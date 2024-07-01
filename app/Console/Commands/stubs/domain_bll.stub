@@ -1,0 +1,20 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\DomainUtils\BaseBLL\BaseBLL;
+use App\DomainUtils\BaseBLL\BaseBLLFileUtils;
+use {{ dalNamespace }}\{{ dalInterface }};
+
+/**
+ * @property {{ dalInterface }} DAL
+ */
+class {{ class }} extends BaseBLL implements {{ interface }}
+{
+    use BaseBLLFileUtils;
+
+    public function __construct({{ dalInterface }} ${{ dalVar }})
+    {
+        $this->DAL = ${{ dalVar }};
+    }
+}

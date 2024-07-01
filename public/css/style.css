@@ -1,0 +1,139 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    background: #f8f9fa;
+}
+.navbar-custom {
+    background: #f0f0f0;
+    color: #333;
+    padding: 15px;
+    border-bottom: 2px solid #ccc;
+}
+.navbar-custom .info {
+    flex-grow: 1;
+    margin-left: 15px;
+}
+.navbar-custom .info h5 {
+    margin: 0;
+}
+.navbar-custom .info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #f8f9fa;
+}
+.card-custom {
+    padding: 20px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+.clock {
+    text-align: center;
+}
+.clock .time {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+.clock .btn {
+    padding: 10px 20px;
+    font-size: 1.1rem;
+}
+.status {
+    text-align: center;
+    margin-top: 20px;
+}
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    padding: 10px;
+    border-top: 1px solid #dee2e6;
+    text-align: center;
+}
+.footer i {
+    font-size: 1.5rem;
+    color: #9b59b6;
+}
+.container {
+    padding: 15px;
+}
+.text-left {
+    text-align: left !important;
+}
+.card-indent {
+    margin-left: 40px;
+}
+.line {
+    border-left: 2px solid #333;
+    height: 160px;
+    position: absolute;
+    left: 20px;
+    top: 25px;
+    z-index: 100;
+}
+.line2 {
+    border-left: 2px solid #333;
+    height: 250px;
+    position: absolute;
+    left: 20px;
+    top: 25px;
+    z-index: 100;
+}
+.dot {
+    height: 10px;
+    width: 10px;
+    background-color: #333;
+    border-radius: 50%;
+    position: absolute;
+    left: 15px;
+}
+.dot-start {
+    top: 25px;
+}
+.dot-end {
+    bottom: 25px;
+}
+.modal-header {
+    border-bottom: none;
+}
+.modal-footer {
+    border-top: none;
+    justify-content: center;
+}
+.modal-title {
+    font-weight: bold;
+}
+.close {
+    padding: 1rem;
+    margin: -1rem -1rem -1rem auto;
+}
+.footer-menu {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+.footer-menu a {
+    text-decoration: none;
+    color: #9b59b6;
+    font-size: 1.2rem;
+}
+.nav-tabs .nav-link {
+    cursor: pointer;
+}
+.nav-tabs .nav-link.active {
+    font-weight: bold;
+}
+.collapse-content {
+    padding: 10px;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+.arrow-btn {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1.2rem;
+    color: #007bff;
+}

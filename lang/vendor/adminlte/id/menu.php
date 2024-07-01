@@ -1,0 +1,38 @@
+<?php
+
+return [
+
+    'main_navigation'               => 'NAVIGASI UTAMA',
+    'blog'                          => 'Blog',
+    'pages'                         => 'Halaman',
+    'account_settings'              => 'PENGATURAN AKUN',
+    'profile'                       => 'Profil',
+    'change_password'               => 'Ubah Kata Sandi',
+    'multilevel'                    => 'Multi Level',
+    'level_one'                     => 'Level 1',
+    'level_two'                     => 'Level 2',
+    'level_three'                   => 'Level 3',
+    'labels'                        => 'LABEL',
+    'important'                     => 'Penting',
+    'warning'                       => 'Peringatan',
+    'information'                   => 'Informasi',
+    'social_media'                  => 'Sosial Media',
+    'user'                          => 'Pengguna',
+    'sales_channel'                 => 'Sales Channel',
+    'marketing_category'            => 'Kategori Marketing',
+    'marketing'                     => 'Marketing',
+    'order'                         => 'Order',
+    'sales'                         => 'Sales',
+    'ad_spent_market_place'         => 'Ad Spent Market Place',
+    'ad_spent_social_media'         => 'Ad Spent Social Media',
+    'visit'                         => 'Visit',
+    'tenant'                        => 'Grup',
+    'funnel'                        => 'Funnel',
+    'input_data'                    => 'Input Data',
+    'recap'                         => 'Rekap',
+    'total'                         => 'Total',
+    'customer'                      => 'Customer',
+    'kol'                           => 'KOL',
+    'campaign'                      => 'Campaign',
+    'offer'                         => 'Pengajuan'
+];

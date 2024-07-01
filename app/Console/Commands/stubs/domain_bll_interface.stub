@@ -1,0 +1,10 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\DomainUtils\BaseBLL\BaseBLLInterface;
+
+interface {{ interface }} extends BaseBLLInterface
+{
+    //
+}

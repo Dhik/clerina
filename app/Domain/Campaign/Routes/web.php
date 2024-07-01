@@ -1,0 +1,128 @@
+<?php
+
+use App\Domain\Campaign\Controllers\CampaignContentController;
+use App\Domain\Campaign\Controllers\CampaignController;
+use App\Domain\Campaign\Controllers\KeyOpinionLeaderController;
+use App\Domain\Campaign\Controllers\OfferController;
+use App\Domain\Campaign\Controllers\StatisticController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+Route::prefix('admin')
+    ->middleware('auth')
+    ->group(function () {
+        Route::prefix('campaign')
+            ->group(function () {
+                Route::get('/', [CampaignController::class, 'index'])->name('campaign.index');
+                Route::get('/get', [CampaignController::class, 'get'])->name('campaign.get');
+                Route::get('/create', [CampaignController::class, 'create'])->name('campaign.create');
+                Route::post('/store', [CampaignController::class, 'store'])->name('campaign.store');
+                Route::get('/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
+                Route::get('/{campaign}/refresh', [CampaignController::class, 'refresh'])->name('campaign.refresh');
+                Route::put('/{campaign}/update', [CampaignController::class, 'update'])->name('campaign.update');
+                Route::get('/{campaign}/show', [CampaignController::class, 'show'])->name('campaign.show');
+                Route::get('/{campaign}/statistic', [CampaignContentController::class, 'statistics'])->name('campaign.statistics');
+                Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+            });
+
+        Route::prefix('campaignContent')
+            ->group(function () {
+                Route::get('/getDataTable/{campaignId}', [CampaignContentController::class, 'getCampaignContentDataTable'])
+                    ->name('campaignContent.getDataTable');
+                Route::get('/select/{campaignId}', [CampaignContentController::class, 'selectApprovedInfluencer'])
+                    ->name('campaignContent.select');
+                Route::post('/store/{campaignId}', [CampaignContentController::class, 'store'])
+                    ->name('campaignContent.store');
+                Route::put('/update/{campaignContent}', [CampaignContentController::class, 'update'])
+                    ->name('campaignContent.update');
+                Route::get('/update/fyp/{campaignContent}', [CampaignContentController::class, 'updateFyp'])
+                    ->name('campaignContent.update.fyp');
+                Route::get('/update/deliver/{campaignContent}', [CampaignContentController::class, 'updateDeliver'])
+                    ->name('campaignContent.update.deliver');
+                Route::get('/payment/deliver/{campaignContent}', [CampaignContentController::class, 'updatePayment'])
+                    ->name('campaignContent.update.payment');
+                Route::get('/export/{campaign}', [CampaignContentController::class, 'export'])
+                    ->name('campaignContent.export');
+                Route::get('/downloadTemplate', [CampaignContentController::class, 'downloadTemplate'])
+                    ->name('campaignContent.template');
+                Route::post('/import/{campaign}', [CampaignContentController::class, 'import'])
+                    ->name('campaignContent.import');
+                Route::delete('/{campaignContent}', [CampaignContentController::class, 'destroy'])
+                    ->name('campaignContent.destroy');
+            });
+
+        Route::prefix('kol')
+            ->group(function () {
+                Route::get('/', [KeyOpinionLeaderController::class, 'index'])->name('kol.index');
+                Route::get('/get', [KeyOpinionLeaderController::class, 'get'])->name('kol.get');
+                Route::get('/select', [KeyOpinionLeaderController::class, 'select'])->name('kol.select');
+                Route::get('/create', [KeyOpinionLeaderController::class, 'create'])->name('kol.create');
+                Route::get('/create-excel', [KeyOpinionLeaderController::class, 'createExcelForm'])->name('kol.create-excel');
+                Route::get('/export', [KeyOpinionLeaderController::class, 'export'])->name('kol.export');
+                Route::post('/store', [KeyOpinionLeaderController::class, 'store'])->name('kol.store');
+                Route::post('/storeExcel', [KeyOpinionLeaderController::class, 'storeExcel'])->name('kol.store-excel');
+                Route::get('/showJson/{keyOpinionLeader}', [KeyOpinionLeaderController::class, 'showJson'])->name('kol.show.json');
+                Route::get('/{keyOpinionLeader}/edit', [KeyOpinionLeaderController::class, 'edit'])->name('kol.edit');
+                Route::put('/{keyOpinionLeader}/update', [KeyOpinionLeaderController::class, 'update'])->name('kol.update');
+                Route::get('/{keyOpinionLeader}/show', [KeyOpinionLeaderController::class, 'show'])->name('kol.show');
+            });
+
+        Route::prefix('offer')
+            ->group(function () {
+                Route::get('/', [OfferController::class, 'index'])->name('offer.index');
+                Route::get('/get', [OfferController::class, 'getOfferDataTable'])->name('offer.get');
+                Route::get('/getByCampaignId/{campaignId}', [OfferController::class, 'getByCampaignId'])->name('offer.getByCampaignId');
+                Route::post('/store/{campaignId}', [OfferController::class, 'store'])->name('offer.store');
+                Route::put('/update/{offer}', [OfferController::class, 'update'])->name('offer.update');
+                Route::put('/updateStatus/{offer}', [OfferController::class, 'updateStatus'])->name('offer.updateStatus');
+                Route::put('/reviewOffering/{offer}', [OfferController::class, 'reviewOffering'])->name('offer.reviewOffering');
+                Route::put('/financeOffer/{offer}', [OfferController::class, 'financeOffering'])->name('offer.financeOffering');
+
+                // Chat Proof
+                Route::post('/uploadChatProof/{offer}', [OfferController::class, 'uploadChatProof'])->name('offer.uploadChatProof');
+                Route::get('/previewChatProof/{mediaId}/{filename}', [OfferController::class, 'previewChatProof'])->name('offer.previewCharProof');
+                Route::delete('/deleteChatProof/{offer}/{media}', [OfferController::class, 'deleteChatProof'])->name('offer.deleteChatProof');
+
+                // Transfer Proof
+                Route::post('/uploadTransferProof/{offer}', [OfferController::class, 'uploadTransferProof'])->name('offer.uploadTransferProof');
+                Route::delete('/deleteTransferProof/{offer}/{media}', [OfferController::class, 'deleteTransferProof'])->name('offer.deleteTransferProof');
+
+                Route::get('/{offer}/show', [OfferController::class, 'show'])->name('offer.show');
+                Route::get('/{campaign}/export', [OfferController::class, 'export'])->name('offer.export');
+            });
+
+        Route::prefix('statistic')
+            ->group(function () {
+                Route::get('/refresh/{campaignContent}', [StatisticController::class, 'refresh'])
+                    ->name('statistic.refresh');
+
+                Route::get('/bulkRefresh/{campaign}', [StatisticController::class, 'bulkRefresh'])
+                    ->name('statistic.bulkRefresh');
+
+                Route::get('/card/{campaignId}', [StatisticController::class, 'card'])
+                    ->name('statistic.card');
+
+                Route::get('/chart/{campaignId}', [StatisticController::class, 'chart'])
+                    ->name('statistic.chart');
+
+                Route::get('/chart-detail/{campaignContentId}', [StatisticController::class, 'chartDetailContent'])
+                    ->name('statistic.chartDetail');
+
+                Route::post('/{campaignContent}', [StatisticController::class, 'store'])
+                    ->name('statistic.store');
+
+            });
+    });
+
+Route::get('/sign-kol', [OfferController::class, 'signKOL'])->name('sign.kol');
+Route::post('/sign-store/{offer}', [OfferController::class, 'postSignKOL'])->name('sign.store');
+Route::get('/preview-sign/{offer}', [OfferController::class, 'previewSign'])->name('sign.preview');

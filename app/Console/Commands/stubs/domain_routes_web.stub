@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::prefix('{{ domainVar }}')
+    //->middleware('auth')
+    ->group(function () {
+
+        Route::get('/', '{{ controllerClass }}@index')->name('{{ domainVar }}.index');
+        Route::get('/create', '{{ controllerClass }}@create')->name('{{ domainVar }}.create');
+        Route::post('/', '{{ controllerClass }}@store')->name('{{ domainVar }}.store');
+        Route::get('/{{{ domainVar }}}', '{{ controllerClass }}@show')->name('{{ domainVar }}.show');
+        Route::get('/{{{ domainVar }}}/edit', '{{ controllerClass }}@edit')->name('{{ domainVar }}.edit');
+        Route::put('/{{{ domainVar }}}', '{{ controllerClass }}@update')->name('{{ domainVar }}.update');
+        Route::delete('{{{ domainVar }}}', '{{ controllerClass }}@destroy')->name('{{ domainVar }}.destroy');
+    });

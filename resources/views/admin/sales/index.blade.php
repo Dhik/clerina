@@ -1,0 +1,376 @@
+@extends('adminlte::page')
+
+@section('title', trans('labels.sales'))
+
+@section('content_header')
+    <h1>{{ trans('labels.sales') }}</h1>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-auto">
+                            <div class="row">
+                                <div class="col-auto">
+                                    <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="filterChannel">
+                                        <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
+                                        <option value="">{{ trans('labels.all') }}</option>
+                                        @foreach($salesChannels as $salesChannel)
+                                            <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h4 id="newSalesCount">0</h4>
+                            <p>Total Sales</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-purple">
+                        <div class="inner">
+                            <h4 id="newVisitCount">0</h4>
+                            <p>Total Visit</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h4 id="newOrderCount">0</h4>
+                            <p>Total Order</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h4 id="newAdSpentCount">0</h4>
+                            <p>Total AdSpent</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-teal">
+                        <div class="inner">
+                            <h4 id="newRoasCount">0</h4>
+                            <p>{{ trans('labels.roas')  }}</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-pink">
+                        <div class="inner">
+                            <h4 id="newClosingRateCount">0</h4>
+                            <p>{{ trans('labels.closing_rate')  }}</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-user-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-maroon">
+                        <div class="inner">
+                            <h4 id="newQtyCount">0</h4>
+                            <p>Qty</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-orange">
+                        <div class="inner">
+                            <h4 id="newCPACount">0</h4>
+                            <p>CPA</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @include('admin.sales.recap-card')
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-auto">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#visitModal" id="btnAddVisit">
+                                    <i class="fas fa-plus"></i> {{ trans('labels.visit') }}
+                                </button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#adSpentSocialMediaModal" id="btnAddAdSpentSM">
+                                    <i class="fas fa-plus"></i> {{ trans('labels.ad_spent_social_media') }}
+                                </button>
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#adSpentMarketPlaceModal" id="btnAddAdSpentMP">
+                                    <i class="fas fa-plus"></i> {{ trans('labels.ad_spent_market_place') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="salesTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="order-info" width="100%">
+                        <thead>
+                        <tr>
+                            <th>{{ trans('labels.date') }}</th>
+                            <th>{{ trans('labels.visit') }}</th>
+                            <th>{{ trans('labels.qty') }}</th>
+                            <th>{{ trans('labels.order') }}</th>
+                            <th>{{ trans('labels.closing_rate') }}</th>
+                            <th>{{ trans('labels.ad_spent_social_media') }}</th>
+                            <th>{{ trans('labels.ad_spent_market_place') }}</th>
+                            <th>{{ trans('labels.spend_total') }}</th>
+                            <th>{{ trans('labels.roas') }}</th>
+                            <th>{{ trans('labels.turnover') }} ({{ trans('labels.rp') }})</th>
+                            <th>{{ trans('labels.action') }}</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @include('admin.visit.modal')
+    @include('admin.adSpentSocialMedia.modal')
+    @include('admin.adSpentMarketPlace.modal')
+    @include('admin.sales.modal-visitor')
+    @include('admin.sales.modal-adspent')
+@stop
+
+@section('js')
+    <script>
+        salesTableSelector = $('#salesTable');
+        filterDate = $('#filterDates');
+        filterChannel = $('#filterChannel');
+
+        $('#btnAddVisit').click(function() {
+            $('#dateVisit').val(moment().format("DD/MM/YYYY"));
+        });
+
+        $('#btnAddAdSpentSM').click(function() {
+            $('#dateAdSpentSocialMedia').val(moment().format("DD/MM/YYYY"));
+        });
+
+        $('#btnAddAdSpentMP').click(function() {
+            $('#dateAdSpentMarketPlace').val(moment().format("DD/MM/YYYY"));
+        });
+
+        $('#resetFilterBtn').click(function () {
+            filterDate.val('')
+            filterChannel.val('')
+            updateRecapCount()
+            salesTable.draw()
+        })
+
+        filterDate.change(function () {
+            salesTable.draw()
+            updateRecapCount()
+        });
+
+        filterChannel.change(function () {
+            salesTable.draw()
+            updateRecapCount()
+        });
+
+        function updateRecapCount() {
+            $.ajax({
+                url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),
+                method: 'GET', // You can use 'POST' if required
+                success: function(response) {
+                    // Update the count with the retrieved value
+                    $('#newSalesCount').text(response.total_sales);
+                    $('#newVisitCount').text(response.total_visit);
+                    $('#newOrderCount').text(response.total_order);
+                    $('#newAdSpentCount').text(response.total_ad_spent);
+                    $('#newQtyCount').text(response.total_qty);
+                    $('#newRoasCount').text(response.total_roas);
+                    $('#newClosingRateCount').text(response.closing_rate);
+                    $('#newCPACount').text(response.cpa);
+                    generateChart(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching new orders count:', error);
+                }
+            });
+        }
+
+        // datatable
+        let salesTable = salesTableSelector.DataTable({
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            pageLength: 25,
+            ajax: {
+                url: "{{ route('sales.get') }}",
+                data: function (d) {
+                    d.filterDates = filterDate.val()
+                }
+            },
+            columns: [
+                {data: 'date', name: 'date'},
+                {data: 'visitFormatted', name: 'visit', sortable: false},
+                {data: 'qtyFormatted', name: 'qty', sortable: false},
+                {data: 'orderFormatted', name: 'order', sortable: false},
+                {data: 'closingRateFormatted', name: 'closing_rate', sortable: false},
+                {data: 'adSpentSocialMediaFormatted', name: 'ad_spent_social_media', sortable: false},
+                {data: 'adSpentMarketPlaceFormatted', name: 'ad_spent_market_place', sortable: false},
+                {data: 'totalFormatted', name: 'total_spend', sortable: false},
+                {data: 'roasFormatted', name: 'roas', sortable: false},
+                {data: 'turnoverFormatted', name: 'turnover', sortable: false},
+                {data: 'actions', sortable: false}
+            ],
+            columnDefs: [
+                { "targets": [1], "className": "text-right" },
+                { "targets": [2], "className": "text-right" },
+                { "targets": [3], "className": "text-right" },
+                { "targets": [4], "className": "text-right" },
+                { "targets": [5], "className": "text-right" },
+                { "targets": [6], "className": "text-right" },
+                { "targets": [7], "className": "text-right" },
+                { "targets": [8], "className": "text-center" }
+            ],
+            order: [[0, 'desc']]
+        });
+
+        // Handle row click event to open modal and fill form
+        salesTable.on('draw.dt', function() {
+            const tableBodySelector =  $('#salesTable tbody');
+
+            tableBodySelector.on('click', '.visitButtonDetail', function(event) {
+                event.preventDefault();
+                let rowData = salesTable.row($(this).closest('tr')).data();
+                showVisitorDetail(rowData);
+            });
+
+            tableBodySelector.on('click', '.adSpentButtonDetail', function(event) {
+                event.preventDefault();
+                let rowData = salesTable.row($(this).closest('tr')).data();
+                showAdSpentDetail(rowData);
+            });
+        });
+
+        function showVisitorDetail(data) {
+            $.ajax({
+                url: "{{ route('visit.getByDate') }}?date=" + data.date,
+                type: 'GET',
+                success: function(response) {
+
+                    let visitTableBody = $("#visit-table-body");
+                    visitTableBody.empty(); // Clear existing rows
+
+                    if (response.length > 0) {
+                        response.forEach(function(item) {
+                            let row = `<tr>
+                            <td>${item.sales_channel.name ?? ''}</td>
+                            <td>${item.visit_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                        </tr>`;
+                            visitTableBody.append(row);
+                        });
+                    } else {
+                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
+                        visitTableBody.append(row);
+                    }
+
+                    $('#showVisitorModal').modal('show');
+                },
+                error: function(error) {
+                    console.log(error);
+                    alert("An error occurred");
+                }
+            });
+        }
+
+        function showAdSpentDetail(data) {
+            $.ajax({
+                url: "{{ route('adSpentMarketPlace.getByDate') }}?date=" + data.date,
+                type: 'GET',
+                success: function(response) {
+
+                    let adSpentSocialMediaTableBody = $("#adspent-social-media-table-body");
+                    adSpentSocialMediaTableBody.empty(); // Clear existing rows
+                    // console.log(response)
+                    if (response.social_media.length > 0) {
+                        response.social_media.forEach(function(item) {
+                            let row = `<tr>
+                            <td>${item.social_media.name ?? ''}</td>
+                            <td>${item.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                        </tr>`;
+                            adSpentSocialMediaTableBody.append(row);
+                        });
+                    } else {
+                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
+                        adSpentSocialMediaTableBody.append(row);
+                    }
+
+                    let adSpentMarketPlaceTableBody = $("#adspent-market-place-table-body");
+                    adSpentMarketPlaceTableBody.empty(); // Clear existing rows
+
+                    if (response.market_place.length > 0) {
+                        response.market_place.forEach(function(item) {
+                            let row = `<tr>
+                            <td>${item.sales_channel.name ?? ''}</td>
+                            <td>${item.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                        </tr>`;
+                            adSpentMarketPlaceTableBody.append(row);
+                        });
+                    } else {
+                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
+                        adSpentMarketPlaceTableBody.append(row);
+                    }
+
+                    $('#showAdSpentModal').modal('show');
+                },
+                error: function(error) {
+                    console.log(error);
+                    alert("An error occurred");
+                }
+            });
+        }
+
+        $(function () {
+            salesTable.draw();
+            updateRecapCount();
+        });
+    </script>
+
+    @include('admin.visit.script')
+    @include('admin.adSpentSocialMedia.script')
+    @include('admin.adSpentMarketPlace.script')
+    @include('admin.sales.script-chart')
+@stop

@@ -1,0 +1,88 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Http\Controllers\Controller;
+use {{ bllNamespace }}\{{ bllInterface }};
+use {{ modelNamespace }}\{{ modelClass }};
+use {{ requestNamespace }}\{{ requestClass }};
+
+/**
+ * @property {{ bllInterface }} {{ bllVar }}
+ */
+class {{ class }} extends Controller
+{
+    public function __construct({{ bllInterface }} ${{ bllVar }})
+    {
+        $this->{{ bllVar }} = ${{ bllVar }};
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     */
+    public function index()
+    {
+        //
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param {{ requestClass }} $request
+     */
+    public function store({{ requestClass }} $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param {{ modelClass }} ${{ modelVar }}
+     */
+    public function show({{ modelClass }} ${{ modelVar }})
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  {{ modelClass }}  ${{ modelVar }}
+     */
+    public function edit({{ modelClass }} ${{ modelVar }})
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param {{ requestClass }} $request
+     * @param  {{ modelClass }}  ${{ modelVar }}
+     */
+    public function update({{ requestClass }} $request, {{ modelClass }} ${{ modelVar }})
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param {{ modelClass }} ${{ modelVar }}
+     */
+    public function destroy({{ modelClass }} ${{ modelVar }})
+    {
+        //
+    }
+}

@@ -1,0 +1,17 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\DomainUtils\BaseDAL\BaseDAL;
+use {{ modelNamespace }}\{{ modelClass }};
+
+/**
+ * @property {{ modelClass }} model
+ */
+class {{ class }} extends BaseDAL implements {{ interface }}
+{
+    public function __construct({{ modelClass }} ${{ modelVar }})
+    {
+        $this->model = ${{ modelVar }};
+    }
+}

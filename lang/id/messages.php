@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'success_save' => ':model berhasil dibuat',
+    'success_update' => ':model berhasil diupdate',
+    'error_delete' => 'Terjadi kesalahan saat menghapus data',
+    'success_delete' => 'Data berhasil dihapus',
+    'success_export' => ':model berhasil diexport',
+    'success_import' => ':model berhasil diimport',
+    'success_refresh' => 'Data berhasil direfresh',
+    'no_data' => 'Tidak ada data yang bisa ditampilkan',
+    'sales_channel_failed_delete' => 'Sales channel sudah dipakai di order, visit, atau adspent',
+    'social_media_failed_delete' => 'Sosial media sudah dipakai di adspent',
+    'tenant_failed_delete' => 'Group sudah dipakai',
+    'marketing_category_failed_delete' => 'Marketing kategori masih memiliki sub category atau sudah dipakai di data marketing',
+    'marketing_sub_category_failed_delete' => 'Marketing sub kategori sudah dipakai di data marketing',
+    'no_brand_assigned' => 'Pengguna ini tidak terdaftar di brand manapun',
+    'success_upload' => ':model berhasil diupload',
+    'refresh_success' => 'Data berhasil direfresh',
+    'refresh_failed' => 'Data gagal direfresh',
+    'copy_success' => 'Link berhasil dicopy',
+    'process_ongoing' => 'Data diprocess',
+    'kol_not_exist_import' => 'KOL tidak terdaftar di campaign atau belum di approve (silahkan cek pengajuan terlebih dahulu) : ',
+    'kol_doesnt_have_enough_slot' => 'KOL berikut tidak mempunya sisa slot yang cukup',
+    'campaign_failed_delete' => 'Campaign sudah berisi pengajuan atau kontent, silahkan kosongkan terlebih dahulu'
+];
