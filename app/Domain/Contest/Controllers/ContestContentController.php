@@ -17,6 +17,9 @@ use Illuminate\Http\RedirectResponse;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Domain\Contest\Exports\ContestContentExport;
+
 
 /**
  * @property ContestBLLInterface contestBLL
@@ -213,5 +216,8 @@ class ContestContentController extends Controller
             ->rawColumns(['actions', 'username_link'])
             ->toJson();
     }
-    
+    public function export(Contest $contest)
+    {
+        return Excel::download(new ContestContentExport($contest->id), 'contest_content_' . $contest->id . '.xlsx');
+    }
 }

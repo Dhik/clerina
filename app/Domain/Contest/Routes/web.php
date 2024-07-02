@@ -40,6 +40,7 @@ Route::prefix('admin')
                 Route::put('/update/{contestContent}', [ContestContentController::class, 'update'])->name('contestContent.update');
                 Route::delete('/destroy/{contestContent}', [ContestContentController::class, 'destroy'])->name('contestContent.destroy');
                 Route::get('/recap', [ContestContentController::class, 'getSalesRecap'])->name('contestContent.get-contestContent-recap');
+                Route::get('/export/{contest}', [ContestContentController::class, 'export'])->name('contestContent.export'); // New export route
             });
     });
 

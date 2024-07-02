@@ -58,8 +58,8 @@ class ContestContentDAL extends BaseDAL implements ContestContentDALInterface
     {
         return $this->content->query()
             ->where('contest_id', $contest->id)
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate)
-            ->orderBy('created_at', 'ASC');
+            ->whereDate('upload_date', '>=', $startDate)
+            ->whereDate('upload_date', '<=', $endDate)
+            ->orderBy('upload_date', 'ASC');
     }
 }

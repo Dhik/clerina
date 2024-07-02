@@ -112,8 +112,11 @@
                                     <a href="{{ route('contestContent.create', $contest) }}" type="button" class="btn btn-primary">
                                         <i class="fas fa-plus"></i> {{ trans('labels.add') }}
                                     </a>
-                                    <a class="btn btn-success" href={{ route('contestContent.bulkRefresh', $contest) }}>
+                                    <a class="btn btn-success" href="{{ route('contestContent.bulkRefresh', $contest) }}">
                                         <i class="fas fa-sync-alt"></i> {{ trans('labels.refresh') }} {{ trans('labels.all2') }}
+                                    </a>
+                                    <a class="btn btn-info" href="{{ route('contestContent.export', $contest) }}">
+                                        <i class="fas fa-file-export"></i> {{ trans('labels.export') }}
                                     </a>
                                 </div>
                             </div>
