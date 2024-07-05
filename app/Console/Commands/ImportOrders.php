@@ -5,6 +5,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Order\Import\OrderImportLazada;
 use App\Domain\Order\Import\OrderImport;
@@ -25,8 +26,17 @@ class ImportOrders extends Command
         $salesChannelId = $this->argument('salesChannelId');
         $tenantId = $this->argument('tenantId');
 
+        // Get the correct path to the file in the storage
+        $filePath = storage_path('app/public/' . $file);
+
+        // Check if the file exists
+        if (!file_exists($filePath)) {
+            $this->error('File does not exist: ' . $filePath);
+            return;
+        }
+
         $import = new OrderImport($salesChannelId, $tenantId);
-        Excel::import($import, $file);
+        Excel::import($import, $filePath);
 
         // Get the cleaned data
         // $cleanedData = $import->getCleanedData();
@@ -40,7 +50,7 @@ class ImportOrders extends Command
         // Prompt the user to continue with the import
         if ($this->confirm('Do you wish to continue with storing the data in the database?')) {
             // Re-import the data to store it in the database
-            Excel::import($import, $file);
+            Excel::import($import, $filePath);
             $this->info('Orders imported successfully.');
         } else {
             $this->info('Import cancelled.');
