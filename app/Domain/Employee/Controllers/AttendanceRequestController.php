@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Yajra\DataTables\DataTables;
 use Illuminate\Http\JsonResponse;
 use App\Domain\Employee\Models\AttendanceRequest;
+use App\Domain\Employee\Models\Attendance;
 use App\Domain\Employee\Models\Employee;
 
 class AttendanceRequestController extends Controller
@@ -69,25 +70,26 @@ class AttendanceRequestController extends Controller
     }
 
     public function updateRequestStatus(Request $request, $id)
-    {
-        $attendanceRequest = AttendanceRequest::find($id);
-        if ($attendanceRequest) {
-            $attendanceRequest->status_approval = $request->status;
-            $attendanceRequest->save();
+{
+    $attendanceRequest = AttendanceRequest::find($id);
+    if ($attendanceRequest) {
+        $attendanceRequest->status_approval = $request->status;
+        $attendanceRequest->save();
 
-            if ($request->status == 'approved') {
-                $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
-                                        ->whereDate('created_at', $attendanceRequest->date)
-                                        ->first();
+        if ($request->status == 'approved') {
+            $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
+                                    ->whereDate('created_at', $attendanceRequest->date)
+                                    ->first();
 
-                if ($attendance) {
-                    $attendance->clock_in = $attendanceRequest->clock_in;
-                    $attendance->clock_out = $attendanceRequest->clock_out;
-                    $attendance->save();
-                }
+            if ($attendance) {
+                $attendance->clock_in = $attendanceRequest->clock_in;
+                $attendance->clock_out = $attendanceRequest->clock_out;
+                $attendance->save();
             }
-            return response()->json(['success' => true, 'message' => 'Status updated successfully']);
         }
-        return response()->json(['success' => false, 'message' => 'Attendance request not found'], 404);
+        return response()->json(['success' => true, 'message' => 'Status updated successfully']);
     }
+    return response()->json(['success' => false, 'message' => 'Attendance request not found'], 404);
+}
+
 }

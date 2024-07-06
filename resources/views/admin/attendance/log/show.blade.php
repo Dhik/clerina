@@ -76,7 +76,7 @@
 <script>
 $(document).ready(function() {
     var baseUrl = "{{ asset('storage/') }}"; // Base URL for profile pictures
-    var defaultImageUrl = "{{ asset('img/user.png') }}";// Default profile picture URL
+    var defaultImageUrl = "{{ asset('img/user.png') }}"; // Default profile picture URL
 
     var pendingTable = loadDataTable('pendingRequests', '{{ route("attendance_requests.pending") }}');
     var approvedTable = loadDataTable('approvedRequests', '{{ route("attendance_requests.approved") }}');
@@ -94,9 +94,9 @@ $(document).ready(function() {
                     data: 'full_name',
                     name: 'employee_name',
                     render: function(data, type, row) {
-                            var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
-                            return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
-                        }
+                        var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
+                        return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
+                    }
                 },
                 { data: 'clock_in' },
                 { data: 'clock_out' },
@@ -129,19 +129,11 @@ $(document).ready(function() {
         $('#attendanceDetailModal').modal('show');
     });
 
-    $(document).on('click', '.approveButton', function() {
+    $(document).on('click', '.approveButton, .rejectButton, .pendingButton', function() {
         var id = $(this).data('id');
-        updateStatus(id, 'approved');
-    });
-
-    $(document).on('click', '.rejectButton', function() {
-        var id = $(this).data('id');
-        updateStatus(id, 'rejected');
-    });
-
-    $(document).on('click', '.pendingButton', function() {
-        var id = $(this).data('id');
-        updateStatus(id, 'pending');
+        var status = $(this).hasClass('approveButton') ? 'approved' :
+                     $(this).hasClass('rejectButton') ? 'rejected' : 'pending';
+        updateStatus(id, status);
     });
 
     function updateStatus(id, status) {
@@ -159,11 +151,13 @@ $(document).ready(function() {
                     approvedTable.ajax.reload();
                     rejectedTable.ajax.reload();
                 } else {
-                    alert('Failed to update status');
+                    alert(response.message || 'Failed to update status');
                 }
             },
-            error: function() {
-                alert('Error updating status');
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating status: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Unknown error'));
             }
         });
     }

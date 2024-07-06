@@ -44,15 +44,21 @@ class AttendanceController extends Controller
         $employee = Employee::where('employee_id', $employeeId)->first();
         $shiftId = $employee->shift_id;
 
-        Attendance::create([
-            'employee_id' => $employeeId,
-            'attendance_status' => 'present',
-            'clock_in' => $clockInTime,
-            'clock_out' => null,
-            'timestamp' => $clockInTime,
-            'shift_id' => $shiftId,
-        ]);
+        // Check if the attendance record already exists for today
+        $existingAttendance = Attendance::where('employee_id', $employeeId)
+            ->whereDate('created_at', Carbon::today())
+            ->first();
 
+        if (!$existingAttendance) {
+            Attendance::create([
+                'employee_id' => $employeeId,
+                'attendance_status' => 'present',
+                'clock_in' => $clockInTime,
+                'clock_out' => null,
+                'timestamp' => $clockInTime,
+                'shift_id' => $shiftId,
+            ]);
+        }
         return redirect()->route('attendance.app');
     }
 

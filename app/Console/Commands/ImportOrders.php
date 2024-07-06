@@ -35,17 +35,17 @@ class ImportOrders extends Command
             return;
         }
 
-        $import = new OrderImport($salesChannelId, $tenantId);
+        $import = new OrderImportLazada($salesChannelId, $tenantId);
         Excel::import($import, $filePath);
 
         // Get the cleaned data
-        // $cleanedData = $import->getCleanedData();
+        $cleanedData = $import->getCleanedData();
 
         // Display the cleaned data
-        // $this->info('Cleaned Data Preview:');
-        // foreach ($cleanedData as $index => $row) {
-        //     $this->info("Row $index: " . json_encode($row));
-        // }
+        $this->info('Cleaned Data Preview:');
+        foreach ($cleanedData as $index => $row) {
+            $this->info("Row $index: " . json_encode($row));
+        }
 
         // Prompt the user to continue with the import
         if ($this->confirm('Do you wish to continue with storing the data in the database?')) {
