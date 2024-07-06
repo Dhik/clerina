@@ -17,7 +17,6 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -58,50 +57,35 @@ class OrderImportLazada implements SkipsEmptyRows, ToModel, WithMapping, WithHea
             $this->loggedHeader = true;
         }
 
-        // Skip rows where any mandatory field is null
-        // $mandatoryFields = [
-        //     'orderNumber',
-        //     'trackingCode',
-        //     'shippingProvider',
-        //     'updateTime',
-        //     'itemName',
-        //     'sellerSku',
-        //     'qty',
-        //     'paidPrice',
-        //     'customerName',
-        //     'shippingAddress',
-        //     'billingPhone',
-        //     'shippingCity',
-        //     'billingAddr4'
-        // ];
-
-        // foreach ($mandatoryFields as $field) {
-        //     if (!isset($row[$field]) || is_null($row[$field]) || trim($row[$field]) === '') {
-        //         return [];
-        //     }
-        // }
-
         try {
+            // Validate essential fields
+            $requiredFields = ['updatetime'];
+
+            foreach ($requiredFields as $field) {
+                if (!isset($row[$field]) || is_null($row[$field])) {
+                    Log::warning("Skipping row due to missing required field: $field");
+                    return []; // Skip this row
+                }
+            }
+
             $cleanedRow = [
-                'id_order' => $this->cleanData($row['orderNumber']),
-                'receipt_number' => $this->cleanData($row['trackingCode']),
-                'shipment' => $this->cleanData($row['shippingProvider']),
-                'date' => $this->formatDateForDatabase($row['updateTime']),
-                'payment_method' => $this->cleanData($row['payMethod']),
-                'product' => $this->cleanData($row['itemName']),
-                'sku' => $this->cleanData($row['sellerSku']),
-                'variant' => $this->cleanData($row['variation']),
-                'price' => $this->convertCurrencyStringToNumber($this->cleanData($row['paidPrice'])),
-                'qty' => $this->cleanData($row['qty']),
-                'username' => $this->cleanData($row['customerName']),
-                'customer_name' => $this->cleanData($row['customerName']),
-                'shipping_address' => $this->cleanData($row['shippingAddress']),
-                'customer_phone_number' => $this->cleanData($row['billingPhone']),
-                'city' => $this->cleanData($row['shippingCity']),
-                'province' => $this->cleanData($row['billingAddr4']),
+                'order_id' => $this->cleanData($row['ordernumber']),
+                'tracking_number' => $this->cleanData($row['trackingcode']) ?? 'N/A',
+                'shipping_provider' => $this->cleanData($row['shippingprovider']),
+                'payment_date' => $this->formatDateForDatabase($row['updatetime']) ,
+                'payment_method' => $this->cleanData($row['paymethod']),
+                'product_name' => $this->cleanData($row['itemname']),
+                'sku' => $this->cleanData($row['sellersku']),
+                'variation' => $this->cleanData($row['variation']),
+                'price' => $this->convertCurrencyStringToNumber($this->cleanData($row['paidprice'])),
+                'quantity' => $this->cleanData($row['qty']),
+                'buyer_username' => $this->cleanData($row['customername']),
+                'recipient_name' => $this->cleanData($row['customername']),
+                'recipient_phone' => $this->cleanData($row['billingphone']),
+                'shipping_address' => $this->cleanData($row['shippingaddress']),
+                'city' => $this->cleanData($row['shippingcity']),
+                'province' => $this->cleanData($row['billingaddr4']),
                 'sales_channel_id' => $this->salesChannelId,
-                'tenant_id' => $this->tenantId,
-                'amount' => $this->cleanData($row['qty']) * $this->convertCurrencyStringToNumber($this->cleanData($row['paidPrice']))
             ];
 
             $this->cleanedData[] = $cleanedRow;
@@ -109,41 +93,36 @@ class OrderImportLazada implements SkipsEmptyRows, ToModel, WithMapping, WithHea
             return $cleanedRow;
         } catch (Exception $e) {
             Log::error("Error mapping row: " . json_encode($row) . " - Exception: " . $e->getMessage());
-            return [];
+            return null; // Skip the row that caused the error
         }
     }
 
-    public function model(array $row): ?Model
+    public function model(array $row): Model
     {
-        // Skip rows where all critical fields are null
-        if (empty($row)) {
-            return null;
-        }
-
         try {
             $price = $row['price'];
 
             $order = Order::updateOrCreate([
-                'id_order' => $row['id_order'],
-                'receipt_number' => $row['receipt_number'],
-                'date' => $row['date'],
+                'id_order' => $row['order_id'],
+                'receipt_number' => $row['tracking_number'],
+                'date' => $row['payment_date'],
                 'sku' => $row['sku'],
                 'sales_channel_id' => $this->salesChannelId,
                 'tenant_id' => $this->tenantId,
             ], [
-                'shipment' => $row['shipment'],
+                'shipment' => $row['shipping_provider'],
                 'payment_method' => $row['payment_method'],
-                'product' => $row['product'],
-                'variant' => $row['variant'],
+                'product' => $row['product_name'],
+                'variant' => $row['variation'],
                 'price' => $price,
-                'qty' => $row['qty'],
-                'username' => $row['username'],
-                'customer_name' => $row['customer_name'],
-                'customer_phone_number' => $row['customer_phone_number'],
+                'qty' => $row['quantity'],
+                'username' => $row['buyer_username'],
+                'customer_name' => $row['recipient_name'],
+                'customer_phone_number' => $row['recipient_phone'],
                 'shipping_address' => $row['shipping_address'],
                 'city' => $row['city'],
                 'province' => $row['province'],
-                'amount' => $row['amount'],
+                'amount' => $row['quantity'] * $price,
             ]);
 
             // Additional actions after order creation or update
@@ -161,8 +140,7 @@ class OrderImportLazada implements SkipsEmptyRows, ToModel, WithMapping, WithHea
             $this->importedData[] = $order;
             return $order;
         } catch (Exception $e) {
-            Log::error("Error processing row: " . json_encode($row) . " - Exception: " . $e->getMessage());
-            return null;
+            abort(500, "Error processing row: " . json_encode($row) . " - Exception: " . $e->getMessage());
         }
     }
 
@@ -179,23 +157,16 @@ class OrderImportLazada implements SkipsEmptyRows, ToModel, WithMapping, WithHea
     public function rules(): array
     {
         return [
-            '*.id_order' => 'nullable',
-            '*.receipt_number' => 'nullable',
-            '*.shipment' => 'nullable',
-            '*.date' => 'nullable',
-            '*.payment_method' => 'max:255',
-            '*.product' => 'nullable',
-            '*.sku' => 'nullable',
-            '*.variant' => 'max:255',
-            '*.price' => 'nullable',
-            '*.qty' => 'nullable|numeric|integer',
-            '*.username' => 'max:255',
-            '*.customer_name' => 'nullable',
-            '*.customer_phone_number' => 'max:255',
-            '*.shipping_address' => 'nullable',
-            '*.city' => 'max:255',
-            '*.province' => 'max:255',
-            '*.amount' => 'nullable',
+            'payment_date' => 'required',
+            'order_id' => 'required',
+            'recipient_name' => 'max:255',
+            'recipient_phone' => 'max:255',
+            'product_name' => 'max:255',
+            'quantity' => 'required|numeric|integer',
+            'tracking_number' => 'required',
+            'sku' => 'required',
+            'price' => 'required',
+            'shipping_address' => 'required',
         ];
     }
 
@@ -231,10 +202,6 @@ class OrderImportLazada implements SkipsEmptyRows, ToModel, WithMapping, WithHea
 
     protected function formatDateForDatabase($dateString)
     {
-        if (is_null($dateString) || $dateString === '') {
-            return null;
-        }
-
         if (is_numeric($dateString)) {
             // Convert Excel numeric date to PHP date
             $date = Date::excelToDateTimeObject($dateString);
