@@ -329,25 +329,35 @@ class AttendanceController extends Controller
     }
 
     public function store_request(Request $request)
-    {
-        $validatedData = $request->validate([
-            'date' => 'required|date',
-            'shift_id' => 'required|integer',
-            'clock_in' => 'required|date_format:H:i',
-            'clock_out' => 'required|date_format:H:i',
-            'work_note' => 'nullable|string',
-            'file' => 'nullable|file|max:10240', // 10MB max size
-        ]);
+{
+    $validatedData = $request->validate([
+        'date' => 'required|date',
+        'shift_id' => 'required|integer',
+        'clock_in' => 'required|date_format:H:i',
+        'clock_out' => 'required|date_format:H:i',
+        'work_note' => 'nullable|string',
+        'file' => 'nullable|file|max:10240', // 10MB max size
+    ]);
 
-        try {
-            $user = Auth::user();
-            $employeeId = $user->employee_id;
-            $validatedData['employee_id'] = $employeeId;
-            $validatedData['status_approval'] = 'Pending';
+    try {
+        $user = Auth::user();
+        $employeeId = $user->employee_id;
+        $validatedData['employee_id'] = $employeeId;
+        $validatedData['status_approval'] = 'Pending';
 
-            $validatedData['clock_in'] = Carbon::createFromFormat('H:i', $request->clock_in)->format('Y-m-d H:i:s');
-            $validatedData['clock_out'] = Carbon::createFromFormat('H:i', $request->clock_out)->format('Y-m-d H:i:s');
+        // Format clock_in and clock_out times
+        $clockInDateTime = Carbon::createFromFormat('H:i', $request->clock_in)->format('Y-m-d H:i:s');
+        $clockOutDateTime = Carbon::createFromFormat('H:i', $request->clock_out)->format('Y-m-d H:i:s');
+        $validatedData['clock_in'] = $clockInDateTime;
+        $validatedData['clock_out'] = $clockOutDateTime;
 
+        // Check if the attendance request already exists
+        $existingRequest = AttendanceRequest::where('employee_id', $employeeId)
+            ->where('date', $validatedData['date'])
+            ->where('shift_id', $validatedData['shift_id'])
+            ->first();
+
+        if (!$existingRequest) {
             if ($request->hasFile('file')) {
                 $validatedData['file'] = $request->file('file')->store('attendance_files', 'public');
             }
@@ -357,13 +367,20 @@ class AttendanceController extends Controller
             return redirect()
                 ->route('attendance.log')
                 ->with('success', 'Attendance request created successfully.');
-        } catch (Exception $e) {
+        } else {
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['message' => 'Failed to create attendance request: ' . $e->getMessage()]);
+                ->withErrors(['message' => 'Attendance request already exists for this date and shift.']);
         }
+    } catch (Exception $e) {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->withErrors(['message' => 'Failed to create attendance request: ' . $e->getMessage()]);
     }
+}
+
     public function get_request(Request $request): JsonResponse {
         $user = Auth::user();
         $employeeId = $user->employee_id;

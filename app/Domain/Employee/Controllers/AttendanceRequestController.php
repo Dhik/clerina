@@ -23,20 +23,24 @@ class AttendanceRequestController extends Controller
     }
 
     public function getPendingRequests()
-    {
-        $pendingRequests = AttendanceRequest::select('attendance_requests.*', 'employees.full_name', 'employees.profile_picture')
-            ->join('employees', 'attendance_requests.employee_id', '=', 'employees.employee_id')
-            ->where('attendance_requests.status_approval', 'pending');
+{
+    $pendingRequests = AttendanceRequest::select('attendance_requests.*', 'employees.full_name', 'employees.profile_picture')
+        ->join('employees', 'attendance_requests.employee_id', '=', 'employees.employee_id')
+        ->where('attendance_requests.status_approval', 'pending');
 
-        return DataTables::of($pendingRequests)
-            ->addColumn('actions', function($row){
-                return '<a href="#" class="btn btn-sm btn-primary" id="attendanceShow" data-id="'.$row->id.'" data-employee_id="'.$row->employee_id.'" data-full_name="'.$row->full_name.'" data-date="'.$row->date.'" data-clock_in="'.$row->clock_in.'" data-clock_out="'.$row->clock_out.'" data-work_note="'.$row->work_note.'" data-file="'.$row->file.'" data-status="'.$row->status_approval.'"><i class="fas fa-eye"></i></a>
-                        <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
-                        <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>';
-            })
-            ->rawColumns(['actions'])
-            ->toJson();
-    }
+    return DataTables::of($pendingRequests)
+        ->addColumn('actions', function($row){
+            return '<a href="#" class="btn btn-sm btn-primary" id="attendanceShow" data-id="'.$row->id.'" data-employee_id="'.$row->employee_id.'" data-full_name="'.$row->full_name.'" data-date="'.$row->date.'" data-clock_in="'.$row->clock_in.'" data-clock_out="'.$row->clock_out.'" data-work_note="'.$row->work_note.'" data-file="'.$row->file.'" data-status="'.$row->status_approval.'"><i class="fas fa-eye"></i></a>
+                    <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
+                    <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>';
+        })
+        ->rawColumns(['actions'])
+        ->filterColumn('full_name', function($query, $keyword) {
+            $query->where('employees.full_name', 'like', "%{$keyword}%");
+        })
+        ->toJson();
+}
+
 
     public function getApprovedRequests()
     {
@@ -50,6 +54,9 @@ class AttendanceRequestController extends Controller
                         <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>';
             })
             ->rawColumns(['actions'])
+            ->filterColumn('full_name', function($query, $keyword) {
+                $query->where('employees.full_name', 'like', "%{$keyword}%");
+            })
             ->toJson();
     }
 
@@ -66,6 +73,9 @@ class AttendanceRequestController extends Controller
                         <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>';
             })
             ->rawColumns(['actions'])
+            ->filterColumn('full_name', function($query, $keyword) {
+                $query->where('employees.full_name', 'like', "%{$keyword}%");
+            })
             ->toJson();
     }
 

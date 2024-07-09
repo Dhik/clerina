@@ -91,7 +91,7 @@
                     </div>
                     <div class="form-group">
                         <label for="edit_employee_name">{{ trans('labels.employee_name') }}</label>
-                        <input type="text" class="form-control" id="edit_employee_name" name="employee_name" required>
+                        <input type="text" class="form-control" id="edit_employee_name" name="full_name" required>
                     </div>
                     <div class="form-group">
                         <label for="edit_date">{{ trans('labels.date') }}</label>
@@ -137,7 +137,7 @@ $(document).ready(function() {
                 { data: 'employee_id' },
                 {
                     data: 'full_name',
-                    name: 'employee_name',
+                    name: 'full_name',
                     render: function(data, type, row) {
                             var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
                             return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;

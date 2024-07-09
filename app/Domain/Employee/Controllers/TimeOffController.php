@@ -47,22 +47,29 @@ class TimeOffController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'time_off_type' => 'required|string',
-            'date' => 'required|date',
-            'request_type' => 'nullable|string',
-            'reason' => 'required|string',
-            'delegate_to' => 'string',
-            'file' => 'nullable|file|max:10240', // 10MB max size
-        ]);
+{
+    $validatedData = $request->validate([
+        'time_off_type' => 'required|string',
+        'date' => 'required|date',
+        'request_type' => 'nullable|string',
+        'reason' => 'required|string',
+        'delegate_to' => 'string',
+        'file' => 'nullable|file|max:10240', // 10MB max size
+    ]);
 
-        try {
-            $user = Auth::user();
-            $employeeId = $user->employee_id;
-            $validatedData['employee_id'] = $employeeId;
-            $validatedData['status_approval'] = 'Pending';
+    try {
+        $user = Auth::user();
+        $employeeId = $user->employee_id;
+        $validatedData['employee_id'] = $employeeId;
+        $validatedData['status_approval'] = 'Pending';
 
+        // Check if the time off request already exists
+        $existingTimeOff = TimeOff::where('employee_id', $employeeId)
+            ->where('date', $validatedData['date'])
+            ->where('time_off_type', $validatedData['time_off_type'])
+            ->first();
+
+        if (!$existingTimeOff) {
             if ($request->hasFile('file')) {
                 $validatedData['file'] = $request->file('file')->store('timeoff_files', 'public');
             }
@@ -72,13 +79,20 @@ class TimeOffController extends Controller
             return redirect()
                 ->route('timeoffs.index')
                 ->with('success', 'Time Off created successfully.');
-        } catch (Exception $e) {
+        } else {
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['message' => 'Failed to create time off request: ' . $e->getMessage()]);
+                ->withErrors(['message' => 'Time off request already exists for this date and type.']);
         }
+    } catch (Exception $e) {
+        return redirect()
+            ->back()
+            ->withInput()
+            ->withErrors(['message' => 'Failed to create time off request: ' . $e->getMessage()]);
     }
+}
+
 
     /**
      * Display the specified resource.
@@ -159,6 +173,9 @@ class TimeOffController extends Controller
                 <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
+        ->filterColumn('full_name', function($query, $keyword) {
+            $query->where('employees.full_name', 'like', "%{$keyword}%");
+        })
         ->toJson();
 }
 
@@ -188,6 +205,9 @@ public function getApprovedTimeOffs()
                 <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
+        ->filterColumn('full_name', function($query, $keyword) {
+            $query->where('employees.full_name', 'like', "%{$keyword}%");
+        })
         ->toJson();
 }
 
@@ -218,6 +238,9 @@ public function getRejectedTimeOffs()
                 <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
+        ->filterColumn('full_name', function($query, $keyword) {
+            $query->where('employees.full_name', 'like', "%{$keyword}%");
+        })
         ->toJson();
 }
 

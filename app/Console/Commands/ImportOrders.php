@@ -1,14 +1,13 @@
 <?php
 
-// app/Console/Commands/ImportOrders.php
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Domain\Order\Import\OrderImportLazada;
-use App\Domain\Order\Import\OrderImport;
+use App\Domain\Order\Import\PreprocessShopeeData;
+use App\Domain\Order\Import\OrderImportShopee;
+use Illuminate\Support\Collection;
 
 class ImportOrders extends Command
 {
@@ -35,8 +34,22 @@ class ImportOrders extends Command
             return;
         }
 
-        $import = new OrderImportLazada($salesChannelId, $tenantId);
-        Excel::import($import, $filePath);
+        // Preprocess the data to remove rows with null 'nomor_invoice'
+        $preprocessedData = Excel::toCollection(new PreprocessShopeeData, $filePath)->first();
+
+        // Check if preprocessing resulted in any data
+        if ($preprocessedData->isEmpty()) {
+            $this->error('No valid data to import after preprocessing.');
+            return;
+        }
+
+        // Create an instance of OrderImportShopee and pass the preprocessed data
+        $import = new OrderImportShopee($salesChannelId, $tenantId, $preprocessedData);
+        
+        // Process the cleaned data
+        foreach ($preprocessedData as $row) {
+            $import->model($import->map($row));
+        }
 
         // Get the cleaned data
         $cleanedData = $import->getCleanedData();
@@ -49,8 +62,10 @@ class ImportOrders extends Command
 
         // Prompt the user to continue with the import
         if ($this->confirm('Do you wish to continue with storing the data in the database?')) {
-            // Re-import the data to store it in the database
-            Excel::import($import, $filePath);
+            // Import the data to store it in the database
+            foreach ($preprocessedData as $row) {
+                $import->model($import->map($row));
+            }
             $this->info('Orders imported successfully.');
         } else {
             $this->info('Import cancelled.');

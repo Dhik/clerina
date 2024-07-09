@@ -139,7 +139,10 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="submitOvertimeRequest()">Submit request</button>
+                <button type="button" class="btn btn-primary" onclick="submitOvertimeRequest()">
+                    Submit request
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -150,13 +153,18 @@
     @include('attendance.footer')
 @stop
 
-
 @section('js')
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script>
     function submitOvertimeRequest() {
         const form = $('#requestOvertimeForm');
+        const submitButton = $('.modal-footer .btn-primary');
+        const spinner = submitButton.find('.spinner-border');
+
+        submitButton.prop('disabled', true);
+        spinner.removeClass('d-none');
+
         $.ajax({
             url: form.attr('action'),
             method: form.attr('method'),
@@ -171,6 +179,10 @@
             error: function(response) {
                 // Handle error response
                 console.error(response);
+            },
+            complete: function() {
+                submitButton.prop('disabled', false);
+                spinner.addClass('d-none');
             }
         });
     }
