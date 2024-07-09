@@ -194,14 +194,21 @@ class AttendanceController extends Controller
     public function getOverview(Request $request)
     {
         $date = $request->has('date') ? Carbon::parse($request->date) : null;
-        $attendances = $date ? Attendance::whereDate('created_at', $date)->get() : Attendance::all();
+
+        if ($date) {
+            $attendances = Attendance::whereDate('created_at', $date)->get();
+            $comparisonDate = $date;
+        } else {
+            $attendances = Attendance::all();
+            $comparisonDate = Carbon::today();
+        }
 
         $onTimeCount = $attendances->where('attendance_status', 'present')
-                                   ->where('clock_in', '<=', Carbon::today()->setTime(8, 0))->count();
+                                ->where('clock_in', '<=', $comparisonDate->copy()->setTime(8, 0))->count();
         $lateClockInCount = $attendances->where('attendance_status', 'present')
-                                        ->where('clock_in', '>', Carbon::today()->setTime(8, 0))->count();
+                                        ->where('clock_in', '>', $comparisonDate->copy()->setTime(8, 0))->count();
         $earlyClockOutCount = $attendances->where('attendance_status', 'present')
-                                          ->where('clock_out', '<', Carbon::today()->setTime(16, 30))->count();
+                                        ->where('clock_out', '<', $comparisonDate->copy()->setTime(16, 30))->count();
         $absentCount = $attendances->where('attendance_status', 'absent')->count();
         $noClockInCount = $attendances->whereNull('clock_in')->count();
         $noClockOutCount = $attendances->whereNull('clock_out')->count();
@@ -221,6 +228,7 @@ class AttendanceController extends Controller
             'timeOffCount' => $timeOffCount,
         ]);
     }
+
     public function show()
     {
         $this->authorize('accessAttendance', Employee::class);

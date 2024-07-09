@@ -231,6 +231,7 @@ $(function () {
         table.column($(this).data('column'))
              .search($(this).val())
              .draw();
+        updateOverviewCounts($('#attendanceDate').val());
     });
 
     $('#attendanceDate').change(function () {
@@ -238,10 +239,11 @@ $(function () {
         updateOverviewCounts();
     });
 
-    function updateOverviewCounts() {
+    function updateOverviewCounts(date = '') {
         $.ajax({
             url: "{{ route('attendance.overview') }}",
             method: 'GET',
+            data: { date: date },
             success: function(data) {
                 console.log(data);
                 $('#onTimeCount').text(data.onTimeCount);

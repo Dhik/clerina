@@ -214,7 +214,7 @@
         function loadOverviewData() {
             const selectedMonth = $('#logMonth').val();
             $.ajax({
-                url: '{{ route("attendance.overview") }}',
+                url: '{{ route("attendance.overviewbyid") }}',
                 method: 'GET',
                 data: { date: selectedMonth },
                 success: function(response) {
