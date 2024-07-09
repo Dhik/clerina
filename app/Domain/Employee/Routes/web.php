@@ -54,7 +54,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [AttendanceController::class, 'absensi'])->name('attendance.absensi');
                 Route::get('/log', [AttendanceController::class, 'log'])->name('attendance.log');
-                Route::get('/overview', [AttendanceController::class, 'getOverviewById'])->name('attendance.overview');
+                // Route::get('/overview', [AttendanceController::class, 'getOverviewById'])->name('attendance.overview');
                 Route::get('/history', [AttendanceController::class, 'getAttendanceHistory'])->name('attendance.history');
                 Route::post('/requests', [AttendanceController::class, 'store_request'])->name('attendance.requests');
                 Route::get('/get', [AttendanceController::class, 'get_request'])->name('attendance.get_requests');

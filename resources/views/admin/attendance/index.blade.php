@@ -242,10 +242,8 @@ $(function () {
         $.ajax({
             url: "{{ route('attendance.overview') }}",
             method: 'GET',
-            data: {
-                date: $('#attendanceDate').val()
-            },
             success: function(data) {
+                console.log(data);
                 $('#onTimeCount').text(data.onTimeCount);
                 $('#lateClockInCount').text(data.lateClockInCount);
                 $('#earlyClockOutCount').text(data.earlyClockOutCount);
@@ -255,6 +253,9 @@ $(function () {
                 $('#invalidCount').text(data.invalidCount);
                 $('#dayOffCount').text(data.dayOffCount);
                 $('#timeOffCount').text(data.timeOffCount);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching overview data:', textStatus, errorThrown);
             }
         });
     }
@@ -265,4 +266,3 @@ $(function () {
 </script>
 
 @stop
-

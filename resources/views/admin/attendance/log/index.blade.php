@@ -26,6 +26,9 @@
                 <li class="nav-item">
                     <a class="nav-link" id="attendance-tab" href="#attendance">Attendance</a>
                 </li>
+                <!-- <li class="nav-item">
+                    <a class="nav-link" id="shift-tab" href="#shift">Shift</a>
+                </li> -->
             </ul>
         </div>
     </div>
@@ -188,7 +191,6 @@
             $('#logs-content').removeClass('d-none');
             $('#attendance-content').addClass('d-none');
             loadOverviewData(); // Load overview data when Logs tab is clicked
-            loadAttendanceHistory();
         });
 
         $('#attendance-tab').click(function() {
@@ -206,6 +208,7 @@
 
         $('#logMonthBtn').click(function() {
             loadOverviewData();
+            loadAttendanceHistory();
         });
 
         function loadOverviewData() {
@@ -293,17 +296,22 @@
                     list.empty();
 
                     response.forEach(function(attendance) {
+                        const clockInTime = attendance.clock_in ? new Date(attendance.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-';
+                        const clockOutTime = attendance.clock_out ? new Date(attendance.clock_out).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-';
+                        
                         const listItem = `
-                            <li class="list-group-item">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>Date:</strong> ${new Date(attendance.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    <strong>${new Date(attendance.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</strong>
                                     <br>
-                                    <strong>Clock In:</strong> ${attendance.clock_in ? new Date(attendance.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                                    <br>
-                                    <strong>Clock Out:</strong> ${attendance.clock_out ? new Date(attendance.clock_out).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                                    <br>
-                                    <strong>Status:</strong> ${attendance.attendance_status.charAt(0).toUpperCase() + attendance.attendance_status.slice(1)}
+                                    <small class="text-muted">Work shift</small>
                                 </div>
+                                <div>
+                                    <span>${clockInTime}&nbsp;&nbsp;&nbsp;&nbsp; - &nbsp;&nbsp;&nbsp;&nbsp; ${clockOutTime}</span>
+                                </div>
+                                <button class="btn btn-link">
+                                    &gt;
+                                </button>
                             </li>
                         `;
                         list.append(listItem);
@@ -316,6 +324,7 @@
         }
 
         loadOverviewData(); // Load initial data
+        loadAttendanceHistory(); // Load attendance history when the page is accessed
     });
 </script>
 @stop
