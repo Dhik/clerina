@@ -92,7 +92,7 @@ $(document).ready(function() {
                 { data: 'employee_id' },
                 {
                     data: 'full_name',
-                    name: 'employee_name',
+                    name: 'full_name',
                     render: function(data, type, row) {
                         var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
                         return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;

@@ -66,15 +66,28 @@ class OvertimeController extends Controller
         $validatedData['employee_id'] = $employeeId;
         $validatedData['status_approval'] = 'Pending';
 
-        if ($request->hasFile('file')) {
-            $validatedData['file'] = $request->file('file')->store('overtime_files', 'public');
+        // Check if the overtime data already exists
+        $existingOvertime = Overtime::where('employee_id', $employeeId)
+            ->where('date', $validatedData['date'])
+            ->where('shift_id', $validatedData['shift_id'])
+            ->first();
+
+        if (!$existingOvertime) {
+            if ($request->hasFile('file')) {
+                $validatedData['file'] = $request->file('file')->store('overtime_files', 'public');
+            }
+
+            Overtime::create($validatedData);
+
+            return redirect()
+                ->route('overtimes.index')
+                ->with('success', 'Overtime created successfully.');
+        } else {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['message' => 'Overtime entry already exists for this date and shift.']);
         }
-
-        Overtime::create($validatedData);
-
-        return redirect()
-            ->route('overtimes.index')
-            ->with('success', 'Overtime created successfully.');
     } catch (Exception $e) {
         return redirect()
             ->back()
@@ -82,6 +95,7 @@ class OvertimeController extends Controller
             ->withErrors(['message' => 'Failed to create overtime: ' . $e->getMessage()]);
     }
 }
+
 
 
     /**

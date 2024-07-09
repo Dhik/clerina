@@ -17,7 +17,6 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -29,6 +28,7 @@ class OrderImportTiktok implements SkipsEmptyRows, ToModel, WithMapping, WithHea
     protected array $importedData = [];
     protected array $cleanedData = [];
     protected bool $loggedHeader = false;
+    protected int $rowNumber = 1; // Row counter
 
     public function __construct(protected int $salesChannelId, protected int $tenantId)
     {
@@ -58,77 +58,111 @@ class OrderImportTiktok implements SkipsEmptyRows, ToModel, WithMapping, WithHea
             $this->loggedHeader = true;
         }
 
+        // Increment row counter
+        $this->rowNumber++;
+
+        // List of required fields
+        $requiredFields = [
+            'nomor_invoice',
+            'no_resi_kode_booking',
+            'nama_kurir',
+            'tanggal_pembayaran',
+            'metode_pembayaran',
+            'nama_produk',
+            'nomor_sku',
+            'tipe_produk',
+            'harga_jual_idr',
+            'jumlah_produk_dibeli',
+            'nama_pembeli',
+            'nama_penerima',
+            'no_telp_penerima',
+            'alamat_pengiriman',
+            'kota',
+            'provinsi'
+        ];
+
         try {
             $cleanedRow = [
-                'no_pesanan' => $this->cleanData($row['nomor_invoice']),
-                'no_resi' => $this->cleanData($row['no_resi_kode_booking']),
-                'opsi_pengiriman' => $this->cleanData($row['nama_kurir']),
-                'tanggal' => $this->formatDateForDatabase($row['tanggal_pembayaran']),
-                'metode_pembayaran' => $this->cleanData($row['metode_pembayaran']),
-                'nama_produk' => $this->cleanData($row['nama_produk']),
-                'sku' => $this->cleanData($row['nomor_sku']),
-                'nama_variasi' => $this->cleanData($row['tipe_produk']),
-                'harga' => $this->convertCurrencyStringToNumber($this->cleanData($row['harga_jual_idr'])),
-                'jumlah_qty' => $this->cleanData($row['jumlah_produk_dibeli']),
-                'username' => $this->cleanData($row['nama_pembeli']),
-                'nama_penerima' => $this->cleanData($row['nama_penerima']),
-                'nomor_telepon' => $this->cleanData($row['no_telp_penerima']),
-                'alamat_pengiriman' => $this->cleanData($row['alamat_pengiriman']),
-                'kotakabupaten' => $this->cleanData($row['kota']),
-                'provinsi' => $this->cleanData($row['provinsi']),
+                'id_order' => $this->cleanData($row['order_id']),
+                'receipt_number' => $this->cleanData($row['tracking_id']),
+                'shipment' => $this->cleanData($row['shipping_provider_name']),
+                'date' => $this->formatDateForDatabase($row['paid_time']),
+                'payment_method' => $this->cleanData($row['payment_method']),
+                'product' => $this->cleanData($row['product_name']),
+                'sku' => $this->cleanData($row['seller_sku']),
+                'variant' => $this->cleanData($row['variation']),
+                'price' => $this->convertCurrencyStringToNumber($this->cleanData($row['sku_subtotal_after_discount'])),
+                'qty' => $this->cleanData($row['quantity']),
+                'username' => $this->cleanData($row['recipient']),
+                'customer_name' => $this->cleanData($row['recipient']),
+                'customer_phone_number' => $this->cleanData($row['phone']),
+                'shipping_address' => $this->cleanData($row['detail_address']),
+                'city' => $this->cleanData($row['regency_and_city']),
+                'province' => $this->cleanData($row['province']),
                 'sales_channel_id' => $this->salesChannelId,
+                'tenant_id' => $this->tenantId,
+                'amount' => $this->cleanData($row['quantity']) * $this->convertCurrencyStringToNumber($this->cleanData($row['sku_subtotal_after_discount'])),
             ];
 
             $this->cleanedData[] = $cleanedRow;
 
             return $cleanedRow;
         } catch (Exception $e) {
-            abort(500, "Error mapping row: " . json_encode($row) . " - Exception: " . $e->getMessage());
+            abort(500, "Error mapping row {$this->rowNumber}: " . json_encode($row) . " - Exception: " . $e->getMessage());
         }
     }
 
     public function model(array $row): Model
     {
         try {
-            $price = $row['harga'];
+            $price = $row['price'];
 
-            $order = Order::updateOrCreate([
-                'id_order' => $row['no_pesanan'],
-                'receipt_number' => $row['no_resi'],
-                'date' => $row['tanggal'],
-                'sku' => $row['sku'],
-                'sales_channel_id' => $this->salesChannelId,
-                'tenant_id' => $this->tenantId,
-            ], [
-                'shipment' => $row['opsi_pengiriman'],
-                'payment_method' => $row['metode_pembayaran'],
-                'product' => $row['nama_produk'],
-                'variant' => $row['nama_variasi'],
-                'price' => $price,
-                'qty' => $row['jumlah_qty'],
-                'username' => $row['username'],
-                'customer_name' => $row['nama_penerima'],
-                'customer_phone_number' => $row['nomor_telepon'],
-                'shipping_address' => $row['alamat_pengiriman'],
-                'city' => $row['kotakabupaten'],
-                'province' => $row['provinsi'],
-                'amount' => $row['jumlah_qty'] * $price,
-            ]);
+            // Check if the order already exists
+            $existingOrder = Order::where('id_order', $row['id_order'])
+                ->where('receipt_number', $row['receipt_number'])
+                ->where('date', $row['date'])
+                ->where('sku', $row['sku'])
+                ->where('sales_channel_id', $row['sales_channel_id'])
+                ->where('tenant_id', $row['tenant_id'])
+                ->first();
 
-            // Additional actions after order creation or update
-            if ($order->wasRecentlyCreated) {
+            if (!$existingOrder) {
+                $order = Order::create([
+                    'id_order' => $row['id_order'],
+                    'receipt_number' => $row['receipt_number'],
+                    'date' => $row['date'],
+                    'sku' => $row['sku'],
+                    'sales_channel_id' => $row['sales_channel_id'],
+                    'tenant_id' => $row['tenant_id'],
+                    'shipment' => $row['shipment'],
+                    'payment_method' => $row['payment_method'],
+                    'product' => $row['product'],
+                    'variant' => $row['variant'],
+                    'price' => $price,
+                    'qty' => $row['qty'],
+                    'username' => $row['username'],
+                    'customer_name' => $row['customer_name'],
+                    'customer_phone_number' => $row['customer_phone_number'],
+                    'shipping_address' => $row['shipping_address'],
+                    'city' => $row['city'],
+                    'province' => $row['province'],
+                    'amount' => $row['amount'],
+                ]);
+
                 // Perform additional actions for order creation
                 $data = [
                     'customer_name' => $order->customer_name,
                     'customer_phone_number' => $order->customer_phone_number,
-                    'tenant_id' => $order->tenant_id
+                    'tenant_id' => $order->tenant_id,
                 ];
 
                 CreateCustomerJob::dispatch($data);
-            }
 
-            $this->importedData[] = $order;
-            return $order;
+                $this->importedData[] = $order;
+                return $order;
+            } else {
+                return $existingOrder;
+            }
         } catch (Exception $e) {
             abort(500, "Error processing row: " . json_encode($row) . " - Exception: " . $e->getMessage());
         }
@@ -147,16 +181,16 @@ class OrderImportTiktok implements SkipsEmptyRows, ToModel, WithMapping, WithHea
     public function rules(): array
     {
         return [
-            'tanggal' => 'required',
-            'no_pesanan' => 'required',
-            'nama_penerima' => 'max:255',
-            'nomor_telepon' => 'max:255',
-            'nama_produk' => 'max:255',
-            'jumlah_qty' => 'required|numeric|integer',
-            'no_resi' => 'required',
+            'date' => 'required|date',
+            'id_order' => 'required',
+            'customer_name' => 'max:255',
+            'customer_phone_number' => 'max:255',
+            'product' => 'max:255',
+            'qty' => 'required|numeric|integer',
+            'receipt_number' => 'required',
             'sku' => 'required',
-            'harga' => 'required',
-            'alamat_pengiriman' => 'required',
+            'price' => 'required',
+            'shipping_address' => 'required',
         ];
     }
 
@@ -221,3 +255,4 @@ class OrderImportTiktok implements SkipsEmptyRows, ToModel, WithMapping, WithHea
         throw new Exception("Date format not recognized: $dateString");
     }
 }
+
