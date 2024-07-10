@@ -166,7 +166,4 @@ enum PermissionEnum
 
     //Keyword Monitoring
     const AccessKeyword = 'access keyword';
-    const ViewKeyword = 'view keyword';
-    const UpdateKeyword = 'update keyword';
-    const DeleteKeyword = 'delete keyword';
 }
