@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('request_change_shift', function (Blueprint $table) {
+        Schema::create('request_change_shifts', function (Blueprint $table) {
             $table->id();
+            $table->string('employee_id');
             $table->date('date')->nullable();
-            $table->integer('starts_shift_id')->nullable();
-            $table->integer('change_shift_id')->nullable();
+            $table->string('starts_shift')->nullable();
+            $table->string('end_shift')->nullable();
             $table->string('status_approval')->nullable();
             $table->text('note')->nullable();
             $table->timestamp('clocktime')->nullable();
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request_change_shift');
+        Schema::dropIfExists('request_change_shifts');
     }
 };

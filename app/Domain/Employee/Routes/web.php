@@ -8,6 +8,7 @@ use App\Domain\Employee\Controllers\LocationController;
 use App\Domain\Employee\Controllers\TimeOffController;
 use App\Domain\Employee\Controllers\OvertimeController;
 use App\Domain\Employee\Controllers\AttendanceRequestController;
+use App\Domain\Employee\Controllers\RequestChangeShiftController;
 
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +108,23 @@ Route::prefix('admin')
                 Route::get('/{overtime}/edit', [OvertimeController::class, 'edit'])->name('overtimes.edit');
                 Route::put('/{overtime}', [OvertimeController::class, 'update'])->name('overtimes.update');
                 Route::delete('/{overtime}', [OvertimeController::class, 'destroy'])->name('overtimes.destroy');
+            });
+
+            Route::prefix('requestChangeShifts')
+            ->group(function() {
+                Route::get('/', [RequestChangeShiftController::class, 'index'])->name('requestChangeShifts.index');
+                Route::get('/create', [RequestChangeShiftController::class, 'create'])->name('requestChangeShifts.create');
+                Route::get('/get', [RequestChangeShiftController::class, 'get'])->name('requestChangeShifts.get');
+                Route::get('/approval', [RequestChangeShiftController::class, 'show_all'])->name('requestChangeShifts.approval');
+                Route::get('/pending', [RequestChangeShiftController::class, 'getPendingRequestChangeShifts'])->name('requestChangeShifts.pending');
+                Route::get('/approved', [RequestChangeShiftController::class, 'getApprovedRequestChangeShifts'])->name('requestChangeShifts.approved');
+                Route::get('/rejected', [RequestChangeShiftController::class, 'getRejectedRequestChangeShifts'])->name('requestChangeShifts.rejected');
+                Route::post('/update-status/{id}', [RequestChangeShiftController::class, 'updateRequestChangeShiftStatus'])->name('requestChangeShifts.update-status');
+                Route::post('/', [RequestChangeShiftController::class, 'store'])->name('requestChangeShifts.store');
+                Route::get('/{requestChangeShift}', [RequestChangeShiftController::class, 'show'])->name('requestChangeShifts.show');
+                Route::get('/{requestChangeShift}/edit', [RequestChangeShiftController::class, 'edit'])->name('requestChangeShifts.edit');
+                Route::put('/{requestChangeShift}', [RequestChangeShiftController::class, 'update'])->name('requestChangeShifts.update');
+                Route::delete('/{requestChangeShift}', [RequestChangeShiftController::class, 'destroy'])->name('requestChangeShifts.destroy');
             });
 
         Route::prefix('employees')

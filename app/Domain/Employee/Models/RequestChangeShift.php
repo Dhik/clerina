@@ -10,9 +10,10 @@ class RequestChangeShift extends Model
     use HasFactory;
 
     protected $fillable = [
+        'employee_id',
         'date',
-        'starts_shift_id',
-        'change_shift_id',
+        'starts_shift',
+        'end_shift',
         'status_approval',
         'note',
         'clocktime',

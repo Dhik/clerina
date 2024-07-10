@@ -182,6 +182,10 @@ class PermissionTableSeeder extends Seeder
             Permission::updateOrCreate(['name' => PermissionEnum::AccessAttendance]),
         ];
 
+        $keywordMonitoring = [
+            Permission::updateOrCreate(['name' => PermissionEnum::AccessKeyword]),
+        ];
+
         $superadmin = Role::findByName(RoleEnum::SuperAdmin);
         $superadmin->givePermissionTo($userPermissions);
         $superadmin->givePermissionTo($marketingCategoryPermissions);
@@ -245,6 +249,7 @@ class PermissionTableSeeder extends Seeder
         $marketing->givePermissionTo($offerMarketing);
         $marketing->givePermissionTo($contest);
         $marketing->givePermissionTo($attendance_app);
+        $marketing->givePermissionTo($keywordMonitoring);
 
         $hr = Role::findByName(RoleEnum::HR);
         $hr->givePermissionTo($profile);
