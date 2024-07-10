@@ -163,4 +163,10 @@ enum PermissionEnum
     //Employee
     const ViewEmployee = 'view employee';
     const UpdateEmployee = 'update employee';
+
+    //Keyword Monitoring
+    const AccessKeyword = 'access keyword';
+    const ViewKeyword = 'view keyword';
+    const UpdateKeyword = 'update keyword';
+    const DeleteKeyword = 'delete keyword';
 }

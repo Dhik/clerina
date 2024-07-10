@@ -16,5 +16,6 @@ class Posting extends Model
         'aweme_id',
         'keyword_id',
         'username',
+        'upload_date',
     ];
 }

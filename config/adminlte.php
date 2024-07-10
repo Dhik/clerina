@@ -403,14 +403,13 @@ return [
         [
             'text' => 'Product Development',
             'can' => [
-                PermissionEnum::ViewCampaign,
+                PermissionEnum::AccessKeyword,
             ],
             'icon'    => 'fas fa-fw fa-table',
             'submenu' => [
                 [
                     'text' => 'Keyword Monitoring',
                     'url' => 'admin/keywordMonitoring',
-                    'can' => [PermissionEnum::ViewOffer],
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/offer*']
                 ],
@@ -553,6 +552,12 @@ return [
                 [
                     'text' => 'TimeOffs',
                     'url' => '/admin/timeOff/approval',
+                    'icon' => 'far fa-circle nav-icon',
+                    'can' => [PermissionEnum::ViewAttendance],
+                ],
+                [
+                    'text' => 'Change Shift',
+                    'url' => '/admin/requestChangeShifts/approval',
                     'icon' => 'far fa-circle nav-icon',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],

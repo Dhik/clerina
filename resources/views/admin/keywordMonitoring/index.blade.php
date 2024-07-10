@@ -35,7 +35,7 @@
         <div class="small-box bg-warning">
             <div class="inner">
                 <h4 id="total_digg_count">0</h4>
-                <p>Total Digg Count</p>
+                <p>Total Like Count</p>
             </div>
             <div class="icon">
                 <i class="fas fa-chart-bar"></i>
@@ -57,7 +57,7 @@
         <div class="small-box bg-primary">
             <div class="inner">
                 <h4 id="total_collect_count">0</h4>
-                <p>Total Collect Count</p>
+                <p>Total Saved Count</p>
             </div>
             <div class="icon">
                 <i class="fas fa-chart-area"></i>
@@ -227,7 +227,7 @@ $(function() {
                             borderWidth: 1
                         },
                         {
-                            label: 'Digg Count',
+                            label: 'Like Count',
                             data: diggCounts,
                             backgroundColor: 'rgba(255, 206, 86, 0.6)',
                             borderColor: 'rgba(255, 206, 86, 1)',
@@ -241,7 +241,7 @@ $(function() {
                             borderWidth: 1
                         },
                         {
-                            label: 'Collect Count',
+                            label: 'Saved Count',
                             data: collectCounts,
                             backgroundColor: 'rgba(153, 102, 255, 0.6)',
                             borderColor: 'rgba(153, 102, 255, 1)',

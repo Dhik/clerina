@@ -16,6 +16,10 @@
         <i class="fas fa-calendar-alt"></i>
         <div>Time Off</div>
     </a>
+    <a href="{{ route('requestChangeShifts.index') }}">
+        <i class="fas fa-random"></i>
+        <div>Shift</div>
+    </a>
 </div>
 
 <style>

@@ -1,4 +1,3 @@
-<!-- Update in the main blade template -->
 @extends('adminlte::page')
 
 @section('title', trans('labels.keyword_monitorings'))
@@ -15,7 +14,10 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h2>{{ $keywordMonitoring->keyword }}</h2>
                     <div>
-                        <a href="#" id="refreshButton" class="btn btn-success">Refresh</a>
+                        <a href="#" id="refreshButton" class="btn btn-success">
+                            <span id="refreshText">Refresh</span>
+                            <i id="refreshSpinner" class="fas fa-spinner fa-spin" style="display:none;"></i>
+                        </a>
                         <a href="#" id="comparisonButton" class="btn btn-primary">Show Comparison</a>
                     </div>
                 </div>
@@ -62,6 +64,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Posting Date</th>
                                     <th>Username</th>
                                     <th>Play Count</th>
                                     <th>Comment Count</th>
@@ -114,18 +117,30 @@
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+
 <script>
 document.getElementById('refreshButton').addEventListener('click', function() {
+    document.getElementById('refreshText').style.display = 'none';
+    document.getElementById('refreshSpinner').style.display = 'inline-block';
+    
     fetch('{{ route('keywordMonitoring.fetchTiktokData', $keywordMonitoring->id) }}')
         .then(response => response.json())
         .then(data => {
+            document.getElementById('refreshText').style.display = 'inline';
+            document.getElementById('refreshSpinner').style.display = 'none';
+            
             if (!data.error) {
                 window.location.reload();
             } else {
                 console.error('Error fetching data:', data.error);
             }
         })
-        .catch(error => console.error('Error fetching data:', error));
+        .catch(error => {
+            document.getElementById('refreshText').style.display = 'inline';
+            document.getElementById('refreshSpinner').style.display = 'none';
+            console.error('Error fetching data:', error);
+        });
 });
 
 document.getElementById('comparisonButton').addEventListener('click', function() {
@@ -170,6 +185,7 @@ $(document).ready(function() {
         ajax: '{{ route('keywordMonitoring.getPostingsData', $keywordMonitoring->id) }}',
         columns: [
             { data: 'id', name: 'id' },
+            { data: 'upload_date', name: 'upload_date' },
             { data: 'username', name: 'username' },
             { data: 'play_count', name: 'play_count' },
             { data: 'comment_count', name: 'comment_count' },

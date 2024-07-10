@@ -309,5 +309,8 @@ return [
     'performances' => 'Performances',
     'products' => "Produk",
     'analysis' => "Analisis",
-    'keyword_monitorings' => 'Keyword Monitoring'
+    'keyword_monitorings' => 'Keyword Monitoring',
+    'change_shift' => 'Change Shift',
+    'starts_shift' => 'Start Shift',
+    'end_shift' => 'End Shift',
 ];

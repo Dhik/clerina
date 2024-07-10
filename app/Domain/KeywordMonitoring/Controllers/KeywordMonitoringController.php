@@ -129,42 +129,47 @@ class KeywordMonitoringController extends Controller
         ->make(true);
 }
 
-    public function fetchTiktokData($id)
-    {
-        $keywordMonitoring = KeywordMonitoring::findOrFail($id);
-        $keyword = $keywordMonitoring->keyword;
+public function fetchTiktokData($id)
+{
+    $keywordMonitoring = KeywordMonitoring::findOrFail($id);
+    $keyword = $keywordMonitoring->keyword;
 
-        $response = Http::withHeaders([
-            'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
-            'x-rapidapi-host' => 'tokapi-mobile-version.p.rapidapi.com'
-        ])->get('https://tokapi-mobile-version.p.rapidapi.com/v1/search/post', [
-            'keyword' => $keyword,
-            'count' => 30,
-            'offset' => 30
-        ]);
+    $response = Http::withHeaders([
+        'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
+        'x-rapidapi-host' => 'tokapi-mobile-version.p.rapidapi.com'
+    ])->get('https://tokapi-mobile-version.p.rapidapi.com/v1/search/post', [
+        'keyword' => $keyword,
+        'count' => 30,
+        'offset' => 30
+    ]);
 
-        if ($response->successful()) {
-            $data = $response->json();
+    if ($response->successful()) {
+        $data = $response->json();
 
-            foreach ($data['search_item_list'] as $post) {
-                Posting::create([
-                    'play_count' => $post['aweme_info']['statistics']['play_count'],
-                    'comment_count' => $post['aweme_info']['statistics']['comment_count'],
-                    'digg_count' => $post['aweme_info']['statistics']['digg_count'],
-                    'share_count' => $post['aweme_info']['statistics']['share_count'],
-                    'collect_count' => $post['aweme_info']['statistics']['collect_count'],
-                    'download_count' => $post['aweme_info']['statistics']['download_count'],
-                    'aweme_id' => $post['aweme_info']['statistics']['aweme_id'],
-                    'username' => $post['aweme_info']['author']['unique_id'],
-                    'keyword_id' => $id,
-                ]);
-            }
+        foreach ($data['search_item_list'] as $post) {
+            $createTime = $post['aweme_info']['create_time'];
+            $uploadDate = date('Y-m-d H:i:s', $createTime);
 
-            return response()->json($data);
-        } else {
-            return response()->json(['error' => 'Failed to fetch data'], 500);
+            Posting::create([
+                'play_count' => $post['aweme_info']['statistics']['play_count'],
+                'comment_count' => $post['aweme_info']['statistics']['comment_count'],
+                'digg_count' => $post['aweme_info']['statistics']['digg_count'],
+                'share_count' => $post['aweme_info']['statistics']['share_count'],
+                'collect_count' => $post['aweme_info']['statistics']['collect_count'],
+                'download_count' => $post['aweme_info']['statistics']['download_count'],
+                'aweme_id' => $post['aweme_info']['statistics']['aweme_id'],
+                'username' => $post['aweme_info']['author']['unique_id'],
+                'keyword_id' => $id,
+                'upload_date' => $uploadDate,
+            ]);
         }
+
+        return response()->json($data);
+    } else {
+        return response()->json(['error' => 'Failed to fetch data'], 500);
     }
+}
+
     public function getPostingsData($id)
     {
         $query = Posting::where('keyword_id', $id);

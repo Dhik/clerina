@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('request_change_shift', function (Blueprint $table) {
-            $table->unsignedBigInteger('employee_id')->after('id');
+        Schema::table('postings', function (Blueprint $table) {
+            $table->timestamp('upload_date')->nullable();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('request_change_shift', function (Blueprint $table) {
-            $table->dropColumn('employee_id');
+        Schema::table('postings', function (Blueprint $table) {
+            $table->dropColumn('upload_date');
         });
     }
 };
