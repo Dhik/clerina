@@ -402,9 +402,7 @@ return [
         ],
         [
             'text' => 'Product Development',
-            'can' => [
-                PermissionEnum::AccessKeyword,
-            ],
+            'can' => [PermissionEnum::ViewOrder],
             'icon'    => 'fas fa-fw fa-table',
             'submenu' => [
                 [
