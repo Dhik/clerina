@@ -247,11 +247,10 @@ private function generateDateRange(Carbon $startDate, Carbon $endDate)
 
 public function getOverview(Request $request)
 {
-    $date = $request->has('date') ? Carbon::parse($request->date) : null;
-
     $query = Attendance::query();
 
-    if ($date) {
+    if ($request->has('date') && !is_null($request->date)) {
+        $date = Carbon::parse($request->date);
         $query->whereDate('created_at', $date);
     }
 
@@ -260,14 +259,14 @@ public function getOverview(Request $request)
     }
 
     $attendances = $query->get();
-    $comparisonDate = $date ?: Carbon::today();
 
+    // No need for comparisonDate as we are not filtering by today's date unless explicitly provided
     $onTimeCount = $attendances->where('attendance_status', 'present')
-                            ->where('clock_in', '<=', $comparisonDate->copy()->setTime(8, 0))->count();
+                               ->where('clock_in', '<=', Carbon::parse('08:00'))->count();
     $lateClockInCount = $attendances->where('attendance_status', 'present')
-                                    ->where('clock_in', '>', $comparisonDate->copy()->setTime(8, 0))->count();
+                                    ->where('clock_in', '>', Carbon::parse('08:00'))->count();
     $earlyClockOutCount = $attendances->where('attendance_status', 'present')
-                                    ->where('clock_out', '<', $comparisonDate->copy()->setTime(16, 30))->count();
+                                      ->where('clock_out', '<', Carbon::parse('16:30'))->count();
     $absentCount = $attendances->where('attendance_status', 'absent')->count();
     $noClockInCount = $attendances->whereNull('clock_in')->count();
     $noClockOutCount = $attendances->whereNull('clock_out')->count();
@@ -287,6 +286,7 @@ public function getOverview(Request $request)
         'timeOffCount' => $timeOffCount,
     ]);
 }
+
 
 
     public function show()
