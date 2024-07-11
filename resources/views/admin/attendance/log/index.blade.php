@@ -295,7 +295,7 @@
                     const list = $('#attendanceList');
                     list.empty();
 
-                    response.forEach(function(attendance) {
+                    Object.values(response).forEach(function(attendance) {
                         const clockInTime = attendance.clock_in ? new Date(attendance.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-';
                         const clockOutTime = attendance.clock_out ? new Date(attendance.clock_out).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-';
                         

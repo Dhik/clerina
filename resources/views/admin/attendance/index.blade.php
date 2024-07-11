@@ -133,6 +133,7 @@ $(function () {
     const userTableSelector = $('#attendanceTable');
     var baseUrl = "{{ asset('storage/') }}";
     var defaultImageUrl = "{{ asset('img/user.png') }}";
+    var selectedEmployeeId = null;
 
     // datatable
     const table = userTableSelector.DataTable({
@@ -143,6 +144,7 @@ $(function () {
             url: "{{ route('attendance.get') }}",
             data: function (d) {
                 d.date = $('#attendanceDate').val();
+                d.employee_id = selectedEmployeeId;
             }
         },
         columns: [
@@ -151,7 +153,7 @@ $(function () {
                 name: 'employee_name',
                 render: function(data, type, row) {
                     var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
-                    return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
+                    return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;" id="employee-filter" data-employee-id="' + row.employee_id + '">' + data;
                 }
             },
             {data: 'employee_id', name: 'employee_id'},
@@ -188,6 +190,12 @@ $(function () {
             let rowData = table.row($(this).closest('tr')).data();
             let route = '{{ route('attendance.destroy', ':id') }}';
             deleteAjax(route, rowData.id, table);
+        });
+
+        tableBodySelector.on('click', '#employee-filter', function() {
+            selectedEmployeeId = $(this).data('employee-id');
+            table.draw();
+            updateOverviewCounts($('#attendanceDate').val());
         });
     });
 
@@ -243,7 +251,7 @@ $(function () {
         $.ajax({
             url: "{{ route('attendance.overview') }}",
             method: 'GET',
-            data: { date: date },
+            data: { date: date, employee_id: selectedEmployeeId },
             success: function(data) {
                 console.log(data);
                 $('#onTimeCount').text(data.onTimeCount);
