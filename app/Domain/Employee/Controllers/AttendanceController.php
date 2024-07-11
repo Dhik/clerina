@@ -188,9 +188,9 @@ class AttendanceController extends Controller
 
     // Define date ranges for the current and previous months
     $startOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(0); // 1st of the current month
-    $endOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(19); // 20th of the current month
+    $endOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(20); // 20th of the current month
 
-    $startOfPreviousMonth = $currentDate->copy()->subMonth()->startOfMonth()->addDays(19); // 20th of the previous month
+    $startOfPreviousMonth = $currentDate->copy()->subMonth()->startOfMonth()->addDays(20); // 20th of the previous month
     $endOfPreviousMonth = $currentDate->copy()->subMonth()->endOfMonth(); // End of the previous month
 
     // Fetch attendance records for the defined date ranges
