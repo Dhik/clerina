@@ -140,7 +140,8 @@ public function fetchTiktokData($id)
     ])->get('https://tokapi-mobile-version.p.rapidapi.com/v1/search/post', [
         'keyword' => $keyword,
         'count' => 30,
-        'offset' => 30
+        'offset' => 30,
+        'region' => 'ID',
     ]);
 
     if ($response->successful()) {
