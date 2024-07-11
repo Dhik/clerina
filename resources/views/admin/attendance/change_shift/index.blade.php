@@ -58,11 +58,11 @@
                         <input type="date" class="form-control" id="changeShiftDate" name="date">
                     </div>
                     <div class="form-group">
-                        <label for="startsShiftId">Starts Shift</label>
+                        <label for="startsShiftId">Starts</label>
                         <input type="time" class="form-control" id="startsShiftId" name="starts_shift">
                     </div>
                     <div class="form-group">
-                        <label for="changeShiftId">End Shift</label>
+                        <label for="changeShiftId">End</label>
                         <input type="time" class="form-control" id="changeShiftId" name="end_shift">
                     </div>
                     <div class="form-group">
