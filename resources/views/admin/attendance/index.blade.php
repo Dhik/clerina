@@ -153,7 +153,7 @@ $(function () {
                 name: 'employee_name',
                 render: function(data, type, row) {
                     var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
-                    return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;" id="employee-filter" data-employee-id="' + row.employee_id + '">' + data;
+                    return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;" class="employee-filter" data-employee-id="' + row.employee_id + '">' + data;
                 }
             },
             {data: 'employee_id', name: 'employee_id'},
@@ -192,10 +192,10 @@ $(function () {
             deleteAjax(route, rowData.id, table);
         });
 
-        tableBodySelector.on('click', '#employee-filter', function() {
+        tableBodySelector.on('click', '.employee-filter', function() {
             selectedEmployeeId = $(this).data('employee-id');
             table.draw();
-            updateOverviewCounts($('#attendanceDate').val());
+            updateOverviewCounts();
         });
     });
 
@@ -244,31 +244,32 @@ $(function () {
 
     $('#attendanceDate').change(function () {
         table.draw();
-        updateOverviewCounts();
+        const selectedDate = $(this).val();
+        updateOverviewCounts(selectedDate);
     });
 
-    function updateOverviewCounts(date = '') {
-        $.ajax({
-            url: "{{ route('attendance.overview') }}",
-            method: 'GET',
-            data: { date: date, employee_id: selectedEmployeeId },
-            success: function(data) {
-                console.log(data);
-                $('#onTimeCount').text(data.onTimeCount);
-                $('#lateClockInCount').text(data.lateClockInCount);
-                $('#earlyClockOutCount').text(data.earlyClockOutCount);
-                $('#absentCount').text(data.absentCount);
-                $('#noClockInCount').text(data.noClockInCount);
-                $('#noClockOutCount').text(data.noClockOutCount);
-                $('#invalidCount').text(data.invalidCount);
-                $('#dayOffCount').text(data.dayOffCount);
-                $('#timeOffCount').text(data.timeOffCount);
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error('Error fetching overview data:', textStatus, errorThrown);
-            }
-        });
-    }
+    function updateOverviewCounts(date = null) {
+    $.ajax({
+        url: "{{ route('attendance.overview') }}",
+        method: 'GET',
+        data: { date: date, employee_id: selectedEmployeeId },
+        success: function(data) {
+            console.log(data);
+            $('#onTimeCount').text(data.onTimeCount);
+            $('#lateClockInCount').text(data.lateClockInCount);
+            $('#earlyClockOutCount').text(data.earlyClockOutCount);
+            $('#absentCount').text(data.absentCount);
+            $('#noClockInCount').text(data.noClockInCount);
+            $('#noClockOutCount').text(data.noClockOutCount);
+            $('#invalidCount').text(data.invalidCount);
+            $('#dayOffCount').text(data.dayOffCount);
+            $('#timeOffCount').text(data.timeOffCount);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error('Error fetching overview data:', textStatus, errorThrown);
+        }
+    });
+}
 
     // Initial load
     updateOverviewCounts();
