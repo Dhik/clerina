@@ -103,6 +103,10 @@ public function getRejectedRequests()
     public function updateRequestStatus(Request $request, $id)
 {
     $attendanceRequest = AttendanceRequest::find($id);
+    $user = Auth::user();
+    $employeeId = $user->employee_id;
+    $employee = Employee::where('employee_id', $employeeId)->first();
+    $shiftId = $employee->shift_id;
     if ($attendanceRequest) {
         $attendanceRequest->status_approval = $request->status;
         $attendanceRequest->save();
@@ -116,6 +120,17 @@ public function getRejectedRequests()
                 $attendance->clock_in = $attendanceRequest->clock_in;
                 $attendance->clock_out = $attendanceRequest->clock_out;
                 $attendance->save();
+            } else {
+                // Create new attendance record
+                Attendance::create([
+                    'shift_id' => $shiftId,
+                    'attendance_status' => 'present',
+                    'clock_in' => $attendanceRequest->clock_in,
+                    'clock_out' => $attendanceRequest->clock_out,
+                    'employee_id' => $employeeId,
+                    'created_at' => $attendanceRequest->date,
+                    'updated_at' => now()
+                ]);
             }
         }
         return response()->json(['success' => true, 'message' => 'Status updated successfully']);
