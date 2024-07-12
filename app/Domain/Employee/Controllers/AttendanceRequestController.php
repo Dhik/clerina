@@ -26,7 +26,7 @@ class AttendanceRequestController extends Controller
 {
     $pendingRequests = AttendanceRequest::select('attendance_requests.*', 'employees.full_name', 'employees.profile_picture')
         ->join('employees', 'attendance_requests.employee_id', '=', 'employees.employee_id')
-        ->where('attendance_requests.status_approval', 'pending');
+        ->where('attendance_requests.status_approval', 'Pending');
 
     return DataTables::of($pendingRequests)
         ->editColumn('clock_in', function($row) {
