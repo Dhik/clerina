@@ -105,6 +105,7 @@
                     <div class="form-group">
                         <label for="attendanceDate">Select date</label>
                         <input type="date" class="form-control" id="attendanceDate" name="date">
+                        <div class="invalid-feedback">Date is required.</div>
                     </div>
                     <div class="form-group">
                         <label for="shift_id">Shift</label>
@@ -117,11 +118,13 @@
                     <div class="form-row">
                         <div class="form-group col-6">
                             <label for="clockIn">Clock In</label>
-                            <input type="time" class="form-control" id="clockIn" name="clock_in">
+                            <input type="time" class="form-control" id="clockIn" name="clock_in" required>
+                            <div class="invalid-feedback">Clock In time is required.</div>
                         </div>
                         <div class="form-group col-6">
                             <label for="clockOut">Clock Out</label>
-                            <input type="time" class="form-control" id="clockOut" name="clock_out">
+                            <input type="time" class="form-control" id="clockOut" name="clock_out" required>
+                            <div class="invalid-feedback">Clock Out time is required.</div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -155,9 +158,16 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script>
     function submitAttendanceRequest() {
-        const form = $('#requestAttendanceForm');
+        const form = $('#requestAttendanceForm')[0];
         const submitButton = $('.modal-footer .btn-primary');
         const spinner = submitButton.find('.spinner-border');
+
+        if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(form).addClass('was-validated');
+            return;
+        }
 
         submitButton.prop('disabled', true);
         spinner.removeClass('d-none');

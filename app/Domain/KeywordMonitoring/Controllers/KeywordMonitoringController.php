@@ -150,19 +150,37 @@ public function fetchTiktokData($id)
         foreach ($data['search_item_list'] as $post) {
             $createTime = $post['aweme_info']['create_time'];
             $uploadDate = date('Y-m-d H:i:s', $createTime);
+            $awemeId = $post['aweme_info']['statistics']['aweme_id'];
 
-            Posting::create([
-                'play_count' => $post['aweme_info']['statistics']['play_count'],
-                'comment_count' => $post['aweme_info']['statistics']['comment_count'],
-                'digg_count' => $post['aweme_info']['statistics']['digg_count'],
-                'share_count' => $post['aweme_info']['statistics']['share_count'],
-                'collect_count' => $post['aweme_info']['statistics']['collect_count'],
-                'download_count' => $post['aweme_info']['statistics']['download_count'],
-                'aweme_id' => $post['aweme_info']['statistics']['aweme_id'],
-                'username' => $post['aweme_info']['author']['unique_id'],
-                'keyword_id' => $id,
-                'upload_date' => $uploadDate,
-            ]);
+            $existingPost = Posting::where('aweme_id', $awemeId)->first();
+            if ($existingPost) {
+                // Update existing record
+                $existingPost->update([
+                    'play_count' => $post['aweme_info']['statistics']['play_count'],
+                    'comment_count' => $post['aweme_info']['statistics']['comment_count'],
+                    'digg_count' => $post['aweme_info']['statistics']['digg_count'],
+                    'share_count' => $post['aweme_info']['statistics']['share_count'],
+                    'collect_count' => $post['aweme_info']['statistics']['collect_count'],
+                    'download_count' => $post['aweme_info']['statistics']['download_count'],
+                    'username' => $post['aweme_info']['author']['unique_id'],
+                    'keyword_id' => $id,
+                    'upload_date' => $uploadDate,
+                ]);
+            } else {
+                // Create new record
+                Posting::create([
+                    'play_count' => $post['aweme_info']['statistics']['play_count'],
+                    'comment_count' => $post['aweme_info']['statistics']['comment_count'],
+                    'digg_count' => $post['aweme_info']['statistics']['digg_count'],
+                    'share_count' => $post['aweme_info']['statistics']['share_count'],
+                    'collect_count' => $post['aweme_info']['statistics']['collect_count'],
+                    'download_count' => $post['aweme_info']['statistics']['download_count'],
+                    'aweme_id' => $awemeId,
+                    'username' => $post['aweme_info']['author']['unique_id'],
+                    'keyword_id' => $id,
+                    'upload_date' => $uploadDate,
+                ]);
+            }
         }
 
         return response()->json($data);
