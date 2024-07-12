@@ -128,8 +128,7 @@ public function getRejectedRequests()
                     'clock_in' => $attendanceRequest->clock_in,
                     'clock_out' => $attendanceRequest->clock_out,
                     'employee_id' => $employeeId,
-                    'created_at' => $attendanceRequest->date,
-                    'updated_at' => now()
+                    'date' => $attendanceRequest->date,
                 ]);
             }
         }
