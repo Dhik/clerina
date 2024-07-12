@@ -90,6 +90,7 @@
 </div>
 
 <!-- Request Attendance Modal -->
+<!-- Request Attendance Modal -->
 <div class="modal fade" id="requestAttendanceModal" tabindex="-1" aria-labelledby="requestAttendanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -104,7 +105,7 @@
                     @csrf
                     <div class="form-group">
                         <label for="attendanceDate">Select date</label>
-                        <input type="date" class="form-control" id="attendanceDate" name="date">
+                        <input type="date" class="form-control" id="attendanceDate" name="date" required>
                         <div class="invalid-feedback">Date is required.</div>
                     </div>
                     <div class="form-group">
@@ -147,6 +148,7 @@
         </div>
     </div>
 </div>
+
 @stop
 
 @section('footer')
@@ -158,14 +160,14 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script>
     function submitAttendanceRequest() {
-        const form = $('#requestAttendanceForm')[0];
+        const form = $('#requestAttendanceForm'); // Ensure form is a jQuery object
         const submitButton = $('.modal-footer .btn-primary');
         const spinner = submitButton.find('.spinner-border');
 
-        if (form.checkValidity() === false) {
+        if (form[0].checkValidity() === false) {
             event.preventDefault();
             event.stopPropagation();
-            $(form).addClass('was-validated');
+            form.addClass('was-validated');
             return;
         }
 
@@ -193,6 +195,7 @@
             }
         });
     }
+
 
     $(document).ready(function() {
         $('#logs-tab').click(function() {
