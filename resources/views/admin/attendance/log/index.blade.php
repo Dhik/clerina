@@ -90,7 +90,6 @@
 </div>
 
 <!-- Request Attendance Modal -->
-<!-- Request Attendance Modal -->
 <div class="modal fade" id="requestAttendanceModal" tabindex="-1" aria-labelledby="requestAttendanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -148,7 +147,6 @@
         </div>
     </div>
 </div>
-
 @stop
 
 @section('footer')
@@ -196,7 +194,6 @@
         });
     }
 
-
     $(document).ready(function() {
         $('#logs-tab').click(function() {
             $(this).addClass('active');
@@ -211,8 +208,8 @@
             $('#logs-tab').removeClass('active');
             $('#logs-content').addClass('d-none');
             $('#attendance-content').removeClass('d-none');
-             // Load attendance history when Attendance tab is clicked
-             loadAttendanceRequests();
+            // Load attendance history when Attendance tab is clicked
+            loadAttendanceRequests();
         });
 
         $('#request-attendance-btn').click(function() {
@@ -315,7 +312,7 @@
                         const listItem = `
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>${new Date(attendance.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</strong>
+                                    <strong>${new Date(attendance.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</strong>
                                     <br>
                                     <small class="text-muted">Work shift</small>
                                 </div>

@@ -37,50 +37,51 @@ class AttendanceController extends Controller
     }
 
     public function clockIn(Request $request)
-    {
-        $user = Auth::user();
-        $employeeId = $user->employee_id;
-        $clockInTime = Carbon::now();
-        $employee = Employee::where('employee_id', $employeeId)->first();
-        $shiftId = $employee->shift_id;
+{
+    $user = Auth::user();
+    $employeeId = $user->employee_id;
+    $clockInTime = Carbon::now();
+    $employee = Employee::where('employee_id', $employeeId)->first();
+    $shiftId = $employee->shift_id;
 
-        // Check if the attendance record already exists for today
-        $existingAttendance = Attendance::where('employee_id', $employeeId)
-            ->whereDate('created_at', Carbon::today())
-            ->first();
+    // Check if the attendance record already exists for today
+    $existingAttendance = Attendance::where('employee_id', $employeeId)
+        ->whereDate('date', Carbon::today())
+        ->first();
 
-        if (!$existingAttendance) {
-            Attendance::create([
-                'employee_id' => $employeeId,
-                'attendance_status' => 'present',
-                'clock_in' => $clockInTime,
-                'clock_out' => null,
-                'timestamp' => $clockInTime,
-                'shift_id' => $shiftId,
-            ]);
-        }
-        return redirect()->route('attendance.app');
+    if (!$existingAttendance) {
+        Attendance::create([
+            'employee_id' => $employeeId,
+            'attendance_status' => 'present',
+            'clock_in' => $clockInTime,
+            'clock_out' => null,
+            'date' => Carbon::today(),
+            'shift_id' => $shiftId,
+        ]);
     }
 
-    public function clockOut(Request $request)
-    {   
-        $user = Auth::user();
-        $employeeId = $user->employee_id;
-        $clockOutTime = Carbon::now();
+    return redirect()->route('attendance.app');
+}
 
-        $attendance = Attendance::where('employee_id', $employeeId)
-            ->whereNull('clock_out')
-            ->whereDate('created_at', Carbon::today())
-            ->first();
+public function clockOut(Request $request)
+{   
+    $user = Auth::user();
+    $employeeId = $user->employee_id;
+    $clockOutTime = Carbon::now();
 
-        if ($attendance) {
-            $attendance->update([
-                'clock_out' => $clockOutTime,
-            ]);
-        }
+    $attendance = Attendance::where('employee_id', $employeeId)
+        ->whereNull('clock_out')
+        ->whereDate('date', Carbon::today())
+        ->first();
 
-        return redirect()->route('attendance.absensi');
+    if ($attendance) {
+        $attendance->update([
+            'clock_out' => $clockOutTime,
+        ]);
     }
+
+    return redirect()->route('attendance.absensi');
+}
 
     public function get(Request $request): JsonResponse
 {
@@ -195,20 +196,16 @@ class AttendanceController extends Controller
 
     // Fetch attendance records for the defined date ranges
     $attendancesCurrentMonth = Attendance::where('employee_id', $employeeId)
-        ->whereBetween('created_at', [$startOfCurrentMonth, $endOfCurrentMonth])
-        ->orderBy('created_at', 'asc')
+        ->whereBetween('date', [$startOfCurrentMonth->format('Y-m-d'), $endOfCurrentMonth->format('Y-m-d')])
+        ->orderBy('date', 'asc')
         ->get()
-        ->keyBy(function($item) {
-            return Carbon::parse($item->created_at)->format('Y-m-d');
-        });
+        ->keyBy('date');
 
     $attendancesPreviousMonth = Attendance::where('employee_id', $employeeId)
-        ->whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])
-        ->orderBy('created_at', 'asc')
+        ->whereBetween('date', [$startOfPreviousMonth->format('Y-m-d'), $endOfPreviousMonth->format('Y-m-d')])
+        ->orderBy('date', 'asc')
         ->get()
-        ->keyBy(function($item) {
-            return Carbon::parse($item->created_at)->format('Y-m-d');
-        });
+        ->keyBy('date');
 
     // Generate date sequences
     $currentMonthDates = $this->generateDateRange($startOfCurrentMonth, $endOfCurrentMonth);
@@ -225,8 +222,9 @@ class AttendanceController extends Controller
             'attendance_status' => '-',
             'clock_in' => null,
             'clock_out' => null,
-            'created_at' => $date,
-            'updated_at' => $date,
+            'date' => $date,
+            'created_at' => null,
+            'updated_at' => null,
             'employee_id' => $employeeId,
         ];
     }
@@ -234,14 +232,19 @@ class AttendanceController extends Controller
     return response()->json($attendanceData);
 }
 
-private function generateDateRange(Carbon $startDate, Carbon $endDate)
+private function generateDateRange($startDate, $endDate)
 {
     $dates = [];
-    for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-        $dates[] = $date->format('Y-m-d');
+    $current = $startDate->copy();
+
+    while ($current->lte($endDate)) {
+        $dates[] = $current->format('Y-m-d');
+        $current->addDay();
     }
+
     return $dates;
 }
+
 
 
 

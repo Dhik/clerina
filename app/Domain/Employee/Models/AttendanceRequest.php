@@ -18,6 +18,5 @@ class AttendanceRequest extends Model
         'status_approval',
         'employee_id', 
         'file',
-        'date',
     ];
 }
