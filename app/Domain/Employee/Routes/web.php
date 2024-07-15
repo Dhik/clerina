@@ -39,6 +39,7 @@ Route::prefix('admin')
             Route::get('/approved', [AttendanceRequestController::class, 'getApprovedRequests'])->name('attendance_requests.approved');
             Route::get('/rejected', [AttendanceRequestController::class, 'getRejectedRequests'])->name('attendance_requests.rejected');
             Route::post('/update-status/{id}', [AttendanceRequestController::class, 'updateRequestStatus'])->name('attendance_requests.update-status');
+            Route::delete('/req/{attendanceRequest}', [AttendanceRequestController::class, 'destroy'])->name('attendance_requests.destroy');
 
 
             Route::post('/requests', [AttendanceController::class, 'store_request'])->name('attendance.requests');

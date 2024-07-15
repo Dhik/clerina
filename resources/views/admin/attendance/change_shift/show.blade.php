@@ -123,8 +123,8 @@
 @section('js')
 <script>
 $(document).ready(function() {
-    var baseUrl = "{{ asset('storage/') }}";
-    var defaultImageUrl = "{{ asset('img/user.png') }}";
+    var baseUrl = "{{ asset('storage/') }}"; // Base URL for profile pictures
+    var defaultImageUrl = "{{ asset('img/user.png') }}"; // Default profile picture URL
 
     var pendingTable = loadDataTable('pendingChangeShifts', '{{ route("requestChangeShifts.pending") }}');
     var approvedTable = loadDataTable('approvedChangeShifts', '{{ route("requestChangeShifts.approved") }}');
@@ -142,9 +142,9 @@ $(document).ready(function() {
                     data: 'full_name',
                     name: 'full_name',
                     render: function(data, type, row) {
-                            var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
-                            return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
-                        }
+                        var profilePictureUrl = row.profile_picture ? baseUrl + '/' + row.profile_picture : defaultImageUrl;
+                        return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
+                    }
                 },
                 { data: 'starts_shift' },
                 { data: 'end_shift' },
@@ -160,14 +160,67 @@ $(document).ready(function() {
                     }
                 },
                 { data: 'status_approval' },
-                { data: 'actions', orderable: false, searchable: false }
-            ]
+                {
+                    data: 'actions',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return `
+                            <a href="#" class="btn btn-sm btn-primary" id="attendanceShow" 
+                               data-id="${row.id}" 
+                               data-employee_id="${row.employee_id}" 
+                               data-full_name="${row.full_name}" 
+                               data-date="${row.date}" 
+                               data-starts_shift="${row.starts_shift}" 
+                               data-end_shift="${row.end_shift}" 
+                               data-note="${row.note}" 
+                               data-file="${row.file}" 
+                               data-status="${row.status_approval}">
+                               <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn btn-sm btn-success approveButton" data-id="${row.id}">Approve</button>
+                            <button class="btn btn-sm btn-danger rejectButton" data-id="${row.id}">Reject</button>
+                            <button class="btn btn-danger btn-sm deleteButton" data-id="${row.id}"><i class="fas fa-trash-alt"></i></button>
+                        `;
+                    }
+                }
+            ],
+            drawCallback: function() {
+                attachEventListeners();
+            }
+        });
+    }
+
+    function attachEventListeners() {
+        $('#pendingChangeShifts').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = pendingTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('requestChangeShifts.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, pendingTable);
+            }
+        });
+
+        $('#approvedChangeShifts').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = approvedTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('requestChangeShifts.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, approvedTable);
+            }
+        });
+
+        $('#rejectedChangeShifts').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = rejectedTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('requestChangeShifts.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, rejectedTable);
+            }
         });
     }
 
     $(document).on('click', '#attendanceShow', function() {
         var data = $(this).data();
         $('#modal_employee_id').text(data.employee_id);
+        $('#modal_employee_name').text(data.full_name);
         $('#modal_date').text(data.date);
         $('#modal_starts_shift').text(data.starts_shift);
         $('#modal_end_shift').text(data.end_shift);
@@ -176,30 +229,11 @@ $(document).ready(function() {
         $('#changeShiftDetailModal').modal('show');
     });
 
-    $(document).on('click', '#attendanceEdit', function() {
-        var data = $(this).data();
-        $('#edit_employee_id').val(data.employee_id);
-        $('#edit_date').val(data.date);
-        $('#edit_starts_shift').val(data.starts_shift);
-        $('#edit_end_shift').val(data.end_shift);
-        $('#edit_note').val(data.note);
-        $('#edit_status').val(data.status_approval);
-        $('#changeShiftEditModal').modal('show');
-    });
-
-    $(document).on('click', '.approveButton', function() {
+    $(document).on('click', '.approveButton, .rejectButton, .pendingButton', function() {
         var id = $(this).data('id');
-        updateStatus(id, 'approved');
-    });
-
-    $(document).on('click', '.rejectButton', function() {
-        var id = $(this).data('id');
-        updateStatus(id, 'rejected');
-    });
-
-    $(document).on('click', '.pendingButton', function() {
-        var id = $(this).data('id');
-        updateStatus(id, 'pending');
+        var status = $(this).hasClass('approveButton') ? 'approved' :
+                     $(this).hasClass('rejectButton') ? 'rejected' : 'pending';
+        updateStatus(id, status);
     });
 
     function updateStatus(id, status) {
@@ -217,19 +251,39 @@ $(document).ready(function() {
                     approvedTable.ajax.reload();
                     rejectedTable.ajax.reload();
                 } else {
-                    alert('Failed to update status');
+                    alert(response.message || 'Failed to update status');
                 }
             },
-            error: function() {
-                alert('Error updating status');
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating status: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Unknown error'));
             }
         });
     }
 
-    $('#editForm').submit(function(event) {
-        event.preventDefault();
-        // Handle form submission
-    });
+    function deleteAjax(route, id, table) {
+        if (confirm('Are you sure you want to delete this record?')) {
+            $.ajax({
+                url: route,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Record deleted successfully');
+                        table.draw();
+                    } else {
+                        alert('Failed to delete the record');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Failed to delete the record');
+                }
+            });
+        }
+    }
 });
 </script>
 <style>

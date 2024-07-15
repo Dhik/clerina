@@ -92,6 +92,9 @@ class RequestChangeShiftController extends Controller
 
     public function destroy(RequestChangeShift $requestChangeShift)
     {
+        if ($requestChangeShift->file) {
+            \Storage::disk('public')->delete($requestChangeShift->file);
+        }
         $requestChangeShift->delete();
 
         return response()->json(['success' => true, 'message' => 'Change Shift Request deleted successfully.']);
@@ -125,7 +128,7 @@ class RequestChangeShiftController extends Controller
                 </a>
                 <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
                 <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -156,7 +159,7 @@ public function getApprovedRequestChangeShifts()
                    <i class="fas fa-eye"></i>
                 </a>
                 <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -188,7 +191,7 @@ public function getRejectedRequestChangeShifts()
                 </a>
                 <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
                 <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {

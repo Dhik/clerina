@@ -112,8 +112,60 @@ $(document).ready(function() {
                     }
                 },
                 { data: 'status_approval' },
-                { data: 'actions', orderable: false, searchable: false }
-            ]
+                {
+                    data: 'actions',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return `
+                            <a href="#" class="btn btn-sm btn-primary" id="attendanceShow" 
+                               data-id="${row.id}" 
+                               data-employee_id="${row.employee_id}" 
+                               data-full_name="${row.full_name}" 
+                               data-date="${row.date}" 
+                               data-clock_in="${row.clock_in}" 
+                               data-clock_out="${row.clock_out}" 
+                               data-work_note="${row.work_note}" 
+                               data-file="${row.file}" 
+                               data-status="${row.status_approval}">
+                               <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn btn-sm btn-success approveButton" data-id="${row.id}">Approve</button>
+                            <button class="btn btn-sm btn-danger rejectButton" data-id="${row.id}">Reject</button>
+                            <button class="btn btn-danger btn-sm deleteButton" data-id="${row.id}"><i class="fas fa-trash-alt"></i></button>
+                        `;
+                    }
+                }
+            ],
+            drawCallback: function() {
+                attachEventListeners();
+            }
+        });
+    }
+
+    function attachEventListeners() {
+        $('#pendingRequests').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = pendingTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('attendance_requests.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, pendingTable);
+            }
+        });
+
+        $('#approvedRequests').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = approvedTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('attendance_requests.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, approvedTable);
+            }
+        });
+
+        $('#rejectedRequests').off('click', '.deleteButton').on('click', '.deleteButton', function() {
+            let rowData = rejectedTable.row($(this).closest('tr')).data();
+            if (rowData) {
+                let route = '{{ route('attendance_requests.destroy', ':id') }}';
+                deleteAjax(route.replace(':id', rowData.id), rowData.id, rejectedTable);
+            }
         });
     }
 
@@ -160,6 +212,29 @@ $(document).ready(function() {
                 alert('Error updating status: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Unknown error'));
             }
         });
+    }
+
+    function deleteAjax(route, id, table) {
+        if (confirm('Are you sure you want to delete this record?')) {
+            $.ajax({
+                url: route,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Record deleted successfully');
+                        table.draw();
+                    } else {
+                        alert('Failed to delete the record');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Failed to delete the record');
+                }
+            });
+        }
     }
 });
 </script>

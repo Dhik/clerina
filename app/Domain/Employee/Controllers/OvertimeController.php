@@ -147,9 +147,12 @@ class OvertimeController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Overtime $overtime)
-    {
+    {   
+        if ($overtime->file) {
+            \Storage::disk('public')->delete($overtime->file);
+        }
         $overtime->delete();
-        return redirect()->route('overtimes.index')->with('success', 'Overtime deleted successfully.');
+        return response()->json(['success' => 'Overtime record deleted successfully']);
     }
 
     public function show_all()
@@ -183,7 +186,7 @@ class OvertimeController extends Controller
                     </a>
                     <button class="btn btn-sm btn-success approveButton" data-id="' . $row->id . '">Approve</button>
                     <button class="btn btn-sm btn-danger rejectButton" data-id="' . $row->id . '">Reject</button>
-                    <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
             })
             ->rawColumns(['actions'])
             ->toJson();
@@ -214,7 +217,7 @@ class OvertimeController extends Controller
                        <i class="fas fa-eye"></i>
                     </a>
                     <button class="btn btn-sm btn-warning pendingButton" data-id="' . $row->id . '">Pending</button>
-                    <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
             })
             ->rawColumns(['actions'])
             ->toJson();
@@ -246,7 +249,7 @@ class OvertimeController extends Controller
                     </a>
                     <button class="btn btn-sm btn-warning pendingButton" data-id="' . $row->id . '">Pending</button>
                     <button class="btn btn-sm btn-success approveButton" data-id="' . $row->id . '">Approve</button>
-                    <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
             })
             ->rawColumns(['actions'])
             ->toJson();

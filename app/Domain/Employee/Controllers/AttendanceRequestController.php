@@ -21,6 +21,14 @@ class AttendanceRequestController extends Controller
     {
         return view('admin.attendance.log.show');
     }
+    public function destroy(AttendanceRequest $attendanceRequest)
+    {
+        if ($attendanceRequest->file) {
+            \Storage::disk('public')->delete($attendanceRequest->file);
+        }
+        $attendanceRequest->delete();
+        return response()->json(['success' => 'Attendance request record deleted successfully']);
+    }
 
     public function getPendingRequests()
 {
@@ -38,7 +46,8 @@ class AttendanceRequestController extends Controller
         ->addColumn('actions', function($row){
             return '<a href="#" class="btn btn-sm btn-primary" id="attendanceShow" data-id="'.$row->id.'" data-employee_id="'.$row->employee_id.'" data-full_name="'.$row->full_name.'" data-date="'.$row->date.'" data-clock_in="'.$row->clock_in.'" data-clock_out="'.$row->clock_out.'" data-work_note="'.$row->work_note.'" data-file="'.$row->file.'" data-status="'.$row->status_approval.'"><i class="fas fa-eye"></i></a>
                     <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
-                    <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>';
+                    <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -64,7 +73,8 @@ public function getApprovedRequests()
         })
         ->addColumn('actions', function($row){
             return '<a href="#" class="btn btn-sm btn-primary" id="attendanceShow" data-id="'.$row->id.'" data-employee_id="'.$row->employee_id.'" data-full_name="'.$row->full_name.'" data-date="'.$row->date.'" data-clock_in="'.$row->clock_in.'" data-clock_out="'.$row->clock_out.'" data-work_note="'.$row->work_note.'" data-file="'.$row->file.'" data-status="'.$row->status_approval.'"><i class="fas fa-eye"></i></a>
-                    <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>';
+                    <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -90,7 +100,8 @@ public function getRejectedRequests()
         ->addColumn('actions', function($row){
             return '<a href="#" class="btn btn-sm btn-primary" id="attendanceShow" data-id="'.$row->id.'" data-employee_id="'.$row->employee_id.'" data-full_name="'.$row->full_name.'" data-date="'.$row->date.'" data-clock_in="'.$row->clock_in.'" data-clock_out="'.$row->clock_out.'" data-work_note="'.$row->work_note.'" data-file="'.$row->file.'" data-status="'.$row->status_approval.'"><i class="fas fa-eye"></i></a>
                     <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
-                    <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>';
+                    <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
+                    <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {

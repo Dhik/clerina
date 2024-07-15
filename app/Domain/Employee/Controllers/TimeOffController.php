@@ -134,12 +134,11 @@ class TimeOffController extends Controller
      */
     public function destroy(TimeOff $timeOff)
     {
-        try {
-            $timeOff->delete();
-            return response()->json(['success' => true, 'message' => 'Time Off deleted successfully.']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to delete Time Off.']);
+        if ($timeOff->file) {
+            \Storage::disk('public')->delete($timeOff->file);
         }
+        $timeOff->delete();
+        return response()->json(['success' => 'Time off record deleted successfully']);
     }
 
     public function show_all()
@@ -170,7 +169,7 @@ class TimeOffController extends Controller
                 </a>
                 <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
                 <button class="btn btn-sm btn-danger rejectButton" data-id="'.$row->id.'">Reject</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -202,7 +201,7 @@ public function getApprovedTimeOffs()
                    <i class="fas fa-eye"></i>
                 </a>
                 <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
@@ -235,7 +234,7 @@ public function getRejectedTimeOffs()
                 </a>
                 <button class="btn btn-sm btn-warning pendingButton" data-id="'.$row->id.'">Pending</button>
                 <button class="btn btn-sm btn-success approveButton" data-id="'.$row->id.'">Approve</button>
-                <button class="btn btn-danger btn-sm deleteButton" data-id="' . $row->id . '"><i class="fas fa-trash-alt"></i></button>';
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>';
         })
         ->rawColumns(['actions'])
         ->filterColumn('full_name', function($query, $keyword) {
