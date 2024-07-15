@@ -18,7 +18,8 @@ class Employee extends Model
         'parent_branch_name', 'religion', 'gender', 'marital_status', 'blood_type',
         'nationality_code', 'currency', 'length_of_service', 'payment_schedule',
         'approval_line', 'manager', 'grade', 'class', 'profile_picture', 'cost_center',
-        'cost_center_category', 'sbu', 'npwp_16_digit', 'passport', 'passport_expiration_date', 'shift_id'
+        'cost_center_category', 'sbu', 'npwp_16_digit', 'passport', 'passport_expiration_date', 'shift_id',
+        'kk', 'ktp', 'cv', 'ijazah'
     ];
     protected static function boot()
     {

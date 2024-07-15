@@ -261,6 +261,46 @@
                                 <th>{{ trans('labels.updated_at') }}</th>
                                 <td>{{ $employee->updated_at }}</td>
                             </tr>
+                            <tr>
+                                <th>{{ trans('labels.kk_file') }}</th>
+                                <td>
+                                    @if($employee->kk)
+                                        <a href="{{ asset('storage/' . $employee->kk) }}" target="_blank">{{ trans('labels.view_file') }}</a>
+                                    @else
+                                        {{ trans('labels.no_file') }}
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ trans('labels.ktp_file') }}</th>
+                                <td>
+                                    @if($employee->ktp)
+                                        <a href="{{ asset('storage/' . $employee->ktp) }}" target="_blank">{{ trans('labels.view_file') }}</a>
+                                    @else
+                                        {{ trans('labels.no_file') }}
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ trans('labels.ijazah_file') }}</th>
+                                <td>
+                                    @if($employee->ijazah)
+                                        <a href="{{ asset('storage/' . $employee->ijazah) }}" target="_blank">{{ trans('labels.view_file') }}</a>
+                                    @else
+                                        {{ trans('labels.no_file') }}
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>{{ trans('labels.cv_file') }}</th>
+                                <td>
+                                    @if($employee->cv)
+                                        <a href="{{ asset('storage/' . $employee->cv) }}" target="_blank">{{ trans('labels.view_file') }}</a>
+                                    @else
+                                        {{ trans('labels.no_file') }}
+                                    @endif
+                                </td>
+                            </tr>
                         </tbody>
                         </table>
                     </div>

@@ -94,6 +94,84 @@
                     @enderror
                 </div>
             </div>
+
+
+            <div class="form-group row">
+                <label for="kk" class="col-md-4 col-form-label text-md-right">
+                    {{ trans("labels.kk") }}<span class="required">*</span>
+                </label>
+                <div class="col-md-8">
+                    <input
+                        id="kk"
+                        type="file"
+                        class="form-control @error('kk') is-invalid @enderror"
+                        name="kk"
+                        accept="application/pdf, image/*">
+                    @error('kk')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="ktp" class="col-md-4 col-form-label text-md-right">
+                    {{ trans("labels.ktp") }}<span class="required">*</span>
+                </label>
+                <div class="col-md-8">
+                    <input
+                        id="ktp"
+                        type="file"
+                        class="form-control @error('ktp') is-invalid @enderror"
+                        name="ktp"
+                        accept="application/pdf, image/*">
+                    @error('ktp')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="ijazah" class="col-md-4 col-form-label text-md-right">
+                    {{ trans("labels.ijazah") }}<span class="required">*</span>
+                </label>
+                <div class="col-md-8">
+                    <input
+                        id="ijazah"
+                        type="file"
+                        class="form-control @error('ijazah') is-invalid @enderror"
+                        name="ijazah"
+                        accept="application/pdf, image/*">
+                    @error('ijazah')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="cv" class="col-md-4 col-form-label text-md-right">
+                    {{ trans("labels.cv") }}<span class="required">*</span>
+                </label>
+                <div class="col-md-8">
+                    <input
+                        id="cv"
+                        type="file"
+                        class="form-control @error('cv') is-invalid @enderror"
+                        name="cv"
+                        accept="application/pdf, image/*">
+                    @error('cv')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

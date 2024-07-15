@@ -143,12 +143,35 @@ class EmployeeController extends Controller
             'npwp_16_digit' => ['nullable', 'string', 'max:255'],
             'passport' => ['nullable', 'string', 'max:255'],
             'passport_expiration_date' => ['nullable', 'date'],
+            'kk' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png'],
+            'ktp' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png'],
+            'ijazah' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png'],
+            'cv' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png'],
         ]);
 
         try {
             if ($request->hasFile('profile_picture')) {
                 $profilePicture = $request->file('profile_picture')->store('profile_pictures', 'public');
                 $validatedData['profile_picture'] = $profilePicture;
+            }
+            if ($request->hasFile('kk')) {
+                $kk = $request->file('kk')->store('kk_files', 'public');
+                $validatedData['kk'] = $kk;
+            }
+    
+            if ($request->hasFile('ktp')) {
+                $ktp = $request->file('ktp')->store('ktp_files', 'public');
+                $validatedData['ktp'] = $ktp;
+            }
+    
+            if ($request->hasFile('ijazah')) {
+                $ijazah = $request->file('ijazah')->store('ijazah_files', 'public');
+                $validatedData['ijazah'] = $ijazah;
+            }
+    
+            if ($request->hasFile('cv')) {
+                $cv = $request->file('cv')->store('cv_files', 'public');
+                $validatedData['cv'] = $cv;
             }
 
             $employee->update($validatedData);

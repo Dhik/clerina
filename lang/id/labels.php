@@ -313,4 +313,9 @@ return [
     'change_shift' => 'Change Shift',
     'starts_shift' => 'Start Shift',
     'end_shift' => 'End Shift',
+    'cv' => 'CV',
+    'ktp' => 'KTP',
+    'kk' => 'Kartu Keluarga',
+    'ijazah' => 'Ijazah',
+    'view_file' => 'View File',
 ];
