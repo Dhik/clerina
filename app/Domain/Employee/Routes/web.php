@@ -9,6 +9,7 @@ use App\Domain\Employee\Controllers\TimeOffController;
 use App\Domain\Employee\Controllers\OvertimeController;
 use App\Domain\Employee\Controllers\AttendanceRequestController;
 use App\Domain\Employee\Controllers\RequestChangeShiftController;
+use App\Domain\Employee\Controllers\PayrollController;
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +163,13 @@ Route::prefix('admin')
                 Route::put('/update/{id}', [ShiftController::class, 'update'])->name('shift.update');
                 Route::delete('/destroy/{id}', [ShiftController::class, 'destroy'])->name('shift.destroy');
                 Route::get('/data', [ShiftController::class, 'getData'])->name('shift.data');
+            });
+
+        Route::prefix('payroll')
+            ->group(function () {
+                Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
+                Route::get('/get', [PayrollController::class, 'get'])->name('payroll.get');
+                Route::get('/{employee}', [PayrollController::class, 'show'])->name('payroll.show');
             });
     });
     
