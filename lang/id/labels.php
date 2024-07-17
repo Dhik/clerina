@@ -318,4 +318,7 @@ return [
     'kk' => 'Kartu Keluarga',
     'ijazah' => 'Ijazah',
     'view_file' => 'View File',
+    'birth_place' => 'Tempat Lahir',
+    'citizen_id_address' => 'Alamat di KTP',
+    'residential_address' => 'Alamat Domisili',
 ];

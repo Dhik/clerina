@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Order\Import\PreprocessShopeeData;
 use App\Domain\Order\Import\OrderImportShopee;
+use App\Domain\Order\Import\OrderImport;
 use Illuminate\Support\Collection;
 
 class ImportOrders extends Command
@@ -44,21 +45,21 @@ class ImportOrders extends Command
         }
 
         // Create an instance of OrderImportShopee and pass the preprocessed data
-        $import = new OrderImportShopee($salesChannelId, $tenantId, $preprocessedData);
+        $import = new OrderImport($salesChannelId, $tenantId, $preprocessedData);
         
         // Process the cleaned data
-        foreach ($preprocessedData as $row) {
-            $import->model($import->map($row));
-        }
+        // foreach ($preprocessedData as $row) {
+        //     $import->model($import->map($row));
+        // }
 
-        // Get the cleaned data
-        $cleanedData = $import->getCleanedData();
+        // // Get the cleaned data
+        // $cleanedData = $import->getCleanedData();
 
-        // Display the cleaned data
-        $this->info('Cleaned Data Preview:');
-        foreach ($cleanedData as $index => $row) {
-            $this->info("Row $index: " . json_encode($row));
-        }
+        // // Display the cleaned data
+        // $this->info('Cleaned Data Preview:');
+        // foreach ($cleanedData as $index => $row) {
+        //     $this->info("Row $index: " . json_encode($row));
+        // }
 
         // Prompt the user to continue with the import
         if ($this->confirm('Do you wish to continue with storing the data in the database?')) {

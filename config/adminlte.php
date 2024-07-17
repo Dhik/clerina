@@ -561,14 +561,14 @@ return [
                 ],
             ],
         ],
-        // [
-        //     'text' => 'Payroll',
-        //     'url' => 'admin/payroll',
-        //     'icon' => 'nav-icon fas fa-credit-card',
-        //     'can' => [PermissionEnum::ViewEmployee,
-        //     PermissionEnum::ViewAttendance],
-        //     'active' => ['admin/payroll*']
-        // ],
+        [
+            'text' => 'Payroll',
+            'url' => 'admin/payroll',
+            'icon' => 'nav-icon fas fa-credit-card',
+            'can' => [PermissionEnum::ViewEmployee,
+            PermissionEnum::ViewAttendance],
+            'active' => ['admin/payroll*']
+        ],
         [
             'text'    => 'Account Settings',
             'icon'    => 'fas fa-fw fa-user',

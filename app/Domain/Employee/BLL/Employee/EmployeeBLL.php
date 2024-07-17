@@ -3,6 +3,7 @@
 namespace App\Domain\Employee\BLL\Employee;
 
 use App\DomainUtils\BaseBLL\BaseBLL;
+use App\Domain\Employee\Models\Employee;
 use App\DomainUtils\BaseBLL\BaseBLLFileUtils;
 use App\Domain\Employee\DAL\Employee\EmployeeDALInterface;
 
@@ -21,6 +22,11 @@ class EmployeeBLL extends BaseBLL implements EmployeeBLLInterface
     {
         return Employee::all();
     }
+    public function createEmployee(array $data): Employee
+    {
+        return Employee::create($data);
+    }
+
 
     public function getEmployeeById($id)
     {

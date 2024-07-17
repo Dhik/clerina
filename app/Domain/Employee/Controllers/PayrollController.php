@@ -20,7 +20,7 @@ use App\Domain\Employee\Models\RequestChangeShift;
 
 class PayrollController extends Controller
 {
-    protected $takeHomePay = 10000000;
+    protected $takeHomePay = 7000000;
 
     public function __construct(
         EmployeeBLLInterface $employeeBLL,
@@ -144,7 +144,7 @@ class PayrollController extends Controller
         });
 
         $netSalary = $baseSalary - $salaryDeductions;
-        $takeHomePay = 10000000;
+        $takeHomePay = 7000000;
         return view('admin.payroll.show', compact('employee', 'attendances', 'overtimes', 'timeOffs', 'attendanceRequests', 'requestChangeShifts', 'totalWorkHours', 'netSalary', 'salaryDeductions', 'baseSalary', 'salaryPerDay', 'attendanceDays', 'takeHomePay'));
     }
 

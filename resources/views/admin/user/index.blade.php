@@ -10,7 +10,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <!-- <div class="card-body">
+                <div class="card-body">
                     <div class="row justify-content-end">
                         <div class="col-auto">
                             <a href="{{ route('users.create') }}" class="btn btn-primary">
@@ -18,7 +18,7 @@
                             </a>
                         </div>
                     </div>
-                </div> -->
+                </div>
                 <div class="card-body">
                     <table id="userTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="userTable-info" width="100%">
                         <thead>

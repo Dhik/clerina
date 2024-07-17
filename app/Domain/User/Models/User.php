@@ -35,6 +35,7 @@ class User extends Authenticatable
         'phone_number',
         'position',
         'current_tenant_id',
+        'employee_id',
     ];
 
     /**

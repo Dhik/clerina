@@ -252,6 +252,7 @@ class PermissionTableSeeder extends Seeder
         $marketing->givePermissionTo($keywordMonitoring);
 
         $hr = Role::findByName(RoleEnum::HR);
+        $hr->givePermissionTo($userPermissions);
         $hr->givePermissionTo($profile);
         $hr->givePermissionTo($employee);
         $hr->givePermissionTo($attendance);
