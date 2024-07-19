@@ -19,7 +19,7 @@ class Employee extends Model
         'nationality_code', 'currency', 'length_of_service', 'payment_schedule',
         'approval_line', 'manager', 'grade', 'class', 'profile_picture', 'cost_center',
         'cost_center_category', 'sbu', 'npwp_16_digit', 'passport', 'passport_expiration_date', 'shift_id',
-        'kk', 'ktp', 'cv', 'ijazah'
+        'kk', 'ktp', 'cv', 'ijazah', 'place_id'
     ];
     protected static function boot()
     {

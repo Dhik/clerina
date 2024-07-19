@@ -526,6 +526,12 @@ return [
                     'icon' => 'far fa-circle nav-icon',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
+                [
+                    'text' => 'Place',
+                    'url' => '/admin/place',
+                    'icon' => 'far fa-circle nav-icon',
+                    'can' => [PermissionEnum::ViewAttendance],
+                ],
             ],
         ],
         [
@@ -563,11 +569,22 @@ return [
         ],
         [
             'text' => 'Payroll',
-            'url' => 'admin/payroll',
             'icon' => 'nav-icon fas fa-credit-card',
-            'can' => [PermissionEnum::ViewEmployee,
-            PermissionEnum::ViewAttendance],
-            'active' => ['admin/payroll*']
+            'can' => [PermissionEnum::ViewEmployee],
+            'submenu' => [
+                [
+                    'text' => 'Recap',
+                    'url' => 'admin/payroll',
+                    'icon' => 'far fa-circle nav-icon',
+                    'can' => [PermissionEnum::ViewAttendance],
+                ],
+                [
+                    'text' => 'Salary',
+                    'url' => 'admin/payroll/import',
+                    'icon' => 'far fa-circle nav-icon',
+                    'can' => [PermissionEnum::ViewAttendance],
+                ],
+            ],
         ],
         [
             'text'    => 'Account Settings',

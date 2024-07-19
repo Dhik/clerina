@@ -16,11 +16,10 @@
                             <tr>
                                 <th>{{ trans('labels.id') }}</th>
                                 <th>{{ trans('labels.name') }}</th>
-                                <th>{{ trans('labels.branch') }}</th>
-                                <th>{{ trans('labels.organization') }}</th>
-                                <th>{{ trans('labels.job_position') }}</th>
-                                <th>{{ trans('labels.job_level') }}</th>
-                                <th>{{ trans('labels.status') }}</th>
+                                <th>{{ trans('labels.gaji_pokok') }}</th>
+                                <th>{{ trans('labels.netSalary') }}</th>
+                                <th>{{ trans('labels.salaryDeductions') }}</th>
+                                <th>{{ trans('labels.insentif') }}</th>
                                 <th width="10%">{{ trans('labels.action') }}</th>
                             </tr>
                         </thead>
@@ -65,12 +64,19 @@
                             return '<img src="' + profilePictureUrl + '" alt="Profile Picture" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">' + data;
                         }
                     },
-                    {data: 'branch_name', name: 'branch_name'},
-                    {data: 'organization', name: 'organization'},
-                    {data: 'job_position', name: 'job_position'},
-                    {data: 'job_level', name: 'job_level'},
-                    {data: 'status_employee', name: 'status_employee'},
-                    {data: 'actions', sortable: false, orderable: false}
+                    {data: 'gaji_pokok', name: 'gaji_pokok'},
+                    {data: 'netSalary', name: 'netSalary'},
+                    {data: 'salaryDeductions', name: 'salaryDeductions'},
+                    {data: 'insentif', name: 'insentif'},
+                    {
+                        data: 'actions', 
+                        name: 'actions', 
+                        orderable: false, 
+                        searchable: false,
+                        render: function(data, type, row) {
+                            return data;
+                        }
+                    }
                 ]
             });
 

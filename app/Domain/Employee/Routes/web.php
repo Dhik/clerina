@@ -10,6 +10,7 @@ use App\Domain\Employee\Controllers\OvertimeController;
 use App\Domain\Employee\Controllers\AttendanceRequestController;
 use App\Domain\Employee\Controllers\RequestChangeShiftController;
 use App\Domain\Employee\Controllers\PayrollController;
+use App\Domain\Employee\Controllers\PlaceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -169,8 +170,28 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [PayrollController::class, 'index'])->name('payroll.index');
                 Route::get('/get', [PayrollController::class, 'get'])->name('payroll.get');
+                Route::get('/import', [PayrollController::class, 'importPage'])->name('payroll.import');
+                Route::post('/import-payrolls', [PayrollController::class, 'import'])->name('payrolls.import');
+                Route::get('/payrolls-data', [PayrollController::class, 'getPayrollsData'])->name('payrolls.data');
                 Route::get('/{employee}', [PayrollController::class, 'show'])->name('payroll.show');
+                Route::get('/data/{employee}', [PayrollController::class, 'getPayrollData'])->name('payroll.data');
+                Route::get('/attendance/{employee}', [PayrollController::class, 'getAttendanceData'])->name('payroll.attendance');
+                Route::get('/edit/{id}', [PayrollController::class, 'edit'])->name('payroll.edit');
+                Route::put('/update/{id}', [PayrollController::class, 'update'])->name('payroll.update');
+                Route::delete('/destroy/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
             });
+
+        Route::prefix('place')
+            ->group(function () {
+                Route::get('/', [PlaceController::class, 'index'])->name('place.index');
+                Route::get('/create', [PlaceController::class, 'create'])->name('place.create');
+                Route::post('/store', [PlaceController::class, 'store'])->name('place.store');
+                Route::get('/edit/{id}', [PlaceController::class, 'edit'])->name('place.edit');
+                Route::put('/update/{id}', [PlaceController::class, 'update'])->name('place.update');
+                Route::delete('/destroy/{id}', [PlaceController::class, 'destroy'])->name('place.destroy');
+                Route::get('/data', [PlaceController::class, 'show'])->name('place.data');
+            });
+        
     });
     
 

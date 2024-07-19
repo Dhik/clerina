@@ -321,4 +321,12 @@ return [
     'birth_place' => 'Tempat Lahir',
     'citizen_id_address' => 'Alamat di KTP',
     'residential_address' => 'Alamat Domisili',
+    'gaji_pokok' => 'Gaji Pokok',
+    'tunjangan_jabatan' => 'Tunjangan Jabatan',
+    'insentif_live' => 'Insentif Live',
+    'insentif' => 'Insentif',
+    'function' =>  'Function',
+    'payroll' => 'Payroll',
+    'bpjs' => 'BPJS %',
+    'salary' => 'Salary',
 ];
