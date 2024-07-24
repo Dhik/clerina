@@ -21,6 +21,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [OrderController::class, 'index'])->name('order.index');
                 Route::get('/get', [OrderController::class, 'get'])->name('order.get');
+                Route::get('/fetch-external', [OrderController::class, 'fetchExternalOrders'])->name('order.fetch-external');
 
                 Route::get('/exportTemplate', [OrderController::class, 'downloadTemplate'])
                     ->name('order.download-template');
@@ -31,6 +32,7 @@ Route::prefix('admin')
                 Route::post('/', [OrderController::class, 'store'])->name('order.store');
                 Route::put('/{order}', [OrderController::class, 'update'])->name('order.update');
                 Route::delete('{order}', [OrderController::class, 'destroy'])->name('order.destroy');
+                
             });
         Route::prefix('product')
             ->group(function () {

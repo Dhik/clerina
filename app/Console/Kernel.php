@@ -22,6 +22,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('data:scrap')->dailyAt('04:00');
         $schedule->command('data:scrap-contest')->dailyAt('05:00');
         $schedule->command('statistic:campaign-recap')->dailyAt('07:00');
+        $schedule->command('orders:fetch-external')->cron('0 9,12,17,19,21,3,6 * * *')->timezone('Asia/Jakarta');
 
 
         // $schedule->command('postings:update daily')->daily();

@@ -12,6 +12,7 @@ use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -195,5 +196,102 @@ class OrderController extends Controller
             'counts' => $counts,
             'lastThreeNumbersCounts' => $lastThreeNumbersCounts,
         ]);
+    }
+    public function fetchExternalOrders(): JsonResponse
+    {
+        $client = new Client();
+        $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
+        $headers = [
+            'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
+        ];
+
+        try {
+            $page = 1;
+            $totalPages = 1;
+
+            do {
+                $response = $client->get($baseUrl, [
+                    'headers' => $headers,
+                    'query' => [
+                        'status' => 'paid',
+                        'page' => $page
+                    ]
+                ]);
+
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                if ($page === 1) {
+                    $totalPages = $data['metadata']['total_page'] ?? 1;
+                }
+
+                if (!isset($data['data'])) {
+                    return response()->json(['error' => 'Unexpected response format', 'response' => $data], 500);
+                }
+
+                foreach ($data['data'] as $orderData) {
+                    // Convert datetime strings to MySQL-compatible format
+                    $date = $this->convertToMySQLDateTime($orderData['created_at']);
+                    $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
+
+                    // Transform and save data to the orders table using updateOrCreate
+                    Order::updateOrCreate(
+                        ['id_order' => $orderData['reference_no']],
+                        [
+                            'date' => $date,
+                            'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
+                            'customer_name' => $orderData['customer_name'],
+                            'customer_phone_number' => $orderData['customer_phone'],
+                            'product' => $orderData['product_summary'],
+                            'qty' => $orderData['qty'],
+                            'created_at' => $createdAt,
+                            'updated_at' => $createdAt,
+                            'receipt_number' => $orderData['reference_no'],
+                            'shipment' => $orderData['courier'],
+                            'payment_method' => $orderData['courier_label'],
+                            'sku' => $orderData['product_summary'],
+                            'price' => $orderData['amount'],
+                            'shipping_address' => $orderData['integration_store'],
+                            'amount' => $orderData['qty'] * $orderData['amount'],
+                            'username' => $orderData['channel_name'],
+                            'tenant_id' => $this->getTenantId($orderData['integration_store']),
+                        ]
+                    );
+                }
+
+                $page++;
+            } while ($page <= $totalPages);
+
+            return response()->json(['message' => 'Orders fetched and saved successfully']);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function getSalesChannelId($channelName)
+    {
+        return match ($channelName) {
+            'Tiktok' => 4,
+            'Shopee' => 1,
+            'Lazada' => 2,
+            'Tokopedia' => 3,
+            default => null,
+        };
+    }
+
+    private function getTenantId($integrationStore)
+    {
+        if (strpos($integrationStore, 'Cleora') !== false) {
+            return 1;
+        } elseif (strpos($integrationStore, 'Azrina') !== false) {
+            return 2;
+        } else {
+            return null;
+        }
+    }
+
+    private function convertToMySQLDateTime($dateTime)
+    {
+        $date = new \DateTime($dateTime);
+        return $date->format('Y-m-d H:i:s');
     }
 }

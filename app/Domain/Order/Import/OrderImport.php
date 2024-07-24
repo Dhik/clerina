@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Domain\Order\Import;
 
 use App\Domain\Order\Job\CreateCustomerJob;
@@ -36,7 +35,7 @@ class OrderImport implements SkipsEmptyRows, ToModel, WithMapping, WithStartRow,
 
     public function uniqueBy(): string
     {
-        return 'id';
+        return 'id_order';
     }
 
     public function map($row): array
@@ -71,42 +70,61 @@ class OrderImport implements SkipsEmptyRows, ToModel, WithMapping, WithStartRow,
     {
         $price = $this->convertCurrencyStringToNumber($row['price']);
 
-        $order = Order::updateOrCreate([
-            'id_order' => $row['id_order'],
-            'receipt_number' => $row['receipt_number'],
-            'date' =>$this->formatDateForDatabase($row['date']),
-            'sku' => $row['sku'],
-            'sales_channel_id' => $this->salesChannelId,
-            'tenant_id' => $this->tenantId,
-        ], [
-            'shipment' => $row['shipment'],
-            'payment_method' => $row['payment_method'],
-            'product' => $row['product'],
-            'variant' => $row['variant'],
-            'price' => $price,
-            'qty' => $row['qty'],
-            'username' => $row['username'],
-            'customer_name' => $row['customer_name'],
-            'customer_phone_number' => $row['customer_phone_number'],
-            'shipping_address' => $row['shipping_address'],
-            'city' => $row['city'],
-            'province' => $row['province'],
-            'amount' => $row['qty'] * $price,
-        ]);
+        $existingOrder = Order::where('id_order', $row['id_order'])->first();
 
-        // Additional actions after order creation or update
-        if ($order->wasRecentlyCreated) {
-            // Perform additional actions for order creation
-            $data = [
-                'customer_name' => $order->customer_name,
-                'customer_phone_number' => $order->customer_phone_number,
-                'tenant_id' => $order->tenant_id
-            ];
+        if ($existingOrder) {
+            $existingOrder->update([
+                'receipt_number' => $row['receipt_number'],
+                'date' => $this->formatDateForDatabase($row['date']),
+                'sku' => $row['sku'],
+                'shipment' => $row['shipment'],
+                'payment_method' => $row['payment_method'],
+                'product' => $row['product'],
+                'variant' => $row['variant'],
+                'qty' => $row['qty'],
+                'username' => $row['username'],
+                'customer_name' => $row['customer_name'],
+                'customer_phone_number' => $row['customer_phone_number'],
+                'shipping_address' => $row['shipping_address'],
+                'city' => $row['city'],
+                'province' => $row['province'],
+            ]);
+        } else {
+            $order = Order::create([
+                'id_order' => $row['id_order'],
+                'receipt_number' => $row['receipt_number'],
+                'date' => $this->formatDateForDatabase($row['date']),
+                'sku' => $row['sku'],
+                'sales_channel_id' => $this->salesChannelId,
+                'tenant_id' => $this->tenantId,
+                'shipment' => $row['shipment'],
+                'payment_method' => $row['payment_method'],
+                'product' => $row['product'],
+                'variant' => $row['variant'],
+                'price' => $price,
+                'qty' => $row['qty'],
+                'username' => $row['username'],
+                'customer_name' => $row['customer_name'],
+                'customer_phone_number' => $row['customer_phone_number'],
+                'shipping_address' => $row['shipping_address'],
+                'city' => $row['city'],
+                'province' => $row['province'],
+                'amount' => $row['qty'] * $price,
+            ]);
 
-            CreateCustomerJob::dispatch($data);
+            // Additional actions after order creation
+            if ($order->wasRecentlyCreated) {
+                $data = [
+                    'customer_name' => $order->customer_name,
+                    'customer_phone_number' => $order->customer_phone_number,
+                    'tenant_id' => $order->tenant_id
+                ];
+
+                CreateCustomerJob::dispatch($data);
+            }
+
+            $this->importedData[] = $order;
         }
-
-        $this->importedData[] = $order;
     }
 
     public function getImportedData(): array
