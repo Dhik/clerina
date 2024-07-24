@@ -7,32 +7,20 @@ use App\Domain\Order\Controllers\OrderController;
 
 class FetchExternalOrders extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'orders:fetch-external';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Fetch external orders and save to the database';
+    
+    protected $orderController;
 
-    /**
-     * Execute the console command.
-     */
-    public function __construct()
+    public function __construct(OrderController $orderController)
     {
         parent::__construct();
+        $this->orderController = $orderController;
     }
 
     public function handle()
     {
-        $orderController = new OrderController();
-        $response = $orderController->fetchExternalOrders();
+        $response = $this->orderController->fetchExternalOrders();
 
         if ($response->getStatusCode() == 200) {
             $this->info('Orders fetched and saved successfully.');
