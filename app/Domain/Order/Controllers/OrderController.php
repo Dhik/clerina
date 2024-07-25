@@ -251,7 +251,7 @@ class OrderController extends Controller
                             'sku' => $orderData['product_summary'],
                             'price' => $orderData['amount'],
                             'shipping_address' => $orderData['integration_store'],
-                            'amount' => $orderData['amount'],
+                            'amount' => $orderData['qty'] * $orderData['amount'],
                             'username' => $orderData['channel_name'],
                             'tenant_id' => $this->getTenantId($orderData['integration_store']),
                         ]
@@ -266,6 +266,96 @@ class OrderController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function fetchAllOrders(): JsonResponse
+{
+    set_time_limit(0); // Setting the execution time to unlimited
+
+    $client = new Client();
+    $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
+    $headers = [
+        'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
+    ];
+    $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
+    $startDate = '2024-07-22';
+    $endDate = '2024-07-23';
+    $allOrders = [];
+
+    foreach ($statuses as $status) {
+        $page = 1;
+        $totalPages = 1;
+
+        do {
+            $response = $client->get($baseUrl, [
+                'headers' => $headers,
+                'query' => [
+                    'status' => $status,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'page' => $page
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                return response()->json(['error' => 'Failed to fetch data from API', 'status_code' => $response->getStatusCode()], 500);
+            }
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            if ($page === 1) {
+                $totalPages = $data['metadata']['total_page'] ?? 1;
+            }
+
+            if (!isset($data['data'])) {
+                return response()->json(['error' => 'Unexpected response format', 'response' => $data], 500);
+            }
+
+            foreach ($data['data'] as $orderData) {
+                // Convert datetime strings to MySQL-compatible format
+                $date = $this->convertToMySQLDateTime($orderData['created_at']);
+                $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
+
+                // Check if the order already exists
+                $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
+
+                if ($existingOrder) {
+                    // Update only amount and sku if the order exists
+                    $existingOrder->update([
+                        'amount' => $orderData['amount'],
+                        'sku' => $orderData['product_summary'],
+                    ]);
+                } else {
+                    // Create new order if it doesn't exist
+                    Order::create([
+                        'id_order' => $orderData['reference_no'],
+                        'date' => $date,
+                        'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
+                        'customer_name' => $orderData['customer_name'],
+                        'customer_phone_number' => $orderData['customer_phone'],
+                        'product' => $orderData['product_summary'],
+                        'qty' => $orderData['qty'],
+                        'created_at' => $createdAt,
+                        'updated_at' => $createdAt,
+                        'receipt_number' => $orderData['reference_no'],
+                        'shipment' => $orderData['courier'],
+                        'payment_method' => $orderData['courier_label'],
+                        'sku' => $orderData['product_summary'],
+                        'price' => $orderData['amount'],
+                        'shipping_address' => $orderData['integration_store'],
+                        'amount' => $orderData['amount'],
+                        'username' => $orderData['channel_name'],
+                        'tenant_id' => $this->getTenantId($orderData['integration_store']),
+                    ]);
+                }
+            }
+
+            $page++;
+        } while ($page <= $totalPages);
+    }
+
+    return response()->json(['message' => 'Orders fetched and saved successfully']);
+}
+
 
     private function getSalesChannelId($channelName)
     {

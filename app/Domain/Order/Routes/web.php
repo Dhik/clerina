@@ -22,6 +22,7 @@ Route::prefix('admin')
                 Route::get('/', [OrderController::class, 'index'])->name('order.index');
                 Route::get('/get', [OrderController::class, 'get'])->name('order.get');
                 Route::get('/fetch-external', [OrderController::class, 'fetchExternalOrders'])->name('order.fetch-external');
+                Route::get('/fetch-all', [OrderController::class, 'fetchAllOrders'])->name('order.fetch-all');
 
                 Route::get('/exportTemplate', [OrderController::class, 'downloadTemplate'])
                     ->name('order.download-template');
