@@ -329,4 +329,5 @@ return [
     'payroll' => 'Payroll',
     'bpjs' => 'BPJS %',
     'salary' => 'Salary',
+    'market_place' => 'Market Place',
 ];

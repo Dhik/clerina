@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
 use GuzzleHttp\Client;
+use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -278,7 +279,7 @@ class OrderController extends Controller
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
     $startDate = '2024-07-01';
-    $endDate = '2024-07-05';
+    $endDate = '2024-07-23';
     $allOrders = [];
 
     foreach ($statuses as $status) {
@@ -384,4 +385,32 @@ class OrderController extends Controller
         $date = new \DateTime($dateTime);
         return $date->format('Y-m-d H:i:s');
     }
+
+    public function getOrdersByDate(Request $request): JsonResponse
+{
+    // Fetch the orders with the sales channel relationship
+    $orders = Order::with('salesChannel')
+        ->where('tenant_id', Auth::user()->current_tenant_id)
+        ->where('date', Carbon::parse($request->input('date')))
+        ->orderBy('date', 'asc')
+        ->get();
+
+    // Group the orders by sales channel name and calculate the sum of the amount
+    $groupedOrders = $orders->groupBy(function($order) {
+        return $order->salesChannel->name;
+    });
+
+    // Format the grouped data into an array with the sum of the amount
+    $result = $groupedOrders->map(function ($orders, $salesChannelName) {
+        return [
+            'sales_channel' => $salesChannelName,
+            'total_amount' => $orders->sum('amount'),
+            'orders' => $orders
+        ];
+    })->values();
+
+    // Return the grouped data as a JSON response
+    return response()->json($result);
+}
+
 }

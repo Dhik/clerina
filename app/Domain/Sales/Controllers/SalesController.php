@@ -70,8 +70,8 @@ class SalesController extends Controller
                 return number_format($row->roas, 2, ',', '.');
             })
             ->addColumn('adSpentTotalFormatted', function ($row) {
-                return '<a href="#" class="adSpentButtonDetail">'.
-                    number_format($row->ad_spent_total, 0, ',', '.').
+                return '<a href="#" class="omsetButtonDetail">'.
+                    number_format($row->turnover, 0, ',', '.').
                     '</a>';
             })
             ->addColumn('turnoverFormatted', function ($row) {
@@ -138,4 +138,20 @@ class SalesController extends Controller
             'message' => trans('messages.success_update', ['model' => trans('labels.sales')]),
         ]);
     }
+
+    public function getOmsetByDate($date): JsonResponse
+{
+    $this->authorize('viewAnySales', Sales::class);
+
+    // Assuming you have a Sales model and it's properly set up with relationships
+    // Adjust the query according to your actual database schema
+
+    $omsetData = Sales::whereDate('created_at', $date)
+        ->groupBy('date')
+        ->get();
+
+    // Return the data as a JSON response
+    return response()->json($omsetData);
+}
+
 }

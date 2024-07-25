@@ -170,7 +170,42 @@
     @include('admin.adSpentSocialMedia.modal')
     @include('admin.adSpentMarketPlace.modal')
     @include('admin.sales.modal-visitor')
-    @include('admin.sales.modal-adspent')
+    @include('admin.sales.modal-omset')
+
+    <!-- Omset Modal -->
+    <!-- Omset Modal -->
+<div class="modal fade" id="omsetModal" tabindex="-1" role="dialog" aria-labelledby="omsetModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document" style="max-width: 80%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="omsetModalLabel">{{ trans('labels.turnover') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('buttons.close') }}">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table id="orderTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="order-info" width="100%">
+                    <thead>
+                        <tr>
+                            <th>{{ trans('labels.order_id') }}</th>
+                            <th>{{ trans('labels.customer_name') }}</th>
+                            <th>{{ trans('labels.customer_phone_number') }}</th>
+                            <th>{{ trans('labels.product') }}</th>
+                            <th>{{ trans('labels.qty') }}</th>
+                            <th>{{ trans('labels.amount') }}</th>
+                            <th>{{ trans('labels.payment_method') }}</th>
+                            <th>{{ trans('labels.created_at') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Order data will be dynamically populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 @stop
 
 @section('js')
@@ -252,7 +287,7 @@
                 {data: 'adSpentMarketPlaceFormatted', name: 'ad_spent_market_place', sortable: false},
                 {data: 'totalFormatted', name: 'total_spend', sortable: false},
                 {data: 'roasFormatted', name: 'roas', sortable: false},
-                {data: 'turnoverFormatted', name: 'turnover', sortable: false},
+                {data: 'adSpentTotalFormatted', name: 'total_spend', sortable: false},
                 {data: 'actions', sortable: false}
             ],
             columnDefs: [
@@ -278,10 +313,16 @@
                 showVisitorDetail(rowData);
             });
 
-            tableBodySelector.on('click', '.adSpentButtonDetail', function(event) {
+            tableBodySelector.on('click', '.omsetButtonDetail', function(event) {
                 event.preventDefault();
                 let rowData = salesTable.row($(this).closest('tr')).data();
-                showAdSpentDetail(rowData);
+                showOmsetDetail(rowData);
+            });
+
+            tableBodySelector.on('click', '.omset-link', function(event) {
+                event.preventDefault();
+                let date = $(this).data('date');
+                showOmsetDetail(date);
             });
         });
 
@@ -316,45 +357,28 @@
             });
         }
 
-        function showAdSpentDetail(data) {
+        function showOmsetDetail(data) {
             $.ajax({
-                url: "{{ route('adSpentMarketPlace.getByDate') }}?date=" + data.date,
+                url: "{{ route('order.getOrdersByDate') }}?date=" + data.date,
                 type: 'GET',
                 success: function(response) {
 
-                    let adSpentSocialMediaTableBody = $("#adspent-social-media-table-body");
-                    adSpentSocialMediaTableBody.empty(); // Clear existing rows
+                    let omsetTableBody = $("#omset-table-body");
+                    omsetTableBody.empty(); // Clear existing rows
                     // console.log(response)
-                    if (response.social_media.length > 0) {
-                        response.social_media.forEach(function(item) {
+                    if (response.length > 0) {
+                        response.forEach(function(item) {
                             let row = `<tr>
-                            <td>${item.social_media.name ?? ''}</td>
-                            <td>${item.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                            <td>${item.sales_channel ?? ''}</td>
+                            <td>${item.total_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
                         </tr>`;
-                            adSpentSocialMediaTableBody.append(row);
+                            omsetTableBody.append(row);
                         });
                     } else {
                         let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
-                        adSpentSocialMediaTableBody.append(row);
+                        omsetTableBody.append(row);
                     }
-
-                    let adSpentMarketPlaceTableBody = $("#adspent-market-place-table-body");
-                    adSpentMarketPlaceTableBody.empty(); // Clear existing rows
-
-                    if (response.market_place.length > 0) {
-                        response.market_place.forEach(function(item) {
-                            let row = `<tr>
-                            <td>${item.sales_channel.name ?? ''}</td>
-                            <td>${item.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
-                        </tr>`;
-                            adSpentMarketPlaceTableBody.append(row);
-                        });
-                    } else {
-                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
-                        adSpentMarketPlaceTableBody.append(row);
-                    }
-
-                    $('#showAdSpentModal').modal('show');
+                    $('#showOmsetModal').modal('show');
                 },
                 error: function(error) {
                     console.log(error);
@@ -362,6 +386,42 @@
                 }
             });
         }
+
+        // function showOmsetDetail(data) {
+        //     $.ajax({
+        //         url: '{{ route("order.getOrdersByDate") }}?date=' + data.date,
+        //         type: 'GET',
+        //         success: function(response) {
+        //             let orderTableBody = $("#orderTable tbody");
+        //             orderTableBody.empty(); // Clear existing rows
+
+        //             if (response.length > 0) {
+        //                 response.forEach(function(order) {
+        //                     let row = `<tr>
+        //                         <td>${order.id_order}</td>
+        //                         <td>${order.customer_name}</td>
+        //                         <td>${order.customer_phone_number}</td>
+        //                         <td>${order.product}</td>
+        //                         <td>${order.qty}</td>
+        //                         <td>${order.amount}</td>
+        //                         <td>${order.payment_method}</td>
+        //                         <td>${order.created_at}</td>
+        //                     </tr>`;
+        //                     orderTableBody.append(row);
+        //                 });
+        //             } else {
+        //                 let row = `<tr><td colspan="8" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
+        //                 orderTableBody.append(row);
+        //             }
+
+        //             $('#omsetModal').modal('show');
+        //         },
+        //         error: function(error) {
+        //             console.log(error);
+        //             alert("An error occurred");
+        //         }
+        //     });
+        // }
 
         $(function () {
             salesTable.draw();

@@ -53,6 +53,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [SalesController::class, 'index'])->name('sales.index');
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
+                Route::get('/omset/{date}', [SalesController::class, 'getOmsetByDate'])->name('sales.getOmsetByDate');
+
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');
                 Route::get('/{sales}', [SalesController::class, 'show'])->name('sales.show');
                 Route::get('/sync/{sales}', [SalesController::class, 'syncSales'])->name('sales.sales-sync');
