@@ -331,7 +331,7 @@ class OrderController extends Controller
                         'id_order' => $orderData['reference_no'],
                         'date' => $date,
                         'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
-                        'customer_name' => $orderData['customer_name'],
+                        'customer_name' => $orderData['customer_username'],
                         'customer_phone_number' => $orderData['customer_phone'],
                         'product' => $orderData['product_summary'],
                         'qty' => $orderData['qty'],
@@ -344,7 +344,7 @@ class OrderController extends Controller
                         'price' => $orderData['amount'],
                         'shipping_address' => $orderData['integration_store'],
                         'amount' => $orderData['amount'] - $orderData['shipping_fee'],
-                        'username' => $orderData['channel_name'],
+                        'username' => $orderData['customer_name'],
                         'tenant_id' => $this->getTenantId($orderData['integration_store']),
                     ]);
                 }
