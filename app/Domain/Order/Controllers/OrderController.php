@@ -252,7 +252,7 @@ class OrderController extends Controller
                             'sku' => $orderData['product_summary'],
                             'price' => $orderData['amount'],
                             'shipping_address' => $orderData['integration_store'],
-                            'amount' => $orderData['qty'] * $orderData['amount'],
+                            'amount' => $orderData['amount'] - $orderData['shipping_fee'],
                             'username' => $orderData['channel_name'],
                             'tenant_id' => $this->getTenantId($orderData['integration_store']),
                         ]
