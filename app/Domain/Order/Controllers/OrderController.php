@@ -322,7 +322,7 @@ class OrderController extends Controller
                 if ($existingOrder) {
                     // Update only amount and sku if the order exists
                     $existingOrder->update([
-                        'amount' => $orderData['amount'],
+                        'amount' => $orderData['amount'] - $orderData['shipping_fee'],
                         'sku' => $orderData['product_summary'],
                         'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
                         'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
