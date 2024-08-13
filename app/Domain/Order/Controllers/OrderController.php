@@ -51,7 +51,7 @@ class OrderController extends Controller
                 return number_format($row->qty, 0, ',', '.');
             })
             ->addColumn('priceFormatted', function ($row) {
-                return number_format($row->price, 0, ',', '.');
+                return number_format($row->amount, 0, ',', '.');
             })
             ->addColumn(
                 'actions',
