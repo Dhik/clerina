@@ -254,7 +254,7 @@ class OrderController extends Controller
                             'shipping_address' => $orderData['integration_store'],
                             'amount' => $orderData['amount'] - $orderData['shipping_fee'],
                             'username' => $orderData['customer_username'],
-                            'tenant_id' => $this->getTenantId($orderData['integration_store']),
+                            'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                         ]
                     );
                 }
@@ -278,8 +278,8 @@ class OrderController extends Controller
         'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
-    $startDate = '2024-08-09';
-    $endDate = '2024-08-13';
+    $startDate = '2024-07-01';
+    $endDate = '2024-07-04';
     $allOrders = [];
 
     foreach ($statuses as $status) {
