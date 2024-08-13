@@ -278,8 +278,8 @@ class OrderController extends Controller
         'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
-    $startDate = '2024-07-24';
-    $endDate = '2024-07-28';
+    $startDate = '2024-07-28';
+    $endDate = '2024-07-31';
     $allOrders = [];
 
     foreach ($statuses as $status) {
