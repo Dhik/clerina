@@ -278,8 +278,8 @@ class OrderController extends Controller
         'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
-    $startDate = '2024-07-12';
-    $endDate = '2024-07-16';
+    $startDate = '2024-07-06';
+    $endDate = '2024-07-06';
     $allOrders = [];
 
     foreach ($statuses as $status) {
@@ -321,12 +321,16 @@ class OrderController extends Controller
 
                 if ($existingOrder) {
                     // Update only amount and sku if the order exists
+                    $amount = $orderData['amount'] - $orderData['shipping_fee'];
+                    $amount = $amount < 0 ? 0 : $amount;
+
                     $existingOrder->update([
-                        'amount' => $orderData['amount'] - $orderData['shipping_fee'],
+                        'amount' => $amount,
                         'sku' => $orderData['product_summary'],
                         'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
                         'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                     ]);
+
                 } else {
                     // Create new order if it doesn't exist
                     Order::create([
