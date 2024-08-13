@@ -278,8 +278,8 @@ class OrderController extends Controller
         'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
-    $startDate = '2024-08-01';
-    $endDate = '2024-08-10';
+    $startDate = '2024-08-03';
+    $endDate = '2024-08-04';
     $allOrders = [];
 
     foreach ($statuses as $status) {
@@ -324,6 +324,8 @@ class OrderController extends Controller
                     $existingOrder->update([
                         'amount' => $orderData['amount'],
                         'sku' => $orderData['product_summary'],
+                        'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
+                        'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                     ]);
                 } else {
                     // Create new order if it doesn't exist
@@ -345,7 +347,7 @@ class OrderController extends Controller
                         'shipping_address' => $orderData['integration_store'],
                         'amount' => $orderData['amount'] - $orderData['shipping_fee'],
                         'username' => $orderData['customer_username'],
-                        'tenant_id' => $this->getTenantId($orderData['integration_store']),
+                        'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                     ]);
                 }
             }
@@ -364,6 +366,7 @@ class OrderController extends Controller
             'Tiktok' => 4,
             'Shopee' => 1,
             'Lazada' => 2,
+            'Manual'=> 5,
             'Tokopedia' => 3,
             default => null,
         };
@@ -379,6 +382,27 @@ class OrderController extends Controller
             return null;
         }
     }
+
+    private function determineTenantId($channelName, $sku, $integrationStore)
+{
+    if ($channelName === 'Manual') {
+        return $this->getTenantIdBySku($sku);
+    } else {
+        return $this->getTenantId($integrationStore);
+    }
+}
+
+
+    private function getTenantIdBySku($sku)
+{
+    if (strpos($sku, 'AZ') !== false) {
+        return 2;
+    } elseif (strpos($sku, 'CL') !== false) {
+        return 1;
+    } else {
+        return null;
+    }
+}
 
     private function convertToMySQLDateTime($dateTime)
     {
