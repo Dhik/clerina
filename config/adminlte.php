@@ -377,13 +377,13 @@ return [
             ],
             'icon'    => 'fas fa-fw fa-map',
             'submenu' => [
-                [
-                    'text' => 'KOL/Influencer',
-                    'url' => 'admin/kol',
-                    'can' => [PermissionEnum::ViewKOL],
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/kol*']
-                ],
+                // [
+                //     'text' => 'KOL/Influencer',
+                //     'url' => 'admin/kol',
+                //     'can' => [PermissionEnum::ViewKOL],
+                //     'icon' => 'nav-icon far fa-circle',
+                //     'active' => ['admin/kol*']
+                // ],
                 [
                     'text' => 'Campaign',
                     'url' => 'admin/campaign',
