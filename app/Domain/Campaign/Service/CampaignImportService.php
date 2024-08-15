@@ -78,12 +78,12 @@ class CampaignImportService
                 CampaignContent::updateOrCreate(
                     [
                         'link' => $data['link'],
-                        'key_opinion_leader_id' => $kol->id,
+                        'campaign_id' => $campaign->id,
                     ],
                     [
                         'channel' => $data['channel'],
+                        'key_opinion_leader_id' => $kol->id,
                         'task_name' => $data['task_name'],
-                        'campaign_id' => $campaign->id,
                         'rate_card' => $data['rate_card'],
                         'product' => $data['product'],
                         'created_by' => Auth::user()->id,
