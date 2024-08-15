@@ -14,7 +14,7 @@
                         {{ trans('labels.download_template') }} <i class="fas fa-download"></i>
                     </a>
                 </div>
-                <form id="contentImportForm" action="{{ route('order.import') }}" method="post" enctype="multipart/form-data">
+                <form id="contentImportForm" action="{{ route('campaignContent.import', ['campaign' => $campaign->id]) }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <div class="form-group">

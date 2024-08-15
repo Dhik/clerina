@@ -57,7 +57,7 @@ class KeyOpinionLeaderController extends Controller
 
         return DataTables::of($query)
             ->addColumn('pic_contact_name', function ($row) {
-                return $row->picContact->name;
+                return $row->picContact->name ?? 'empty';
             })
             ->addColumn('actions', function ($row) {
                 return '<a href=' . route('kol.show', $row->id) . ' class="btn btn-success btn-xs">
@@ -70,6 +70,7 @@ class KeyOpinionLeaderController extends Controller
             ->rawColumns(['actions'])
             ->toJson();
     }
+
 
     /**
      * Select KOl by username

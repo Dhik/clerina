@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use App\Domain\Campaign\Models\Budget;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -78,8 +79,9 @@ class CampaignController extends Controller
     public function create(): View|\Illuminate\Foundation\Application|Factory|Application
     {
         $this->authorize('createCampaign', Campaign::class);
+        $budgets = Budget::all();
 
-        return view('admin.campaign.create');
+        return view('admin.campaign.create', compact('budgets'));
     }
 
     /**
@@ -118,8 +120,9 @@ class CampaignController extends Controller
     public function edit(Campaign $campaign): View|\Illuminate\Foundation\Application|Factory|Application
     {
         $this->authorize('UpdateCampaign', $campaign);
+        $budgets = Budget::all();
 
-        return view('admin.campaign.edit', compact('campaign'));
+        return view('admin.campaign.edit', compact('campaign', 'budgets'));
     }
 
     /**

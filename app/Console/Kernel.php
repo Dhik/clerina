@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\ImportOrders::class,
+        \App\Console\Commands\ImportCampaignContent::class,
     ];
 
 

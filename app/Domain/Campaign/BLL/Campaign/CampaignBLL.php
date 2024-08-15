@@ -41,7 +41,8 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
             'start_date' => $period->startDate,
             'end_date' => $period->endDate,
             'description' => $request->input('description'),
-            'created_by' => Auth::user()->id
+            'created_by' => Auth::user()->id,
+            'id_budget' => $request->input('id_budget'),
         ];
 
         return $this->campaignDAL->storeCampaign($data);

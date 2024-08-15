@@ -32,34 +32,64 @@ class CampaignImportService
 
         $data = $import->getImportedData();
         $collection = collect($data);
-        $grouped = $collection->groupBy('username');
-        $importedUsername = $grouped->keys()->toArray();
 
-        $kol = $this->getKol($campaign->id);
-
-        $this->validateKolExistence($campaign->id, $importedUsername, $kol);
-        $this->validateKolSlots($campaign->id, $data);
-
-        $this->save($collection, $campaign, $kol);
+        $this->save($collection, $campaign);
 
         return 'OK';
     }
 
-    protected function save(Collection $collections, Campaign $campaign, Collection $kol): void
+    protected function save(Collection $collections, Campaign $campaign): void
     {
         try {
             DB::beginTransaction();
             foreach ($collections as $data) {
-                CampaignContent::create([
-                    'campaign_id' => $campaign->id,
-                    'key_opinion_leader_id' => $kol->where('username', $data['username'])->first()->id,
-                    'channel' => $data['channel'],
-                    'task_name' => $data['task_name'],
-                    'link' => $data['link'],
-                    'rate_card' => $data['rate_card'],
-                    'product' => $data['product'],
-                    'created_by' => Auth::user()->id
-                ]);
+                // Create or update the KeyOpinionLeader based on the username
+                // Check if the record exists
+                $existingKOL = KeyOpinionLeader::where('username', $data['username'])->first();
+
+                if ($existingKOL) {
+                    // If the record exists, update it without modifying average_view and cpm
+                    $existingKOL->update([
+                        'channel' => $data['channel'],
+                        'rate' => $data['rate_card'],
+                        'created_by' => Auth::user()->id,
+                        'pic_contact' => Auth::user()->id,
+                    ]);
+                    $kol = $existingKOL;
+                } else {
+                    // If the record does not exist, create a new one with average_view and cpm set to 0
+                    $kol = KeyOpinionLeader::create([
+                        'username' => $data['username'],
+                        'channel' => $data['channel'],
+                        'niche' => '-',
+                        'average_view' => 0,
+                        'skin_type' => '-',
+                        'skin_concern' => '-',
+                        'content_type' => '-',
+                        'rate' => $data['rate_card'],
+                        'cpm' => 0,
+                        'created_by' => Auth::user()->id,
+                        'pic_contact' => Auth::user()->id,
+                    ]);
+                }
+
+
+                // Create or update the campaign content
+                CampaignContent::updateOrCreate(
+                    [
+                        'link' => $data['link'],
+                        'key_opinion_leader_id' => $kol->id,
+                    ],
+                    [
+                        'channel' => $data['channel'],
+                        'task_name' => $data['task_name'],
+                        'campaign_id' => $campaign->id,
+                        'rate_card' => $data['rate_card'],
+                        'product' => $data['product'],
+                        'created_by' => Auth::user()->id,
+                    ]
+                );
+
             }
 
             DB::commit();

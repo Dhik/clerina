@@ -5,6 +5,7 @@ use App\Domain\Campaign\Controllers\CampaignController;
 use App\Domain\Campaign\Controllers\KeyOpinionLeaderController;
 use App\Domain\Campaign\Controllers\OfferController;
 use App\Domain\Campaign\Controllers\StatisticController;
+use App\Domain\Campaign\Controllers\BudgetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -98,6 +99,16 @@ Route::prefix('admin')
 
                 Route::get('/{offer}/show', [OfferController::class, 'show'])->name('offer.show');
                 Route::get('/{campaign}/export', [OfferController::class, 'export'])->name('offer.export');
+            });
+
+            Route::prefix('budgets')->group(function () {
+                Route::get('/', [BudgetController::class, 'index'])->name('budgets.index');
+                Route::get('/create', [BudgetController::class, 'create'])->name('budgets.create');
+                Route::post('/store', [BudgetController::class, 'store'])->name('budgets.store');
+                Route::get('/edit/{id}', [BudgetController::class, 'edit'])->name('budgets.edit');
+                Route::put('/update/{id}', [BudgetController::class, 'update'])->name('budgets.update');
+                Route::delete('/destroy/{id}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+                Route::get('/data', [BudgetController::class, 'show'])->name('budgets.data');
             });
 
         Route::prefix('statistic')

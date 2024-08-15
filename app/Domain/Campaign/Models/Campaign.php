@@ -29,7 +29,8 @@ class Campaign extends Model implements HasMedia
         'total_content',
         'total_expense',
         'achievement',
-        'cpm'
+        'cpm',
+        'id_budget',
     ];
 
     protected $appends = [

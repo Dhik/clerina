@@ -369,7 +369,7 @@ return [
             ]
         ],
         [
-            'text' => 'Campaign',
+            'text' => 'KOL',
             'can' => [
                 PermissionEnum::ViewCampaign,
                 PermissionEnum::ViewOffer,
@@ -378,7 +378,7 @@ return [
             'icon'    => 'fas fa-fw fa-map',
             'submenu' => [
                 [
-                    'text' => 'KOL',
+                    'text' => 'KOL/Influencer',
                     'url' => 'admin/kol',
                     'can' => [PermissionEnum::ViewKOL],
                     'icon' => 'nav-icon far fa-circle',
@@ -392,12 +392,19 @@ return [
                     'active' => ['admin/campaign*']
                 ],
                 [
-                    'text' => 'Offer',
-                    'url' => 'admin/offer',
+                    'text' => 'Budget',
+                    'url' => 'admin/budgets',
                     'can' => [PermissionEnum::ViewOffer],
                     'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/offer*']
+                    'active' => ['admin/budgets*']
                 ],
+                // [
+                //     'text' => 'Offer',
+                //     'url' => 'admin/offer',
+                //     'can' => [PermissionEnum::ViewOffer],
+                //     'icon' => 'nav-icon far fa-circle',
+                //     'active' => ['admin/offer*']
+                // ],
             ]
         ],
         [
