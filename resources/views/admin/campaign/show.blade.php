@@ -317,7 +317,11 @@
                     d.filterFyp = filterFyp.prop('checked');
                     d.filterPayment = filterPayment.prop('checked');
                     d.filterDelivery = filterDelivery.prop('checked');
-                }
+                },
+                success: function(data) {
+                    // Log the data received from the server
+                    console.log('Data received from server:', data);
+                },
             },
             columns: [
                 {data: 'id', name: 'id'},
