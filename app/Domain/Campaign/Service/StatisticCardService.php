@@ -53,7 +53,7 @@ class StatisticCardService
 
     protected function fetchCampaignContents(int $campaignId, Request $request)
     {
-        $query = CampaignContent::select('id', 'campaign_id', 'key_opinion_leader_id', 'rate_card', 'product')
+        $query = CampaignContent::select('id','username', 'campaign_id', 'key_opinion_leader_id', 'rate_card', 'product')
             ->with(['latestStatistic' => function ($query) {
                 $query->select('id', 'campaign_content_id', 'date', 'view', 'like', 'comment', 'cpm', 'engagement');
             }, 'keyOpinionLeader' => function ($query) {
@@ -94,11 +94,11 @@ class StatisticCardService
     {
         return $campaignContents->groupBy('username')->map(function ($items) {
             return [
-                'username' => $items->first()->username ?? '',
-                'view' => $items->sum('latestStatistic.view'),
-                'like' => $items->sum('latestStatistic.like'),
-                'comment' => $items->sum('latestStatistic.comment'),
-                'engagement' => $items->sum('latestStatistic.engagement'),
+                'key_opinion_leader_name' => $items->first()->username ?? '',
+                'view' => $items->sum(fn($item) => $item->latestStatistic->view ?? 0),
+                'like' => $items->sum(fn($item) => $item->latestStatistic->like ?? 0),
+                'comment' => $items->sum(fn($item) => $item->latestStatistic->comment ?? 0),
+                'engagement' => $items->sum(fn($item) => $item->latestStatistic->engagement ?? 0),
             ];
         });
     }
