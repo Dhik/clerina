@@ -1,6 +1,7 @@
 <script>
     function updateCard() {
         $.ajax({
+            // url: "{{ route('statistic.card', ['campaignId' => ':campaignId']) }}".replace(':campaignId', {{ $campaign->id }}) + '?filterDates=' + filterDates.val(),
             url: "{{ route('statistic.card', ['campaignId' => ':campaignId']) }}".replace(':campaignId', {{ $campaign->id }}),
             method: 'GET',
             success: function(response) {

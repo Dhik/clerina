@@ -310,7 +310,7 @@
             ajax: {
                 url: "{{ route('campaignContent.getDataTable', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
                 data: function (d) {
-                    d.filterDates = filterDates.val();
+                    // d.filterDates = filterDates.val();
                     d.filterInfluencer = filterInfluencer.val();
                     d.filterProduct = filterProduct.val();
                     d.filterPlatform = filterPlatform.val();
