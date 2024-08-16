@@ -301,6 +301,7 @@
         const filterPayment = $('#filterPayment')
         const filterDelivery = $('#filterDelivery')
 
+        // datatable
         let contentTable = $('#contentTable').DataTable({
             responsive: true,
             processing: true,
@@ -309,7 +310,6 @@
             ajax: {
                 url: "{{ route('campaignContent.getDataTable', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
                 data: function (d) {
-                    // Log the data being sent to the server
                     d.filterDates = filterDates.val();
                     d.filterInfluencer = filterInfluencer.val();
                     d.filterProduct = filterProduct.val();
@@ -317,17 +317,10 @@
                     d.filterFyp = filterFyp.prop('checked');
                     d.filterPayment = filterPayment.prop('checked');
                     d.filterDelivery = filterDelivery.prop('checked');
-
-                    console.log('Data sent to server:', d);
                 },
                 success: function(data) {
-                    // Log the data received from the server
                     console.log('Data received from server:', data);
                 },
-                error: function(xhr, status, error) {
-                    console.error('AJAX error:', error);
-                    console.log('Response:', xhr.responseText);
-                }
             },
             columns: [
                 {data: 'id', name: 'id'},
@@ -353,7 +346,6 @@
             ],
             order: [[0, 'desc']]
         });
-
 
         // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {
