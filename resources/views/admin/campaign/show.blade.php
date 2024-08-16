@@ -343,6 +343,7 @@
             ],
             order: [[0, 'desc']]
         });
+        console.log(contentTable);
 
         // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {
