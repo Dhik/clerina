@@ -236,7 +236,7 @@
                 {data: 'created_at', name: 'created_at'},
                 {data: 'id', name: 'id'},
                 {data: 'created_by_name', name: 'createdBy.name'},
-                {data: 'key_opinion_leader_username', name: 'keyOpinionLeader.username'},
+                {data: 'key_opinion_leader_username', name: 'username'},
                 {data: 'rate_formatted', name: 'rate_per_slot'},
                 {data: 'key_opinion_leader_cpm', name: 'keyOpinionLeader.cpm'},
                 {data: 'key_opinion_leader_average_view', name: 'keyOpinionLeader.average_view'},
