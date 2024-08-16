@@ -92,10 +92,9 @@ class StatisticCardService
 
     protected function groupDataByKeyOpinionLeader($campaignContents): mixed
     {
-        return $campaignContents->groupBy('key_opinion_leader_id')->map(function ($items) {
+        return $campaignContents->groupBy('username')->map(function ($items) {
             return [
-                'key_opinion_leader_id' => $items->first()->keyOpinionLeader->id ?? '',
-                'key_opinion_leader_name' => $items->first()->keyOpinionLeader->username ?? '',
+                'username' => $items->first()->username ?? '',
                 'view' => $items->sum('latestStatistic.view'),
                 'like' => $items->sum('latestStatistic.like'),
                 'comment' => $items->sum('latestStatistic.comment'),
