@@ -82,6 +82,7 @@ class CampaignImportService
                     ],
                     [
                         'channel' => $data['channel'],
+                        'username' => $data['username'],
                         'key_opinion_leader_id' => $kol->id,
                         'task_name' => $data['task_name'],
                         'rate_card' => $data['rate_card'],

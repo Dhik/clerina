@@ -4,6 +4,7 @@
             url: "{{ route('statistic.card', ['campaignId' => ':campaignId']) }}".replace(':campaignId', {{ $campaign->id }}) + '?filterDates=' + filterDates.val(),
             method: 'GET',
             success: function(response) {
+                console.log("Response from server:", response);
                 // Update card elements
                 updateElement('#totalExpense', response.total_expense);
                 updateElement('#totalCPM', response.cpm);

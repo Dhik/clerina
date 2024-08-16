@@ -18,6 +18,7 @@ class CampaignContent extends Model
         'campaign_id',
         'key_opinion_leader_id',
         'channel',
+        'username',
         'task_name',
         'link',
         'rate_card',
