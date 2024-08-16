@@ -321,7 +321,7 @@
             },
             columns: [
                 {data: 'id', name: 'id'},
-                {data: 'key_opinion_leader_username', name: 'task_name'},
+                {data: 'username', name: 'username', sortable: false, orderable: false},
                 {data: 'channel', name: 'channel'},
                 {data: 'product', name: 'product'},
                 {data: 'task_name', name: 'task_name'},
