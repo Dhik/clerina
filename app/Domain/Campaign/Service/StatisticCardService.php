@@ -145,7 +145,7 @@ class StatisticCardService
             'view' => number_format($totals['totalView'], 0, ',', '.'),
             'like' => number_format($totals['totalLike'], 0, ',', '.'),
             'comment' => number_format($totals['totalComment'], 0, ',', '.'),
-            'total_influencer' => number_format($campaignContents->pluck('key_opinion_leader_id')->unique()->count(), 0, ',', '.'),
+            'total_influencer' => number_format($campaignContents->pluck('username')->unique()->count(), 0, ',', '.'),
             'total_content' => number_format($campaignContents->count(), 0, ',', '.'),
             'total_expense' => number_format($totals['totalExpense'], 0, ',', '.'),
             'achievement' => $totals['totalExpense'] === 0 ? 0 : number_format($totals['totalView'] / $totals['totalExpense'] * 100, 2, ',', '.') . '%',
