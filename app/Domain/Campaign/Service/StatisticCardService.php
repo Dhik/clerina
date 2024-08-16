@@ -37,7 +37,7 @@ class StatisticCardService
             'view' => $totals['totalView'],
             'like' => $totals['totalLike'],
             'comment' => $totals['totalComment'],
-            'total_influencer' => $campaignContents->pluck('key_opinion_leader_id')->unique()->count(),
+            'total_influencer' => $campaignContents->pluck('username')->unique()->count(),
             'total_content' => $campaignContents->count(),
             'total_expense' => $totals['totalExpense'],
             'achievement' => $totals['totalExpense'] === 0 ? 0 : $totals['totalView'] / $totals['totalExpense'],
