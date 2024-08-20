@@ -8,6 +8,7 @@ use App\Domain\Campaign\Enums\CampaignContentEnum;
 use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Service\InstagramScrapperService;
 use App\Domain\Campaign\Service\TiktokScrapperService;
+use App\Domain\Campaign\Service\TwitterScrapperService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,8 @@ class StatisticBLL implements StatisticBLLInterface
         protected CampaignContentDALInterface $campaignContentDAL,
         protected StatisticDALInterface $statisticDAL,
         protected InstagramScrapperService $instagramScrapperService,
-        protected TiktokScrapperService $tiktokScrapperService
+        protected TiktokScrapperService $tiktokScrapperService,
+        protected TwitterScrapperService $twitterScrapperService
     ) {
     }
 
@@ -81,6 +83,9 @@ class StatisticBLL implements StatisticBLLInterface
                 $data = $this->instagramScrapperService->getPostInfo($link);
             } elseif ($channel === CampaignContentEnum::TiktokVideo) {
                 $data = $this->tiktokScrapperService->getData($link);
+            } elseif ($channel === CampaignContentEnum::TwitterPost) {
+                $twitterPostId = $this->extractTwitterPostId($link);
+                $data = $this->twitterScrapperService->getData($twitterPostId);
             }
 
             if (empty($data)) {
@@ -101,6 +106,11 @@ class StatisticBLL implements StatisticBLLInterface
         }
 
         return false;
+    }
+    protected function extractTwitterPostId(string $url): ?string 
+    {
+        $segments = explode('/', rtrim($url, '/'));
+        return end($segments);
     }
 
     /**

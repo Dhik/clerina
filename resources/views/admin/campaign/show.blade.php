@@ -92,134 +92,13 @@
         </div>
     </div>
 
-    @include('admin.campaign.modal-create-offer')
-    @include('admin.campaign.modal-update-offer')
-    @include('admin.campaign.modal-status-offer')
-    @include('admin.campaign.modal-review-offer')
 @endsection
 
 @section('js')
     <script>
         let campaignId = '{{ $campaign->id }}'
         const filterStatus = $('#filterStatus');
-
-        filterStatus.change(function () {
-            offerTable.draw();
-        });
-
-        // Handle change event of Select2
-        $('#usernameOffer').on('change', function() {
-            let selectedOption = $(this).select2('data')[0];
-
-            if (selectedOption && selectedOption.id !== '') {
-                // Fetch additional data based on the selected option
-                $.ajax({
-                    url: "{{ route('kol.show.json', ['keyOpinionLeader' => ':keyOpinionLeaderId']) }}".replace(':keyOpinionLeaderId', selectedOption.id),
-                    type: 'GET',
-                    success: function(response) {
-                        $('#ratePerSlot').val(response.rate);
-                        $('#bankName').val(response.bank_name);
-                        $('#bankAccount').val(response.bank_account);
-                        $('#bankAccountName').val(response.bank_account_name);
-                        $('#nik').val(response.nik);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching additional data:', error);
-                    }
-                });
-            }
-        });
-
-        // submit update form
-        $('#offerForm').submit(function(e) {
-            e.preventDefault();
-
-            let formData = $(this).serialize();
-
-            $.ajax({
-                type: 'POST',
-                url: "{{ route('offer.store', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
-                data: formData,
-                success: function(response) {
-                    offerTable.ajax.reload();
-                    $('#offerModal').modal('hide');
-                    $('#username').val(null).trigger('change');
-                    $('#offerForm')[0].reset();
-                    toastr.success('{{ trans('messages.success_save', ['model' => trans('labels.offer')]) }}');
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                }
-            });
-        });
-
-        // submit update form
-        $('#offerUpdateForm').submit(function(e) {
-            e.preventDefault();
-
-            let formData = $(this).serialize();
-
-            $.ajax({
-                type: 'PUT',
-                url: "{{ route('offer.update', ['offer' => ':offer']) }}".replace(':offer', $('#offerId').val()),
-                data: formData,
-                success: function(response) {
-                    offerTable.ajax.reload();
-                    $('#offerUpdateModal').modal('hide');
-                    $('#offerForm')[0].reset();
-                    toastr.success('{{ trans('messages.success_update', ['model' => trans('labels.offer')]) }}');
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                }
-            });
-        });
-
-        // submit update form
-        $('#statusUpdateForm').submit(function(e) {
-            e.preventDefault();
-
-            let formData = $(this).serialize();
-
-            $.ajax({
-                type: 'PUT',
-                url: "{{ route('offer.updateStatus', ['offer' => ':offer']) }}".replace(':offer', $('#statusOfferId').val()),
-                data: formData,
-                success: function(response) {
-                    offerTable.ajax.reload();
-                    $('#errorUpdateStatus').addClass('d-none');
-                    $('#statusUpdateModal').modal('hide');
-                    $('#statusUpdateForm')[0].reset();
-                    toastr.success('{{ trans('messages.success_update', ['model' => trans('labels.offer')]) }}');
-                },
-                error: function(xhr, status, error) {
-                    errorAjaxValidation(xhr, status, error, $('#errorUpdateStatus'));
-                }
-            });
-        });
-
-        // submit update form
-        $('#reviewOfferForm').submit(function(e) {
-            e.preventDefault();
-
-            let formData = $(this).serialize();
-
-            $.ajax({
-                type: 'PUT',
-                url: "{{ route('offer.reviewOffering', ['offer' => ':offer']) }}".replace(':offer', $('#reviewOfferId').val()),
-                data: formData,
-                success: function(response) {
-                    offerTable.ajax.reload();
-                    $('#errorReviewOffer').addClass('d-none');
-                    $('#reviewOfferModal').modal('hide');
-                    toastr.success('{{ trans('messages.success_update', ['model' => trans('labels.offer')]) }}');
-                },
-                error: function(xhr, status, error) {
-                    errorAjaxValidation(xhr, status, error, $('#errorReviewOffer'));
-                }
-            });
-        });
-
+        
         // datatable
         let offerTable = $('#offerTable').DataTable({
             responsive: true,
@@ -252,45 +131,6 @@
                 { "targets": [10, 11], "className": "text-center" },
             ],
             order: [[0, 'desc']]
-        });
-
-        // Handle row click event to open modal and fill form
-        offerTable.on('draw.dt', function() {
-            const tableBodySelector =  $('#offerTable tbody');
-
-            tableBodySelector.on('click', '.btnUpdateOffer', function() {
-                let rowData = offerTable.row($(this).closest('tr')).data();
-
-                $('#offerId').val(rowData.id);
-                $('#usernameOfferUpdate').val(rowData.key_opinion_leader.username);
-                $('#rateUpdate').val(rowData.rate_per_slot);
-                $('#benefitUpdate').val(rowData.benefit);
-                $('#negotiateUpdate').val(rowData.negotiate).trigger('change');
-                $('#updateBankName').val(rowData.bank_name);
-                $('#updateBankAccount').val(rowData.bank_account);
-                $('#updateBankAccountName').val(rowData.bank_account_name);
-                $('#updateNik').val(rowData.nik);
-
-                $('#offerUpdateModal').modal('show');
-            });
-
-            tableBodySelector.on('click', '.btnUpdateStatus', function() {
-                let rowData = offerTable.row($(this).closest('tr')).data();
-
-                $('#statusOfferId').val(rowData.id);
-                $('#statusField').val(rowData.status).trigger('change');
-                $('#accSlot').val(rowData.acc_slot);
-                $('#statusUpdateModal').modal('show');
-            });
-
-            tableBodySelector.on('click', '.btnReviewOffer', function() {
-                let rowData = offerTable.row($(this).closest('tr')).data();
-                $('#reviewOfferId').val(rowData.id);
-                $('#rateFinalSlot').val(rowData.rate_final_slot);
-                $('#rateTotalSlot').val(rowData.rate_total_slot);
-                $('#npwpCheckbox').prop('checked', !!rowData.npwp);
-                $('#reviewOfferModal').modal('show');
-            });
         });
 
         const filterDates = $('#filterDates')

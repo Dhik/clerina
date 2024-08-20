@@ -79,7 +79,7 @@
 
     {{-- Body Content --}}
     @yield('body')
-
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
     {{-- Base Scripts --}}
     @if(!config('adminlte.enabled_laravel_mix'))
         <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>

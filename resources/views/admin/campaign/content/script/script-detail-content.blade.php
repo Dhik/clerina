@@ -1,63 +1,86 @@
 <script>
-    $(document).on('click', '.btnDetail', detailContent());
+    $(document).on('click', '.btnDetail', detailContent);
 
     let statisticDetailChart;
 
     function detailContent() {
-        return function () {
-            let rowData = contentTable.row($(this).closest('tr')).data();
+        let rowData = contentTable.row($(this).closest('tr')).data();
 
-            $('#likeModal').text(rowData.like);
-            $('#viewModal').text(rowData.view);
-            $('#commentModal').text(rowData.comment);
-            $('#rateCardModal').text(rowData.rate_card_formatted);
+        // Update modal with the data
+        $('#likeModal').text(rowData.like);
+        $('#viewModal').text(rowData.view);
+        $('#commentModal').text(rowData.comment);
+        $('#rateCardModal').text(rowData.rate_card_formatted);
 
-            if (rowData.upload_date !== null) {
-                $('#uploadDateModal').text(rowData.upload_date);
+        if (rowData.upload_date !== null) {
+            $('#uploadDateModal').text(rowData.upload_date);
+        } else {
+            $('#uploadDateModal').text('Belum Posting');
+        }
+
+        // Clear existing chart if it exists
+        if (statisticDetailChart) {
+            statisticDetailChart.destroy();
+        }
+
+        // Fetch and render the chart data
+        $.ajax({
+            url: "{{ route('statistic.chartDetail', ['campaignContentId' => ':campaignContentId']) }}".replace(':campaignContentId', rowData.id),
+            type: 'GET',
+            success: function (response) {
+                renderDetailChart(response);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
             }
+        });
 
-            // Clear existing chart if it exists
-            if (statisticDetailChart) {
-                statisticDetailChart.destroy();
-            }
+        // Embed content based on the channel
+        $('#contentEmbed').html(''); // Clear previous content
 
+        if (rowData.link !== '' && rowData.channel === 'twitter_post') {
+            let twitterLink = rowData.link.replace('https://x.com/', 'https://twitter.com/');
+
+            // Dynamically insert the Twitter post URL
+            let tweetEmbed = `
+                <blockquote class="twitter-tweet">
+                    <a href="${twitterLink}"></a>
+                </blockquote>
+            `;
+            $('#contentEmbed').html(tweetEmbed);
+
+            // Render the Twitter embed
+            twttr.widgets.load(document.getElementById('contentEmbed'));
+
+        } else if (rowData.link !== '' && rowData.channel === 'tiktok_video') {
+            // Embed TikTok video
             $.ajax({
-                url: "{{ route('statistic.chartDetail', ['campaignContentId' => ':campaignContentId']) }}".replace(':campaignContentId', rowData.id),
+                url: "https://www.tiktok.com/oembed?url=" + rowData.link,
                 type: 'GET',
                 success: function (response) {
-                    renderDetailChart(response);
+                    $('#contentEmbed').html(response.html);
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
                 }
             });
+        } else if (rowData.link !== '' && rowData.channel === 'instagram_feed') {
+            // Embed Instagram post
+            let linkIg = rowData.link.endsWith('/');
+            let embedLink = linkIg ? rowData.link + 'embed' : rowData.link + '/embed';
 
-            if (rowData.link !== '' && rowData.channel === 'tiktok_video') {
-                $.ajax({
-                    url: "https://www.tiktok.com/oembed?url=" + rowData.link,
-                    type: 'GET',
-                    success: function (response) {
-                        $('#contentEmbed').html(response.html)
-                    },
-                    error: function (xhr, status, error) {
-                        console.error(xhr.responseText);
-                    }
-                });
-            } else if (rowData.link !== '' && rowData.channel === 'instagram_feed') {
-                let linkIg = rowData.link.endsWith('/');
-                let embedLink = linkIg ? rowData.link + 'embed' : rowData.link + '/embed';
-
-                let embedIg = '<iframe height="600" src="' + embedLink + '" frameborder="0"></iframe>'
-                $('#contentEmbed').html(embedIg)
-            } else if (rowData.link !== '') {
-                let buttonEmbed = '<a href='+ rowData.link +' target="_blank" class="btn btn-primary">Go to Content</a>';
-                $('#contentEmbed').html(buttonEmbed)
-            } else {
-                $('#contentEmbed').text('')
-            }
-
-            $('#detailModal').modal('show');
+            let embedIg = '<iframe height="600" src="' + embedLink + '" frameborder="0"></iframe>';
+            $('#contentEmbed').html(embedIg);
+        } else if (rowData.link !== '') {
+            // Embed generic link
+            let buttonEmbed = '<a href="'+ rowData.link +'" target="_blank" class="btn btn-primary">Go to Content</a>';
+            $('#contentEmbed').html(buttonEmbed);
+        } else {
+            $('#contentEmbed').html('');  // Clear contentEmbed if no link is provided
         }
+
+        // Show the modal
+        $('#detailModal').modal('show');
     }
 
     function renderDetailChart(chartData) {
@@ -74,40 +97,42 @@
                     borderColor: 'rgba(54, 162, 235, 1)',
                     fill: false
                 },
-                    {
-                        label: 'Likes',
-                        data: chartData.map(data => data.positive_like),
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        fill: false
-                    },
-                    {
-                        label: 'Comments',
-                        data: chartData.map(data => data.comment),
-                        backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                        borderColor: 'rgba(255, 206, 86, 1)',
-                        fill: false
-                    }]
+                {
+                    label: 'Likes',
+                    data: chartData.map(data => data.positive_like),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    fill: false
+                },
+                {
+                    label: 'Comments',
+                    data: chartData.map(data => data.comment),
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    fill: false
+                }]
             },
             options: {
                 responsive: true,
-                title: {
-                    display: true,
-                    text: 'Statistics Chart'
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Statistics Chart'
+                    }
                 },
                 scales: {
-                    xAxes: [{
-                        scaleLabel: {
+                    x: {
+                        title: {
                             display: true,
-                            labelString: 'Date'
+                            text: 'Date'
                         }
-                    }],
-                    yAxes: [{
-                        scaleLabel: {
+                    },
+                    y: {
+                        title: {
                             display: true,
-                            labelString: 'Value'
+                            text: 'Value'
                         }
-                    }]
+                    }
                 }
             }
         });

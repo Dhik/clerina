@@ -10,6 +10,7 @@ enum CampaignContentEnum
     const TiktokVideo = 'tiktok_video';
     const TikTokLive = 'tiktok_live';
     const YoutubeVideo = 'youtube_video';
+    const TwitterPost = 'twitter_post';
 
     const Platform = [
         [
@@ -32,6 +33,10 @@ enum CampaignContentEnum
             'value' => self::YoutubeVideo,
             'label' => self::YoutubeVideo . ' (Manual)',
         ],
+        [
+            'value' => self::TwitterPost,
+            'label' => self::TwitterPost. ' (Auto)',
+        ],
     ];
 
     const PlatformValidation = [
@@ -40,5 +45,6 @@ enum CampaignContentEnum
         self::TiktokVideo,
         self::TikTokLive,
         self::YoutubeVideo,
+        self::TwitterPost,
     ];
 }
