@@ -167,6 +167,14 @@
                 $(this).find('form')[0].reset();
                 $(this).find('input[name="_method"]').remove();
             });
+
+            // Handle Delete button click
+            $('#budgetTable').on('click', '.deleteButton', function() {
+                let rowData = table.row($(this).closest('tr')).data();
+                let route = '{{ route('budgets.destroy', ':id') }}'.replace(':id', rowData.id);
+
+                deleteAjax(route, rowData.id, table);
+            });
         });
     </script>
 @stop
