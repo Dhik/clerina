@@ -5,6 +5,7 @@ namespace App\Domain\Campaign\DAL\Campaign;
 use App\Domain\Campaign\Models\Campaign;
 use App\DomainUtils\BaseDAL\BaseDALInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 interface CampaignDALInterface extends BaseDALInterface
 {
@@ -37,4 +38,6 @@ interface CampaignDALInterface extends BaseDALInterface
      * Check campaign content
      */
     public function checkCampaignContent(Campaign $campaign);
+
+    public function getCampaignsByDateRange($startDate, $endDate, int $tenantId): Collection;
 }

@@ -6,6 +6,7 @@ use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Requests\CampaignRequest;
 use App\DomainUtils\BaseBLL\BaseBLLInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Yajra\DataTables\Utilities\Request;
 
 interface CampaignBLLInterface extends BaseBLLInterface
 {
@@ -28,4 +29,6 @@ interface CampaignBLLInterface extends BaseBLLInterface
      * Delete campaign
      */
     public function deleteCampaign(Campaign $campaign): bool;
+
+    public function getCampaignSummary(Request $request, int $tenantId): array;
 }

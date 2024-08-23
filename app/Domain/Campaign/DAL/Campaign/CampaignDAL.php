@@ -7,6 +7,7 @@ use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Models\Offer;
 use App\DomainUtils\BaseDAL\BaseDAL;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 
 class CampaignDAL extends BaseDAL implements CampaignDALInterface
@@ -65,4 +66,12 @@ class CampaignDAL extends BaseDAL implements CampaignDALInterface
     {
         return $this->campaignContent->where('campaign_id', $campaign->id)->first();
     }
+    public function getCampaignsByDateRange($startDate, $endDate, int $tenantId): Collection
+    {
+        return $this->campaign->where('start_date', '>=', $startDate)
+                            ->where('end_date', '<=', $endDate)
+                            ->where('tenant_id', $tenantId)
+                            ->get();
+    }
+
 }

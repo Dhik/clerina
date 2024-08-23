@@ -10,6 +10,7 @@ use App\Domain\Campaign\Requests\CampaignRequest;
 use App\Domain\Campaign\Service\StatisticCardService;
 use App\Http\Controllers\Controller;
 use Exception;
+use Auth;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use App\Domain\Campaign\Models\Budget;
@@ -18,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Utilities\Request;
+
 
 class CampaignController extends Controller
 {
@@ -173,5 +176,28 @@ class CampaignController extends Controller
                 'alert' => 'success',
                 'message' => trans('messages.success_update', ['model' => trans('labels.campaign')]),
             ]);
+    }
+    public function bulkRefresh(): RedirectResponse
+    {
+        $this->authorize('UpdateCampaign', Campaign::class);
+
+        $campaigns = Campaign::all(); // Fetch all campaigns, or you can apply filters as needed
+
+        foreach ($campaigns as $campaign) {
+            $this->cardService->recapStatisticCampaign($campaign->id);
+        }
+
+        return redirect()
+            ->route('campaign.index')
+            ->with([
+                'alert' => 'success',
+                'message' => trans('messages.success_bulk_update', ['model' => trans('labels.campaign')]),
+            ]);
+    }
+
+    public function getCampaignSummary(Request $request): JsonResponse
+    {
+        $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
+        return response()->json($summary);
     }
 }
