@@ -137,12 +137,15 @@
             campaignTable.ajax.url("{{ route('campaign.get') }}?filterDates=" + filterDate.val()).load();
         });
 
-        // Load the summary data with an optional date range
-        function loadCampaignSummary(dateRange = '') {
+        // Load the summary data with an optional date range and search term
+        function loadCampaignSummary(dateRange = '', searchTerm = '') {
             $.ajax({
                 url: "{{ route('campaign.summary') }}",
                 method: 'GET',
-                data: { filterDates: dateRange },
+                data: { 
+                    filterDates: dateRange,
+                    search: searchTerm
+                },
                 success: function(response) {
                     $('#totalExpense').text(response.total_expense);
                     $('#totalContent').text(response.total_content);
@@ -157,43 +160,48 @@
 
         // Initialize DataTables
         let campaignTable = campaignTableSelector.DataTable({
-    responsive: true,
-    processing: true,
-    serverSide: true,
-    ajax: {
-        url: "{{ route('campaign.get') }}",
-        data: function (d) {
-            d.filterDates = filterDate.val();
-        }
-    },
-    columns: [
-        {data: 'created_at', name: 'created_at'},
-        {
-            data: 'title',
-            name: 'title',
-            render: function(data, type, row) {
-                return '<a href="/admin/campaign/' + row.id + '/show">' + data + '</a>';
-            }
-        },
-        {data: 'expense_formatted', name: 'total_expense', searchable: false},
-        {data: 'cpm_formatted', name: 'cpm', searchable: false},
-        {data: 'views_formatted', name: 'view', searchable: false},
-        {data: 'period', name: 'period', sortable: false, orderable: false, searchable: false},
-        {data: 'created_by_name', name: 'created_by_name'},
-        {data: 'actions', sortable: false, orderable: false}
-    ],
-    columnDefs: [
-        { "targets": [0], "visible": false },
-        { "targets": [2], "className": "text-right" },
-        { "targets": [3], "className": "text-right" },
-        { "targets": [4], "className": "text-right" },
-        { "targets": [5], "className": "text-center" },
-        { "targets": [6], "visible": false },
-        { "targets": [7], "className": "text-center" }
-    ],
-    order: [[0, 'desc']]
-});
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('campaign.get') }}",
+                data: function (d) {
+                    d.filterDates = filterDate.val();
+                }
+            },
+            columns: [
+                {data: 'created_at', name: 'created_at'},
+                {
+                    data: 'title',
+                    name: 'title',
+                    render: function(data, type, row) {
+                        return '<a href="/admin/campaign/' + row.id + '/show">' + data + '</a>';
+                    }
+                },
+                {data: 'expense_formatted', name: 'total_expense', searchable: false},
+                {data: 'cpm_formatted', name: 'cpm', searchable: false},
+                {data: 'views_formatted', name: 'view', searchable: false},
+                {data: 'period', name: 'period', sortable: false, orderable: false, searchable: false},
+                {data: 'created_by_name', name: 'created_by_name'},
+                {data: 'actions', sortable: false, orderable: false}
+            ],
+            columnDefs: [
+                { "targets": [0], "visible": false },
+                { "targets": [2], "className": "text-right" },
+                { "targets": [3], "className": "text-right" },
+                { "targets": [4], "className": "text-right" },
+                { "targets": [5], "className": "text-center" },
+                { "targets": [6], "visible": false },
+                { "targets": [7], "className": "text-center" }
+            ],
+            order: [[0, 'desc']]
+        });
 
+        // Listen for search event
+        campaignTableSelector.on('search.dt', function() {
+            let searchTerm = campaignTable.search();
+            loadCampaignSummary(filterDate.val(), searchTerm);
+        });
 
         // Handle bulk refresh button click
         $('#bulkRefreshBtn').click(function () {

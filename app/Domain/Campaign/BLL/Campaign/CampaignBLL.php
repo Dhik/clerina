@@ -100,30 +100,50 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         return true;
     }
     public function getCampaignSummary(Request $request, int $tenantId): array
-    {
-        $startDateString = Carbon::now()->startOfMonth();
-        $endDateString = Carbon::now()->endOfMonth();
+{
+    $startDateString = Carbon::now()->startOfMonth();
+    $endDateString = Carbon::now()->endOfMonth();
 
-        if ($request->input('filterDates')) {
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-            $startDateString = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
-            $endDateString = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-        }
-
-        $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
-
-        $totalExpense = $campaigns->sum('total_expense');
-        $totalContent = $campaigns->sum('total_content');
-        $totalViews = $campaigns->sum('view');
-        $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
-
-        return [
-            'total_expense' => $this->numberFormat($totalExpense),
-            'total_content' => $this->numberFormat($totalContent),
-            'cpm' => $this->numberFormat($cpm, 2),
-            'views' => $this->numberFormat($totalViews),
-        ];
+    if ($request->input('filterDates')) {
+        [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+        $startDateString = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+        $endDateString = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
     }
+
+    $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
+
+    if ($request->input('search')) {
+        $campaigns = $campaigns->filter(function ($campaign) use ($request) {
+            return stripos($campaign->title, $request->input('search')) !== false;
+        });
+    }
+
+    // Group campaigns by normalized (lowercase) title and sum their values
+    $groupedCampaigns = $campaigns->groupBy(function ($campaign) {
+        return strtolower($campaign->title);
+    });
+
+    $totalExpense = 0;
+    $totalContent = 0;
+    $totalViews = 0;
+
+    foreach ($groupedCampaigns as $group) {
+        $totalExpense += $group->sum('total_expense');
+        $totalContent += $group->sum('total_content');
+        $totalViews += $group->sum('view');
+    }
+
+    $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
+
+    return [
+        'total_expense' => $this->numberFormat($totalExpense),
+        'total_content' => $this->numberFormat($totalContent),
+        'cpm' => $this->numberFormat($cpm, 2),
+        'views' => $this->numberFormat($totalViews),
+    ];
+}
+
+
     protected function numberFormat($number, $decimals = 0): string
     {
         return number_format($number, $decimals, '.', ',');
