@@ -100,7 +100,6 @@
                                     <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">{{ trans('labels.cpm_short') }}</th>
                                     <th>{{ trans('labels.views') }}</th>
                                     <th>{{ trans('labels.period') }}</th>
-                                    <th>{{ trans('labels.created_by') }}</th>
                                     <th width="15%">{{ trans('labels.action') }}</th>
                                 </tr>
                                 </thead>
@@ -173,7 +172,6 @@
                 {data: 'cpm_formatted', name: 'cpm', searchable: false},
                 {data: 'views_formatted', name: 'view', searchable: false},
                 {data: 'period', name: 'period', sortable: false, orderable: false, searchable: false},
-                {data: 'created_by_name', name: 'created_by_name'},
                 {data: 'actions', sortable: false, orderable: false}
             ],
             columnDefs: [
