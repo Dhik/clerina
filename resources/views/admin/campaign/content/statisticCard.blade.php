@@ -6,7 +6,7 @@
                 <p>Total Pengeluaran</p>
             </div>
             <div class="icon">
-                <i class="fas fa-comment-dollar text-lime"></i>
+                <i class="fas fa-comment-dollar text-gray"></i>
             </div>
         </div>
     </div>
@@ -17,7 +17,7 @@
                 <p>Cost Per Mile</p>
             </div>
             <div class="icon">
-                <i class="fas fa-chart-bar text-purple"></i>
+                <i class="fas fa-chart-bar text-gray"></i>
             </div>
         </div>
     </div>
@@ -28,7 +28,7 @@
                 <p>Total Influencer</p>
             </div>
             <div class="icon">
-                <i class="fas fa-bullhorn text-danger"></i>
+                <i class="fas fa-bullhorn text-gray"></i>
             </div>
         </div>
     </div>
@@ -39,7 +39,7 @@
                 <p>Total Konten</p>
             </div>
             <div class="icon">
-                <i class="fas fa-folder-open text-warning"></i>
+                <i class="fas fa-folder-open text-gray"></i>
             </div>
         </div>
     </div>
@@ -50,7 +50,7 @@
                 <p>Pencapaian</p>
             </div>
             <div class="icon">
-                <i class="fas fa-trophy text-lightblue"></i>
+                <i class="fas fa-trophy text-gray"></i>
             </div>
         </div>
     </div>
@@ -61,7 +61,7 @@
                 <p>Video Views</p>
             </div>
             <div class="icon">
-                <i class="far fa-eye text-success"></i>
+                <i class="far fa-eye text-gray"></i>
             </div>
         </div>
     </div>
@@ -72,7 +72,7 @@
                 <p>Likes</p>
             </div>
             <div class="icon">
-                <i class="fas fa-thumbs-up text-fuchsia"></i>
+                <i class="fas fa-thumbs-up text-gray"></i>
             </div>
         </div>
     </div>
@@ -83,7 +83,7 @@
                 <p>Comment</p>
             </div>
             <div class="icon">
-                <i class="fas fa-comment-dots text-primary"></i>
+                <i class="fas fa-comment-dots text-gray"></i>
             </div>
         </div>
     </div>

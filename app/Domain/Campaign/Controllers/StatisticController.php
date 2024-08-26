@@ -60,6 +60,11 @@ class StatisticController extends Controller
                 $campaignContent->tenant_id,
                 $campaignContent->rate_card
             );
+            // Check if views are above 10000 and update is_fyp field
+            if ($result && $result['view'] > 10000) {
+                $campaignContent->is_fyp = 1;
+                $campaignContent->save();
+            }
         }
 
         if (!$result) {
@@ -87,6 +92,21 @@ class StatisticController extends Controller
 
             if (!is_null($content->link)) {
                 ScrapJob::dispatch($data);
+
+                 // Retrieve statistics and update is_fyp if view count is above 10000
+                $statistics = $this->statisticBLL->scrapData(
+                    $campaign->id,
+                    $content->id,
+                    $content->channel,
+                    $content->link,
+                    $content->tenant_id,
+                    $content->rate_card
+                );
+
+                if ($statistics && $statistics['view'] > 10000) {
+                    $content->is_fyp = 1;
+                    $content->save();
+                }
             }
         }
 

@@ -106,6 +106,7 @@ Route::prefix('admin')
             Route::prefix('budgets')->group(function () {
                 Route::get('/', [BudgetController::class, 'index'])->name('budgets.index');
                 Route::get('/create', [BudgetController::class, 'create'])->name('budgets.create');
+                Route::get('/{id}/campaigns', [BudgetController::class, 'showCampaigns'])->name('budgets.showCampaigns');
                 Route::post('/store', [BudgetController::class, 'store'])->name('budgets.store');
                 Route::get('/edit/{id}', [BudgetController::class, 'edit'])->name('budgets.edit');
                 Route::put('/update/{id}', [BudgetController::class, 'update'])->name('budgets.update');

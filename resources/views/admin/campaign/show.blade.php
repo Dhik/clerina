@@ -161,7 +161,7 @@
             },
             columns: [
                 {data: 'id', name: 'id'},
-                {data: 'username', name: 'keyOpinionLeader.username', sortable: false, orderable: false},
+                {data: 'username', name: 'keyOpinionLeader.username', orderable: false},
                 {data: 'channel', name: 'channel'},
                 {data: 'product', name: 'product'},
                 {data: 'task_name', name: 'task_name'},
@@ -169,7 +169,7 @@
                 {data: 'comment', name: 'latestStatistic.comment', orderable: false},
                 {data: 'view', name: 'latestStatistic.view', orderable: false},
                 {data: 'cpm', name: 'latestStatistic.view', orderable: false},
-                {data: 'additional_info', sortable: false, orderable: false},
+                {data: 'additional_info', orderable: false},
                 {data: 'actions', sortable: false, orderable: false}
             ],
             columnDefs: [

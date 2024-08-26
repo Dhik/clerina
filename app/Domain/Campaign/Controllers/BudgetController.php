@@ -69,7 +69,7 @@ class BudgetController extends Controller
     public function edit($id)
     {
         $budget = Budget::findOrFail($id);
-        return view('admin.budget.edit', compact('budget'));
+        return response()->json(['budget' => $budget]);
     }
 
     public function update(Request $request, $id)
@@ -86,25 +86,52 @@ class BudgetController extends Controller
         return response()->json(['success' => true]);
     }
 
+
+    public function showCampaigns($id)
+{
+    // Fetch the budget with related campaigns and their total expenses
+    $budget = Budget::with(['campaigns' => function($query) {
+        $query->select('id', 'id_budget', 'title', 'start_date', 'end_date', 'description', 'total_expense');
+    }])->findOrFail($id);
+
+    // Calculate the sum of total expenses for the campaigns under this budget
+    $totalExpenseSum = $budget->campaigns->sum('total_expense');
+
+    return response()->json([
+        'budget' => $budget,
+        'campaigns' => $budget->campaigns,
+        'totalExpenseSum' => number_format($totalExpenseSum, 0, ',', '.')
+    ]);
+}
+
+
+
     public function show()
 {
     $budgets = Budget::all();
 
     return DataTables::of($budgets)
-        ->addColumn('action', function ($budget) {
-            return '
-                <button class="btn btn-sm btn-primary editButton" 
-                    data-id="' . $budget->id . '" 
-                    data-nama_budget="' . htmlspecialchars($budget->nama_budget, ENT_QUOTES, 'UTF-8') . '" 
-                    data-budget="' . $budget->budget . '" 
-                    data-toggle="modal" 
-                    data-target="#budgetModal">
-                    Edit
-                </button>
-                <button class="btn btn-sm btn-danger deleteButton" data-id="' . $budget->id . '">Delete</button>
-            ';
-        })
-        ->make(true);
+    ->addColumn('action', function ($budget) {
+        return '
+            <button class="btn btn-sm btn-primary viewButton" 
+                data-id="' . $budget->id . '" 
+                data-toggle="modal" 
+                data-target="#viewBudgetModal">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-success editButton" 
+                data-id="' . $budget->id . '" 
+                data-nama_budget="' . htmlspecialchars($budget->nama_budget, ENT_QUOTES, 'UTF-8') . '" 
+                data-budget="' . $budget->budget . '" 
+                data-toggle="modal" 
+                data-target="#budgetModal">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-danger deleteButton" data-id="' . $budget->id . '"><i class="fas fa-trash-alt"></i></button>
+        ';
+    })
+    ->make(true);
+
 }
 
     
