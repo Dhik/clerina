@@ -83,7 +83,7 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
             'task_name' => 'required|max:255',
             'channel' => ['required', Rule::in(CampaignContentEnum::PlatformValidation)],
             'link' => 'nullable|url',
-            'rate_card' => 'numeric|min:1',
+            'rate_card' => 'numeric',
             'product' => 'required|max:255'
         ];
     }
