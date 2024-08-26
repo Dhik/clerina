@@ -24,10 +24,24 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     /**
      * Get campaign list datatable
      */
-    public function getCampaignDataTable(): Builder
+    public function getCampaignDataTable(Request $request): Builder
     {
-        return $this->campaignDAL->getCampaignDataTable();
+        $query = $this->campaignDAL->getCampaignDataTable();
+
+        if ($request->input('search.value')) {
+            $searchTerms = explode(' ', strtolower($request->input('search.value')));
+            
+            $query->where(function($q) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    $q->whereRaw('LOWER(title) LIKE ?', ["%$term%"]);
+                }
+            });
+        }
+
+        return $query;
     }
+
+
 
     /**
      * Create new campaign

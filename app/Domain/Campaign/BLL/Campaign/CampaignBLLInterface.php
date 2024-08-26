@@ -13,7 +13,7 @@ interface CampaignBLLInterface extends BaseBLLInterface
     /**
      * Get campaign list datatable
      */
-    public function getCampaignDataTable(): Builder;
+    public function getCampaignDataTable(Request $request): Builder;
 
     /**
      * Create new campaign

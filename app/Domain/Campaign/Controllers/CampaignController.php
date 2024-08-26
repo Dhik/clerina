@@ -34,11 +34,11 @@ class CampaignController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function get(): JsonResponse
+    public function get(Request $request): JsonResponse
     {
         $this->authorize('viewCampaign', Campaign::class);
 
-        $query = $this->campaignBLL->getCampaignDataTable();
+        $query = $this->campaignBLL->getCampaignDataTable($request);
 
         return DataTables::of($query)
             ->addColumn('created_by_name', function ($row) {
