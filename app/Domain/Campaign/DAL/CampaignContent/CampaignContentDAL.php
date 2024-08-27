@@ -6,6 +6,7 @@ use App\Domain\Campaign\Enums\OfferEnum;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Models\Offer;
 use Carbon\Carbon;
+use Auth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -23,7 +24,7 @@ class CampaignContentDAL implements CampaignContentDALInterface
     public function getCampaignContentDatatable(int $campaignId): Builder
     {
         return $this->campaignContent->query()
-            ->where('campaign_id', $campaignId)
+            ->where('campaign_contents.campaign_id', $campaignId)
             ->with(['keyOpinionLeader', 'createdBy', 'campaign']);
     }
 

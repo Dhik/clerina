@@ -127,8 +127,15 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
 
     if ($request->input('search')) {
-        $campaigns = $campaigns->filter(function ($campaign) use ($request) {
-            return stripos($campaign->title, $request->input('search')) !== false;
+        $searchTerms = explode(' ', strtolower($request->input('search')));
+        
+        $campaigns = $campaigns->filter(function ($campaign) use ($searchTerms) {
+            foreach ($searchTerms as $term) {
+                if (stripos($campaign->title, $term) === false) {
+                    return false;
+                }
+            }
+            return true;
         });
     }
 
@@ -156,6 +163,7 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         'views' => $this->numberFormat($totalViews),
     ];
 }
+
 
 
     protected function numberFormat($number, $decimals = 0): string
