@@ -35,36 +35,42 @@ class CampaignController extends Controller
      * @throws Exception
      */
     public function get(Request $request): JsonResponse
-    {
-        $this->authorize('viewCampaign', Campaign::class);
+{
+    $this->authorize('viewCampaign', Campaign::class);
 
-        $query = $this->campaignBLL->getCampaignDataTable($request);
+    $query = $this->campaignBLL->getCampaignDataTable($request);
 
-        return DataTables::of($query)
-            ->addColumn('created_by_name', function ($row) {
-                return $row->createdBy->name;
-            })
-            ->addColumn('actions', function ($row) {
-                $actions = '<a href=' . route('campaign.show', $row->id) . ' class="btn btn-success btn-xs">
-                        <i class="fas fa-eye"></i>
+    if ($request->has('filterMonth') && $request->input('filterMonth') !== '') {
+        $month = $request->input('filterMonth');
+        $query->whereMonth('start_date', '=', date('m', strtotime($month)))
+              ->whereYear('start_date', '=', date('Y', strtotime($month)));
+    }
+
+    return DataTables::of($query)
+        ->addColumn('created_by_name', function ($row) {
+            return $row->createdBy->name;
+        })
+        ->addColumn('actions', function ($row) {
+            $actions = '<a href=' . route('campaign.show', $row->id) . ' class="btn btn-success btn-xs">
+                    <i class="fas fa-eye"></i>
+                </a>';
+
+            if (Gate::allows('UpdateCampaign', $row)) {
+                $actions .= ' <a href=' . route('campaign.edit', $row->id) . ' class="btn btn-primary btn-xs">
+                        <i class="fas fa-pencil-alt"></i>
                     </a>';
 
-                // Check if the user has the permission to edit campaigns
-                if (Gate::allows('UpdateCampaign', $row)) {
-                    $actions .= ' <a href=' . route('campaign.edit', $row->id) . ' class="btn btn-primary btn-xs">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>';
+                $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-danger btn-xs">
+                        <i class="fas fa-sync-alt"></i>
+                    </a>';
+            }
 
-                    $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-danger btn-xs">
-                            <i class="fas fa-sync-alt"></i>
-                        </a>';
-                }
+            return $actions;
+        })
+        ->rawColumns(['actions'])
+        ->toJson();
+}
 
-                return $actions;
-            })
-            ->rawColumns(['actions'])
-            ->toJson();
-    }
 
     /**
      * Show index page campaign
@@ -197,8 +203,9 @@ class CampaignController extends Controller
 
 
     public function getCampaignSummary(Request $request): JsonResponse
-    {
-        $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
-        return response()->json($summary);
-    }
+{
+    $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
+    return response()->json($summary);
+}
+
 }
