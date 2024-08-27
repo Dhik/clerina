@@ -179,7 +179,9 @@ class CampaignController extends Controller
     }
     public function bulkRefresh(): RedirectResponse
     {
-        $campaigns = Campaign::all(); // Fetch all campaigns, or you can apply filters as needed
+        $currentMonth = now()->format('Y-m'); // Get the current month in 'YYYY-MM' format
+
+        $campaigns = Campaign::where('created_at', 'like', "$currentMonth%")->get(); // Fetch campaigns created in the current month
 
         foreach ($campaigns as $campaign) {
             $this->cardService->recapStatisticCampaign($campaign->id);
@@ -192,6 +194,7 @@ class CampaignController extends Controller
                 'message' => trans('messages.success_bulk_update', ['model' => trans('labels.campaign')]),
             ]);
     }
+
 
     public function getCampaignSummary(Request $request): JsonResponse
     {
