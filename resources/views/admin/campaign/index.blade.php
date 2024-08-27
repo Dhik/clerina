@@ -9,11 +9,24 @@
 @section('content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
+
+            <!-- DataTables -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
                         <div class="col-auto">
                             <div class="row">
+                                <div class="col-auto">
+                                @can(\App\Domain\User\Enums\PermissionEnum::CreateCampaign)
+                                        <div class="btn-group">
+                                            <a href="{{ route('campaign.create') }}" type="button" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> {{ trans('labels.add') }}
+                                            </a>
+                                        </div>
+                                    @endcan
+                                </div>
                                 <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
@@ -23,9 +36,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
+                        </div>
+                        <div class="card-body">
+                        <div class="row">
                 <!-- Summary Card -->
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-info">
@@ -72,25 +85,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- DataTables -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    @can(\App\Domain\User\Enums\PermissionEnum::CreateCampaign)
-                                        <div class="btn-group">
-                                            <a href="{{ route('campaign.create') }}" type="button" class="btn btn-primary">
-                                                <i class="fas fa-plus"></i> {{ trans('labels.add') }}
-                                            </a>
-                                        </div>
-                                    @endcan
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
                             <table id="campaignTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
                                 <thead>
                                 <tr>
