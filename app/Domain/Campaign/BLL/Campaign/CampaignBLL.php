@@ -115,16 +115,12 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     }
     public function getCampaignSummary(Request $request, int $tenantId): array
 {
-    $startDateString = Carbon::now()->startOfMonth()->format('Y-m-d');
-    $endDateString = Carbon::now()->endOfMonth()->format('Y-m-d');
+    $startDateString = Carbon::now()->startOfMonth();
+    $endDateString = Carbon::now()->endOfMonth();
 
-    if ($request->input('filterMonth') && $request->input('filterMonth') !== '') {
+    if ($request->input('filterMonth')) {
         $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
         $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
-    } else {
-        // Remove date filter to show all campaigns
-        $startDateString = null;
-        $endDateString = null;
     }
 
     $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
@@ -142,6 +138,7 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         });
     }
 
+    // Group campaigns by normalized (lowercase) title and sum their values
     $groupedCampaigns = $campaigns->groupBy(function ($campaign) {
         return strtolower($campaign->title);
     });
@@ -165,8 +162,6 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         'views' => $this->numberFormat($totalViews),
     ];
 }
-
-
 
 
 

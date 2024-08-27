@@ -147,7 +147,6 @@
                 }
             }
         },
-
         columns: [
             {data: 'created_at', name: 'created_at'},
             {
@@ -200,12 +199,22 @@
     // Reset Filter Button Click
     $('#resetFilterBtn').click(function () {
         filterMonth.val(''); // Clear the month filter input
+        campaignTable.search(''); // Clear the search term
         campaignTable.ajax.reload(); // Reload DataTables without filter
+        loadCampaignSummary(''); // Reload summary without filter and search term
     });
 
     // When the filter changes, reload the DataTables with the new filter
     filterMonth.change(function () {
+        let searchTerm = campaignTable.search(); // Capture the current search term
         campaignTable.ajax.reload(); // Reload DataTables with filter
+        loadCampaignSummary(filterMonth.val(), searchTerm); // Reload summary with the same filter and search term
+    });
+
+    // Listen for search event and update the summary accordingly
+    campaignTableSelector.on('search.dt', function () {
+        let searchTerm = campaignTable.search(); // Capture the current search term
+        loadCampaignSummary(filterMonth.val(), searchTerm); // Reload summary with the filter and search term
     });
 
     // Load the summary data with an optional month and search term
