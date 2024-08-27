@@ -104,7 +104,7 @@
                                     <th width="15%">{{ trans('labels.action') }}</th>
                                 </tr>
                                 </thead>
-                                <tfoot>
+                                <!-- <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
                                     <th>Total Expense</th>
@@ -112,7 +112,7 @@
                                     <th>Views</th>
                                     <th colspan="3"></th>
                                 </tr>
-                                </tfoot>
+                                </tfoot> -->
                             </table>
                         </div>
                     </div>
@@ -226,52 +226,56 @@
             { "targets": [7], "className": "text-center" }
         ],
         order: [[0, 'desc']],
-        footerCallback: function (row, data, start, end, display) {
-            let api = this.api();
+        // footerCallback: function (row, data, start, end, display) {
+        //     let api = this.api();
 
-            // Remove formatting to get integer data for summation
-            let intVal = function (i) {
-                return typeof i === 'string' ?
-                    i.replace(/[\$,]/g, '') * 1 :
-                    typeof i === 'number' ?
-                        i : 0;
-            };
+        //     // Remove formatting to get integer data for summation
+        //     let intVal = function (i) {
+        //         return typeof i === 'string' ?
+        //             i.replace(/[\$,]/g, '') * 1 :
+        //             typeof i === 'number' ?
+        //                 i : 0;
+        //     };
 
-            // Total over all pages
-            let totalExpense = api
-                .column(2)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
+        //     // Total over all pages
+        //     let totalExpense = api
+        //         .column(2)
+        //         .data()
+        //         .reduce(function (a, b) {
+        //             return intVal(a) + intVal(b);
+        //         }, 0);
 
-            let totalCPM = api
-                .column(3)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
+        //     let totalCPM = api
+        //         .column(3)
+        //         .data()
+        //         .reduce(function (a, b) {
+        //             return intVal(a) + intVal(b);
+        //         }, 0);
 
-            let totalViews = api
-                .column(4)
-                .data()
-                .reduce(function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0);
+        //     let totalViews = api
+        //         .column(4)
+        //         .data()
+        //         .reduce(function (a, b) {
+        //             return intVal(a) + intVal(b);
+        //         }, 0);
 
-            // Format totals with thousand separators and update footer
-            let numberFormatter = new Intl.NumberFormat('en-US');
+        //     // Format totals with thousand separators and update footer
+        //     let numberFormatter = new Intl.NumberFormat('en-US');
 
-            $(api.column(2).footer()).html(
-                'Rp ' + numberFormatter.format(totalExpense)
-            );
-            $(api.column(3).footer()).html(
-                'Rp ' + numberFormatter.format(totalCPM)
-            );
-            $(api.column(4).footer()).html(
-                numberFormatter.format(totalViews)
-            );
-        }
+        //     $(api.column(2).footer()).html(
+        //         'Total per page
+        //     );
+
+        //     $(api.column(2).footer()).html(
+        //         'Rp ' + numberFormatter.format(totalExpense)
+        //     );
+        //     $(api.column(3).footer()).html(
+        //         'Rp ' + numberFormatter.format(totalCPM)
+        //     );
+        //     $(api.column(4).footer()).html(
+        //         numberFormatter.format(totalViews)
+        //     );
+        // }
     });
 
     // Listen for search event
