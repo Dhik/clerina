@@ -28,6 +28,17 @@
                                     @endcan
                                 </div>
                                 <div class="col-auto">
+    @can(\App\Domain\User\Enums\PermissionEnum::UpdateCampaign)
+        <div class="btn-group">
+            <button id="bulkRefreshBtn" type="button" class="btn btn-success">
+                <i class="fas fa-sync-alt"></i> {{ trans('labels.bulk_refresh') }}
+                <span id="bulkRefreshLoading" class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+        </div>
+    @endcan
+</div>
+
+                                <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
                                 <div class="col-auto">

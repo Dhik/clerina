@@ -330,4 +330,7 @@ return [
     'bpjs' => 'BPJS %',
     'salary' => 'Salary',
     'market_place' => 'Market Place',
+    'bulk_refresh' => 'Refresh All',
+'refresh' => 'Refresh',
+
 ];

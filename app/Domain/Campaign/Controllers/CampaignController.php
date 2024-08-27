@@ -179,8 +179,6 @@ class CampaignController extends Controller
     }
     public function bulkRefresh(): RedirectResponse
     {
-        $this->authorize('UpdateCampaign', Campaign::class);
-
         $campaigns = Campaign::all(); // Fetch all campaigns, or you can apply filters as needed
 
         foreach ($campaigns as $campaign) {
