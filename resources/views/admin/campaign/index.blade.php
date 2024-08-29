@@ -126,7 +126,6 @@
         </div>
     </div>
 @stop
-
 @section('js')
 <script>
     let campaignTableSelector = $('#campaignTable');
@@ -159,7 +158,7 @@
             {
                 data: 'total_expense',
                 name: 'total_expense',
-                render: function(data, type, row) {
+                render: function(data) {
                     return new Intl.NumberFormat('en-US').format(data);
                 },
                 searchable: false
@@ -167,7 +166,7 @@
             {
                 data: 'cpm',
                 name: 'cpm',
-                render: function(data, type, row) {
+                render: function(data) {
                     return new Intl.NumberFormat('en-US').format(data);
                 },
                 searchable: false
@@ -175,7 +174,7 @@
             {
                 data: 'view',
                 name: 'view',
-                render: function(data, type, row) {
+                render: function(data) {
                     return new Intl.NumberFormat('en-US').format(data);
                 },
                 searchable: false
@@ -194,6 +193,19 @@
             { "targets": [7], "className": "text-center" }
         ],
         order: [[0, 'desc']],
+    });
+
+    // Event handler for table draw event
+    campaignTable.on('draw.dt', function() {
+        let tableBodySelector = $('#campaignTable tbody');
+
+        // Delete button click event
+        tableBodySelector.on('click', '.deleteButton', function() {
+            let rowData = campaignTable.row($(this).closest('tr')).data();
+            let route = '{{ route('campaign.destroy', ':id') }}'.replace(':id', rowData.id);
+
+            deleteAjax(route, rowData.id, campaignTable);
+        });
     });
 
     // Reset Filter Button Click
@@ -241,8 +253,52 @@
 
     // Initial Load
     loadCampaignSummary();
+
+    function deleteAjax(route, id, table) {
+    Swal.fire({
+        title: '{{ trans('labels.are_you_sure') }}',
+        text: '{{ trans('labels.not_be_able_to_recover') }}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '{{ trans('buttons.confirm_swal') }}',
+        cancelButtonText: '{{ trans('buttons.cancel_swal') }}',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: route,
+                type: 'DELETE', // This ensures the correct HTTP method is used
+                data: {
+                    _token: '{{ csrf_token() }}' // Include the CSRF token
+                },
+                success: function (response) {
+                    Swal.fire(
+                        '{{ trans('labels.success') }}',
+                        '{{ trans('messages.success_delete') }}',
+                        'success'
+                    ).then(() => {
+                        table.ajax.reload(); // Reload the DataTable after successful deletion
+                    });
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status === 422) {
+                        Swal.fire(
+                            '{{ trans('labels.failed') }}',
+                            xhr.responseJSON.message,
+                            'error'
+                        );
+                    } else {
+                        Swal.fire(
+                            '{{ trans('labels.failed') }}',
+                            '{{ trans('messages.error_delete') }}',
+                            'error'
+                        );
+                    }
+                }
+            });
+        }
+    });
+}
+
 </script>
-
-
-
 @stop

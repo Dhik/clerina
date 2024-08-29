@@ -6,6 +6,7 @@ use App\Domain\Campaign\BLL\Campaign\CampaignBLLInterface;
 use App\Domain\Campaign\Enums\CampaignContentEnum;
 use App\Domain\Campaign\Enums\OfferEnum;
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Requests\CampaignRequest;
 use App\Domain\Campaign\Service\StatisticCardService;
 use App\Http\Controllers\Controller;
@@ -35,42 +36,47 @@ class CampaignController extends Controller
      * @throws Exception
      */
     public function get(Request $request): JsonResponse
-    {
-        $this->authorize('viewCampaign', Campaign::class);
+{
+    $this->authorize('viewCampaign', Campaign::class);
 
-        $query = $this->campaignBLL->getCampaignDataTable($request);
+    $query = $this->campaignBLL->getCampaignDataTable($request);
 
-        if ($request->has('filterMonth')) {
-            $month = $request->input('filterMonth');
-            $query->whereMonth('start_date', '=', date('m', strtotime($month)))
-                  ->whereYear('start_date', '=', date('Y', strtotime($month)));
-        }
+    if ($request->has('filterMonth')) {
+        $month = $request->input('filterMonth');
+        $query->whereMonth('start_date', '=', date('m', strtotime($month)))
+              ->whereYear('start_date', '=', date('Y', strtotime($month)));
+    }
 
-        return DataTables::of($query)
-            ->addColumn('created_by_name', function ($row) {
-                return $row->createdBy->name;
-            })
-            ->addColumn('actions', function ($row) {
-                $actions = '<a href=' . route('campaign.show', $row->id) . ' class="btn btn-success btn-xs">
+    return DataTables::of($query)
+        ->addColumn('created_by_name', function ($row) {
+            return $row->createdBy->name;
+        })
+        ->addColumn('actions', function ($row) {
+            $actions = '<a href="' . route('campaign.show', $row->id) . '" class="btn btn-success btn-xs">
                         <i class="fas fa-eye"></i>
                     </a>';
 
-                // Check if the user has the permission to edit campaigns
-                if (Gate::allows('UpdateCampaign', $row)) {
-                    $actions .= ' <a href=' . route('campaign.edit', $row->id) . ' class="btn btn-primary btn-xs">
+            // Check if the user has the permission to edit campaigns
+            if (Gate::allows('UpdateCampaign', $row)) {
+                $actions .= ' <a href="' . route('campaign.edit', $row->id) . '" class="btn btn-primary btn-xs">
                             <i class="fas fa-pencil-alt"></i>
                         </a>';
+            }
 
-                    $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-danger btn-xs">
-                            <i class="fas fa-sync-alt"></i>
-                        </a>';
-                }
+            // Add delete button with the deleteButton class
+            if (Gate::allows('deleteCampaign', $row)) {
+                $actions .= ' <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>';
+            }
 
-                return $actions;
-            })
-            ->rawColumns(['actions'])
-            ->toJson();
-    }
+            return $actions;
+        })
+        ->rawColumns(['actions'])
+        ->toJson();
+}
+
+
 
     /**
      * Show index page campaign
@@ -158,13 +164,17 @@ class CampaignController extends Controller
     {
         $this->authorize('deleteCampaign', $campaign);
 
-        $result = $this->campaignBLL->deleteCampaign($campaign);
+        try {
+            // Delete related campaign contents first
+            CampaignContent::where('campaign_id', $campaign->id)->delete();
 
-        if (! $result) {
-            return response()->json(['message' => trans('messages.campaign_failed_delete')], 422);
+            // Then delete the campaign itself
+            $this->campaignBLL->deleteCampaign($campaign);
+
+            return response()->json(['message' => trans('messages.success_delete')]);
+        } catch (Exception $e) {
+            return response()->json(['message' => trans('messages.campaign_failed_delete')], 500);
         }
-
-        return response()->json(['message' => trans('messages.success_delete')]);
     }
 
     /**
