@@ -61,6 +61,9 @@ class CampaignController extends Controller
                 $actions .= ' <a href="' . route('campaign.edit', $row->id) . '" class="btn btn-primary btn-xs">
                             <i class="fas fa-pencil-alt"></i>
                         </a>';
+                $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-warning btn-xs">
+                        <i class="fas fa-sync-alt"></i>
+                    </a>';
             }
 
             // Add delete button with the deleteButton class
