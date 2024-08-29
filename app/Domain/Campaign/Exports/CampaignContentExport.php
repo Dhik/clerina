@@ -37,7 +37,7 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
     public function map($row): array
     {
         return [
-            $row->keyOpinionLeader->username ?? '', // A
+            $row->username ?? '', // A
             $row->channel, // B
             $row->link, // C
             $row->product, // D
