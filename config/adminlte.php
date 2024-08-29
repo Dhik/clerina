@@ -369,7 +369,7 @@ return [
             ]
         ],
         [
-            'text' => 'KOL',
+            'text' => 'Campaign',
             'can' => [
                 PermissionEnum::ViewCampaign,
                 PermissionEnum::ViewOffer,
