@@ -96,4 +96,12 @@ class CampaignContentDAL implements CampaignContentDALInterface
     {
         $campaignContent->delete();
     }
+
+    public function getCampaignContentDataTableForRefresh(int $campaignId): Collection
+    {
+        return $this->campaignContent->select('id', 'username', 'task_name', 'channel', 'product', 'link')
+            ->where('campaign_id', $campaignId)
+            ->get();
+    }
+
 }

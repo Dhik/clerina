@@ -58,4 +58,6 @@ interface CampaignContentBLLInterface
      * Delete campaign content
      */
     public function deleteCampaignContent(CampaignContent $campaignContent): void;
+
+    public function getCampaignContentDataTableForRefresh(int $campaignId): Collection;
 }

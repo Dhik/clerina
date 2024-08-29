@@ -45,6 +45,8 @@ Route::prefix('admin')
                     ->name('campaignContent.select');
                 Route::post('/store/{campaignId}', [CampaignContentController::class, 'store'])
                     ->name('campaignContent.store');
+                Route::get('/getDataTableForRefresh/{campaignId}', [CampaignContentController::class, 'getCampaignContentDataTableForRefresh'])
+                    ->name('campaignContent.getDataTableForRefresh');                
                 Route::put('/update/{campaignContent}', [CampaignContentController::class, 'update'])
                     ->name('campaignContent.update');
                 Route::get('/update/fyp/{campaignContent}', [CampaignContentController::class, 'updateFyp'])
@@ -61,6 +63,7 @@ Route::prefix('admin')
                     ->name('campaignContent.import');
                 Route::delete('/{campaignContent}', [CampaignContentController::class, 'destroy'])
                     ->name('campaignContent.destroy');
+                    
             });
 
         Route::prefix('kol')

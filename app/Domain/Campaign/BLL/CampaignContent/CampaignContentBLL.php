@@ -189,4 +189,10 @@ class CampaignContentBLL implements CampaignContentBLLInterface
         $this->campaignContentDAL->deleteCampaignContent($campaignContent);
     }
 
+    public function getCampaignContentDataTableForRefresh(int $campaignId): Collection
+    {
+        return $this->campaignContentDAL->getCampaignContentDataTableForRefresh($campaignId);
+    }
+
+
 }

@@ -307,5 +307,14 @@ class CampaignContentController extends Controller
 
         return response()->json(['message' => trans('messages.success_delete')]);
     }
+    public function getCampaignContentDataTableForRefresh(int $campaignId): JsonResponse
+    {
+        $this->authorize('viewCampaignContent', CampaignContent::class);
+
+        $query = $this->campaignContentBLL->getCampaignContentDataTableForRefresh($campaignId);
+
+        return response()->json($query);
+    }
+
 
 }

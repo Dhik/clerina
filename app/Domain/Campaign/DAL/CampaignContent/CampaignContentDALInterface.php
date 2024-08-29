@@ -42,4 +42,6 @@ interface CampaignContentDALInterface
      * Delete campaign content and statistic
      */
     public function deleteCampaignContent(CampaignContent $campaignContent): void;
+
+    public function getCampaignContentDataTableForRefresh(int $campaignId): Collection;
 }

@@ -31,53 +31,6 @@
                             <div class="tab-pane active" id="statistic">
                                 @include('admin.campaign.statistic')
                             </div>
-                            <div class="tab-pane" id="offer">
-
-                                <div class="row mb-lg-2 justify-content-between">
-                                    <div class="col-auto">
-                                        <select class="form-control" id="filterStatus">
-                                            <option value="" selected>{{ trans('placeholder.select', ['field' => trans('labels.status')]) }}</option>
-                                            <option value="">{{ trans('labels.all') }}</option>
-                                            @foreach($statuses as $status)
-                                                <option value={{ $status }}>{{ ucfirst($status) }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-auto">
-                                        @can(\App\Domain\User\Enums\PermissionEnum::CreateOffer)
-                                            <button class="btn btn-primary" data-toggle="modal" data-target="#offerModal">
-                                                <i class="fas fa-plus"></i> {{ trans('labels.add') }}
-                                            </button>
-                                        @endcan
-                                        <a class="btn btn-success" href={{ route('offer.export', $campaign->id) }}>
-                                            <i class="fas fa-file-download"></i> {{ trans('labels.export') }}
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <table id="offerTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="offer-info" width="100%">
-                                    <thead>
-                                        <tr>
-                                            <th>{{ trans('labels.date') }}</th>
-                                            <th>{{ trans('labels.id') }}</th>
-                                            <th>{{ trans('labels.created_by') }}</th>
-                                            <th>{{ trans('labels.username') }}</th>
-                                            <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.slot_rate') }}">
-                                                {{ trans('labels.rate') }}
-                                            </th>
-                                            <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">
-                                                {{ trans('labels.cpm_short') }}
-                                            </th>
-                                            <th>{{ trans('labels.average_view') }}</th>
-                                            <th>{{ trans('labels.benefit') }}</th>
-                                            <th>{{ trans('labels.negotiate') }}</th>
-                                            <th>{{ trans('labels.acc_slot') }}</th>
-                                            <th>{{ trans('labels.status') }}</th>
-                                            <th width="10%">{{ trans('labels.action') }}</th>
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -96,8 +49,75 @@
 
 @section('js')
     <script>
-        let campaignId = '{{ $campaign->id }}'
+        
+        let campaignId = '{{ $campaign->id }}';
         const filterStatus = $('#filterStatus');
+        
+        $('#refreshAllBtn').click(function() {
+    // Show the modal
+    $('#refreshAllModal').modal('show');
+
+    // Fetch the campaign contents
+    $.ajax({
+        url: "{{ route('campaignContent.getDataTableForRefresh', ['campaignId' => $campaign->id]) }}",
+        method: 'GET',
+        success: function(data) {
+            let contentList = '';
+            data.forEach(function(content) {
+                contentList += `
+                    <tr id="content-${content.id}">
+                        <td>${content.username}</td>
+                        <td>${content.task_name}</td>
+                        <td>${content.channel}</td>
+                        <td>${content.product}</td>
+                        <td class="text-center"><i class="fas fa-clock text-warning"></i></td>
+                    </tr>
+                `;
+            });
+            $('#refreshAllContentList').html(contentList);
+        },
+        error: function() {
+            alert('Failed to load content list.');
+        }
+    });
+});
+
+$('#confirmRefreshAll').click(function() {
+    const contents = $('#refreshAllContentList tr');
+    const totalContents = contents.length;
+    let completedContents = 0;
+
+    contents.each(function(index, contentRow) {
+        const contentId = $(contentRow).attr('id').split('-')[1];
+        
+        // Update icon to loading
+        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
+
+        // Scrape data one by one
+        $.ajax({
+            url: "{{ route('statistic.refresh', ['campaignContent' => ':campaignContentId']) }}".replace(':campaignContentId', contentId),
+            method: 'GET',
+            success: function(data) {
+                // Update icon to check if successful
+                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
+                completedContents++;
+                updateProgressBar(completedContents, totalContents);
+            },
+            error: function() {
+                // Update icon to error if failed
+                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
+                completedContents++;
+                updateProgressBar(completedContents, totalContents);
+            }
+        });
+    });
+});
+
+function updateProgressBar(completed, total) {
+    const progressPercentage = Math.round((completed / total) * 100);
+    $('#refreshProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
+}
+
         
         // datatable
         let offerTable = $('#offerTable').DataTable({
