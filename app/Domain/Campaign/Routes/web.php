@@ -137,6 +137,7 @@ Route::prefix('admin')
                 Route::post('/{campaignContent}', [StatisticController::class, 'store'])
                     ->name('statistic.store');
 
+                Route::get('/bulk-refresh-by-month/{month}/{year}', [StatisticController::class, 'bulkRefreshByMonth'])->name('campaign.bulkRefreshByMonth');
             });
     });
 
