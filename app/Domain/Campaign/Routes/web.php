@@ -30,7 +30,7 @@ Route::prefix('admin')
                 Route::post('/store', [CampaignController::class, 'store'])->name('campaign.store');
                 Route::get('/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
                 Route::get('/{campaign}/refresh', [CampaignController::class, 'refresh'])->name('campaign.refresh');
-                Route::get('/bulk-refresh', [CampaignController::class, 'refreshAllCampaigns'])->name('campaign.bulkRefresh');
+                Route::get('/bulk-refresh', [CampaignController::class, 'bulkRefresh'])->name('campaign.bulkRefresh');
                 Route::put('/{campaign}/update', [CampaignController::class, 'update'])->name('campaign.update');
                 Route::get('/{campaign}/show', [CampaignController::class, 'show'])->name('campaign.show');
                 Route::get('/{campaign}/statistic', [CampaignContentController::class, 'statistics'])->name('campaign.statistics');
