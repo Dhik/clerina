@@ -74,66 +74,6 @@ class StatisticController extends Controller
         return response()->json($result);
     }
 
-    public function bulkRefreshByMonth(string $monthYear): RedirectResponse
-    {
-        $this->authorize('viewCampaignContent', CampaignContent::class);
-
-        $monthYear = "{$month} {$year}";
-
-        try {
-            $startOfMonth = Carbon::parse('first day of ' . $monthYear);
-            $endOfMonth = Carbon::parse('last day of ' . $monthYear);
-        } catch (\Exception $e) {
-            return redirect()->back()->with([
-                'alert' => 'error',
-                'message' => trans('messages.invalid_date_format'),
-            ]);
-        }
-
-        // Fetch campaigns that start within the specified month
-        $campaigns = Campaign::whereBetween('start_date', [$startOfMonth, $endOfMonth])
-                            ->with('campaignContents')
-                            ->get();
-
-        foreach ($campaigns as $campaign) {
-            foreach ($campaign->campaignContents as $content) {
-                $data = [
-                    'campaign_id' => $campaign->id,
-                    'campaign_content_id' => $content->id,
-                    'channel' => $content->channel,
-                    'link' => $content->link,
-                    'tenant_id' => $content->tenant_id,
-                    'rate_card' => $content->rate_card
-                ];
-
-                if (!is_null($content->link)) {
-                    ScrapJob::dispatch($data);
-
-                    // Retrieve statistics and update is_fyp if view count is above 10000
-                    $statistics = $this->statisticBLL->scrapData(
-                        $campaign->id,
-                        $content->id,
-                        $content->channel,
-                        $content->link,
-                        $content->tenant_id,
-                        $content->rate_card
-                    );
-
-                    if ($statistics && $statistics['view'] > 10000) {
-                        $content->is_fyp = 1;
-                        $content->save();
-                    }
-                }
-            }
-        }
-
-        return redirect()->back()->with([
-            'alert' => 'success',
-            'message' => trans('messages.process_ongoing'),
-        ]);
-    }
-
-
     public function bulkRefresh(Campaign $campaign): RedirectResponse
     {
         $this->authorize('viewCampaignContent', CampaignContent::class);
@@ -175,8 +115,6 @@ class StatisticController extends Controller
             'message' => trans('messages.process_ongoing'),
         ]);
     }
-
-
 
     /**
      * Store information for card statistic

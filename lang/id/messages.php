@@ -22,5 +22,6 @@ return [
     'process_ongoing' => 'Data diprocess',
     'kol_not_exist_import' => 'KOL tidak terdaftar di campaign atau belum di approve (silahkan cek pengajuan terlebih dahulu) : ',
     'kol_doesnt_have_enough_slot' => 'KOL berikut tidak mempunya sisa slot yang cukup',
-    'campaign_failed_delete' => 'Campaign sudah berisi pengajuan atau kontent, silahkan kosongkan terlebih dahulu'
+    'campaign_failed_delete' => 'Campaign sudah berisi pengajuan atau kontent, silahkan kosongkan terlebih dahulu',
+    'success_bulk_update' => 'Campaign sudah diupdate',
 ];

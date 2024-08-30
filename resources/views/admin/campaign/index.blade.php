@@ -28,15 +28,15 @@
                                     @endcan
                                 </div>
                                 <div class="col-auto">
-    @can(\App\Domain\User\Enums\PermissionEnum::UpdateCampaign)
-        <div class="btn-group">
-            <button id="bulkRefreshBtn" type="button" class="btn btn-success">
-                <i class="fas fa-sync-alt"></i> {{ trans('labels.bulk_refresh') }}
-                <span id="bulkRefreshLoading" class="spinner-border spinner-border-sm d-none"></span>
-            </button>
-        </div>
-    @endcan
-</div>
+                                    @can(\App\Domain\User\Enums\PermissionEnum::UpdateCampaign)
+                                        <div class="btn-group">
+                                            <button id="bulkRefreshBtn" type="button" class="btn btn-success">
+                                                <i class="fas fa-sync-alt"></i> {{ trans('labels.bulk_refresh') }}
+                                                <span id="bulkRefreshLoading" class="spinner-border spinner-border-sm d-none"></span>
+                                            </button>
+                                        </div>
+                                    @endcan
+                                </div>
 
                                 <div class="col-auto">
                                 <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
@@ -299,6 +299,34 @@
         }
     });
 }
+
+// Bulk Refresh Button Click
+$('#bulkRefreshBtn').click(function () {
+        $('#bulkRefreshLoading').removeClass('d-none'); // Show the loading spinner
+        $.ajax({
+            url: "{{ route('campaign.bulkRefresh') }}",
+            method: 'GET',
+            success: function(response) {
+                $('#bulkRefreshLoading').addClass('d-none'); // Hide the loading spinner
+                Swal.fire(
+                    '{{ trans('labels.success') }}',
+                    '{{ trans('messages.success_bulk_update', ['model' => trans('labels.campaign')]) }}',
+                    'success'
+                ).then(() => {
+                    campaignTable.ajax.reload(); // Reload the DataTable after the refresh
+                    loadCampaignSummary(); // Reload the summary after the refresh
+                });
+            },
+            error: function(response) {
+                $('#bulkRefreshLoading').addClass('d-none'); // Hide the loading spinner
+                Swal.fire(
+                    '{{ trans('labels.failed') }}',
+                    '{{ trans('messages.error_bulk_update') }}',
+                    'error'
+                );
+            }
+        });
+    });
 
 </script>
 @stop

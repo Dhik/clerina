@@ -214,6 +214,23 @@ class CampaignController extends Controller
             ]);
     }
 
+    public function refreshAllCampaigns(): RedirectResponse
+    {
+        $campaigns = Campaign::all(); // Fetch all campaigns
+
+        foreach ($campaigns as $campaign) {
+            $this->cardService->recapStatisticCampaign($campaign->id);
+        }
+
+        return redirect()
+            ->route('campaign.index')
+            ->with([
+                'alert' => 'success',
+                'message' => trans('messages.success_refresh_all', ['model' => trans('labels.campaign')]),
+            ]);
+    }
+
+
 
     public function getCampaignSummary(Request $request): JsonResponse
     {
