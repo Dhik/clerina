@@ -54,7 +54,7 @@
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-info">
                         <div class="inner">
-                            <h4 id="kpi_total_expense">0</h4>
+                            <h4 id="kpi_total_expense">Loading...</h4>
                             <p>Total Expense</p>
                         </div>
                         <div class="icon">
@@ -65,7 +65,7 @@
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-purple">
                         <div class="inner">
-                            <h4 id="kpi_total_content">0</h4>
+                            <h4 id="kpi_total_content">Loading...</h4>
                             <p>Total Content</p>
                         </div>
                         <div class="icon">
@@ -76,7 +76,7 @@
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-success">
                         <div class="inner">
-                            <h4 id="kpi_cpm">0</h4>
+                            <h4 id="kpi_cpm">Loading...</h4>
                             <p>CPM</p>
                         </div>
                         <div class="icon">
@@ -87,7 +87,7 @@
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-danger">
                         <div class="inner">
-                            <h4 id="views">0</h4>
+                            <h4 id="views">Loading...</h4>
                             <p>Total Views</p>
                         </div>
                         <div class="icon">

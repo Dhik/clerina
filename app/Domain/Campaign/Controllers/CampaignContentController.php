@@ -312,52 +312,90 @@ class CampaignContentController extends Controller
         return response()->json($query);
     }
     public function getProductDataTable(): JsonResponse
-{
-    $products = CampaignContent::select('product')->distinct()->get();
+    {
+        $products = CampaignContent::select('product')->distinct()->get();
 
-    return DataTables::of($products)
-        ->addColumn('actions', function ($product) {
-            if ($product->product) {
-                return '
-                    <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
-                        View Details
-                    </a>';
-            } else {
-                return ''; // Return an empty string if the product is null
-            }
-        })
-        ->rawColumns(['actions'])
-        ->toJson();
-}
+        return DataTables::of($products)
+            ->addColumn('actions', function ($product) {
+                if ($product->product) {
+                    return '
+                        <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
+                            View Details
+                        </a>';
+                } else {
+                    return ''; // Return an empty string if the product is null
+                }
+            })
+            ->rawColumns(['actions'])
+            ->toJson();
+    }
 
     public function showProductDetails(string $productName): View
-{
-    $product = CampaignContent::where('product', $productName)->firstOrFail();
-    $statistics = Statistic::where('campaign_content_id', $product->id)->get();
+    {
+        $product = CampaignContent::where('product', $productName)->firstOrFail();
 
-    $totalViews = $statistics->sum('view');
-    $totalLikes = $statistics->sum('like');
-    $totalComments = $statistics->sum('comment');
-    $totalInfluencers = $statistics->groupBy('username')->count();
+        // Aggregate statistics by username for the given product
+        $statistics = Statistic::where('campaign_content_id', $product->id)
+            ->join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->selectRaw('campaign_contents.username, 
+                        SUM(statistics.view) as total_views, 
+                        SUM(statistics.like) as total_likes, 
+                        SUM(statistics.comment) as total_comments, 
+                        SUM(statistics.engagement) as total_engagement')
+            ->groupBy('campaign_contents.username')
+            ->get();
 
-    $topEngagements = $statistics->sortByDesc('engagement')->take(5);
-    $topViews = $statistics->sortByDesc('view')->take(5);
-    $topLikes = $statistics->sortByDesc('like')->take(5);
-    $topComments = $statistics->sortByDesc('comment')->take(5);
+        $totalViews = $statistics->sum('total_views');
+        $totalLikes = $statistics->sum('total_likes');
+        $totalComments = $statistics->sum('total_comments');
+        $totalInfluencers = $statistics->count(); // Since each row is already grouped by username
 
-    return view('admin.campaign.product_details', compact(
-        'product', 
-        'statistics', 
-        'totalViews', 
-        'totalLikes', 
-        'totalComments', 
-        'totalInfluencers', 
-        'topEngagements', 
-        'topViews', 
-        'topLikes', 
-        'topComments'
-    ));
-}
+        $topEngagements = $statistics->sortByDesc('total_engagement')->take(5);
+        $topViews = $statistics->sortByDesc('total_views')->take(5);
+        $topLikes = $statistics->sortByDesc('total_likes')->take(5);
+        $topComments = $statistics->sortByDesc('total_comments')->take(5);
+
+        return view('admin.campaign.product_details', compact(
+            'product', 
+            'statistics', 
+            'totalViews', 
+            'totalLikes', 
+            'totalComments', 
+            'totalInfluencers', 
+            'topEngagements', 
+            'topViews', 
+            'topLikes', 
+            'topComments'
+        ));
+    }
+
+    public function getProductStatistics(string $productName)
+    {
+        $product = CampaignContent::where('product', $productName)->firstOrFail();
+
+        // Aggregate statistics by username for the given product
+        $statistics = Statistic::where('campaign_content_id', $product->id)
+            ->join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->selectRaw('campaign_contents.username, 
+                        SUM(statistics.view) as total_views, 
+                        SUM(statistics.like) as total_likes, 
+                        SUM(statistics.comment) as total_comments, 
+                        SUM(statistics.engagement) as total_engagement')
+            ->groupBy('campaign_contents.username')
+            ->get();
+
+        return response()->json([
+            'totalViews' => $statistics->sum('total_views'),
+            'totalLikes' => $statistics->sum('total_likes'),
+            'totalComments' => $statistics->sum('total_comments'),
+            'totalInfluencers' => $statistics->count(),
+            'topEngagements' => $statistics->sortByDesc('total_engagement')->take(5)->values(),
+            'topViews' => $statistics->sortByDesc('total_views')->take(5)->values(),
+            'topLikes' => $statistics->sortByDesc('total_likes')->take(5)->values(),
+            'topComments' => $statistics->sortByDesc('total_comments')->take(5)->values(),
+        ]);
+    }
+
 
 
 
