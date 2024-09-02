@@ -326,24 +326,35 @@ class CampaignContentController extends Controller
             ->toJson();
     }
     public function showProductDetails(string $productName): View
-    {
-        // Retrieve the product based on the product name
-        $product = CampaignContent::where('product', $productName)->firstOrFail();
+{
+    $product = CampaignContent::where('product', $productName)->firstOrFail();
+    $statistics = Statistic::where('campaign_content_id', $product->id)->get();
 
-        // Retrieve all related statistics for the product
-        $statistics = Statistic::where('campaign_content_id', $product->id)->get();
+    $totalViews = $statistics->sum('view');
+    $totalLikes = $statistics->sum('like');
+    $totalComments = $statistics->sum('comment');
+    $totalInfluencers = $statistics->groupBy('username')->count();
 
-        // Calculate total views, likes, and comments
-        $totalViews = $statistics->sum('view');
-        $totalLikes = $statistics->sum('like');
-        $totalComments = $statistics->sum('comment');
+    $topEngagements = $statistics->sortByDesc('engagement')->take(5);
+    $topViews = $statistics->sortByDesc('view')->take(5);
+    $topLikes = $statistics->sortByDesc('like')->take(5);
+    $topComments = $statistics->sortByDesc('comment')->take(5);
 
-        // Count distinct usernames (influencers) related to the product
-        $totalInfluencers = CampaignContent::where('product', $productName)->distinct('username')->count('username');
+    return view('admin.campaign.product_details', compact(
+        'product', 
+        'statistics', 
+        'totalViews', 
+        'totalLikes', 
+        'totalComments', 
+        'totalInfluencers', 
+        'topEngagements', 
+        'topViews', 
+        'topLikes', 
+        'topComments'
+    ));
+}
 
-        // Pass all the calculated data to the view
-        return view('admin.campaign.product_details', compact('product', 'statistics', 'totalViews', 'totalLikes', 'totalComments', 'totalInfluencers'));
-    }
+
 
     public function showDistinctProducts(): View
     {

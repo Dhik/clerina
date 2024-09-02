@@ -398,20 +398,20 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/budgets*']
                 ],
-                // [
-                //     'text' => 'Product',
-                //     'url' => 'admin/products',
-                //     'can' => [PermissionEnum::ViewOffer],
-                //     'icon' => 'nav-icon far fa-circle',
-                //     'active' => ['admin/budgets*']
-                // ],
-                // [
-                //     'text' => 'Influencer',
-                //     'url' => 'admin/budgets',
-                //     'can' => [PermissionEnum::ViewOffer],
-                //     'icon' => 'nav-icon far fa-circle',
-                //     'active' => ['admin/budgets*']
-                // ],
+                [
+                    'text' => 'Product',
+                    'url' => 'admin/products',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/budgets*']
+                ],
+                [
+                    'text' => 'Influencer',
+                    'url' => 'admin/budgets',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/budgets*']
+                ],
                 // [
                 //     'text' => 'Offer',
                 //     'url' => 'admin/offer',
