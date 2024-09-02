@@ -8,6 +8,7 @@ use App\Domain\Campaign\Exports\CampaignContentExport;
 use App\Domain\Campaign\Exports\CampaignContentTemplateExport;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
+use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Requests\CampaignContentRequest;
 use App\Domain\Campaign\Requests\CampaignUpdateContentRequest;
 use App\Http\Controllers\Controller;
@@ -160,11 +161,6 @@ class CampaignContentController extends Controller
         return $infoHtml;
     }
 
-    public function getDetail(CampaignContent $campaignContent)
-    {
-
-    }
-
     /**
      * Store new campaign content
      */
@@ -315,6 +311,42 @@ class CampaignContentController extends Controller
 
         return response()->json($query);
     }
+    public function getProductDataTable(): JsonResponse
+    {
+        $products = CampaignContent::select('product')->distinct()->get();
 
+        return DataTables::of($products)
+            ->addColumn('actions', function ($product) {
+                return '
+                    <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
+                        View Details
+                    </a>';
+            })
+            ->rawColumns(['actions'])
+            ->toJson();
+    }
+    public function showProductDetails(string $productName): View
+    {
+        // Retrieve the product based on the product name
+        $product = CampaignContent::where('product', $productName)->firstOrFail();
 
+        // Retrieve all related statistics for the product
+        $statistics = Statistic::where('campaign_content_id', $product->id)->get();
+
+        // Calculate total views, likes, and comments
+        $totalViews = $statistics->sum('view');
+        $totalLikes = $statistics->sum('like');
+        $totalComments = $statistics->sum('comment');
+
+        // Count distinct usernames (influencers) related to the product
+        $totalInfluencers = CampaignContent::where('product', $productName)->distinct('username')->count('username');
+
+        // Pass all the calculated data to the view
+        return view('admin.campaign.product_details', compact('product', 'statistics', 'totalViews', 'totalLikes', 'totalComments', 'totalInfluencers'));
+    }
+
+    public function showDistinctProducts(): View
+    {
+        return view('admin.campaign.products');
+    }
 }

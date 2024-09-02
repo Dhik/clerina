@@ -115,8 +115,8 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     }
     public function getCampaignSummary(Request $request, int $tenantId): array
 {
-    $startDateString = Carbon::now()->startOfMonth();
-    $endDateString = Carbon::now()->endOfMonth();
+    $startDateString = null;
+    $endDateString = null;
 
     if ($request->input('filterMonth')) {
         $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');

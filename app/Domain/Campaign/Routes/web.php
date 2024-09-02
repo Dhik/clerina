@@ -35,6 +35,14 @@ Route::prefix('admin')
                 Route::get('/{campaign}/show', [CampaignController::class, 'show'])->name('campaign.show');
                 Route::get('/{campaign}/statistic', [CampaignContentController::class, 'statistics'])->name('campaign.statistics');
                 Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+                
+            });
+        Route::prefix('products')
+            ->group(function () {
+                Route::get('/', [CampaignContentController::class, 'showDistinctProducts'])->name('campaignContent.showDistinctProducts');
+                Route::get('/get', [CampaignContentController::class, 'getProductDataTable'])->name('campaignContent.getProduct');
+                Route::get('/{productName}', [CampaignContentController::class, 'showProductDetails'])
+    ->name('campaignContent.showProductDetails');
             });
 
         Route::prefix('campaignContent')
