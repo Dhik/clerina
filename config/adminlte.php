@@ -403,7 +403,7 @@ return [
                     'url' => 'admin/products',
                     'can' => [PermissionEnum::ViewOffer],
                     'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/budgets*']
+                    'active' => ['admin/products*']
                 ],
                 // [
                 //     'text' => 'Influencer',
