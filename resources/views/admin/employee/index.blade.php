@@ -18,7 +18,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-4 col-6">
-                            <div class="small-box bg-info">
+                            <div id="totalEmployeesCard" class="small-box bg-info p-2 filter-card" data-filter="all">
                                 <div class="inner">
                                     <h4 id="totalEmployees">0</h4>
                                     <p>Total Employees</p>
@@ -29,7 +29,7 @@
                             </div>
                         </div>
                         <div class="col-lg-4 col-6">
-                            <div class="small-box bg-info">
+                            <div id="newHiresCard" class="small-box bg-success p-2 filter-card" data-filter="newHires">
                                 <div class="inner">
                                     <h4 id="newHires">0</h4>
                                     <p>New Hire</p>
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="col-lg-4 col-6">
-                            <div class="small-box bg-info">
+                            <div id="leavingsCard" class="small-box bg-maroon p-2 filter-card" data-filter="leavings">
                                 <div class="inner">
                                     <h4 id="leavings">0</h4>
                                     <p>Leaving</p>
