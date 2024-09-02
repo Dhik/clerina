@@ -134,6 +134,7 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [EmployeeController::class, 'index'])->name('employee.index');
             Route::get('/get', [EmployeeController::class, 'get'])->name('employee.get');
+            Route::get('/export', [EmployeeController::class, 'export'])->name('employee.export');
             Route::get('/get_overview', [EmployeeController::class, 'getOverview'])->name('employee.overview');
             Route::get('/new-hires', [EmployeeController::class, 'getNewHires'])->name('employees.newHires');
             Route::get('/leavings', [EmployeeController::class, 'getLeavings'])->name('employees.leavings');

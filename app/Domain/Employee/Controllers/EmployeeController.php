@@ -5,7 +5,9 @@ namespace App\Domain\Employee\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Employee\BLL\Employee\EmployeeBLLInterface;
 use App\Domain\Employee\Models\Employee;
+use App\Domain\Employee\Exports\EmployeesExport;
 use App\Domain\Employee\Requests\EmployeeRequest;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\User\Models\User;
 use Illuminate\Http\JsonResponse;
 use Yajra\DataTables\DataTables;
@@ -333,5 +335,10 @@ class EmployeeController extends Controller
 
     return response()->json($data);
 }
+public function export(Request $request)
+    {
+        $filename = 'employees_export_' . date('Ymd_His') . '.xlsx';
+        return Excel::download(new EmployeesExport, $filename);
+    }
 
 }

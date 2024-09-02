@@ -11,40 +11,42 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-lg-4 col-6">
+                            <a href="{{ route('employee.export') }}" class="btn btn-success"><i class="fas fa-file-download"></i> Download Employees Data</a>
+                        </div>
+                    </div>
                     <div class="row">
-                        <div class="col-lg-2 col-6">
-                            <div id="totalEmployeesCard" class="small-box bg-purple p-2 filter-card" data-filter="all">
-                                <h5 class="text-center">Total Employees</h5>
-                                <div class="row text-center">
-                                    <div class="col-12">
-                                        <div class="inner">
-                                            <h4 id="totalEmployees">0</h4>
-                                        </div>
-                                    </div>
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h4 id="totalEmployees">0</h4>
+                                    <p>Total Employees</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-id-badge"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-2 col-6">
-                            <div id="newHiresCard" class="small-box bg-success p-2 filter-card" data-filter="newHires">
-                                <h5 class="text-center">New Hire</h5>
-                                <div class="row text-center">
-                                    <div class="col-12">
-                                        <div class="inner">
-                                            <h4 id="newHires">0</h4>
-                                        </div>
-                                    </div>
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h4 id="newHires">0</h4>
+                                    <p>New Hire</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-arrow-up"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-2 col-6">
-                            <div id="leavingsCard" class="small-box bg-maroon p-2 filter-card" data-filter="leavings">
-                                <h5 class="text-center">Leaving</h5>
-                                <div class="row text-center">
-                                    <div class="col-12">
-                                        <div class="inner">
-                                            <h4 id="leavings">0</h4>
-                                        </div>
-                                    </div>
+                        <div class="col-lg-4 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h4 id="leavings">0</h4>
+                                    <p>Leaving</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-arrow-down"></i>
                                 </div>
                             </div>
                         </div>
