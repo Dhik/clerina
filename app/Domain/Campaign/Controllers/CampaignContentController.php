@@ -312,19 +312,24 @@ class CampaignContentController extends Controller
         return response()->json($query);
     }
     public function getProductDataTable(): JsonResponse
-    {
-        $products = CampaignContent::select('product')->distinct()->get();
+{
+    $products = CampaignContent::select('product')->distinct()->get();
 
-        return DataTables::of($products)
-            ->addColumn('actions', function ($product) {
+    return DataTables::of($products)
+        ->addColumn('actions', function ($product) {
+            if ($product->product) {
                 return '
                     <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
                         View Details
                     </a>';
-            })
-            ->rawColumns(['actions'])
-            ->toJson();
-    }
+            } else {
+                return ''; // Return an empty string if the product is null
+            }
+        })
+        ->rawColumns(['actions'])
+        ->toJson();
+}
+
     public function showProductDetails(string $productName): View
 {
     $product = CampaignContent::where('product', $productName)->firstOrFail();
