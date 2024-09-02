@@ -316,12 +316,6 @@ class CampaignContentController extends Controller
         $products = CampaignContent::select('product')->distinct()->get();
 
         return DataTables::of($products)
-            ->addColumn('actions', function ($product) {
-                return '
-                    <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
-                        View Details
-                    </a>';
-            })
             ->rawColumns(['actions'])
             ->toJson();
     }

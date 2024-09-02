@@ -41,8 +41,6 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [CampaignContentController::class, 'showDistinctProducts'])->name('campaignContent.showDistinctProducts');
                 Route::get('/get', [CampaignContentController::class, 'getProductDataTable'])->name('campaignContent.getProduct');
-                Route::get('/{productName}', [CampaignContentController::class, 'showProductDetails'])
-    ->name('campaignContent.showProductDetails');
             });
 
         Route::prefix('campaignContent')

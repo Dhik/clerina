@@ -15,7 +15,6 @@
                         <thead>
                             <tr>
                                 <th>Product</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -43,8 +42,7 @@
                     }
                 },
                 "columns": [
-                    { "data": "product" },
-                    { "data": "actions", "orderable": false, "searchable": false }
+                    { "data": "product" }
                 ],
                 "pageLength": 10,
                 "responsive": true
