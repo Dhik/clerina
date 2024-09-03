@@ -37,7 +37,7 @@
                             type="date"
                             class="form-control @error($field) is-invalid @enderror"
                             name="{{ $field }}"
-                            value="{{ old($field, $edit ? (new \DateTime($employee->$field))->format('Y-m-d') : '') }}"
+                            value="{{ old($field, $edit && $employee->$field ? (new \DateTime($employee->$field))->format('Y-m-d') : '') }}"
                             placeholder="{{ trans('placeholder.input', ['field' => trans("labels.$field")]) }}"
                             autocomplete="{{ $field }}"
                             autofocus>

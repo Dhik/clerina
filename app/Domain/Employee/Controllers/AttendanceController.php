@@ -49,14 +49,10 @@ class AttendanceController extends Controller
         ->whereDate('date', Carbon::today())
         ->first();
 
-    if (!$existingAttendance) {
-        Attendance::create([
-            'employee_id' => $employeeId,
+    if ($existingAttendance) {
+        $existingAttendance->update([
             'attendance_status' => 'present',
             'clock_in' => $clockInTime,
-            'clock_out' => null,
-            'date' => Carbon::today(),
-            'shift_id' => $shiftId,
         ]);
     }
 
