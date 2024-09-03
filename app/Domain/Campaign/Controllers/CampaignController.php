@@ -130,7 +130,10 @@ class CampaignController extends Controller
         $statuses = OfferEnum::Status;
         $platforms = CampaignContentEnum::Platform;
 
-        $usernames = CampaignContent::where('campaign_id', $campaign->id)->distinct()->pluck('username');
+        $usernames = CampaignContent::where('tenant_id', Auth::user()->current_tenant_id)
+                    ->distinct()
+                    ->pluck('username');
+                    
         return view('admin.campaign.show', compact('campaign', 'negotiates', 'statuses', 'platforms', 'usernames'));
     }
 
