@@ -129,7 +129,9 @@ class CampaignController extends Controller
         $negotiates = OfferEnum::Negotiation;
         $statuses = OfferEnum::Status;
         $platforms = CampaignContentEnum::Platform;
-        return view('admin.campaign.show', compact('campaign', 'negotiates', 'statuses', 'platforms'));
+
+        $usernames = CampaignContent::where('campaign_id', $campaign->id)->distinct()->pluck('username');
+        return view('admin.campaign.show', compact('campaign', 'negotiates', 'statuses', 'platforms', 'usernames'));
     }
 
     /**

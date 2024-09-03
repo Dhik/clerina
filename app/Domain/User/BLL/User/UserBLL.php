@@ -39,18 +39,12 @@ class UserBLL extends BaseBLL implements UserBLLInterface
      * Return user for DataTable
      */
     public function getUserDataTable(): Builder
-    {
-        $query = $this->userDAL->getUserDataTable();
+{
+    $query = $this->userDAL->getUserDataTable();
+    return $query;
+}
 
-        if (Auth::user()->hasRole(RoleEnum::BrandManager)) {
-            $query->whereDoesntHave('roles', function ($q) {
-                $q->where('name', RoleEnum::SuperAdmin)
-                    ->orWhere('name', RoleEnum::BrandManager);
-            });
-        }
 
-        return $query;
-    }
 
     /**
      * Return marketing user

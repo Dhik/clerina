@@ -14,9 +14,12 @@
                     <!-- Your form fields here -->
                     <div class="form-group">
                         <label for="username">{{ trans('labels.influencer') }}<span class="required">*</span></label>
-
-                        <select class="form-control" id="username" name="key_opinion_leader_id" required>
-                            <option value=""></option>
+                        <select class="form-control">
+                            <option value="" selected>{{ trans('placeholder.select', ['field' => trans('labels.influencer')]) }}</option>
+                            <option value="">{{ trans('labels.all') }}</option>
+                            @foreach($usernames as $username)
+                                <option value={{ $username }}>{{ $username }}</option>
+                            @endforeach
                         </select>
                     </div>
 

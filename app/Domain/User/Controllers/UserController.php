@@ -7,6 +7,7 @@ use App\Domain\User\BLL\User\UserBLLInterface;
 use App\Domain\Employee\BLL\Employee\EmployeeBLLInterface;
 use App\Domain\User\Models\User;
 use App\Domain\User\Requests\ResetPasswordRequest;
+use App\Domain\User\Enums\PermissionEnum;
 use App\Domain\User\Requests\UserRequest;
 use App\Domain\User\Requests\UserUpdateRequest;
 use App\Http\Controllers\Controller;
@@ -35,8 +36,6 @@ class UserController extends Controller
      */
     public function get(): JsonResponse
     {
-        $this->authorize('viewAnyUser', User::class);
-
         $userQuery = $this->userBLL->getUserDataTable();
 
         return DataTables::of($userQuery)
@@ -76,8 +75,6 @@ class UserController extends Controller
      */
     public function index(): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('viewAnyUser', User::class);
-
         return view('admin.user.index');
     }
 
@@ -86,7 +83,7 @@ class UserController extends Controller
      */
     public function create(): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('createUser', User::class);
+        $this->authorize(PermissionEnum::CreateUser, User::class);
 
         $roles = $this->userBLL->getAllRoles();
         $tenants = $this->tenantBLL->getAllTenants();
@@ -100,7 +97,7 @@ class UserController extends Controller
      */
     public function store(UserRequest $request): RedirectResponse
 {
-    $this->authorize('createUser', User::class);
+    $this->authorize(PermissionEnum::CreateUser, User::class);
 
     $user = $this->userBLL->createUser($request);
 
@@ -139,7 +136,7 @@ class UserController extends Controller
      */
     public function show(User $user): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('viewUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::ViewUser, [User::class, $user]);
 
         $roles = $this->userBLL->getRoleUser($user);
         $tenants = $user->tenants()->get()->pluck('name');
@@ -149,7 +146,7 @@ class UserController extends Controller
 
     public function show_detail(User $user): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('viewUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::ViewUser, [User::class, $user]);
 
         $roles = $this->userBLL->getRoleUser($user);
         $tenants = $user->tenants()->get()->pluck('name');
@@ -162,7 +159,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('updateUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::UpdateUser, [User::class, $user]);
 
         $roles = $this->userBLL->getAllRoles();
         $tenants = $this->tenantBLL->getAllTenants();
@@ -175,7 +172,7 @@ class UserController extends Controller
      */
     public function update(User $user, UserUpdateRequest $request): RedirectResponse
     {
-        $this->authorize('updateUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::UpdateUser, [User::class, $user]);
 
         $this->userBLL->updateUser($user, $request);
 
@@ -192,7 +189,7 @@ class UserController extends Controller
      */
     public function destroy(User $user): JsonResponse
     {
-        $this->authorize('deleteUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::DeleteUser, [User::class, $user]);
 
         $this->userBLL->deleteUser($user);
 
@@ -204,7 +201,7 @@ class UserController extends Controller
      */
     public function resetPassword(User $user): View|ApplicationAlias|Factory|Application
     {
-        $this->authorize('updateUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::UpdateUser, [User::class, $user]);
 
         return view('admin.user.reset-password', compact('user'));
     }
@@ -214,7 +211,7 @@ class UserController extends Controller
      */
     public function updateResetPassword(User $user, ResetPasswordRequest $request): RedirectResponse
     {
-        $this->authorize('updateUser', [User::class, $user]);
+        $this->authorize(PermissionEnum::UpdateUser, [User::class, $user]);
 
         $this->userBLL->resetPassword($user, $request);
 

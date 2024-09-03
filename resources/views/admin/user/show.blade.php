@@ -49,13 +49,16 @@
                             </tbody>
                         </table>
                     </div>
+                    @php
+                        use App\Domain\User\Enums\PermissionEnum;
+                    @endphp
                     <div class="card-footer">
-                        @can('updateUser', $user)
+                        @can(PermissionEnum::UpdateUser, $user)
                             <a href="{{ route('users.edit', $user->id) }}" class="btn btn-primary">{{ trans('buttons.edit') }}</a>
                             <a href="{{ route('users.editPasswordReset', $user->id) }}" class="btn btn-success">{{ trans('buttons.change_password') }}</a>
                         @endcan
 
-                        @can('deleteUser', $user)
+                        @can(PermissionEnum::DeleteUser, $user)
                             <button class="btn btn-danger delete-user">{{ trans('buttons.delete') }}</button>
                         @endcan
                     </div>
