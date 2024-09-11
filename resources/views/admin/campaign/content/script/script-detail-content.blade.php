@@ -71,6 +71,13 @@
 
             let embedIg = '<iframe height="600" src="' + embedLink + '" frameborder="0"></iframe>';
             $('#contentEmbed').html(embedIg);
+        } else if (rowData.link !== '' && rowData.channel === 'youtube_video') {
+            // Embed YouTube Shorts
+            let videoId = rowData.link.split('/').pop(); // Extract video ID from URL
+            let embedLink = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1'; // Embed URL with autoplay
+
+            let embedYoutube = `<iframe width="315" height="560" src="${embedLink}" frameborder="0" allowfullscreen></iframe>`;
+            $('#contentEmbed').html(embedYoutube);
         } else if (rowData.link !== '') {
             // Embed generic link
             let buttonEmbed = '<a href="'+ rowData.link +'" target="_blank" class="btn btn-primary">Go to Content</a>';

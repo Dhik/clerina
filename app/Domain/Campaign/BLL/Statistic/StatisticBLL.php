@@ -9,6 +9,7 @@ use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Service\InstagramScrapperService;
 use App\Domain\Campaign\Service\TiktokScrapperService;
 use App\Domain\Campaign\Service\TwitterScrapperService;
+use App\Domain\Campaign\Service\YoutubeScrapperService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,8 @@ class StatisticBLL implements StatisticBLLInterface
         protected StatisticDALInterface $statisticDAL,
         protected InstagramScrapperService $instagramScrapperService,
         protected TiktokScrapperService $tiktokScrapperService,
-        protected TwitterScrapperService $twitterScrapperService
+        protected TwitterScrapperService $twitterScrapperService,
+        protected YoutubeScrapperService $youtubeScrapperService
     ) {
     }
 
@@ -86,6 +88,9 @@ class StatisticBLL implements StatisticBLLInterface
             } elseif ($channel === CampaignContentEnum::TwitterPost) {
                 $twitterPostId = $this->extractTwitterPostId($link);
                 $data = $this->twitterScrapperService->getData($twitterPostId);
+            } elseif ($channel === CampaignContentEnum::YoutubeVideo) {
+                $youtubeVideoId = $this->extractYoutubeVideoId($link);
+                $data = $this->youtubeScrapperService->getData($youtubeVideoId);
             }
 
             if (empty($data)) {
@@ -111,6 +116,20 @@ class StatisticBLL implements StatisticBLLInterface
     {
         $segments = explode('/', rtrim($url, '/'));
         return end($segments);
+    }
+    protected function extractYoutubeVideoId(string $url): ?string
+    {
+        // Parse the URL to get the path
+        $path = parse_url($url, PHP_URL_PATH);
+
+        // Extract video ID based on the URL path
+        if (preg_match('/\/shorts\/([a-zA-Z0-9_-]{11})/', $path, $matches)) {
+            return $matches[1]; // For YouTube Shorts
+        } elseif (preg_match('/\/watch\?v=([a-zA-Z0-9_-]{11})/', $url, $matches)) {
+            return $matches[1]; // For regular YouTube videos
+        }
+
+        return null; // Return null if no ID is found
     }
 
     /**

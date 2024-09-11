@@ -85,8 +85,15 @@ class CampaignContentDAL implements CampaignContentDALInterface
     public function updateUploadDate(int $campaignContentId, string $date): void
     {
         $content = CampaignContent::where('id', $campaignContentId)->withoutGlobalScopes()->first();
-        $content->upload_date = Carbon::createFromTimestamp($date);
-        $content->update();
+        if ($content->channel == 'youtube_video') {
+            // Convert the ISO 8601 date string to a Carbon instance
+            $content->upload_date = $date ? Carbon::parse($date) : null;
+            $content->save(); // Use save() to update the model
+        }
+        else{
+            $content->upload_date = Carbon::createFromTimestamp($date);
+            $content->update();
+        }
     }
 
     /**
