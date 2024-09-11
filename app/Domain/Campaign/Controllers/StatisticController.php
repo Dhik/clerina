@@ -134,7 +134,6 @@ class StatisticController extends Controller
     {
 
         $this->authorize('viewCampaignContent', CampaignContent::class);
-
         return response()->json($this->statisticBLL->getChartDataCampaign($campaignId, $request));
     }
 
