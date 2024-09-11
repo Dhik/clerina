@@ -78,6 +78,11 @@
 
             let embedYoutube = `<iframe width="315" height="560" src="${embedLink}" frameborder="0" allowfullscreen></iframe>`;
             $('#contentEmbed').html(embedYoutube);
+
+        } else if (rowData.link !== '' && rowData.channel === 'shopee_video') {
+            let shopeeEmbed = `<iframe src="${rowData.link}" width="315" height="560" frameborder="0" allowfullscreen></iframe>`;
+            $('#contentEmbed').html(shopeeEmbed);
+
         } else if (rowData.link !== '') {
             // Embed generic link
             let buttonEmbed = '<a href="'+ rowData.link +'" target="_blank" class="btn btn-primary">Go to Content</a>';

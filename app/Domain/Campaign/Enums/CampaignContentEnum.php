@@ -11,6 +11,7 @@ enum CampaignContentEnum
     const TikTokLive = 'tiktok_live';
     const YoutubeVideo = 'youtube_video';
     const TwitterPost = 'twitter_post';
+    const ShopeeVideo = 'shopee_video';
 
     const Platform = [
         [
@@ -37,6 +38,10 @@ enum CampaignContentEnum
             'value' => self::TwitterPost,
             'label' => self::TwitterPost. ' (Auto)',
         ],
+        [
+            'value' => self::ShopeeVideo,
+            'label' => self::ShopeeVideo. ' (Auto)',
+        ],
     ];
 
     const PlatformValidation = [
@@ -46,5 +51,6 @@ enum CampaignContentEnum
         self::TikTokLive,
         self::YoutubeVideo,
         self::TwitterPost,
+        self::ShopeeVideo,
     ];
 }

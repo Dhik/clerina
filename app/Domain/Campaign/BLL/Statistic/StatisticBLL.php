@@ -10,6 +10,7 @@ use App\Domain\Campaign\Service\InstagramScrapperService;
 use App\Domain\Campaign\Service\TiktokScrapperService;
 use App\Domain\Campaign\Service\TwitterScrapperService;
 use App\Domain\Campaign\Service\YoutubeScrapperService;
+use App\Domain\Campaign\Service\ShopeeScrapperService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,8 @@ class StatisticBLL implements StatisticBLLInterface
         protected InstagramScrapperService $instagramScrapperService,
         protected TiktokScrapperService $tiktokScrapperService,
         protected TwitterScrapperService $twitterScrapperService,
-        protected YoutubeScrapperService $youtubeScrapperService
+        protected YoutubeScrapperService $youtubeScrapperService,
+        protected ShopeeScrapperService $shopeeScrapperService,
     ) {
     }
 
@@ -91,6 +93,8 @@ class StatisticBLL implements StatisticBLLInterface
             } elseif ($channel === CampaignContentEnum::YoutubeVideo) {
                 $youtubeVideoId = $this->extractYoutubeVideoId($link);
                 $data = $this->youtubeScrapperService->getData($youtubeVideoId);
+            } elseif ($channel === CampaignContentEnum::ShopeeVideo) {
+                $data = $this->shopeeScrapperService->getData($link);
             }
 
             if (empty($data)) {

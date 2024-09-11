@@ -107,7 +107,7 @@ class CampaignContentController extends Controller
                 </button>
                 <div class="dropdown-menu" role="menu" style="">';
 
-        if (in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo])) {
+        if (in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo, CampaignContentEnum::ShopeeVideo])) {
             $actionsHtml .= '
             <button class="dropdown-item btnRefresh">
                 '. trans("labels.refresh").'
@@ -119,7 +119,7 @@ class CampaignContentController extends Controller
                 <button class="dropdown-item btnUpdateContent">'.trans("labels.update").'</button>';
         }
 
-        if (Gate::allows('updateCampaign', $row->campaign) && !in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo])) {
+        if (Gate::allows('updateCampaign', $row->campaign) && !in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo, CampaignContentEnum::ShopeeVideo])) {
             $actionsHtml .= '
                 <button class="dropdown-item btnStatistic">'. trans("labels.manual") .' '. trans("labels.data") .'</button>';
         }
