@@ -12,7 +12,8 @@ class StatisticCardService
 {
     public function card(int $campaignId, Request $request): array
 {
-    $campaignContents = $this->fetchCampaignContents($campaignId, $request);
+    // Fetch all campaign contents (without date filtering)
+    $allCampaignContents = CampaignContent::where('campaign_id', $campaignId)->get();
 
     // Convert filterDates to start and end dates
     $startDate = null;
@@ -32,8 +33,9 @@ class StatisticCardService
         ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
         ->get()
         ->unique('campaign_content_id'); 
-    
-    $allCampaignContents = CampaignContent::where('campaign_id', $campaignId)->get();
+
+    // Fetch filtered campaign contents using fetchCampaignContents
+    $campaignContents = $this->fetchCampaignContents($campaignId, $request);
 
     // Aggregate totals from the latest statistics
     $totals = [
@@ -54,6 +56,7 @@ class StatisticCardService
 
     return $this->constructTotalData($campaignContents, $totals, $topData, $topProducts);
 }
+
 
 
 
