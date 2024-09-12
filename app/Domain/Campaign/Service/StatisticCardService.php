@@ -4,27 +4,56 @@ namespace App\Domain\Campaign\Service;
 
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
+use App\Domain\Campaign\Models\Statistic;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class StatisticCardService
 {
     public function card(int $campaignId, Request $request): array
-    {
-        $campaignContents = $this->fetchCampaignContents($campaignId, $request);
+{
+    $campaignContents = $this->fetchCampaignContents($campaignId, $request);
 
-        $totals = $this->calculateTotals($campaignContents);
+    // Convert filterDates to start and end dates
+    $startDate = null;
+    $endDate = null;
 
-        $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
-
-        $topData = $this->sortDataByCriteria($groupedData);
-
-        $groupedProducts = $this->groupDataByProduct($campaignContents);
-
-        $topProducts = $this->getTopProducts($groupedProducts);
-
-        return $this->constructTotalData($campaignContents, $totals, $topData, $topProducts);
+    if ($request->input('filterDates')) {
+        [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+        $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+        $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
     }
+
+    // Fetch latest statistics for each campaign_content_id, considering the date range
+    $statistics = Statistic::where('campaign_id', $campaignId)
+        ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+        })
+        ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
+        ->get()
+        ->unique('campaign_content_id'); // Keep only the most recent statistic for each content
+
+    // Aggregate totals from the latest statistics
+    $totals = [
+        'totalView' => $statistics->sum('view'),
+        'totalLike' => $statistics->sum('like'),
+        'totalComment' => $statistics->sum('comment'),
+        'total_influencer' => $statistics->groupBy('key_opinion_leader_id')->count(),
+        'total_content' => $statistics->groupBy('campaign_content_id')->count(),
+        'totalExpense' => $statistics->sum('rate_card'),
+        'cpm' => $statistics->sum('cpm'),
+    ];
+
+    // Use the fetched campaignContents to calculate the top data
+    $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
+    $topData = $this->sortDataByCriteria($groupedData);
+    $groupedProducts = $this->groupDataByProduct($campaignContents);
+    $topProducts = $this->getTopProducts($groupedProducts);
+
+    return $this->constructTotalData($campaignContents, $totals, $topData, $topProducts);
+}
+
+
 
     public function recapStatisticCampaign(int $campaignId): void
     {

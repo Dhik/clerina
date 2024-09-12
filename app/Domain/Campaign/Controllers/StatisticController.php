@@ -121,9 +121,7 @@ class StatisticController extends Controller
      */
     public function card(int $campaignId, Request $request): JsonResponse
     {
-
         $this->authorize('viewCampaignContent', CampaignContent::class);
-
         return response()->json($this->cardService->card($campaignId, $request));
     }
 
