@@ -17,7 +17,7 @@ class CampaignContentTemplateExport implements ShouldAutoSize, WithHeadings, Wit
         return [
             trans('labels.username'),
             trans('labels.task'),
-            trans('labels.platform'). ' (instagram_feed/tiktok_video/instagram_story/tiktok_live/youtube_video/twitter_post) CASE SENSITIVE',
+            trans('labels.platform'). ' (instagram_feed/tiktok_video/instagram_story/tiktok_live/youtube_video/twitter_post/shopee_video) CASE SENSITIVE',
             trans('labels.link'),
             trans('labels.rate_card'),
             trans('labels.product')
