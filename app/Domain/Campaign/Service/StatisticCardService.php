@@ -38,8 +38,8 @@ class StatisticCardService
         'totalView' => $statistics->sum('view'),
         'totalLike' => $statistics->sum('like'),
         'totalComment' => $statistics->sum('comment'),
-        'total_influencer' => $statistics->groupBy('key_opinion_leader_id')->count(),
-        'total_content' => $statistics->groupBy('campaign_content_id')->count(),
+        'total_influencer' => $campaignContents->pluck('username')->unique()->count(),
+        'total_content' => $campaignContents->pluck('link')->unique()->count(),
         'totalExpense' => $statistics->sum('rate_card'),
         'cpm' => $statistics->sum('cpm'),
     ];
