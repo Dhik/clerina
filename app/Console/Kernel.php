@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\ImportOrders::class,
         \App\Console\Commands\ImportCampaignContent::class,
+        \App\Console\Commands\RefreshCampaignContents::class,
     ];
 
 
@@ -25,6 +26,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('statistic:campaign-recap')->dailyAt('07:00');
         $schedule->command('orders:fetch-external')->cron('0 9,12,17,19,21,3,6 * * *')->timezone('Asia/Jakarta');
         $schedule->command('attendance:populate')->dailyAt('00:05');
+        $schedule->command('campaign:refresh-contents')->dailyAt('06:00');
+
 
 
         // $schedule->command('postings:update daily')->daily();
