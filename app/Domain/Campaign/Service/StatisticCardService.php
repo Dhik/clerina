@@ -42,8 +42,6 @@ class StatisticCardService
         'totalView' => $statistics->sum('view'),
         'totalLike' => $statistics->sum('like'),
         'totalComment' => $statistics->sum('comment'),
-        'total_influencer' => $allCampaignContents->pluck('username')->unique()->count(),
-        'total_content' => $allCampaignContents->pluck('link')->unique()->count(),
         'totalExpense' => $allCampaignContents->sum('rate_card'),
         'cpm' => $statistics->sum('cpm'),
     ];
@@ -54,7 +52,7 @@ class StatisticCardService
     $groupedProducts = $this->groupDataByProduct($campaignContents);
     $topProducts = $this->getTopProducts($groupedProducts);
 
-    return $this->constructTotalData($campaignContents, $totals, $topData, $topProducts);
+    return $this->constructTotalData($allCampaignContents, $totals, $topData, $topProducts);
 }
 
 
@@ -71,8 +69,6 @@ class StatisticCardService
             'view' => $totals['totalView'],
             'like' => $totals['totalLike'],
             'comment' => $totals['totalComment'],
-            'total_influencer' => $campaignContents->pluck('username')->unique()->count(),
-            'total_content' => $campaignContents->count(),
             'total_expense' => $totals['totalExpense'],
             'achievement' => $totals['totalExpense'] === 0 ? 0 : $totals['totalView'] / $totals['totalExpense'],
             'cpm' => $totals['cpm'],
