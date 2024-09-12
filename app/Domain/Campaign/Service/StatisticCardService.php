@@ -31,7 +31,7 @@ class StatisticCardService
         })
         ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
         ->get()
-        ->unique('campaign_content_id'); // Keep only the most recent statistic for each content
+        ->unique('campaign_content_id'); 
 
     // Aggregate totals from the latest statistics
     $totals = [
@@ -40,7 +40,7 @@ class StatisticCardService
         'totalComment' => $statistics->sum('comment'),
         'total_influencer' => $campaignContents->pluck('username')->unique()->count(),
         'total_content' => $campaignContents->pluck('link')->unique()->count(),
-        'totalExpense' => $statistics->sum('rate_card'),
+        'totalExpense' => $campaignContents->sum('rate_card'),
         'cpm' => $statistics->sum('cpm'),
     ];
 
