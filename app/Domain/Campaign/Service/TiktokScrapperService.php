@@ -86,7 +86,9 @@ class TiktokScrapperService
     protected function urlCheck(string $url): ?string
     {
         // Check if the URL starts with tiktok.com or vt.tiktok.com
-        if (str_starts_with($url, 'https://www.tiktok.com/')) {
+        if (str_starts_with($url, 'https://www.tiktok.com/t/')) {
+            return self::BY_URL; // Shortened tiktok.com URL
+        } elseif (str_starts_with($url, 'https://www.tiktok.com/')) {
             return self::BY_ID;
         } elseif (str_starts_with($url, 'https://vt.tiktok.com/')) {
             return self::BY_URL;
