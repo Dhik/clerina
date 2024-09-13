@@ -56,7 +56,7 @@ class AttendanceController extends Controller
         ]);
     }
 
-    return redirect()->route('attendance.app');
+    return redirect()->route('attendance.absensi');
 }
 
 public function clockOut(Request $request)

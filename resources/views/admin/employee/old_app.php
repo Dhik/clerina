@@ -6,7 +6,7 @@
 <nav class="navbar navbar-custom">
     <div class="container d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center">
-            <img src="{{ $profile_picture ? asset('storage/' . $profile_picture) : asset('img/user.png') }}" alt="Profile Picture" width="60" class="rounded-circle shadow">
+        <img src="{{ $profile_picture ? asset('storage/' . $profile_picture) : asset('img/user.png') }}" alt="Profile Picture" width="60" class="rounded-circle shadow">
             <div class="info ml-3">
                 <h5 class="font-weight-bold">Hello, {{ $full_name }}</h5>
                 <p class="text-muted">{{ $shift_name }} (08.00 - 16.30)</p>
@@ -49,7 +49,7 @@
             <div class="time" id="clock">--:--</div>
             <form id="clockInForm" action="{{ route('attendance.clockin') }}" method="POST">
                 @csrf
-                <button type="button" id="clockInBtn" class="btn btn-primary mx-2 @if($attendance && $attendance->clock_in) d-none @endif" data-toggle="modal" data-target="#clockInModal">
+                <button type="submit" id="clockInBtn" class="btn btn-primary mx-2 @if($attendance && $attendance->clock_in) d-none @endif">
                     Clock In
                     <span id="clockInLoading" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                 </button>
@@ -83,7 +83,7 @@
     @endif
 </div>
 
-<!-- Clock In Modal with Selfie -->
+<!-- Clock In Modal -->
 <div class="modal fade" id="clockInModal" tabindex="-1" aria-labelledby="clockInModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -94,16 +94,12 @@
                 </button>
             </div>
             <div class="modal-body text-center">
-                <video id="video" autoplay style="width: 100%; max-width: 400px;"></video>
-                <canvas id="canvas" style="display:none;"></canvas>
-                <img id="selfie" class="img-fluid mb-3" style="max-width: 150px; display: none;" alt="Your Selfie">
-                
-                <button id="takeSelfieBtn" class="btn btn-primary mt-3">Take Selfie</button>
-                <h5>Clock In at <span id="modalClockTime">--:--</span></h5>
+                <img src="{{ asset('/img/success.png') }}" alt="Clocked In" class="img-fluid mb-3" style="max-width: 150px;">
+                <h5>Clocked In at <span id="modalClockTime">--:--</span></h5>
                 <p class="mb-0">Another day, another opportunity to shine!</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="confirmClockInBtn">Confirm and Clock In</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -208,8 +204,8 @@
     }
 
     $(document).ready(function() {
-        setInterval(updateClock, 1000); // Update every minute
-        updateClock();
+        setInterval(updateClock, 1000); // Update every second
+        updateClock(); // Initial call to set the time immediately
 
         const targetLat = -6.969788604742309;
         const targetLng = 107.63952348097007;
@@ -234,39 +230,36 @@
             console.error("Geolocation is not supported by this browser.");
         }
 
-        // Selfie capture logic
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const selfie = document.getElementById('selfie');
-        const takeSelfieBtn = document.getElementById('takeSelfieBtn');
-        const confirmClockInBtn = document.getElementById('confirmClockInBtn');
-        
-        // Access the camera
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-                video.srcObject = stream;
-                video.play();
+        // Handle clock in form submission
+        $('#clockInForm').submit(function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            const form = $(this);
+            const url = form.attr('action');
+            const formData = form.serialize();
+
+            $('#clockInBtn').prop('disabled', true);
+            $('#clockInLoading').removeClass('d-none');
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: formData,
+                success: function(response) {
+                    $('#clockInLoading').addClass('d-none');
+                    $('#modalClockTime').text(response.clock_in_time);
+                    $('#clockInModal .modal-body p.mb-0').text(getRandomClockInMessage());
+                    $('#clockInModal').modal('show');
+                    $('#clockInModal').on('hidden.bs.modal', function () {
+                        location.reload();
+                    });
+                },
+                error: function(response) {
+                    // Handle the error
+                    console.error('Clock-in failed:', response);
+                    $('#clockInLoading').addClass('d-none');
+                    $('#clockInBtn').prop('disabled', false);
+                }
             });
-        }
-
-        // Capture the selfie when the button is clicked
-        takeSelfieBtn.addEventListener('click', function() {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Convert the canvas image to base64 and display it
-            const dataURL = canvas.toDataURL('image/png');
-            selfie.src = dataURL;
-            selfie.style.display = 'block';
-            video.style.display = 'none';
-        });
-
-        // Confirm clock in
-        confirmClockInBtn.addEventListener('click', function() {
-            $('#clockInModal').modal('hide');
-            $('#clockInForm').submit();
         });
 
         // Handle clock out form submission
@@ -301,5 +294,6 @@
             });
         });
     });
+
 </script>
 @stop
