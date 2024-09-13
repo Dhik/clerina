@@ -2,7 +2,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalExpense">0</h4>
+                <h4 id="totalExpense">Loading...</h4>
                 <p>Total Pengeluaran</p>
             </div>
             <div class="icon">
@@ -13,7 +13,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalCPM">0</h4>
+                <h4 id="totalCPM">Loading...</h4>
                 <p>Cost Per Mile</p>
             </div>
             <div class="icon">
@@ -24,7 +24,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalInfluencer">0</h4>
+                <h4 id="totalInfluencer">Loading...</h4>
                 <p>Total Influencer</p>
             </div>
             <div class="icon">
@@ -35,7 +35,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalContent">0</h4>
+                <h4 id="totalContent">Loading...</h4>
                 <p>Total Konten</p>
             </div>
             <div class="icon">
@@ -46,7 +46,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalAchievement">0</h4>
+                <h4 id="totalAchievement">Loading...</h4>
                 <p>Pencapaian</p>
             </div>
             <div class="icon">
@@ -57,7 +57,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalViews">0</h4>
+                <h4 id="totalViews">Loading...</h4>
                 <p>Video Views</p>
             </div>
             <div class="icon">
@@ -68,7 +68,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalLikes">0</h4>
+                <h4 id="totalLikes">Loading...</h4>
                 <p>Likes</p>
             </div>
             <div class="icon">
@@ -79,7 +79,7 @@
     <div class="col-md-4">
         <div class="small-box bg-white">
             <div class="inner">
-                <h4 id="totalComment">0</h4>
+                <h4 id="totalComment">Loading...</h4>
                 <p>Comment</p>
             </div>
             <div class="icon">
