@@ -211,10 +211,26 @@ class EmployeeController extends Controller
      */
     public function destroy(Employee $employee): JsonResponse
     {
-        // $this->authorize('deleteUser', [User::class, $user]);
-        $employee->delete();
-        return response()->json(['message' => trans('messages.success_delete')]);
+        try {
+            // Attempt to find the related user based on the employee's employee_id
+            $user = User::where('employee_id', $employee->employee_id)->first();
+
+            // If a user is found, delete the user
+            if ($user) {
+                $user->delete();
+            }
+
+            // Delete the employee
+            $employee->delete();
+
+            return response()->json(['message' => trans('messages.success_delete')], 200);
+        } catch (\Exception $e) {
+            // If any error occurs, return a failure response
+            return response()->json(['message' => trans('messages.error_delete')], 500);
+        }
     }
+
+
     public function get(Request $request): JsonResponse
     {
         $this->authorize('viewEmployee', Employee::class);
@@ -230,14 +246,18 @@ class EmployeeController extends Controller
         $result = $query->get();
         
         return DataTables::of($result)
-        ->addColumn('actions',
-                '<a href="{{ URL::route( \'employee.show\', array( $id )) }}" class="btn btn-primary btn-xs" >
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ URL::route( \'employee.edit\', array( $id )) }}" class="btn btn-success btn-xs" >
-                            <i class="fas fa-pencil-alt"></i>
-                        </a> '
-            )
+        ->addColumn('actions', function ($row) {
+            return '<a href="' . route('employee.show', $row->id) . '" class="btn btn-primary btn-xs">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="' . route('employee.edit', $row->id) . '" class="btn btn-success btn-xs">
+                        <i class="fas fa-pencil-alt"></i>
+                    </a>
+                    <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>';
+        })
+        
             ->rawColumns(['actions'])
             ->toJson();
         // return DataTables::of($userQuery)

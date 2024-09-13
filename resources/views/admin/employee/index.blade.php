@@ -139,6 +139,59 @@
                     }
                 });
             }
+            $(document).on('click', '.deleteButton', function () {
+                var employeeId = $(this).data('id');
+                var deleteUrl = "{{ route('employee.destroy', ':id') }}";
+                deleteUrl = deleteUrl.replace(':id', employeeId);
+
+                deleteAjax(deleteUrl, employeeId, table);
+            });
+
+            function deleteAjax(route, id, table) {
+                Swal.fire({
+                    title: '{{ trans('labels.are_you_sure') }}',
+                    text: '{{ trans('labels.not_be_able_to_recover') }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '{{ trans('buttons.confirm_swal') }}',
+                    cancelButtonText: '{{ trans('buttons.cancel_swal') }}',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: route,
+                            type: 'DELETE', // This ensures the correct HTTP method is used
+                            data: {
+                                _token: '{{ csrf_token() }}' // Include the CSRF token
+                            },
+                            success: function (response) {
+                                Swal.fire(
+                                    '{{ trans('labels.success') }}',
+                                    '{{ trans('messages.success_delete') }}',
+                                    'success'
+                                ).then(() => {
+                                    table.ajax.reload(); // Reload the DataTable after successful deletion
+                                });
+                            },
+                            error: function (xhr, status, error) {
+                                if (xhr.status === 422) {
+                                    Swal.fire(
+                                        '{{ trans('labels.failed') }}',
+                                        xhr.responseJSON.message,
+                                        'error'
+                                    );
+                                } else {
+                                    Swal.fire(
+                                        '{{ trans('labels.failed') }}',
+                                        '{{ trans('messages.error_delete') }}',
+                                        'error'
+                                    );
+                                }
+                            }
+                        });
+                    }
+                });
+            }
 
             function reloadTable(filter) {
                 var ajaxUrl;
