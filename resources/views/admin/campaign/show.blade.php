@@ -264,18 +264,18 @@ function updateProgressBar(completed, total) {
                 }
             });
 
-            // const startFilter = moment('{{ $campaign->start_date }}', "DD MMMM YYYY");
-            // const endFilter = moment('{{ $campaign->end_date }}', "DD MMMM YYYY");
+            const startFilter = moment('{{ $campaign->start_date }}', "DD MMMM YYYY");
+            const endFilter = moment('{{ $campaign->end_date }}', "DD MMMM YYYY");
 
-            // $('.filterDate').daterangepicker({
-            //     startDate: startFilter,
-            //     endDate: endFilter,
-            //     autoApply: true,
-            //     showDropdowns: true,
-            //     locale: {
-            //         format: 'DD/MM/YYYY'
-            //     }
-            // });
+            $('.filterDate').daterangepicker({
+                startDate: startFilter,
+                endDate: endFilter,
+                autoApply: false,
+                showDropdowns: true,
+                locale: {
+                    format: 'DD/MM/YYYY'
+                }
+            });
 
             bsCustomFileInput.init()
 
