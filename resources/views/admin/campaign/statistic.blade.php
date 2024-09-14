@@ -92,7 +92,7 @@
                             @endcan
 
                         </div>
-                        <div class="col-auto mt-3">
+                        <!-- <div class="col-auto mt-3">
                             <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
                                 <button type="button" class="btn btn-outline-primary" id="sortLikeAsc">
                                     <i class="fas fa-sort-amount-up"></i> {{ trans('labels.like') }} Asc
@@ -125,7 +125,7 @@
                                     <i class="fas fa-sort-amount-down"></i> {{ trans('labels.cpm_short') }} Desc
                                 </button>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
                 <div class="card-body">
