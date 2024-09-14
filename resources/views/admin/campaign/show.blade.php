@@ -204,6 +204,39 @@ function updateProgressBar(completed, total) {
             order: [[0, 'desc']]
         });
 
+        // Custom sorting buttons functionality using column().order() method
+        $('#sortLikeAsc').click(function() {
+            contentTable.column(5).order('asc').draw();  // Sort Like column ascending
+        });
+
+        $('#sortLikeDesc').click(function() {
+            contentTable.column(5).order('desc').draw();  // Sort Like column descending
+        });
+
+        $('#sortCommentAsc').click(function() {
+            contentTable.column(6).order('asc').draw();  // Sort Comment column ascending
+        });
+
+        $('#sortCommentDesc').click(function() {
+            contentTable.column(6).order('desc').draw();  // Sort Comment column descending
+        });
+
+        $('#sortViewAsc').click(function() {
+            contentTable.column(7).order('asc').draw();  // Sort View column ascending
+        });
+
+        $('#sortViewDesc').click(function() {
+            contentTable.column(7).order('desc').draw();  // Sort View column descending
+        });
+
+        $('#sortCPMAsc').click(function() {
+            contentTable.column(8).order('asc').draw();  // Sort CPM column ascending
+        });
+
+        $('#sortCPMDesc').click(function() {
+            contentTable.column(8).order('desc').draw();  // Sort CPM column descending
+        });
+
         // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {
             $('[data-toggle="tooltip"]').tooltip();

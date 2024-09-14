@@ -90,6 +90,41 @@
                                     <i class="fas fa-file-download"></i> {{ trans('labels.import') }}
                                 </button>
                             @endcan
+
+                        </div>
+                        <div class="col-auto mt-3">
+                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
+                                <button type="button" class="btn btn-outline-primary" id="sortLikeAsc">
+                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.like') }} Asc
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="sortLikeDesc">
+                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.like') }} Desc
+                                </button>
+                            </div>
+                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
+                                <button type="button" class="btn btn-outline-primary" id="sortCommentAsc">
+                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.comment') }} Asc
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="sortCommentDesc">
+                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.comment') }} Desc
+                                </button>
+                            </div>
+                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
+                                <button type="button" class="btn btn-outline-primary" id="sortViewAsc">
+                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.view') }} Asc
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="sortViewDesc">
+                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.view') }} Desc
+                                </button>
+                            </div>
+                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
+                                <button type="button" class="btn btn-outline-primary" id="sortCPMAsc">
+                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.cpm_short') }} Asc
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="sortCPMDesc">
+                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.cpm_short') }} Desc
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
