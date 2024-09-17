@@ -43,7 +43,7 @@ class StatisticCardService
         'totalLike' => $statistics->sum('like'),
         'totalComment' => $statistics->sum('comment'),
         'totalExpense' => $allCampaignContents->sum('rate_card'),
-        'cpm' => $statistics->sum('cpm'),
+        'cpm' =>($allCampaignContents->sum('rate_card')/$statistics->sum('view')) * 1000,
     ];
 
     // Use the fetched campaignContents to calculate the top data
@@ -72,6 +72,8 @@ class StatisticCardService
             'total_expense' => $totals['totalExpense'],
             'achievement' => $totals['totalExpense'] === 0 ? 0 : $totals['totalView'] / $totals['totalExpense'],
             'cpm' => $totals['cpm'],
+            'total_content' => $campaignContents->count(),
+            'total_influencer' => $campaignContents->pluck('username')->unique()->count(),
         ];
 
         $campaign = Campaign::withoutGlobalScopes()->where('id', $campaignId)->first();
