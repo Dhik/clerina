@@ -116,11 +116,24 @@ class StatisticBLL implements StatisticBLLInterface
 
         return false;
     }
-    protected function extractTwitterPostId(string $url): ?string 
+    protected function extractTwitterPostId(string $url): ?string
     {
-        $segments = explode('/', rtrim($url, '/'));
-        return end($segments);
+        // Remove query string if present
+        $urlWithoutQuery = strtok($url, '?');
+
+        // Extract segments after splitting by '/'
+        $segments = explode('/', rtrim($urlWithoutQuery, '/'));
+
+        // Find the segment which is numeric (tweet ID)
+        foreach ($segments as $segment) {
+            if (ctype_digit($segment)) {
+                return $segment;
+            }
+        }
+
+        return null;
     }
+
     protected function extractYoutubeVideoId(string $url): ?string
     {
         // Parse the URL to get the path
