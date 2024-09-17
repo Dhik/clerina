@@ -64,7 +64,7 @@ class User extends Authenticatable
 
         self::addGlobalScope(function (Builder $builder) {
             if (Auth::hasUser()) {
-                if (! Auth::user()->hasRole(RoleEnum::SuperAdmin)) {
+                if (! Auth::user()->hasAnyRole([RoleEnum::SuperAdmin, RoleEnum::HR])) {
                     $builder->whereHas('tenants', function ($q) {
                         $q->where('id', Auth::user()->current_tenant_id);
                     });
