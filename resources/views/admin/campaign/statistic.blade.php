@@ -92,61 +92,29 @@
                             @endcan
 
                         </div>
-                        <!-- <div class="col-auto mt-3">
-                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
-                                <button type="button" class="btn btn-outline-primary" id="sortLikeAsc">
-                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.like') }} Asc
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="sortLikeDesc">
-                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.like') }} Desc
-                                </button>
-                            </div>
-                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
-                                <button type="button" class="btn btn-outline-primary" id="sortCommentAsc">
-                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.comment') }} Asc
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="sortCommentDesc">
-                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.comment') }} Desc
-                                </button>
-                            </div>
-                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
-                                <button type="button" class="btn btn-outline-primary" id="sortViewAsc">
-                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.view') }} Asc
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="sortViewDesc">
-                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.view') }} Desc
-                                </button>
-                            </div>
-                            <div class="btn-group mb-3 mr-3" role="group" aria-label="Sorting buttons">
-                                <button type="button" class="btn btn-outline-primary" id="sortCPMAsc">
-                                    <i class="fas fa-sort-amount-up"></i> {{ trans('labels.cpm_short') }} Asc
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="sortCPMDesc">
-                                    <i class="fas fa-sort-amount-down"></i> {{ trans('labels.cpm_short') }} Desc
-                                </button>
-                            </div>
-                        </div> -->
                     </div>
                 </div>
                 <div class="card-body">
-                    <table id="contentTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="offer-info" width="100%">
+                    <table id="contentTable" class="table table-bordered table-hover">
                         <thead>
-                        <tr>
-                            <th>{{ trans('labels.id') }}</th>
-                            <th>{{ trans('labels.influencer') }}</th>
-                            <th>{{ trans('labels.platform') }}</th>
-                            <th>{{ trans('labels.product') }}</th>
-                            <th>{{ trans('labels.task') }}</th>
-                            <th>{{ trans('labels.like') }}</th>
-                            <th>{{ trans('labels.comment') }}</th>
-                            <th>{{ trans('labels.view') }}</th>
-                            <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">
-                                {{ trans('labels.cpm_short') }}
-                            </th>
-                            <th width="20%">{{ trans('labels.info') }}</th>
-                            <th width="10%">{{ trans('labels.action') }}</th>
-                        </tr>
+                            <tr>
+                                <th>{{ trans('labels.influencer') }}</th>
+                                <th>{{ trans('labels.platform') }}</th>
+                                <th>{{ trans('labels.product') }}</th>
+                                <th>{{ trans('labels.task') }}</th>
+                                <th>{{ trans('labels.like') }}</th>
+                                <th>{{ trans('labels.comment') }}</th>
+                                <th>{{ trans('labels.view') }}</th>
+                                <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">
+                                    {{ trans('labels.cpm_short') }}
+                                </th>
+                                <th>{{ trans('labels.additional_info') }}</th>
+                                <th>{{ trans('labels.actions') }}</th>
+                            </tr>
                         </thead>
+                        <tbody>
+                            <!-- Data will be populated here via AJAX -->
+                        </tbody>
                     </table>
                 </div>
             </div>

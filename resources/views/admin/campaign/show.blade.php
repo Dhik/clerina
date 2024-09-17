@@ -43,6 +43,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
 @endsection
@@ -161,81 +162,37 @@ function updateProgressBar(completed, total) {
         const filterPayment = $('#filterPayment')
         const filterDelivery = $('#filterDelivery')
 
-        // datatable
-        let contentTable = $('#contentTable').DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            pageLength: 25,
-            ajax: {
-                url: "{{ route('campaignContent.getDataTable', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
-                data: function (d) {
-                    // d.filterDates = filterDates.val();
-                    d.filterInfluencer = filterInfluencer.val();
-                    d.filterProduct = filterProduct.val();
-                    d.filterPlatform = filterPlatform.val();
-                    d.filterFyp = filterFyp.prop('checked');
-                    d.filterPayment = filterPayment.prop('checked');
-                    d.filterDelivery = filterDelivery.prop('checked');
-                }
-            },
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'username', name: 'keyOpinionLeader.username'},
-                {data: 'channel', name: 'channel'},
-                {data: 'product', name: 'product'},
-                {data: 'task_name', name: 'task_name'},
-                {data: 'like', name: 'latestStatistic.like'},
-                {data: 'comment', name: 'latestStatistic.comment'},
-                {data: 'view', name: 'latestStatistic.view'},
-                {data: 'cpm', name: 'latestStatistic.view'},
-                {data: 'additional_info'},
-                {data: 'actions', orderable: false, searchable: false}
-            ],
-            columnDefs: [
-                { "targets": [0], "visible": false },
-                { "targets": [5], "className": "text-right" },
-                { "targets": [6], "className": "text-right" },
-                { "targets": [7], "className": "text-right" },
-                { "targets": [8], "className": "text-right" },
-                { "targets": [9], "className": "text-center" },
-                { "targets": [10], "className": "text-center" },
-            ],
-            order: [[0, 'desc']]
-        });
+        const contentTable = $('#contentTable').DataTable({
+                responsive: true,
+                processing: true,
+                serverSide: false, // Since data is fetched via AJAX, you can keep this to false
+                ajax: {
+                    url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
+                    data: function (d) {
+                        // d.filterDates = filterDates.val();
+                        d.filterInfluencer = filterInfluencer.val();
+                        d.filterProduct = filterProduct.val();
+                        d.filterPlatform = filterPlatform.val();
+                        d.filterFyp = filterFyp.prop('checked');
+                        d.filterPayment = filterPayment.prop('checked');
+                        d.filterDelivery = filterDelivery.prop('checked');
+                    }
+                },
+                columns: [
+                    { data: 'key_opinion_leader_username' },
+                    { data: 'channel', orderable: false },
+                    { data: 'product', orderable: false },
+                    { data: 'task', orderable: false },
+                    { data: 'like', className: "text-right", orderable: true }, // Like column is sortable
+                    { data: 'comment', className: "text-right", orderable: true }, // Comment column is sortable
+                    { data: 'view', className: "text-right", orderable: true }, // View column is sortable
+                    { data: 'cpm', className: "text-right", orderable: true }, // CPM column is sortable
+                    { data: 'additional_info', orderable: false }, // Additional info column is not sortable
+                    { data: 'actions', orderable: false, searchable: false },
+                ],
+                order: [[4, 'desc']], // Set initial sorting by "view" column
+            });
 
-        // Custom sorting buttons functionality using column().order() method
-        $('#sortLikeAsc').click(function() {
-            contentTable.column(5).order('asc').draw();  // Sort Like column ascending
-        });
-
-        $('#sortLikeDesc').click(function() {
-            contentTable.column(5).order('desc').draw();  // Sort Like column descending
-        });
-
-        $('#sortCommentAsc').click(function() {
-            contentTable.column(6).order('asc').draw();  // Sort Comment column ascending
-        });
-
-        $('#sortCommentDesc').click(function() {
-            contentTable.column(6).order('desc').draw();  // Sort Comment column descending
-        });
-
-        $('#sortViewAsc').click(function() {
-            contentTable.column(7).order('asc').draw();  // Sort View column ascending
-        });
-
-        $('#sortViewDesc').click(function() {
-            contentTable.column(7).order('desc').draw();  // Sort View column descending
-        });
-
-        $('#sortCPMAsc').click(function() {
-            contentTable.column(8).order('asc').draw();  // Sort CPM column ascending
-        });
-
-        $('#sortCPMDesc').click(function() {
-            contentTable.column(8).order('desc').draw();  // Sort CPM column descending
-        });
 
         // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {

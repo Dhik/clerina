@@ -97,6 +97,43 @@ class CampaignContentController extends Controller
             ->toJson();
     }
 
+    public function getCampaignContentJson(int $campaignId, Request $request): JsonResponse
+    {
+        $this->authorize('viewCampaignContent', CampaignContent::class);
+
+        // Fetch the data using the BLL (Business Logic Layer)
+        $query = $this->campaignContentBLL->getCampaignContentDataTable($campaignId, $request);
+
+        // Transform the query results into an array format
+        $campaignContents = $query->get()->map(function ($row) {
+            return [
+                'id' => $row->id,
+                'channel' => $row->channel,
+                'product' => $row->product,
+                'task' => $row->task_name,
+                'is_fyp' => $row->is_fyp,
+                'is_product_deliver' => $row->is_product_deliver,
+                'is_paid' => $row->is_paid,
+                'created_by_name' => $row->createdBy->name ?? 'N/A',
+                'key_opinion_leader_username' => $row->keyOpinionLeader->username ?? 'N/A',
+                'like' => !empty($row->latestStatistic->like) ? abs($row->latestStatistic->like) : 0,
+                'comment' => $row->latestStatistic->comment ?? 0,
+                'view' => $row->latestStatistic->view ?? 0,
+                'cpm' => number_format($row->latestStatistic->cpm ?? 0, 2, ',', '.'),
+                'rate_card_formatted' => number_format($row->rate_card, 0, ',', '.'),
+                'link' => $row->link ?? 'N/A',  // Retrieve the link from the campaign_contents table
+                'additional_info' => $this->additionalInfo($row),
+                'actions' => $this->actionsHtml($row),
+            ];
+        });
+
+        // Return the campaign content data in JSON format
+        return response()->json([
+            'data' => $campaignContents
+        ]);
+    }
+
+
     protected function actionsHtml($row): string
     {
         $actionsHtml = '
