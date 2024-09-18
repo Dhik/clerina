@@ -228,7 +228,7 @@
                     // Calculate the distance to the target
                     const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
                     // Display the distance
-                    document.getElementById('distanceToTarget').textContent = `You are ${distance.toFixed(2)} km away from the target location.`;
+                    document.getElementById('distanceToTarget').textContent = `You are ${distance.toFixed(2)} km away from your workplace.`;
 
                     // Enable the button if within 0.2 km radius
                     if (distance <= 20) {
