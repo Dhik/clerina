@@ -268,7 +268,8 @@ class EmployeeController extends Controller
     }
     public function getNewHires(Request $request)
     {
-        $query = Employee::whereMonth('join_date', now()->month);
+        $query = Employee::whereMonth('join_date', now()->month)
+                    ->whereYear('join_date', now()->year);
 
         $employees = $query->get();
 
