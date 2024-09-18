@@ -547,12 +547,6 @@ return [
                     'icon' => 'far fa-circle nav-icon',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
-                [
-                    'text' => 'Place',
-                    'url' => '/admin/place',
-                    'icon' => 'far fa-circle nav-icon',
-                    'can' => [PermissionEnum::ViewAttendance],
-                ],
             ],
         ],
         [

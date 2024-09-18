@@ -10,7 +10,6 @@ use App\Domain\Employee\Controllers\OvertimeController;
 use App\Domain\Employee\Controllers\AttendanceRequestController;
 use App\Domain\Employee\Controllers\RequestChangeShiftController;
 use App\Domain\Employee\Controllers\PayrollController;
-use App\Domain\Employee\Controllers\PlaceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -180,17 +179,6 @@ Route::prefix('admin')
                 Route::get('/edit/{id}', [PayrollController::class, 'edit'])->name('payroll.edit');
                 Route::put('/update/{id}', [PayrollController::class, 'update'])->name('payroll.update');
                 Route::delete('/destroy/{id}', [PayrollController::class, 'destroy'])->name('payroll.destroy');
-            });
-
-        Route::prefix('place')
-            ->group(function () {
-                Route::get('/', [PlaceController::class, 'index'])->name('place.index');
-                Route::get('/create', [PlaceController::class, 'create'])->name('place.create');
-                Route::post('/store', [PlaceController::class, 'store'])->name('place.store');
-                Route::get('/edit/{id}', [PlaceController::class, 'edit'])->name('place.edit');
-                Route::put('/update/{id}', [PlaceController::class, 'update'])->name('place.update');
-                Route::delete('/destroy/{id}', [PlaceController::class, 'destroy'])->name('place.destroy');
-                Route::get('/data', [PlaceController::class, 'show'])->name('place.data');
             });
         
     });
