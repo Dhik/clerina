@@ -138,7 +138,7 @@ private function formatNumber($number)
     {
         $this->authorize('viewEmployee', Employee::class);
 
-        $query = $this->employee->query();
+        $query = $this->employee->query()->whereNull('resign_date');
 
         if (!is_null($request->input('date'))) {
             $attendanceDateString = Carbon::createFromFormat('Y-m-d', $request->input('date'))->format('Y-m-d');
