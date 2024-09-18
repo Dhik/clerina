@@ -49,7 +49,7 @@
             <div class="time" id="clock">--:--</div>
             <form id="clockInForm" action="{{ route('attendance.clockin') }}" method="POST">
                 @csrf
-                <button type="button" id="clockInBtn" class="btn btn-primary mx-2 @if($attendance && $attendance->clock_in) d-none @endif" 
+                <button type="button" id="clockInBtn" class="btn btn-primary mx-2" 
                         data-toggle="modal" data-target="#clockInModal" @if($attendance && $attendance->clock_in) disabled @endif>
                     Clock In
                     <span id="clockInLoading" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -235,11 +235,13 @@
                 }, (error) => {
                     if (error.code === error.PERMISSION_DENIED) {
                         showLocationError("Please allow the location first");
+                        document.getElementById("clockInBtn").disabled = true;
                     }
                     console.error("Error getting location: ", error);
                 });
             } else {
                 showLocationError("Geolocation is not supported by this browser.");
+                document.getElementById("clockInBtn").disabled = true;
                 console.error("Geolocation is not supported by this browser.");
             }
         }
