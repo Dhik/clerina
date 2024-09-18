@@ -32,7 +32,7 @@ class LocationController extends Controller
     public function edit($id)
     {
         $location = Location::with('employees')->findOrFail($id);
-        $employees = Employee::all();
+        $employees = Employee::whereNull('resign_date')->get();
         return view('admin.attendance.location.edit', compact('location', 'employees'));
     }
 
