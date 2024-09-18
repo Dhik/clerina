@@ -27,6 +27,9 @@
 
 @section('content')
 <div class="container mt-4">
+    <div class="distance-info mt-3">
+        <p id="distanceToTarget" class="text-muted">Calculating distance...</p>
+    </div>
     @if($attendance && $attendance->clock_in)
     <div class="card card-custom shadow-sm">
         <div class="dot dot-start"></div>
@@ -153,16 +156,15 @@
     }
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Radius of the earth in km
-        const dLat = deg2rad(lat2 - lat1);  // deg2rad below
-        const dLon = deg2rad(lon2 - lon1); 
+        const R = 6371; // Radius of the Earth in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = 
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-            Math.sin(dLon / 2) * Math.sin(dLon / 2); 
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
-        const d = R * c; // Distance in km
-        return d;
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Distance in kilometers
     }
 
     function deg2rad(deg) {
@@ -225,6 +227,8 @@
 
                     // Calculate the distance to the target
                     const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
+                    // Display the distance
+                    document.getElementById('distanceToTarget').textContent = `You are ${distance.toFixed(2)} km away from the target location.`;
 
                     // Enable the button if within 0.2 km radius
                     if (distance <= 0.2) {
