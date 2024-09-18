@@ -231,7 +231,7 @@
                     document.getElementById('distanceToTarget').textContent = `You are ${distance.toFixed(2)} km away from your workplace.`;
 
                     // Enable the button if within 0.2 km radius
-                    if (distance <= 20) {
+                    if (distance <= 200) {
                         document.getElementById("clockInBtn").disabled = false;
                         hideLocationError(); 
                     } else {
