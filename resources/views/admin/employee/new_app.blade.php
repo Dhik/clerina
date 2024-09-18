@@ -49,10 +49,12 @@
             <div class="time" id="clock">--:--</div>
             <form id="clockInForm" action="{{ route('attendance.clockin') }}" method="POST">
                 @csrf
-                <button type="button" id="clockInBtn" class="btn btn-primary mx-2 @if($attendance && $attendance->clock_in) d-none @endif" data-toggle="modal" data-target="#clockInModal">
+                <button type="button" id="clockInBtn" class="btn btn-primary mx-2 @if($attendance && $attendance->clock_in) d-none @endif" 
+                        data-toggle="modal" data-target="#clockInModal" @if($attendance && $attendance->clock_in) disabled @endif>
                     Clock In
                     <span id="clockInLoading" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                 </button>
+
             </form>
         </div>
     </div>
@@ -224,16 +226,39 @@
                     // Calculate the distance to the target
                     const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
 
-                    // Enable the button if within 20km radius
+                    // Enable the button if within 0.2 km radius
                     if (distance <= 0.2) {
                         document.getElementById("clockInBtn").disabled = false;
+                    } else {
+                        document.getElementById("clockInBtn").disabled = true; // Disable if outside radius
                     }
                 }, (error) => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        showLocationError("Please allow the location first");
+                    }
                     console.error("Error getting location: ", error);
                 });
             } else {
+                showLocationError("Geolocation is not supported by this browser.");
                 console.error("Geolocation is not supported by this browser.");
             }
+        }
+
+        // Function to display the error message
+        function showLocationError(message) {
+            const container = document.createElement('div');
+            container.classList.add('card', 'card-custom', 'shadow-sm', 'mt-3', 'location-error-card');
+
+            const errorContent = `
+                <div class="card-body">
+                    <div class="alert alert-danger shadow" role="alert">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = errorContent;
+            document.querySelector('.container.mt-4').appendChild(container);
         }
 
         // Selfie capture logic
