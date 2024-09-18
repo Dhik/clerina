@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Employee\BLL\Employee\EmployeeBLLInterface;
 use App\Domain\Employee\Models\Employee;
 use App\Domain\Employee\Models\Payroll;
-use App\Domain\Employee\Models\Place;
+use App\Domain\Employee\Models\Location;
 use App\Domain\Employee\Import\PayrollImport;
 use Illuminate\Http\JsonResponse;
 use Yajra\DataTables\DataTables;
@@ -58,7 +58,7 @@ class PayrollController extends Controller
 
     // Fetch payroll and place details
     $payroll = Payroll::where('employee_id', $employee->employee_id)->first();
-    $place = Place::where('id', $employee->place_id)->first();
+    $place = Location::where('id', $employee->place_id)->first();
 
     // Initialize salary variables
     $salary = 0;
@@ -69,14 +69,14 @@ class PayrollController extends Controller
     $count_time_off = $timeOffs->count();
     $salaryDeductions = 0;
 
-    if ($place && $place->place == 'Gudang') {
+    if ($place && $place->setting_name == 'Warehouse') {
         $count_attendanceQuery = Attendance::where('employee_id', $employee->employee_id)
             ->where('attendance_status', 'present');
         $count_attendanceQuery = $this->filterByDateRange($count_attendanceQuery, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth']);
         $count_attendance = $count_attendanceQuery->count();
 
         $salary = ($payroll->gaji_pokok / 26 * $count_attendance) + ($count_attendance * 10000) + ($payroll->gaji_pokok / (26 * 7)) * $payroll->insentif;
-    } elseif ($place && $place->place == 'Kantor') {
+    } elseif ($place && $place->setting_name == 'Office') {
         $salaryDeductions = ($payroll->gaji_pokok / 26 + 20000) * $count_time_off;
         $salary = ($payroll->gaji_pokok + $payroll->function + 520000 + $payroll->insentif) - $salaryDeductions;
     }
@@ -154,19 +154,19 @@ private function formatNumber($number)
                 return $payroll ? ($payroll->gaji_pokok !== null ? $payroll->gaji_pokok : 'input gaji pokok') : 'please import payroll data';
             })
             ->addColumn('netSalary', function ($employee) {
-                if ($employee->place_id) {
+                if ($employee->location_id) {
                     $payroll = Payroll::where('employee_id', $employee->employee_id)->first();
                     return $payroll ? $this->getPayrollData($employee)['netSalary'] : 'please import payroll data';
                 } else {
-                    return 'input place';
+                    return 'Assign to a location';
                 }
             })
             ->addColumn('salaryDeductions', function ($employee) {
-                if ($employee->place_id) {
+                if ($employee->location_id) {
                     $payroll = Payroll::where('employee_id', $employee->employee_id)->first();
                     return $payroll ? $this->getPayrollData($employee)['salaryDeductions'] : 'please import payroll data';
                 } else {
-                    return 'input place';
+                    return 'Assign to a location';
                 }
             })
             ->addColumn('insentif', function ($employee) {
@@ -174,10 +174,10 @@ private function formatNumber($number)
                 return $payroll ? $payroll->insentif : 'please import payroll data';
             })
             ->addColumn('actions', function ($employee) {
-                if ($employee->place_id) {
+                if ($employee->location_id) {
                     return '<a href="' . route('payroll.show', $employee->id) . '" class="btn btn-primary btn-xs"><i class="fas fa-eye"></i></a>';
                 } else {
-                    return 'input place';
+                    return 'Assign to a location';
                 }
             })
             ->rawColumns(['actions'])
