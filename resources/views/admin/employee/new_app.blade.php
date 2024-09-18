@@ -229,8 +229,10 @@
                     // Enable the button if within 0.2 km radius
                     if (distance <= 0.2) {
                         document.getElementById("clockInBtn").disabled = false;
+                        hideLocationError(); 
                     } else {
                         document.getElementById("clockInBtn").disabled = true; // Disable if outside radius
+                        showLocationError("You're out of range. Please move closer to clock in.");
                     }
                 }, (error) => {
                     if (error.code === error.PERMISSION_DENIED) {
@@ -261,6 +263,13 @@
 
             container.innerHTML = errorContent;
             document.querySelector('.container.mt-4').appendChild(container);
+        }
+        // Function to hide the error message when within range
+        function hideLocationError() {
+            const errorCard = document.querySelector('.location-error-card');
+            if (errorCard) {
+                errorCard.remove();
+            }
         }
 
         // Selfie capture logic
