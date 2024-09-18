@@ -211,27 +211,29 @@
         setInterval(updateClock, 1000); // Update every minute
         updateClock();
 
-        const targetLat = -6.969788604742309;
-        const targetLng = 107.63952348097007;
+        const targetLat = {{$targetLat ?? 'null'}};
+        const targetLng = {{$targetLng ?? 'null'}};
 
-        // Check if geolocation is available
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const userLat = position.coords.latitude;
-                const userLng = position.coords.longitude;
+        if (targetLat && targetLng) {
+            // Check if geolocation is available
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
 
-                // Calculate the distance to the target
-                const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
+                    // Calculate the distance to the target
+                    const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
 
-                // Enable the button if within 20km radius
-                if (distance <= 2000) {
-                    document.getElementById("clockInBtn").disabled = false;
-                }
-            }, (error) => {
-                console.error("Error getting location: ", error);
-            });
-        } else {
-            console.error("Geolocation is not supported by this browser.");
+                    // Enable the button if within 20km radius
+                    if (distance <= 0.2) {
+                        document.getElementById("clockInBtn").disabled = false;
+                    }
+                }, (error) => {
+                    console.error("Error getting location: ", error);
+                });
+            } else {
+                console.error("Geolocation is not supported by this browser.");
+            }
         }
 
         // Selfie capture logic

@@ -311,7 +311,7 @@ public function getOverview(Request $request)
         $today = Carbon::today();
 
         // Get employee details
-        $employee = Employee::where('employee_id', $employeeId)->first();
+        $employee = Employee::where('employee_id', $employeeId)->with('location')->first();
 
         // Get shift details
         $shift = Shift::find($employee->shift_id);
@@ -321,6 +321,10 @@ public function getOverview(Request $request)
             ->whereDate('created_at', $today)
             ->first();
 
+        // Check if the employee has a location and fetch lat/long from location table
+        $targetLat = $employee->location ? $employee->location->lat : null;
+        $targetLng = $employee->location ? $employee->location->long : null;
+
         // Pass data to the view
         return view('admin.employee.new_app', [
             'attendance' => $attendance,
@@ -329,6 +333,8 @@ public function getOverview(Request $request)
             'profile_picture' => $employee->profile_picture,
             'full_name' => $employee->full_name,
             'shift_name' => $shift->shift_name,
+            'targetLat' => $targetLat,
+            'targetLng' => $targetLng,
         ]);
     }
 
