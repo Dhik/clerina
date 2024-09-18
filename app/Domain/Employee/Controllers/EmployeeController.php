@@ -194,8 +194,8 @@ class EmployeeController extends Controller
     public function getOverview(Request $request)
     {
         $totalEmployees = Employee::count();
-        $newHires = Employee::whereMonth('join_date', now()->month)->count();
-        $leavings = Employee::whereMonth('resign_date', now()->month)->count();
+        $newHires = Employee::whereMonth('join_date', now()->month)->whereYear('join_date', now()->year)->count();
+        $leavings = Employee::whereMonth('resign_date')->count();
 
         return response()->json([
             'totalEmployees' => $totalEmployees,
