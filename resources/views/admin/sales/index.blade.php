@@ -270,7 +270,7 @@
                     $('#newSalesCount').text(response.total_sales);
                     $('#newVisitCount').text(response.total_visit);
                     $('#newOrderCount').text(response.total_order);
-                    $('#newAdSpentCount').text(response.total_ad_spent);
+                    $('#newAdSpentCount').text(response.campaign_expense);
                     $('#newQtyCount').text(response.total_qty);
                     $('#newRoasCount').text(response.total_roas);
                     $('#newClosingRateCount').text(response.closing_rate);
