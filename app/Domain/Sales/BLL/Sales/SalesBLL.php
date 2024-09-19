@@ -104,7 +104,7 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
             'campaign_expense' => $this->numberFormat($totalCampaignExpense),
             'total_ad_spent' => $this->numberFormat($totalAdSpent),
             'total_ads_spent' => $this->numberFormat($sales->sum('ad_spent_total')),
-            'total_roas' => $sales->count() === 0 ? 0 : $this->numberFormat($sales->sum('roas') / $sales->count(), 2),
+            'total_roas' => $totalAdSpent === 0 ? 0 : $this->numberFormat($tempSales / $totalAdSpent, 2),
             'cpa' => $tempOrder === 0 ? 0 : $this->numberFormat($sales->sum('ad_spent_total') / $tempOrder, 0),
             'closing_rate' => $tempVisit === 0 ? 0 : $this->numberFormat(($tempOrder / $tempVisit) * 100, 2) . '%',
             'pie_chart' => $this->preparePieChartData($salesByChannelByDate),
