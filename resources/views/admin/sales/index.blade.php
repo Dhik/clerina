@@ -275,8 +275,8 @@
                     $('#newRoasCount').text(response.total_roas);
                     $('#newClosingRateCount').text(response.closing_rate);
                     $('#newCPACount').text(response.cpa);
-                    $('#campaignExpense').text('Campaign Expense: ' + response.campaign_expense);
-                    $('#adsSpentTotal').text('Total Ads Spent: ' + response.total_ads_spent);
+                    $('#campaignExpense').text(response.campaign_expense);
+                    $('#adsSpentTotal').text(response.total_ads_spent);
                     generateChart(response);
                 },
                 error: function(xhr, status, error) {
