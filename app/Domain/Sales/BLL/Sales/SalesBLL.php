@@ -8,6 +8,7 @@ use App\Domain\Sales\DAL\AdSpentMarketPlace\AdSpentMarketPlaceDALInterface;
 use App\Domain\Sales\DAL\AdSpentSocialMedia\AdSpentSocialMediaDALInterface;
 use App\Domain\Sales\DAL\Sales\SalesDALInterface;
 use App\Domain\Sales\DAL\Visit\VisitDALInterface;
+use App\Domain\Campaign\DAL\Campaign\CampaignDALInterface;
 use App\Domain\Sales\Models\Sales;
 use App\DomainUtils\BaseBLL\BaseBLL;
 use App\DomainUtils\BaseBLL\BaseBLLFileUtils;
@@ -31,7 +32,8 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
         protected OrderDALInterface $orderDAL,
         protected SalesDALInterface $salesDAL,
         protected SalesChannelBLLInterface $salesChannelBLL,
-        protected VisitDALInterface $visitDAL
+        protected VisitDALInterface $visitDAL,
+        protected CampaignDALInterface $campaignDAL,
     ) {
     }
 
@@ -71,7 +73,6 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
         }
 
         $sales = $this->salesDAL->getSalesByDateRange($startDateString, $endDateString, $tenantId);
-
         $channelId = $request->input('filterChannel');
 
         $salesByChannelByDate = $this->salesDAL
@@ -89,13 +90,19 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
             ($salesByChannel->count() === 0 ? 0 : $salesByChannel->sum('closing_rate') / $salesByChannel->count()) :
             ($sales->count() === 0 ? 0 : $sales->sum('closing_rate') / $sales->count());
 
+        $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
+        $totalCampaignExpense = $campaigns->sum('total_expense');
+        
+        $totalAdSpent = $sales->sum('ad_spent_total') + $totalCampaignExpense;
+
         return [
             'sales' => $sales,
             'total_sales' => $this->numberFormat($tempSales),
             'total_visit' => $this->numberFormat($tempVisit),
             'total_order' => $this->numberFormat($tempOrder),
             'total_qty' => $this->numberFormat($tempQty),
-            'total_ad_spent' => $this->numberFormat($sales->sum('ad_spent_total')),
+            'total_ad_spent' => $this->numberFormat($totalAdSpent),
+            'total_ads_spent' => $this->numberFormat($sales->sum('ad_spent_total')),
             'total_roas' => $sales->count() === 0 ? 0 : $this->numberFormat($sales->sum('roas') / $sales->count(), 2),
             'cpa' => $tempOrder === 0 ? 0 : $this->numberFormat($sales->sum('ad_spent_total') / $tempOrder, 0),
             'closing_rate' => $tempVisit === 0 ? 0 : $this->numberFormat(($tempOrder / $tempVisit) * 100, 2) . '%',
