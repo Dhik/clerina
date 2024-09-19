@@ -69,12 +69,10 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger" data-toggle="tooltip" data-html="true" title="<strong>Detail Spent</strong><br>Campaign Expense: <span id='tooltipCampaignExpense'>Loading..</span><br>Total Ads Spent: <span id='tooltipAdsSpentTotal'>Loading..</span>">
+                    <div class="small-box bg-danger" id="totalSpentCard" style="cursor: pointer;">
                         <div class="inner">
                             <h4 id="newAdSpentCount">0</h4>
                             <p>Total Spent</p>
-                            <p id="campaignExpense" style="display: none;">Campaign Expense: 0</p>
-                            <p id="adsSpentTotal" style="display: none;">Total Ads Spent: 0</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-shopping-cart"></i>
@@ -85,7 +83,7 @@
                     <div class="small-box bg-teal">
                         <div class="inner">
                             <h4 id="newRoasCount">0</h4>
-                            <p>{{ trans('labels.roas')  }}</p>
+                            <p>{{ trans('labels.roas') }}</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-chart-area"></i>
@@ -96,7 +94,7 @@
                     <div class="small-box bg-pink">
                         <div class="inner">
                             <h4 id="newClosingRateCount">0</h4>
-                            <p>{{ trans('labels.closing_rate')  }}</p>
+                            <p>{{ trans('labels.closing_rate') }}</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-user-alt"></i>
@@ -207,6 +205,25 @@
         </div>
     </div>
 
+    <!-- Detail Spent Modal -->
+    <div class="modal fade" id="detailSpentModal" tabindex="-1" role="dialog" aria-labelledby="detailSpentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document" style="max-width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailSpentModalLabel">Detail Spent</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="modalCampaignExpense">Campaign Expense: 0</p>
+                    <p id="modalAdsSpentTotal">Total Ads Spent: 0</p>
+                    <p id="modalTotalSpent">Total Spent: 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @stop
 
 @section('js')
@@ -260,8 +277,6 @@
                     $('#newCPACount').text(response.cpa);
                     $('#campaignExpense').text('Campaign Expense: ' + response.campaign_expense);
                     $('#adsSpentTotal').text('Total Ads Spent: ' + response.total_ads_spent);
-                    $('#tooltipCampaignExpense').text(response.campaign_expense);
-                    $('#tooltipAdsSpentTotal').text(response.total_ads_spent);
                     generateChart(response);
                 },
                 error: function(xhr, status, error) {
@@ -389,6 +404,21 @@
                 }
             });
         }
+
+        // Click event for the Total Spent card
+        $('#totalSpentCard').click(function() {
+            const campaignExpense = $('#campaignExpense').text().replace('Campaign Expense: ', '').trim();
+            const adsSpentTotal = $('#adsSpentTotal').text().replace('Total Ads Spent: ', '').trim();
+            const totalSpent = $('#newAdSpentCount').text().trim();
+
+            // Update modal content
+            $('#modalCampaignExpense').text('Campaign Expense: ' + campaignExpense);
+            $('#modalAdsSpentTotal').text('Total Ads Spent: ' + adsSpentTotal);
+            $('#modalTotalSpent').text('Total Spent: ' + totalSpent);
+
+            // Show the modal
+            $('#detailSpentModal').modal('show');
+        });
 
         $(function () {
             salesTable.draw();
