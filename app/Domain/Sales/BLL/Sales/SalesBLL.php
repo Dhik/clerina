@@ -101,6 +101,7 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
             'total_visit' => $this->numberFormat($tempVisit),
             'total_order' => $this->numberFormat($tempOrder),
             'total_qty' => $this->numberFormat($tempQty),
+            'campaign_expense' => $this->numberFormat($totalCampaignExpense),
             'total_ad_spent' => $this->numberFormat($totalAdSpent),
             'total_ads_spent' => $this->numberFormat($sales->sum('ad_spent_total')),
             'total_roas' => $sales->count() === 0 ? 0 : $this->numberFormat($sales->sum('roas') / $sales->count(), 2),

@@ -69,10 +69,12 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
+                    <div class="small-box bg-danger" data-toggle="tooltip" data-html="true" title="<strong>Detail Spent</strong><br>Campaign Expense: <span id='tooltipCampaignExpense'>0</span><br>Total Ads Spent: <span id='tooltipAdsSpentTotal'>0</span>">
                         <div class="inner">
                             <h4 id="newAdSpentCount">0</h4>
-                            <p>Total AdSpent</p>
+                            <p>Total Spent</p>
+                            <p id="campaignExpense" style="display: none;">Campaign Expense: 0</p>
+                            <p id="adsSpentTotal" style="display: none;">Total Ads Spent: 0</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-shopping-cart"></i>
@@ -173,7 +175,6 @@
     @include('admin.sales.modal-omset')
 
     <!-- Omset Modal -->
-    <!-- Omset Modal -->
 <div class="modal fade" id="omsetModal" tabindex="-1" role="dialog" aria-labelledby="omsetModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document" style="max-width: 80%;">
         <div class="modal-content">
@@ -257,6 +258,10 @@
                     $('#newRoasCount').text(response.total_roas);
                     $('#newClosingRateCount').text(response.closing_rate);
                     $('#newCPACount').text(response.cpa);
+                    $('#campaignExpense').text('Campaign Expense: ' + response.campaign_expense);
+                    $('#adsSpentTotal').text('Total Ads Spent: ' + response.total_ads_spent);
+                    $('#tooltipCampaignExpense').text(response.campaign_expense);
+                    $('#tooltipAdsSpentTotal').text(response.total_ads_spent);
                     generateChart(response);
                 },
                 error: function(xhr, status, error) {
@@ -426,6 +431,7 @@
         $(function () {
             salesTable.draw();
             updateRecapCount();
+            $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
 
