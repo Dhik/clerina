@@ -73,8 +73,6 @@
                         <div class="inner">
                             <h4 id="newAdSpentCount">0</h4>
                             <p>Total Spent</p>
-                            <p id="campaignExpense" style="display: none;">Campaign Expense: 0</p>
-                            <p id="adsSpentTotal" style="display: none;">Total Ads Spent: 0</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-shopping-cart"></i>
@@ -258,8 +256,6 @@
                     $('#newRoasCount').text(response.total_roas);
                     $('#newClosingRateCount').text(response.closing_rate);
                     $('#newCPACount').text(response.cpa);
-                    $('#campaignExpense').text('Campaign Expense: ' + response.campaign_expense);
-                    $('#adsSpentTotal').text('Total Ads Spent: ' + response.total_ads_spent);
                     $('#tooltipCampaignExpense').text(response.campaign_expense);
                     $('#tooltipAdsSpentTotal').text(response.total_ads_spent);
                     generateChart(response);
