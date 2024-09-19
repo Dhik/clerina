@@ -270,13 +270,13 @@
                     $('#newSalesCount').text(response.total_sales);
                     $('#newVisitCount').text(response.total_visit);
                     $('#newOrderCount').text(response.total_order);
-                    $('#newAdSpentCount').text(response.campaign_expense);
+                    $('#newAdSpentCount').text(response.total_ad_spent);
                     $('#newQtyCount').text(response.total_qty);
                     $('#newRoasCount').text(response.total_roas);
                     $('#newClosingRateCount').text(response.closing_rate);
                     $('#newCPACount').text(response.cpa);
-                    $('#campaignExpense').text(response.campaign_expense);
-                    $('#adsSpentTotal').text(response.total_ads_spent);
+                    $('#newCampaignExpense').text(response.campaign_expense);
+                    $('#newAdsSpentTotal').text(response.total_ads_spent);
                     generateChart(response);
                 },
                 error: function(xhr, status, error) {
@@ -407,9 +407,12 @@
 
         // Click event for the Total Spent card
         $('#totalSpentCard').click(function() {
-            const campaignExpense = $('#campaignExpense').text().trim();
-            const adsSpentTotal = $('#adsSpentTotal').text().trim();
+            const campaignExpense = $('#newCampaignExpense').text().trim();
+            const adsSpentTotal = $('#newAdsSpentTotal').text().trim();
             const totalSpent = $('#newAdSpentCount').text().trim();
+            console.log(campaignExpense);
+            console.log(adsSpentTotal);
+            console.log(totalSpent);
 
             // Update modal content
             $('#modalCampaignExpense').text('Campaign Expense: ' + campaignExpense);
