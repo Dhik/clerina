@@ -73,6 +73,8 @@
                         <div class="inner">
                             <h4 id="newAdSpentCount">0</h4>
                             <p>Total Spent</p>
+                            <p id="newCampaignExpense" style="display: none;">Campaign Expense: 0</p>
+                            <p id="newAdsSpentTotal" style="display: none;">Total Ads Spent: 0</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-shopping-cart"></i>
