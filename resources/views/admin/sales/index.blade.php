@@ -244,6 +244,10 @@
             updateRecapCount()
         });
 
+        $('[data-toggle="tooltip"]').tooltip({
+            delay: { "show": 500, "hide": 100 }
+        });
+
         function updateRecapCount() {
             $.ajax({
                 url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),
@@ -393,7 +397,6 @@
         $(function () {
             salesTable.draw();
             updateRecapCount();
-            $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
         });
     </script>
 
