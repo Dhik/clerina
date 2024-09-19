@@ -407,8 +407,8 @@
 
         // Click event for the Total Spent card
         $('#totalSpentCard').click(function() {
-            const campaignExpense = $('#campaignExpense').text().replace('Campaign Expense: ', '').trim();
-            const adsSpentTotal = $('#adsSpentTotal').text().replace('Total Ads Spent: ', '').trim();
+            const campaignExpense = $('#campaignExpense').text().trim();
+            const adsSpentTotal = $('#adsSpentTotal').text().trim();
             const totalSpent = $('#newAdSpentCount').text().trim();
 
             // Update modal content
