@@ -1,7 +1,6 @@
 
 
 INSERT INTO `campaigns` (`id`, `title`, `start_date`, `end_date`, `description`, `tenant_id`, `id_budget`, `created_at`, `updated_at`, `created_by`, `view`, `like`, `comment`, `total_influencer`, `total_content`, `total_expense`, `achievement`, `cpm`) VALUES
-(322100500002, 'CAMPAIGN KOL OKTOBER 2022', '2022-10-01', '2022-10-31', '<p>Produk yang diendorsekan ada Pure Charcoal Mud Mask, Acne Purifying Clay Mask, Dream Glow dan Skin Clinic Mask. Terdapat campaign Mystery Box juga</p>', 2, NULL, '2022-10-05 03:11:08', '2024-09-20 04:18:20', 85, 7541216, 599293, 6616, 132, 411, 328857500, 0.02, 43608.02),
 (322100600003, 'Campaign Oktober Organik', '2022-10-01', '2022-10-31', '<p>#CleoraSprintExfo</p>', 1, NULL, '2022-10-05 21:19:12', '2024-09-20 04:06:50', 85, 16444810, 374429, 7979, 1, 146, 0, 0.00, 0.00),
 (322100600004, 'CAMPAIGN ORGANIK OKTOBER 2022', '2022-10-01', '2022-10-31', '<p>Campaign Azrina Mystery Box</p>', 2, NULL, '2022-10-05 23:18:21', '2024-09-20 04:18:20', 85, 5346362, 187798, 2755, 1, 73, 0, 0.00, 0.00),
 (322100600005, 'Campaign Oktober Beauty', '2022-10-01', '2022-10-31', '<p>KOL Beauty Tiktok</p>', 1, NULL, '2022-10-06 01:24:08', '2024-09-20 04:06:50', 85, 17810190, 1065397, 18844, 183, 1072, 598609576, 0.03, 33610.51),
