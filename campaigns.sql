@@ -1,3 +1,5 @@
+
+
 INSERT INTO `campaigns` (`id`, `title`, `start_date`, `end_date`, `description`, `tenant_id`, `id_budget`, `created_at`, `updated_at`, `created_by`, `view`, `like`, `comment`, `total_influencer`, `total_content`, `total_expense`, `achievement`, `cpm`) VALUES
 (322082900001, 'Kol dong', '2022-08-29', '2022-10-31', '<p>Campaign</p>', 1, 0, '2022-08-28 21:47:25', '2024-09-20 04:06:50', 85, 0, 0, 0, 0, 0, 0, 0.00, 0.00),
 (322100500001, '-', '2022-10-01', '2022-10-31', '<p>Sukses ebrsama</p>', 1, NULL, '2022-10-05 00:43:12', '2024-09-20 04:06:50', 85, 0, 0, 0, 0, 0, 0, 0.00, 0.00),
@@ -408,6 +410,4 @@ INSERT INTO `campaigns` (`id`, `title`, `start_date`, `end_date`, `description`,
 (323120700002, 'INSTAGRAM - KOL BEAUTY MIKRO - DESEMBER 2023 - CANTIKA', '2023-12-01', '2023-12-31', '<p>INSTAGRAM - KOL BEAUTY MIKRO - DESEMBER 2023 - CANTIKA</p>', 2, 91, '2023-12-06 18:27:08', '2024-09-20 04:18:22', 85, 142507, 18261, 2077, 28, 66, 13341784, 0.01, 93621.96),
 (323120700003, 'TIK TOK - KOL BEAUTY MIKRO - DESEMBER 2023 - AISYAH', '2023-12-01', '2023-12-31', '<p>TIK TOK - KOL BEAUTY MIKRO - DESEMBER 2023 - AISYAH</p>', 2, 92, '2023-12-06 23:20:33', '2024-09-20 04:18:22', 85, 3213344, 123729, 805, 10, 12, 5125124, 0.63, 1594.95),
 (323122100001, 'TIK TOK - KOL MIKRO AFFILIATE - DESEMBER 2023 - SALMA', '2023-12-01', '2023-12-31', '<p>TIK TOK - KOL MIKRO AFFILIATE - DESEMBER 2023 - SALMA</p>', 2, 17, '2023-12-21 06:13:28', '2024-09-20 04:18:22', 85, 2074, 8, 0, 2, 2, 300028, 0.01, 144661.52),
-(323122700001, 'TIKTOK - Beauty Exfoliating Set - Desember 2023 - Benita', '2023-12-01', '2023-12-31', '<p>TIKTOK - Beauty Exfoliating Set - Desember 2023 - Benita</p>', 1, 15, '2023-12-26 18:27:30', '2024-09-20 04:06:53', 85, 1005168, 19123, 577, 22, 31, 16470104, 0.06, 16385.42),
-(324010300001, 'Campaign Tasya - Desember 2023', '2023-12-01', '2024-01-01', '<p>Campaign Tasya&nbsp;</p>', 1, 15, '2024-01-02 18:43:16', '2024-09-20 04:06:53', 85, 150833, 53460, 377, 3, 3, 89875025, 0.00, 595857.84),
-(324010300005, 'REELS - Beauty Exfoliating Set - Desember 2023 - Benita', '2023-12-01', '2024-01-31', '<h5>REELS - Beauty Exfoliating Set - Desember 2023 - Benita</h5>', 1, 15, '2024-01-02 20:09:42', '2024-09-20 04:06:53', 85, 152311, 16885, 2776, 37, 75, 10922895, 0.01, 71714.42);
+(323122700001, 'TIKTOK - Beauty Exfoliating Set - Desember 2023 - Benita', '2023-12-01', '2023-12-31', '<p>TIKTOK - Beauty Exfoliating Set - Desember 2023 - Benita</p>', 1, 15, '2023-12-26 18:27:30', '2024-09-20 04:06:53', 85, 1005168, 19123, 577, 22, 31, 16470104, 0.06, 16385.42);
