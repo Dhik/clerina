@@ -205,7 +205,8 @@ class CampaignController extends Controller
     {
         $currentMonth = now()->format('Y-m'); // Get the current month in 'YYYY-MM' format
 
-        $campaigns = Campaign::where('created_at', 'like', "$currentMonth%")->get(); // Fetch campaigns created in the current month
+        // $campaigns = Campaign::where('created_at', 'like', "$currentMonth%")->get();
+        $campaigns = Campaign::all();
 
         foreach ($campaigns as $campaign) {
             $this->cardService->recapStatisticCampaign($campaign->id);
