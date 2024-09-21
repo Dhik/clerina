@@ -112,6 +112,7 @@ class CampaignContentController extends Controller
                 'product' => $row->product,
                 'task' => $row->task_name,
                 'is_fyp' => $row->is_fyp,
+                'username' => $row->username,
                 'rate_card' => $row->rate_card,
                 'is_product_deliver' => $row->is_product_deliver,
                 'is_paid' => $row->is_paid,

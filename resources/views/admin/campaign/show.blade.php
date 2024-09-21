@@ -179,7 +179,7 @@ function updateProgressBar(completed, total) {
                     }
                 },
                 columns: [
-                    { data: 'key_opinion_leader_username' },
+                    { data: 'username' },
                     { data: 'channel', orderable: false },
                     { data: 'product', orderable: false },
                     { data: 'task', orderable: false },
