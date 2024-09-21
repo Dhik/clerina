@@ -102,7 +102,7 @@ class CampaignContentController extends Controller
         $this->authorize('viewCampaignContent', CampaignContent::class);
 
         // Fetch the data using the BLL (Business Logic Layer)
-        $query = $this->campaignContentBLL->getCampaignContentDataTable($campaignId, $request);
+        $query = $this->campaignContentBLL->getCampaignContentDataTable($campaignId, $request)->orderBy('upload_date', 'desc');
 
         // Transform the query results into an array format
         $campaignContents = $query->get()->map(function ($row) {
@@ -113,6 +113,7 @@ class CampaignContentController extends Controller
                 'task' => $row->task_name,
                 'is_fyp' => $row->is_fyp,
                 'username' => $row->username,
+                'upload_date' => $row->upload_date,
                 'rate_card' => $row->rate_card,
                 'is_product_deliver' => $row->is_product_deliver,
                 'is_paid' => $row->is_paid,

@@ -38,6 +38,14 @@ class CampaignImportService
         return 'OK';
     }
 
+    public function storeContent(Request $request, int $tenantId, Campaign $campaign): string
+    {
+        $collection = collect($data);
+        $this->save($collection, $campaign);
+
+        return 'OK';
+    }
+
     protected function save(Collection $collections, Campaign $campaign): void
     {
         try {

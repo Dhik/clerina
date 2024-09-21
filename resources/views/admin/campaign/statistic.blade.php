@@ -70,14 +70,11 @@
                             </div>
                         </div>
                         <div class="col-auto">
-                            <!-- @can('UpdateCampaign', $campaign)
+                            @can('UpdateCampaign', $campaign)
                                 <button class="btn btn-primary" data-toggle="modal" data-target="#contentModal">
                                     <i class="fas fa-plus"></i> {{ trans('labels.add') }}
                                 </button>
-                            @endcan -->
-                            <!-- <a class="btn btn-success" href={{ route('statistic.bulkRefresh', $campaign->id) }}>
-                                <i class="fas fa-sync-alt"></i> {{ trans('labels.refresh') }} {{ trans('labels.all2') }}
-                            </a> -->
+                            @endcan
                             <button id="refreshAllBtn" class="btn btn-success">
                                 <i class="fas fa-sync-alt"></i> {{ trans('labels.refresh') }} {{ trans('labels.all2') }}
                             </button>

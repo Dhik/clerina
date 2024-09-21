@@ -334,4 +334,5 @@ return [
     'refresh' => 'Refresh',
     'netSalary' => 'Salary',
     'salaryDeductions' => 'Deduction',
+    'additional_info' => "Additional Info"
 ];

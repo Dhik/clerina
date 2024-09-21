@@ -14,13 +14,7 @@
                     <!-- Your form fields here -->
                     <div class="form-group">
                         <label for="username">{{ trans('labels.influencer') }}<span class="required">*</span></label>
-                        <select class="form-control">
-                            <option value="" selected>{{ trans('placeholder.select', ['field' => trans('labels.influencer')]) }}</option>
-                            <option value="">{{ trans('labels.all') }}</option>
-                            @foreach($usernames as $username)
-                                <option value={{ $username }}>{{ $username }}</option>
-                            @endforeach
-                        </select>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.influencer')]) }}">
                     </div>
 
                     <div class="form-group">
@@ -62,6 +56,7 @@
                     <div class="form-group d-none" id="errorContent"></div>
 
                     <button type="submit" class="btn btn-primary">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         <i class="fas fa-save"></i> {{ trans('buttons.save') }}
                     </button>
                 </form>

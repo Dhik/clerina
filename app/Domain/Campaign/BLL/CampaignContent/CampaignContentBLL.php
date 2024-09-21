@@ -4,6 +4,7 @@ namespace App\Domain\Campaign\BLL\CampaignContent;
 
 use App\Domain\Campaign\DAL\CampaignContent\CampaignContentDALInterface;
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Requests\CampaignContentRequest;
 use App\Domain\Campaign\Requests\CampaignUpdateContentRequest;
@@ -104,20 +105,56 @@ class CampaignContentBLL implements CampaignContentBLLInterface
      */
     public function storeCampaignContent(int $campaignId, CampaignContentRequest $request): CampaignContent
     {
-        $data = [
-            'key_opinion_leader_id' => $request->input('key_opinion_leader_id'),
-            'rate_card' => $request->input('rate_card'),
-            'task_name' => $request->input('task_name'),
-            'link' => $request->input('link'),
-            'product' => $request->input('product'),
-            'channel' => $request->input('channel'),
-            'boost_code' => $request->input('boost_code'),
+        // Fetch data from the request
+        $data = $request->only(['username', 'channel', 'rate_card', 'task_name', 'link', 'product', 'boost_code']);
+
+        // Check if the KOL exists
+        $existingKOL = KeyOpinionLeader::where('username', $data['username'])->first();
+
+        if ($existingKOL) {
+            // If the record exists, update it without modifying average_view and cpm
+            $existingKOL->update([
+                'channel' => $data['channel'],
+                'rate' => $data['rate_card'],
+                'created_by' => Auth::user()->id,
+                'pic_contact' => Auth::user()->id,
+            ]);
+            $kol = $existingKOL;
+        } else {
+            // If the record does not exist, create a new one with average_view and cpm set to 0
+            $kol = KeyOpinionLeader::create([
+                'username' => $data['username'],
+                'channel' => $data['channel'],
+                'niche' => '-',
+                'average_view' => 0,
+                'skin_type' => '-',
+                'skin_concern' => '-',
+                'content_type' => '-',
+                'rate' => $data['rate_card'],
+                'cpm' => 0,
+                'created_by' => Auth::user()->id,
+                'pic_contact' => Auth::user()->id,
+            ]);
+        }
+
+        // Prepare data for campaign content
+        $campaignContentData = [
+            'key_opinion_leader_id' => $kol->id,  // Use the $kol instance for ID
+            'username' => $data['username'],
+            'rate_card' => $data['rate_card'],
+            'task_name' => $data['task_name'],
+            'link' => $data['link'],
+            'product' => $data['product'],
+            'channel' => $data['channel'],
+            'boost_code' => $data['boost_code'],
             'created_by' => Auth::user()->id,
-            'campaign_id' => $campaignId
+            'campaign_id' => $campaignId,
         ];
 
-        return $this->campaignContentDAL->storeCampaignContent($data);
+        // Store the campaign content
+        return $this->campaignContentDAL->storeCampaignContent($campaignContentData);
     }
+
 
     /**
      * Update campaign content
