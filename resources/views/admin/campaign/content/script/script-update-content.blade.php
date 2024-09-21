@@ -9,8 +9,8 @@
             let rowData = contentTable.row($(this).closest('tr')).data();
 
             $('#contentId').val(rowData.id);
-            $('#usernameUpdate').val(rowData.key_opinion_leader.username);
-            $('#taskNameUpdate').val(rowData.task_name);
+            $('#usernameUpdate').val(rowData.key_opinion_leader_username);
+            $('#taskNameUpdate').val(rowData.task);
             $('#rateCardUpdate').val(rowData.rate_card);
             $('#platformUpdate').val(rowData.channel).trigger('change');
             $('#linkUpdate').val(rowData.link);
