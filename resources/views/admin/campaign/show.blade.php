@@ -183,6 +183,7 @@ function updateProgressBar(completed, total) {
                     { data: 'channel', orderable: false },
                     { data: 'product', orderable: false },
                     { data: 'task', orderable: false },
+                    { data: 'upload_date', orderable: true },
                     { data: 'like', className: "text-right", orderable: true }, // Like column is sortable
                     { data: 'comment', className: "text-right", orderable: true }, // Comment column is sortable
                     { data: 'view', className: "text-right", orderable: true }, // View column is sortable

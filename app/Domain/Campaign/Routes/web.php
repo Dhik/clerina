@@ -6,6 +6,7 @@ use App\Domain\Campaign\Controllers\KeyOpinionLeaderController;
 use App\Domain\Campaign\Controllers\OfferController;
 use App\Domain\Campaign\Controllers\StatisticController;
 use App\Domain\Campaign\Controllers\BudgetController;
+use App\Domain\Campaign\Controllers\BriefController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,6 +38,19 @@ Route::prefix('admin')
                 Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
                 
             });
+
+                Route::prefix('brief')
+                    ->group(function () {
+                        Route::get('/', [BriefController::class, 'index'])->name('brief.index');
+                        Route::get('/data', [BriefController::class, 'data'])->name('brief.data');
+                        Route::get('/create', [BriefController::class, 'create'])->name('brief.create');
+                        Route::post('/', [BriefController::class, 'store'])->name('brief.store');
+                        Route::get('/{brief}', [BriefController::class, 'show'])->name('brief.show');
+                        Route::get('/{brief}/edit', [BriefController::class, 'edit'])->name('brief.edit');
+                        Route::put('/{brief}', [BriefController::class, 'update'])->name('brief.update');
+                        Route::delete('/{brief}', [BriefController::class, 'destroy'])->name('brief.destroy');
+                    });
+        
         Route::prefix('products')
             ->group(function () {
                 Route::get('/', [CampaignContentController::class, 'showDistinctProducts'])->name('campaignContent.showDistinctProducts');
