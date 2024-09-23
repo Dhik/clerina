@@ -8,6 +8,11 @@
                     <div class="col-auto">
                         <input type="text" class="form-control filterDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                     </div>
+                    <div class="col-auto">
+                        <button id="resetFilterBtn" class="btn btn-outline-secondary">
+                            {{ trans('buttons.reset_filter') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

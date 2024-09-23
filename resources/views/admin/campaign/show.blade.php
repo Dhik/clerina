@@ -53,6 +53,23 @@
         
         let campaignId = '{{ $campaign->id }}';
         const filterStatus = $('#filterStatus');
+
+        // Reset Filter Button Click Event
+        $('#resetFilterBtn').click(function () {
+            // Clear the date filter
+            $('#filterDates').val('');
+            
+            // Reset other filters
+            $('#filterPlatform').val('');
+            $('#filterFyp').prop('checked', false);
+            $('#filterPayment').prop('checked', false);
+            $('#filterDelivery').prop('checked', false);
+
+            // Reload the DataTable and update card
+            contentTable.ajax.reload();
+            updateCard(); // Refresh card data
+            initChart();  // Reload chart data if necessary
+        });
         
         $('#refreshAllBtn').click(function() {
     // Show the modal

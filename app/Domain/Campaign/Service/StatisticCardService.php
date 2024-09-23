@@ -11,49 +11,49 @@ use Illuminate\Http\Request;
 class StatisticCardService
 {
     public function card(int $campaignId, Request $request): array
-{
-    // Fetch all campaign contents (without date filtering)
-    $allCampaignContents = CampaignContent::where('campaign_id', $campaignId)->get();
+    {
+        // Fetch all campaign contents (without date filtering)
+        $allCampaignContents = CampaignContent::where('campaign_id', $campaignId)->get();
 
-    // Convert filterDates to start and end dates
-    $startDate = null;
-    $endDate = null;
+        // Convert filterDates to start and end dates
+        $startDate = null;
+        $endDate = null;
 
-    if ($request->input('filterDates')) {
-        [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-        $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
-        $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+        if ($request->input('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+        }
+
+        // Fetch latest statistics for each campaign_content_id, considering the date range
+        $statistics = Statistic::where('campaign_id', $campaignId)
+            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+                $query->whereBetween('date', [$startDate, $endDate]);
+            })
+            ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
+            ->get()
+            ->unique('campaign_content_id'); 
+
+        // Fetch filtered campaign contents using fetchCampaignContents
+        $campaignContents = $this->fetchCampaignContents($campaignId, $request);
+
+        // Aggregate totals from the latest statistics
+        $totals = [
+            'totalView' => $statistics->sum('view'),
+            'totalLike' => $statistics->sum('like'),
+            'totalComment' => $statistics->sum('comment'),
+            'totalExpense' => $allCampaignContents->sum('rate_card'),
+            'cpm' =>($allCampaignContents->sum('rate_card')/$statistics->sum('view')) * 1000,
+        ];
+
+        // Use the fetched campaignContents to calculate the top data
+        $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
+        $topData = $this->sortDataByCriteria($groupedData);
+        $groupedProducts = $this->groupDataByProduct($campaignContents);
+        $topProducts = $this->getTopProducts($groupedProducts);
+
+        return $this->constructTotalData($allCampaignContents, $totals, $topData, $topProducts);
     }
-
-    // Fetch latest statistics for each campaign_content_id, considering the date range
-    $statistics = Statistic::where('campaign_id', $campaignId)
-        ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
-            $query->whereBetween('date', [$startDate, $endDate]);
-        })
-        ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
-        ->get()
-        ->unique('campaign_content_id'); 
-
-    // Fetch filtered campaign contents using fetchCampaignContents
-    $campaignContents = $this->fetchCampaignContents($campaignId, $request);
-
-    // Aggregate totals from the latest statistics
-    $totals = [
-        'totalView' => $statistics->sum('view'),
-        'totalLike' => $statistics->sum('like'),
-        'totalComment' => $statistics->sum('comment'),
-        'totalExpense' => $allCampaignContents->sum('rate_card'),
-        'cpm' =>($allCampaignContents->sum('rate_card')/$statistics->sum('view')) * 1000,
-    ];
-
-    // Use the fetched campaignContents to calculate the top data
-    $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
-    $topData = $this->sortDataByCriteria($groupedData);
-    $groupedProducts = $this->groupDataByProduct($campaignContents);
-    $topProducts = $this->getTopProducts($groupedProducts);
-
-    return $this->constructTotalData($allCampaignContents, $totals, $topData, $topProducts);
-}
 
 
 
