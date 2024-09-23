@@ -7,6 +7,7 @@ use App\Domain\Campaign\Controllers\OfferController;
 use App\Domain\Campaign\Controllers\StatisticController;
 use App\Domain\Campaign\Controllers\BudgetController;
 use App\Domain\Campaign\Controllers\BriefController;
+use App\Domain\Campaign\Controllers\BriefContentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,6 +51,13 @@ Route::prefix('admin')
                         Route::put('/{brief}', [BriefController::class, 'update'])->name('brief.update');
                         Route::delete('/{brief}', [BriefController::class, 'destroy'])->name('brief.destroy');
                     });
+        
+        Route::prefix('brief_contents')
+            ->group(function () {
+                Route::post('/', [BriefContentController::class, 'store'])->name('brief_contents.store');
+                Route::get('/{id_brief}/data', [BriefContentController::class, 'data'])->name('brief_contents.data');
+                Route::delete('/{id}', [BriefContentController::class, 'destroy'])->name('brief_contents.destroy');
+            });
         
         Route::prefix('products')
             ->group(function () {
