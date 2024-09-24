@@ -405,13 +405,13 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/products*']
                 ],
-                [
-                    'text' => 'Brief',
-                    'url' => 'admin/brief',
-                    'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/brief*']
-                ],
+                // [
+                //     'text' => 'Brief',
+                //     'url' => 'admin/brief',
+                //     'can' => [PermissionEnum::ViewOffer],
+                //     'icon' => 'nav-icon far fa-circle',
+                //     'active' => ['admin/brief*']
+                // ],
                 // [
                 //     'text' => 'Influencer',
                 //     'url' => 'admin/budgets',
