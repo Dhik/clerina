@@ -41,7 +41,7 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
         return [
             'username' => $row[0],
             'task_name' => $row[1],
-            'channel' => $row[2],
+            'channel' => trim($row[2]),
             'link' => trim($row[3]),
             'rate_card' => $row[4],
             'product' => $row[5]
@@ -60,7 +60,7 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
             $data[] = [
                 'username' => $row['username'],
                 'task_name' => $row['task_name'],
-                'channel' => $row['channel'],
+                'channel' => trim($row['channel']),
                 'link' => trim($row['link']),
                 'rate_card' => $row['rate_card'],
                 'product' => $row['product']
