@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BriefContent extends Model implements HasMedia
 {
-    use FilterByTenant, InteractsWithMedia;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'id_brief', 'link','tenant_id',

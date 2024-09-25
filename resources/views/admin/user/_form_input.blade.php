@@ -207,7 +207,7 @@
 
 <!-- Employee Related Fields -->
 <div class="form-group row">
-    <label for="employee_id" class="col-md-3 col-form-label text-md-right">Employee ID</label>
+    <label for="employee_id" class="col-md-3 col-form-label text-md-right">Employee ID<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="employee_id" 
@@ -215,7 +215,8 @@
         class="form-control" 
         name="employee_id"
         placeholder="{{ trans('placeholder.input', ['field' => trans('labels.employee_id')]) }}" 
-        value="{{ old('employee_id') }}">
+        value="{{ old('employee_id') }}"
+        required>
     </div>
 </div>
 
@@ -256,9 +257,9 @@
 </div>
 
 <div class="form-group row">
-    <label for="join_date" class="col-md-3 col-form-label text-md-right">Join Date</label>
+    <label for="join_date" class="col-md-3 col-form-label text-md-right">Join Date<span class="required">*</span></label>
     <div class="col-md-6">
-        <input id="join_date" type="date" class="form-control" name="join_date" value="{{ old('join_date') }}">
+        <input id="join_date" type="date" class="form-control" name="join_date" value="{{ old('join_date') }}" required>
     </div>
 </div>
 
@@ -278,31 +279,33 @@
 </div>
 
 <div class="form-group row">
-    <label for="birth_date" class="col-md-3 col-form-label text-md-right">Birth Date</label>
+    <label for="birth_date" class="col-md-3 col-form-label text-md-right">Birth Date<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="birth_date" 
         type="date" 
         class="form-control" 
         name="birth_date"
-        value="{{ old('birth_date') }}">
+        value="{{ old('birth_date') }}"
+        required>
     </div>
 </div>
 
 <div class="form-group row">
-    <label for="birth_place" class="col-md-3 col-form-label text-md-right">Birth Place</label>
+    <label for="birth_place" class="col-md-3 col-form-label text-md-right">Birth Place<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="birth_place" 
         type="text" 
         class="form-control"
         placeholder="{{ trans('placeholder.input', ['field' => trans('labels.birth_place')]) }}" 
-        name="birth_place">
+        name="birth_place"
+        required>
     </div>
 </div>
 
 <div class="form-group row">
-    <label for="age" class="col-md-3 col-form-label text-md-right">Age</label>
+    <label for="age" class="col-md-3 col-form-label text-md-right">Age<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="age" 
@@ -310,12 +313,13 @@
         class="form-control" 
         name="age"
         placeholder="{{ trans('placeholder.input', ['field' => trans('labels.age')]) }}" 
-        value="{{ old('age') }}">
+        value="{{ old('age') }}"
+        required>
     </div>
 </div>
 
 <div class="form-group row">
-    <label for="citizen_id_address" class="col-md-3 col-form-label text-md-right">Citizen ID Address</label>
+    <label for="citizen_id_address" class="col-md-3 col-form-label text-md-right">Citizen ID Address<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="citizen_id_address" 
@@ -323,12 +327,13 @@
         class="form-control" 
         name="citizen_id_address"
         placeholder="{{ trans('placeholder.input', ['field' => trans('labels.citizen_id_address')]) }}" 
-        value="{{ old('citizen_id_address') }}">
+        value="{{ old('citizen_id_address') }}"
+        required>
     </div>
 </div>
 
 <div class="form-group row">
-    <label for="residential_address" class="col-md-3 col-form-label text-md-right">Residential Address</label>
+    <label for="residential_address" class="col-md-3 col-form-label text-md-right">Residential Address<span class="required">*</span></label>
     <div class="col-md-6">
         <input 
         id="residential_address" 
@@ -336,7 +341,8 @@
         class="form-control"
         placeholder="{{ trans('placeholder.input', ['field' => trans('labels.residential_address')]) }}" 
         name="residential_address"
-        value="{{ old('residential_address') }}">
+        value="{{ old('residential_address') }}"
+        required>
     </div>
 </div>
 <div class="form-group row">

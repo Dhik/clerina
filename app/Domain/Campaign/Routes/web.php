@@ -55,8 +55,10 @@ Route::prefix('admin')
         
         Route::prefix('brief_contents')
             ->group(function () {
+                Route::get('/chart/{id_brief}', [BriefContentController::class, 'chartData'])->name('brief_contents.chart');
                 Route::post('/', [BriefContentController::class, 'store'])->name('brief_contents.store');
                 Route::get('/{id_brief}/data', [BriefContentController::class, 'data'])->name('brief_contents.data');
+                Route::get('/{id}/kpi', [BriefContentController::class, 'getKPI'])->name('brief_contents.get-kpi');
                 Route::delete('/{id}', [BriefContentController::class, 'destroy'])->name('brief_contents.destroy');
             });
         
