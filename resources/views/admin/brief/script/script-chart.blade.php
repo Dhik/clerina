@@ -8,12 +8,11 @@
             url: "{{ route('brief_contents.chart', ['id_brief' => ':id_brief']) }}".replace(':id_brief', {{ $brief->id }}),
             type: 'GET',
             success: function (response) {
-                renderChart(response);
                 console.log(response);
+                renderChart(response);
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
-                console.log(response);
             }
         });
     }
