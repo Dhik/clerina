@@ -279,7 +279,7 @@ class OrderController extends Controller
     ];
     $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
     $startDate = '2024-09-21';
-    $endDate = '2024-09-23';
+    $endDate = '2024-09-26';
     $allOrders = [];
 
     foreach ($statuses as $status) {
