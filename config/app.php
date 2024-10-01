@@ -182,7 +182,8 @@ return [
         App\Domain\Tenant\Providers\TenantProvider::class,
         App\Domain\User\Providers\UserProvider::class,
         App\Domain\Employee\Providers\EmployeeProvider::class,
-        App\Domain\KeywordMonitoring\Providers\KeywordMonitoringProvider::class
+        App\Domain\KeywordMonitoring\Providers\KeywordMonitoringProvider::class,
+        App\Domain\Competitor\Providers\CompetitorProvider::class
     ])->toArray(),
 
     /*

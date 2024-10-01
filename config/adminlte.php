@@ -473,6 +473,13 @@ return [
             'can' => [PermissionEnum::ViewSales],
             'active' => ['admin/contest*']
         ],
+        // [
+        //     'text' => 'Competitor Analysis',
+        //     'url' => 'admin/competitor_brands',
+        //     'icon' => 'nav-icon fas fa-certificate',
+        //     'can' => [PermissionEnum::ViewSales],
+        //     'active' => ['admin/contest*']
+        // ],
         [
             'text'    => 'Master Data',
             'icon'    => 'fas fa-fw fa-database',

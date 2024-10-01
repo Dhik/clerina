@@ -1,3 +1,9 @@
 .smaller-text{
     font-size: 0.75rem !important;
 }
+
+.custom-logo-background {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+}

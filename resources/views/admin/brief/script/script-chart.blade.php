@@ -3,7 +3,6 @@
     let campaignContentChart;
 
     function initChart() {
-        // Make AJAX request to get chart data
         $.ajax({
             url: "{{ route('brief_contents.chart', ['id_brief' => ':id_brief']) }}".replace(':id_brief', {{ $brief->id }}),
             type: 'GET',
