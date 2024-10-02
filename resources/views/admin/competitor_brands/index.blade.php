@@ -20,7 +20,7 @@
                         <img src="{{ asset('img/cleora-logo.png') }}" alt="Cleora Logo" style="width: 400px; height: auto;">
                     </div>
                     <div class="card-body">
-                        <canvas id="cleoraSalesChart" class="w-100"></canvas>
+                        <canvas id="cleoraSalesChart" class="w-100" style="height: 500px;"></canvas>
                     </div>
                 </div>
             </div>
