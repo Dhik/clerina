@@ -478,7 +478,7 @@ return [
             'url' => 'admin/competitor_brands',
             'icon' => 'nav-icon fas fa-certificate',
             'can' => [PermissionEnum::ViewSales],
-            'active' => ['admin/contest*']
+            'active' => ['admin/competitor_brands*']
         ],
         [
             'text'    => 'Master Data',
