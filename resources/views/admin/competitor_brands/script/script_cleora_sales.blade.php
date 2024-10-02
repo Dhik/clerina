@@ -39,7 +39,7 @@
                 responsive: true,
                 title: {
                     display: true,
-                    text: 'Competitor Sales Chart'
+                    text: 'Cleora Sales Chart'
                 },
                 scales: {
                     xAxes: [{
