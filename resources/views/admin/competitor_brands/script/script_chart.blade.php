@@ -1,11 +1,15 @@
 <script>
     let competitorSalesChart;
 
-    function initSalesChart() {
-        // Make AJAX request to get sales chart data
+    function initSalesChart(filterChannel = null, filterType = null) {
+        // Make AJAX request to get sales chart data with filters
         $.ajax({
             url: "{{ route('competitor_brands.sales_chart', ['competitorBrandId' => ':competitorBrandId']) }}".replace(':competitorBrandId', {{ $competitorBrand->id }}),
             type: 'GET',
+            data: {
+                filterChannel: filterChannel,
+                filterType: filterType
+            },
             success: function (response) {
                 renderSalesChart(response);
             },
@@ -62,7 +66,7 @@
         });
     }
 
-    // Initialize the sales chart when the page loads or data changes
+    // Initialize the sales chart when the page loads
     $(document).ready(function () {
         initSalesChart();
     });

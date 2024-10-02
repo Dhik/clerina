@@ -47,7 +47,7 @@ class CompetitorBrandController extends Controller
                     <button class="btn btn-sm btn-danger deleteButton" data-id="' . $competitorBrand->id . '"><i class="fas fa-trash-alt"></i></button>';
             })
             ->editColumn('logo', function ($competitorBrand) {
-                return $competitorBrand->logo ? '<img src="' . asset('storage/' . $competitorBrand->logo) . '" width="50">' : 'No Logo';
+                return $competitorBrand->logo ? '<img src="' . asset('storage/' . $competitorBrand->logo) . '" width="150">' : 'No Logo';
             })
             ->rawColumns(['action', 'logo'])
             ->make(true);
@@ -76,6 +76,16 @@ class CompetitorBrandController extends Controller
         $query = CompetitorSales::where('competitor_brand_id', $competitorBrandId)
             ->selectRaw('date, SUM(omset) as omset')
             ->groupBy('date');
+
+        // Apply channel filter if present
+        if (!is_null($request->input('filterChannel'))) {
+            $query->where('channel', $request->input('filterChannel'));
+        }
+
+        // Apply type filter if present
+        if (!is_null($request->input('filterType'))) {
+            $query->where('type', $request->input('filterType'));
+        }
 
         // If date filter is applied, modify the query
         if ($request->has('filterDates')) {
@@ -186,12 +196,12 @@ class CompetitorBrandController extends Controller
         $query = CompetitorSales::where('competitor_brand_id', $competitorBrandId);
 
         // Apply filters if they are present
-        if ($request->has('channel') && !empty($request->channel)) {
-            $query->where('channel', $request->channel);
+        if (!is_null($request->input('filterChannel'))) {
+            $query->where('channel', $request->input('filterChannel'));
         }
 
-        if ($request->has('type') && !empty($request->type)) {
-            $query->where('type', $request->type);
+        if (!is_null($request->input('filterType'))) {
+            $query->where('type', $request->input('filterType'));
         }
 
         return DataTables::of($query)

@@ -71,8 +71,14 @@ class CompetitorSalesController extends Controller
      *
      * @param  Competitor  $competitor
      */
-    public function edit(CompetitorSales $competitorSales)
+    public function edit($id)
     {
+        $competitorSales = CompetitorSales::find($id);
+
+        if (!$competitorSales) {
+            return response()->json(['error' => 'Competitor sale not found'], 404);
+        }
+        
         return response()->json(['competitorSales' => $competitorSales]);
     }
     /**
@@ -81,19 +87,35 @@ class CompetitorSalesController extends Controller
      * @param CompetitorRequest $request
      * @param  Competitor  $competitor
      */
-    public function update(Request $request, CompetitorSales $competitorSales)
+    public function update(Request $request, $id)
     {
+        $competitorSales = CompetitorSales::find($id);
+        if (!$competitorSales) {
+            return response()->json(['error' => 'Competitor sale not found'], 404);
+        }
         $validated = $request->validate([
-            'competitor_brand_id' => 'required|exists:competitor_brands,id',
             'channel' => 'required|string|max:255',
             'omset' => 'required|integer',
             'date' => 'required|date',
             'type' => 'required|string|max:255',
         ]);
 
-        $competitorSale->update($validated);
-
-        return redirect()->route('admin.competitor_brands.show')->with('success', 'Competitor sale updated successfully.');
+        try {
+            // Update the competitor sale record with validated data
+            $competitorSales->update($validated);
+    
+            // Return a success response
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Competitor sale updated successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            // Return an error response if there's an issue with the update
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update competitor sale.',
+            ], 500);
+        }
     }
 
 

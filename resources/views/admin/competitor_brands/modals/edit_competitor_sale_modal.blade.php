@@ -4,6 +4,7 @@
             <form id="editCompetitorSaleForm" method="POST">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="competitor_brand_id" id="edit_competitor_brand_id">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editCompetitorSaleModalLabel">Edit Competitor Sale</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -13,11 +14,17 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="edit_channel">Channel</label>
-                        <input type="text" name="channel" id="edit_channel" class="form-control" required>
+                        <select name="channel" id="edit_channel" class="form-control" required>
+                            <option value="" disabled selected>Select a channel</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Tiktok">Tiktok</option>
+                            <option value="Twitter">Twitter</option>
+                            <option value="Shopee">Shopee</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="edit_omset">Omset</label>
-                        <input type="number" name="omset" id="edit_omset" class="form-control" required>
+                        <input type="text" name="omset" id="edit_omset" class="form-control money" required>
                     </div>
                     <div class="form-group">
                         <label for="edit_date">Date</label>
@@ -25,7 +32,11 @@
                     </div>
                     <div class="form-group">
                         <label for="edit_type">Type</label>
-                        <input type="text" name="type" id="edit_type" class="form-control" required>
+                        <select name="type" id="edit_type" class="form-control" required>
+                            <option value="" disabled selected>Select a type</option>
+                            <option value="Direct">Direct</option>
+                            <option value="Indirect">Indirect</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">

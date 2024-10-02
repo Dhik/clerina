@@ -11,8 +11,8 @@
 <div class="row">
     <div class="col-12">
         <!-- Start of Cards -->
-        <div class="row">
-        <div class="col-md-6">
+        <!-- <div class="row">
+            <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Monthly Sales Cleora</h3>
@@ -38,13 +38,12 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- End of Cards -->
+        </div> -->
 
         <div class="card mt-3">
             <div class="card-header">
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCompetitorBrandModal">
-                    Add Competitor Brand
+                <i class="fas fa-plus"></i> Add Competitor Brand
                 </button>
             </div>
             <div class="card-body">
@@ -73,7 +72,6 @@
 @section('js')
 <script>
     $(function() {
-        // Initialize DataTables
         var baseUrl = "{{ asset('storage/') }}";
         var defaultImageUrl = "{{ asset('img/user.png') }}";
         var table = $('#competitor-brands-table').DataTable({
@@ -86,8 +84,8 @@
                     data: 'logo', 
                     name: 'logo', 
                     render: function(data, type, row) {
-                        var logoUrl = row.logo ? baseUrl + '/' + row.logo : defaultImageUrl;
-                        return data ? '<img src="' + logoUrl + '" width="50">' : 'No Logo';
+                        var logoUrl = row.logo ? row.logo : defaultImageUrl;
+                        return logoUrl;
                     }
                 },
                 { data: 'brand', name: 'brand' },

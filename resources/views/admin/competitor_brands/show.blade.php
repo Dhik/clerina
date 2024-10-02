@@ -42,8 +42,29 @@
                             </div>
                         </div>
                         <button type="button" class="btn btn-primary mb-4" data-toggle="modal" data-target="#addCompetitorSaleModal">
-                        <i class="fas fa-plus"></i> Add Competitor Sale
+                            <i class="fas fa-plus"></i> Add Competitor Sale
                         </button>
+                        <div class="row">
+                            <label for="channel">Channel</label>
+                            <select name="channel" id="filterChannel" class="form-control" required>
+                                <option value="" disabled selected>Select a channel</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Tiktok">Tiktok</option>
+                                <option value="Twitter">Twitter</option>
+                                <option value="Shopee">Shopee</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <label for="type">Type</label>
+                            <select name="type" id="filterType" class="form-control" required>
+                                <option value="" disabled selected>Select a type</option>
+                                <option value="Direct">Direct</option>
+                                <option value="Indirect">Indirect</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <button id="resetFilters" class="btn btn-secondary mt-4">Reset Filters</button>
+                        </div>
                     </div>
                     <div class="col-9">
                         <div class="card">
@@ -51,28 +72,6 @@
                                 <canvas id="competitorSalesChart" class="w-100"></canvas>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Filters for Channel and Type -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="channel">Channel</label>
-                        <select name="channel" id="filterChannel" class="form-control" required>
-                            <option value="" disabled selected>Select a channel</option>
-                            <option value="Instagram">Instagram</option>
-                            <option value="Tiktok">Tiktok</option>
-                            <option value="Twitter">Twitter</option>
-                            <option value="Shopee">Shopee</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="type">Type</label>
-                        <select name="type" id="filterType" class="form-control" required>
-                            <option value="" disabled selected>Select a type</option>
-                            <option value="Direct">Direct</option>
-                            <option value="Indirect">Indirect</option>
-                        </select>
                     </div>
                 </div>
 
@@ -143,16 +142,8 @@
             ajax: {
                 url: '{{ route('competitor_brand.sales_data', $competitorBrand->id) }}',
                 data: function(d) {
-                    d.channel = $('#filterChannel').val(); // Use filterChannel for channel
-                    d.type = $('#filterType').val(); // Use filterType for type
-                },
-                dataSrc: function(json) {
-                    var totalOmset = 0;
-                    for (var i = 0; i < json.data.length; i++) {
-                        totalOmset += parseFloat(json.data[i].omset);
-                    }
-                    $('#newSalesCount').text(totalOmset.toLocaleString());
-                    return json.data;
+                    d.filterChannel = $('#filterChannel').val();
+                    d.filterType = $('#filterType').val(); 
                 }
             },
             columns: [
@@ -161,42 +152,88 @@
                 { data: 'omset', name: 'omset' },
                 { data: 'date', name: 'date' },
                 { data: 'type', name: 'type' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
+                {
+                    data: 'id',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return `
+                            <button class="btn btn-sm btn-success editButton" data-id="${data}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger deleteButton" data-id="${data}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        `;
+                    }
+                }
             ]
         });
 
-        // Event listeners for filters
+        function updateTotalOmsetAndChart() {
+        // Fetch and update total omset
+        $.ajax({
+            url: '{{ route('competitor_brand.sales_data', $competitorBrand->id) }}',
+            method: 'GET',
+            data: {
+                filterChannel: $('#filterChannel').val(),
+                filterType: $('#filterType').val(),
+            },
+            success: function(response) {
+                var totalOmset = response.data.reduce(function (accumulator, sale) {
+                    return accumulator + parseFloat(sale.omset);
+                }, 0);
+
+                $('#newSalesCount').text(totalOmset.toLocaleString());
+                initSalesChart($('#filterChannel').val(), $('#filterType').val());
+            }
+        });
+    }
+        
+
         $('#filterChannel').change(function() {
-            table.draw(); // Redraw table when filter changes
+            table.draw(); 
+            updateTotalOmsetAndChart();
         });
 
         $('#filterType').change(function() {
-            table.draw(); // Redraw table when filter changes
+            table.draw(); 
+            updateTotalOmsetAndChart();
         });
 
-        // Handle Edit button click
+        $('#resetFilters').click(function() {
+            $('#filterChannel').val('').change();
+            $('#filterType').val('').change();
+
+            table.draw();
+            updateTotalOmsetAndChart();
+        });
+
+        updateTotalOmsetAndChart();
+
+        // Handle the edit form submission
         $('#competitor-sales-table').on('click', '.editButton', function(e) {
-            e.preventDefault(); // Prevent default behavior
+            e.preventDefault();
             var saleId = $(this).data('id');
+            console.log(saleId);
             var url = '{{ route("competitor_sales.edit", ":id") }}'.replace(':id', saleId);
 
-            // Fetch the sale details via AJAX
             $.ajax({
                 url: url,
                 method: 'GET',
                 success: function(response) {
                     if (response.competitorSales) {
-                        // Populate the modal with the fetched data
-                        $('#edit_competitor_brand_id').val(response.competitorSales.competitor_brand_id);
+                        // Populate the form with the retrieved data
                         $('#edit_channel').val(response.competitorSales.channel);
                         $('#edit_omset').val(response.competitorSales.omset);
                         $('#edit_date').val(response.competitorSales.date);
                         $('#edit_type').val(response.competitorSales.type);
 
-                        // Set the action URL for the form
+                        // Update the form action to the correct route
                         $('#editCompetitorSaleForm').attr('action', '{{ route("competitor_sales.update", ":id") }}'.replace(':id', saleId));
 
-                        // Show the edit modal
+                        // Open the modal
                         $('#editCompetitorSaleModal').modal('show');
                     }
                 },
@@ -206,9 +243,8 @@
             });
         });
 
-        // Handle form submission for updating competitor sales
         $('#editCompetitorSaleForm').on('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
+            e.preventDefault(); 
             var form = $(this);
             var url = form.attr('action');
 
@@ -217,9 +253,10 @@
                 method: 'POST',
                 data: form.serialize(),
                 success: function(response) {
-                    $('#editCompetitorSaleModal').modal('hide'); // Close the modal
+                    $('#editCompetitorSaleModal').modal('hide'); 
                     Swal.fire('Success!', 'Competitor sale updated successfully.', 'success');
-                    table.ajax.reload(); // Reload DataTable
+                    table.ajax.reload(); 
+                    updateTotalOmsetAndChart();
                 },
                 error: function(xhr) {
                     Swal.fire('Error!', 'Failed to update competitor sale.', 'error');
@@ -227,10 +264,10 @@
             });
         });
 
-        // SweetAlert confirmation for delete
         $('#competitor-sales-table').on('click', '.deleteButton', function(e) {
-            e.preventDefault(); // Prevent default form submission
+            e.preventDefault(); 
             var saleId = $(this).data('id');
+            console.log(saleId);
             var url = '{{ route('competitor_sales.destroy', ':id') }}'.replace(':id', saleId);
 
             Swal.fire({
@@ -256,7 +293,7 @@
                                 'Competitor sale has been deleted.',
                                 'success'
                             );
-                            table.ajax.reload(); // Reload DataTable after successful deletion
+                            table.ajax.reload(); 
                         },
                         error: function(xhr) {
                             Swal.fire(
@@ -270,11 +307,9 @@
             });
         });
 
-        // Handle View button click and show the modal with sale details
         $('#competitor-sales-table').on('click', '.viewSaleButton', function() {
             var saleId = $(this).data('id');
 
-            // Fetch the sale details via AJAX
             $.ajax({
                 url: '{{ route("competitor_brand.show_sales", ":id") }}'.replace(':id', saleId),
                 method: 'GET',
@@ -285,7 +320,6 @@
                         $('#sale_date').val(response.competitorSale.date);
                         $('#sale_type').val(response.competitorSale.type);
 
-                        // Show the modal
                         $('#viewCompetitorSaleModal').modal('show');
                     }
                 },
