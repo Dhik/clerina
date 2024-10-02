@@ -10,9 +10,8 @@
 
 <div class="row">
     <div class="col-12">
-        <!-- Start of Cards -->
-        <!-- <div class="row">
-            <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Monthly Sales Cleora</h3>
@@ -25,7 +24,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <!-- <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Monthly Sales Competitor</h3>
@@ -37,8 +36,8 @@
                         <canvas id="competitorSalesChart" class="w-100"></canvas>
                     </div>
                 </div>
-            </div>
-        </div> -->
+            </div> -->
+        </div>
 
         <div class="card mt-3">
             <div class="card-header">
