@@ -43,9 +43,7 @@
                 </div>
             </div>
         </div>
-
     </div>
-
 @endsection
 
 @section('js')
@@ -54,90 +52,102 @@
         let campaignId = '{{ $campaign->id }}';
         const filterStatus = $('#filterStatus');
 
-        // Reset Filter Button Click Event
-        $('#resetFilterBtn').click(function () {
-            // Clear the date filter
+        // Function to reset filters and reload data
+        function resetFilters() {
+            // Clear all filters to default states
             $('#filterDates').val('');
-            
-            // Reset other filters
-            $('#filterPlatform').val('');
+            $('#filterPlatform').val('').trigger('change');
             $('#filterFyp').prop('checked', false);
             $('#filterPayment').prop('checked', false);
             $('#filterDelivery').prop('checked', false);
+            $('#filterInfluencer').val('').trigger('change'); // Reset influencer filter
+            $('#filterProduct').val('').trigger('change'); // Reset product filter
 
-            // Reload the DataTable and update card
+            // Reload the DataTable with default settings
             contentTable.ajax.reload();
-            updateCard(); // Refresh card data
-            initChart();  // Reload chart data if necessary
+            offerTable.ajax.reload();
+
+            // Optionally, reset the card or chart if necessary
+            updateCard();  // Refresh card data with default values
+            initChart();   // Reload chart data if necessary
+        }
+
+        // Automatically reset filters when the page loads
+        $(document).ready(function () {
+            resetFilters(); // Apply reset filters on page load
+        });
+
+        // Reset Filter Button Click Event
+        $('#resetFilterBtn').click(function () {
+            resetFilters(); // Clear filters and reload data on button click
         });
         
         $('#refreshAllBtn').click(function() {
-    // Show the modal
-    $('#refreshAllModal').modal('show');
+            // Show the modal
+            $('#refreshAllModal').modal('show');
 
-    // Fetch the campaign contents
-    $.ajax({
-        url: "{{ route('campaignContent.getDataTableForRefresh', ['campaignId' => $campaign->id]) }}",
-        method: 'GET',
-        success: function(data) {
-            let contentList = '';
-            data.forEach(function(content) {
-                contentList += `
-                    <tr id="content-${content.id}">
-                        <td>${content.username}</td>
-                        <td>${content.task_name}</td>
-                        <td>${content.channel}</td>
-                        <td>${content.product}</td>
-                        <td class="text-center"><i class="fas fa-clock text-warning"></i></td>
-                    </tr>
-                `;
+            // Fetch the campaign contents
+            $.ajax({
+                url: "{{ route('campaignContent.getDataTableForRefresh', ['campaignId' => $campaign->id]) }}",
+                method: 'GET',
+                success: function(data) {
+                    let contentList = '';
+                    data.forEach(function(content) {
+                        contentList += `
+                            <tr id="content-${content.id}">
+                                <td>${content.username}</td>
+                                <td>${content.task_name}</td>
+                                <td>${content.channel}</td>
+                                <td>${content.product}</td>
+                                <td class="text-center"><i class="fas fa-clock text-warning"></i></td>
+                            </tr>
+                        `;
+                    });
+                    $('#refreshAllContentList').html(contentList);
+                },
+                error: function() {
+                    alert('Failed to load content list.');
+                }
             });
-            $('#refreshAllContentList').html(contentList);
-        },
-        error: function() {
-            alert('Failed to load content list.');
-        }
-    });
-});
-
-$('#confirmRefreshAll').click(function() {
-    const contents = $('#refreshAllContentList tr');
-    const totalContents = contents.length;
-    let completedContents = 0;
-
-    contents.each(function(index, contentRow) {
-        const contentId = $(contentRow).attr('id').split('-')[1];
-        
-        // Update icon to loading
-        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
-
-        // Scrape data one by one
-        $.ajax({
-            url: "{{ route('statistic.refresh', ['campaignContent' => ':campaignContentId']) }}".replace(':campaignContentId', contentId),
-            method: 'GET',
-            success: function(data) {
-                // Update icon to check if successful
-                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
-                completedContents++;
-                updateProgressBar(completedContents, totalContents);
-            },
-            error: function() {
-                // Update icon to error if failed
-                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
-                completedContents++;
-                updateProgressBar(completedContents, totalContents);
-            }
         });
-    });
-});
 
-function updateProgressBar(completed, total) {
-    const progressPercentage = Math.round((completed / total) * 100);
-    $('#refreshProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
-}
+        $('#confirmRefreshAll').click(function() {
+            const contents = $('#refreshAllContentList tr');
+            const totalContents = contents.length;
+            let completedContents = 0;
 
-        
-        // datatable
+            contents.each(function(index, contentRow) {
+                const contentId = $(contentRow).attr('id').split('-')[1];
+                
+                // Update icon to loading
+                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
+
+                // Scrape data one by one
+                $.ajax({
+                    url: "{{ route('statistic.refresh', ['campaignContent' => ':campaignContentId']) }}".replace(':campaignContentId', contentId),
+                    method: 'GET',
+                    success: function(data) {
+                        // Update icon to check if successful
+                        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
+                        completedContents++;
+                        updateProgressBar(completedContents, totalContents);
+                    },
+                    error: function() {
+                        // Update icon to error if failed
+                        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
+                        completedContents++;
+                        updateProgressBar(completedContents, totalContents);
+                    }
+                });
+            });
+        });
+
+        function updateProgressBar(completed, total) {
+            const progressPercentage = Math.round((completed / total) * 100);
+            $('#refreshProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
+        }
+
+        // DataTable for offer table
         let offerTable = $('#offerTable').DataTable({
             responsive: true,
             processing: true,
@@ -171,72 +181,71 @@ function updateProgressBar(completed, total) {
             order: [[0, 'desc']]
         });
 
-        const filterDates = $('#filterDates')
-        const filterInfluencer = $('#filterInfluencer')
-        const filterProduct = $('#filterProduct')
-        const filterPlatform = $('#filterPlatform')
-        const filterFyp = $('#filterFyp')
-        const filterPayment = $('#filterPayment')
-        const filterDelivery = $('#filterDelivery')
+        const filterDates = $('#filterDates');
+        const filterInfluencer = $('#filterInfluencer');
+        const filterProduct = $('#filterProduct');
+        const filterPlatform = $('#filterPlatform');
+        const filterFyp = $('#filterFyp');
+        const filterPayment = $('#filterPayment');
+        const filterDelivery = $('#filterDelivery');
 
+        // DataTable for content table
         const contentTable = $('#contentTable').DataTable({
-                responsive: true,
-                processing: true,
-                serverSide: false, // Since data is fetched via AJAX, you can keep this to false
-                ajax: {
-                    url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
-                    data: function (d) {
-                        // d.filterDates = filterDates.val();
-                        d.filterInfluencer = filterInfluencer.val();
-                        d.filterProduct = filterProduct.val();
-                        d.filterPlatform = filterPlatform.val();
-                        d.filterFyp = filterFyp.prop('checked');
-                        d.filterPayment = filterPayment.prop('checked');
-                        d.filterDelivery = filterDelivery.prop('checked');
-                    }
-                },
-                columns: [
-                    { data: 'username' },
-                    { data: 'channel', orderable: false },
-                    { data: 'product', orderable: false },
-                    { data: 'task', orderable: false },
-                    { data: 'upload_date', orderable: true, visible: false },
-                    { data: 'like', className: "text-right", orderable: true }, // Like column is sortable
-                    { data: 'comment', className: "text-right", orderable: true }, // Comment column is sortable
-                    { data: 'view', className: "text-right", orderable: true }, // View column is sortable
-                    { data: 'cpm', className: "text-right", orderable: true }, // CPM column is sortable
-                    { data: 'additional_info', orderable: false }, // Additional info column is not sortable
-                    { data: 'actions', orderable: false, searchable: false },
-                ],
-                order: [[4, 'desc']], // Set initial sorting by "view" column
-            });
-
+            responsive: true,
+            processing: true,
+            serverSide: false, // Since data is fetched via AJAX, you can keep this to false
+            ajax: {
+                url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
+                data: function (d) {
+                    d.filterInfluencer = filterInfluencer.val();
+                    d.filterProduct = filterProduct.val();
+                    d.filterPlatform = filterPlatform.val();
+                    d.filterFyp = filterFyp.prop('checked');
+                    d.filterPayment = filterPayment.prop('checked');
+                    d.filterDelivery = filterDelivery.prop('checked');
+                }
+            },
+            columns: [
+                { data: 'username' },
+                { data: 'channel', orderable: false },
+                { data: 'product', orderable: false },
+                { data: 'task', orderable: false },
+                { data: 'upload_date', orderable: true, visible: false },
+                { data: 'like', className: "text-right", orderable: true }, // Like column is sortable
+                { data: 'comment', className: "text-right", orderable: true }, // Comment column is sortable
+                { data: 'view', className: "text-right", orderable: true }, // View column is sortable
+                { data: 'cpm', className: "text-right", orderable: true }, // CPM column is sortable
+                { data: 'additional_info', orderable: false }, // Additional info column is not sortable
+                { data: 'actions', orderable: false, searchable: false },
+            ],
+            order: [[4, 'desc']], // Set initial sorting by "view" column
+        });
 
         // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {
             $('[data-toggle="tooltip"]').tooltip();
         });
 
-        filterDates.change(function (){
-            contentTable.ajax.reload()
+        filterDates.change(function () {
+            contentTable.ajax.reload();
             updateCard();
             initChart();
-        })
+        });
 
         filterPlatform.change(function() {
-            contentTable.ajax.reload()
+            contentTable.ajax.reload();
         });
 
         filterFyp.change(function() {
-            contentTable.ajax.reload()
+            contentTable.ajax.reload();
         });
 
         filterPayment.change(function() {
-            contentTable.ajax.reload()
+            contentTable.ajax.reload();
         });
 
         filterDelivery.change(function() {
-            contentTable.ajax.reload()
+            contentTable.ajax.reload();
         });
 
         $(function () {
@@ -273,7 +282,7 @@ function updateProgressBar(completed, total) {
             });
 
             const startFilter = moment().startOf('month');  // First day of the current month
-            const endFilter = moment().endOf('month');  
+            const endFilter = moment().endOf('month');
 
             $('.filterDate').daterangepicker({
                 startDate: startFilter,
@@ -285,7 +294,7 @@ function updateProgressBar(completed, total) {
                 }
             });
 
-            bsCustomFileInput.init()
+            bsCustomFileInput.init();
 
             $('#username').select2({
                 theme: 'bootstrap4',
