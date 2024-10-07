@@ -30,23 +30,22 @@ class StatisticCardService
             ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
                 $query->whereBetween('date', [$startDate, $endDate]);
             })
-            ->orderBy('updated_at', 'desc') // Fetch the latest by updated_at
+            ->orderBy('updated_at', 'desc') 
             ->get()
             ->unique('campaign_content_id'); 
 
-        // Fetch filtered campaign contents using fetchCampaignContents
         $campaignContents = $this->fetchCampaignContents($campaignId, $request);
 
-        // Aggregate totals from the latest statistics
         $totals = [
             'totalView' => $statistics->sum('view'),
             'totalLike' => $statistics->sum('like'),
             'totalComment' => $statistics->sum('comment'),
             'totalExpense' => $allCampaignContents->sum('rate_card'),
-            'cpm' =>($allCampaignContents->sum('rate_card')/$statistics->sum('view')) * 1000,
+            'cpm' => $statistics->sum('view') > 0 
+        ? ($allCampaignContents->sum('rate_card') / $statistics->sum('view')) * 1000 
+        : 0,
         ];
 
-        // Use the fetched campaignContents to calculate the top data
         $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
         $topData = $this->sortDataByCriteria($groupedData);
         $groupedProducts = $this->groupDataByProduct($campaignContents);
