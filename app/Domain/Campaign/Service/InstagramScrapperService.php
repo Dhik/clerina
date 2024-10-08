@@ -12,9 +12,9 @@ class InstagramScrapperService
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => 'https://instagram-scraper-2022.p.rapidapi.com/ig/',
+            'base_uri' => 'https://instagram-scraper-api2.p.rapidapi.com/v1/',
             'headers' => [
-                'X-RapidAPI-Host' => 'instagram-scraper-2022.p.rapidapi.com',
+                'X-RapidAPI-Host' => 'instagram-scraper-api2.p.rapidapi.com',
                 'X-RapidAPI-Key' => config('rapidapi.rapid_api_key')
             ],
         ]);
@@ -26,17 +26,22 @@ class InstagramScrapperService
             $shortCode = $this->extractShortCode($link);
 
             $response = $this->client->request('GET', 'post_info/', [
-                'query' => ['shortcode' => $shortCode],
+                'query' => ['code_or_id_or_url' => $shortCode],
             ]);
 
             $data = json_decode($response->getBody()->getContents());
 
-            return [
-                'comment' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->comment_count ?? 0,
-                'view' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->view_count ?? 0,
-                'like' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->like_count ?? 0,
-                'upload_date' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->taken_at ?? null,
-            ];
+            if (isset($data->data->metrics)) {
+                $metrics = $data->data->metrics;
+
+                return [
+                    'comment' => $metrics->comment_count ?? 0,
+                    'view' => $metrics->play_count ?? 0,
+                    'like' => $metrics->like_count ?? 0,
+                    'upload_date' =>  $data->data->taken_at ?? null,
+                ];
+            }
+            return null;
         } catch (\Exception $e) {
             Log::error('Error fetching IG info: ' . $e);
             return null;
