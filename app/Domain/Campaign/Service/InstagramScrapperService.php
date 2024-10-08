@@ -25,23 +25,18 @@ class InstagramScrapperService
         try {
             $shortCode = $this->extractShortCode($link);
 
-            $response = $this->client->request('GET', 'post_info/', [
+            $response = $this->client->request('GET', 'post_info', [
                 'query' => ['code_or_id_or_url' => $shortCode],
             ]);
 
             $data = json_decode($response->getBody()->getContents());
 
-            if (isset($data->data->metrics)) {
-                $metrics = $data->data->metrics;
-
-                return [
-                    'comment' => $metrics->comment_count ?? 0,
-                    'view' => $metrics->play_count ?? 0,
-                    'like' => $metrics->like_count ?? 0,
-                    'upload_date' =>  $data->data->taken_at ?? null,
-                ];
-            }
-            return null;
+            return [
+                'comment' => $data->data->metrics->comment_count ?? 0,
+                'view' => $data->data->metrics->play_count ?? 0,
+                'like' => $data->data->metrics->like_count ?? 0,
+                'upload_date' => $data->data->taken_at ?? null
+            ];
         } catch (\Exception $e) {
             Log::error('Error fetching IG info: ' . $e);
             return null;
