@@ -12,10 +12,7 @@ class StatisticCardService
 {
     public function card(int $campaignId, Request $request): array
     {
-        // Fetch all campaign contents (without date filtering)
         $allCampaignContents = CampaignContent::where('campaign_id', $campaignId)->get();
-
-        // Convert filterDates to start and end dates
         $startDate = null;
         $endDate = null;
 
@@ -25,7 +22,6 @@ class StatisticCardService
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
         }
 
-        // Fetch latest statistics for each campaign_content_id, considering the date range
         $statistics = Statistic::where('campaign_id', $campaignId)
             ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
                 $query->whereBetween('date', [$startDate, $endDate]);

@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('talent_payments', function (Blueprint $table) {
             $table->id();
-            $table->date('done_payment');
-            $table->foreignId('talent_id')->constrained('talents')->onDelete('cascade'); // Foreign key linking to `talents` table
-            $table->string('status_payment');
-            $table->float('final_transfer', 10, 2);
+            $table->date('done_payment')->nullable();;
+            $table->foreignId('talent_id')->constrained('talents')->onDelete('cascade');
+            $table->string('status_payment')->nullable();;
+            $table->float('final_transfer', 10, 2)->nullable();;
             $table->timestamps();
         });
     }

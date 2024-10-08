@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Domain\Talent\Controllers\TalentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,15 +14,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('talent')
-    //->middleware('auth')
+Route::prefix('admin')
+    ->middleware('auth')
     ->group(function () {
+    Route::prefix('talent')
+        ->group(function () {
 
-        Route::get('/', 'TalentController@index')->name('talent.index');
-        Route::get('/create', 'TalentController@create')->name('talent.create');
-        Route::post('/', 'TalentController@store')->name('talent.store');
-        Route::get('/{talent}', 'TalentController@show')->name('talent.show');
-        Route::get('/{talent}/edit', 'TalentController@edit')->name('talent.edit');
-        Route::put('/{talent}', 'TalentController@update')->name('talent.update');
-        Route::delete('{talent}', 'TalentController@destroy')->name('talent.destroy');
-    });
+            Route::get('/', [TalentController::class, 'index'])->name('talent.index');
+            Route::get('/data', [TalentController::class, 'data'])->name('talent.data');
+            Route::post('/import', [TalentController::class, 'import'])->name('talent.import');
+            Route::get('/download-template', [TalentController::class, 'downloadTalentTemplate'])->name('talent.downloadTemplate');
+            Route::get('/create', [TalentController::class, 'create'])->name('talent.create');
+            Route::post('/', [TalentController::class, 'store'])->name('talent.store');
+            Route::get('/{talent}', [TalentController::class, 'show'])->name('talent.show');
+            Route::get('/{talent}/edit', [TalentController::class, 'edit'])->name('talent.edit');
+            Route::put('/{talent}', [TalentController::class, 'update'])->name('talent.update');
+            Route::delete('{talent}', [TalentController::class, 'destroy'])->name('talent.destroy');
+        });
+});

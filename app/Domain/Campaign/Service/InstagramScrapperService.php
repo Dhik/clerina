@@ -32,10 +32,10 @@ class InstagramScrapperService
             $data = json_decode($response->getBody()->getContents());
 
             return [
-                'comment' => $data->edge_media_to_comment->count ?? 0,
-                'view' => $data->video_play_count ?? 0,
-                'like' => $data->edge_media_preview_like->count ?? 0,
-                'upload_date' => $data->taken_at_timestamp ?? null
+                'comment' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->comment_count ?? 0,
+                'view' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->view_count ?? 0,
+                'like' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->like_count ?? 0,
+                'upload_date' => $data->data->xdt_api__v1__media__shortcode__web_info->items[0]->taken_at ?? null,
             ];
         } catch (\Exception $e) {
             Log::error('Error fetching IG info: ' . $e);
