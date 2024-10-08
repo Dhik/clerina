@@ -473,13 +473,13 @@ return [
             'can' => [PermissionEnum::ViewSales],
             'active' => ['admin/contest*']
         ],
-        [
-            'text' => 'Talents',
-            'url' => 'admin/talent',
-            'icon' => 'nav-icon fas fa-certificate',
-            'can' => [PermissionEnum::ViewSales],
-            'active' => ['admin/talent*']
-        ],
+        // [
+        //     'text' => 'Talents',
+        //     'url' => 'admin/talent',
+        //     'icon' => 'nav-icon fas fa-certificate',
+        //     'can' => [PermissionEnum::ViewSales],
+        //     'active' => ['admin/talent*']
+        // ],
         [
             'text' => 'Competitor Analysis',
             'url' => 'admin/competitor_brands',
