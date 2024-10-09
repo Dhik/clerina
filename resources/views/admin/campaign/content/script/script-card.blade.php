@@ -15,6 +15,7 @@
                 updateElement('#totalViews', response.view);
                 updateElement('#totalLikes', response.like);
                 updateElement('#totalComment', response.comment);
+                updateElement('#engagementRate', response.engagement_rate);
 
                 // Update tables
                 updateTable('top-likes-table', response.top_likes, 'like');

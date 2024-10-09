@@ -473,13 +473,25 @@ return [
             'can' => [PermissionEnum::ViewSales],
             'active' => ['admin/contest*']
         ],
-        // [
-        //     'text' => 'Talents',
-        //     'url' => 'admin/talent',
-        //     'icon' => 'nav-icon fas fa-certificate',
-        //     'can' => [PermissionEnum::ViewSales],
-        //     'active' => ['admin/talent*']
-        // ],
+        [
+            'text' => 'KOL',
+            'can' => [PermissionEnum::ViewOrder],
+            'icon'    => 'fas fa-fw fa-play',
+            'submenu' => [
+                [
+                    'text' => 'Talents',
+                    'url' => 'admin/talent',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/talent*']
+                ],
+                [
+                    'text' => 'Content',
+                    'url' => 'admin/talent-content',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/talent-content*']
+                ],
+            ]
+        ],
         [
             'text' => 'Competitor Analysis',
             'url' => 'admin/competitor_brands',

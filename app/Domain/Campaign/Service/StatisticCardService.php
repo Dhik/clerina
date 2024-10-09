@@ -177,6 +177,7 @@ class StatisticCardService
             'total_expense' => number_format($totals['totalExpense'], 0, ',', '.'),
             'achievement' => $totals['totalExpense'] === 0 ? 0 : number_format($totals['totalView'] / $totals['totalExpense'] * 100, 2, ',', '.') . '%',
             'cpm' => number_format($totals['cpm'], 2, ',', '.'),
+            'engagement_rate' => $totals['totalView'] === 0 ? 0 : number_format(($totals['totalLike']+$totals['totalComment']) / $totals['totalView'] * 100, 2, ',', '.') . '%',
             'top_likes' => $topData['like'],
             'top_comment' => $topData['comment'],
             'top_view' => $topData['view'],

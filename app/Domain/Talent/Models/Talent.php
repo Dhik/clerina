@@ -36,4 +36,8 @@ class Talent extends Model
         'slot_final',
         'tax_deduction',
     ];
+    public function talentContents()
+    {
+        return $this->hasMany(TalentContent::class, 'talent_id', 'id');
+    }
 }

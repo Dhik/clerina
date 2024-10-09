@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Domain\Talent\Controllers\TalentController;
+use App\Domain\Talent\Controllers\TalentContentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,5 +31,20 @@ Route::prefix('admin')
             Route::get('/{talent}/edit', [TalentController::class, 'edit'])->name('talent.edit');
             Route::put('/{talent}', [TalentController::class, 'update'])->name('talent.update');
             Route::delete('{talent}', [TalentController::class, 'destroy'])->name('talent.destroy');
+        });
+    Route::prefix('talent-content')
+        ->group(function () {
+            Route::get('/', [TalentContentController::class, 'index'])->name('talent_content.index');
+            Route::get('/talents', [TalentContentController::class, 'getTalents'])->name('talent_content.get');
+            Route::get('/today', [TalentContentController::class, 'getTodayTalentNames'])->name('talent_content.today');
+            Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
+            Route::get('/count', [TalentContentController::class, 'countContent'])->name('talent_content.count');
+            Route::get('/data', [TalentContentController::class, 'data'])->name('talent_content.data');
+            Route::get('/create', [TalentContentController::class, 'create'])->name('talent_content.create');
+            Route::post('/', [TalentContentController::class, 'store'])->name('talent_content.store');
+            Route::get('/{talentContent}', [TalentContentController::class, 'show'])->name('talent_content.show');
+            Route::get('/{talentContent}/edit', [TalentContentController::class, 'edit'])->name('talent_content.edit');
+            Route::put('/{talentContent}', [TalentContentController::class, 'update'])->name('talent_content.update');
+            Route::delete('{talentContent}', [TalentContentController::class, 'destroy'])->name('talent_content.destroy');
         });
 });

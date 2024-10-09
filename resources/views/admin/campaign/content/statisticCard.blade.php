@@ -87,4 +87,15 @@
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="small-box bg-white">
+            <div class="inner">
+                <h4 id="engagementRate">0</h4>
+                <p>Engagement Rate</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-chart-line text-gray"></i>
+            </div>
+        </div>
+    </div>
 </div>
