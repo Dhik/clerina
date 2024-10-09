@@ -12,7 +12,7 @@
             <div class="card">
                 <div class="card-header">
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
-                        Add Talent Content
+                        <i class="fas fa-plus"></i> Add Talent Content
                     </button>
                 </div>
                 <div class="card-body">
@@ -308,15 +308,15 @@
                 url: '{{ route('talent_content.show', ':id') }}'.replace(':id', id),
                 method: 'GET',
                 success: function(response) {
-                    $('#view_talent_name').text(response.talentContent.talent_name);
-                    $('#view_dealing_upload_date').text(response.talentContent.dealing_upload_date);
-                    $('#view_posting_date').text(response.talentContent.posting_date);
-                    $('#view_final_rate_card').text(response.talentContent.final_rate_card);
-                    $('#view_done').text(response.talentContent.done ? 'Yes' : 'No');
-                    $('#view_upload_link').text(response.talentContent.upload_link);
-                    $('#view_pic_code').text(response.talentContent.pic_code);
-                    $('#view_boost_code').text(response.talentContent.boost_code);
-                    $('#view_kerkun').text(response.talentContent.kerkun ? 'Yes' : 'No');
+                    $('#view_talent_name').val(response.talentContent.talent_name);
+                    $('#view_dealing_upload_date').val(response.talentContent.dealing_upload_date);
+                    $('#view_posting_date').val(response.talentContent.posting_date);
+                    $('#view_final_rate_card').val(response.talentContent.final_rate_card);
+                    $('#view_done').val(response.talentContent.done ? 'Yes' : 'No');
+                    $('#view_upload_link').val(response.talentContent.upload_link);
+                    $('#view_pic_code').val(response.talentContent.pic_code);
+                    $('#view_boost_code').val(response.talentContent.boost_code);
+                    $('#view_kerkun').val(response.talentContent.kerkun ? 'Yes' : 'No');
                     
                     $('#viewTalentContentModal').modal('show');
                 },
@@ -325,6 +325,7 @@
                 }
             });
         });
+
 
         $('#talentContentTable').on('click', '.deleteButton', function(e) {
             e.preventDefault(); 

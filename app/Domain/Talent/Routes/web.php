@@ -32,7 +32,7 @@ Route::prefix('admin')
             Route::put('/{talent}', [TalentController::class, 'update'])->name('talent.update');
             Route::delete('{talent}', [TalentController::class, 'destroy'])->name('talent.destroy');
         });
-    Route::prefix('talent-content')
+    Route::prefix('tlnt-content')
         ->group(function () {
             Route::get('/', [TalentContentController::class, 'index'])->name('talent_content.index');
             Route::get('/talents', [TalentContentController::class, 'getTalents'])->name('talent_content.get');

@@ -117,7 +117,7 @@ class TalentController extends Controller
      */
     public function show(Talent $talent)
     {
-        //
+        return response()->json($talent);
     }
 
     /**

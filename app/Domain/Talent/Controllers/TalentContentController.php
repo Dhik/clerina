@@ -130,7 +130,23 @@ class TalentContentController extends Controller
      */
     public function show(TalentContent $talentContent)
     {
-        //
+        if (!$talentContent) {
+            return response()->json(['message' => 'Talent content not found'], 404);
+        }
+        return response()->json([
+            'talentContent' => [
+                'id' => $talentContent->id,
+                'talent_name' => $talentContent->talent_name,
+                'dealing_upload_date' => $talentContent->dealing_upload_date,
+                'posting_date' => $talentContent->posting_date,
+                'final_rate_card' => $talentContent->final_rate_card,
+                'done' => $talentContent->done,
+                'upload_link' => $talentContent->upload_link,
+                'pic_code' => $talentContent->pic_code,
+                'boost_code' => $talentContent->boost_code,
+                'kerkun' => $talentContent->kerkun,
+            ],
+        ]);
     }
 
     /**

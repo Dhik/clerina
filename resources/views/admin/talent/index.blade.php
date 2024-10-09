@@ -12,10 +12,10 @@
             <div class="card">
                 <div class="card-header">
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
-                        Add Talent
+                    <i class="fas fa-plus"></i> Add Talent
                     </button>
                     <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
-                        Import Talent
+                    <i class="fas fa-file-download"></i> Import Talent
                     </button>
                 </div>
                 <div class="card-body">
@@ -81,9 +81,35 @@
                 url: "{{ route('talent.show', ':id') }}".replace(':id', talentId),
                 method: 'GET',
                 success: function(response) {
-                    $('#view_username').val(response.talent.username);
-                    $('#view_talent_name').val(response.talent.talent_name);
+                    // Directly access the properties from the response
+                    $('#view_username').val(response.username);
+                    $('#view_talent_name').val(response.talent_name);
+                    $('#view_video_slot').val(response.video_slot);
+                    $('#view_content_type').val(response.content_type);
+                    $('#view_produk').val(response.produk);
+                    $('#view_rate_final').val(response.rate_final);
+                    $('#view_pic').val(response.pic);
+                    $('#view_bulan_running').val(response.bulan_running);
+                    $('#view_niche').val(response.niche);
+                    $('#view_followers').val(response.followers);
+                    $('#view_address').val(response.address);
+                    $('#view_phone_number').val(response.phone_number);
+                    $('#view_bank').val(response.bank);
+                    $('#view_no_rekening').val(response.no_rekening);
+                    $('#view_nama_rekening').val(response.nama_rekening);
+                    $('#view_no_npwp').val(response.no_npwp);
+                    $('#view_pengajuan_transfer_date').val(response.pengajuan_transfer_date);
+                    $('#view_gdrive_ttd_kol_accepting').val(response.gdrive_ttd_kol_accepting);
+                    $('#view_nik').val(response.nik);
+                    $('#view_price_rate').val(response.price_rate);
+                    $('#view_first_rate_card').val(response.first_rate_card);
+                    $('#view_discount').val(response.discount);
+                    $('#view_slot_final').val(response.slot_final);
+                    $('#view_tax_deduction').val(response.tax_deduction);
+                    $('#view_created_at').val(response.created_at);
+                    $('#view_updated_at').val(response.updated_at);
 
+                    // Show the modal
                     $('#viewTalentModal').modal('show');
                 },
                 error: function(response) {
@@ -91,6 +117,7 @@
                 }
             });
         });
+
 
         $('#addTalentModal, #editTalentModal').on('hidden.bs.modal', function () {
             $(this).find('form')[0].reset();

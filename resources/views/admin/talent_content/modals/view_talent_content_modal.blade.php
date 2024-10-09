@@ -9,15 +9,41 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="view_username">Username</label>
-                    <input type="text" id="view_username" class="form-control" readonly>
+                    <label for="view_talent_name">Talent Name</label>
+                    <input type="text" id="view_talent_name" class="form-control" readonly>
                 </div>
-
                 <div class="form-group">
-                    <label for="view_content_title">Content Title</label>
-                    <input type="text" id="view_content_title" class="form-control" readonly>
+                    <label for="view_dealing_upload_date">Dealing Upload Date</label>
+                    <input type="text" id="view_dealing_upload_date" class="form-control" readonly>
                 </div>
-                <!-- Add more fields as needed -->
+                <div class="form-group">
+                    <label for="view_posting_date">Posting Date</label>
+                    <input type="text" id="view_posting_date" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_final_rate_card">Final Rate Card</label>
+                    <input type="text" id="view_final_rate_card" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_done">Done Status</label>
+                    <input type="text" id="view_done" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_upload_link">Upload Link</label>
+                    <input type="text" id="view_upload_link" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_pic_code">PIC Code</label>
+                    <input type="text" id="view_pic_code" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_boost_code">Boost Code</label>
+                    <input type="text" id="view_boost_code" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_kerkun">Kerkun Status</label>
+                    <input type="text" id="view_kerkun" class="form-control" readonly>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

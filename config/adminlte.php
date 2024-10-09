@@ -486,9 +486,9 @@ return [
                 ],
                 [
                     'text' => 'Content',
-                    'url' => 'admin/talent-content',
+                    'url' => 'admin/tlnt-content',
                     'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/talent-content*']
+                    'active' => ['admin/tlnt-content*']
                 ],
             ]
         ],
