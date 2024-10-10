@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\ImportOrders::class,
         \App\Console\Commands\ImportCampaignContent::class,
         \App\Console\Commands\RefreshCampaignContents::class,
+        \App\Console\Commands\ImportTalentCommand::class,
     ];
 
 

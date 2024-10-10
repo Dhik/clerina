@@ -37,101 +37,80 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
      * Map each row from the Excel file to the corresponding fields in the database.
      */
     public function map($row): array
-    {
-        return [
-            'username' => $row[0],
-            'talent_name' => $row[1],
-            'video_slot' => $row[2],
-            'content_type' => $row[3],
-            'produk' => $row[4],
-            'rate_final' => $row[5],
-            'pic' => $row[6],
-            'bulan_running' => $row[7],
-            'niche' => $row[8],
-            'followers' => $row[9],
-            'address' => $row[10],
-            'phone_number' => $row[11],
-            'bank' => $row[12],
-            'no_rekening' => $row[13],
-            'nama_rekening' => $row[14],
-            'no_npwp' => $row[15],
-            'pengajuan_transfer_date' => $row[16],
-            'gdrive_ttd_kol_accepting' => $row[17],
-            'nik' => $row[18],
-            'price_rate' => $row[19],
-            'first_rate_card' => $row[20],
-            'discount' => $row[21],
-            'slot_final' => $row[22],
-            'tax_deduction' => $row[23],
-        ];
-    }
+{
+    return [
+        'username' => $row[0] ?? '',
+        'talent_name' => $row[1] ?? '',
+        'video_slot' => $row[2] ?? 0,
+        'content_type' => $row[3] ?? '',
+        'produk' => $row[4] ?? '',
+        'rate_final' => $row[5] ?? 0,
+        'pic' => $row[6] ?? '',
+        'bulan_running' => $row[7] ?? '',
+        'niche' => $row[8] ?? '',
+        'followers' => $row[9] ?? 0,
+        'address' => $row[10] ?? '',
+        'phone_number' => $row[11] ?? '',
+        'bank' => $row[12] ?? '',
+        'no_rekening' => $row[13] ?? '',
+        'nama_rekening' => $row[14] ?? '',
+        'no_npwp' => $row[15] ?? '',
+        'pengajuan_transfer_date' => $row[16] ?? null,
+        'gdrive_ttd_kol_accepting' => $row[17] ?? '',
+        'nik' => $row[18] ?? '',
+        'price_rate' => $row[19] ?? 0,
+        'first_rate_card' => $row[20] ?? 0,
+        'discount' => $row[21] ?? 0,
+        'slot_final' => $row[22] ?? 0,
+        'tax_deduction' => $row[23] ?? 0,
+    ];
+}
 
     /**
      * Handle the collection of rows from the Excel file.
      */
     public function collection(Collection $rows)
-    {
-        foreach ($rows as $row) {
-            $existingTalent = Talent::where('username', $row['username'])->first();
+{
+    foreach ($rows as $row) {
+        $existingTalent = Talent::where('username', $row['username'])->first();
 
-            if ($existingTalent) {
-                // Update the existing talent
-                $existingTalent->update([
-                    'talent_name' => $row['talent_name'],
-                    'video_slot' => $row['video_slot'],
-                    'content_type' => $row['content_type'],
-                    'produk' => $row['produk'],
-                    'rate_final' => $row['rate_final'],
-                    'pic' => $row['pic'],
-                    'bulan_running' => $row['bulan_running'],
-                    'niche' => $row['niche'],
-                    'followers' => $row['followers'],
-                    'address' => $row['address'],
-                    'phone_number' => $row['phone_number'],
-                    'bank' => $row['bank'],
-                    'no_rekening' => $row['no_rekening'],
-                    'nama_rekening' => $row['nama_rekening'],
-                    'no_npwp' => $row['no_npwp'],
-                    'pengajuan_transfer_date' => $this->formatDateForDatabase($row['pengajuan_transfer_date']),
-                    'gdrive_ttd_kol_accepting' => $row['gdrive_ttd_kol_accepting'],
-                    'nik' => $row['nik'],
-                    'price_rate' => $row['price_rate'],
-                    'first_rate_card' => $row['first_rate_card'],
-                    'discount' => $row['discount'],
-                    'slot_final' => $row['slot_final'],
-                    'tax_deduction' => $row['tax_deduction'],
-                ]);
-            } else {
-                // Create a new talent record
-                $talent = Talent::create([
-                    'username' => $row['username'],
-                    'talent_name' => $row['talent_name'],
-                    'video_slot' => $row['video_slot'],
-                    'content_type' => $row['content_type'],
-                    'produk' => $row['produk'],
-                    'rate_final' => $row['rate_final'],
-                    'pic' => $row['pic'],
-                    'bulan_running' => $row['bulan_running'],
-                    'niche' => $row['niche'],
-                    'followers' => $row['followers'],
-                    'address' => $row['address'],
-                    'phone_number' => $row['phone_number'],
-                    'bank' => $row['bank'],
-                    'no_rekening' => $row['no_rekening'],
-                    'nama_rekening' => $row['nama_rekening'],
-                    'no_npwp' => $row['no_npwp'],
-                    'pengajuan_transfer_date' => $this->formatDateForDatabase($row['pengajuan_transfer_date']),
-                    'gdrive_ttd_kol_accepting' => $row['gdrive_ttd_kol_accepting'],
-                    'nik' => $row['nik'],
-                    'price_rate' => $row['price_rate'],
-                    'first_rate_card' => $row['first_rate_card'],
-                    'discount' => $row['discount'],
-                    'slot_final' => $row['slot_final'],
-                    'tax_deduction' => $row['tax_deduction'],
-                ]);
-            }
+        $data = [
+            'username' => $row['username'] ?? '',
+            'talent_name' => $row['talent_name'] ?? '',
+            'video_slot' => $row['video_slot'] ?? 0,
+            'content_type' => $row['content_type'] ?? '',
+            'produk' => $row['produk'] ?? '',
+            'rate_final' => $row['rate_final'] ?? 0,
+            'pic' => $row['pic'] ?? '',
+            'bulan_running' => $row['bulan_running'] ?? '',
+            'niche' => $row['niche'] ?? '',
+            'followers' => $row['followers'] ?? 0,
+            'address' => $row['address'] ?? '',
+            'phone_number' => $row['phone_number'] ?? '',
+            'bank' => $row['bank'] ?? '',
+            'no_rekening' => $row['no_rekening'] ?? '',
+            'nama_rekening' => $row['nama_rekening'] ?? '',
+            'no_npwp' => $row['no_npwp'] ?? '',
+            'pengajuan_transfer_date' => $this->formatDateForDatabase($row['pengajuan_transfer_date'] ?? null),
+            'gdrive_ttd_kol_accepting' => $row['gdrive_ttd_kol_accepting'] ?? '',
+            'nik' => $row['nik'] ?? '',
+            'price_rate' => $row['price_rate'] ?? 0,
+            'first_rate_card' => $row['first_rate_card'] ?? 0,
+            'discount' => $row['discount'] ?? 0,
+            'slot_final' => $row['slot_final'] ?? 0,
+            'tax_deduction' => $row['tax_deduction'] ?? 0,
+        ];
+
+        if ($existingTalent) {
+            // Update the existing talent
+            $existingTalent->update($data);
+        } else {
+            // Create a new talent record
+            Talent::create($data);
         }
     }
+}
+
 
     /**
      * Validation rules for each row.
@@ -139,8 +118,8 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
     public function rules(): array
     {
         return [
-            'username' => 'required|string|max:255',
-            'talent_name' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'talent_name' => 'nullable|string|max:255',
             'video_slot' => 'nullable|integer',
             'content_type' => 'nullable|string|max:255',
             'produk' => 'nullable|string|max:255',
@@ -163,7 +142,7 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
             'discount' => 'nullable|integer',
             'slot_final' => 'nullable|integer',
             'tax_deduction' => 'nullable|integer',
-        ];
+        ];        
     }
     protected function formatDateForDatabase($dateString)
     {
