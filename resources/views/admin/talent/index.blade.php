@@ -25,6 +25,8 @@
                                 <th>ID</th>
                                 <th>Username</th>
                                 <th>Talent Name</th>
+                                <th>Tanggal Pengajuan TF</th>
+                                <th>Rate Final</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -52,6 +54,8 @@
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
+                { data: 'pengajuan_transfer_date', name: 'pengajuan_transfer_date' },
+                { data: 'rate_final', name: 'rate_final' },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]

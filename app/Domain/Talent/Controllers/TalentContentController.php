@@ -190,7 +190,6 @@ class TalentContentController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'transfer_date' => 'required|date',
             'dealing_upload_date' => 'nullable|date',
             'posting_date' => 'nullable|date',
             'done' => 'required|boolean',
@@ -200,6 +199,7 @@ class TalentContentController extends Controller
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
         ]);
+        $validated['transfer_date'] = $request->dealing_upload_date;
 
         $talentContent = TalentContent::find($id);
         if (!$talentContent) {
@@ -229,7 +229,7 @@ class TalentContentController extends Controller
     }
     public function getTalents()
     {
-        $talents = Talent::select('id', 'talent_name')->get();
+        $talents = Talent::select('id', 'username')->get();
         return response()->json($talents);
     }
     public function getTodayTalentNames()
@@ -245,12 +245,12 @@ class TalentContentController extends Controller
     public function calendar(): JsonResponse
     {
         $talentContents = TalentContent::join('talents', 'talent_content.talent_id', '=', 'talents.id')
-            ->select('talent_content.id', 'talent_content.posting_date', 'talents.talent_name')
+            ->select('talent_content.id', 'talent_content.posting_date', 'talents.username')
             ->get();
         $data = $talentContents->map(function ($content) {
             return [
                 'id' => $content->id,
-                'talent_name' => $content->talent_name, 
+                'talent_name' => $content->username, 
                 'posting_date' => $content->posting_date ? (new \DateTime($content->posting_date))->format(DATE_ISO8601) : null, // Ensure ISO format
             ];
         });

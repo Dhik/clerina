@@ -11,14 +11,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="transfer_date">Transfer Date</label>
-                        <input type="date" name="transfer_date" id="transfer_date" class="form-control">
-                    </div>
-
-                    <div class="form-group">
                         <label for="talent_id">Talent Name</label>
                         <select name="talent_id" id="talent_id" class="form-control" required>
-                            <!-- Options will be populated by AJAX -->
                         </select>
                     </div>
 

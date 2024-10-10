@@ -23,8 +23,11 @@
                         <label for="status_payment">Status Payment</label>
                         <select name="status_payment" id="status_payment" class="form-control" required>
                             <option value="">Select Status</option>
-                            <option value="50%">50%</option>
-                            <option value="Pelunasan">Pelunasan</option>
+                            <option value="DP 50%">DP 50%</option>
+                            <option value="Full Payment">Full Payment</option>
+                            <option value="DP">DP</option>
+                            <option value="Pelunasan 50%">Pelunasan 50%</option>
+                            <option value="Termin 2">Termin 2</option>
                         </select>
                     </div>
                 </div>

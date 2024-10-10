@@ -217,7 +217,7 @@
                     select.empty();
                     select.append('<option value="">Select Talent</option>');
                     $.each(data, function(index, talent) {
-                        select.append('<option value="' + talent.id + '">' + talent.talent_name + '</option>');
+                        select.append('<option value="' + talent.id + '">' + talent.username + '</option>');
                     });
 
                     if (choices) {
