@@ -35,6 +35,7 @@ class Talent extends Model
         'discount',
         'slot_final',
         'tax_deduction',
+        'amount_tf',
     ];
     public function talentContents()
     {

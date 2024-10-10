@@ -84,6 +84,7 @@ class TalentPaymentController extends Controller
         $validatedData = $request->validate([
             'done_payment' => 'nullable|date',
             'talent_id' => 'required|integer',
+            'amount_tf' => 'nullable',
             'talent_content_id' => 'nullable|integer',
             'status_payment' => 'nullable|string|max:255',
         ]);

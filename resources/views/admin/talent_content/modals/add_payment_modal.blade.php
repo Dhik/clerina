@@ -20,6 +20,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="amount_tf">Jumlah Transfer</label>
+                        <input type="text" name="amount_tf" id="amount_tf" class="form-control money" required>
+                    </div>
+
+                    <div class="form-group">
                         <label for="status_payment">Status Payment</label>
                         <select name="status_payment" id="status_payment" class="form-control" required>
                             <option value="">Select Status</option>
