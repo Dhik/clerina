@@ -429,6 +429,31 @@ return [
             ]
         ],
         [
+            'text' => 'KOL',
+            'can' => [PermissionEnum::ViewOrder],
+            'icon'    => 'fas fa-fw fa-play',
+            'submenu' => [
+                [
+                    'text' => 'Talents',
+                    'url' => 'admin/talent',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/talent*']
+                ],
+                [
+                    'text' => 'Content',
+                    'url' => 'admin/tlnt-content',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/tlnt-content*']
+                ],
+                [
+                    'text' => 'Payment',
+                    'url' => 'admin/talnt-payments',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/talnt-payments*']
+                ],
+            ]
+        ],
+        [
             'text' => 'Product Development',
             'can' => [PermissionEnum::ViewOrder],
             'icon'    => 'fas fa-fw fa-table',
@@ -472,25 +497,6 @@ return [
             'icon' => 'nav-icon fas fa-trophy',
             'can' => [PermissionEnum::ViewSales],
             'active' => ['admin/contest*']
-        ],
-        [
-            'text' => 'KOL',
-            'can' => [PermissionEnum::ViewOrder],
-            'icon'    => 'fas fa-fw fa-play',
-            'submenu' => [
-                [
-                    'text' => 'Talents',
-                    'url' => 'admin/talent',
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/talent*']
-                ],
-                [
-                    'text' => 'Content',
-                    'url' => 'admin/tlnt-content',
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/tlnt-content*']
-                ],
-            ]
         ],
         [
             'text' => 'Competitor Analysis',

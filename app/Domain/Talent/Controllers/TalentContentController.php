@@ -32,6 +32,25 @@ class TalentContentController extends Controller
     }
     protected function statusAndLinkHtml($talentContent): string
     {
+        $uploadLinkButton = !empty($talentContent->upload_link) 
+            ? '<a href="' . $talentContent->upload_link . '" target="_blank" class="btn btn-light" data-toggle="tooltip" data-placement="top" title="View Upload">
+                <i class="fas fa-link"></i>
+            </a>'
+            : '<span class="text-black-50">No Link</span>';
+
+        $viewButton = '<button class="btn btn-light viewButton" 
+            data-id="' . $talentContent->id . '" 
+            data-toggle="modal" 
+            data-target="#viewTalentContentModal" 
+            data-placement="top" title="View">
+            <i class="fas fa-eye"></i>
+        </button>';
+
+        return $uploadLinkButton . ' ' . $viewButton;
+    }
+
+    protected function doneHtml($talentContent): string
+    {
         $doneButton = $talentContent->done 
             ? '<button class="btn btn-light" data-toggle="tooltip" data-placement="top" title="Done">
                 <i class="fas fa-check-circle text-success"></i>
@@ -39,14 +58,9 @@ class TalentContentController extends Controller
             : '<button class="btn btn-light" data-toggle="tooltip" data-placement="top" title="Not Done">
                 <i class="fas fa-times-circle text-secondary"></i>
             </button>';
-        $uploadLinkButton = !empty($talentContent->upload_link) 
-            ? '<a href="' . $talentContent->upload_link . '" target="_blank" class="btn btn-light" data-toggle="tooltip" data-placement="top" title="View Upload">
-                <i class="fas fa-link"></i>
-            </a>'
-            : '<span class="text-black-50">No Link</span>';
-
-        return $doneButton . ' ' . $uploadLinkButton;
+        return $doneButton;
     }
+    
         
     public function data(Request $request)
     {
@@ -65,13 +79,17 @@ class TalentContentController extends Controller
             ->addColumn('status_and_link', function ($talentContent) {
                 return $this->statusAndLinkHtml($talentContent);
             })
+            ->addColumn('done', function ($talentContent) {
+                return $this->doneHtml($talentContent);
+            })
             ->addColumn('action', function ($talentContent) {
                 return '
-                    <button class="btn btn-sm btn-primary viewButton" 
-                        data-id="' . $talentContent->id . '" 
+                    <button class="btn btn-sm btn-info addPaymentButton" 
+                        data-id="' . $talentContent->id . '"
+                        data-talent_id="' . $talentContent->talent_id . '"
                         data-toggle="modal" 
-                        data-target="#viewTalentContentModal">
-                        <i class="fas fa-eye"></i>
+                        data-target="#addPaymentModal">
+                        <i class="fas fa-wallet"></i>
                     </button>
                     <button class="btn btn-sm btn-success editButton" 
                         data-id="' . $talentContent->id . '">
@@ -83,7 +101,7 @@ class TalentContentController extends Controller
                     </button>
                 ';
             })
-            ->rawColumns(['action', 'status_and_link']) // Ensure this includes your new column
+            ->rawColumns(['action', 'status_and_link', 'done'])
             ->make(true);
     }
 
@@ -185,21 +203,15 @@ class TalentContentController extends Controller
 
         $talentContent = TalentContent::find($id);
         if (!$talentContent) {
-            return response()->json(['error' => 'Talent content not found'], 404);
+            return redirect()->route('talent_content.index')->with('error', 'Talent content not found.');
         }
 
         try {
             $talentContent->update($validated);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Talent content updated successfully.',
-            ], 200);
+            return redirect()->route('talent_content.index')->with('success', 'Talent content updated successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update talent content. ' . $e->getMessage(),
-            ], 500);
+            return redirect()->route('talent_content.index')->with('error', 'Failed to update talent content. ' . $e->getMessage());
         }
     }
 

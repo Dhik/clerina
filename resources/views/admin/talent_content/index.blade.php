@@ -89,6 +89,7 @@
                                 <th>Dealing Upload Date</th>
                                 <th>Posting Date</th>
                                 <th>Final Rate Card</th>
+                                <th>Done</th>
                                 <th>Additional Info</th>
                                 <th>Action</th>
                             </tr>
@@ -101,6 +102,7 @@
     </div>
 
     @include('admin.talent_content.modals.add_talent_content_modal')
+    @include('admin.talent_content.modals.add_payment_modal')
     @include('admin.talent_content.modals.edit_talent_content_modal')
     @include('admin.talent_content.modals.view_talent_content_modal')
 @stop
@@ -267,10 +269,20 @@
                     }
                 },
                 { data: 'final_rate_card', name: 'final_rate_card' },
+                { data: 'done', name: 'done', orderable: false, searchable: false },
                 { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
+        });
+
+        $('#talentContentTable').on('click', '.addPaymentButton', function() {
+            var talentContentId = $(this).data('id');
+            var talentId = $(this).data('talent_id');
+
+            $('#paymentTalentContentId').val(talentContentId);
+            $('#paymentTalentId').val(talentId);
+            $('#addPaymentModal').modal('show');
         });
 
         $('#talentContentTable').on('click', '.editButton', function() {

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Domain\Talent\Controllers\TalentController;
 use App\Domain\Talent\Controllers\TalentContentController;
+use App\Domain\Talent\Controllers\TalentPaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,5 +47,16 @@ Route::prefix('admin')
             Route::get('/{talentContent}/edit', [TalentContentController::class, 'edit'])->name('talent_content.edit');
             Route::put('/{talentContent}', [TalentContentController::class, 'update'])->name('talent_content.update');
             Route::delete('{talentContent}', [TalentContentController::class, 'destroy'])->name('talent_content.destroy');
+        });
+
+    Route::prefix('talnt-payments')
+        ->group(function () {
+            Route::get('/', [TalentPaymentController::class, 'index'])->name('talent_payments.index');
+            Route::get('/data', [TalentPaymentController::class, 'data'])->name('talent_payments.data');
+            Route::post('/', [TalentPaymentController::class, 'store'])->name('talent_payments.store');
+            Route::get('/{payment}', [TalentPaymentController::class, 'show'])->name('talent_payments.show');
+            Route::get('/{payment}/edit', [TalentPaymentController::class, 'edit'])->name('talent_payments.edit');
+            Route::put('/{payment}', [TalentPaymentController::class, 'update'])->name('talent_payments.update');
+            Route::delete('/{payment}', [TalentPaymentController::class, 'destroy'])->name('talent_payments.destroy');
         });
 });
