@@ -5,6 +5,7 @@
 
     function detailContent() {
         let rowData = contentTable.row($(this).closest('tr')).data();
+        console.log(rowData);
 
         // Update modal with the data
         $('#likeModal').text(rowData.like);
@@ -66,10 +67,11 @@
             });
         } else if (rowData.link !== '' && rowData.channel === 'instagram_feed') {
             // Embed Instagram post
-            let linkIg = rowData.link.endsWith('/');
-            let embedLink = linkIg ? rowData.link + 'embed' : rowData.link + '/embed';
+            let cleanLink = rowData.link.split('?')[0];
+            let linkIg = cleanLink.endsWith('/');
+            let embedLink = linkIg ? cleanLink + 'embed' : cleanLink + '/embed';
 
-            let embedIg = '<iframe height="600" src="' + embedLink + '" frameborder="0"></iframe>';
+            let embedIg = '<iframe width="315" height="560" src="' + embedLink + '" frameborder="0"></iframe>';
             $('#contentEmbed').html(embedIg);
         } else if (rowData.link !== '' && rowData.channel === 'youtube_video') {
             // Embed YouTube Shorts
