@@ -11,7 +11,7 @@ class CampaignUpdateContentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rate_card' => ['required', 'numeric', 'min:1'],
+            'rate_card' => ['required', 'numeric', 'min:0'],
             'task_name' => ['required', 'string', 'max:255'],
             'link' => ['nullable', 'url'],
             'product' => ['required', 'string', 'max:255'],

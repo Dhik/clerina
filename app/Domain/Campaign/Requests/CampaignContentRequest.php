@@ -12,7 +12,7 @@ class CampaignContentRequest extends FormRequest
     {
         return [
             'key_opinion_leader_id' => ['integer', 'exists:key_opinion_leaders,id'],
-            'rate_card' => ['required', 'numeric', 'min:0'],
+            'rate_card' => ['required', 'numeric'],
             'task_name' => ['required', 'string', 'max:255'],
             'link' => ['nullable', 'url'],
             'product' => ['required', 'string', 'max:255'],
