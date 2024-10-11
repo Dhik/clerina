@@ -52,41 +52,33 @@
         let campaignId = '{{ $campaign->id }}';
         const filterStatus = $('#filterStatus');
 
-        // Function to reset filters and reload data
         function resetFilters() {
-            // Clear all filters to default states
             $('#filterDates').val('');
             $('#filterPlatform').val('').trigger('change');
             $('#filterFyp').prop('checked', false);
             $('#filterPayment').prop('checked', false);
             $('#filterDelivery').prop('checked', false);
-            $('#filterInfluencer').val('').trigger('change'); // Reset influencer filter
-            $('#filterProduct').val('').trigger('change'); // Reset product filter
+            $('#filterInfluencer').val('').trigger('change'); 
+            $('#filterProduct').val('').trigger('change'); 
 
-            // Reload the DataTable with default settings
             contentTable.ajax.reload();
             offerTable.ajax.reload();
 
-            // Optionally, reset the card or chart if necessary
-            updateCard();  // Refresh card data with default values
-            initChart();   // Reload chart data if necessary
+            updateCard(); 
+            initChart(); 
         }
 
-        // Automatically reset filters when the page loads
         $(document).ready(function () {
-            resetFilters(); // Apply reset filters on page load
+            resetFilters(); 
         });
 
-        // Reset Filter Button Click Event
         $('#resetFilterBtn').click(function () {
-            resetFilters(); // Clear filters and reload data on button click
+            resetFilters(); 
         });
         
         $('#refreshAllBtn').click(function() {
-            // Show the modal
             $('#refreshAllModal').modal('show');
 
-            // Fetch the campaign contents
             $.ajax({
                 url: "{{ route('campaignContent.getDataTableForRefresh', ['campaignId' => $campaign->id]) }}",
                 method: 'GET',
@@ -119,21 +111,17 @@
             contents.each(function(index, contentRow) {
                 const contentId = $(contentRow).attr('id').split('-')[1];
                 
-                // Update icon to loading
                 $(`#content-${contentId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
 
-                // Scrape data one by one
                 $.ajax({
                     url: "{{ route('statistic.refresh', ['campaignContent' => ':campaignContentId']) }}".replace(':campaignContentId', contentId),
                     method: 'GET',
                     success: function(data) {
-                        // Update icon to check if successful
                         $(`#content-${contentId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
                         completedContents++;
                         updateProgressBar(completedContents, totalContents);
                     },
                     error: function() {
-                        // Update icon to error if failed
                         $(`#content-${contentId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
                         completedContents++;
                         updateProgressBar(completedContents, totalContents);
@@ -147,7 +135,6 @@
             $('#refreshProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
         }
 
-        // DataTable for offer table
         let offerTable = $('#offerTable').DataTable({
             responsive: true,
             processing: true,
@@ -189,11 +176,10 @@
         const filterPayment = $('#filterPayment');
         const filterDelivery = $('#filterDelivery');
 
-        // DataTable for content table
         const contentTable = $('#contentTable').DataTable({
             responsive: true,
             processing: true,
-            serverSide: false, // Since data is fetched via AJAX, you can keep this to false
+            serverSide: false, 
             ajax: {
                 url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
                 data: function (d) {
@@ -211,17 +197,16 @@
                 { data: 'product', orderable: false },
                 { data: 'task', orderable: false },
                 { data: 'upload_date', orderable: true, visible: false },
-                { data: 'like', className: "text-right", orderable: true }, // Like column is sortable
-                { data: 'comment', className: "text-right", orderable: true }, // Comment column is sortable
-                { data: 'view', className: "text-right", orderable: true }, // View column is sortable
-                { data: 'cpm', className: "text-right", orderable: true }, // CPM column is sortable
-                { data: 'additional_info', orderable: false }, // Additional info column is not sortable
+                { data: 'like', className: "text-right", orderable: true }, 
+                { data: 'comment', className: "text-right", orderable: true }, 
+                { data: 'view', className: "text-right", orderable: true }, 
+                { data: 'cpm', className: "text-right", orderable: true }, 
+                { data: 'additional_info', orderable: false }, 
                 { data: 'actions', orderable: false, searchable: false },
             ],
-            order: [[4, 'desc']], // Set initial sorting by "view" column
+            order: [[4, 'desc']],
         });
 
-        // Handle row click event to open modal and fill form
         contentTable.on('draw.dt', function() {
             $('[data-toggle="tooltip"]').tooltip();
         });
@@ -281,7 +266,7 @@
                 }
             });
 
-            const startFilter = moment().startOf('month');  // First day of the current month
+            const startFilter = moment().startOf('month'); 
             const endFilter = moment().endOf('month');
 
             $('.filterDate').daterangepicker({
