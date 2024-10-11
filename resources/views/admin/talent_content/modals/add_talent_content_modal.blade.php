@@ -22,38 +22,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="posting_date">Posting Date</label>
-                        <input type="date" name="posting_date" id="posting_date" class="form-control">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="done">Done</label>
-                        <select name="done" id="done" class="form-control" required>
-                            <option value="">Select Status</option>
-                            <option value="0">No</option>
-                            <option value="1">Yes</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="upload_link">Upload Link</label>
-                        <input type="url" name="upload_link" id="upload_link" class="form-control" placeholder="http://example.com/upload">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="final_rate_card">Final Rate Card</label>
-                        <input type="text" name="final_rate_card" id="final_rate_card" class="form-control money" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="pic_code">PIC Code</label>
+                        <label for="pic_code">Produk</label>
                         <input type="text" name="pic_code" id="pic_code" class="form-control">
                     </div>
 
                     <div class="form-group">
-                        <label for="boost_code">Boost Code</label>
-                        <input type="text" name="boost_code" id="boost_code" class="form-control">
+                        <label for="pic_code">Nama PIC</label>
+                        <input type="text" name="pic_code" id="pic_code" class="form-control">
                     </div>
+
+                    
 
                     <div class="form-group">
                         <label for="kerkun">Kerkun</label>
