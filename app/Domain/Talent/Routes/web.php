@@ -37,6 +37,8 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentContentController::class, 'index'])->name('talent_content.index');
             Route::get('/talents', [TalentContentController::class, 'getTalents'])->name('talent_content.get');
+            Route::get('/{talentContent}/export-pdf', [TalentContentController::class, 'exportPDF'])->name('talent_content.exportPDF');
+            Route::get('/invoice', [TalentContentController::class, 'showInvoice'])->name('talentContents.showInvoice');
             Route::get('/today', [TalentContentController::class, 'getTodayTalentNames'])->name('talent_content.today');
             Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
             Route::get('/count', [TalentContentController::class, 'countContent'])->name('talent_content.count');
