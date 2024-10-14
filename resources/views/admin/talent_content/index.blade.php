@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="card-header">
-                    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#exportForm">
+                    <button type="button" class="btn btn-outline-primary exportForm" data-toggle="modal" data-target="#exportForm">
                     <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
                     </button>
                 </div>
@@ -326,6 +326,9 @@
             window.location.href = exportUrl;
         });
 
+        $('#talentContentTable').on('click', '.exportSPK', function() {
+            window.location.href = '{{ route('talent_content.spk') }}';
+        });
 
         $('#talentContentTable').on('click', '.viewButton', function() {
             var id = $(this).data('id');
@@ -403,5 +406,13 @@
         });
 
     });
+
+    $(document).ready(function() {
+        $('.exportForm').on('click', function() {
+            window.location.href = '{{ route('talent_content.pengajuan') }}';
+        });
+    });
+
+
 </script>
 @stop
