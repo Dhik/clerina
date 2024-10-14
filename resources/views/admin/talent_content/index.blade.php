@@ -80,6 +80,11 @@
                         </div>
                     </div>
                 </div>
+                <div class="card-header">
+                    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#exportForm">
+                    <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
+                    </button>
+                </div>
                 <div class="card-body">
                     <table id="talentContentTable" class="table table-bordered table-striped">
                         <thead>
@@ -91,6 +96,7 @@
                                 <th>Final Rate Card</th>
                                 <th>Done</th>
                                 <th>Additional Info</th>
+                                <th>Payment Action</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -271,6 +277,7 @@
                 { data: 'final_rate_card', name: 'final_rate_card' },
                 { data: 'done', name: 'done', orderable: false, searchable: false },
                 { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
+                { data: 'payment_action', name: 'payment_action', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
@@ -312,6 +319,13 @@
                 }
             });
         });
+
+        $('#talentContentTable').on('click', '.exportData', function() {
+            var id = $(this).data('id');
+            var exportUrl = '{{ route('talent_content.exportPDF', ':id') }}'.replace(':id', id);
+            window.location.href = exportUrl;
+        });
+
 
         $('#talentContentTable').on('click', '.viewButton', function() {
             var id = $(this).data('id');
