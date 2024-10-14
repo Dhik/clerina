@@ -39,7 +39,7 @@ Route::prefix('admin')
             Route::get('/talents', [TalentContentController::class, 'getTalents'])->name('talent_content.get');
             Route::get('/{talentContent}/export-pdf', [TalentContentController::class, 'exportPDF'])->name('talent_content.exportPDF');
             Route::get('/pengajuan', [TalentContentController::class, 'exportPengajuan'])->name('talent_content.pengajuan');
-            Route::get('/generate-docx', [TalentContentController::class, 'generateDocx'])->name('talent_content.spk');
+            Route::get('/generate-docx', [TalentContentController::class, 'exportSPK'])->name('talent_content.spk');
             Route::get('/invoice', [TalentContentController::class, 'showInvoice'])->name('talentContents.showInvoice');
             Route::get('/today', [TalentContentController::class, 'getTodayTalentNames'])->name('talent_content.today');
             Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
