@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
+use Illuminate\Support\Facades\DB;
 
 /**
  */
@@ -136,21 +137,19 @@ class TalentContentController extends Controller
     public function store(Request $request)
     {
         // Validate the incoming request data
-        $request->validate([
+        $validatedData = $request->validate([
             'talent_id' => 'required|integer',
-            'transfer_date' => 'nullable|date',
             'dealing_upload_date' => 'nullable|date',
-            'posting_date' => 'nullable|date',
-            'done' => 'required|boolean',
-            'upload_link' => 'nullable|string|max:255',
             'pic_code' => 'nullable|string|max:255',
-            'boost_code' => 'nullable|string|max:255',
+            'product' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
-            'final_rate_card' => 'required',
         ]);
+        $validatedData['done'] = 0;
+        $validatedData['upload_link'] = null;
+        $validatedData['boost_code'] = null;
 
         // Create a new TalentContent record
-        TalentContent::create($request->all());
+        TalentContent::create($validatedData);
 
         // Redirect back to the talent contents index page with a success message
         return redirect()->route('talent_content.index')->with('success', 'Talent content created successfully.');
@@ -214,7 +213,15 @@ class TalentContentController extends Controller
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
         ]);
+
         $validated['transfer_date'] = $request->dealing_upload_date;
+
+        // Set posting_date based on upload_link
+        if (!empty($validated['upload_link'])) {
+            $validated['posting_date'] = Carbon::today()->toDateString();
+        } else {
+            $validated['posting_date'] = null;
+        }
 
         $talentContent = TalentContent::find($id);
         if (!$talentContent) {
@@ -222,10 +229,15 @@ class TalentContentController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+
             $talentContent->update($validated);
+
+            DB::commit();
 
             return redirect()->route('talent_content.index')->with('success', 'Talent content updated successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->route('talent_content.index')->with('error', 'Failed to update talent content. ' . $e->getMessage());
         }
     }
@@ -250,7 +262,7 @@ class TalentContentController extends Controller
     public function getTodayTalentNames()
     {
         $today = Carbon::today();
-        $talentNames = TalentContent::whereDate('posting_date', $today)
+        $talentNames = TalentContent::whereDate('dealing_upload_date', $today)
             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
             ->pluck('talents.talent_name');
 
@@ -260,13 +272,13 @@ class TalentContentController extends Controller
     public function calendar(): JsonResponse
     {
         $talentContents = TalentContent::join('talents', 'talent_content.talent_id', '=', 'talents.id')
-            ->select('talent_content.id', 'talent_content.posting_date', 'talents.username')
+            ->select('talent_content.id', 'talent_content.dealing_upload_date', 'talents.username')
             ->get();
         $data = $talentContents->map(function ($content) {
             return [
                 'id' => $content->id,
                 'talent_name' => $content->username, 
-                'posting_date' => $content->posting_date ? (new \DateTime($content->posting_date))->format(DATE_ISO8601) : null, // Ensure ISO format
+                'posting_date' => $content->dealing_upload_date ? (new \DateTime($content->dealing_upload_date))->format(DATE_ISO8601) : null, // Ensure ISO format
             ];
         });
 
@@ -334,11 +346,17 @@ class TalentContentController extends Controller
         $pdf->setPaper('A4', 'landscape');
         return $pdf->download('form_pengajuan.pdf');
     }
-    public function exportSPK()
+    public function exportSPK($id)
     {
-        $talentContents = TalentContent::with('talent')->get();
-        $pdf = PDF::loadView('admin.talent_content.mou', compact('talentContents'));
+        $talentContent = TalentContent::with('talent')->findOrFail($id);
+        $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
+        $pdf = PDF::loadView('admin.talent_content.mou', compact('talentContent', 'tanggal_hari_ini'));
         $pdf->setPaper('A4', 'potrait');
         return $pdf->download('SPK.pdf');
+    }
+    public function showSPK()
+    {
+        $talentContents = TalentContent::with('talent')->get();
+        return view('admin.talent_content.mou', compact('talentContents'));
     }
 }

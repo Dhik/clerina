@@ -11,6 +11,8 @@ use Yajra\DataTables\DataTables;
 use App\Domain\Talent\Import\TalentImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Talent\Exports\TalentTemplateExport;
+use Illuminate\Support\Facades\DB;
+
 /**
  * @property TalentBLLInterface talentBLL
  */
@@ -76,13 +78,12 @@ class TalentController extends Controller
     public function store(Request $request)
     {
         // Validate the incoming request data
-        $request->validate([
+        $validatedData = $request->validate([
             'username' => 'required|string|max:255',
             'talent_name' => 'required|string|max:255',
             'video_slot' => 'nullable|integer',
             'content_type' => 'nullable|string|max:255',
             'produk' => 'nullable|string|max:255',
-            'rate_final' => 'nullable|integer',
             'pic' => 'nullable|string|max:255',
             'bulan_running' => 'nullable|string|max:255',
             'niche' => 'nullable|string|max:255',
@@ -94,17 +95,32 @@ class TalentController extends Controller
             'nama_rekening' => 'nullable|string|max:255',
             'no_npwp' => 'nullable|string|max:255',
             'pengajuan_transfer_date' => 'nullable|date',
-            'gdrive_ttd_kol_accepting' => 'nullable|string|max:255',
             'nik' => 'nullable|string|max:255',
             'price_rate' => 'nullable|integer',
-            'first_rate_card' => 'nullable|integer',
-            'discount' => 'nullable|integer',
             'slot_final' => 'nullable|integer',
-            'tax_deduction' => 'nullable|integer',
+            'rate_final' => 'nullable|integer',
         ]);
 
+        // Calculate discount
+        $discount = 0;
+        if ($validatedData['price_rate'] && $validatedData['slot_final'] && $validatedData['rate_final']) {
+            $discount = ($validatedData['price_rate'] * $validatedData['slot_final']) - $validatedData['rate_final'];
+        }
+
+        // Calculate tax deduction
+        $tax_rate = (strpos($validatedData['talent_name'], 'PT') === 0 || strpos($validatedData['talent_name'], 'CV') === 0) ? 0.02 : 0.025;
+        $tax_deduction = $validatedData['rate_final'] ? $validatedData['rate_final'] * $tax_rate : 0;
+
+        // Calculate final transfer
+        $final_transfer = $validatedData['rate_final'] ? $validatedData['rate_final'] - $tax_deduction : 0;
+
+        // Add calculated fields to the validated data
+        $validatedData['discount'] = $discount;
+        $validatedData['tax_deduction'] = $tax_deduction;
+        $validatedData['final_transfer'] = $final_transfer;
+
         // Create a new Talent record
-        Talent::create($request->all());
+        Talent::create($validatedData);
 
         // Redirect back to the talents index page with a success message
         return redirect()->route('talent.index')->with('success', 'Talent created successfully.');
@@ -127,7 +143,7 @@ class TalentController extends Controller
      */
     public function edit(Talent $talent)
     {
-        //
+        return response()->json($talent);
     }
 
     /**
@@ -138,7 +154,41 @@ class TalentController extends Controller
      */
     public function update(TalentRequest $request, Talent $talent)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            // Prepare the data for update
+            $data = $request->validated();
+
+            // Handle money inputs (assuming they come in as formatted strings)
+            $data['price_rate'] = (int) str_replace(['Rp', '.', ' '], '', $data['price_rate']);
+            $data['rate_final'] = (int) str_replace(['Rp', '.', ' '], '', $data['rate_final']);
+
+            // Calculate discount
+            $data['discount'] = ($data['price_rate'] * $data['slot_final']) - $data['rate_final'];
+
+            // Calculate tax deduction
+            $taxRate = (strpos($data['talent_name'], 'PT') === 0 || strpos($data['talent_name'], 'CV') === 0) ? 0.02 : 0.025;
+            $data['tax_deduction'] = (int) ($data['rate_final'] * $taxRate);
+
+            // Update the talent
+            $talent->update($data);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Talent updated successfully',
+                'talent' => $talent
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update talent',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

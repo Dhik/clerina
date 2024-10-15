@@ -22,6 +22,7 @@ class TalentContent extends Model
         'boost_code',
         'kerkun',
         'final_rate_card',
+        'product',
         'created_at',
         'updated_at',
     ];
