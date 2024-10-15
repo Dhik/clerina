@@ -69,8 +69,33 @@
                 method: 'GET',
                 success: function(response) {
                     $('#editTalentForm').attr('action', '{{ route('talent.update', ':id') }}'.replace(':id', id));
-                    $('#edit_username').val(response.talent.username);
-                    $('#edit_talent_name').val(response.talent.talent_name);
+                    
+                    // Populate all fields
+                    $('#edit_username').val(response.username);
+                    $('#edit_talent_name').val(response.talent_name);
+                    $('#edit_video_slot').val(response.video_slot);
+                    $('#edit_content_type').val(response.content_type);
+                    $('#edit_produk').val(response.produk);
+                    $('#edit_pic').val(response.pic);
+                    $('#edit_bulan_running').val(response.bulan_running);
+                    $('#edit_niche').val(response.niche);
+                    $('#edit_followers').val(response.followers);
+                    $('#edit_address').val(response.address);
+                    $('#edit_phone_number').val(response.phone_number);
+                    $('#edit_bank').val(response.bank);
+                    $('#edit_no_rekening').val(response.no_rekening);
+                    $('#edit_nama_rekening').val(response.nama_rekening);
+                    $('#edit_no_npwp').val(response.no_npwp);
+                    $('#edit_pengajuan_transfer_date').val(response.pengajuan_transfer_date);
+                    $('#edit_nik').val(response.nik);
+                    
+                    // Format currency fields
+                    $('#edit_price_rate').val(response.price_rate);
+                    $('#edit_rate_final').val(response.rate_final);
+                    
+                    $('#edit_slot_final').val(response.slot_final);
+
+                    // Show the modal
                     $('#editTalentModal').modal('show');
                 },
                 error: function(response) {
@@ -85,13 +110,23 @@
                 url: "{{ route('talent.show', ':id') }}".replace(':id', talentId),
                 method: 'GET',
                 success: function(response) {
+                    // Function to format number as IDR currency
+                    function formatRupiah(number) {
+                        return new Intl.NumberFormat('id-ID', { 
+                            style: 'currency', 
+                            currency: 'IDR',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(number);
+                    }
+
                     // Directly access the properties from the response
                     $('#view_username').val(response.username);
                     $('#view_talent_name').val(response.talent_name);
                     $('#view_video_slot').val(response.video_slot);
                     $('#view_content_type').val(response.content_type);
                     $('#view_produk').val(response.produk);
-                    $('#view_rate_final').val(response.rate_final);
+                    $('#view_rate_final').val(formatRupiah(response.rate_final));
                     $('#view_pic').val(response.pic);
                     $('#view_bulan_running').val(response.bulan_running);
                     $('#view_niche').val(response.niche);
@@ -105,11 +140,11 @@
                     $('#view_pengajuan_transfer_date').val(response.pengajuan_transfer_date);
                     $('#view_gdrive_ttd_kol_accepting').val(response.gdrive_ttd_kol_accepting);
                     $('#view_nik').val(response.nik);
-                    $('#view_price_rate').val(response.price_rate);
-                    $('#view_first_rate_card').val(response.first_rate_card);
-                    $('#view_discount').val(response.discount);
+                    $('#view_price_rate').val(formatRupiah(response.price_rate));
+                    $('#view_first_rate_card').val(formatRupiah(response.first_rate_card));
+                    $('#view_discount').val(formatRupiah(response.discount));
                     $('#view_slot_final').val(response.slot_final);
-                    $('#view_tax_deduction').val(response.tax_deduction);
+                    $('#view_tax_deduction').val(formatRupiah(response.tax_deduction));
                     $('#view_created_at').val(response.created_at);
                     $('#view_updated_at').val(response.updated_at);
 
@@ -169,5 +204,15 @@
         });
     });
     });
+
+    // Helper function to format currency
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', { 
+            style: 'currency', 
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(number);
+    }
 </script>
 @stop

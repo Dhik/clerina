@@ -1,156 +1,380 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Contract</title>
+    <title>Perjanjian Kerjasama</title>
     <style>
+        @page {
+            margin-top: 0.5in;
+            margin-bottom: 0.5in;   
+            margin-left: 1in;
+            margin-right: 0.7in;
+        }
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 12pt;
-            margin: 1in;
-            line-height: 1.6;
+            font-size: 11pt;
+            line-height: 1.3;
         }
-
-        .container {
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        h1, h2 {
-            text-align: center;
-            font-weight: bold;
-        }
-
         .header {
-            text-align: center;
             margin-bottom: 20px;
         }
-
-        .content-section {
-            margin-top: 30px;
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-
+        .header-table td {
+            vertical-align: top;
+            border: none; /* Remove border for table cells */
+        }
+        .logo {
+            width: 150px;
+        }
+        h1 {
+            font-size: 20pt; /* Increased from 14pt to 17pt (3px larger) */
+            margin: 0;
+            font-weight: normal; /* Changed from bold to normal */
+        }
+        h2 {
+            font-size: 15pt;
+            text-align: center;
+            margin: 20px 0;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        .company-info {
+            font-size: 9pt;
+            margin: 0;
+        }
+        .content-section {
+            margin-top: 15px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
-
         th, td {
-            border: 1px solid #000;
+            border: 1px solid black;
             padding: 5px;
-            text-align: left;
         }
-
         th {
-            background-color: #f0f0f0;
+            background-color: #f2f2f2;
         }
-
-        .section-title {
-            font-weight: bold;
-            margin-top: 15px;
+        .no-border td {
+            border: none;
+            padding: 2px;
         }
-
-        .sign-section {
-            margin-top: 50px;
-            text-align: center;
+        .indent {
+            padding-left: 20px;
         }
-
-        .sign-block {
-            display: inline-block;
-            width: 45%;
-            margin: 0 2%;
-            text-align: center;
-        }
-
         .highlight {
             background-color: yellow;
         }
-
-        .page-footer {
+        .signature-section {
+            margin-top: 50px;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .signature-table td {
+            width: 50%;
+            text-align: center;
+            vertical-align: bottom;
+            border: none; /* Remove border for table cells */
+            padding: 5px; /* Add some padding for spacing */
+        }
+        .footer {
             position: fixed;
-            bottom: 10px;
-            left: 0;
-            right: 0;
-            text-align: right;
+            bottom: 0.5in;
+            right: 0.5in;
             font-size: 10pt;
+        }
+
+        /* Page-specific footers */
+        .page1 .footer::after { content: "Page 1 of 4"; }
+        .page2 .footer::after { content: "Page 2 of 4"; }
+        .page3 .footer::after { content: "Page 3 of 4"; }
+        .page4 .footer::after { content: "Page 4 of 4"; }
+
+        .page-break {
+            page-break-after: always;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Page 1 -->
+    <div class="page1">
         <div class="header">
-            <h1>PT Summer Cantika Indonesia</h1>
-            <p>
-                Ruko Garden City No. 05, Jl. Ciganitri, Ds. Cipagalo, Kec. Bojongsoang Kab. Bandung<br>
-                Prov. Jawa Barat, Kode Pos 40287<br>
-                clerinawijayaindonesia@gmail.com | 08517325324
-            </p>
+            <table class="header-table">
+                <tr>
+                    <td style="width: 30%;">
+                        <img src="{{ public_path('img/pt_sign.png') }}" alt="Company Logo" class="logo">
+                    </td>
+                    <td>
+                        <h1>PT Summer Cantika Indonesia</h1>
+                        <p class="company-info">
+                            Ruko Garden City No. 05, Jl. Ciganitri, Ds. Cipagalo, Kec. Bojongsoang Kab. Bandung<br>
+                            Prov. Jawa Barat, Kode Pos 40287<br>
+                            clerinawijayaindonesia@gmail.com | 08517325324
+                        </p>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <h2>PERJANJIAN KERJASAMA</h2>
 
         <div class="content-section">
-            <strong>Pihak Pertama:</strong><br>
-            Nama Perusahaan: PT Summer Cantika Indonesia<br>
-            Alamat: Ruko Garden City No 05 (Ruko Warna Pink) Cipagalo, Bojongsoang, Bandung<br>
-            Kontak resmi: M. Rocky Pramana<br>
-            No. Telepon: 085173069356<br><br>
-
-            <strong>Pihak Kedua:</strong><br>
-            Nama KOL: Nirfana Okta Via Alhusna<br>
-            Alamat: Jawa Timur, kabupaten Malang, kecamatan Wajak, jalan Semeru gang 2 RT 001, RW 012<br>
-            No. Telepon: 085745531853<br><br>
-
-            Berdasarkan prinsip kesetaraan dan saling menguntungkan, kedua belah pihak telah mencapai kesepakatan untuk melakukan endorsement di platform TikTok.
+            <strong>Pihak Pertama</strong>
+            <table class="no-border">
+                <tr>
+                    <td style="width: 30%;">Nama Perusahaan</td>
+                    <td>: PT Summer Cantika Indonesia</td>
+                </tr>
+                <tr>
+                    <td>Alamat</td>
+                    <td>: Ruko Garden City No 05 ( Ruko Warna Pink ) Cipagalo, Bojongsoang, Bandung</td>
+                </tr>
+                <tr>
+                    <td>Kontak resmi</td>
+                    <td>: M. Rocky Pramana</td>
+                </tr>
+                <tr>
+                    <td>No. Telepon</td>
+                    <td>: 085173069356</td>
+                </tr>
+            </table>
         </div>
+
+        <div class="content-section">
+            <strong>Pihak Kedua</strong>
+            <table class="no-border">
+                <tr>
+                    <td style="width: 30%;">Nama KOL</td>
+                    <td>: {{ $talentContent->talent->talent_name }}</td>
+                </tr>
+                <tr>
+                    <td>Alamat</td>
+                    <td>: {{ $talentContent->talent->address }}</td>
+                </tr>
+                <tr>
+                    <td>No. Telepon</td>
+                    <td>: {{ $talentContent->talent->phone_number }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <p class="indent">
+            Berdasarkan prinsip kesetaraan dan saling menguntungkan, kedua belah pihak telah mencapai kesepakatan dalam hal melakukan endorsement di platform TikTok untuk Pihak Pertama dengan KOL:
+        </p>
 
         <table>
             <thead>
                 <tr>
-                    <th>No</th>
+                    <th>No.</th>
                     <th>Nama Akun TikTok</th>
                     <th>Jumlah Followers</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>1</td>
-                    <td>@kelayxzy</td>
-                    <td>2.650</td>
+                    <td>1.</td>
+                    <td>{{ $talentContent->talent->username }}</td>
+                    <td>{{ $talentContent->talent->followers }}</td>
                 </tr>
             </tbody>
         </table>
 
         <div class="content-section">
-            <strong class="section-title">Hak dan Kewajiban:</strong>
+            <strong>1. Isi</strong>
+            <p class="indent">
+                Pihak Pertama dengan ini telah mengkonfirmasi saudari Nirfana Okta Via Alhusna (untuk selanjutnya disebut Pihak Kedua) setelah bernegosiasi dan bersepakat bersama, dan menunjuk Pihak Kedua sebagai yang mempromosikan video endorsement dari Pihak Pertama.
+            </p>
+        </div>
+
+        <div class="footer"></div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Page 2 -->
+    <div class="page2">
+        <div class="header">
+            <table class="header-table">
+                <tr>
+                    <td style="width: 30%;">
+                        <img src="{{ public_path('img/pt_sign.png') }}" alt="Company Logo" class="logo">
+                    </td>
+                    <td>
+                        <h1>PT Summer Cantika Indonesia</h1>
+                        <p class="company-info">
+                            Ruko Garden City No. 05, Jl. Ciganitri, Ds. Cipagalo, Kec. Bojongsoang Kab. Bandung<br>
+                            Prov. Jawa Barat, Kode Pos 40287<br>
+                            clerinawijayaindonesia@gmail.com | 08517325324
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <table>
+            <tr>
+                <th>Brand</th>
+                <th>Scope Of Work</th>
+                <th>Masa Kerjasama</th>
+                <th>Biaya Endorsement</th>
+            </tr>
+            <tr>
+                <td>{{ $talentContent->talent->produk }}</td>
+                <td>{{ $talentContent->talent->content_type }}</td>
+                <td>{{ $talentContent->talent->bulan_running }}</td>
+                <td>{{ $talentContent->talent->rate_final }}</td>
+            </tr>
+        </table>
+
+        <div class="content-section">
+            <strong>2. Hak dan Kewajiban</strong>
             <ol>
-                <li>PIHAK PERTAMA menyediakan produk yang disepakati kepada PIHAK KEDUA untuk endorsement.</li>
-                <li>PIHAK KEDUA wajib memposting 3 video TikTok dalam 1 bulan.</li>
-                <li class="highlight">PIHAK KEDUA wajib mempertahankan video yang telah diunggah di platform TikTok, dan tidak diperkenankan untuk menghapus, mengedit, atau menonaktifkan video tersebut tanpa alasan hukum di Indonesia.</li>
-                <li>PIHAK KEDUA menyerahkan draft promosi kepada PIHAK PERTAMA untuk persetujuan sebelum diunggah.</li>
+                <li>PIHAK PERTAMA memberikan dan menyediakan produk yang telah disepakati dengan PIHAK KEDUA serta memberikan info terkait video yang diinginkan.</li>
+                <li>PIHAK KEDUA wajib memposting 3 video TikTok brand dalam waktu 1 bulan. PIHAK PERTAMA berhak memposting ulang atas video tersebut baik di Official Account dengan menyertakan credit.</li>
+                <li class="highlight">PIHAK KEDUA wajib mempertahankan video yang telah diunggah di platform terkait dan tidak diperkenankan untuk menghapus, menyunting, mengarsipkan atau menonaktifkan video tersebut dengan alasan apapun, kecuali video tersebut melanggar ketentuan hukum yang berlaku di Indonesia.</li>
+                <li>PIHAK KEDUA harus menyerahkan perkiraan rencana draft promosi atau siaran langsung dan data yang terkait dengan produk kepada PIHAK PERTAMA sesuai jadwal yang disepakati.</li>
+                <li>Jika PIHAK KEDUA tidak melakukan kewajiban seperti tidak memposting video sesuai jadwal yang telah disepakati bersama, tidak ada respon apapun mengenai kemuduran posting video atau membatalkan kerjasama secara sepihak maka PIHAK KEDUA wajib melakukan pengembalian dana secara materil dengan sejumlah sisa slot video yang belum terposting sebanyak 5x (lima kali) lipat dari nominal harga yang sudah disepakati.</li>
+                <li>Apabila dalam pelaksanaan kerjasama terdapat hal-hal yang tidak sesuai dengan kesepakatan yang telah dibuat, maka pihak yang melanggar bersedia untuk menerima konsekuensi Hukum yang berlaku di Negara Kesatuan Republik Indonesia.</li>
             </ol>
         </div>
 
+        <div class="footer"></div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Page 3 -->
+    <div class="page3">
+        <div class="header">
+            <table class="header-table">
+                <tr>
+                    <td style="width: 30%;">
+                        <img src="{{ public_path('img/pt_sign.png') }}" alt="Company Logo" class="logo">
+                    </td>
+                    <td>
+                        <h1>PT Summer Cantika Indonesia</h1>
+                        <p class="company-info">
+                            Ruko Garden City No. 05, Jl. Ciganitri, Ds. Cipagalo, Kec. Bojongsoang Kab. Bandung<br>
+                            Prov. Jawa Barat, Kode Pos 40287<br>
+                            clerinawijayaindonesia@gmail.com | 08517325324
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <div class="content-section">
-            <strong class="section-title">Biaya dan Pembayaran:</strong>
-            <p>Rekening Pengirim: PT Summer Cantika Indonesia (BCA - 3372176463)</p>
-            <p>Rekening Penerima: Nirfana Okta Via Alhusna (DANA - 085745531853)</p>
+            <strong>3. Biaya dan Pembayaran</strong>
+            <p>Rekening yang ditunjuk dari pihak pengirim</p>
+            <table class="no-border">
+                <tr>
+                    <td>Pengirim</td>
+                    <td>: PT SUMMER CANTIKA INDONESIA</td>
+                </tr>
+                <tr>
+                    <td>Rekening Pengirim</td>
+                    <td>: 3372176463</td>
+                </tr>
+                <tr>
+                    <td>Bank Pengirim</td>
+                    <td>: BCA</td>
+                </tr>
+            </table>
+
+            <p>Rekening yang ditunjuk dari Pihak Kedua</p>
+            <table class="no-border">
+                <tr>
+                    <td>Penerima</td>
+                    <td>: {{ $talentContent->talent->nama_rekening }}</td>
+                </tr>
+                <tr>
+                    <td>Rekening Penerima</td>
+                    <td>: {{ $talentContent->talent->no_rekening }}</td>
+                </tr>
+                <tr>
+                    <td>Bank Perima</td>
+                    <td>: {{ $talentContent->talent->bank }}</td>
+                </tr>
+                <tr>
+                    <td>No. NPWP</td>
+                    <td>: {{ $talentContent->talent->no_npwp }}</td>
+                </tr>
+                <tr>
+                    <td>NIK</td>
+                    <td>: {{ $talentContent->talent->nik }}</td>
+                </tr>
+            </table>
         </div>
 
-        <div class="sign-section">
-            <div class="sign-block">
-                <p>M. Rocky Pramana</p>
-                <p>Direktur Utama</p>
-            </div>
-            <div class="sign-block">
-                <p>Nirfana Okta Via Alhusna</p>
-                <p>KOL</p>
-            </div>
+        <div class="content-section">
+            <strong>4. Ketentuan dan Privasi</strong>
+            <p>
+                Sejak tanggal penandatanganan kontrak ini hingga akhir kontrak ini, semua ketentuan kontrak ini, dan semua materi dan informasi dari pihak lain (termasuk rahasia dagang, rencana perusahaan, kegiatan operasional, informasi keuangan dan rahasia dagang lainnya, dan lain-lain), Pihak Pertama dan Pihak Kedua tidak boleh mengungkapkan kepada pihak lainnya sebelum memperoleh persetujuan dari kedua belah pihak. Pihak yang mengungkapkan akan bertanggung jawab atas pelanggaran kontrak dan memberikan kompensasi kepada pihak lainnya atas kerugian ekonomi yang diakibatkannya.
+            </p>
         </div>
 
-        <div class="page-footer">
-            Page 1 of 4
+        <div class="footer"></div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Page 4 -->
+    <div class="page4">
+        <div class="header">
+            <table class="header-table">
+                <tr>
+                    <td style="width: 30%;">
+                        <img src="{{ public_path('img/pt_sign.png') }}" alt="Company Logo" class="logo">
+                    </td>
+                    <td>
+                        <h1>PT Summer Cantika Indonesia</h1>
+                        <p class="company-info">
+                            Ruko Garden City No. 05, Jl. Ciganitri, Ds. Cipagalo, Kec. Bojongsoang Kab. Bandung<br>
+                            Prov. Jawa Barat, Kode Pos 40287<br>
+                            clerinawijayaindonesia@gmail.com | 08517325324
+                        </p>
+                    </td>
+                </tr>
+            </table>
         </div>
+
+        <div class="content-section">
+            <p>
+                Kontrak ini ditandatangani oleh kedua belah pihak dan akan efektif setelah ditandatangani. Kontrak tambahan akan ditandatangani jika kontrak tidak mencakup hal-hal yang perlu direvisi atau diubah.
+            </p>
+        </div>
+
+        <div class="signature-section">
+            <p style="text-align: right;">{{ $tanggal_hari_ini }}</p>
+            <table class="signature-table">
+                <tr>
+                    <td>Pihak Pertama</td>
+                    <td>Pihak Kedua</td>
+                </tr>
+                <tr>
+                    <td style="height: 80px;"></td>
+                    <td style="height: 80px;">
+                        <!-- You can add an image of the signature here if needed -->
+                        <!-- <img src="{{ public_path('path/to/signature.png') }}" alt="Signature" style="height: 60px;"> -->
+                    </td>
+                </tr>
+                <tr>
+                    <td>M. Rocky Pramana</td>
+                    <td>{{ $talentContent->talent->talent_name }}</td>
+                </tr>
+                <tr>
+                    <td>Direktur Utama</td>
+                    <td>KOL</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="footer"></div>
     </div>
 </body>
 </html>
