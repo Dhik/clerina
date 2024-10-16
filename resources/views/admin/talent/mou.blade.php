@@ -150,15 +150,15 @@
             <table class="no-border">
                 <tr>
                     <td style="width: 30%;">Nama KOL</td>
-                    <td>: {{ $talentContent->talent->talent_name }}</td>
+                    <td>: {{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
                     <td>Alamat</td>
-                    <td>: {{ $talentContent->talent->address }}</td>
+                    <td>: {{ $talent->address }}</td>
                 </tr>
                 <tr>
                     <td>No. Telepon</td>
-                    <td>: {{ $talentContent->talent->phone_number }}</td>
+                    <td>: {{ $talent->phone_number }}</td>
                 </tr>
             </table>
         </div>
@@ -176,10 +176,10 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
+                <tr style="text-align: center;">
                     <td>1.</td>
-                    <td>{{ $talentContent->talent->username }}</td>
-                    <td>{{ $talentContent->talent->followers }}</td>
+                    <td>{{ $talent->username }}</td>
+                    <td>{{ $talent->followers }}</td>
                 </tr>
             </tbody>
         </table>
@@ -223,11 +223,11 @@
                 <th>Masa Kerjasama</th>
                 <th>Biaya Endorsement</th>
             </tr>
-            <tr>
-                <td>{{ $talentContent->talent->produk }}</td>
-                <td>{{ $talentContent->talent->content_type }}</td>
-                <td>{{ $talentContent->talent->bulan_running }}</td>
-                <td>{{ $talentContent->talent->rate_final }}</td>
+            <tr style="text-align: center;">
+                <td>Cleora Beauty</td>
+                <td>{{ $talent->scope_of_work }}</td>
+                <td>{{ $talent->masa_kerjasama }}</td>
+                <td>{{ $talent->rate_final - $talent->tax_deduction }}</td>
             </tr>
         </table>
 
@@ -290,23 +290,23 @@
             <table class="no-border">
                 <tr>
                     <td>Penerima</td>
-                    <td>: {{ $talentContent->talent->nama_rekening }}</td>
+                    <td>: {{ $talent->nama_rekening }}</td>
                 </tr>
                 <tr>
                     <td>Rekening Penerima</td>
-                    <td>: {{ $talentContent->talent->no_rekening }}</td>
+                    <td>: {{ $talent->no_rekening }}</td>
                 </tr>
                 <tr>
                     <td>Bank Perima</td>
-                    <td>: {{ $talentContent->talent->bank }}</td>
+                    <td>: {{ $talent->bank }}</td>
                 </tr>
                 <tr>
                     <td>No. NPWP</td>
-                    <td>: {{ $talentContent->talent->no_npwp }}</td>
+                    <td>: {{ $talent->no_npwp }}</td>
                 </tr>
                 <tr>
                     <td>NIK</td>
-                    <td>: {{ $talentContent->talent->nik }}</td>
+                    <td>: {{ $talent->nik }}</td>
                 </tr>
             </table>
         </div>
@@ -365,7 +365,7 @@
                 </tr>
                 <tr>
                     <td>M. Rocky Pramana</td>
-                    <td>{{ $talentContent->talent->talent_name }}</td>
+                    <td>{{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
                     <td>Direktur Utama</td>

@@ -10,6 +10,11 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
+                <div class="card-header">
+                    <button type="button" class="btn btn-outline-primary exportForm" data-toggle="modal" data-target="#exportForm">
+                    <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
+                    </button>
+                </div>
                 <div class="card-body">
                     <table id="talentPaymentsTable" class="table table-bordered table-striped">
                         <thead>
@@ -17,8 +22,9 @@
                                 <th>Talent Name</th>
                                 <th>Followers</th>
                                 <th>Status Payment</th>
+                                <th>Amount Transfer</th>
                                 <th>Done Payment</th>
-                                <th>Final Rate Card</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -55,6 +61,7 @@
                         return data;
                     }
                 },
+                { data: 'amount_tf', name: 'amount_tf' },
                 {
                     data: 'done_payment', 
                     name: 'done_payment',
@@ -68,11 +75,53 @@
                         return '';
                     }
                 },
-                { data: 'final_rate_card', name: 'talent_content.final_rate_card' },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
         });
-    });
 
+        // Handle delete button click
+        $('#talentPaymentsTable').on('click', '.deleteButton', function() {
+            var paymentId = $(this).data('id');
+            var route = '{{ route('talent_payments.destroy', ':id') }}'.replace(':id', paymentId);
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: route,
+                        type: 'DELETE',
+                        data: {
+                            '_token': '{{ csrf_token() }}' // Include CSRF token for security
+                        },
+                        success: function(response) {
+                            // Reload the DataTable to reflect the changes
+                            table.ajax.reload();
+                            Swal.fire(
+                                'Deleted!',
+                                'Payment has been deleted.',
+                                'success'
+                            );
+                        },
+                        error: function(xhr) {
+                            Swal.fire(
+                                'Error!',
+                                'There was an error deleting the payment.',
+                                'error'
+                            );
+                            console.error('Error deleting payment:', xhr);
+                        }
+                    });
+                }
+            });
+        });
+    });
 </script>
 @stop

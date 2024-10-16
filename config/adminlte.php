@@ -451,6 +451,12 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/talnt-payments*']
                 ],
+                [
+                    'text' => 'Approval',
+                    'url' => 'admin/approval',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/approval*']
+                ],
             ]
         ],
         [

@@ -66,12 +66,12 @@
                                 <label for="address">Address</label>
                                 <input type="text" name="address" id="address" class="form-control">
                             </div>
-                        </div>
-                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="phone_number">Phone Number</label>
                                 <input type="text" name="phone_number" id="phone_number" class="form-control">
                             </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label for="bank">Bank</label>
                                 <input type="text" name="bank" id="bank" class="form-control">
@@ -107,6 +107,14 @@
                             <div class="form-group">
                                 <label for="rate_final">Rate Final</label>
                                 <input type="text" name="rate_final" id="rate_final" class="form-control money" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="scope_of_work">Scope of Work</label>
+                                <input type="text" name="scope_of_work" id="scope_of_work" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="masa_kerjasama">Masa Kerjasama</label>
+                                <input type="text" name="masa_kerjasama" id="masa_kerjasama" class="form-control">
                             </div>
                         </div>
                     </div>

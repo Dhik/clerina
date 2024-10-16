@@ -80,23 +80,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-header">
-                    <button type="button" class="btn btn-outline-primary exportForm" data-toggle="modal" data-target="#exportForm">
-                    <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
-                    </button>
-                </div>
+                
                 <div class="card-body">
                     <table id="talentContentTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Talent Name</th>
+                                <th>Username</th>
                                 <th>Dealing Upload Date</th>
                                 <th>Posting Date</th>
-                                <th>Final Rate Card</th>
                                 <th>Done</th>
                                 <th>Additional Info</th>
-                                <th>Payment Action</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -108,7 +102,6 @@
     </div>
 
     @include('admin.talent_content.modals.add_talent_content_modal')
-    @include('admin.talent_content.modals.add_payment_modal')
     @include('admin.talent_content.modals.edit_talent_content_modal')
     @include('admin.talent_content.modals.view_talent_content_modal')
 @stop
@@ -247,7 +240,7 @@
             ajax: '{{ route('talent_content.data') }}',
             columns: [
                 { data: 'id', name: 'id', visible: false },
-                { data: 'talent_name', name: 'talents.talent_name' }, 
+                { data: 'username', name: 'talents.username' }, 
                 {
                     data: 'dealing_upload_date', 
                     name: 'dealing_upload_date',
@@ -274,22 +267,11 @@
                         return '';
                     }
                 },
-                { data: 'final_rate_card', name: 'final_rate_card' },
                 { data: 'done', name: 'done', orderable: false, searchable: false },
                 { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
-                { data: 'payment_action', name: 'payment_action', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
-        });
-
-        $('#talentContentTable').on('click', '.addPaymentButton', function() {
-            var talentContentId = $(this).data('id');
-            var talentId = $(this).data('talent_id');
-
-            $('#paymentTalentContentId').val(talentContentId);
-            $('#paymentTalentId').val(talentId);
-            $('#addPaymentModal').modal('show');
         });
 
         $('#talentContentTable').on('click', '.editButton', function() {
@@ -316,18 +298,6 @@
                     alert('Error: ' + response.message);
                 }
             });
-        });
-
-        $('#talentContentTable').on('click', '.exportData', function() {
-            var id = $(this).data('id');
-            var exportUrl = '{{ route('talent_content.exportPDF', ':id') }}'.replace(':id', id);
-            window.location.href = exportUrl;
-        });
-
-        $('#talentContentTable').on('click', '.exportSPK', function() {
-            var id = $(this).data('id');
-            window.location.href = '{{ route('talent_content.spk', ':id') }}'.replace(':id', id);
-            window.location.href = exportUrl;
         });
 
         $('#talentContentTable').on('click', '.viewButton', function() {
@@ -409,10 +379,9 @@
 
     $(document).ready(function() {
         $('.exportForm').on('click', function() {
-            window.location.href = '{{ route('talent_content.pengajuan') }}';
+            window.location.href = '{{ route('talent.pengajuan') }}';
         });
     });
-
 
 </script>
 @stop

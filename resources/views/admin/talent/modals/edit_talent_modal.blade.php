@@ -109,6 +109,14 @@
                                 <label for="edit_rate_final">Rate Final</label>
                                 <input type="text" name="rate_final" id="edit_rate_final" class="form-control money" required>
                             </div>
+                            <div class="form-group">
+                                <label for="edit_scope_of_work">Scope of Work</label>
+                                <input type="text" name="scope_of_work" id="edit_scope_of_work" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit_masa_kerjasama">Masa Kerjasama</label>
+                                <input type="text" name="masa_kerjasama" id="edit_masa_kerjasama" class="form-control">
+                            </div>
                         </div>
                     </div>
                 </div>

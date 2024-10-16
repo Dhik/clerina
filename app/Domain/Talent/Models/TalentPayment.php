@@ -16,6 +16,7 @@ class TalentPayment extends Model
         'talent_id',
         'talent_content_id',
         'status_payment',
+        'amount_tf',
         'created_at',
         'updated_at',
     ];

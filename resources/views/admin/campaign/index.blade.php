@@ -104,6 +104,7 @@
                                     <th>{{ trans('labels.total_spend') }}</th>
                                     <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">{{ trans('labels.cpm_short') }}</th>
                                     <th>{{ trans('labels.views') }}</th>
+                                    <th>ER</th>
                                     <th>{{ trans('labels.period') }}</th>
                                     <th>{{ trans('labels.created_by') }}</th>
                                     <th width="15%">{{ trans('labels.action') }}</th>
@@ -179,6 +180,14 @@
                 },
                 searchable: false
             },
+            {
+                data: 'engagement_rate',
+                name: 'engagement_rate',
+                render: function(data) {
+                    return data + '%'; // Append '%' for display
+                },
+                searchable: false
+            },
             {data: 'period', name: 'period', sortable: false, orderable: false, searchable: false},
             {data: 'created_by_name', name: 'created_by_name'},
             {data: 'actions', sortable: false, orderable: false}
@@ -189,8 +198,9 @@
             { "targets": [3], "className": "text-right" },
             { "targets": [4], "className": "text-right" },
             { "targets": [5], "className": "text-center" },
-            { "targets": [6], "visible": false },
-            { "targets": [7], "className": "text-center" }
+            { "targets": [6], "className": "text-center" },
+            { "targets": [7], "visible": false },
+            { "targets": [8], "className": "text-center" }
         ],
         order: [[0, 'desc']],
     });

@@ -5,6 +5,7 @@ namespace App\Domain\Talent\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\Talent;
+use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Requests\TalentRequest;
 use Yajra\DataTables\Utilities\Request;
 use Yajra\DataTables\DataTables;
@@ -12,6 +13,8 @@ use App\Domain\Talent\Import\TalentImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Talent\Exports\TalentTemplateExport;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;  
 
 /**
  * @property TalentBLLInterface talentBLL
@@ -55,7 +58,25 @@ class TalentController extends Controller
                     </button>
                 ';
             })
-            ->rawColumns(['action'])
+            ->addColumn('payment_action', function ($talent) {
+                return '
+                    <button class="btn btn-sm btn-info addPaymentButton" 
+                        data-id="' . $talent->id . '"
+                        data-toggle="modal" 
+                        data-target="#addPaymentModal">
+                        <i class="fas fa-wallet"> Payment</i>
+                    </button>
+                    <button class="btn btn-sm bg-purple exportData" 
+                        data-id="' . $talent->id . '">
+                        <i class="fas fa-file-invoice"> Invoice</i>
+                    </button>
+                    <button class="btn btn-sm bg-maroon exportSPK" 
+                        data-id="' . $talent->id . '">
+                        <i class="fas fa-file"> SPK</i>
+                    </button>
+                ';
+            })
+            ->rawColumns(['action', 'payment_action'])
             ->make(true);
     }
     /**
@@ -99,6 +120,8 @@ class TalentController extends Controller
             'price_rate' => 'nullable|integer',
             'slot_final' => 'nullable|integer',
             'rate_final' => 'nullable|integer',
+            'scope_of_work' => 'nullable|string|max:255',
+            'masa_kerjasama' => 'nullable|string|max:255',
         ]);
 
         // Calculate discount
@@ -176,18 +199,10 @@ class TalentController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Talent updated successfully',
-                'talent' => $talent
-            ]);
+            return redirect()->route('talent.index')->with('success', 'Talent updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update talent',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->route('talent.index')->with('error', 'Failed to update talent: ' . $e->getMessage());
         }
     }
 
@@ -214,5 +229,79 @@ class TalentController extends Controller
         Excel::import(new TalentImport, $request->file('file'));
 
         return redirect()->back()->with('success', 'Talent data imported successfully.');
+    }
+
+    public function exportInvoice(Request $request, $id)
+    {
+        $talent = Talent::findOrFail($id);
+        $approvalId = $request->query('approval');
+
+        if ($approvalId) {
+            $approval = Approval::findOrFail($approvalId);
+        }
+
+        $harga = $talent->rate_final; 
+        if (\Illuminate\Support\Str::startsWith($talent->talent_name, ['PT', 'CV'])) {
+            $pph21 = $harga * 0.02;
+        } else {
+            $pph21 = $harga * 0.025;
+        }
+        $total = $harga - $pph21; 
+        $downPayment = $total / 2; 
+        $remainingBalance = $total - $downPayment;
+        $ttd = $approval->photo;
+        $approval_name = $approval->name;
+        
+        $data = [
+            'nik' => $talent->nik,
+            'nama_talent' => $talent->talent_name,
+            'tanggal_hari_ini' => now()->format('d/m/Y'),
+            'alamat_talent' => $talent->address,
+            'no_hp_talent' => $talent->phone_number,
+            'nama_akun' => $talent->username, 
+            'quantity_slot' => $talent->video_slot,
+            'deskripsi' => $talent->content_type,
+            'harga' => $harga,
+            'subtotal' => $harga,
+            'pph21' => $pph21,
+            'total' => $total,
+            'down_payment' => $downPayment,
+            'sisa' => $remainingBalance,
+            'bank' => $talent->bank,
+            'nama_account' => $talent->nama_rekening,
+            'account_no' => $talent->no_rekening,
+            'npwp' => $talent->no_npwp,
+            'ttd' => $ttd,
+            'approval_name' => $approval_name,
+        ];
+
+        $pdf = Pdf::loadView('admin.talent.invoice', $data);
+        $pdf->setPaper('A4', 'portrait');
+        return $pdf->download('invoice.pdf');
+    }
+    public function showInvoice()
+    {
+        $talent = Talent::with('talent')->get();
+        return view('admin.talent.invoice', compact('talent'));
+    }
+    public function exportPengajuan()
+    {
+        $talentContents = TalentContent::with('talent')->get();
+        $pdf = PDF::loadView('admin.talent_content.form_pengajuan', compact('talentContents'));
+        $pdf->setPaper('A4', 'landscape');
+        return $pdf->download('form_pengajuan.pdf');
+    }
+    public function exportSPK($id)
+    {
+        $talent = Talent::findOrFail($id);
+        $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
+        $pdf = PDF::loadView('admin.talent.mou', compact('talent', 'tanggal_hari_ini'));
+        $pdf->setPaper('A4', 'potrait');
+        return $pdf->download('SPK.pdf');
+    }
+    public function showSPK()
+    {
+        $talentContents = TalentContent::with('talent')->get();
+        return view('admin.talent.mou', compact('talentContents'));
     }
 }

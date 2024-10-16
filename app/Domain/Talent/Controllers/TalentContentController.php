@@ -5,6 +5,7 @@ namespace App\Domain\Talent\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Models\Talent;
 use App\Domain\Talent\Requests\TalentContentRequest;
 use Yajra\DataTables\Utilities\Request;
@@ -75,7 +76,7 @@ class TalentContentController extends Controller
             'talent_content.posting_date', 
             'talent_content.done', 
             'talent_content.upload_link', 
-            'talents.talent_name',
+            'talents.username',
             'talent_content.final_rate_card'])
             ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
 
@@ -98,30 +99,9 @@ class TalentContentController extends Controller
                     </button>
                 ';
             })
-            ->addColumn('payment_action', function ($talentContent) {
-                return '
-                    <button class="btn btn-sm btn-info addPaymentButton" 
-                        data-id="' . $talentContent->id . '"
-                        data-talent_id="' . $talentContent->talent_id . '"
-                        data-toggle="modal" 
-                        data-target="#addPaymentModal">
-                        <i class="fas fa-wallet"> Payment</i>
-                    </button>
-                    <button class="btn btn-sm bg-purple exportData" 
-                        data-id="' . $talentContent->id . '">
-                        <i class="fas fa-file-invoice"> Invoice</i>
-                    </button>
-                    <button class="btn btn-sm bg-maroon exportSPK" 
-                        data-id="' . $talentContent->id . '">
-                        <i class="fas fa-file"> SPK</i>
-                    </button>
-                ';
-            })
-            ->rawColumns(['action', 'status_and_link', 'done', 'payment_action'])
+            ->rawColumns(['action', 'status_and_link', 'done'])
             ->make(true);
     }
-
-
     /**
      * Show the form for creating a new resource.
      */
@@ -297,66 +277,5 @@ class TalentContentController extends Controller
             'done_true_count' => $doneTrueCount,
             'total_count' => $totalCount,
         ]);
-    }
-
-    public function exportPDF($id)
-    {
-        $talentContent = TalentContent::with('talent')->findOrFail($id);
-
-        $harga = $talentContent->final_rate_card; 
-        $pph21 = $harga * 0.025; 
-        $total = $harga - $pph21; 
-        $downPayment = $total / 2; 
-        $remainingBalance = $total - $downPayment; 
-        
-        $data = [
-            'nik' => $talentContent->talent->nik,
-            'nama_talent' => $talentContent->talent->talent_name,
-            'tanggal_hari_ini' => now()->format('d/m/Y'),
-            'alamat_talent' => $talentContent->talent->address,
-            'no_hp_talent' => $talentContent->talent->phone_number,
-            'nama_akun' => $talentContent->talent->username, 
-            'quantity_slot' => $talentContent->talent->video_slot,
-            'deskripsi' => $talentContent->talent->content_type,
-            'harga' => $harga,
-            'subtotal' => $harga,
-            'pph21' => $pph21,
-            'total' => $total,
-            'down_payment' => $downPayment,
-            'sisa' => $remainingBalance,
-            'bank' => $talentContent->talent->bank,
-            'nama_account' => $talentContent->talent->nama_rekening,
-            'account_no' => $talentContent->talent->no_rekening,
-            'npwp' => $talentContent->talent->no_npwp,
-        ];
-
-        $pdf = Pdf::loadView('admin.talent_content.invoice', $data);
-        $pdf->setPaper('A4', 'portrait');
-        return $pdf->download('invoice.pdf');
-    }
-    public function showInvoice()
-    {
-        $talentContents = TalentContent::with('talent')->get();
-        return view('admin.talent_content.invoice', compact('talentContents'));
-    }
-    public function exportPengajuan()
-    {
-        $talentContents = TalentContent::with('talent')->get();
-        $pdf = PDF::loadView('admin.talent_content.form_pengajuan', compact('talentContents'));
-        $pdf->setPaper('A4', 'landscape');
-        return $pdf->download('form_pengajuan.pdf');
-    }
-    public function exportSPK($id)
-    {
-        $talentContent = TalentContent::with('talent')->findOrFail($id);
-        $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
-        $pdf = PDF::loadView('admin.talent_content.mou', compact('talentContent', 'tanggal_hari_ini'));
-        $pdf->setPaper('A4', 'potrait');
-        return $pdf->download('SPK.pdf');
-    }
-    public function showSPK()
-    {
-        $talentContents = TalentContent::with('talent')->get();
-        return view('admin.talent_content.mou', compact('talentContents'));
     }
 }
