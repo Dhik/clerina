@@ -11,7 +11,6 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="talent_content_id" id="paymentTalentContentId">
                     <input type="hidden" name="talent_id" id="paymentTalentId">
 
                     <div class="form-group">

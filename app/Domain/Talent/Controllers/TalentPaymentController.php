@@ -33,13 +33,12 @@ class TalentPaymentController extends Controller
         $payments = TalentPayment::select([
                 'talent_payments.id',
                 'talent_payments.done_payment',
+                'talent_payments.amount_tf',
                 'talent_payments.status_payment',
                 'talents.talent_name',
-                'talents.followers',
-                'talent_content.final_rate_card'
+                'talents.followers'
             ])
-            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id')
-            ->join('talent_content', 'talent_payments.talent_content_id', '=', 'talent_content.id');
+            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id');
 
         return DataTables::of($payments)
             ->addColumn('action', function ($payment) {
@@ -81,16 +80,23 @@ class TalentPaymentController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'done_payment' => 'nullable|date',
-            'talent_id' => 'required|integer',
-            'amount_tf' => 'nullable',
-            'talent_content_id' => 'nullable|integer',
-            'status_payment' => 'nullable|string|max:255',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'done_payment' => 'nullable|date',
+                'talent_id' => 'required|integer',
+                'amount_tf' => 'nullable',
+                'status_payment' => 'nullable|string|max:255',
+            ]);
 
-        $payment = TalentPayment::create($validatedData);
-        return redirect()->route('talent_content.index')->with('success', 'Talent payment created successfully.');
+            // Create the payment record
+            $payment = TalentPayment::create($validatedData);
+
+            // Redirect to the talent index route with a success message
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+            \Log::error('Talent payment creation failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -131,7 +137,7 @@ class TalentPaymentController extends Controller
      */
     public function destroy($id)
     {
-        $payment = TalentPayments::findOrFail($id);
+        $payment = TalentPayment::findOrFail($id);
         $payment->delete();
         return response()->json(['success' => true]);
     }

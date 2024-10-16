@@ -186,9 +186,20 @@
                     </div>
                 </td>
                 <td style="width: 30%; text-align: center;">
-                    <img src="{{ public_path('img/rani.png') }}" style="width:50%; max-width:150px;">
+                    @if($ttd)
+                        @php
+                            $imagePath = storage_path('app/public/' . $ttd);
+                            $imageData = base64_encode(file_get_contents($imagePath));
+                            $src = 'data:image/png;base64,'.$imageData;
+                        @endphp
+                        <img src="{{ $src }}" style="width:50%; max-width:150px;">
+                    @else
+                        <div style="width:50%; max-width:150px; height:75px; margin:auto; border:1px solid #ccc; display:flex; align-items:center; justify-content:center;">
+                            No Image
+                        </div>
+                    @endif
                     <div style="border-top: 1px solid #555; width: 80%; margin: auto;"></div>
-                    <p>Rani Herawati</p>
+                    <p>{{ $approval_name }}</p>
                 </td>
             </tr>
         </table>

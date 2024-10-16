@@ -104,6 +104,14 @@
                             <label for="view_discount">Diskon</label>
                             <input type="text" id="view_discount" class="form-control" readonly>
                         </div>
+                        <div class="form-group">
+                            <label for="view_scope_of_work">Scope of Work</label>
+                            <input type="text" id="view_scope_of_work" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="view_masa_kerjasama">Masa Kerjasama</label>
+                            <input type="text" id="view_masa_kerjasama" class="form-control" readonly>
+                        </div>
                     </div>
                 </div>
             </div>

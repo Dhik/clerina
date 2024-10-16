@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Domain\Talent\Controllers\TalentController;
 use App\Domain\Talent\Controllers\TalentContentController;
 use App\Domain\Talent\Controllers\TalentPaymentController;
+use App\Domain\Talent\Controllers\ApprovalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,13 @@ Route::prefix('admin')
         ->group(function () {
 
             Route::get('/', [TalentController::class, 'index'])->name('talent.index');
+
+            Route::get('/{talent}/invoice', [TalentController::class, 'exportInvoice'])->name('talent.exportInvoice');
+            Route::get('/pengajuan', [TalentController::class, 'exportPengajuan'])->name('talent.pengajuan');
+            Route::get('/{talent}/spk', [TalentController::class, 'exportSPK'])->name('talent.spk');
+            Route::get('/spk', [TalentController::class, 'showSPK'])->name('talent.spk_view');
+            Route::get('/invoice', [TalentController::class, 'showInvoice'])->name('talent.showInvoice');
+
             Route::get('/data', [TalentController::class, 'data'])->name('talent.data');
             Route::post('/import', [TalentController::class, 'import'])->name('talent.import');
             Route::get('/download-template', [TalentController::class, 'downloadTalentTemplate'])->name('talent.downloadTemplate');
@@ -37,11 +45,6 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentContentController::class, 'index'])->name('talent_content.index');
             Route::get('/talents', [TalentContentController::class, 'getTalents'])->name('talent_content.get');
-            Route::get('/{talentContent}/export-pdf', [TalentContentController::class, 'exportPDF'])->name('talent_content.exportPDF');
-            Route::get('/pengajuan', [TalentContentController::class, 'exportPengajuan'])->name('talent_content.pengajuan');
-            Route::get('/{talentContent}/generate-docx', [TalentContentController::class, 'exportSPK'])->name('talent_content.spk');
-            Route::get('/spk', [TalentContentController::class, 'showSPK'])->name('talent_content.spk_view');
-            Route::get('/invoice', [TalentContentController::class, 'showInvoice'])->name('talentContents.showInvoice');
             Route::get('/today', [TalentContentController::class, 'getTodayTalentNames'])->name('talent_content.today');
             Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
             Route::get('/count', [TalentContentController::class, 'countContent'])->name('talent_content.count');
@@ -63,5 +66,16 @@ Route::prefix('admin')
             Route::get('/{payment}/edit', [TalentPaymentController::class, 'edit'])->name('talent_payments.edit');
             Route::put('/{payment}', [TalentPaymentController::class, 'update'])->name('talent_payments.update');
             Route::delete('/{payment}', [TalentPaymentController::class, 'destroy'])->name('talent_payments.destroy');
+        });
+
+    Route::prefix('approval')
+        ->group(function () {
+            Route::get('/', [ApprovalController::class, 'index'])->name('approval.index');
+            Route::get('/data', [ApprovalController::class, 'data'])->name('approval.data');
+            Route::post('/', [ApprovalController::class, 'store'])->name('approval.store');
+            Route::get('/{approval}', [ApprovalController::class, 'show'])->name('approval.show');
+            Route::get('/{approval}/edit', [ApprovalController::class, 'edit'])->name('approval.edit');
+            Route::put('/{approval}', [ApprovalController::class, 'update'])->name('approval.update');
+            Route::delete('{approval}', [ApprovalController::class, 'destroy'])->name('approval.destroy');
         });
 });

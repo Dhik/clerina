@@ -27,6 +27,7 @@
                                 <th>Talent Name</th>
                                 <th>Tanggal Pengajuan TF</th>
                                 <th>Rate Final</th>
+                                <th>Payment Action</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -41,6 +42,8 @@
     @include('admin.talent.modals.edit_talent_modal')
     @include('admin.talent.modals.view_talent_modal')
     @include('admin.talent.modals.import_talent_modal')
+    @include('admin.talent.modals.add_payment_modal')
+    @include('admin.talent.modals.choose_approval_modal')
 @stop
 
 @section('js')
@@ -56,6 +59,7 @@
                 { data: 'talent_name', name: 'talent_name' },
                 { data: 'pengajuan_transfer_date', name: 'pengajuan_transfer_date' },
                 { data: 'rate_final', name: 'rate_final' },
+                { data: 'payment_action', name: 'payment_action', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
@@ -92,7 +96,8 @@
                     // Format currency fields
                     $('#edit_price_rate').val(response.price_rate);
                     $('#edit_rate_final').val(response.rate_final);
-                    
+                    $('#edit_scope_of_work').val(response.scope_of_work);
+                    $('#edit_masa_kerjasama').val(response.masa_kerjasama);
                     $('#edit_slot_final').val(response.slot_final);
 
                     // Show the modal
@@ -147,6 +152,8 @@
                     $('#view_tax_deduction').val(formatRupiah(response.tax_deduction));
                     $('#view_created_at').val(response.created_at);
                     $('#view_updated_at').val(response.updated_at);
+                    $('#view_scope_of_work').val(response.scope_of_work);
+                    $('#view_masa_kerjasama').val(response.masa_kerjasama);
 
                     // Show the modal
                     $('#viewTalentModal').modal('show');
@@ -155,6 +162,18 @@
                     console.error('Error fetching talent details:', response);
                 }
             });
+        });
+
+        $('#talentTable').on('click', '.addPaymentButton', function() {
+            var talentId = $(this).data('id');
+            $('#paymentTalentId').val(talentId);
+            $('#addPaymentModal').modal('show');
+        });
+
+        $('#talentTable').on('click', '.exportSPK', function() {
+            var id = $(this).data('id');
+            window.location.href = '{{ route('talent.spk', ':id') }}'.replace(':id', id);
+            window.location.href = exportUrl;
         });
 
 
@@ -203,6 +222,49 @@
             }
         });
     });
+    });
+
+    $(document).ready(function() {
+        $('#talentTable').on('click', '.exportData', function() {
+            var id = $(this).data('id');
+            $('#exportInvoiceId').val(id);
+            
+            // Load approvals dynamically
+            $.ajax({
+                url: '{{ route('approval.data') }}',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    var options = '<option value="">Select an approval</option>';
+                    $.each(response.data, function(index, approval) {
+                        options += '<option value="' + approval.id + '">' + approval.name + '</option>';
+                    });
+                    $('#approvalSelect').html(options);
+                    $('#chooseApprovalModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading approvals:', error);
+                    alert('Error loading approvals. Please try again.');
+                }
+            });
+        });
+
+        $('#confirmExport').on('click', function() {
+            var id = $('#exportInvoiceId').val();
+            var approvalId = $('#approvalSelect').val();
+            
+            if (!approvalId) {
+                alert('Please select an approval.');
+                return;
+            }
+            
+            var exportUrl = '{{ route('talent.exportInvoice', ':id') }}'
+                .replace(':id', id);
+            exportUrl += '?approval=' + approvalId;
+            
+            window.location.href = exportUrl;
+            $('#chooseApprovalModal').modal('hide');
+        });
     });
 
     // Helper function to format currency

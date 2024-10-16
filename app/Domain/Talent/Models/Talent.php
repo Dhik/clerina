@@ -36,6 +36,8 @@ class Talent extends Model
         'slot_final',
         'tax_deduction',
         'amount_tf',
+        'scope_of_work',
+        'masa_kerjasama',
     ];
     public function talentContents()
     {

@@ -36,48 +36,60 @@ class CampaignController extends Controller
      * @throws Exception
      */
     public function get(Request $request): JsonResponse
-{
-    $this->authorize('viewCampaign', Campaign::class);
+    {
+        $this->authorize('viewCampaign', Campaign::class);
 
-    $query = $this->campaignBLL->getCampaignDataTable($request);
+        $query = $this->campaignBLL->getCampaignDataTable($request);
 
-    if ($request->has('filterMonth')) {
-        $month = $request->input('filterMonth');
-        $query->whereMonth('start_date', '=', date('m', strtotime($month)))
-              ->whereYear('start_date', '=', date('Y', strtotime($month)));
-    }
+        if ($request->has('filterMonth')) {
+            $month = $request->input('filterMonth');
+            $query->whereMonth('start_date', '=', date('m', strtotime($month)))
+                ->whereYear('start_date', '=', date('Y', strtotime($month)));
+        }
 
-    return DataTables::of($query)
-        ->addColumn('created_by_name', function ($row) {
-            return $row->createdBy->name;
-        })
-        ->addColumn('actions', function ($row) {
-            $actions = '<a href="' . route('campaign.show', $row->id) . '" class="btn btn-success btn-xs">
-                        <i class="fas fa-eye"></i>
-                    </a>';
+        return DataTables::of($query)
+            ->addColumn('created_by_name', function ($row) {
+                return $row->createdBy->name;
+            })
+            ->addColumn('engagement_rate', function ($row) {
+                // Calculate engagement rate (ER)
+                $likes = $row->like;
+                $comments = $row->comment;
+                $views = $row->view;
 
-            // Check if the user has the permission to edit campaigns
-            if (Gate::allows('UpdateCampaign', $row)) {
-                $actions .= ' <a href="' . route('campaign.edit', $row->id) . '" class="btn btn-primary btn-xs">
-                            <i class="fas fa-pencil-alt"></i>
+                // Avoid division by zero
+                if ($views > 0) {
+                    return round(($likes + $comments) / $views * 100, 2); // Return as a numeric value
+                }
+                return 0; // If views are zero, return 0
+            })
+            ->addColumn('actions', function ($row) {
+                $actions = '<a href="' . route('campaign.show', $row->id) . '" class="btn btn-success btn-xs">
+                            <i class="fas fa-eye"></i>
                         </a>';
-                $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-warning btn-xs">
-                        <i class="fas fa-sync-alt"></i>
-                    </a>';
-            }
 
-            // Add delete button with the deleteButton class
-            if (Gate::allows('deleteCampaign', $row)) {
-                $actions .= ' <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>';
-            }
+                // Check if the user has the permission to edit campaigns
+                if (Gate::allows('UpdateCampaign', $row)) {
+                    $actions .= ' <a href="' . route('campaign.edit', $row->id) . '" class="btn btn-primary btn-xs">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>';
+                    $actions .= ' <a href=' . route('campaign.refresh', $row->id) . ' class="btn btn-warning btn-xs">
+                            <i class="fas fa-sync-alt"></i>
+                        </a>';
+                }
 
-            return $actions;
-        })
-        ->rawColumns(['actions'])
-        ->toJson();
-}
+                // Add delete button with the deleteButton class
+                if (Gate::allows('deleteCampaign', $row)) {
+                    $actions .= ' <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>';
+                }
+
+                return $actions;
+            })
+            ->rawColumns(['actions']) // Ensure actions are treated as raw
+            ->toJson();
+    }
 
 
 
