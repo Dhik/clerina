@@ -255,4 +255,10 @@ class CampaignController extends Controller
         $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
         return response()->json($summary);
     }
+
+    public function getCampaignsTitles()
+    {
+        $campaigns = Campaign::select('id', 'title')->get();
+        return response()->json($campaigns);
+    }
 }

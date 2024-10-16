@@ -29,7 +29,7 @@
     <table>
         <thead>
             <tr>
-                <th>Nama Talent</th>
+                <th>Username</th>
                 <th>Rate Card Per Slot</th>
                 <th>Slot</th>
                 <th>Jenis Konten</th>
@@ -61,7 +61,7 @@
                     $dp = $final_tf / 2; // DP 50%
                 @endphp
                 <tr>
-                    <td>{{ $content->talent->talent_name }}</td>
+                    <td>{{ $content->talent->username }}</td>
                     <td>{{ number_format($rate_card_per_slot, 2) }}</td>
                     <td>{{ $slot }}</td>
                     <td>{{ $content->talent->content_type }}</td>
@@ -72,7 +72,7 @@
                     <td>{{ number_format($pph, 2) }}</td>
                     <td>{{ number_format($final_tf, 2) }}</td>
                     <td>{{ number_format($final_tf, 2) }}</td>
-                    <td>{{ number_format($dp, 2) }}</td>
+                    <td>{{ $content->status_payment }}</td>
                     <td>{{ $content->talent->pic }}</td>
                     <td>{{ $content->talent->no_rekening }}</td>
                     <td>{{ $content->talent->bank }}</td>

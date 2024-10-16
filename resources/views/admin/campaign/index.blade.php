@@ -184,7 +184,7 @@
                 data: 'engagement_rate',
                 name: 'engagement_rate',
                 render: function(data) {
-                    return data + '%'; // Append '%' for display
+                    return data + '%'; 
                 },
                 searchable: false
             },

@@ -10,19 +10,42 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <button type="button" class="btn btn-outline-primary exportForm" data-toggle="modal" data-target="#exportForm">
-                    <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
-                    </button>
-                </div>
                 <div class="card-body">
+                    <!-- Filter Dropdowns -->
+                    <div class="row mb-3">
+                        <div class="col-auto">
+                            <select id="filterPic" class="form-control">
+                                <option value="">Select PIC</option>
+                                @foreach($uniquePics as $pic)
+                                    <option value="{{ $pic }}">{{ $pic }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <select id="filterUsername" class="form-control">
+                                <option value="">Select Username</option>
+                                @foreach($uniqueUsernames as $username)
+                                    <option value="{{ $username }}">{{ $username }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" id="filterButton">Filter</button>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary exportForm" id="exportButton">
+                            <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
+                        </button>
+                    </div>
+
                     <table id="talentPaymentsTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
+                                <th>Username</th>
                                 <th>Talent Name</th>
                                 <th>Followers</th>
                                 <th>Status Payment</th>
                                 <th>Amount Transfer</th>
+                                <th>PIC</th>
                                 <th>Done Payment</th>
                                 <th>Action</th>
                             </tr>
@@ -45,8 +68,15 @@
         var table = $('#talentPaymentsTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('talent_payments.data') }}',
+            ajax: {
+                url: '{{ route('talent_payments.data') }}',
+                data: function(d) {
+                    d.pic = $('#filterPic').val(); // Add PIC filter
+                    d.username = $('#filterUsername').val(); // Add Username filter
+                }
+            },
             columns: [
+                { data: 'username', name: 'talents.username' },
                 { data: 'talent_name', name: 'talents.talent_name' },
                 { data: 'followers', name: 'talents.followers' },
                 { 
@@ -62,6 +92,7 @@
                     }
                 },
                 { data: 'amount_tf', name: 'amount_tf' },
+                { data: 'pic', name: 'pic' },
                 {
                     data: 'done_payment', 
                     name: 'done_payment',
@@ -78,6 +109,11 @@
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
+        });
+
+        // Handle filter button click
+        $('#filterButton').on('click', function() {
+            table.ajax.reload(); // Reload the DataTable with the new filters
         });
 
         // Handle delete button click
@@ -121,6 +157,15 @@
                     });
                 }
             });
+        });
+
+        // Handle export button click
+        $('#exportButton').on('click', function() {
+            var pic = $('#filterPic').val(); // Get selected PIC
+            var username = $('#filterUsername').val(); // Get selected Username
+
+            // Redirect to the export route with filters as query parameters
+            window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username;
         });
     });
 </script>

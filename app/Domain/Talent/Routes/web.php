@@ -26,7 +26,6 @@ Route::prefix('admin')
             Route::get('/', [TalentController::class, 'index'])->name('talent.index');
 
             Route::get('/{talent}/invoice', [TalentController::class, 'exportInvoice'])->name('talent.exportInvoice');
-            Route::get('/pengajuan', [TalentController::class, 'exportPengajuan'])->name('talent.pengajuan');
             Route::get('/{talent}/spk', [TalentController::class, 'exportSPK'])->name('talent.spk');
             Route::get('/spk', [TalentController::class, 'showSPK'])->name('talent.spk_view');
             Route::get('/invoice', [TalentController::class, 'showInvoice'])->name('talent.showInvoice');
@@ -61,6 +60,7 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentPaymentController::class, 'index'])->name('talent_payments.index');
             Route::get('/data', [TalentPaymentController::class, 'data'])->name('talent_payments.data');
+            Route::get('/pengajuan', [TalentPaymentController::class, 'exportPengajuan'])->name('talent_payments.pengajuan');
             Route::post('/', [TalentPaymentController::class, 'store'])->name('talent_payments.store');
             Route::get('/{payment}', [TalentPaymentController::class, 'show'])->name('talent_payments.show');
             Route::get('/{payment}/edit', [TalentPaymentController::class, 'edit'])->name('talent_payments.edit');
