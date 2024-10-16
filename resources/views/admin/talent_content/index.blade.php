@@ -233,6 +233,7 @@
                 }
             });
         });
+        
 
         var table = $('#talentContentTable').DataTable({
             processing: true,
@@ -377,11 +378,9 @@
 
     });
 
-    $(document).ready(function() {
-        $('.exportForm').on('click', function() {
-            window.location.href = '{{ route('talent.pengajuan') }}';
-        });
-    });
+    
 
 </script>
 @stop
+
+

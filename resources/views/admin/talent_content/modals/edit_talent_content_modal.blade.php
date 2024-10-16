@@ -56,6 +56,14 @@
                                     <option value="1">Yes</option>
                                 </select>
                             </div>
+
+                            <div class="form-group">
+                                <label for="edit_campaign_id">Campaign</label>
+                                <select name="campaign_id" id="edit_campaign_id" class="form-control" required>
+                                    <option value="">Select Campaign</option>
+                                    <!-- Options will be populated via AJAX -->
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -284,13 +284,6 @@ class TalentController extends Controller
         $talent = Talent::with('talent')->get();
         return view('admin.talent.invoice', compact('talent'));
     }
-    public function exportPengajuan()
-    {
-        $talentContents = TalentContent::with('talent')->get();
-        $pdf = PDF::loadView('admin.talent_content.form_pengajuan', compact('talentContents'));
-        $pdf->setPaper('A4', 'landscape');
-        return $pdf->download('form_pengajuan.pdf');
-    }
     public function exportSPK($id)
     {
         $talent = Talent::findOrFail($id);
