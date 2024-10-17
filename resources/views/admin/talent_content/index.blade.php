@@ -14,6 +14,9 @@
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
                         <i class="fas fa-plus"></i> Add Talent Content
                     </button>
+                    <a href="{{ route('talent_content.export') }}" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </a>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -104,6 +107,7 @@
     @include('admin.talent_content.modals.add_talent_content_modal')
     @include('admin.talent_content.modals.edit_talent_content_modal')
     @include('admin.talent_content.modals.view_talent_content_modal')
+    @include('admin.talent_content.modals.add_link_content_modal')
 @stop
 
 
@@ -181,12 +185,14 @@
                     var container = $('#todayTalentContainer');
                     container.empty(); 
                     if (data.length) {
-                        $.each(data, function(index, talentName) {
+                        $.each(data, function(index, item) {
+                            var campaignInfo = item.campaign_title ? `<p>Campaign: ${item.campaign_title}</p>` : '';
                             var subCard = `
                                 <div class="sub-card card mb-2">
-                                    <div class="card-header">Akun <strong>${talentName}</strong></div>
+                                    <div class="card-header">Akun <strong>${item.username}</strong></div>
                                     <div class="card-body">
                                         <p>Harus upload konten hari ini</p>
+                                        ${campaignInfo}
                                     </div>
                                 </div>
                             `;
@@ -205,7 +211,7 @@
     });
 
     $(document).ready(function() {
-        var choices;
+        var talentChoices, campaignChoices;
         
         $('#addTalentContentModal').on('show.bs.modal', function() {
             $.ajax({
@@ -219,10 +225,10 @@
                         select.append('<option value="' + talent.id + '">' + talent.username + '</option>');
                     });
 
-                    if (choices) {
-                        choices.destroy();
+                    if (talentChoices) {
+                        talentChoices.destroy();
                     }
-                    choices = new Choices(select[0], {
+                    talentChoices = new Choices(select[0], {
                         searchEnabled: true,
                         placeholder: true,
                         placeholderValue: 'Select Talent'
@@ -230,6 +236,30 @@
                 },
                 error: function() {
                     alert('Failed to fetch talents.');
+                }
+            });
+            $.ajax({
+                url: "{{ route('talent_content.getCampaigns') }}",
+                method: "GET",
+                success: function(data) {
+                    var select = $('#campaign_id');
+                    select.empty();
+                    select.append('<option value="">Select Campaign</option>');
+                    $.each(data, function(index, campaign) {
+                        select.append('<option value="' + campaign.id + '">' + campaign.title + '</option>');
+                    });
+
+                    if (campaignChoices) {
+                        campaignChoices.destroy();
+                    }
+                    campaignChoices = new Choices(select[0], {
+                        searchEnabled: true,
+                        placeholder: true,
+                        placeholderValue: 'Select Campaign'
+                    });
+                },
+                error: function() {
+                    alert('Failed to fetch campaigns.');
                 }
             });
         });
@@ -376,11 +406,47 @@
             });
         });
 
+        // Handle "Add Link" button click
+        $('#talentContentTable').on('click', '.addLinkButton', function() {
+            var id = $(this).data('id');
+            $('#addLinkContentForm').attr('action', '{{ route('talent_content.addLink', ':id') }}'.replace(':id', id));
+            $('#addLinkContentModal').modal('show');
+        });
+
+        // Handle form submission for adding link
+        $('#addLinkContentForm').on('submit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var url = form.attr('action');
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addLinkContentModal').modal('hide');
+                        table.ajax.reload();
+                        Swal.fire('Success', 'Link added successfully', 'success');
+                    } else {
+                        Swal.fire('Error', 'Failed to add link', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error', 'Failed to add link', 'error');
+                }
+            });
+        });
+
     });
 
     
 
 </script>
 @stop
+
+
+
+
 
 

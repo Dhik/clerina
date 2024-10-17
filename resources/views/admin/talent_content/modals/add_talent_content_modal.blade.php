@@ -15,6 +15,11 @@
                         <select name="talent_id" id="talent_id" class="form-control" required>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="campaign_id">Campaign Name</label>
+                        <select name="campaign_id" id="campaign_id" class="form-control" required>
+                        </select>
+                    </div>
 
                     <div class="form-group">
                         <label for="dealing_upload_date">Dealing Upload Date</label>

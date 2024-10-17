@@ -14,9 +14,9 @@
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
                     <i class="fas fa-plus"></i> Add Talent
                     </button>
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
+                    <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
                     <i class="fas fa-file-download"></i> Import Talent
-                    </button>
+                    </button> -->
                 </div>
                 <div class="card-body">
                     <table id="talentTable" class="table table-bordered table-striped">
@@ -46,6 +46,16 @@
     @include('admin.talent.modals.choose_approval_modal')
 @stop
 
+@section('css')
+<style>
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 80%;
+    }
+</style>
+@endsection
+
 @section('js')
 <script>
     $(document).ready(function() {
@@ -58,7 +68,21 @@
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
                 { data: 'pengajuan_transfer_date', name: 'pengajuan_transfer_date' },
-                { data: 'rate_final', name: 'rate_final' },
+                {
+                    data: 'rate_final',
+                    name: 'rate_final',
+                    render: function(data, type, row) {
+                        // Check if the data is null or undefined
+                        if (data == null) {
+                            return '';
+                        }
+                        // Convert to float and format as currency
+                        return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
                 { data: 'payment_action', name: 'payment_action', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
@@ -276,5 +300,39 @@
             maximumFractionDigits: 0
         }).format(number);
     }
+
+    $('#addTalentForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var url = form.attr('action');
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: form.serialize(),
+            success: function(response) {
+                $('#addTalentModal').modal('hide');
+                table.ajax.reload();
+                Swal.fire('Success', 'Talent added successfully', 'success');
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    var errors = xhr.responseJSON.errors;
+                    if (errors.username) {
+                        $('#username').addClass('is-invalid');
+                        $('#username-error').text(errors.username[0]).show();
+                    }
+                } else {
+                    Swal.fire('Error', 'Failed to add talent', 'error');
+                }
+            }
+        });
+    });
+
+    // Clear error messages when modal is hidden
+    $('#addTalentModal').on('hidden.bs.modal', function () {
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').hide();
+    });
 </script>
 @stop
