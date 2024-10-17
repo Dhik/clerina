@@ -55,6 +55,9 @@
             </tr>
         </thead>
         <tbody>
+            @php
+                $totalTransfer = 0;
+            @endphp
             @foreach($talentContents as $content)
                 @php
                     $rate_card_per_slot = $content->talent->first_rate_card;
@@ -90,6 +93,7 @@
                             } elseif ($content->status_payment === "Pelunasan 50%") {
                                 $displayValue = $final_tf / 2;
                             }
+                            $totalTransfer += $displayValue;
                         @endphp
                         {{ number_format($displayValue, 2) }}
                     </td>
@@ -101,6 +105,11 @@
                     <td>{{ $content->talent->nik }}</td>
                 </tr>
             @endforeach
+            <tr class="total-row">
+                <td colspan="10" style="text-align: right;">Total Transfer:</td>
+                <td>{{ number_format($totalTransfer, 2) }}</td>
+                <td colspan="6"></td>
+            </tr>
         </tbody>
     </table>
 </body>
