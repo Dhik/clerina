@@ -14,7 +14,8 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="username">Username</label>
-                                <input type="text" name="username" id="username" class="form-control" required>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                                <div id="username-error" class="invalid-feedback"></div>
                             </div>
                             <div class="form-group">
                                 <label for="talent_name">Talent Name</label>

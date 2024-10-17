@@ -37,7 +37,13 @@
                 <th>Besar Diskon</th>
                 <th>Harga Setelah Diskon</th>
                 <th>NPWP</th>
-                <th>PPh (2.5%)</th>
+                <th>
+                    @if($talentContents->first()->isPTorCV)
+                        PPh23 (2%)
+                    @else
+                        PPh21 (2,5%)
+                    @endif
+                </th>
                 <th>Final TF</th>
                 <th>Total Payment</th>
                 <th>Keterangan (DP 50%)</th>
@@ -56,8 +62,9 @@
                     $rate_harga = $rate_card_per_slot * $slot;
                     $discount = $content->talent->discount;
                     $harga_setelah_diskon = $rate_harga - $discount;
-                    $pph = 0.025 * $harga_setelah_diskon; // 2.5% PPh deduction
-                    $final_tf = $harga_setelah_diskon - $pph;
+                    $pphPercentage = $content->isPTorCV ? 0.02 : 0.025;
+                    $pphAmount = $harga_setelah_diskon * $pphPercentage;
+                    $final_tf = $harga_setelah_diskon - $pphAmount;
                     $dp = $final_tf / 2; // DP 50%
                 @endphp
                 <tr>
@@ -69,9 +76,23 @@
                     <td>{{ number_format($discount, 2) }}</td>
                     <td>{{ number_format($harga_setelah_diskon, 2) }}</td>
                     <td>{{ $content->talent->no_npwp }}</td>
-                    <td>{{ number_format($pph, 2) }}</td>
+                    <td>{{ number_format($pphAmount, 2) }}</td>
                     <td>{{ number_format($final_tf, 2) }}</td>
-                    <td>{{ number_format($final_tf, 2) }}</td>
+                    <td>
+                        @php
+                            $displayValue = $final_tf;
+                            if (in_array($content->status_payment, ["Pelunasan", "DP", "Termin 2"])) {
+                                $displayValue = $final_tf / 3;
+                            } elseif ($content->status_payment === "DP 50%") {
+                                $displayValue = $final_tf / 2;
+                            } elseif ($content->status_payment === "Full Payment") {
+                                $displayValue = $final_tf;
+                            } elseif ($content->status_payment === "Pelunasan 50%") {
+                                $displayValue = $final_tf / 2;
+                            }
+                        @endphp
+                        {{ number_format($displayValue, 2) }}
+                    </td>
                     <td>{{ $content->status_payment }}</td>
                     <td>{{ $content->talent->pic }}</td>
                     <td>{{ $content->talent->no_rekening }}</td>

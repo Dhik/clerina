@@ -9,20 +9,12 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="view_talent_name">Talent Name</label>
-                    <input type="text" id="view_talent_name" class="form-control" readonly>
-                </div>
-                <div class="form-group">
                     <label for="view_dealing_upload_date">Dealing Upload Date</label>
                     <input type="text" id="view_dealing_upload_date" class="form-control" readonly>
                 </div>
                 <div class="form-group">
                     <label for="view_posting_date">Posting Date</label>
                     <input type="text" id="view_posting_date" class="form-control" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="view_final_rate_card">Final Rate Card</label>
-                    <input type="text" id="view_final_rate_card" class="form-control" readonly>
                 </div>
                 <div class="form-group">
                     <label for="view_done">Done Status</label>
@@ -33,7 +25,7 @@
                     <input type="text" id="view_upload_link" class="form-control" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="view_pic_code">PIC Code</label>
+                    <label for="view_pic_code">PIC</label>
                     <input type="text" id="view_pic_code" class="form-control" readonly>
                 </div>
                 <div class="form-group">

@@ -150,8 +150,8 @@
                 <td>Rp {{ number_format($subtotal, 2, ',', '.') }}</td>
             </tr>
             <tr>
-                <td>PPh 21 (2.5%)</td>
-                <td>Rp {{ number_format($pph21, 2, ',', '.') }}</td>
+                <td>{{ $pphLabel }}</td>
+                <td>Rp {{ number_format($pph, 2, ',', '.') }}</td>
             </tr>
             <tr>
                 <td><strong>TOTAL</strong></td>

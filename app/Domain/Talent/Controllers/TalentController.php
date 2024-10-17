@@ -100,7 +100,7 @@ class TalentController extends Controller
     {
         // Validate the incoming request data
         $validatedData = $request->validate([
-            'username' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:talents,username',
             'talent_name' => 'required|string|max:255',
             'video_slot' => 'nullable|integer',
             'content_type' => 'nullable|string|max:255',
@@ -241,12 +241,17 @@ class TalentController extends Controller
         }
 
         $harga = $talent->rate_final; 
-        if (\Illuminate\Support\Str::startsWith($talent->talent_name, ['PT', 'CV'])) {
-            $pph21 = $harga * 0.02;
+        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->talent_name, ['PT', 'CV']);
+        if ($isPTorCV) {
+            $pphPercentage = 2;
+            $pphLabel = 'PPh 23 (2%)';
+            $pph = $harga * 0.02;
         } else {
-            $pph21 = $harga * 0.025;
+            $pphPercentage = 2.5;
+            $pphLabel = 'PPh 21 (2.5%)';
+            $pph = $harga * 0.025;
         }
-        $total = $harga - $pph21; 
+        $total = $harga - $pph; 
         $downPayment = $total / 2; 
         $remainingBalance = $total - $downPayment;
         $ttd = $approval->photo;
@@ -263,7 +268,9 @@ class TalentController extends Controller
             'deskripsi' => $talent->content_type,
             'harga' => $harga,
             'subtotal' => $harga,
-            'pph21' => $pph21,
+            'pphLabel' => $pphLabel,
+            'pphPercentage' => $pphPercentage,
+            'pph' => $pph,
             'total' => $total,
             'down_payment' => $downPayment,
             'sisa' => $remainingBalance,

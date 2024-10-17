@@ -102,7 +102,6 @@ class TalentPaymentController extends Controller
             $validatedData = $request->validate([
                 'done_payment' => 'nullable|date',
                 'talent_id' => 'required|integer',
-                'amount_tf' => 'nullable',
                 'status_payment' => 'nullable|string|max:255',
             ]);
             $payment = TalentPayment::create($validatedData);
@@ -175,6 +174,11 @@ class TalentPaymentController extends Controller
         }
 
         $talentContents = $query->get();
+
+        // Determine the tax type for each talent
+        $talentContents->each(function ($content) {
+            $content->isPTorCV = \Illuminate\Support\Str::startsWith($content->talent->talent_name, ['PT', 'CV']);
+        });
 
         // Generate PDF
         $pdf = PDF::loadView('admin.talent_payment.form_pengajuan', compact('talentContents'));

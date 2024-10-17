@@ -16,6 +16,7 @@ class TalentContent extends Model
         'talent_id',
         'dealing_upload_date',
         'posting_date',
+        'campaign_id',
         'done',
         'upload_link',
         'pic_code',

@@ -5,8 +5,11 @@ namespace App\Domain\Talent\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Talent\Exports\TalentContentExport;
 use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Models\Talent;
+use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Talent\Requests\TalentContentRequest;
 use Yajra\DataTables\Utilities\Request;
 use Yajra\DataTables\DataTables;
@@ -17,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\DB;
+use Auth;
 
 /**
  */
@@ -89,9 +93,13 @@ class TalentContentController extends Controller
             })
             ->addColumn('action', function ($talentContent) {
                 return '
+                    <button class="btn btn-sm btn-primary addLinkButton" 
+                        data-id="' . $talentContent->id . '">
+                        <i class="fas fa-link"> Add link</i>
+                    </button>
                     <button class="btn btn-sm btn-success editButton" 
                         data-id="' . $talentContent->id . '">
-                        <i class="fas fa-pencil-alt"> Add link</i>
+                        <i class="fas fa-pencil-alt"> Edit</i>
                     </button>
                     <button class="btn btn-sm btn-danger deleteButton" 
                         data-id="' . $talentContent->id . '">
@@ -123,6 +131,7 @@ class TalentContentController extends Controller
             'pic_code' => 'nullable|string|max:255',
             'product' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
+            'campaign_id' => 'nullable|integer',
         ]);
         $validatedData['done'] = 0;
         $validatedData['upload_link'] = null;
@@ -185,10 +194,6 @@ class TalentContentController extends Controller
     {
         $validated = $request->validate([
             'dealing_upload_date' => 'nullable|date',
-            'posting_date' => 'nullable|date',
-            'done' => 'required|boolean',
-            'upload_link' => 'nullable|url',
-            'final_rate_card' => 'nullable|max:255',
             'pic_code' => 'nullable|string|max:255',
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
@@ -239,14 +244,21 @@ class TalentContentController extends Controller
         $talents = Talent::select('id', 'username')->get();
         return response()->json($talents);
     }
+    public function getCampaigns()
+    {
+        $campaigns = Campaign::select('id', 'title')->get();
+        return response()->json($campaigns);
+    }
     public function getTodayTalentNames()
     {
         $today = Carbon::today();
-        $talentNames = TalentContent::whereDate('dealing_upload_date', $today)
+        $talentData = TalentContent::whereDate('talent_content.dealing_upload_date', $today)
             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
-            ->pluck('talents.talent_name');
+            ->leftJoin('campaigns', 'talent_content.campaign_id', '=', 'campaigns.id')
+            ->select('talents.username', 'campaigns.title as campaign_title')
+            ->get();
 
-        return response()->json($talentNames);
+        return response()->json($talentData);
     }
 
     public function calendar(): JsonResponse
@@ -277,5 +289,50 @@ class TalentContentController extends Controller
             'done_true_count' => $doneTrueCount,
             'total_count' => $totalCount,
         ]);
+    }
+    public function addLink(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'upload_link' => 'required|url',
+            'channel' => 'required|string',
+            'task_name' => 'required|string',
+        ]);
+
+        $talentContent = TalentContent::findOrFail($id);
+        $talentContent->upload_link = $request->upload_link;
+        $talentContent->done = 1;
+        $talentContent->posting_date = Carbon::today();
+        $talentContent->save();
+
+        $talent = Talent::findOrFail($talentContent->talent_id);
+
+        // Create new CampaignContent
+        CampaignContent::create([
+            'campaign_id' => $talentContent->campaign_id,
+            'key_opinion_leader_id' => 1,
+            'username' => $talent->username,
+            'channel' => $request->channel,
+            'task_name' => $request->task_name,
+            'link' => $request->upload_link,
+            'rate_card' => $talent->rate_final,
+            'product' => $talent->produk,
+            'upload_date' => null,
+            'boost_code' => $talentContent->boost_code,
+            'is_fyp' => 0,
+            'is_product_deliver' => 0,
+            'is_paid' => 0,
+            'caption' => null,
+            'created_by' => Auth::id(),
+            'tenant_id' => Auth::user()->current_tenant_id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Link added successfully and campaign content created',
+            'upload_link' => $talentContent->upload_link,
+        ]);
+    }
+    public function export(){
+        return Excel::download(new TalentContentExport, 'talent_content.xlsx');
     }
 }

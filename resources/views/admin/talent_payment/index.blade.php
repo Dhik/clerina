@@ -31,10 +31,13 @@
                         </div>
                         <div class="col-auto">
                             <button class="btn btn-primary" id="filterButton">Filter</button>
+                            <button class="btn btn-secondary" id="resetFilterButton">Reset Filter</button>
                         </div>
-                        <button type="button" class="btn btn-outline-primary exportForm" id="exportButton">
-                            <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
-                        </button>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-outline-primary exportForm" id="exportButton">
+                                <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
+                            </button>
+                        </div>
                     </div>
 
                     <table id="talentPaymentsTable" class="table table-bordered table-striped">
@@ -44,7 +47,6 @@
                                 <th>Talent Name</th>
                                 <th>Followers</th>
                                 <th>Status Payment</th>
-                                <th>Amount Transfer</th>
                                 <th>PIC</th>
                                 <th>Done Payment</th>
                                 <th>Action</th>
@@ -91,7 +93,6 @@
                         return data;
                     }
                 },
-                { data: 'amount_tf', name: 'amount_tf' },
                 { data: 'pic', name: 'pic' },
                 {
                     data: 'done_payment', 
@@ -113,7 +114,14 @@
 
         // Handle filter button click
         $('#filterButton').on('click', function() {
-            table.ajax.reload(); // Reload the DataTable with the new filters
+            table.ajax.reload();
+        });
+
+        // Handle reset filter button click
+        $('#resetFilterButton').on('click', function() {
+            $('#filterPic').val('');
+            $('#filterUsername').val('');
+            table.ajax.reload();
         });
 
         // Handle delete button click
@@ -161,10 +169,8 @@
 
         // Handle export button click
         $('#exportButton').on('click', function() {
-            var pic = $('#filterPic').val(); // Get selected PIC
-            var username = $('#filterUsername').val(); // Get selected Username
-
-            // Redirect to the export route with filters as query parameters
+            var pic = $('#filterPic').val();
+            var username = $('#filterUsername').val();
             window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username;
         });
     });
