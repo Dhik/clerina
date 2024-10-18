@@ -14,20 +14,15 @@
                     <input type="hidden" name="talent_id" id="paymentTalentId">
 
                     <div class="form-group">
-                        <label for="done_payment">Payment Date</label>
-                        <input type="date" name="done_payment" id="done_payment" class="form-control" required>
-                    </div>
-
-                    <div class="form-group">
                         <label for="status_payment">Status Payment</label>
                         <select name="status_payment" id="status_payment" class="form-control" required>
                             <option value="">Select Status</option>
                             <option value="Full Payment">Full Payment</option>
                             <option value="DP 50%">DP 50%</option>
                             <option value="Pelunasan 50%">Pelunasan 50%</option>
-                            <option value="DP">DP</option>
+                            <option value="Termin 1">Termin 1</option>
                             <option value="Termin 2">Termin 2</option>
-                            <option value="Pelunasan">Pelunasan</option>
+                            <option value="Termin 3">Termin 3</option>
                         </select>
                     </div>
                 </div>

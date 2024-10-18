@@ -84,7 +84,7 @@
                     <td>
                         @php
                             $displayValue = $final_tf;
-                            if (in_array($content->status_payment, ["Pelunasan", "DP", "Termin 2"])) {
+                            if (in_array($content->status_payment, ["Termin 1", "Termin 3", "Termin 2"])) {
                                 $displayValue = $final_tf / 3;
                             } elseif ($content->status_payment === "DP 50%") {
                                 $displayValue = $final_tf / 2;

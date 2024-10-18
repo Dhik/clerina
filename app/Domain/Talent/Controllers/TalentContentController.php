@@ -81,8 +81,10 @@ class TalentContentController extends Controller
             'talent_content.done', 
             'talent_content.upload_link', 
             'talents.username',
-            'talent_content.final_rate_card'])
-            ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
+            'talent_content.final_rate_card',
+            'talent_content.is_refund' // Include is_refund in the select statement
+        ])
+        ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
 
         return DataTables::of($talentContents)
             ->addColumn('status_and_link', function ($talentContent) {
@@ -107,7 +109,25 @@ class TalentContentController extends Controller
                     </button>
                 ';
             })
-            ->rawColumns(['action', 'status_and_link', 'done'])
+            ->addColumn('refund', function ($talentContent) {
+                // Check the value of is_refund and return the appropriate button
+                if ($talentContent->is_refund == 0) {
+                    return '
+                        <button class="btn btn-sm bg-maroon refundButton" 
+                            data-id="' . $talentContent->id . '">
+                            <i class="fas fa-redo"> Refund</i>
+                        </button>
+                    ';
+                } else {
+                    return '
+                        <button class="btn btn-sm bg-info unRefundButton" 
+                            data-id="' . $talentContent->id . '">
+                            <i class="fas fa-undo"> Unrefund</i>
+                        </button>
+                    ';
+                }
+            })
+            ->rawColumns(['action', 'status_and_link', 'done', 'refund'])
             ->make(true);
     }
     /**
@@ -334,5 +354,32 @@ class TalentContentController extends Controller
     }
     public function export(){
         return Excel::download(new TalentContentExport, 'talent_content.xlsx');
+    }
+    public function refund($id)
+    {
+        try {
+            $talentContent = TalentContent::findOrFail($id);
+            $talentContent->is_refund = 1; // Set is_refund to 1
+            $talentContent->save();
+
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to refund talent content: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to refund talent content.'], 500);
+        }
+    }
+
+    public function unrefund($id)
+    {
+        try {
+            $talentContent = TalentContent::findOrFail($id);
+            $talentContent->is_refund = 0; // Set is_refund to 0
+            $talentContent->save();
+
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to unrefund talent content: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to unrefund talent content.'], 500);
+        }
     }
 }

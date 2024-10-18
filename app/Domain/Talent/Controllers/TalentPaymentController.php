@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\TalentPayment\TalentPaymentBLLInterface;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Talent\Models\Talent;
 use App\Domain\Talent\Models\TalentPayment;
 use App\Domain\Talent\Requests\TalentPaymentRequest;
 use Yajra\DataTables\Utilities\Request;
 use Yajra\DataTables\DataTables;
-use App\Domain\Talent\Models\Talent;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;  
+use Illuminate\Support\Facades\DB;
 
 /**
  */
@@ -41,6 +43,7 @@ class TalentPaymentController extends Controller
                 'talent_payments.id',
                 'talent_payments.done_payment',
                 'talent_payments.amount_tf',
+                'talent_payments.tanggal_pengajuan',
                 'talents.pic',
                 'talents.username',
                 'talent_payments.status_payment',
@@ -77,6 +80,9 @@ class TalentPaymentController extends Controller
                     </button>
                 ';
             })
+            ->filterColumn('pic', function($query, $keyword) {
+                $query->whereRaw("talents.pic like ?", ["%{$keyword}%"]);
+            })
             ->rawColumns(['action'])
             ->make(true);
     }
@@ -100,10 +106,10 @@ class TalentPaymentController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'done_payment' => 'nullable|date',
                 'talent_id' => 'required|integer',
                 'status_payment' => 'nullable|string|max:255',
             ]);
+            $validatedData['tanggal_pengajuan'] = Carbon::today();
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
         } catch (\Exception $e) {
@@ -138,9 +144,21 @@ class TalentPaymentController extends Controller
      * @param TalentPaymentsRequest $request
      * @param TalentPayments $payment
      */
-    public function update(TalentPaymentsRequest $request, TalentPayments $payment)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+            $payment = TalentPayment::findOrFail($id);
+
+            $validatedData = $request->validate([
+                'done_payment' => 'nullable|date',
+            ]);
+            $payment->update($validatedData);
+
+            return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Payment update failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -186,5 +204,159 @@ class TalentPaymentController extends Controller
 
         // Download the PDF
         return $pdf->download('form_pengajuan.pdf');
+    }
+
+    public function report()
+    {
+        return view('admin.talent_payment.report');
+    }
+
+    public function getReportKPI()
+    {
+        $payments = TalentPayment::with('talent')->get();
+        $totalRateFinal = 0;
+        $totalSpent = 0;
+
+        $result = $payments->map(function ($payment) use (&$totalRateFinal, &$totalSpent) {
+            $rateFinal = $payment->talent ? $payment->talent->rate_final : null;
+            if ($rateFinal !== null) {
+                $rateFinal = $rateFinal - $payment->talent->tax_deduction;
+                $totalRateFinal += $rateFinal;
+            }
+            if ($payment->done_payment !== null && $rateFinal !== null) {
+                switch ($payment->status_payment) {
+                    case 'Full Payment':
+                        $totalSpent += $rateFinal;
+                        break;
+                    case 'DP 50%':
+                    case 'Pelunasan 50%':
+                        $totalSpent += $rateFinal * 0.5;
+                        break;
+                    case 'Termin 1':
+                    case 'Termin 2':
+                    case 'Termin 3':
+                        $totalSpent += $rateFinal / 3;
+                        break;
+                    default:
+                        $totalSpent += 0;
+                        break;
+                }
+            }
+        });
+
+        return response()->json([
+            'total_final_tf' => $totalRateFinal,
+            'total_spent' => $totalSpent,
+        ], 200);
+    }
+    public function getHutang()
+    {
+        // Initialize totals
+        $totalHutang = 0;
+        $totalPiutang = 0;
+        $totalSpent = 0;
+
+        // Fetch all talents with their payments and content
+        $talents = Talent::with(['talentContents', 'talentPayments']) // Use correct relationship names
+            ->select('talents.*')
+            ->get()
+            ->map(function($talent) use (&$totalHutang, &$totalPiutang, &$totalSpent) {
+                // Calculating total_spent based on the payment status
+                $totalSpentForTalent = $talent->talentPayments->sum(function($payment) use ($talent) {
+                    switch ($payment->status_payment) {
+                        case 'Full Payment':
+                            return $payment->done_payment ? $talent->rate_final * 1 : 0;
+                        case 'DP 50%':
+                        case 'Pelunasan 50%':
+                            return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
+                        case 'Termin 1':
+                        case 'Termin 2':
+                        case 'Termin 3':
+                            return $payment->done_payment ? $talent->rate_final / 3 : 0;
+                        default:
+                            return 0;
+                    }
+                });
+
+                // Calculating talent_should_get based on the content count
+                $contentCount = $talent->talentContents->count(); // Use the correct relationship
+                $talentShouldGet = ($talent->slot_final > 0) ? ($talent->rate_final / $talent->slot_final) * $contentCount : 0;
+
+                // Calculating hutang and piutang for the talent
+                $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
+                $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
+
+                // Add to the global totals
+                $totalSpent += $totalSpentForTalent;
+                $totalHutang += $hutang;
+                $totalPiutang += $piutang;
+
+                // Return an object with all the calculations for this talent
+                return (object) [
+                    'talent_name'      => $talent->talent_name,
+                    'total_spent'      => $totalSpentForTalent,
+                    'talent_should_get'=> $talentShouldGet,
+                    'hutang'           => $hutang,
+                    'piutang'          => $piutang,
+                ];
+            });
+
+        // Filter out talents where both total_spent and talent_should_get are 0
+        $filteredTalents = $talents->filter(function($talent) {
+            return $talent->total_spent != 0 || $talent->talent_should_get != 0;
+        });
+
+        // Return response with both the filtered talents and total values
+        return response()->json([
+            'talents' => $filteredTalents,
+            'totals' => [
+                'total_spent' => $totalSpent,
+                'total_hutang' => $totalHutang,
+                'total_piutang' => $totalPiutang,
+            ]
+        ]);
+    }
+
+    public function getTotalHutang()
+    {
+        // Fetch all talents with their payments and content
+        $totals = Talent::with(['talentContents', 'talentPayments']) // Use correct relationship names
+            ->select('talents.*')
+            ->get()
+            ->reduce(function($carry, $talent) {
+                // Calculating total_spent based on the payment status
+                $totalSpent = $talent->talentPayments->sum(function($payment) use ($talent) {
+                    switch ($payment->status_payment) {
+                        case 'Full Payment':
+                            return $payment->done_payment ? $talent->rate_final * 1 : 0;
+                        case 'DP 50%':
+                        case 'Pelunasan 50%':
+                            return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
+                        case 'Termin 1':
+                        case 'Termin 2':
+                        case 'Termin 3':
+                            return $payment->done_payment ? $talent->rate_final / 3 : 0;
+                        default:
+                            return 0;
+                    }
+                });
+
+                // Calculating talent_should_get based on the content count
+                $contentCount = $talent->talentContents->count();
+                $talentShouldGet = ($talent->slot_final > 0) ? ($talent->rate_final / $talent->slot_final) * $contentCount : 0;
+
+                // Calculating hutang and piutang for the talent
+                $hutang = $talentShouldGet > $totalSpent ? $talentShouldGet - $totalSpent : 0;
+                $piutang = $talentShouldGet < $totalSpent ? $totalSpent - $talentShouldGet : 0;
+
+                // Accumulate totals
+                $carry['total_spent'] += $totalSpent;
+                $carry['total_hutang'] += $hutang;
+                $carry['total_piutang'] += $piutang;
+
+                return $carry;
+            }, ['total_spent' => 0, 'total_hutang' => 0, 'total_piutang' => 0]);
+
+        return response()->json($totals);
     }
 }
