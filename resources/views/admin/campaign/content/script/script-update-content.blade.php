@@ -17,6 +17,10 @@
             $('#productUpdate').val(rowData.product);
             $('#boostCodeUpdate').val(rowData.boost_code);
 
+            $('#viewsUpdate').val(rowData.view);
+            $('#likesUpdate').val(rowData.like);
+            $('#commentsUpdate').val(rowData.comment);
+
             $('#contentUpdateModal').modal('show');
         }
     }

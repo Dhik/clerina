@@ -53,6 +53,22 @@
                         <input type="text" class="form-control" id="boostCodeUpdate" name="boost_code" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.boost_code')]) }}">
                     </div>
 
+                    <!-- New fields for views, likes, and comments -->
+                    <div class="form-group">
+                        <label for="viewsUpdate">{{ trans('labels.views') }}</label>
+                        <input type="number" class="form-control" id="viewsUpdate" name="views" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.views')]) }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="likesUpdate">{{ trans('labels.like') }}</label>
+                        <input type="number" class="form-control" id="likesUpdate" name="likes" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.like')]) }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentsUpdate">{{ trans('labels.comment') }}</label>
+                        <input type="number" class="form-control" id="commentsUpdate" name="comments" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.comment')]) }}">
+                    </div>
+
                     <input type="hidden" id="contentId">
 
                     <div class="form-group d-none" id="errorContentUpdate"></div>
@@ -65,4 +81,3 @@
         </div>
     </div>
 </div>
-
