@@ -55,7 +55,7 @@
                     <table id="talentTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>Talent Name</th>
+                                <th>Username</th>
                                 <th>Total Spent</th>
                                 <th>Should Get</th>
                                 <th>Hutang</th>
@@ -97,7 +97,7 @@
                         $.each(json.talents, function (id, talent) {
                             data.push({
                                 id: id,
-                                talent_name: talent.talent_name,
+                                username: talent.username,
                                 total_spent: rupiahFormatter.format(talent.total_spent),
                                 talent_should_get: rupiahFormatter.format(talent.talent_should_get),
                                 hutang: rupiahFormatter.format(talent.hutang),
@@ -108,7 +108,7 @@
                     }
                 },
                 columns: [
-                    { data: 'talent_name', name: 'Talent Name' },
+                    { data: 'username', name: 'Username' },
                     { data: 'total_spent', name: 'Total Spent' },
                     { data: 'talent_should_get', name: 'Should Get' },
                     { data: 'hutang', name: 'Hutang' },

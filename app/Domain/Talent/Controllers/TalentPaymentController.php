@@ -294,6 +294,7 @@ class TalentPaymentController extends Controller
                 // Return an object with all the calculations for this talent
                 return (object) [
                     'talent_name'      => $talent->talent_name,
+                    'username'      => $talent->username,
                     'total_spent'      => $totalSpentForTalent,
                     'talent_should_get'=> $talentShouldGet,
                     'hutang'           => $hutang,
