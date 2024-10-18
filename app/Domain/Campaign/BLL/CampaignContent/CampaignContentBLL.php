@@ -4,6 +4,7 @@ namespace App\Domain\Campaign\BLL\CampaignContent;
 
 use App\Domain\Campaign\DAL\CampaignContent\CampaignContentDALInterface;
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Requests\CampaignContentRequest;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Utilities\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class CampaignContentBLL implements CampaignContentBLLInterface
 {
@@ -161,16 +164,55 @@ class CampaignContentBLL implements CampaignContentBLLInterface
      */
     public function updateCampaignContent(CampaignContent $campaignContent, CampaignUpdateContentRequest $request): CampaignContent
     {
-        $data = [
-            'rate_card' => $request->input('rate_card'),
-            'task_name' => $request->input('task_name'),
-            'link' => $request->input('link'),
-            'product' => $request->input('product'),
-            'channel' => $request->input('channel'),
-            'boost_code' => $request->input('boost_code')
-        ];
+        return DB::transaction(function () use ($campaignContent, $request) {
+            $data = [
+                'rate_card' => $request->input('rate_card'),
+                'task_name' => $request->input('task_name'),
+                'link' => $request->input('link'),
+                'product' => $request->input('product'),
+                'channel' => $request->input('channel'),
+                'boost_code' => $request->input('boost_code'),
+            ];
 
-        return $this->campaignContentDAL->updateCampaignContent($campaignContent, $data);
+            $updatedCampaignContent = $this->campaignContentDAL->updateCampaignContent($campaignContent, $data);
+
+            $statistic = Statistic::where('campaign_id', $campaignContent->campaign_id)
+                              ->where('campaign_content_id', $campaignContent->id)
+                              ->first();
+
+            if ($statistic) {
+                // Update existing statistic
+                $statistic->update([
+                    'view' => $request->input('views', $statistic->view),
+                    'like' => $request->input('likes', $statistic->like),
+                    'comment' => $request->input('comments', $statistic->comment),
+                ]);
+            } else {
+                // Create new statistic if it doesn't exist
+                $statistic = Statistic::create([
+                    'campaign_id' => $campaignContent->campaign_id,
+                    'campaign_content_id' => $campaignContent->id,
+                    'date' => $campaignContent->upload_date ?? now()->toDateString(),
+                    'view' => $request->input('views', 0),
+                    'like' => $request->input('likes', 0),
+                    'comment' => $request->input('comments', 0),
+                    'tenant_id' => Auth::user()->current_tenant_id,
+                ]);
+            }
+
+            // Calculate and update CPM and engagement
+            $totalImpressions = $statistic->view;
+            $totalEngagements = $statistic->like + $statistic->comment;
+            
+            $cpm = $totalImpressions > 0 ? ($updatedCampaignContent->rate_card / $totalImpressions) * 1000 : 0;
+
+            $statistic->update([
+                'cpm' => $cpm,
+                'engagement' => $totalEngagements,
+            ]);
+
+            return $updatedCampaignContent;
+        });
     }
 
     /**
