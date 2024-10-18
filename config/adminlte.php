@@ -360,6 +360,7 @@ return [
                     'can' => [PermissionEnum::ViewVisit],
                     'icon' => 'nav-icon far fa-circle',
                 ],
+                
                 // [
                 //     'text' => 'Product',
                 //     'url' => 'admin/product',
@@ -450,6 +451,12 @@ return [
                     'url' => 'admin/talnt-payments',
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/talnt-payments*']
+                ],
+                [
+                    'text' => 'Debt Report',
+                    'url' => 'admin/kol-payments/report',
+                    'can' => [PermissionEnum::ViewVisit],
+                    'icon' => 'nav-icon far fa-circle',
                 ],
                 [
                     'text' => 'Approval',

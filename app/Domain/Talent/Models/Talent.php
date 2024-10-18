@@ -43,4 +43,8 @@ class Talent extends Model
     {
         return $this->hasMany(TalentContent::class, 'talent_id', 'id');
     }
+    public function talentPayments()
+    {
+        return $this->hasMany(TalentPayment::class, 'talent_id', 'id');
+    }
 }

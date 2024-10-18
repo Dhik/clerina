@@ -47,6 +47,10 @@ Route::prefix('admin')
             Route::get('/export', [TalentContentController::class, 'export'])->name('talent_content.export');
             Route::get('/campaigns', [TalentContentController::class, 'getCampaigns'])->name('talent_content.getCampaigns');
             Route::post('/{id}/add-link', [TalentContentController::class, 'addLink'])->name('talent_content.addLink');
+
+            Route::post('/{id}/refund', [TalentContentController::class, 'refund'])->name('talent_content.refund');
+            Route::post('/{id}/unrefund', [TalentContentController::class, 'unrefund'])->name('talent_content.unrefund');
+
             Route::get('/today', [TalentContentController::class, 'getTodayTalentNames'])->name('talent_content.today');
             Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
             Route::get('/count', [TalentContentController::class, 'countContent'])->name('talent_content.count');
@@ -63,13 +67,21 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentPaymentController::class, 'index'])->name('talent_payments.index');
             Route::get('/data', [TalentPaymentController::class, 'data'])->name('talent_payments.data');
+            Route::get('/card', [TalentPaymentController::class, 'getReportKPI'])->name('talent_payments.kpi');
+            Route::get('/hutang', [TalentPaymentController::class, 'getHutang'])->name('talent_payments.hutang');
             Route::get('/pengajuan', [TalentPaymentController::class, 'exportPengajuan'])->name('talent_payments.pengajuan');
             Route::post('/', [TalentPaymentController::class, 'store'])->name('talent_payments.store');
             Route::get('/{payment}', [TalentPaymentController::class, 'show'])->name('talent_payments.show');
             Route::get('/{payment}/edit', [TalentPaymentController::class, 'edit'])->name('talent_payments.edit');
-            Route::put('/{payment}', [TalentPaymentController::class, 'update'])->name('talent_payments.update');
+            Route::put('/{id}', [TalentPaymentController::class, 'update'])->name('talent_payments.update');
             Route::delete('/{payment}', [TalentPaymentController::class, 'destroy'])->name('talent_payments.destroy');
         });
+
+    Route::prefix('kol-payments')
+        ->group(function () {
+            Route::get('/report', [TalentPaymentController::class, 'report'])->name('talent_payments.report');
+        });
+
 
     Route::prefix('approval')
         ->group(function () {

@@ -95,6 +95,7 @@
                                 <th>Done</th>
                                 <th>Additional Info</th>
                                 <th>Action</th>
+                                <th>Refund</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -301,6 +302,7 @@
                 { data: 'done', name: 'done', orderable: false, searchable: false },
                 { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
+                { data: 'refund', name: 'refund', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']]
         });
@@ -438,12 +440,87 @@
             });
         });
 
+        // Handle refund button click
+        $('#talentContentTable').on('click', '.refundButton', function() {
+            var id = $(this).data('id');
+            var url = '{{ route('talent_content.refund', ':id') }}'.replace(':id', id);
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will mark the content as refunded.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, refund it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Refunded!', 'Talent content has been marked as refunded.', 'success');
+                                table.ajax.reload();
+                            } else {
+                                Swal.fire('Error!', 'There was an issue marking the content as refunded.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error!', 'There was an issue marking the content as refunded.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Handle unrefund button click
+        $('#talentContentTable').on('click', '.unRefundButton', function() {
+            var id = $(this).data('id');
+            var url = '{{ route('talent_content.unrefund', ':id') }}'.replace(':id', id);
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will unmark the content as refunded.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, unrefund it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Unrefunded!', 'Talent content has been unmarked as refunded.', 'success');
+                                table.ajax.reload();
+                            } else {
+                                Swal.fire('Error!', 'There was an issue unmarking the content as refunded.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error!', 'There was an issue unmarking the content as refunded.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+
     });
 
     
 
 </script>
 @stop
+
 
 
 
