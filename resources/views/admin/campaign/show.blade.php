@@ -201,6 +201,7 @@
                 { data: 'comment', className: "text-right", orderable: true }, 
                 { data: 'view', className: "text-right", orderable: true }, 
                 { data: 'cpm', className: "text-right", orderable: true }, 
+                { data: 'engagement_rate', className: "text-right", orderable: true }, 
                 { data: 'additional_info', orderable: false }, 
                 { data: 'actions', orderable: false, searchable: false },
             ],

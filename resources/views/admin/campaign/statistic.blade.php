@@ -111,6 +111,7 @@
                                 <th data-toggle="tooltip" data-placement="top" title="{{ trans('labels.cpm') }}">
                                     {{ trans('labels.cpm_short') }}
                                 </th>
+                                <th>ER</th>
                                 <th>{{ trans('labels.additional_info') }}</th>
                                 <th>{{ trans('labels.actions') }}</th>
                             </tr>

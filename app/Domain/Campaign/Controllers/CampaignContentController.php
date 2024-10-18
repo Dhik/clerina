@@ -80,6 +80,14 @@ class CampaignContentController extends Controller
                 $result = $row->latestStatistic->view ?? 0;
                 return $this->numberFormatShort($result);
             })
+            ->addColumn('engagement_rate', function($row) {
+                $likes = $row->latestStatistic->like ?? 0;
+                $comments = $row->latestStatistic->comment ?? 0;
+                $views = $row->latestStatistic->view ?? 1; // Avoid division by zero
+
+                $engagementRate = (($likes + $comments) / $views) * 100;
+                return number_format($engagementRate, 2) . '%'; // Format as percentage
+            })
             ->addColumn('cpm', function ($row) {
                 $cpm = $row->latestStatistic->cpm ?? 0;
                 return number_format($cpm, '2', ',', '.');
@@ -106,6 +114,13 @@ class CampaignContentController extends Controller
 
         // Transform the query results into an array format
         $campaignContents = $query->get()->map(function ($row) {
+
+            $likes = $row->latestStatistic->like ?? 0;
+            $comments = $row->latestStatistic->comment ?? 0;
+            $views = $row->latestStatistic->view ?? 1; // Avoid division by zero
+
+            $engagementRate = (($likes + $comments) / $views) * 100;
+            
             return [
                 'id' => $row->id,
                 'channel' => $row->channel,
@@ -127,6 +142,7 @@ class CampaignContentController extends Controller
                 'link' => $row->link ?? 'N/A',  // Retrieve the link from the campaign_contents table
                 'additional_info' => $this->additionalInfo($row),
                 'actions' => $this->actionsHtml($row),
+                'engagement_rate' => number_format($engagementRate, 2) . '%', // Format as percentage
             ];
         });
 
