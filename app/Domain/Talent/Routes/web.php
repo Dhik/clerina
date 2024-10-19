@@ -67,6 +67,7 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentPaymentController::class, 'index'])->name('talent_payments.index');
             Route::get('/data', [TalentPaymentController::class, 'data'])->name('talent_payments.data');
+            Route::get('/report_table', [TalentPaymentController::class, 'paymentReport'])->name('talent_payments.paymentReport');
             Route::get('/card', [TalentPaymentController::class, 'getReportKPI'])->name('talent_payments.kpi');
             Route::get('/hutang', [TalentPaymentController::class, 'getHutang'])->name('talent_payments.hutang');
             Route::get('/pengajuan', [TalentPaymentController::class, 'exportPengajuan'])->name('talent_payments.pengajuan');
