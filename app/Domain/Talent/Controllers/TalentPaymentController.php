@@ -317,47 +317,59 @@ class TalentPaymentController extends Controller
             ]
         ]);
     }
-
-    public function getTotalHutang()
+    public function paymentReport(Request $request)
     {
-        // Fetch all talents with their payments and content
-        $totals = Talent::with(['talentContents', 'talentPayments']) // Use correct relationship names
-            ->select('talents.*')
-            ->get()
-            ->reduce(function($carry, $talent) {
-                // Calculating total_spent based on the payment status
-                $totalSpent = $talent->talentPayments->sum(function($payment) use ($talent) {
-                    switch ($payment->status_payment) {
-                        case 'Full Payment':
-                            return $payment->done_payment ? $talent->rate_final * 1 : 0;
-                        case 'DP 50%':
-                        case 'Pelunasan 50%':
-                            return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
-                        case 'Termin 1':
-                        case 'Termin 2':
-                        case 'Termin 3':
-                            return $payment->done_payment ? $talent->rate_final / 3 : 0;
-                        default:
-                            return 0;
-                    }
-                });
+        $payments = TalentPayment::select([
+                'talent_payments.id',
+                'talent_payments.done_payment',
+                'talent_payments.amount_tf',
+                'talent_payments.tanggal_pengajuan',
+                'talents.pic',
+                'talents.username',
+                'talent_payments.status_payment',
+                'talents.talent_name',
+                'talents.followers',
+                'talents.rate_final',
+            ])
+            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id');
 
-                // Calculating talent_should_get based on the content count
-                $contentCount = $talent->talentContents->count();
-                $talentShouldGet = ($talent->slot_final > 0) ? ($talent->rate_final / $talent->slot_final) * $contentCount : 0;
+        return DataTables::of($payments)
+            ->addColumn('spent', function ($payment) {
+                $rateFinal = $payment->rate_final ?? 0; // Get the rate_final, default to 0 if null
 
-                // Calculating hutang and piutang for the talent
-                $hutang = $talentShouldGet > $totalSpent ? $talentShouldGet - $totalSpent : 0;
-                $piutang = $talentShouldGet < $totalSpent ? $totalSpent - $talentShouldGet : 0;
-
-                // Accumulate totals
-                $carry['total_spent'] += $totalSpent;
-                $carry['total_hutang'] += $hutang;
-                $carry['total_piutang'] += $piutang;
-
-                return $carry;
-            }, ['total_spent' => 0, 'total_hutang' => 0, 'total_piutang' => 0]);
-
-        return response()->json($totals);
+                // Calculate spent based on the rules provided
+                if ($payment->status_payment === 'Full Payment' && !is_null($payment->done_payment)) {
+                    return $rateFinal * 1;
+                } elseif (in_array($payment->status_payment, ['DP 50%', 'Pelunasan 50%']) && !is_null($payment->done_payment)) {
+                    return $rateFinal * 0.5;
+                } elseif (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3']) && !is_null($payment->done_payment)) {
+                    return $rateFinal / 3;
+                } else {
+                    return 0;
+                }
+            })
+            ->addColumn('action', function ($payment) {
+                return '
+                    <button class="btn btn-sm btn-primary viewButton" 
+                        data-id="' . $payment->id . '" 
+                        data-toggle="modal" 
+                        data-target="#viewPaymentModal">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success editButton" 
+                        data-id="' . $payment->id . '">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger deleteButton" 
+                        data-id="' . $payment->id . '">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                ';
+            })
+            ->filterColumn('pic', function($query, $keyword) {
+                $query->whereRaw("talents.pic like ?", ["%{$keyword}%"]);
+            })
+            ->rawColumns(['action', 'spent'])
+            ->make(true);
     }
 }

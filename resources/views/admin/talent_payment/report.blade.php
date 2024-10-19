@@ -44,20 +44,20 @@
         </div>
     </div>
 
-    <!-- Talent Table -->
+    <!-- Talent Table for Hutang and Piutang -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Talent Financial Details</h3>
+                    <h3 class="card-title">Talent Financial Details (Hutang & Piutang)</h3>
                 </div>
                 <div class="card-body">
-                    <table id="talentTable" class="table table-bordered table-striped">
+                    <table id="hutangPiutangTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
                                 <th>Username</th>
                                 <th>Total Spent</th>
-                                <th>Should Get</th>
+                                <th>Talent Should Get</th>
                                 <th>Hutang</th>
                                 <th>Piutang</th>
                             </tr>
@@ -67,12 +67,72 @@
             </div>
         </div>
     </div>
+
+    <!-- Separate Talent Payments Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Talent Payments</h3>
+                </div>
+                <div class="card-body">
+                    <table id="talentPaymentsTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Status Payment</th>
+                                <th>PIC</th>
+                                <th>Done Payment</th>
+                                <th>Tanggal Pengajuan</th>
+                                <th>Spent</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separate Talent Content Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Talent Content</h3>
+                </div>
+                <div class="card-body">
+                    <table id="talentContentTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Dealing Upload Date</th>
+                                <th>Posting Date</th>
+                                <th>Done</th>
+                                <th>Additional Info</th>
+                                <th>Talent Should Get</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
-
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(function () {
+            // Initialize Select2 for filters
+            $('#filterUsername').select2({
+                placeholder: "All Usernames",
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap4'
+            });
+
             // Currency formatter for Indonesian Rupiah (Rp.)
             const rupiahFormatter = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -80,7 +140,8 @@
                 minimumFractionDigits: 0
             });
 
-            $('#talentTable').DataTable({
+            // Initialize DataTable for Hutang and Piutang
+            $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -116,6 +177,127 @@
                 ],
                 order: [[0, 'asc']]
             });
+
+            // Initialize DataTable for Talent Payments
+            var tablePayments = $('#talentPaymentsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('talent_payments.paymentReport') }}',
+                    data: function(d) {
+                        d.pic = $('#filterPic').val();
+                        d.username = $('#filterUsername').val();
+                    }
+                },
+                columns: [
+                    { data: 'username', name: 'talents.username' },
+                    { 
+                        data: 'status_payment', 
+                        name: 'talent_payments.status_payment',
+                        render: function(data, type, row) {
+                            if (data === "50%") {
+                                return '<span style="color: orange;">' + data + '</span>';
+                            } else if (data === "Pelunasan") {
+                                return '<span style="color: green;">' + data + '</span>';
+                            }
+                            return data;
+                        }
+                    },
+                    { data: 'pic', name: 'talents.pic' },
+                    {
+                        data: 'done_payment', 
+                        name: 'talent_payments.done_payment',
+                        render: function(data, type, row) {
+                            if (data) {
+                                let date = new Date(data);
+                                return ('0' + date.getDate()).slice(-2) + '/' + 
+                                       ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                       date.getFullYear();
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        data: 'tanggal_pengajuan', 
+                        name: 'talent_payments.tanggal_pengajuan',
+                        render: function(data, type, row) {
+                            if (data) {
+                                let date = new Date(data);
+                                return ('0' + date.getDate()).slice(-2) + '/' + 
+                                       ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                       date.getFullYear();
+                            }
+                            return '';
+                        }
+                    },
+                    { data: 'spent', name: 'spent' },
+                ],
+                order: [[0, 'desc']]
+            });
+
+            // Initialize DataTable for Talent Content
+            var tableContent = $('#talentContentTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('talent_content.data') }}',
+                    data: function(d) {
+                        d.filterDealingDate = $('#filterDealingDate').val(); 
+                        d.filterPostingDate = $('#filterPostingDate').val();
+                        d.filterDone = $('#filterDone').is(':checked') ? 1 : ''; 
+                    }
+                },
+                columns: [
+                    { data: 'id', name: 'id', visible: false },
+                    { data: 'username', name: 'talents.username' },
+                    {
+                        data: 'dealing_upload_date', 
+                        name: 'dealing_upload_date',
+                        render: function(data) {
+                            if (data) {
+                                let date = new Date(data);
+                                return ('0' + date.getDate()).slice(-2) + '/' + 
+                                       ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                       date.getFullYear();
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        data: 'posting_date', 
+                        name: 'posting_date',
+                        render: function(data) {
+                            if (data) {
+                                let date = new Date(data);
+                                return ('0' + date.getDate()).slice(-2) + '/' + 
+                                       ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                       date.getFullYear();
+                            }
+                            return '';
+                        }
+                    },
+                    { data: 'done', name: 'done', orderable: false, searchable: false },
+                    { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
+                    { data: 'talent_should_get', name: 'talent_should_get' },
+                ],
+                order: [[0, 'desc']]
+            });
+
+            // Filter button functionality for Talent Payments
+            $('#filterButton').on('click', function() {
+                tablePayments.ajax.reload();
+            });
+
+            // Reset filter button functionality for Talent Payments
+            $('#resetFilterButton').on('click', function() {
+                $('#filterPic').val('').trigger('change');
+                $('#filterUsername').val('').trigger('change');
+                tablePayments.ajax.reload();
+            });
         });
     </script>
+@stop
+
+@section('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @stop
