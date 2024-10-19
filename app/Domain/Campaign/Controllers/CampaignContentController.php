@@ -83,9 +83,9 @@ class CampaignContentController extends Controller
             ->addColumn('engagement_rate', function($row) {
                 $likes = $row->latestStatistic->like ?? 0;
                 $comments = $row->latestStatistic->comment ?? 0;
-                $views = $row->latestStatistic->view ?? 1; // Avoid division by zero
-
-                $engagementRate = (($likes + $comments) / $views) * 100;
+                $views = $row->latestStatistic->view ?? 0;
+                $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0; 
+                
                 return number_format($engagementRate, 2) . '%'; // Format as percentage
             })
             ->addColumn('cpm', function ($row) {
@@ -118,7 +118,7 @@ class CampaignContentController extends Controller
             $likes = $row->latestStatistic->like ?? 0;
             $comments = $row->latestStatistic->comment ?? 0;
             $views = $row->latestStatistic->view ?? 0;
-            $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0; // Set engagement rate to 0 if views are 0
+            $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0; 
             
             return [
                 'id' => $row->id,
