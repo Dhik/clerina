@@ -43,6 +43,20 @@
             </div>
         </div>
     </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <select id="filterUsername" class="form-control select2" style="width: 100%;">
+                <option value="">All Usernames</option>
+                @foreach($usernames as $username)
+                    <option value="{{ $username }}">{{ $username }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button id="resetFilterButton" class="btn btn-secondary">Reset Filter</button>
+        </div>
+    </div>
 
     <!-- Talent Table for Hutang and Piutang -->
     <div class="row">
@@ -141,12 +155,15 @@
             });
 
             // Initialize DataTable for Hutang and Piutang
-            $('#hutangPiutangTable').DataTable({
+            var tableHutangPiutang = $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
                     url: "{{ route('talent_payments.hutang') }}", // Your route here
                     type: 'GET',
+                    data: function(d) {
+                        d.username = $('#filterUsername').val(); // Pass the selected username
+                    },
                     dataSrc: function (json) {
                         // Populate KPI Cards with total values formatted as currency
                         $('#totalSpent').text(rupiahFormatter.format(json.totals.total_spent));
@@ -185,7 +202,6 @@
                 ajax: {
                     url: '{{ route('talent_payments.paymentReport') }}',
                     data: function(d) {
-                        d.pic = $('#filterPic').val();
                         d.username = $('#filterUsername').val();
                     }
                 },
@@ -242,6 +258,7 @@
                 ajax: {
                     url: '{{ route('talent_content.data') }}',
                     data: function(d) {
+                        d.username = $('#filterUsername').val(); // Pass the selected username
                         d.filterDealingDate = $('#filterDealingDate').val(); 
                         d.filterPostingDate = $('#filterPostingDate').val();
                         d.filterDone = $('#filterDone').is(':checked') ? 1 : ''; 
@@ -283,16 +300,18 @@
                 order: [[0, 'desc']]
             });
 
-            // Filter button functionality for Talent Payments
-            $('#filterButton').on('click', function() {
+            $('#filterUsername').on('change', function () {
+                tableHutangPiutang.ajax.reload();
                 tablePayments.ajax.reload();
+                tableContent.ajax.reload();
             });
 
             // Reset filter button functionality for Talent Payments
             $('#resetFilterButton').on('click', function() {
-                $('#filterPic').val('').trigger('change');
                 $('#filterUsername').val('').trigger('change');
+                tableHutangPiutang.ajax.reload();
                 tablePayments.ajax.reload();
+                tableContent.ajax.reload();
             });
         });
     </script>

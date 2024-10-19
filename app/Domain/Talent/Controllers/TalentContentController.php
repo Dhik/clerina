@@ -87,6 +87,10 @@ class TalentContentController extends Controller
             'talents.slot_final'
         ])
         ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
+        
+        if ($request->input('username')) {
+            $talentContents->where('talents.username', $request->input('username'));
+        }
 
         if (! is_null($request->input('filterDealingDate'))) {
             $dates = explode(' - ', $request->input('filterDealingDate'));

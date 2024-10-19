@@ -208,7 +208,8 @@ class TalentPaymentController extends Controller
 
     public function report()
     {
-        return view('admin.talent_payment.report');
+        $usernames = Talent::select('username')->distinct()->pluck('username');
+        return view('admin.talent_payment.report', compact('usernames'));
     }
 
     public function getReportKPI()
@@ -249,19 +250,22 @@ class TalentPaymentController extends Controller
             'total_spent' => $totalSpent,
         ], 200);
     }
-    public function getHutang()
+    public function getHutang(Request $request)
     {
         // Initialize totals
         $totalHutang = 0;
         $totalPiutang = 0;
         $totalSpent = 0;
 
+        $query = Talent::with(['talentContents', 'talentPayments'])
+        ->select('talents.*');
+
+        if ($request->input('username')) {
+            $query->where('username', $request->input('username'));
+        }
+
         // Fetch all talents with their payments and content
-        $talents = Talent::with(['talentContents', 'talentPayments']) // Use correct relationship names
-            ->select('talents.*')
-            ->get()
-            ->map(function($talent) use (&$totalHutang, &$totalPiutang, &$totalSpent) {
-                // Calculating total_spent based on the payment status
+        $talents = $query->get()->map(function($talent) use (&$totalHutang, &$totalPiutang, &$totalSpent) {
                 $totalSpentForTalent = $talent->talentPayments->sum(function($payment) use ($talent) {
                     switch ($payment->status_payment) {
                         case 'Full Payment':
@@ -332,6 +336,10 @@ class TalentPaymentController extends Controller
                 'talents.rate_final',
             ])
             ->join('talents', 'talent_payments.talent_id', '=', 'talents.id');
+
+            if ($request->input('username')) {
+                $payments->where('talents.username', $request->input('username'));
+            }
 
         return DataTables::of($payments)
             ->addColumn('spent', function ($payment) {
