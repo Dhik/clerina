@@ -82,9 +82,28 @@ class TalentContentController extends Controller
             'talent_content.upload_link', 
             'talents.username',
             'talent_content.final_rate_card',
-            'talent_content.is_refund' // Include is_refund in the select statement
+            'talent_content.is_refund'
         ])
         ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
+
+        if (! is_null($request->input('filterDealingDate'))) {
+            $dates = explode(' - ', $request->input('filterDealingDate'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+            $talentContents->whereBetween('dealing_upload_date', [$startDate, $endDate]);
+        }
+
+        // Filter by posting_date
+        if (! is_null($request->input('filterPostingDate'))) {
+            $dates = explode(' - ', $request->input('filterPostingDate'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+            $talentContents->whereBetween('posting_date', [$startDate, $endDate]);
+        }
+
+        if (!is_null($request->input('filterDone'))) {
+            $talentContents->where('talent_content.done', $request->input('filterDone'));
+        }
 
         return DataTables::of($talentContents)
             ->addColumn('status_and_link', function ($talentContent) {
@@ -130,6 +149,7 @@ class TalentContentController extends Controller
             ->rawColumns(['action', 'status_and_link', 'done', 'refund'])
             ->make(true);
     }
+
     /**
      * Show the form for creating a new resource.
      */

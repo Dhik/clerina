@@ -85,6 +85,31 @@
                 </div>
                 
                 <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="col-auto">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <input type="text" class="form-control filterDate" id="filterDealingDate" placeholder="Select Dealing Date Range" autocomplete="off">
+                            </div>
+                            <div class="col-auto">
+                                <input type="text" class="form-control filterDate" id="filterPostingDate" placeholder="Select Posting Date Range" autocomplete="off">
+                            </div>
+                            <div class="col-auto">
+                                <div class="icheck-primary d-inline">
+                                    <input type="checkbox" id="filterDone">
+                                    <label for="filterDone">
+                                        Done
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button id="resetFilterBtn" class="btn btn-outline-secondary">
+                                    Reset Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                     <table id="talentContentTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
@@ -135,6 +160,97 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable with the date range filters
+        const filterDone = $('#filterDone');
+        var table = $('#talentContentTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{{ route('talent_content.data') }}',
+                data: function (d) {
+                    d.filterDealingDate = $('#filterDealingDate').val(); 
+                    d.filterPostingDate = $('#filterPostingDate').val();
+                    d.filterDone = $('#filterDone').is(':checked') ? 1 : ''; 
+                }
+            },
+            columns: [
+                { data: 'id', name: 'id', visible: false },
+                { data: 'username', name: 'talents.username' }, 
+                {
+                    data: 'dealing_upload_date', 
+                    name: 'dealing_upload_date',
+                    render: function(data) {
+                        if (data) {
+                            let date = new Date(data);
+                            return ('0' + date.getDate()).slice(-2) + '/' + 
+                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                   date.getFullYear();
+                        }
+                        return '';
+                    }
+                },
+                {
+                    data: 'posting_date', 
+                    name: 'posting_date',
+                    render: function(data) {
+                        if (data) {
+                            let date = new Date(data);
+                            return ('0' + date.getDate()).slice(-2) + '/' + 
+                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                   date.getFullYear();
+                        }
+                        return '';
+                    }
+                },
+                { data: 'done', name: 'done', orderable: false, searchable: false },
+                { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
+                { data: 'refund', name: 'refund', orderable: false, searchable: false },
+            ],
+            order: [[0, 'desc']]
+        });
+
+        filterDone.change(function() {
+            table.ajax.reload();
+        });
+        // Initialize daterangepicker for both Dealing Date and Posting Date
+        const filterDealingDate = $('#filterDealingDate').daterangepicker({
+            autoUpdateInput: false,
+            locale: { cancelLabel: 'Clear' }
+        });
+
+        const filterPostingDate = $('#filterPostingDate').daterangepicker({
+            autoUpdateInput: false,
+            locale: { cancelLabel: 'Clear' }
+        });
+
+        filterDealingDate.on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+            table.ajax.reload(); 
+        });
+
+        filterDealingDate.on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            table.ajax.reload();
+        });
+
+        filterPostingDate.on('apply.daterangepicker', function(ev, picker) {
+            var selectedRange = picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD');
+            $(this).val(selectedRange);
+            table.ajax.reload(); 
+        });
+
+        filterPostingDate.on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            table.ajax.reload();
+        });
+
+        $('#resetFilterBtn').click(function () {
+            $('#filterDealingDate').val('');
+            $('#filterPostingDate').val('');
+            $('#filterDone').prop('checked', false);
+            table.ajax.reload();
+        });
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
@@ -266,46 +382,7 @@
         });
         
 
-        var table = $('#talentContentTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: '{{ route('talent_content.data') }}',
-            columns: [
-                { data: 'id', name: 'id', visible: false },
-                { data: 'username', name: 'talents.username' }, 
-                {
-                    data: 'dealing_upload_date', 
-                    name: 'dealing_upload_date',
-                    render: function(data, type, row) {
-                        if (data) {
-                            let date = new Date(data);
-                            return ('0' + date.getDate()).slice(-2) + '/' + 
-                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
-                                   date.getFullYear();
-                        }
-                        return '';
-                    }
-                },
-                {
-                    data: 'posting_date', 
-                    name: 'posting_date',
-                    render: function(data, type, row) {
-                        if (data) {
-                            let date = new Date(data);
-                            return ('0' + date.getDate()).slice(-2) + '/' + 
-                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
-                                   date.getFullYear();
-                        }
-                        return '';
-                    }
-                },
-                { data: 'done', name: 'done', orderable: false, searchable: false },
-                { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
-                { data: 'action', name: 'action', orderable: false, searchable: false },
-                { data: 'refund', name: 'refund', orderable: false, searchable: false },
-            ],
-            order: [[0, 'desc']]
-        });
+        
 
         $('#talentContentTable').on('click', '.editButton', function() {
             var id = $(this).data('id');
