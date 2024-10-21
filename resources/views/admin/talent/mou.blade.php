@@ -136,7 +136,7 @@
                 </tr>
                 <tr>
                     <td>Kontak resmi</td>
-                    <td>: M. Rocky Pramana</td>
+                    <td>: Fahry Husein</td>
                 </tr>
                 <tr>
                     <td>No. Telepon</td>
@@ -364,11 +364,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>M. Rocky Pramana</td>
+                    <td>Fahry Husein</td>
                     <td>{{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
-                    <td>Direktur Utama</td>
+                    <td>CEO Office</td>
                     <td>KOL</td>
                 </tr>
             </table>
