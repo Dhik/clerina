@@ -187,7 +187,7 @@
         <div class="content-section">
             <strong>1. Isi</strong>
             <p class="indent">
-                Pihak Pertama dengan ini telah mengkonfirmasi saudari Nirfana Okta Via Alhusna (untuk selanjutnya disebut Pihak Kedua) setelah bernegosiasi dan bersepakat bersama, dan menunjuk Pihak Kedua sebagai yang mempromosikan video endorsement dari Pihak Pertama.
+                Pihak Pertama dengan ini telah mengkonfirmasi saudara/i {{ $talent->talent_name }} (untuk selanjutnya disebut Pihak Kedua) setelah bernegosiasi dan bersepakat bersama, dan menunjuk Pihak Kedua sebagai yang mempromosikan video endorsement dari Pihak Pertama.
             </p>
         </div>
 
@@ -235,7 +235,7 @@
             <strong>2. Hak dan Kewajiban</strong>
             <ol>
                 <li>PIHAK PERTAMA memberikan dan menyediakan produk yang telah disepakati dengan PIHAK KEDUA serta memberikan info terkait video yang diinginkan.</li>
-                <li>PIHAK KEDUA wajib memposting 3 video TikTok brand dalam waktu 1 bulan. PIHAK PERTAMA berhak memposting ulang atas video tersebut baik di Official Account dengan menyertakan credit.</li>
+                <li>PIHAK KEDUA wajib memposting sesuai dengan SoW diatas untuk brand dalam waktu {{ $talent->masa_kerjasama }}. </li>
                 <li class="highlight">PIHAK KEDUA wajib mempertahankan video yang telah diunggah di platform terkait dan tidak diperkenankan untuk menghapus, menyunting, mengarsipkan atau menonaktifkan video tersebut dengan alasan apapun, kecuali video tersebut melanggar ketentuan hukum yang berlaku di Indonesia.</li>
                 <li>PIHAK KEDUA harus menyerahkan perkiraan rencana draft promosi atau siaran langsung dan data yang terkait dengan produk kepada PIHAK PERTAMA sesuai jadwal yang disepakati.</li>
                 <li>Jika PIHAK KEDUA tidak melakukan kewajiban seperti tidak memposting video sesuai jadwal yang telah disepakati bersama, tidak ada respon apapun mengenai kemuduran posting video atau membatalkan kerjasama secara sepihak maka PIHAK KEDUA wajib melakukan pengembalian dana secara materil dengan sejumlah sisa slot video yang belum terposting sebanyak 5x (lima kali) lipat dari nominal harga yang sudah disepakati.</li>
