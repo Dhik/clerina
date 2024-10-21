@@ -150,34 +150,34 @@
                     }
 
                     // Directly access the properties from the response
-                    $('#view_username').val(response.username);
-                    $('#view_talent_name').val(response.talent_name);
-                    $('#view_video_slot').val(response.video_slot);
-                    $('#view_content_type').val(response.content_type);
-                    $('#view_produk').val(response.produk);
-                    $('#view_rate_final').val(formatRupiah(response.rate_final));
-                    $('#view_pic').val(response.pic);
-                    $('#view_bulan_running').val(response.bulan_running);
-                    $('#view_niche').val(response.niche);
-                    $('#view_followers').val(response.followers);
-                    $('#view_address').val(response.address);
-                    $('#view_phone_number').val(response.phone_number);
-                    $('#view_bank').val(response.bank);
-                    $('#view_no_rekening').val(response.no_rekening);
-                    $('#view_nama_rekening').val(response.nama_rekening);
-                    $('#view_no_npwp').val(response.no_npwp);
-                    $('#view_pengajuan_transfer_date').val(response.pengajuan_transfer_date);
-                    $('#view_gdrive_ttd_kol_accepting').val(response.gdrive_ttd_kol_accepting);
-                    $('#view_nik').val(response.nik);
-                    $('#view_price_rate').val(formatRupiah(response.price_rate));
-                    $('#view_first_rate_card').val(formatRupiah(response.first_rate_card));
-                    $('#view_discount').val(formatRupiah(response.discount));
-                    $('#view_slot_final').val(response.slot_final);
-                    $('#view_tax_deduction').val(formatRupiah(response.tax_deduction));
-                    $('#view_created_at').val(response.created_at);
-                    $('#view_updated_at').val(response.updated_at);
-                    $('#view_scope_of_work').val(response.scope_of_work);
-                    $('#view_masa_kerjasama').val(response.masa_kerjasama);
+                    $('#view_username').val(response.talent.username);
+                    $('#view_talent_name').val(response.talent.talent_name);
+                    $('#view_video_slot').val(response.talent.video_slot);
+                    $('#view_content_type').val(response.talent.content_type);
+                    $('#view_produk').val(response.talent.produk);
+                    $('#view_rate_final').val(formatRupiah(response.talent.rate_final));
+                    $('#view_pic').val(response.talent.pic);
+                    $('#view_bulan_running').val(response.talent.bulan_running);
+                    $('#view_niche').val(response.talent.niche);
+                    $('#view_followers').val(response.talent.followers);
+                    $('#view_address').val(response.talent.address);
+                    $('#view_phone_number').val(response.talent.phone_number);
+                    $('#view_bank').val(response.talent.bank);
+                    $('#view_no_rekening').val(response.talent.no_rekening);
+                    $('#view_nama_rekening').val(response.talent.nama_rekening);
+                    $('#view_no_npwp').val(response.talent.no_npwp);
+                    $('#view_pengajuan_transfer_date').val(response.talent.pengajuan_transfer_date);
+                    $('#view_gdrive_ttd_kol_accepting').val(response.talent.gdrive_ttd_kol_accepting);
+                    $('#view_nik').val(response.talent.nik);
+                    $('#view_price_rate').val(formatRupiah(response.talent.price_rate));
+                    $('#view_first_rate_card').val(formatRupiah(response.talent.first_rate_card));
+                    $('#view_discount').val(formatRupiah(response.discount)); // Access discount directly
+                    $('#view_slot_final').val(response.talent.slot_final);
+                    $('#view_tax_deduction').val(formatRupiah(response.talent.tax_deduction));
+                    $('#view_created_at').val(response.talent.created_at);
+                    $('#view_updated_at').val(response.talent.updated_at);
+                    $('#view_scope_of_work').val(response.talent.scope_of_work);
+                    $('#view_masa_kerjasama').val(response.talent.masa_kerjasama);
 
                     // Show the modal
                     $('#viewTalentModal').modal('show');

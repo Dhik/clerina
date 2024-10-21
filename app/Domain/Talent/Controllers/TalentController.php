@@ -127,7 +127,7 @@ class TalentController extends Controller
         // Calculate discount
         $discount = 0;
         if ($validatedData['price_rate'] && $validatedData['slot_final'] && $validatedData['rate_final']) {
-            $discount = ($validatedData['price_rate'] * $validatedData['slot_final']) - $validatedData['rate_final'];
+            $discount = $validatedData['price_rate'] - $validatedData['rate_final'];
         }
 
         // Calculate tax deduction
@@ -156,7 +156,11 @@ class TalentController extends Controller
      */
     public function show(Talent $talent)
     {
-        return response()->json($talent);
+        $discount = $talent->price_rate - $talent->rate_final;
+        return response()->json([
+            'talent' => $talent,
+            'discount' => $discount,
+        ]);
     }
 
     /**
