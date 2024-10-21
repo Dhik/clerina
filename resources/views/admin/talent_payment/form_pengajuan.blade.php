@@ -60,7 +60,7 @@
             @endphp
             @foreach($talentContents as $content)
                 @php
-                    $rate_card_per_slot = $content->talent->price_rate / $content->talent->slot_final;
+                    $rate_card_per_slot = $content->talent->price_rate;
                     $slot = $content->talent->slot_final;
                     $rate_harga = $rate_card_per_slot * $slot;
                     $discount = $content->talent->discount;
