@@ -12,11 +12,11 @@
             <div class="card">
                 <div class="card-header">
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
-                    <i class="fas fa-plus"></i> Add Talent
+                        <i class="fas fa-plus"></i> Add Talent
                     </button>
-                    <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
-                    <i class="fas fa-file-download"></i> Import Talent
-                    </button> -->
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
+                        <i class="fas fa-file-download"></i> Import Talent
+                    </button>
                 </div>
                 <div class="card-body">
                     <table id="talentTable" class="table table-bordered table-striped">
