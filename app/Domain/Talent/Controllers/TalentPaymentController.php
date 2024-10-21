@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\TalentPayment\TalentPaymentBLLInterface;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Talent\Exports\TalentPaymentExport;
 use App\Domain\Talent\Models\Talent;
 use App\Domain\Talent\Models\TalentPayment;
 use App\Domain\Talent\Requests\TalentPaymentRequest;
 use Yajra\DataTables\Utilities\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;  
@@ -379,5 +381,8 @@ class TalentPaymentController extends Controller
             })
             ->rawColumns(['action', 'spent'])
             ->make(true);
+    }
+    public function exportReport(){
+        return Excel::download(new TalentPaymentExport, 'kol_payment_report.xlsx');
     }
 }

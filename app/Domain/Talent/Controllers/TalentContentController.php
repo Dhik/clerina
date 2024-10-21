@@ -162,7 +162,14 @@ class TalentContentController extends Controller
                     ';
                 }
             })
-            ->rawColumns(['action', 'status_and_link', 'done', 'refund', 'talent_should_get'])
+            ->addColumn('deadline', function ($talentContent) {
+                if ($talentContent->posting_date > $talentContent->dealing_upload_date) {
+                    return '<span style="color:red;">Overdue</span>';
+                } else {
+                    return '<span style="color:green;">On time</span>';
+                }
+            })            
+            ->rawColumns(['action', 'status_and_link', 'done', 'refund', 'talent_should_get', 'deadline'])
             ->make(true);
     }
 

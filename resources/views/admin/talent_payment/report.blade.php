@@ -53,9 +53,10 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-4">
-            <button id="resetFilterButton" class="btn btn-secondary">Reset Filter</button>
-        </div>
+        <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
+        <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </a>
     </div>
 
     <!-- Talent Table for Hutang and Piutang -->
@@ -122,8 +123,7 @@
                                 <th>Username</th>
                                 <th>Dealing Upload Date</th>
                                 <th>Posting Date</th>
-                                <th>Done</th>
-                                <th>Additional Info</th>
+                                <th>Status</th>
                                 <th>Talent Should Get</th>
                             </tr>
                         </thead>
@@ -158,6 +158,9 @@
             var tableHutangPiutang = $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
+                paging: true, 
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]], 
+                pageLength: 10,
                 ajax: {
                     url: "{{ route('talent_payments.hutang') }}", // Your route here
                     type: 'GET',
@@ -192,7 +195,21 @@
                     { data: 'hutang', name: 'Hutang' },
                     { data: 'piutang', name: 'Piutang' }
                 ],
-                order: [[0, 'asc']]
+                order: [[0, 'asc']],
+                info: false, 
+                searching: false, 
+                pagingType: "simple_numbers",
+                drawCallback: function(settings) {
+                    var api = this.api();
+                    var rowsCount = api.data().length;
+
+                    // If less than or equal to 10 rows, hide the pagination
+                    if (rowsCount <= 10) {
+                        $('.dataTables_paginate').hide();
+                    } else {
+                        $('.dataTables_paginate').show();
+                    }
+                }
             });
 
             // Initialize DataTable for Talent Payments
@@ -246,7 +263,13 @@
                             return '';
                         }
                     },
-                    { data: 'spent', name: 'spent' },
+                    { 
+                        data: 'spent', 
+                        name: 'spent', 
+                        render: function(data, type, row) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    }
                 ],
                 order: [[0, 'desc']]
             });
@@ -293,9 +316,14 @@
                             return '';
                         }
                     },
-                    { data: 'done', name: 'done', orderable: false, searchable: false },
-                    { data: 'status_and_link', name: 'status_and_link', orderable: false, searchable: false },
-                    { data: 'talent_should_get', name: 'talent_should_get' },
+                    { data: 'deadline', name: 'deadline', orderable: false, searchable: false },
+                    { 
+                        data: 'talent_should_get', 
+                        name: 'talent_should_get', 
+                        render: function(data, type, row) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    }
                 ],
                 order: [[0, 'desc']]
             });
