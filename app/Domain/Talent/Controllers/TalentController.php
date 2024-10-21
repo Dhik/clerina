@@ -241,7 +241,7 @@ class TalentController extends Controller
         }
 
         $harga = $talent->rate_final; 
-        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->talent_name, ['PT', 'CV']);
+        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
         if ($isPTorCV) {
             $pphPercentage = 2;
             $pphLabel = 'PPh 23 (2%)';
