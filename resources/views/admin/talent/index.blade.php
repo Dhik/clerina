@@ -14,9 +14,9 @@
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
                         <i class="fas fa-plus"></i> Add Talent
                     </button>
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
+                    <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
                         <i class="fas fa-file-download"></i> Import Talent
-                    </button>
+                    </button> -->
                 </div>
                 <div class="card-body">
                     <table id="talentTable" class="table table-bordered table-striped">
