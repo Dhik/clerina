@@ -227,7 +227,7 @@
                 <td>Cleora Beauty</td>
                 <td>{{ $talent->scope_of_work }}</td>
                 <td>{{ $talent->masa_kerjasama }}</td>
-                <td>{{ $talent->rate_final - $talent->tax_deduction }}</td>
+                <td>{{ $total }}</td>
             </tr>
         </table>
 

@@ -295,7 +295,15 @@ class TalentController extends Controller
     {
         $talent = Talent::findOrFail($id);
         $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
-        $pdf = PDF::loadView('admin.talent.mou', compact('talent', 'tanggal_hari_ini'));
+        $harga = $talent->rate_final; 
+        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
+        if ($isPTorCV) {
+            $pph = $harga * 0.02;
+        } else {
+            $pph = $harga * 0.025;
+        }
+        $total = $harga - $pph; 
+        $pdf = PDF::loadView('admin.talent.mou', compact('talent', 'tanggal_hari_ini', 'total'));
         $pdf->setPaper('A4', 'potrait');
         return $pdf->download('SPK.pdf');
     }
