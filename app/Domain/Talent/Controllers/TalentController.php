@@ -200,9 +200,9 @@ class TalentController extends Controller
             $talent->update($data);
     
             // Redirect using the route name "Talent"
-            return redirect()->route('Talent')->with('success', 'Talent updated successfully');
+            return redirect()->route('talent.index')->with('success', 'Talent updated successfully');
         } catch (\Exception $e) {
-            return redirect()->route('Talent')->with('error', 'Failed to update talent: ' . $e->getMessage());
+            return redirect()->route('talent.index')->with('error', 'Failed to update talent: ' . $e->getMessage());
         }
     }
 
