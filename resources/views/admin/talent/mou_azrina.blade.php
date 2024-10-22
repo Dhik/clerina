@@ -12,7 +12,7 @@
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt;
-            line-height: 1.3;
+            line-height: 1.5;
         }
         .header {
             margin-bottom: 20px;
@@ -117,13 +117,13 @@
 
         <p class="indent">
         Pada tanggal 11 September 2024 dibuat dan ditandatangani perjanjian kerjasama untuk
-        program endorsement, yang selanjutnya disebut juga sebagai
+program endorsement, yang selanjutnya disebut juga sebagai “<strong>PERJANJIAN KERJA SAMA</strong>” antara :
         </p>
 
         <div class="content-section">
             <table class="no-border">
                 <tr>
-                    <td style="width: 30%;">Nama Perusahaan</td>
+                    <td style="width: 40%;">Nama Perusahaan</td>
                     <td>: PT Lisa Global Cantika</td>
                 </tr>
                 <tr>
@@ -139,12 +139,13 @@
                     <td>: 085173069356</td>
                 </tr>
             </table>
+            <p>Selanjutnya dalam hal ini disebut sebagai <strong>PIHAK PERTAMA.</strong></p>
         </div>
 
         <div class="content-section">
             <table class="no-border">
                 <tr>
-                    <td style="width: 30%;">Nama KOL</td>
+                    <td style="width: 40%;">Nama KOL</td>
                     <td>: {{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
@@ -154,6 +155,15 @@
                 <tr>
                     <td>No. Telepon</td>
                     <td>: {{ $talent->phone_number }}</td>
+                </tr>
+            </table>
+            <p>Selanjutnya dalam hal ini disebut sebagai <strong>PIHAK KEDUA.</strong><p>
+        </div>
+
+        <div class="content-section">
+            <table class="no-border">
+                <tr>
+                    <td><strong>PIHAK PERTAMA</strong> dan <strong>PIHAK KEDUA</strong> untuk selanjutnya disebut <strong>PARA PIHAK</strong>.</td>
                 </tr>
             </table>
         </div>
@@ -173,39 +183,22 @@
                     <td>: {{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
-                    <td>Alamat</td>
-                    <td>: {{ $talent->address }}</td>
+                    <td>Jumlah Followers</td>
+                    <td>: {{ number_format($talent->followers, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
-                    <td>No. Telepon</td>
-                    <td>: {{ $talent->phone_number }}</td>
+                    <td>SOW</td>
+                    <td>: {{ $talent->scope_of_work }}</td>
+                </tr>
+                <tr>
+                    <td>Masa Kerjasama</td>
+                    <td>: {{ $talent->masa_kerjasama }}</td>
+                </tr>
+                <tr>
+                    <td>Biaya Endorsement</td>
+                    <td>: {{ number_format($total, 0, ',', '.') }}</td>
                 </tr>
             </table>
-        </div>
-
-
-        <table>
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Nama Akun TikTok</th>
-                    <th>Jumlah Followers</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr style="text-align: center;">
-                    <td>1.</td>
-                    <td>{{ $talent->username }}</td>
-                    <td>{{ number_format($talent->followers, 0, ',', '.') }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="content-section">
-            <strong>1. Isi</strong>
-            <p class="indent">
-                Pihak Pertama dengan ini telah mengkonfirmasi saudara/i {{ $talent->talent_name }} (untuk selanjutnya disebut Pihak Kedua) setelah bernegosiasi dan bersepakat bersama, dan menunjuk Pihak Kedua sebagai yang mempromosikan video endorsement dari Pihak Pertama.
-            </p>
         </div>
 
         <div class="footer"></div>
@@ -233,11 +226,11 @@
 
         <div class="content-section">
             <ol>
-                <li>PIHAK PERTAMA memberikan dan menyediakan produk yang telah disepakati dengan PIHAK KEDUA serta memberikan info terkait video yang diberikan.</li>
-                <li>PIHAK KEDUA wajib memposting {{ $talent->scope_of_work }} untuk brand dalam waktu {{ $talent->masa_kerjasama }}. </li>
-                <li class="highlight">PIHAK KEDUA wajib mempertahankan video yang telah diunggah di platform terkait dan tidak diperkenankan untuk menghapus, menyunting, mengarsipkan atau menonaktifkan video tersebut dengan alasan apapun, kecuali video tersebut melanggar ketentuan hukum yang berlaku di Indonesia.</li>
-                <li>PIHAK KEDUA harus menyerahkan perkiraan rencana draft promosi atau siaran langsung dan data yang terkait dengan produk kepada PIHAK PERTAMA sesuai jadwal yang disepakati.</li>
-                <li>Jika PIHAK KEDUA tidak melakukan kewajiban seperti tidak memposting video sesuai jadwal yang telah disepakati bersama, tidak ada respon apapun mengenai kemuduran posting video atau membatalkan kerjasama secara sepihak maka PIHAK KEDUA wajib melakukan pengembalian dana secara materil dengan sejumlah sisa slot video yang belum terposting sebanyak 5x (lima kali) lipat dari nominal harga yang sudah disepakati.</li>
+                <li><strong>PIHAK PERTAMA</strong> memberikan dan menyediakan produk yang telah disepakati dengan <strong>PIHAK KEDUA</strong> serta memberikan info terkait video yang diberikan.</li>
+                <li><strong>PIHAK KEDUA</strong> wajib memposting {{ $talent->scope_of_work }} untuk brand dalam waktu {{ $talent->masa_kerjasama }}. </li>
+                <li class="highlight"><strong>PIHAK KEDUA</strong> wajib mempertahankan video yang telah diunggah di platform terkait dan tidak diperkenankan untuk menghapus, menyunting, mengarsipkan atau menonaktifkan video tersebut dengan alasan apapun, kecuali video tersebut melanggar ketentuan hukum yang berlaku di Indonesia.</li>
+                <li><strong>PIHAK KEDUA</strong> harus menyerahkan perkiraan rencana draft promosi video atau siaran langsung dan data yang terkait dengan produk kepada <strong>PIHAK PERTAMA</strong> sesuai jadwal yang disepakati.</li>
+                <li>Jika <strong>PIHAK KEDUA</strong> tidak melakukan kewajiban seperti tidak memposting video sesuai jadwal yang telah disepakati bersama, tidak ada respon apapun mengenai kemuduran posting video atau membatalkan kerjasama secara sepihak maka <strong>PIHAK KEDUA</strong> wajib melakukan pengembalian dana secara materil dengan sejumlah sisa slot video yang belum terposting sebanyak 5x (lima kali) lipat dari nominal harga yang sudah disepakati.</li>
                 <li>Apabila dalam pelaksanaan kerjasama terdapat hal-hal yang tidak sesuai dengan kesepakatan yang telah dibuat, maka pihak yang melanggar bersedia untuk menerima konsekuensi Hukum yang berlaku di Negara Kesatuan Republik Indonesia.</li>
             </ol>
         </div>
