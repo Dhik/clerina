@@ -15,6 +15,7 @@ use App\Domain\Talent\Exports\TalentTemplateExport;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;  
+use Auth;
 
 /**
  * @property TalentBLLInterface talentBLL
@@ -141,6 +142,7 @@ class TalentController extends Controller
         $validatedData['discount'] = $discount;
         $validatedData['tax_deduction'] = $tax_deduction;
         $validatedData['final_transfer'] = $final_transfer;
+        $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
 
         // Create a new Talent record
         Talent::create($validatedData);

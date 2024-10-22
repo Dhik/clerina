@@ -9,6 +9,7 @@ use App\Domain\Tenant\Traits\FilterByTenant;
 
 class Talent extends Model
 {
+    use FilterByTenant, InteractsWithMedia;
     protected $table = 'talents';
     protected $fillable = [
         'username',
@@ -38,6 +39,7 @@ class Talent extends Model
         'amount_tf',
         'scope_of_work',
         'masa_kerjasama',
+        'tenant_id',
     ];
     public function talentContents()
     {

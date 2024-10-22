@@ -16,6 +16,7 @@ use Yajra\DataTables\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;  
 use Illuminate\Support\Facades\DB;
+use Auth;
 
 /**
  */
@@ -41,6 +42,7 @@ class TalentPaymentController extends Controller
 
     public function data(Request $request)
     {
+        $currentTenantId = Auth::user()->current_tenant_id;
         $payments = TalentPayment::select([
                 'talent_payments.id',
                 'talent_payments.done_payment',
@@ -52,7 +54,8 @@ class TalentPaymentController extends Controller
                 'talents.talent_name',
                 'talents.followers'
             ])
-            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id');
+            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId);
 
         // Apply filters if provided
         if ($request->has('pic') && $request->pic != '') {
@@ -112,6 +115,7 @@ class TalentPaymentController extends Controller
                 'status_payment' => 'nullable|string|max:255',
             ]);
             $validatedData['tanggal_pengajuan'] = Carbon::today();
+            $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
         } catch (\Exception $e) {
@@ -325,6 +329,7 @@ class TalentPaymentController extends Controller
     }
     public function paymentReport(Request $request)
     {
+        $currentTenantId = Auth::user()->current_tenant_id;
         $payments = TalentPayment::select([
                 'talent_payments.id',
                 'talent_payments.done_payment',
@@ -337,7 +342,8 @@ class TalentPaymentController extends Controller
                 'talents.followers',
                 'talents.rate_final',
             ])
-            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id');
+            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId);
 
             if ($request->input('username')) {
                 $payments->where('talents.username', $request->input('username'));

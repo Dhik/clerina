@@ -73,6 +73,7 @@ class TalentContentController extends Controller
         
     public function data(Request $request)
     {
+        $currentTenantId = Auth::user()->current_tenant_id;
         $talentContents = TalentContent::select([
             'talent_content.id', 
             'talent_content.talent_id', 
@@ -86,7 +87,8 @@ class TalentContentController extends Controller
             'talents.rate_final',
             'talents.slot_final'
         ])
-        ->join('talents', 'talent_content.talent_id', '=', 'talents.id');
+        ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+        ->where('talents.tenant_id', $currentTenantId);
         
         if ($request->input('username')) {
             $talentContents->where('talents.username', $request->input('username'));
@@ -199,6 +201,7 @@ class TalentContentController extends Controller
         $validatedData['done'] = 0;
         $validatedData['upload_link'] = null;
         $validatedData['boost_code'] = null;
+        $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
 
         // Create a new TalentContent record
         TalentContent::create($validatedData);
@@ -315,9 +318,11 @@ class TalentContentController extends Controller
     public function getTodayTalentNames()
     {
         $today = Carbon::today();
+        $currentTenantId = Auth::user()->current_tenant_id;
         $talentData = TalentContent::whereDate('talent_content.dealing_upload_date', $today)
             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
             ->leftJoin('campaigns', 'talent_content.campaign_id', '=', 'campaigns.id')
+            ->where('talents.tenant_id', $currentTenantId)
             ->select('talents.username', 'campaigns.title as campaign_title')
             ->get();
 
@@ -326,8 +331,10 @@ class TalentContentController extends Controller
 
     public function calendar(): JsonResponse
     {
+        $currentTenantId = Auth::user()->current_tenant_id;
         $talentContents = TalentContent::join('talents', 'talent_content.talent_id', '=', 'talents.id')
             ->select('talent_content.id', 'talent_content.dealing_upload_date', 'talents.username')
+            ->where('talents.tenant_id', $currentTenantId)
             ->get();
         $data = $talentContents->map(function ($content) {
             return [
@@ -341,10 +348,26 @@ class TalentContentController extends Controller
     }
     public function countContent(): JsonResponse
     {
-        $todayCount = TalentContent::whereDate('posting_date', today())->count();
-        $doneFalseCount = TalentContent::where('done', false)->count();
-        $doneTrueCount = TalentContent::where('done', true)->count();
-        $totalCount = TalentContent::count();
+        $currentTenantId = Auth::user()->current_tenant_id;
+
+        $todayCount = TalentContent::whereDate('talent_content.posting_date', today())
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId)
+            ->count();
+
+        $doneFalseCount = TalentContent::where('talent_content.done', false)
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId)
+            ->count();
+
+        $doneTrueCount = TalentContent::where('talent_content.done', true)
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId)
+            ->count();
+
+        $totalCount = TalentContent::join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->where('talents.tenant_id', $currentTenantId)
+            ->count();
 
         return response()->json([
             'today_count' => $todayCount,
