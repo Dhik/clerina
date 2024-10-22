@@ -297,7 +297,7 @@
                     <td>: {{ $talent->no_rekening }}</td>
                 </tr>
                 <tr>
-                    <td>Bank Perima</td>
+                    <td>Bank Penerima</td>
                     <td>: {{ $talent->bank }}</td>
                 </tr>
                 <tr>

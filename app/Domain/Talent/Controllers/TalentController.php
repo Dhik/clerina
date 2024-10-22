@@ -295,6 +295,7 @@ class TalentController extends Controller
     }
     public function exportSPK($id)
     {
+        $currentTenantId = Auth::user()->current_tenant_id;
         $talent = Talent::findOrFail($id);
         $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
         $harga = $talent->rate_final; 
@@ -305,13 +306,27 @@ class TalentController extends Controller
             $pph = $harga * 0.025;
         }
         $total = $harga - $pph; 
-        $pdf = PDF::loadView('admin.talent.mou', compact('talent', 'tanggal_hari_ini', 'total'));
+        if ($talent->tenant_id == 1) {
+            $pdf = PDF::loadView('admin.talent.mou_cleora', compact('talent', 'tanggal_hari_ini', 'total'));
+        } else {
+            $pdf = PDF::loadView('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
+        } 
         $pdf->setPaper('A4', 'potrait');
         return $pdf->download('SPK.pdf');
     }
     public function showSPK()
     {
-        $talentContents = TalentContent::with('talent')->get();
-        return view('admin.talent.mou', compact('talentContents'));
+        $currentTenantId = Auth::user()->current_tenant_id;
+        $talent = Talent::findOrFail(516);
+        $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
+        $harga = $talent->rate_final; 
+        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
+        if ($isPTorCV) {
+            $pph = $harga * 0.02;
+        } else {
+            $pph = $harga * 0.025;
+        }
+        $total = $harga - $pph; 
+        return view('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
     }
 }
