@@ -67,7 +67,7 @@
                     $harga_setelah_diskon = $rate_harga - $discount;
                     $pphPercentage = $content->isPTorCV ? 0.02 : 0.025;
                     $pphAmount = $harga_setelah_diskon * $pphPercentage;
-                    $final_tf = $rate_harga - $pphAmount;
+                    $final_tf = $harga_setelah_diskon - $pphAmount;
                     $dp = $final_tf / 2; // DP 50%
                 @endphp
                 <tr>

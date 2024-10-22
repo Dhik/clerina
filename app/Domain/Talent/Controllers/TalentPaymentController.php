@@ -201,7 +201,7 @@ class TalentPaymentController extends Controller
 
         // Determine the tax type for each talent
         $talentContents->each(function ($content) {
-            $content->isPTorCV = \Illuminate\Support\Str::startsWith($content->talent->talent_name, ['PT', 'CV']);
+            $content->isPTorCV = \Illuminate\Support\Str::startsWith($content->talent->nama_rekening, ['PT', 'CV']);
         });
 
         // Generate PDF
