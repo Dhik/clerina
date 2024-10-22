@@ -289,6 +289,26 @@
             }
         });
     });
+
+    // Check if there's a success message and show SweetAlert for success after editing talent
+        @if(session('success'))
+            Swal.fire({
+                title: 'Success!',
+                text: "{{ session('success') }}",
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+        @endif
+
+        // Check if there's an error message and show SweetAlert for error after editing talent
+        @if(session('error'))
+            Swal.fire({
+                title: 'Error!',
+                text: "{{ session('error') }}",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        @endif
     });
 
     $(document).ready(function() {
