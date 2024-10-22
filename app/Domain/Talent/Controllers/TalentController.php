@@ -182,31 +182,27 @@ class TalentController extends Controller
     public function update(TalentRequest $request, Talent $talent)
     {
         try {
-            DB::beginTransaction();
-
             // Prepare the data for update
             $data = $request->validated();
-
+    
             // Handle money inputs (assuming they come in as formatted strings)
             $data['price_rate'] = (int) str_replace(['Rp', '.', ' '], '', $data['price_rate']);
             $data['rate_final'] = (int) str_replace(['Rp', '.', ' '], '', $data['rate_final']);
-
+    
             // Calculate discount
             $data['discount'] = ($data['price_rate'] * $data['slot_final']) - $data['rate_final'];
-
+    
             // Calculate tax deduction
             $taxRate = (strpos($data['talent_name'], 'PT') === 0 || strpos($data['talent_name'], 'CV') === 0) ? 0.02 : 0.025;
             $data['tax_deduction'] = (int) ($data['rate_final'] * $taxRate);
-
-            // Update the talent
+    
+            // Update the talent without transactions
             $talent->update($data);
-
-            DB::commit();
-
-            return redirect()->route('talent.index')->with('success', 'Talent updated successfully');
+    
+            // Redirect using the route name "Talent"
+            return redirect()->route('Talent')->with('success', 'Talent updated successfully');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('talent.index')->with('error', 'Failed to update talent: ' . $e->getMessage());
+            return redirect()->route('Talent')->with('error', 'Failed to update talent: ' . $e->getMessage());
         }
     }
 

@@ -200,6 +200,49 @@
             window.location.href = exportUrl;
         });
 
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', { 
+                style: 'currency', 
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(number);
+        }
+
+        $('#addTalentForm').on('submit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var url = form.attr('action');
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: form.serialize(),
+                success: function(response) {
+                    $('#addTalentModal').modal('hide');
+                    table.ajax.reload();
+                    Swal.fire('Success', 'Talent added successfully', 'success');
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        var errors = xhr.responseJSON.errors;
+                        if (errors.username) {
+                            $('#username').addClass('is-invalid');
+                            $('#username-error').text(errors.username[0]).show();
+                        }
+                    } else {
+                        Swal.fire('Error', 'Failed to add talent', 'error');
+                    }
+                }
+            });
+        });
+
+        // Clear error messages when modal is hidden
+        $('#addTalentModal').on('hidden.bs.modal', function () {
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').hide();
+        });
+
 
         $('#addTalentModal, #editTalentModal').on('hidden.bs.modal', function () {
             $(this).find('form')[0].reset();
@@ -292,47 +335,6 @@
     });
 
     // Helper function to format currency
-    function formatRupiah(number) {
-        return new Intl.NumberFormat('id-ID', { 
-            style: 'currency', 
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(number);
-    }
-
-    $('#addTalentForm').on('submit', function(e) {
-        e.preventDefault();
-        var form = $(this);
-        var url = form.attr('action');
-
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: form.serialize(),
-            success: function(response) {
-                $('#addTalentModal').modal('hide');
-                table.ajax.reload();
-                Swal.fire('Success', 'Talent added successfully', 'success');
-            },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    var errors = xhr.responseJSON.errors;
-                    if (errors.username) {
-                        $('#username').addClass('is-invalid');
-                        $('#username-error').text(errors.username[0]).show();
-                    }
-                } else {
-                    Swal.fire('Error', 'Failed to add talent', 'error');
-                }
-            }
-        });
-    });
-
-    // Clear error messages when modal is hidden
-    $('#addTalentModal').on('hidden.bs.modal', function () {
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').hide();
-    });
+    
 </script>
 @stop
