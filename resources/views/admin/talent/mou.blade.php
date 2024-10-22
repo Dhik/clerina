@@ -179,7 +179,7 @@
                 <tr style="text-align: center;">
                     <td>1.</td>
                     <td>{{ $talent->username }}</td>
-                    <td>{{ $talent->followers }}</td>
+                    <td>{{ number_format($talent->followers, 0, ',', '.') }}</td>
                 </tr>
             </tbody>
         </table>

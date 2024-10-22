@@ -61,7 +61,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="followers">Followers</label>
-                                <input type="number" name="followers" id="followers" class="form-control">
+                                <input type="text" name="followers" id="followers" class="form-control money">
                             </div>
                             <div class="form-group">
                                 <label for="address">Address</label>
