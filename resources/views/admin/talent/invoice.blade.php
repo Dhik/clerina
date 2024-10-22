@@ -92,7 +92,6 @@
                         <tr>
                             <td>
                                 <img src="{{ public_path('img/cleora-logo.png') }}" style="width:100%; max-width:250px;"><br>
-                                CV CLEORA BEAUTY SOLUTION<br>
                                 PT. Summer Cantika Indonesia<br>
                             </td>
                             <td class="title">
