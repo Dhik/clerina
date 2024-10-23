@@ -396,7 +396,7 @@ class TalentContentController extends Controller
             'channel' => $request->channel,
             'task_name' => $request->task_name,
             'link' => $request->upload_link,
-            'rate_card' => $talent->rate_final/$talent->slot_final,
+            'rate_card' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
             'product' => $talent->produk,
             'upload_date' => null,
             'boost_code' => $talentContent->boost_code,
