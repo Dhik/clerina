@@ -260,19 +260,14 @@ class TalentContentController extends Controller
     {
         $validated = $request->validate([
             'dealing_upload_date' => 'nullable|date',
+            'posting_date' => 'nullable|date',
             'pic_code' => 'nullable|string|max:255',
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
         ]);
 
         $validated['transfer_date'] = $request->dealing_upload_date;
-
-        // Set posting_date based on upload_link
-        if (!empty($validated['upload_link'])) {
-            $validated['posting_date'] = Carbon::today()->toDateString();
-        } else {
-            $validated['posting_date'] = null;
-        }
+        $validated['posting_date'] = $request->posting_date;
 
         $talentContent = TalentContent::find($id);
         if (!$talentContent) {

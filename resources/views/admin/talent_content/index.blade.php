@@ -389,6 +389,7 @@
                     
                     $('#edit_talent_id').val(response.talentContent.talent_id);
                     $('#edit_dealing_upload_date').val(response.talentContent.dealing_upload_date.split('T')[0]);
+                    $('#edit_posting_date').val(response.talentContent.posting_date.split('T')[0]);
                     $('#edit_done').val(response.talentContent.done ? 1 : 0);
                     $('#edit_upload_link').val(response.talentContent.upload_link);
                     $('#edit_final_rate_card').val(response.talentContent.final_rate_card);

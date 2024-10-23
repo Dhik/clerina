@@ -18,6 +18,10 @@
                                 <input type="date" name="dealing_upload_date" id="edit_dealing_upload_date" class="form-control">
                             </div>
                             <div class="form-group">
+                                <label for="edit_posting_date">Posting Date</label>
+                                <input type="date" name="posting_date" id="edit_posting_date" class="form-control">
+                            </div>
+                            <div class="form-group">
                                 <label for="edit_kerkun">Kerkun</label>
                                 <select name="kerkun" id="edit_kerkun" class="form-control" required>
                                     <option value="">Select Option</option>
