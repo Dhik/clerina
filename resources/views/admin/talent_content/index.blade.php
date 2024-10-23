@@ -159,7 +159,7 @@
 @section('js')
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
         // Initialize DataTable with the date range filters
         const filterDone = $('#filterDone');
         var table = $('#talentContentTable').DataTable({
@@ -325,9 +325,6 @@
             });
         }
         fetchTodayTalents();
-    });
-
-    $(document).ready(function() {
         var talentChoices, campaignChoices;
         
         $('#addTalentContentModal').on('show.bs.modal', function() {
@@ -381,9 +378,6 @@
             });
         });
         
-
-        
-
         $('#talentContentTable').on('click', '.editButton', function() {
             var id = $(this).data('id');
 
@@ -435,7 +429,6 @@
             });
         });
 
-
         $('#talentContentTable').on('click', '.deleteButton', function(e) {
             e.preventDefault(); 
             var id = $(this).data('id');
@@ -485,18 +478,18 @@
             });
         });
 
-        // Handle "Add Link" button click
         $('#talentContentTable').on('click', '.addLinkButton', function() {
             var id = $(this).data('id');
             $('#addLinkContentForm').attr('action', '{{ route('talent_content.addLink', ':id') }}'.replace(':id', id));
             $('#addLinkContentModal').modal('show');
         });
 
-        // Handle form submission for adding link
         $('#addLinkContentForm').on('submit', function(e) {
             e.preventDefault();
             var form = $(this);
             var url = form.attr('action');
+
+            console.log(form.serialize());
 
             $.ajax({
                 url: url,
@@ -592,9 +585,6 @@
         });
 
     });
-
-    
-
 </script>
 @stop
 

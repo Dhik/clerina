@@ -382,12 +382,13 @@ class TalentContentController extends Controller
             'upload_link' => 'required|url',
             'channel' => 'required|string',
             'task_name' => 'required|string',
+            'posting_date' => 'required|date',
         ]);
 
         $talentContent = TalentContent::findOrFail($id);
         $talentContent->upload_link = $request->upload_link;
         $talentContent->done = 1;
-        $talentContent->posting_date = Carbon::today();
+        $talentContent->posting_date = $request->posting_date;
         $talentContent->save();
 
         $talent = Talent::findOrFail($talentContent->talent_id);

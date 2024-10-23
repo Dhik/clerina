@@ -33,6 +33,10 @@
                         <label for="upload_link">Upload Link</label>
                         <input type="url" name="upload_link" id="upload_link" class="form-control" required>
                     </div>
+                    <div class="form-group">
+                        <label for="posting_date">Posting Date</label>
+                        <input type="date" name="posting_date" id="posting_date" class="form-control" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
