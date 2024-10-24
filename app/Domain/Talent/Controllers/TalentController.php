@@ -38,7 +38,7 @@ class TalentController extends Controller
 
     public function data(Request $request)
     {
-        $talents = Talent::select(['id', 'username', 'talent_name', 'pengajuan_transfer_date', 'rate_final']);
+        $talents = Talent::select(['id', 'username', 'talent_name', 'pengajuan_transfer_date', 'rate_final', 'slot_final']);
     
         return DataTables::of($talents)
             ->addColumn('action', function ($talent) {

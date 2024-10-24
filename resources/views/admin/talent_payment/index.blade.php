@@ -49,7 +49,7 @@
                             <tr>
                                 <th>Username</th>
                                 <th>Talent Name</th>
-                                <th>Followers</th>
+                                <th>Nama Rekening</th>
                                 <th>Status Payment</th>
                                 <th>PIC</th>
                                 <th>Done Payment</th>
@@ -94,7 +94,7 @@
             columns: [
                 { data: 'username', name: 'talents.username' },
                 { data: 'talent_name', name: 'talents.talent_name' },
-                { data: 'followers', name: 'talents.followers' },
+                { data: 'nama_rekening', name: 'talents.nama_rekening' },
                 { 
                     data: 'status_payment', 
                     name: 'talent_payments.status_payment',

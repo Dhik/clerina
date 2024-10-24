@@ -50,6 +50,7 @@ class TalentPaymentController extends Controller
                 'talent_payments.tanggal_pengajuan',
                 'talents.pic',
                 'talents.username',
+                'talents.nama_rekening',
                 'talent_payments.status_payment',
                 'talents.talent_name',
                 'talents.followers'

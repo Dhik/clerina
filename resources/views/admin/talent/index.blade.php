@@ -25,7 +25,7 @@
                                 <th>ID</th>
                                 <th>Username</th>
                                 <th>Talent Name</th>
-                                <th>Tanggal Pengajuan TF</th>
+                                <th>Slot Final</th>
                                 <th>Rate Final</th>
                                 <th>Payment Action</th>
                                 <th>Action</th>
@@ -67,7 +67,7 @@
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
-                { data: 'pengajuan_transfer_date', name: 'pengajuan_transfer_date' },
+                { data: 'slot_final', name: 'slot_final' },
                 {
                     data: 'rate_final',
                     name: 'rate_final',
