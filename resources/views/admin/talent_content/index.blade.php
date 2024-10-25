@@ -382,6 +382,7 @@
                     $('#edit_upload_link').val(response.talentContent.upload_link);
                     $('#edit_final_rate_card').val(response.talentContent.final_rate_card);
                     $('#edit_pic_code').val(response.talentContent.pic_code);
+                    $('#edit_product').val(response.talentContent.product);
                     $('#edit_boost_code').val(response.talentContent.boost_code);
                     $('#edit_kerkun').val(response.talentContent.kerkun ? 1 : 0);
                     
@@ -403,6 +404,7 @@
                     $('#view_talent_name').val(response.talentContent.talent_name);
                     $('#view_dealing_upload_date').val(response.talentContent.dealing_upload_date);
                     $('#view_posting_date').val(response.talentContent.posting_date);
+                    $('#view_product').val(response.talentContent.product);
                     $('#view_final_rate_card').val(response.talentContent.final_rate_card);
                     $('#view_done').val(response.talentContent.done ? 'Yes' : 'No');
                     $('#view_upload_link').val(response.talentContent.upload_link);

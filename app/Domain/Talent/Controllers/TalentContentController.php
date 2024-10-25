@@ -234,6 +234,7 @@ class TalentContentController extends Controller
                 'pic_code' => $talentContent->pic_code,
                 'boost_code' => $talentContent->boost_code,
                 'kerkun' => $talentContent->kerkun,
+                'product' => $talentContent->product,
             ],
         ]);
     }
@@ -267,11 +268,13 @@ class TalentContentController extends Controller
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
             'upload_link' => 'nullable|string|max:255',
+            'product' => 'nullable|string|max:255',
         ]);
 
         $validated['transfer_date'] = $request->dealing_upload_date;
         $validated['posting_date'] = $request->posting_date;
         $validated['upload_link'] = $request->upload_link;
+        $validated['product'] = $request->product;
         if ($request->upload_link == "") {
             $validated['done'] = 0;
         }

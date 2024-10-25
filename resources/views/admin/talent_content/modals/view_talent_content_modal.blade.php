@@ -33,6 +33,10 @@
                     <input type="text" id="view_boost_code" class="form-control" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="view_product">Produk</label>
+                    <input type="text" id="view_product" class="form-control" readonly>
+                </div>
+                <div class="form-group">
                     <label for="view_kerkun">Kerkun Status</label>
                     <input type="text" id="view_kerkun" class="form-control" readonly>
                 </div>

@@ -29,6 +29,10 @@
                                     <option value="1">Yes</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="edit_product">Produk</label>
+                                <input type="text" name="product" id="edit_product" class="form-control">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
