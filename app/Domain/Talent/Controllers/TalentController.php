@@ -123,6 +123,7 @@ class TalentController extends Controller
             'rate_final' => 'nullable|integer',
             'scope_of_work' => 'nullable|string|max:255',
             'masa_kerjasama' => 'nullable|string|max:255',
+            'platform' => 'nullable|string|max:255',
         ]);
 
         // Calculate discount

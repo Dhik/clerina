@@ -117,6 +117,16 @@
                                 <label for="edit_masa_kerjasama">Masa Kerjasama</label>
                                 <input type="text" name="masa_kerjasama" id="edit_masa_kerjasama" class="form-control">
                             </div>
+                            <div class="form-group">
+                                <label for="edit_platform">Platform</label>
+                                <select name="platform" id="edit_platform" class="form-control">
+                                    <option value="">Select Platform</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Tiktok">Tiktok</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Youtube">Youtube</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

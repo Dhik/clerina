@@ -112,6 +112,10 @@
                             <label for="view_masa_kerjasama">Masa Kerjasama</label>
                             <input type="text" id="view_masa_kerjasama" class="form-control" readonly>
                         </div>
+                        <div class="form-group">
+                            <label for="view_platform">Platform</label>
+                            <input type="text" id="view_platform" class="form-control" readonly>
+                        </div>
                     </div>
                 </div>
             </div>

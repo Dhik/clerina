@@ -164,14 +164,14 @@
         </div>
 
         <p class="indent">
-            Berdasarkan prinsip kesetaraan dan saling menguntungkan, kedua belah pihak telah mencapai kesepakatan dalam hal melakukan endorsement di platform TikTok untuk Pihak Pertama dengan KOL:
+            Berdasarkan prinsip kesetaraan dan saling menguntungkan, kedua belah pihak telah mencapai kesepakatan dalam hal melakukan endorsement di platform {{ $talent->platform }} untuk Pihak Pertama dengan KOL:
         </p>
 
         <table>
             <thead>
                 <tr>
                     <th>No.</th>
-                    <th>Nama Akun TikTok</th>
+                    <th>Nama Akun</th>
                     <th>Jumlah Followers</th>
                 </tr>
             </thead>

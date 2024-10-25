@@ -106,6 +106,7 @@
                     $('#edit_produk').val(response.produk);
                     $('#edit_pic').val(response.pic);
                     $('#edit_bulan_running').val(response.bulan_running);
+                    $('#edit_platform').val(response.platform);
                     $('#edit_niche').val(response.niche);
                     $('#edit_followers').val(response.followers);
                     $('#edit_address').val(response.address);
@@ -158,6 +159,7 @@
                     $('#view_rate_final').val(formatRupiah(response.talent.rate_final));
                     $('#view_pic').val(response.talent.pic);
                     $('#view_bulan_running').val(response.talent.bulan_running);
+                    $('#view_platform').val(response.talent.platform);
                     $('#view_niche').val(response.talent.niche);
                     $('#view_followers').val(response.talent.followers);
                     $('#view_address').val(response.talent.address);

@@ -179,7 +179,7 @@ program endorsement, yang selanjutnya disebut juga sebagai “<strong>PERJANJIAN
         <div class="content-section">
             <table class="no-border">
                 <tr>
-                    <td style="width: 30%;">Nama Akun Tiktok</td>
+                    <td style="width: 30%;">Nama Akun</td>
                     <td>: {{ $talent->talent_name }}</td>
                 </tr>
                 <tr>
