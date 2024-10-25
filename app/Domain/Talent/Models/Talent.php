@@ -16,6 +16,7 @@ class Talent extends Model
         'video_slot',
         'content_type',
         'produk',
+        'platform',
         'rate_final',
         'pic',
         'bulan_running',
