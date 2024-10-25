@@ -85,9 +85,11 @@ class TalentContentController extends Controller
             'talent_content.final_rate_card',
             'talent_content.is_refund',
             'talents.rate_final',
-            'talents.slot_final'
+            'talents.slot_final',
+            'campaigns.title as campaign_title'
         ])
         ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+        ->join('campaigns', 'talent_content.campaign_id', '=', 'campaigns.id')
         ->where('talents.tenant_id', $currentTenantId);
         
         if ($request->input('username')) {
