@@ -40,6 +40,10 @@
                                 <label for="edit_boost_code">Boost Code</label>
                                 <input type="text" name="boost_code" id="edit_boost_code" class="form-control">
                             </div>
+                            <div class="form-group">
+                                <label for="edit_upload_link">Upload Link</label>
+                                <input type="text" name="upload_link" id="edit_upload_link" class="form-control">
+                            </div>
                         </div>
                     </div>
                 </div>

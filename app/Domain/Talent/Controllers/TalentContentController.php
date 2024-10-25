@@ -264,10 +264,15 @@ class TalentContentController extends Controller
             'pic_code' => 'nullable|string|max:255',
             'boost_code' => 'nullable|string|max:255',
             'kerkun' => 'required|boolean',
+            'upload_link' => 'nullable|string|max:255',
         ]);
 
         $validated['transfer_date'] = $request->dealing_upload_date;
         $validated['posting_date'] = $request->posting_date;
+        $validated['upload_link'] = $request->upload_link;
+        if ($request->upload_link == "") {
+            $validated['done'] = 0;
+        }
 
         $talentContent = TalentContent::find($id);
         if (!$talentContent) {
@@ -275,15 +280,9 @@ class TalentContentController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
             $talentContent->update($validated);
-
-            DB::commit();
-
             return redirect()->route('talent_content.index')->with('success', 'Talent content updated successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
             return redirect()->route('talent_content.index')->with('error', 'Failed to update talent content. ' . $e->getMessage());
         }
     }
