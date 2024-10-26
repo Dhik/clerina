@@ -115,7 +115,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Username</th>
-                                <th>Campaign Name</th>
+                                <th>Dealing Upload Date</th>
                                 <th>Posting Date</th>
                                 <th>Done</th>
                                 <th>Additional Info</th>
@@ -176,7 +176,19 @@
             columns: [
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'talents.username' }, 
-                { data: 'campaign_title', name: 'campaigns.title' }, 
+                {
+                    data: 'dealing_upload_date', 
+                    name: 'dealing_upload_date',
+                    render: function(data) {
+                        if (data) {
+                            let date = new Date(data);
+                            return ('0' + date.getDate()).slice(-2) + '/' + 
+                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                   date.getFullYear();
+                        }
+                        return '';
+                    }
+                }, 
                 {
                     data: 'posting_date', 
                     name: 'posting_date',
