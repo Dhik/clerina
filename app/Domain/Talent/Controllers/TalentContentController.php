@@ -235,6 +235,7 @@ class TalentContentController extends Controller
                 'boost_code' => $talentContent->boost_code,
                 'kerkun' => $talentContent->kerkun,
                 'product' => $talentContent->product,
+                'campaign_title' => $talentContent->campaign ? $talentContent->campaign->title : null,
             ],
         ]);
     }

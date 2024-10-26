@@ -420,6 +420,7 @@
                     $('#view_final_rate_card').val(response.talentContent.final_rate_card);
                     $('#view_done').val(response.talentContent.done ? 'Yes' : 'No');
                     $('#view_upload_link').val(response.talentContent.upload_link);
+                    $('#view_campaign_name').val(response.talentContent.campaign_title);
                     $('#view_pic_code').val(response.talentContent.pic_code);
                     $('#view_boost_code').val(response.talentContent.boost_code);
                     $('#view_kerkun').val(response.talentContent.kerkun ? 'Yes' : 'No');

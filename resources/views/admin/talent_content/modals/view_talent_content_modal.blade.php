@@ -21,6 +21,10 @@
                     <input type="text" id="view_done" class="form-control" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="view_campaign_name">Campaign Name</label>
+                    <input type="text" id="view_campaign_name" class="form-control" readonly>
+                </div>
+                <div class="form-group">
                     <label for="view_upload_link">Upload Link</label>
                     <input type="text" id="view_upload_link" class="form-control" readonly>
                 </div>

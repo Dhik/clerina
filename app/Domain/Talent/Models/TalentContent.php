@@ -4,6 +4,7 @@ namespace App\Domain\Talent\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Domain\Campaign\Models\Campaign;
 
 class TalentContent extends Model
 {
@@ -40,5 +41,9 @@ class TalentContent extends Model
     public function talent()
     {
         return $this->belongsTo(Talent::class, 'talent_id', 'id');
+    }
+    public function campaign()
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }
