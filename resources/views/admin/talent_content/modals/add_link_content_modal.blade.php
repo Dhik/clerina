@@ -39,7 +39,7 @@
                     </div>
                     <div class="form-group">
                         <label for="kode_ads">Kode Ads</label>
-                        <input type="text" name="kode_ads" id="kode_ads" class="form-control" required>
+                        <input type="text" name="kode_ads" id="kode_ads" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">

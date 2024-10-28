@@ -392,13 +392,13 @@ return [
                     'can' => [PermissionEnum::ViewCampaign],
                     'active' => ['admin/campaign*']
                 ],
-                // [
-                //     'text' => 'Account',
-                //     'url' => 'admin/kol',
-                //     'can' => [PermissionEnum::ViewOffer],
-                //     'icon' => 'nav-icon far fa-circle',
-                //     'active' => ['admin/kol*']
-                // ],
+                [
+                    'text' => 'Account',
+                    'url' => 'admin/kol',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/kol*']
+                ],
                 [
                     'text' => 'Budget',
                     'url' => 'admin/budgets',

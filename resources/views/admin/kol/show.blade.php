@@ -16,16 +16,23 @@
                 <h3>{{ $keyOpinionLeader->username }}</h3>
             </div>
             <div class="col-md-2 text-center">  
-                <h2>10.283</h2>
+                <h2>{{ $keyOpinionLeader->followers }}</h2>
                 <p>Followers</p>
             </div>
             <div class="col-md-2 text-center">
-                <h2>9344</h2>
+                <h2>{{ $keyOpinionLeader->following }}</h2>
                 <p>Following</p>
             </div>
             <div class="col-md-2 text-center">
-                <h2>10.243</h2>
+                <h2>{{ $keyOpinionLeader->rate }}</h2>
                 <p>Rate Card</p>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-12 text-right">
+                <button type="button" id="refresh-followers-following" class="btn btn-success">
+                <i class="fas fa-sync-alt"></i> Refresh Profile
+                </button>
             </div>
         </div>
         <div class="row justify-content-center">
