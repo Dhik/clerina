@@ -383,6 +383,7 @@ class TalentContentController extends Controller
             'channel' => 'required|string',
             'task_name' => 'required|string',
             'posting_date' => 'required|date',
+            'kode_ads' => 'nullable|string',
         ]);
 
         $talentContent = TalentContent::findOrFail($id);
@@ -403,6 +404,7 @@ class TalentContentController extends Controller
             'link' => $request->upload_link,
             'rate_card' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
             'product' => $talent->produk,
+            'kode_ads' => $request->kode_ads,
             'upload_date' => null,
             'boost_code' => $talentContent->boost_code,
             'is_fyp' => 0,

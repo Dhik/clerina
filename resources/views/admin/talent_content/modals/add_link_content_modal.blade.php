@@ -37,6 +37,10 @@
                         <label for="posting_date">Posting Date</label>
                         <input type="date" name="posting_date" id="posting_date" class="form-control" required>
                     </div>
+                    <div class="form-group">
+                        <label for="kode_ads">Kode Ads</label>
+                        <input type="text" name="kode_ads" id="kode_ads" class="form-control" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
