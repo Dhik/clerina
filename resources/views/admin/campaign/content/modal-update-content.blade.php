@@ -53,6 +53,11 @@
                         <input type="text" class="form-control" id="boostCodeUpdate" name="boost_code" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.boost_code')]) }}">
                     </div>
 
+                    <div class="form-group">
+                        <label for="adsCodeUpdate">{{ trans('labels.kode_ads') }}</label>
+                        <input type="text" class="form-control" id="adsCodeUpdate" name="kode_ads" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.kode_ads')]) }}">
+                    </div>
+
                     <!-- New fields for views, likes, and comments -->
                     <div class="form-group">
                         <label for="viewsUpdate">{{ trans('labels.views') }}</label>

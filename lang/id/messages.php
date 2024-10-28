@@ -19,6 +19,7 @@ return [
     'refresh_success' => 'Data berhasil direfresh',
     'refresh_failed' => 'Data gagal direfresh',
     'copy_success' => 'Link berhasil dicopy',
+    'copy_code_success' => 'Kode Ads berhasil dicopy',
     'process_ongoing' => 'Data diprocess',
     'kol_not_exist_import' => 'KOL tidak terdaftar di campaign atau belum di approve (silahkan cek pengajuan terlebih dahulu) : ',
     'kol_doesnt_have_enough_slot' => 'KOL berikut tidak mempunya sisa slot yang cukup',

@@ -16,6 +16,7 @@
             $('#linkUpdate').val(rowData.link);
             $('#productUpdate').val(rowData.product);
             $('#boostCodeUpdate').val(rowData.boost_code);
+            $('#adsCodeUpdate').val(rowData.kode_ads);
 
             $('#viewsUpdate').val(rowData.view);
             $('#likesUpdate').val(rowData.like);

@@ -109,7 +109,7 @@ class CampaignContentBLL implements CampaignContentBLLInterface
     public function storeCampaignContent(int $campaignId, CampaignContentRequest $request): CampaignContent
     {
         // Fetch data from the request
-        $data = $request->only(['username', 'channel', 'rate_card', 'task_name', 'link', 'product', 'boost_code']);
+        $data = $request->only(['username', 'channel', 'rate_card', 'task_name', 'link', 'product', 'boost_code', 'kode_ads']);
 
         // Check if the KOL exists
         $existingKOL = KeyOpinionLeader::where('username', $data['username'])->first();
@@ -150,6 +150,7 @@ class CampaignContentBLL implements CampaignContentBLLInterface
             'product' => $data['product'],
             'channel' => $data['channel'],
             'boost_code' => $data['boost_code'],
+            'kode_ads' => $data['kode_ads'],
             'created_by' => Auth::user()->id,
             'campaign_id' => $campaignId,
         ];
@@ -172,6 +173,7 @@ class CampaignContentBLL implements CampaignContentBLLInterface
                 'product' => $request->input('product'),
                 'channel' => $request->input('channel'),
                 'boost_code' => $request->input('boost_code'),
+                'kode_ads' => $request->input('kode_ads'),
             ];
 
             $updatedCampaignContent = $this->campaignContentDAL->updateCampaignContent($campaignContent, $data);

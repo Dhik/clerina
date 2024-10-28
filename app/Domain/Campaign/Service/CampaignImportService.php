@@ -95,6 +95,7 @@ class CampaignImportService
                         'task_name' => $data['task_name'],
                         'rate_card' => $data['rate_card'],
                         'product' => $data['product'],
+                        'kode_ads' => $data['kode_ads'],
                         'created_by' => Auth::user()->id,
                     ]
                 );

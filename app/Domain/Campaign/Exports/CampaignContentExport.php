@@ -49,6 +49,7 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
             $row->rate_card, // J
             $row->is_paid ? trans('labels.paid') : trans('labels.unpaid'), // K
             $row->keyOpinionLeader->bank_name, // L
+            $row->kode_ads,
         ];
     }
 
@@ -81,6 +82,7 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
             trans('labels.rate_card'), // J
             trans('labels.payment'), // K
             trans('labels.bank_name'), // L
+            trans('labels.kode_ads'), // L
         ];
     }
 

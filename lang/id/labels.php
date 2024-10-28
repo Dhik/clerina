@@ -334,5 +334,7 @@ return [
     'refresh' => 'Refresh',
     'netSalary' => 'Salary',
     'salaryDeductions' => 'Deduction',
-    'additional_info' => "Additional Info"
+    'additional_info' => "Additional Info",
+    'kode_ads' => 'Kode Ads',
+    'actions' => 'Aksi',
 ];

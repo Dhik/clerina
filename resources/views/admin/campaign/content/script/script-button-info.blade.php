@@ -71,4 +71,28 @@
 
         toastr.success('{{ trans('messages.copy_success') }}');
     });
+    $(document).on('click', '.btnKode', function(e) {
+        e.preventDefault();
+
+        let rowData = contentTable.row($(this).closest('tr')).data();
+
+        // Create a temporary input element
+        let tempInput = document.createElement('input');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        tempInput.value = rowData.kode_ads;
+        document.body.appendChild(tempInput);
+
+        // Select the text inside the input
+        tempInput.select();
+        tempInput.setSelectionRange(0, 99999); // For mobile devices
+
+        // Copy the text to the clipboard
+        document.execCommand('copy');
+
+        // Remove the temporary input element
+        document.body.removeChild(tempInput);
+
+        toastr.success('{{ trans('messages.copy_code_success') }}');
+    });
 </script>

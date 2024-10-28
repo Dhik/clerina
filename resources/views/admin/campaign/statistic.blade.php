@@ -104,6 +104,7 @@
                                 <th>{{ trans('labels.platform') }}</th>
                                 <th>{{ trans('labels.product') }}</th>
                                 <th>{{ trans('labels.task') }}</th>
+                                <th>{{ trans('labels.kode_ads') }}</th>
                                 <th>{{ trans('labels.upload_date') }}</th>
                                 <th>{{ trans('labels.like') }}</th>
                                 <th>{{ trans('labels.comment') }}</th>

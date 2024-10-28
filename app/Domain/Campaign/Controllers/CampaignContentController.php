@@ -128,6 +128,7 @@ class CampaignContentController extends Controller
                 'is_fyp' => $row->is_fyp,
                 'username' => $row->username,
                 'upload_date' => $row->upload_date,
+                'kode_ads' => $row->kode_ads,
                 'rate_card' => $row->rate_card,
                 'is_product_deliver' => $row->is_product_deliver,
                 'is_paid' => $row->is_paid,
@@ -202,6 +203,16 @@ class CampaignContentController extends Controller
         $infoHtml .= '<a href="#" class="btn btn-link btn-sm btnPay" data-toggle="tooltip" data-placement="top" title="Pembayaran">
                         <i class="far fa-credit-card' . ($row->is_paid ? ' text-warning' : ' text-black-50') . '"></i>
                     </a>';
+
+        if (!empty($row->kode_ads)) {
+            $infoHtml .= '<a href="#" class="btn btn-link btn-sm btnKode" data-toggle="tooltip" data-placement="top" title="Copy Ads Code">
+                        <i class="far fa-bell text-primary"></i>
+                    </a>';
+        } else {
+            $infoHtml .= '<a href="#" class="btn btn-link btn-sm">
+                        <i class="far fa-bell text-black-50"></i>
+                    </a>';
+        }
 
         if (!empty($row->link)) {
             $infoHtml .= '<a href="#" class="btn btn-link btn-sm btnCopy" data-toggle="tooltip" data-placement="top" title="Copy content link">

@@ -30,6 +30,7 @@ class CampaignContent extends Model
         'is_paid',
         'caption',
         'created_by',
+        'kode_ads',
         'tenant_id'
     ];
 

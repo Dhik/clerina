@@ -52,6 +52,47 @@
         let campaignId = '{{ $campaign->id }}';
         const filterStatus = $('#filterStatus');
 
+        const filterDates = $('#filterDates');
+        const filterInfluencer = $('#filterInfluencer');
+        const filterProduct = $('#filterProduct');
+        const filterPlatform = $('#filterPlatform');
+        const filterFyp = $('#filterFyp');
+        const filterPayment = $('#filterPayment');
+        const filterDelivery = $('#filterDelivery');
+
+        const contentTable = $('#contentTable').DataTable({
+            responsive: true,
+            processing: true,
+            serverSide: false, 
+            ajax: {
+                url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
+                data: function (d) {
+                    d.filterInfluencer = filterInfluencer.val();
+                    d.filterProduct = filterProduct.val();
+                    d.filterPlatform = filterPlatform.val();
+                    d.filterFyp = filterFyp.prop('checked');
+                    d.filterPayment = filterPayment.prop('checked');
+                    d.filterDelivery = filterDelivery.prop('checked');
+                }
+            },
+            columns: [
+                { data: 'username' },
+                { data: 'channel', orderable: false },
+                { data: 'product', orderable: false },
+                { data: 'task', orderable: false },
+                { data: 'kode_ads', orderable: true, visible: false },
+                { data: 'upload_date', orderable: true, visible: false },
+                { data: 'like', className: "text-right", orderable: true }, 
+                { data: 'comment', className: "text-right", orderable: true }, 
+                { data: 'view', className: "text-right", orderable: true }, 
+                { data: 'cpm', className: "text-right", orderable: true }, 
+                { data: 'engagement_rate', className: "text-right", orderable: true }, 
+                { data: 'additional_info', orderable: false }, 
+                { data: 'actions', orderable: false, searchable: false },
+            ],
+            order: [[4, 'desc']],
+        });
+
         function resetFilters() {
             $('#filterDates').val('');
             $('#filterPlatform').val('').trigger('change');
@@ -168,45 +209,7 @@
             order: [[0, 'desc']]
         });
 
-        const filterDates = $('#filterDates');
-        const filterInfluencer = $('#filterInfluencer');
-        const filterProduct = $('#filterProduct');
-        const filterPlatform = $('#filterPlatform');
-        const filterFyp = $('#filterFyp');
-        const filterPayment = $('#filterPayment');
-        const filterDelivery = $('#filterDelivery');
-
-        const contentTable = $('#contentTable').DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: false, 
-            ajax: {
-                url: "{{ route('campaignContent.getJson', ['campaignId' => ':campaignId']) }}".replace(':campaignId', campaignId),
-                data: function (d) {
-                    d.filterInfluencer = filterInfluencer.val();
-                    d.filterProduct = filterProduct.val();
-                    d.filterPlatform = filterPlatform.val();
-                    d.filterFyp = filterFyp.prop('checked');
-                    d.filterPayment = filterPayment.prop('checked');
-                    d.filterDelivery = filterDelivery.prop('checked');
-                }
-            },
-            columns: [
-                { data: 'username' },
-                { data: 'channel', orderable: false },
-                { data: 'product', orderable: false },
-                { data: 'task', orderable: false },
-                { data: 'upload_date', orderable: true, visible: false },
-                { data: 'like', className: "text-right", orderable: true }, 
-                { data: 'comment', className: "text-right", orderable: true }, 
-                { data: 'view', className: "text-right", orderable: true }, 
-                { data: 'cpm', className: "text-right", orderable: true }, 
-                { data: 'engagement_rate', className: "text-right", orderable: true }, 
-                { data: 'additional_info', orderable: false }, 
-                { data: 'actions', orderable: false, searchable: false },
-            ],
-            order: [[4, 'desc']],
-        });
+        
 
         contentTable.on('draw.dt', function() {
             $('[data-toggle="tooltip"]').tooltip();

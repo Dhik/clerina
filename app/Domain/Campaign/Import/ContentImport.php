@@ -44,7 +44,8 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
             'channel' => trim($row[2]),
             'link' => trim($row[3]),
             'rate_card' => $row[4],
-            'product' => $row[5]
+            'product' => $row[5],
+            'kode_ads' => $row[6]
         ];
     }
 
@@ -63,7 +64,8 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
                 'channel' => trim($row['channel']),
                 'link' => trim($row['link']),
                 'rate_card' => $row['rate_card'],
-                'product' => $row['product']
+                'product' => $row['product'],
+                'kode_ads' => $row['kode_ads']
             ];
         }
         $this->importedData = $data;
@@ -84,7 +86,8 @@ class ContentImport implements SkipsEmptyRows, ToCollection, WithMapping, WithSt
             'channel' => ['required', Rule::in(CampaignContentEnum::PlatformValidation)],
             'link' => 'nullable|url',
             'rate_card' => 'numeric',
-            'product' => 'required|max:255'
+            'product' => 'required|max:255',
+            'kode_ads' => 'nullable|max:255'
         ];
     }
 }

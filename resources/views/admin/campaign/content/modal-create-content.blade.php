@@ -14,7 +14,7 @@
                     <!-- Your form fields here -->
                     <div class="form-group">
                         <label for="username">{{ trans('labels.influencer') }}<span class="required">*</span></label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.influencer')]) }}">
+                        <input type="text" class="form-control" name="username" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.influencer')]) }}">
                     </div>
 
                     <div class="form-group">
@@ -51,6 +51,11 @@
                     <div class="form-group">
                         <label for="boostCode">{{ trans('labels.boost_code') }}</label>
                         <input type="text" class="form-control" id="boostCode" name="boost_code" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.boost_code')]) }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adsCode">{{ trans('labels.kode_ads') }}</label>
+                        <input type="text" class="form-control" id="adsCode" name="kode_ads" placeholder="{{ trans('placeholder.input', ['field' => trans('labels.kode_ads')]) }}">
                     </div>
 
                     <div class="form-group d-none" id="errorContent"></div>
