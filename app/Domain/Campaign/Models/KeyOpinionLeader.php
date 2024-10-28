@@ -34,7 +34,9 @@ class KeyOpinionLeader extends Model
         'nik',
         'notes',
         'product_delivery',
-        'product'
+        'product',
+        'followers',
+        'following',
     ];
 
     protected $appends = [

@@ -3,71 +3,17 @@
 @section('title', trans('labels.key_opinion_leader'))
 
 @section('content_header')
-    <h1>{{ trans('labels.key_opinion_leader') }}</h1>
+    <h1>Account</h1>
 @stop
 
 @section('content')
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <!-- <div class="card">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-auto">
                             <div class="row mb-2">
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterChannel">
-                                        <option value="" selected>{{ trans('placeholder.select_channel') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($channels as $channel)
-                                            <option value={{ $channel }}>{{ ucfirst($channel) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterNiche">
-                                        <option value="" selected>{{ trans('placeholder.select_niche') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($niches as $niche)
-                                            <option value={{ $niche }}>{{ ucfirst($niche) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterSkinType">
-                                        <option value="" selected>{{ trans('placeholder.select_skin_type') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($skinTypes as $skinType)
-                                            <option value={{ $skinType }}>{{ ucfirst($skinType) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterSkinConcern">
-                                        <option value="" selected>{{ trans('placeholder.select_skin_concern') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($skinConcerns as $skinConcern)
-                                            <option value={{ $skinConcern }}>{{ ucfirst($skinConcern) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterContentType">
-                                        <option value="" selected>{{ trans('placeholder.select_content_type') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($contentTypes as $contentType)
-                                            <option value={{ $contentType }}>{{ ucfirst($contentType) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-auto mb-2">
-                                    <select class="form-control" id="filterPIC">
-                                        <option value="" selected>{{ trans('placeholder.select_pic') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($marketingUsers as $marketingUser)
-                                            <option value={{ $marketingUser->id }}>{{ $marketingUser->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
                                 <div class="col-auto mb-2">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
@@ -75,7 +21,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
             <div class="card">
                 <div class="card-body">
                     <div class="row">
@@ -104,8 +50,6 @@
                             <th>{{ trans('labels.niche') }}</th>
                             <th>{{ trans('labels.skin_type') }}</th>
                             <th>{{ trans('labels.skin_concern') }}</th>
-                            <th>{{ trans('labels.content_type') }}</th>
-                            <th>{{ trans('labels.pic_contact') }}</th>
                             <th width="10%">{{ trans('labels.action') }}</th>
                         </tr>
                         </thead>
@@ -150,8 +94,6 @@
                 {data: 'niche', name: 'niche'},
                 {data: 'skin_type', name: 'skin_type'},
                 {data: 'skin_concern', name: 'skin_concern'},
-                {data: 'content_type', name: 'content_type'},
-                {data: 'pic_contact_name', name: 'picContact.name'},
                 {data: 'actions', sortable: false, orderable: false}
             ],
             columnDefs: [

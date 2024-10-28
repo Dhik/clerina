@@ -42,10 +42,14 @@
         $.each(data, function(index, item) {
             const row = $('<tr></tr>');
 
+            const nameCell = item.id ? 
+            `<a href="/admin/kol/${item.id}/show">${item.key_opinion_leader_name}</a>` : 
+            item.key_opinion_leader_name;
+
             row.append(`
-                    <td><a href="/admin/kol/${item.key_opinion_leader_id}/show" target="_blank">${item.key_opinion_leader_name}</a></td>
-                    <td class="text-right">${formatNumber(item[dataType])}</td>
-                `);
+                <td>${nameCell}</td>
+                <td class="text-right">${formatNumber(item[dataType])}</td>
+            `);
 
             tableBody.append(row);
         });

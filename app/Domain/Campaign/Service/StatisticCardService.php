@@ -5,6 +5,7 @@ namespace App\Domain\Campaign\Service;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Models\Statistic;
+use App\Domain\Campaign\Models\KeyOpinionLeader;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -120,7 +121,10 @@ class StatisticCardService
     protected function groupDataByKeyOpinionLeader($campaignContents): mixed
     {
         return $campaignContents->groupBy('username')->map(function ($items) {
+
+            $keyOpinionLeader = KeyOpinionLeader::where('username', $items->first()->username)->first();
             return [
+                'id' => $keyOpinionLeader->id ?? null,
                 'key_opinion_leader_name' => $items->first()->username ?? '',
                 'view' => $items->sum(fn($item) => $item->latestStatistic->view ?? 0),
                 'like' => $items->sum(fn($item) => $item->latestStatistic->like ?? 0),

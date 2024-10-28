@@ -3,11 +3,31 @@
 @section('title', trans('labels.key_opinion_leader'))
 
 @section('content_header')
-    <h1>{{ $keyOpinionLeader->username }}</h1>
+    <h1>Key Opinion Leader</h1>
 @stop
 
 @section('content')
     <div class="container-fluid">
+        <div class="row align-items-center mb-3">
+            <div class="col-md-1">
+                <div style="width: 70px; height: 70px; border-radius: 50%; border: 1px solid #000;"></div>
+            </div>
+            <div class="col-md-5">
+                <h3>{{ $keyOpinionLeader->username }}</h3>
+            </div>
+            <div class="col-md-2 text-center">  
+                <h2>10.283</h2>
+                <p>Followers</p>
+            </div>
+            <div class="col-md-2 text-center">
+                <h2>9344</h2>
+                <p>Following</p>
+            </div>
+            <div class="col-md-2 text-center">
+                <h2>10.243</h2>
+                <p>Rate Card</p>
+            </div>
+        </div>
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="card">
@@ -19,15 +39,15 @@
                             <tbody>
                             <tr>
                                 <th>{{ trans('labels.cpm') }}</th>
-                                <td>{{ number_format($keyOpinionLeader->cpm, 0, ',', '.') }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.average_view') }}</th>
-                                <td>{{ number_format($keyOpinionLeader->average_view, 0, ',', '.') }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.slot_rate') }}</th>
-                                <td>{{ number_format($keyOpinionLeader->rate, 0, ',', '.') }}</td>
+                                <td></td>
                             </tr>
                             </tbody>
                         </table>
@@ -46,41 +66,38 @@
                             <tbody>
                             <tr>
                                 <th>{{ trans('labels.channel') }}</th>
-                                <td>{{ ucfirst($keyOpinionLeader->channel) }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.username') }}</th>
                                 <td>
-                                    <a href="{{ $keyOpinionLeader->social_media_link }}" target="_blank">
-                                        {{ $keyOpinionLeader->username }}
+                                    <a href="#" target="_blank">
                                     </a>
                                 </td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.niche') }}</th>
-                                <td>{{ ucfirst($keyOpinionLeader->niche) }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.skin_concern') }}</th>
-                                <td>{{ ucfirst($keyOpinionLeader->skin_concern) }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.skin_type') }}</th>
-                                <td>{{ ucfirst($keyOpinionLeader->skin_type) }}</td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.pic_contact') }}</th>
                                 <td>
-                                    <a href="{{ route('users.show', $keyOpinionLeader->picContact->id) }}" target="_blank">
-                                        {{ $keyOpinionLeader->picContact->name }}
+                                    <a href="#" target="_blank">
                                     </a>
                                 </td>
                             </tr>
                             <tr>
                                 <th>{{ trans('labels.created_by') }}</th>
                                 <td>
-                                    <a href="{{ route('users.show', $keyOpinionLeader->createdBy->id) }}" target="_blank">
-                                        {{ $keyOpinionLeader->createdBy->name }}
+                                    <a href="#" target="_blank">
                                     </a>
                                 </td>
                             </tr>
@@ -88,7 +105,7 @@
                         </table>
                     </div>
                     <div class="card-footer">
-                        <a href="{{ route('kol.edit', $keyOpinionLeader->id) }}" class="btn btn-primary">{{ trans('buttons.edit') }}</a>
+                        <a href="#" class="btn btn-primary">{{ trans('buttons.edit') }}</a>
                         <button class="btn btn-danger delete-user">{{ trans('buttons.delete') }}</button>
                     </div>
                 </div>
@@ -103,45 +120,43 @@
                                     <tbody>
                                     <tr>
                                         <th>{{ trans('labels.name') }}</th>
-                                        <td>{{ $keyOpinionLeader->name }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.address') }}</th>
-                                        <td>{{ $keyOpinionLeader->address }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.phone_number') }}</th>
                                         <td>
-                                            <a href="{{ $keyOpinionLeader->wa_link }}" target="_blank">
-                                                {{ $keyOpinionLeader->phone_number }}
+                                            <a href="#" target="_blank">
                                             </a>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.npwp') }}</th>
-                                        <td>{{ $keyOpinionLeader->product_delivery ? trans('labels.have') : trans('labels.dont_have') }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.npwp_number') }}</th>
                                         <td>
-                                            {{ $keyOpinionLeader->npwp_number }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.nik') }}</th>
-                                        <td>{{ $keyOpinionLeader->nik }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.notes') }}</th>
-                                        <td>{{ $keyOpinionLeader->notes }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.product_delivery') }}</th>
-                                        <td>{{ $keyOpinionLeader->product_delivery ? trans('labels.yes') : trans('labels.no') }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.product') }}</th>
-                                        <td>{{ $keyOpinionLeader->product }}</td>
+                                        <td></td>
                                     </tr>
 
                                     </tbody>
@@ -159,15 +174,15 @@
                                     <tbody>
                                     <tr>
                                         <th>{{ trans('labels.bank_name') }}</th>
-                                        <td>{{ $keyOpinionLeader->bank_name }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.bank_account') }}</th>
-                                        <td>{{ $keyOpinionLeader->bank_account }}</td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <th>{{ trans('labels.bank_account_name') }}</th>
-                                        <td>{{ $keyOpinionLeader->bank_account_name }}</td>
+                                        <td></td>
                                     </tr>
                                     </tbody>
                                 </table>
