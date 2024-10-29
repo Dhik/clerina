@@ -70,8 +70,8 @@ Route::prefix('admin')
             Route::get('/report_table', [TalentPaymentController::class, 'paymentReport'])->name('talent_payments.paymentReport');
             Route::get('/report_export', [TalentPaymentController::class, 'exportReport'])->name('talent_payments.export');
             Route::get('/card', [TalentPaymentController::class, 'getReportKPI'])->name('talent_payments.kpi');
-            Route::get('/hutang/data', [TalentPaymentController::class, 'getHutangDatatable'])->name('talent_payments.hutangData');
-            Route::get('/hutang/totals', [TalentPaymentController::class, 'calculateTotals'])->name('talent_payments.hutangTotals');
+            Route::get('/hutang_data', [TalentPaymentController::class, 'getHutangDatatable'])->name('talent_payments.hutangData');
+            Route::get('/hutang_totals', [TalentPaymentController::class, 'calculateTotals'])->name('talent_payments.hutangTotals');
             Route::get('/pengajuan', [TalentPaymentController::class, 'exportPengajuan'])->name('talent_payments.pengajuan');
             Route::post('/', [TalentPaymentController::class, 'store'])->name('talent_payments.store');
             Route::get('/{payment}', [TalentPaymentController::class, 'show'])->name('talent_payments.show');

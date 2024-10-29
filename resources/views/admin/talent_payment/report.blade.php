@@ -174,9 +174,6 @@
             var tableHutangPiutang = $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
-                paging: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                pageLength: 10,
                 ajax: {
                     url: "{{ route('talent_payments.hutangData') }}",
                     type: 'GET',
