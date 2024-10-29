@@ -6,10 +6,13 @@ use App\Domain\Campaign\BLL\KOL\KeyOpinionLeaderBLLInterface;
 use App\Domain\Campaign\Enums\KeyOpinionLeaderEnum;
 use App\Domain\Campaign\Exports\KeyOpinionLeaderExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
+use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Requests\KeyOpinionLeaderRequest;
 use App\Domain\Campaign\Requests\KolExcelRequest;
 use App\Domain\User\BLL\User\UserBLLInterface;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -177,7 +180,61 @@ class KeyOpinionLeaderController extends Controller
     {
         $this->authorize('viewKOL', KeyOpinionLeader::class);
 
-        return view('admin.kol.show', compact('keyOpinionLeader'));
+        if ($keyOpinionLeader->followers >= 1000 && $keyOpinionLeader->followers < 10000) {
+            $tiering = "Nano";
+            $er_top = 0.1;
+            $er_bottom = 0.04;
+            $cpm_target = 35000;
+        } elseif ($keyOpinionLeader->followers >= 10000 && $keyOpinionLeader->followers < 50000) {
+            $tiering = "Micro";
+            $er_top = 0.05;
+            $er_bottom = 0.02;
+            $cpm_target = 35000;
+        } elseif ($keyOpinionLeader->followers >= 50000 && $keyOpinionLeader->followers < 250000) {
+            $tiering = "Mid-Tier";
+            $er_top = 0.03;
+            $er_bottom = 0.015;
+            $cpm_target = 25000;
+        } elseif ($keyOpinionLeader->followers >= 250000 && $keyOpinionLeader->followers < 1000000) {
+            $tiering = "Macro TOFU";
+            $er_top = 0.025;
+            $er_bottom = 0.01;
+            $cpm_target = 10000;
+        } elseif ($keyOpinionLeader->followers >= 1000000 && $keyOpinionLeader->followers < 2000000) {
+            $tiering = "Mega TOFU";
+            $er_top = 0.02;
+            $er_bottom = 0.01;
+            $cpm_target = 10000;
+        } elseif ($keyOpinionLeader->followers >= 2000000) {
+            $tiering = "Mega MOFU";
+            $er_top = 0.02;
+            $er_bottom = 0.01;
+            $cpm_target = 35000;
+        } else {
+            $tiering = "Unknown";
+            $er_top = null;
+            $er_bottom = null;
+            $cpm_target = null;
+        }
+        $statistics = Statistic::whereHas('campaignContent', function($query) use ($keyOpinionLeader) {
+            $query->where('username', $keyOpinionLeader->username);
+        })->get();
+    
+        $total_views = $statistics->sum('view');
+        $total_likes = $statistics->sum('like');
+        $total_comments = $statistics->sum('comment');
+
+        // Calculate cpm_actual
+        $cpm_actual = $total_views > 0
+            ? ($keyOpinionLeader->rate / $total_views) * $keyOpinionLeader->followers
+            : 0;
+
+        // Calculate er_actual
+        $er_actual = $total_views > 0
+            ? (($total_likes + $total_comments) / $total_views) * 100
+            : 0;
+
+        return view('admin.kol.show', compact('keyOpinionLeader', 'tiering', 'er_top', 'er_bottom', 'cpm_target', 'cpm_actual', 'er_actual'));
     }
 
     /**
@@ -206,4 +263,55 @@ class KeyOpinionLeaderController extends Controller
             ->forPic($request->input('pic'))
             ->download('kol.xlsx');
     }
+    public function refreshFollowersFollowing(string $username): JsonResponse
+    {
+        $keyOpinionLeader = KeyOpinionLeader::where('username', $username)->first();
+
+        if (!$keyOpinionLeader) {
+            return response()->json(['error' => 'Key Opinion Leader not found'], 404);
+        }
+        try {
+            if ($keyOpinionLeader->channel === 'tiktok_video') {
+                $url = "https://tokapi-mobile-version.p.rapidapi.com/v1/user/@{$username}";
+                $headers = [
+                    'x-rapidapi-host' => 'tokapi-mobile-version.p.rapidapi.com',
+                    'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
+                ];
+            } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
+                $url = "https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url={$username}";
+                $headers = [
+                    'x-rapidapi-host' => 'instagram-scraper-api2.p.rapidapi.com',
+                    'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
+                ];
+            } else {
+                return response()->json(['error' => 'Unsupported channel type'], 400);
+            }
+            $response = Http::withHeaders($headers)->get($url);
+            if ($response->successful()) {
+                $data = $response->json();
+                if ($keyOpinionLeader->channel === 'tiktok_video') {
+                    $followers = $data['user']['follower_count'] ?? 0;
+                    $following = $data['user']['following_count'] ?? 0;
+                } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
+                    $followers = $data['data']['follower_count'] ?? 0;
+                    $following = $data['data']['following_count'] ?? 0;
+                }
+                $keyOpinionLeader->update([
+                    'followers' => $followers,
+                    'following' => $following,
+                ]);
+
+                return response()->json([
+                    'followers' => $followers,
+                    'following' => $following,
+                    'message' => 'Followers and Following counts updated successfully.',
+                ]);
+            } else {
+                return response()->json(['error' => 'Failed to fetch data from API'], $response->status());
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
+        }
+    }
+
 }

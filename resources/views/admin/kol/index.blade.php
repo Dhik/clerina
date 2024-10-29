@@ -23,7 +23,7 @@
                 </div>
             </div> -->
             <div class="card">
-                <div class="card-body">
+                <!-- <div class="card-body">
                     <div class="row">
                         <div class="col-md-12">
                             <div class="btn-group">
@@ -39,7 +39,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 <div class="card-body">
                     <table id="kolTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
                         <thead>
@@ -47,9 +47,6 @@
                             <th>id</th>
                             <th>{{ trans('labels.channel') }}</th>
                             <th>{{ trans('labels.username') }}</th>
-                            <th>{{ trans('labels.niche') }}</th>
-                            <th>{{ trans('labels.skin_type') }}</th>
-                            <th>{{ trans('labels.skin_concern') }}</th>
                             <th width="10%">{{ trans('labels.action') }}</th>
                         </tr>
                         </thead>
@@ -91,39 +88,10 @@
                 {data: 'id', name: 'id'},
                 {data: 'channel', name: 'channel'},
                 {data: 'username', name: 'username'},
-                {data: 'niche', name: 'niche'},
-                {data: 'skin_type', name: 'skin_type'},
-                {data: 'skin_concern', name: 'skin_concern'},
                 {data: 'actions', sortable: false, orderable: false}
-            ],
-            columnDefs: [
-                { "targets": [0], "visible": false },
-                {
-                    targets: [1, 3, 4, 5, 6],
-                    render: function(data, type, row, meta) {
-                        if (type === 'display') {
-                            return data.charAt(0).toUpperCase() + data.slice(1); // Convert the data to uppercase
-                        }
-                        return data;
-                    }
-                }
             ],
             order: [[0, 'desc']]
         });
-
-        $('#filterChannel, #filterNiche, #filterSkinType, #filterSkinConcern, #filterContentType, #filterPIC').change(function() {
-            kolTable.draw()
-        });
-
-        $('#resetFilterBtn').click(function () {
-            channelSelector.val('');
-            nicheSelector.val('');
-            skinTypeSelector.val('');
-            skinConcernSelector.val('');
-            contentTypeSelector.val('');
-            picSelector.val('');
-            kolTable.draw()
-        })
 
         btnExportKol.click(function () {
             let data = {
