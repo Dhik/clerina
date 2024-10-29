@@ -44,7 +44,6 @@
                     <table id="kolTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
                         <thead>
                         <tr>
-                            <th>id</th>
                             <th>{{ trans('labels.channel') }}</th>
                             <th>{{ trans('labels.username') }}</th>
                             <th width="10%">{{ trans('labels.action') }}</th>
@@ -85,7 +84,6 @@
                 }
             },
             columns: [
-                {data: 'id', name: 'id'},
                 {data: 'channel', name: 'channel'},
                 {data: 'username', name: 'username'},
                 {data: 'actions', sortable: false, orderable: false}
