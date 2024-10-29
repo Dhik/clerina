@@ -54,9 +54,9 @@
             </select>
         </div>
         <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
-        <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
+        <!-- <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
             <i class="fas fa-file-excel"></i> Export to Excel
-        </a>
+        </a> -->
     </div>
 
     <!-- Talent Table for Hutang and Piutang -->
