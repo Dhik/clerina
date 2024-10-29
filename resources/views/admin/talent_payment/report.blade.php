@@ -154,26 +154,36 @@
                 minimumFractionDigits: 0
             });
 
+            function fetchTotals() {
+                $.ajax({
+                    url: "{{ route('talent_payments.hutangTotals') }}",
+                    type: "GET",
+                    data: { username: $('#filterUsername').val() },
+                    success: function(data) {
+                        $('#totalSpent').text(rupiahFormatter.format(data.totals.total_spent));
+                        $('#totalHutang').text(rupiahFormatter.format(data.totals.total_hutang));
+                        $('#totalPiutang').text(rupiahFormatter.format(data.totals.total_piutang));
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching totals:', error);
+                    }
+                });
+            }
+
             // Initialize DataTable for Hutang and Piutang
             var tableHutangPiutang = $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
-                paging: true, 
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]], 
+                paging: true,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 pageLength: 10,
                 ajax: {
-                    url: "{{ route('talent_payments.hutang') }}", // Your route here
+                    url: "{{ route('talent_payments.hutangData') }}",
                     type: 'GET',
                     data: function(d) {
                         d.username = $('#filterUsername').val(); // Pass the selected username
                     },
                     dataSrc: function (json) {
-                        // Populate KPI Cards with total values formatted as currency
-                        $('#totalSpent').text(rupiahFormatter.format(json.totals.total_spent));
-                        $('#totalHutang').text(rupiahFormatter.format(json.totals.total_hutang));
-                        $('#totalPiutang').text(rupiahFormatter.format(json.totals.total_piutang));
-
-                        // Prepare table data with formatted currency
                         let data = [];
                         $.each(json.talents, function (id, talent) {
                             data.push({
@@ -196,8 +206,8 @@
                     { data: 'piutang', name: 'Piutang' }
                 ],
                 order: [[0, 'asc']],
-                info: false, 
-                searching: false, 
+                info: false,
+                searching: false,
                 pagingType: "simple_numbers",
                 drawCallback: function(settings) {
                     var api = this.api();
@@ -332,6 +342,7 @@
                 tableHutangPiutang.ajax.reload();
                 tablePayments.ajax.reload();
                 tableContent.ajax.reload();
+                fetchTotals();
             });
 
             // Reset filter button functionality for Talent Payments
@@ -340,7 +351,9 @@
                 tableHutangPiutang.ajax.reload();
                 tablePayments.ajax.reload();
                 tableContent.ajax.reload();
+                fetchTotals();
             });
+            fetchTotals();
         });
     </script>
 @stop
