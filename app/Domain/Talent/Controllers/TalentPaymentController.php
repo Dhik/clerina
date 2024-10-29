@@ -258,38 +258,46 @@ class TalentPaymentController extends Controller
         ], 200);
     }
     public function getHutangDatatable(Request $request)
-    {
-        $query = Talent::with(['talentContents', 'talentPayments'])
-            ->select('talents.*');
+{
+    // Query talents with their related contents and payments
+    $query = Talent::with(['talentContents', 'talentPayments'])
+        ->select('talents.*');
 
-        if ($request->input('username')) {
-            $query->where('username', $request->input('username'));
-        }
-
-        $talents = $query->get()->map(function($talent) {
-            $totalSpentForTalent = $this->calculateSpentForTalent($talent);
-            $contentCount = $talent->talentContents->count();
-            $talentShouldGet = ($talent->slot_final > 0) ? ($talent->rate_final / $talent->slot_final) * $contentCount : 0;
-            
-            $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
-            $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
-
-            return (object) [
-                'talent_name'      => $talent->talent_name,
-                'username'         => $talent->username,
-                'total_spent'      => $totalSpentForTalent,
-                'talent_should_get'=> $talentShouldGet,
-                'hutang'           => $hutang,
-                'piutang'          => $piutang,
-            ];
-        });
-
-        $filteredTalents = $talents->filter(function($talent) {
-            return $talent->total_spent != 0 || $talent->talent_should_get != 0;
-        });
-
-        return response()->json(['talents' => $filteredTalents]);
+    if ($request->input('username')) {
+        $query->where('username', $request->input('username'));
     }
+
+    // Retrieve the talents as a collection and calculate additional columns
+    $talents = $query->get()->map(function ($talent) {
+        $totalSpentForTalent = $this->calculateSpentForTalent($talent);
+        $contentCount = $talent->talentContents->count();
+        $talentShouldGet = ($talent->slot_final > 0) 
+            ? ($talent->rate_final / $talent->slot_final) * $contentCount 
+            : 0;
+
+        $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
+        $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
+
+        // Return an object with all the necessary fields for DataTables
+        return (object) [
+            'talent_name' => $talent->talent_name,
+            'username' => $talent->username,
+            'total_spent' => $totalSpentForTalent,
+            'talent_should_get' => $talentShouldGet,
+            'hutang' => $hutang,
+            'piutang' => $piutang,
+        ];
+    });
+
+    // Filter out talents where both total_spent and talent_should_get are zero
+    $filteredTalents = $talents->filter(function ($talent) {
+        return $talent->total_spent != 0 || $talent->talent_should_get != 0;
+    });
+
+    // Return the filtered data to DataTables
+    return DataTables::of($filteredTalents)->make(true);
+}
+
 
     public function calculateTotals(Request $request)
     {

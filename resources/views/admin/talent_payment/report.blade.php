@@ -179,45 +179,42 @@
                     type: 'GET',
                     data: function(d) {
                         d.username = $('#filterUsername').val(); // Pass the selected username
-                    },
-                    dataSrc: function (json) {
-                        let data = [];
-                        $.each(json.talents, function (id, talent) {
-                            data.push({
-                                id: id,
-                                username: talent.username,
-                                total_spent: rupiahFormatter.format(talent.total_spent),
-                                talent_should_get: rupiahFormatter.format(talent.talent_should_get),
-                                hutang: rupiahFormatter.format(talent.hutang),
-                                piutang: rupiahFormatter.format(talent.piutang)
-                            });
-                        });
-                        return data;
                     }
                 },
                 columns: [
                     { data: 'username', name: 'Username' },
-                    { data: 'total_spent', name: 'Total Spent' },
-                    { data: 'talent_should_get', name: 'Should Get' },
-                    { data: 'hutang', name: 'Hutang' },
-                    { data: 'piutang', name: 'Piutang' }
+                    { 
+                        data: 'total_spent', 
+                        name: 'Total Spent',
+                        render: function(data) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    },
+                    { 
+                        data: 'talent_should_get', 
+                        name: 'Should Get',
+                        render: function(data) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    },
+                    { 
+                        data: 'hutang', 
+                        name: 'Hutang',
+                        render: function(data) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    },
+                    { 
+                        data: 'piutang', 
+                        name: 'Piutang',
+                        render: function(data) {
+                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                        }
+                    }
                 ],
                 order: [[0, 'asc']],
-                info: false,
-                searching: false,
-                pagingType: "simple_numbers",
-                drawCallback: function(settings) {
-                    var api = this.api();
-                    var rowsCount = api.data().length;
-
-                    // If less than or equal to 10 rows, hide the pagination
-                    if (rowsCount <= 10) {
-                        $('.dataTables_paginate').hide();
-                    } else {
-                        $('.dataTables_paginate').show();
-                    }
-                }
             });
+
 
             // Initialize DataTable for Talent Payments
             var tablePayments = $('#talentPaymentsTable').DataTable({
