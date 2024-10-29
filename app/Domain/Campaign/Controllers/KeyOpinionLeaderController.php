@@ -70,7 +70,12 @@ class KeyOpinionLeaderController extends Controller
                             <i class="fas fa-pencil-alt"></i>
                         </a>';
             })
-            ->rawColumns(['actions'])
+            ->addColumn('refresh_follower', function ($row) {
+                return '<button class="btn btn-info btn-xs refresh-follower" data-id="' . $row->username . '">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>';
+            })
+            ->rawColumns(['actions', 'refresh_follower'])
             ->toJson();
     }
 
@@ -235,6 +240,30 @@ class KeyOpinionLeaderController extends Controller
             : 0;
 
         return view('admin.kol.show', compact('keyOpinionLeader', 'tiering', 'er_top', 'er_bottom', 'cpm_target', 'cpm_actual', 'er_actual'));
+    }
+    public function chart()
+    {
+        $data = KeyOpinionLeader::select('channel', DB::raw('count(*) as count'))
+            ->groupBy('channel')
+            ->get();
+        $response = [
+            'labels' => $data->pluck('channel'), 
+            'values' => $data->pluck('count'),  
+        ];
+        return response()->json($response); 
+    }
+    public function averageRate()
+    {
+        $data = KeyOpinionLeader::select('channel', DB::raw('AVG(rate) as average_rate'))
+            ->groupBy('channel')
+            ->get();
+
+        $response = [
+            'labels' => $data->pluck('channel'),
+            'values' => $data->pluck('average_rate') 
+        ];
+
+        return response()->json($response); 
     }
 
     /**

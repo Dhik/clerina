@@ -10,7 +10,17 @@
     <div class="container-fluid">
         <div class="row align-items-center mb-3">
             <div class="col-md-1">
-                <img src="{{ asset('img/tiktok.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @if ($keyOpinionLeader->channel === 'tiktok_video')
+                    <img src="{{ asset('img/tiktok.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @elseif ($keyOpinionLeader->channel === 'instagram_feed')
+                    <img src="{{ asset('img/instagram.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @elseif ($keyOpinionLeader->channel === 'youtube_video')
+                    <img src="{{ asset('img/youtube.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @elseif ($keyOpinionLeader->channel === 'twitter_post')
+                    <img src="{{ asset('img/x.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @elseif ($keyOpinionLeader->channel === 'shopee_video')
+                    <img src="{{ asset('img/shopee.png') }}" alt="Channel Logo" class="logo" style="width: 100%; height: 100%;">
+                @endif
             </div>
             <div class="col-md-5">
                 <h3>{{ $keyOpinionLeader->username }}</h3>

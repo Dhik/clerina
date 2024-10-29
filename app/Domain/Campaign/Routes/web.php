@@ -106,6 +106,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [KeyOpinionLeaderController::class, 'index'])->name('kol.index');
                 Route::get('/get', [KeyOpinionLeaderController::class, 'get'])->name('kol.get');
+                Route::get('/chart', [KeyOpinionLeaderController::class, 'chart'])->name('kol.chart');
+                Route::get('/average-rate', [KeyOpinionLeaderController::class, 'averageRate'])->name('kol.averageRate');
                 Route::get('/select', [KeyOpinionLeaderController::class, 'select'])->name('kol.select');
                 Route::get('{username}/refresh_follow', [KeyOpinionLeaderController::class, 'refreshFollowersFollowing'])->name('kol.refresh_follow');
                 Route::get('/create', [KeyOpinionLeaderController::class, 'create'])->name('kol.create');
