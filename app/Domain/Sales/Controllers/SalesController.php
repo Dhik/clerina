@@ -9,6 +9,7 @@ use App\Domain\Sales\BLL\Sales\SalesBLLInterface;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
+use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
@@ -19,18 +20,22 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
+use App\Domain\Sales\Services\TelegramService;
 
 class SalesController extends Controller
 {
+    protected $telegramService;
+
     public function __construct(
         protected AdSpentMarketPlaceBLL $adSpentMarketPlaceBLL,
         protected AdSpentSocialMediaBLL $adSpentSocialMediaBLL,
         protected SalesBLLInterface $salesBLL,
         protected SalesChannelBLLInterface $salesChannelBLL,
         protected SocialMediaBLLInterface $socialMediaBLL,
-        protected VisitBLLInterface $visitBLL
+        protected VisitBLLInterface $visitBLL,
+        TelegramService $telegramService
     ) {
-
+        $this->telegramService = $telegramService;
     }
 
     /**
@@ -140,18 +145,129 @@ class SalesController extends Controller
     }
 
     public function getOmsetByDate($date): JsonResponse
-{
-    $this->authorize('viewAnySales', Sales::class);
+    {
+        $this->authorize('viewAnySales', Sales::class);
 
-    // Assuming you have a Sales model and it's properly set up with relationships
-    // Adjust the query according to your actual database schema
+        // Assuming you have a Sales model and it's properly set up with relationships
+        // Adjust the query according to your actual database schema
 
-    $omsetData = Sales::whereDate('created_at', $date)
-        ->groupBy('date')
-        ->get();
+        $omsetData = Sales::whereDate('created_at', $date)
+            ->groupBy('date')
+            ->get();
 
-    // Return the data as a JSON response
-    return response()->json($omsetData);
-}
+        // Return the data as a JSON response
+        return response()->json($omsetData);
+    }
+    public function sendMessage()
+    {   
+        $yesterday = now()->subDay();
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y'); 
+        $yesterdayData = Sales::whereDate('date', $yesterday)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->select('turnover')
+            ->first();
+        
+        $orderData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
+            ->first();
+        
+        $avgTurnoverPerTransaction = $orderData->transactions > 0 
+            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+            : 0;
+    
+        $avgTurnoverPerCustomer = $orderData->customers > 0 
+            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+            : 0;
+        
+        $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
+        $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
+        $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
+        $message = <<<EOD
+        🔥Laporan Transaksi CLERINA🔥
+        Periode: $yesterdayDateFormatted
+
+        📅 Kemarin
+        Total Omzet: Rp {$formattedTurnover}
+        Total Transaksi: {$orderData->transactions}
+        Total Customer: {$orderData->customers}
+        Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
+        Avg Rp/Cust: Rp {$formattedAvgPerCustomer}
+        Growth(Today/Yesterday): 0%
+        EOD;
+
+        $response = $this->telegramService->sendMessage($message);
+
+        return response()->json($response); 
+    }
+    public function sendMessageTemplate()
+    {   
+        $yesterday = now()->subDay();
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y'); 
+        $yesterdayData = Sales::whereDate('date', $yesterday)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->select('turnover')
+            ->first();
+        
+        
+
+        $message = <<<EOD
+        🔥Laporan Transaksi CLERINA🔥
+        Periode: $yesterdayDateFormatted
+
+        📅 Hari Ini Total Omzet: Rp {$yesterdayData->turnover}
+        Total Transaksi: 
+        Total Customer: 
+        Avg Rp/Trx: Rp 187.480
+        Avg Rp/Cust: Rp 187.480
+        Growth(Today/Yesterday) : 0%
+
+        🗓 Bulan Ini Total Omzet: Rp 99.491.500
+        Total Transaksi: 578
+        Total Customer: 543
+        Avg Rp/Trx: Rp 172.131
+        Avg Rp/Cust: Rp 183.226
+        Growth(MTD/LM) : -15.24%
+
+        📈 Proyeksi Total Omzet: Rp 110.151.304
+        Total Transaksi: 640
+        Total Customer: 601
+        Avg Rp/Trx: Rp 172.111
+        Avg Rp/Cust: Rp 183.280
+        Growth(MTD/LM) : Infinity%
+
+        📅 Hari Ini
+
+        Eyebost : 27
+        Zymuno : 8
+        Etawaku : 6
+        Etawalin : 4
+        Waji Herbal Oil : 2
+        Maxgreng : 1
+
+        🗓 Bulan Ini
+        Eyebost : 512 (567)
+        Zymuno : 263 (291)
+        Waji Herbal Oil : 103 (114)
+        Ben Rapat Kecil : 43 (48)
+        Etawalin : 42 (47)
+        Nutriflakes : 8 (9)
+        Freshmag : 7 (8)
+        Maxgreng : 7 (8)
+        Etawaku : 6 (7)
+        Vitameal : 6 (7)
+        WAJI SABUN 2PCS : 3 (3)
+        Samuralin : 3 (3)
+        WAJI SABUN 2 PCS PAKET 2 : 3 (3)
+        Vitasma : 2 (2)
+        Weight Herba : 2 (2)
+        Generos : 1 (1)
+        WAJI OIL 1 PCS DAN WAJI SABUN 1 PCS : 1 (1)
+        EOD;
+
+        $response = $this->telegramService->sendMessage($message);
+
+        return response()->json($response); 
+    }
 }
