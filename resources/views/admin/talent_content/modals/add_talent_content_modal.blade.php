@@ -27,8 +27,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="pic_code">Produk</label>
-                        <input type="text" name="pic_code" id="pic_code" class="form-control">
+                        <label for="product">Produk</label>
+                        <input type="text" name="product" id="product" class="form-control" required>
                     </div>
 
                     <div class="form-group">

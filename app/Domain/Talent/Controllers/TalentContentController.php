@@ -9,6 +9,7 @@ use App\Domain\Talent\Exports\TalentContentExport;
 use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Models\Talent;
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Talent\Requests\TalentContentRequest;
 use Yajra\DataTables\Utilities\Request;
@@ -394,7 +395,65 @@ class TalentContentController extends Controller
 
         $talent = Talent::findOrFail($talentContent->talent_id);
 
-        // Create new CampaignContent
+        $existingKOL = KeyOpinionLeader::where('username', $talent->username)->first();
+
+        if ($existingKOL) {
+            $existingKOL->update([
+                'channel' => $request->channel,
+                'rate' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
+                'created_by' => Auth::user()->id,
+                'pic_contact' => Auth::user()->id,
+            ]);
+            $kol = $existingKOL;
+        } else {
+            $kol = KeyOpinionLeader::create([
+                'username' => $talent->username,
+                'channel' => $request->channel,
+                'niche' => '-',
+                'average_view' => 0,
+                'skin_type' => '-',
+                'skin_concern' => '-',
+                'content_type' => '-',
+                'rate' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
+                'cpm' => 0,
+                'created_by' => Auth::user()->id,
+                'pic_contact' => Auth::user()->id,
+            ]);
+        }
+        $campaignContent = CampaignContent::where('campaign_id', $talentContent->campaign_id)
+            ->where('link', $request->upload_link)
+            ->first();
+
+        if ($campaignContent) {
+            $campaignContent->update([
+                'username' => $talent->username,
+                'channel' => $request->channel,
+                'task_name' => $request->task_name,
+                'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
+                'kode_ads' => $request->kode_ads,
+            ]);
+        } else {
+            CampaignContent::create([
+                'campaign_id' => $talentContent->campaign_id,
+                'key_opinion_leader_id' => $kol->id,
+                'username' => $talent->username,
+                'channel' => $request->channel,
+                'task_name' => $request->task_name,
+                'link' => $request->upload_link,
+                'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
+                'product' => $talentContent->product,
+                'kode_ads' => $request->kode_ads,
+                'upload_date' => null,
+                'boost_code' => $talentContent->boost_code,
+                'is_fyp' => 0,
+                'is_product_deliver' => 0,
+                'is_paid' => 0,
+                'caption' => null,
+                'created_by' => Auth::user()->id,
+                'tenant_id' => Auth::user()->current_tenant_id,
+            ]);
+        }
+
         CampaignContent::create([
             'campaign_id' => $talentContent->campaign_id,
             'key_opinion_leader_id' => 1,
