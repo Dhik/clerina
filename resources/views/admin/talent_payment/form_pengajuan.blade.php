@@ -29,6 +29,7 @@
     <table>
         <thead>
             <tr>
+                <th>Tanggal Transfer</th>
                 <th>Username</th>
                 <th>Rate Card Per Slot</th>
                 <th>Slot</th>
@@ -71,6 +72,7 @@
                     $dp = $final_tf / 2; // DP 50%
                 @endphp
                 <tr>
+                    <td>{{ $content->done_payment }}</td>
                     <td>{{ $content->talent->username }}</td>
                     <td>{{ number_format($rate_card_per_slot, 2) }}</td>
                     <td>{{ $slot }}</td>
