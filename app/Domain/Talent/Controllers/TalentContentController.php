@@ -454,26 +454,6 @@ class TalentContentController extends Controller
             ]);
         }
 
-        CampaignContent::create([
-            'campaign_id' => $talentContent->campaign_id,
-            'key_opinion_leader_id' => 1,
-            'username' => $talent->username,
-            'channel' => $request->channel,
-            'task_name' => $request->task_name,
-            'link' => $request->upload_link,
-            'rate_card' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
-            'product' => $talent->produk,
-            'kode_ads' => $request->kode_ads,
-            'upload_date' => null,
-            'boost_code' => $talentContent->boost_code,
-            'is_fyp' => 0,
-            'is_product_deliver' => 0,
-            'is_paid' => 0,
-            'caption' => null,
-            'created_by' => Auth::id(),
-            'tenant_id' => Auth::user()->current_tenant_id,
-        ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Link added successfully and campaign content created',
