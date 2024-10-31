@@ -373,7 +373,6 @@ return [
             'text' => 'Campaign',
             'can' => [
                 PermissionEnum::ViewCampaign,
-                PermissionEnum::ViewOffer,
                 PermissionEnum::ViewKOL
             ],
             'icon'    => 'fas fa-fw fa-map',
