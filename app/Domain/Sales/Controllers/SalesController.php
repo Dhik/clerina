@@ -184,6 +184,21 @@ class SalesController extends Controller
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
+        $startOfMonth = now()->startOfMonth();
+        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('SUM(turnover) as total_turnover')
+            ->first();
+        
+        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
+            ->first();
+
+        $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
+        $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
+        $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
+
         $message = <<<EOD
         🔥Laporan Transaksi CLERINA🔥
         Periode: $yesterdayDateFormatted
@@ -195,6 +210,13 @@ class SalesController extends Controller
         Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
         Avg Rp/Cust: Rp {$formattedAvgPerCustomer}
         Growth(Today/Yesterday): 0%
+
+        📅 Bulan Ini Total Omzet: Rp 99.491.500
+        Total Omzet: Rp {$formattedMonthTurnover}
+        Total Transaksi: {$formattedMonthTransactions}
+        Total Customer: {$formattedMonthCustomers}
+        Avg Rp/Cust: Rp 183.226
+        Growth(MTD/LM) : -15.24%
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
@@ -209,8 +231,6 @@ class SalesController extends Controller
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->select('turnover')
             ->first();
-        
-        
 
         $message = <<<EOD
         🔥Laporan Transaksi CLERINA🔥

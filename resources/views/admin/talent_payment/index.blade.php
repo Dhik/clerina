@@ -39,7 +39,10 @@
                         </div>
                         <div class="col-auto">
                             <button type="button" class="btn btn-outline-primary exportForm" id="exportButton">
-                                <i class="fas fa-file-download"></i> {{ trans('labels.export') }} Form Pengajuan
+                                <i class="fas fa-file-download"></i> {{ trans('labels.export') }} in PDF
+                            </button>
+                            <button type="button" class="btn btn-outline-success" id="exportExcelButton">
+                                <i class="fas fa-file-excel"></i> Export in Excel
                             </button>
                         </div>
                     </div>
@@ -199,6 +202,12 @@
             var pic = $('#filterPic').val();
             var username = $('#filterUsername').val();
             window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username;
+        });
+
+        $('#exportExcelButton').on('click', function() {
+            var pic = $('#filterPic').val();
+            var username = $('#filterUsername').val();
+            window.location.href = '{{ route('talent_payments.export_excel') }}?pic=' + pic + '&username=' + username;
         });
 
         // Handle edit button click

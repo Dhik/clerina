@@ -438,7 +438,7 @@ return [
         ],
         [
             'text' => 'KOL',
-            'can' => [PermissionEnum::ViewOrder],
+            'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
             'icon'    => 'fas fa-fw fa-play',
             'submenu' => [
                 [
@@ -457,12 +457,13 @@ return [
                     'text' => 'Payment',
                     'url' => 'admin/talnt-payments',
                     'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
                     'active' => ['admin/talnt-payments*']
                 ],
                 [
                     'text' => 'Debt Report',
                     'url' => 'admin/kol-payments/report',
-                    'can' => [PermissionEnum::ViewVisit],
+                    'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
                     'icon' => 'nav-icon far fa-circle',
                 ],
                 [
