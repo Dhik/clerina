@@ -215,8 +215,15 @@ class TalentPaymentController extends Controller
 
     public function exportPengajuanExcel(Request $request)
     {
-        $export = new TalentPaymentExport($request);
-        return Excel::download($export, 'form_pengajuan.xlsx');
+        try {
+            ini_set('memory_limit', '512M');
+            $export = new TalentPaymentExport($request);
+            return Excel::download($export, 'form_pengajuan.xlsx');
+        }
+        catch (\Exception $e) {
+            Log::error('Export failed: ' . $e->getMessage());
+            return back()->with('error', 'Export failed. Please try again.');
+        }
     }
 
     public function report()
