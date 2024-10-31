@@ -54,7 +54,7 @@ class KeyOpinionLeaderController extends Controller
      */
     public function get(Request $request): JsonResponse
     {
-        $this->authorize('viewKOL', KeyOpinionLeader::class);
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
 
         $query = $this->kolBLL->getKOLDatatable($request);
 
