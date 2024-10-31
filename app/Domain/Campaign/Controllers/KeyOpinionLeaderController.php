@@ -182,7 +182,7 @@ class KeyOpinionLeaderController extends Controller
      */
     public function show(KeyOpinionLeader $keyOpinionLeader): View|\Illuminate\Foundation\Application|Factory|Application
     {
-        $this->authorize('viewKOL', KeyOpinionLeader::class);
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
 
         if ($keyOpinionLeader->followers >= 1000 && $keyOpinionLeader->followers < 10000) {
             $tiering = "Nano";
@@ -270,7 +270,7 @@ class KeyOpinionLeaderController extends Controller
      */
     public function showJson(KeyOpinionLeader $keyOpinionLeader): JsonResponse
     {
-        $this->authorize('viewKOL', KeyOpinionLeader::class);
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
 
         return response()->json($keyOpinionLeader);
     }
@@ -280,7 +280,7 @@ class KeyOpinionLeaderController extends Controller
      */
     public function export(Request $request): Response|BinaryFileResponse
     {
-        $this->authorize('viewKOL', KeyOpinionLeader::class);
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
 
         return (new KeyOpinionLeaderExport())
             ->forChannel($request->input('channel'))
