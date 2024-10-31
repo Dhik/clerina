@@ -233,7 +233,6 @@ class SalesController extends Controller
         Total Transaksi: {$orderData->transactions}
         Total Customer: {$orderData->customers}
         Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
-        Avg Rp/Cust: Rp {$formattedAvgPerCustomer}
 
         📅 Bulan Ini
         Total Omzet: Rp {$formattedMonthTurnover}
