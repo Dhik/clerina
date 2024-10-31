@@ -159,9 +159,12 @@ class SalesController extends Controller
         return response()->json($omsetData);
     }
     public function sendMessage()
-    {   
+    {
+        // Ambil data kemarin dan format tanggal
         $yesterday = now()->subDay();
-        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y'); 
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
+        
+        // Data omzet dan transaksi untuk kemarin
         $yesterdayData = Sales::whereDate('date', $yesterday)
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->select('turnover')
@@ -172,33 +175,55 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
         
+        // Rata-rata per transaksi dan per pelanggan
         $avgTurnoverPerTransaction = $orderData->transactions > 0 
             ? round($yesterdayData->turnover / $orderData->transactions, 2) 
             : 0;
-    
+
         $avgTurnoverPerCustomer = $orderData->customers > 0 
             ? round($yesterdayData->turnover / $orderData->customers, 2) 
             : 0;
         
+        // Format omzet harian
         $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
+        // Data untuk bulan ini
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
-        
+
         $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, now()])
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
+        // Format omzet bulanan
         $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
+        // Menghitung proyeksi omzet, transaksi, dan pelanggan
+        $daysPassed = now()->day; // Hari yang telah berlalu dalam bulan ini
+        $remainingDays = now()->daysInMonth - $daysPassed; // Hari tersisa
+
+        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0; // Rata-rata omzet harian
+        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0; // Rata-rata transaksi harian
+        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0; // Rata-rata pelanggan harian
+
+        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays); // Proyeksi omzet akhir bulan
+        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays); // Proyeksi transaksi akhir bulan
+        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays); // Proyeksi pelanggan akhir bulan
+
+        // Format proyeksi omzet, transaksi, dan pelanggan
+        $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
+        $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
+        $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
+
+        // Pesan yang akan dikirim
         $message = <<<EOD
         🔥Laporan Transaksi CLERINA🔥
         Periode: $yesterdayDateFormatted
@@ -209,20 +234,24 @@ class SalesController extends Controller
         Total Customer: {$orderData->customers}
         Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
         Avg Rp/Cust: Rp {$formattedAvgPerCustomer}
-        Growth(Today/Yesterday): 0%
 
-        📅 Bulan Ini Total Omzet: Rp 99.491.500
+        📅 Bulan Ini
         Total Omzet: Rp {$formattedMonthTurnover}
         Total Transaksi: {$formattedMonthTransactions}
         Total Customer: {$formattedMonthCustomers}
-        Avg Rp/Cust: Rp 183.226
-        Growth(MTD/LM) : -15.24%
+
+        📈 Proyeksi Bulan Ini
+        Proyeksi Omzet: Rp {$formattedProjectedTurnover}
+        Proyeksi Total Transaksi: {$formattedProjectedTransactions}
+        Proyeksi Total Customer: {$formattedProjectedCustomers}
         EOD;
 
+        // Mengirim pesan
         $response = $this->telegramService->sendMessage($message);
 
-        return response()->json($response); 
+        return response()->json($response);
     }
+
     public function sendMessageTemplate()
     {   
         $yesterday = now()->subDay();
