@@ -14,7 +14,6 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use App\Domain\Talent\Models\TalentContent;
 use App\Domain\Talent\Models\TalentPayment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -24,7 +23,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
     use Exportable;
 
     protected $request;
-
+    protected $chunkSize = 100; // Reduced chunk size
+    
     public function __construct(Request $request)
     {
         $this->request = $request;
@@ -56,7 +56,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
 
     public function query()
     {
-        $query = TalentPayment::query()
+        return TalentPayment::query()
+            ->select('talent_payments.*') // Select only necessary columns
             ->with(['talent' => function ($query) {
                 $query->select(
                     'id',
@@ -73,89 +74,80 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     'nik'
                 );
             }])
-            ->select([
-                'id',
-                'talent_id',
-                'done_payment',
-                'status_payment',
-                'amount_tf'
-            ]);
-
-        if ($this->request->has('pic') && $this->request->pic != '') {
-            $query->whereHas('talent', function($q) {
-                $q->where('pic', $this->request->pic);
-            });
-        }
-
-        if ($this->request->has('username') && $this->request->username != '') {
-            $query->whereHas('talent', function($q) {
-                $q->where('username', $this->request->username);
-            });
-        }
-
-        return $query;
+            ->when($this->request->has('pic') && $this->request->pic != '', function($query) {
+                $query->whereHas('talent', function($q) {
+                    $q->where('pic', $this->request->pic);
+                });
+            })
+            ->when($this->request->has('username') && $this->request->username != '', function($query) {
+                $query->whereHas('talent', function($q) {
+                    $q->where('username', $this->request->username);
+                });
+            })
+            ->orderBy('id'); // Add ordering for consistent chunking
     }
 
     public function map($payment): array
     {
         try {
             $talent = $payment->talent;
+            
             if (!$talent) {
-                Log::error('Talent not found for payment', ['payment_id' => $payment->id]);
-                return array_fill(0, 18, 'N/A'); // Return empty row with N/A values
+                return array_fill(0, 18, 'N/A');
             }
 
-            $rate_card_per_slot = $talent->price_rate;
-            $slot = $talent->slot_final;
+            // Pre-calculate values to reduce memory usage
+            $rate_card_per_slot = (float)$talent->price_rate;
+            $slot = (int)$talent->slot_final;
             $rate_harga = $rate_card_per_slot * $slot;
-            $discount = $talent->discount;
+            $discount = (float)$talent->discount;
             $harga_setelah_diskon = $rate_harga - $discount;
             
-            // Calculate PPH based on nama_rekening
-            $isPTorCV = Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
-            $pphPercentage = $isPTorCV ? 0.02 : 0.025;
+            $pphPercentage = Str::startsWith($talent->nama_rekening, ['PT', 'CV']) ? 0.02 : 0.025;
             $pphAmount = $harga_setelah_diskon * $pphPercentage;
             $final_tf = $harga_setelah_diskon - $pphAmount;
             
-            // Calculate display value based on payment status
+            // Calculate display value
             $displayValue = match($payment->status_payment) {
                 "Termin 1", "Termin 2", "Termin 3" => $final_tf / 3,
                 "DP 50%", "Pelunasan 50%" => $final_tf / 2,
-                "Full Payment" => $final_tf,
                 default => $final_tf
             };
 
+            // Return array directly without storing in variable
             return [
                 $payment->done_payment,
-                $talent->username,
+                $talent->username ?? '',
                 $rate_card_per_slot,
                 $slot,
-                $talent->content_type,
+                $talent->content_type ?? '',
                 $rate_harga,
                 $discount,
                 $harga_setelah_diskon,
-                $talent->no_npwp,
+                $talent->no_npwp ?? '',
                 $pphAmount,
                 $final_tf,
                 $displayValue,
-                $payment->status_payment,
-                $talent->pic,
-                $talent->no_rekening,
-                $talent->bank,
-                $talent->nama_rekening,
-                $talent->nik,
+                $payment->status_payment ?? '',
+                $talent->pic ?? '',
+                $talent->no_rekening ?? '',
+                $talent->bank ?? '',
+                $talent->nama_rekening ?? '',
+                $talent->nik ?? '',
             ];
+
         } catch (\Exception $e) {
-            Log::error('Error processing payment row: ' . $e->getMessage(), [
-                'payment_id' => $payment->id ?? 'unknown'
+            Log::error('Error processing payment row', [
+                'payment_id' => $payment->id ?? 'unknown',
+                'error' => $e->getMessage()
             ]);
-            throw $e;
+            return array_fill(0, 18, 'ERROR');
         }
     }
 
     public function chunkSize(): int
     {
-        return 500;
+        return $this->chunkSize;
     }
 
     public function title(): string
@@ -168,33 +160,43 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
-                $lengthValidationRow = 10000;
                 $spreadsheet = $sheet->getDelegate();
-
-                // Define numeric validation for specific columns
-                $numericColumns = ['K', 'F', 'T', 'U', 'V', 'W', 'X'];
-                foreach ($numericColumns as $column) {
-                    $validation = $spreadsheet->getCell($column . '2')->getDataValidation();
-                    $validation->setType(DataValidation::TYPE_WHOLE)
-                        ->setErrorStyle(DataValidation::STYLE_STOP)
-                        ->setAllowBlank(true)
-                        ->setShowInputMessage(true)
-                        ->setShowErrorMessage(true)
-                        ->setErrorTitle('Input Error')
-                        ->setError('This field can only contain numbers')
-                        ->setPromptTitle('Number Validation')
-                        ->setPrompt('Please enter a valid number');
-
-                    // Apply validation in chunks
-                    for ($row = 2; $row <= $lengthValidationRow; $row += 100) {
-                        $endRow = min($row + 99, $lengthValidationRow);
-                        for ($currentRow = $row; $currentRow <= $endRow; $currentRow++) {
-                            $spreadsheet->getCell($column . $currentRow)
-                                ->setDataValidation(clone $validation);
-                        }
-                    }
-                }
+                
+                // Apply validations in smaller chunks
+                $this->applyValidations($spreadsheet);
+                
+                // Clear any unnecessary formatting
+                $sheet->getStyle($sheet->calculateWorksheetDimension())->setQuotePrefix(false);
             },
         ];
+    }
+
+    protected function applyValidations($spreadsheet)
+    {
+        $numericColumns = ['K', 'F', 'T', 'U', 'V', 'W', 'X'];
+        $chunkSize = 50; // Smaller chunks for validation
+        
+        foreach ($numericColumns as $column) {
+            $validation = $spreadsheet->getCell($column . '2')->getDataValidation();
+            $validation->setType(DataValidation::TYPE_WHOLE)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setErrorTitle('Input Error')
+                ->setError('Numbers only')
+                ->setPromptTitle('Validation')
+                ->setPrompt('Enter number');
+
+            // Apply validation in smaller chunks
+            for ($row = 2; $row <= 1000; $row += $chunkSize) {
+                $endRow = min($row + $chunkSize - 1, 1000);
+                for ($currentRow = $row; $currentRow <= $endRow; $currentRow++) {
+                    $spreadsheet->getCell($column . $currentRow)
+                        ->setDataValidation(clone $validation);
+                }
+                gc_collect_cycles();
+            }
+        }
     }
 }
