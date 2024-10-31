@@ -3,19 +3,26 @@
 namespace App\Domain\Talent\Exports;
 
 use Yajra\DataTables\Utilities\Request;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use App\Domain\Talent\Models\TalentContent;
 use App\Domain\Talent\Models\TalentPayment;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
-class TalentPaymentExport implements FromCollection, ShouldAutoSize, WithEvents, WithHeadings, WithTitle
+class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, ShouldAutoSize, WithEvents, WithHeadings, WithTitle
 {
+    use Exportable;
+
     protected $request;
 
     public function __construct(Request $request)
@@ -47,14 +54,33 @@ class TalentPaymentExport implements FromCollection, ShouldAutoSize, WithEvents,
         ];
     }
 
-    /**
-     * Fetch the talent payment data based on filters.
-     */
-    public function collection()
+    public function query()
     {
-        $query = TalentPayment::with('talent');
+        $query = TalentPayment::query()
+            ->with(['talent' => function ($query) {
+                $query->select(
+                    'id',
+                    'username',
+                    'price_rate',
+                    'slot_final',
+                    'content_type',
+                    'discount',
+                    'no_npwp',
+                    'pic',
+                    'no_rekening',
+                    'bank',
+                    'nama_rekening',
+                    'nik'
+                );
+            }])
+            ->select([
+                'id',
+                'talent_id',
+                'done_payment',
+                'status_payment',
+                'amount_tf'
+            ]);
 
-        // Apply filters if provided
         if ($this->request->has('pic') && $this->request->pic != '') {
             $query->whereHas('talent', function($q) {
                 $q->where('pic', $this->request->pic);
@@ -67,75 +93,87 @@ class TalentPaymentExport implements FromCollection, ShouldAutoSize, WithEvents,
             });
         }
 
-        $talentContents = $query->get();
+        return $query;
+    }
 
-        // Process each record
-        return $talentContents->map(function ($content) {
-            $rate_card_per_slot = $content->talent->price_rate;
-            $slot = $content->talent->slot_final;
-            $rate_harga = $rate_card_per_slot * $slot;
-            $discount = $content->talent->discount;
-            $harga_setelah_diskon = $rate_harga - $discount;
-            $pphPercentage = $content->isPTorCV ? 0.02 : 0.025;
-            $pphAmount = $harga_setelah_diskon * $pphPercentage;
-            $final_tf = $harga_setelah_diskon - $pphAmount;
-            $displayValue = $final_tf;
-            if (in_array($content->status_payment, ["Termin 1", "Termin 3", "Termin 2"])) {
-                $displayValue = $final_tf / 3;
-            } elseif ($content->status_payment === "DP 50%") {
-                $displayValue = $final_tf / 2;
-            } elseif ($content->status_payment === "Full Payment") {
-                $displayValue = $final_tf;
-            } elseif ($content->status_payment === "Pelunasan 50%") {
-                $displayValue = $final_tf / 2;
+    public function map($payment): array
+    {
+        try {
+            $talent = $payment->talent;
+            if (!$talent) {
+                Log::error('Talent not found for payment', ['payment_id' => $payment->id]);
+                return array_fill(0, 18, 'N/A'); // Return empty row with N/A values
             }
 
+            $rate_card_per_slot = $talent->price_rate;
+            $slot = $talent->slot_final;
+            $rate_harga = $rate_card_per_slot * $slot;
+            $discount = $talent->discount;
+            $harga_setelah_diskon = $rate_harga - $discount;
+            
+            // Calculate PPH based on nama_rekening
+            $isPTorCV = Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
+            $pphPercentage = $isPTorCV ? 0.02 : 0.025;
+            $pphAmount = $harga_setelah_diskon * $pphPercentage;
+            $final_tf = $harga_setelah_diskon - $pphAmount;
+            
+            // Calculate display value based on payment status
+            $displayValue = match($payment->status_payment) {
+                "Termin 1", "Termin 2", "Termin 3" => $final_tf / 3,
+                "DP 50%", "Pelunasan 50%" => $final_tf / 2,
+                "Full Payment" => $final_tf,
+                default => $final_tf
+            };
+
             return [
-                $content->done_payment,
-                $content->talent->username,
+                $payment->done_payment,
+                $talent->username,
                 $rate_card_per_slot,
                 $slot,
-                $content->talent->content_type,
+                $talent->content_type,
                 $rate_harga,
                 $discount,
                 $harga_setelah_diskon,
-                $content->talent->no_npwp,
+                $talent->no_npwp,
                 $pphAmount,
                 $final_tf,
                 $displayValue,
-                $content->status_payment,
-                $content->talent->pic,
-                $content->talent->no_rekening,
-                $content->talent->bank,
-                $content->talent->nama_rekening,
-                $content->talent->nik,
+                $payment->status_payment,
+                $talent->pic,
+                $talent->no_rekening,
+                $talent->bank,
+                $talent->nama_rekening,
+                $talent->nik,
             ];
-        });
+        } catch (\Exception $e) {
+            Log::error('Error processing payment row: ' . $e->getMessage(), [
+                'payment_id' => $payment->id ?? 'unknown'
+            ]);
+            throw $e;
+        }
     }
 
-    /**
-     * Set the title for the Excel sheet.
-     */
+    public function chunkSize(): int
+    {
+        return 500;
+    }
+
     public function title(): string
     {
         return 'Talent';
     }
 
-    /**
-     * Register events to handle validation and styling after the sheet is created.
-     */
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
                 $lengthValidationRow = 10000;
-
-                // Get the active sheet
                 $spreadsheet = $sheet->getDelegate();
 
-                // Define numeric validation for the specific columns
-                $numericValidation = function ($column) use ($spreadsheet, $lengthValidationRow) {
+                // Define numeric validation for specific columns
+                $numericColumns = ['K', 'F', 'T', 'U', 'V', 'W', 'X'];
+                foreach ($numericColumns as $column) {
                     $validation = $spreadsheet->getCell($column . '2')->getDataValidation();
                     $validation->setType(DataValidation::TYPE_WHOLE)
                         ->setErrorStyle(DataValidation::STYLE_STOP)
@@ -147,20 +185,15 @@ class TalentPaymentExport implements FromCollection, ShouldAutoSize, WithEvents,
                         ->setPromptTitle('Number Validation')
                         ->setPrompt('Please enter a valid number');
 
-                    // Apply validation for all rows up to the specified row limit
-                    for ($row = 2; $row <= $lengthValidationRow; $row++) {
-                        $spreadsheet->getCell($column . $row)->setDataValidation(clone $validation);
+                    // Apply validation in chunks
+                    for ($row = 2; $row <= $lengthValidationRow; $row += 100) {
+                        $endRow = min($row + 99, $lengthValidationRow);
+                        for ($currentRow = $row; $currentRow <= $endRow; $currentRow++) {
+                            $spreadsheet->getCell($column . $currentRow)
+                                ->setDataValidation(clone $validation);
+                        }
                     }
-                };
-
-                // Apply numeric validation to necessary columns
-                $numericValidation('K'); // Followers
-                $numericValidation('F'); // Rate Final
-                $numericValidation('T'); // Price Rate
-                $numericValidation('U'); // First Rate Card
-                $numericValidation('V'); // Discount
-                $numericValidation('W'); // Slot Final
-                $numericValidation('X'); // Tax Deduction
+                }
             },
         ];
     }
