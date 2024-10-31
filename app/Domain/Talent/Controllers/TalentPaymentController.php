@@ -213,6 +213,12 @@ class TalentPaymentController extends Controller
         return $pdf->download('form_pengajuan.pdf');
     }
 
+    public function exportPengajuanExcel(Request $request)
+    {
+        $export = new TalentPaymentExport($request);
+        return Excel::download($export, 'form_pengajuan.xlsx');
+    }
+
     public function report()
     {
         $usernames = Talent::select('username')->distinct()->pluck('username');
