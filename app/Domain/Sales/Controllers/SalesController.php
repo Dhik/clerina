@@ -207,7 +207,7 @@ class SalesController extends Controller
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
         // Menghitung proyeksi omzet, transaksi, dan pelanggan
-        $daysPassed = now()->day; // Hari yang telah berlalu dalam bulan ini
+        $daysPassed = now()->day - 1; // Hari yang telah berlalu dalam bulan ini
         $remainingDays = now()->daysInMonth - $daysPassed; // Hari tersisa
 
         $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0; // Rata-rata omzet harian
