@@ -14,7 +14,7 @@ class GoogleSheetService
     public function __construct()
     {
         $this->client = new Google_Client();
-        // $this->client->setAuthConfig(storage_path('app/google-sheets-credentials.json'));
+        $this->client->setAuthConfig(storage_path('app/google-sheets-credentials.json'));
         $this->client->addScope(Google_Service_Sheets::SPREADSHEETS);
 
         $this->service = new Google_Service_Sheets($this->client);
