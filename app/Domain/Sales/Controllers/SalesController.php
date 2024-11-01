@@ -406,7 +406,6 @@ class SalesController extends Controller
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
-        // Calculate Growth (MTD/LM)
         $growthMTDLM = $lastMonthData->total_turnover > 0
             ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
             : 0;
