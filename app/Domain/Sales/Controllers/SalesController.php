@@ -159,7 +159,7 @@ class SalesController extends Controller
         // Return the data as a JSON response
         return response()->json($omsetData);
     }
-    public function sendMessage()
+    public function sendMessageCleora()
     {
         // Get yesterday's data
         $yesterday = now()->subDay();
@@ -167,12 +167,12 @@ class SalesController extends Controller
 
         // Yesterday's sales and transaction data
         $yesterdayData = Sales::whereDate('date', $yesterday)
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->select('turnover')
             ->first();
 
         $orderData = Order::whereDate('date', $yesterday)
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
 
@@ -193,12 +193,12 @@ class SalesController extends Controller
         // Monthly data
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
         $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, now()])
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
@@ -226,14 +226,14 @@ class SalesController extends Controller
 
         // Calculate turnover per sales channel
         $salesChannelData = Order::whereDate('date', $yesterday)
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
 
         // Monthly data per sales channel for projection
         $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, now()])
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
@@ -258,7 +258,7 @@ class SalesController extends Controller
         $endOfLastMonth = now()->subMonth()->endOfMonth();
 
         $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
@@ -270,7 +270,7 @@ class SalesController extends Controller
         $dayBeforeYesterday = now()->subDays(2);
 
         $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
-            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->select('turnover')
             ->first();
 
