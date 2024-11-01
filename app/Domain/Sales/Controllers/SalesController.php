@@ -281,7 +281,6 @@ class SalesController extends Controller
             ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
             : 0;
 
-        // Message to be sent
         $message = <<<EOD
         🔥Laporan Transaksi CLEORA🔥
         Periode: $yesterdayDateFormatted
