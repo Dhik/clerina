@@ -30,7 +30,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('attendance:populate')->dailyAt('00:05');
         $schedule->command('campaign:refresh-contents')->dailyAt('06:00');
         // $schedule->command('report:send-telegram')->dailyAt('07:00');
-        $schedule->command('report:send-telegram')->dailyAt('17:12');
+        $schedule->command('report:send-telegram')->dailyAt('10:00');
 
 
 
