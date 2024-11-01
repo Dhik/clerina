@@ -9,6 +9,7 @@ use App\Domain\Sales\BLL\Sales\SalesBLLInterface;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
+use App\Domain\Sales\Models\SalesChannel;
 use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use Auth;
