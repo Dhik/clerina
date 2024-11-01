@@ -194,7 +194,6 @@ class SalesController extends Controller
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
-        // Monthly data
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
             ->where('tenant_id', 1)
