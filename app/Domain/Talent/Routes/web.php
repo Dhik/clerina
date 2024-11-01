@@ -67,6 +67,7 @@ Route::prefix('admin')
         ->group(function () {
             Route::get('/', [TalentPaymentController::class, 'index'])->name('talent_payments.index');
             Route::get('/data', [TalentPaymentController::class, 'data'])->name('talent_payments.data');
+            Route::get('/report', [TalentPaymentController::class, 'report'])->name('talent_payments.report');
             Route::get('/report_table', [TalentPaymentController::class, 'paymentReport'])->name('talent_payments.paymentReport');
             Route::get('/report_export', [TalentPaymentController::class, 'exportReport'])->name('talent_payments.export');
             Route::get('/export-talent-payments', [TalentPaymentController::class, 'exportPengajuanExcel'])->name('talent_payments.export_excel');
@@ -80,12 +81,6 @@ Route::prefix('admin')
             Route::put('/{id}', [TalentPaymentController::class, 'update'])->name('talent_payments.update');
             Route::delete('/{payment}', [TalentPaymentController::class, 'destroy'])->name('talent_payments.destroy');
         });
-
-    Route::prefix('kol-payments')
-        ->group(function () {
-            Route::get('/report', [TalentPaymentController::class, 'report'])->name('talent_payments.report');
-        });
-
 
     Route::prefix('approval')
         ->group(function () {
