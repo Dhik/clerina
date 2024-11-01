@@ -160,22 +160,22 @@ class SalesController extends Controller
     }
     public function sendMessage()
     {
-        // Ambil data kemarin dan format tanggal
+        // Get yesterday's data
         $yesterday = now()->subDay();
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
-        
-        // Data omzet dan transaksi untuk kemarin
+
+        // Yesterday's sales and transaction data
         $yesterdayData = Sales::whereDate('date', $yesterday)
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->select('turnover')
             ->first();
-        
+
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
-        
-        // Rata-rata per transaksi dan per pelanggan
+
+        // Average turnover per transaction and per customer
         $avgTurnoverPerTransaction = $orderData->transactions > 0 
             ? round($yesterdayData->turnover / $orderData->transactions, 2) 
             : 0;
@@ -183,13 +183,13 @@ class SalesController extends Controller
         $avgTurnoverPerCustomer = $orderData->customers > 0 
             ? round($yesterdayData->turnover / $orderData->customers, 2) 
             : 0;
-        
-        // Format omzet harian
+
+        // Format daily turnover
         $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
-        // Data untuk bulan ini
+        // Monthly data
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
             ->where('tenant_id', Auth::user()->current_tenant_id)
@@ -201,29 +201,59 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
-        // Format omzet bulanan
+        // Format monthly turnover
         $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
-        // Menghitung proyeksi omzet, transaksi, dan pelanggan
-        $daysPassed = now()->day - 1; // Hari yang telah berlalu dalam bulan ini
-        $remainingDays = now()->daysInMonth - $daysPassed; // Hari tersisa
+        // Monthly projection
+        $daysPassed = now()->day - 1;
+        $remainingDays = now()->daysInMonth - $daysPassed;
 
-        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0; // Rata-rata omzet harian
-        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0; // Rata-rata transaksi harian
-        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0; // Rata-rata pelanggan harian
+        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
+        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
+        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
 
-        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays); // Proyeksi omzet akhir bulan
-        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays); // Proyeksi transaksi akhir bulan
-        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays); // Proyeksi pelanggan akhir bulan
+        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
+        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
+        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
 
-        // Format proyeksi omzet, transaksi, dan pelanggan
+        // Format projections
         $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
         $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
         $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
 
-        // Pesan yang akan dikirim
+        // Calculate turnover per sales channel
+        $salesChannelData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        // Monthly data per sales channel for projection
+        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        // Map sales channel data to names and calculate projections
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $formattedAmount = number_format($item->total_amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+            $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
+            $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedProjectedAmount}";
+        })->implode("\n");
+
+        // Message to be sent
         $message = <<<EOD
         🔥Laporan Transaksi CLERINA🔥
         Periode: $yesterdayDateFormatted
@@ -243,13 +273,21 @@ class SalesController extends Controller
         Proyeksi Omzet: Rp {$formattedProjectedTurnover}
         Proyeksi Total Transaksi: {$formattedProjectedTransactions}
         Proyeksi Total Customer: {$formattedProjectedCustomers}
+
+        📈 Omset Sales Channel
+        {$salesChannelTurnover}
+
+        📈 Proyeksi Sales Channel
+        {$salesChannelProjection}
         EOD;
 
-        // Mengirim pesan
+        // Send message
         $response = $this->telegramService->sendMessage($message);
 
         return response()->json($response);
     }
+
+
 
     public function sendMessageTemplate()
     {   
