@@ -55,6 +55,7 @@ Route::prefix('admin')
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
                 Route::get('/omset/{date}', [SalesController::class, 'getOmsetByDate'])->name('sales.getOmsetByDate');
                 Route::get('/send-message', [SalesController::class, 'sendMessageCleora']);
+                Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet']);
 
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');
                 Route::get('/{sales}', [SalesController::class, 'show'])->name('sales.show');

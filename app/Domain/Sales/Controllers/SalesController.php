@@ -22,10 +22,12 @@ use Illuminate\Http\RedirectResponse;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Sales\Services\TelegramService;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 class SalesController extends Controller
 {
     protected $telegramService;
+    protected $googleSheetService;
 
     public function __construct(
         protected AdSpentMarketPlaceBLL $adSpentMarketPlaceBLL,
@@ -34,9 +36,11 @@ class SalesController extends Controller
         protected SalesChannelBLLInterface $salesChannelBLL,
         protected SocialMediaBLLInterface $socialMediaBLL,
         protected VisitBLLInterface $visitBLL,
-        TelegramService $telegramService
+        TelegramService $telegramService,
+        GoogleSheetService $googleSheetService
     ) {
         $this->telegramService = $telegramService;
+        $this->googleSheetService = $googleSheetService;
     }
 
     /**
@@ -232,7 +236,7 @@ class SalesController extends Controller
             ->get();
 
         // Monthly data per sales channel for projection
-        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, now()])
+        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 1)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
@@ -280,7 +284,7 @@ class SalesController extends Controller
 
         // Message to be sent
         $message = <<<EOD
-        🔥Laporan Transaksi CLERINA🔥
+        🔥Laporan Transaksi CLEORA🔥
         Periode: $yesterdayDateFormatted
 
         📅 Kemarin
@@ -308,79 +312,173 @@ class SalesController extends Controller
         {$salesChannelProjection}
         EOD;
 
-        // Send message
+        $response = $this->telegramService->sendMessage($message);
+        return response()->json($response);
+    }
+
+    public function sendMessageAzrina()
+    {
+        $yesterday = now()->subDay();
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
+
+        $yesterdayData = Sales::whereDate('date', $yesterday)
+            ->where('tenant_id', 2)
+            ->select('turnover')
+            ->first();
+
+        $orderData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 2)
+            ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
+            ->first();
+
+        $avgTurnoverPerTransaction = $orderData->transactions > 0 
+            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+            : 0;
+
+        $avgTurnoverPerCustomer = $orderData->customers > 0 
+            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+            : 0;
+
+        $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
+        $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
+        $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
+
+        $startOfMonth = now()->startOfMonth();
+        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', 2)
+            ->selectRaw('SUM(turnover) as total_turnover')
+            ->first();
+
+        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', 2)
+            ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
+            ->first();
+
+        $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
+        $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
+        $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
+
+        $daysPassed = now()->day - 1;
+        $remainingDays = now()->daysInMonth - $daysPassed;
+
+        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
+        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
+        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
+
+        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
+        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
+        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
+
+        $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
+        $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
+        $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
+
+        $salesChannelData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 2)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, now()])
+            ->where('tenant_id', 2)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $formattedAmount = number_format($item->total_amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+            $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
+            $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedProjectedAmount}";
+        })->implode("\n");
+
+        $startOfLastMonth = now()->subMonth()->startOfMonth();
+        $endOfLastMonth = now()->subMonth()->endOfMonth();
+
+        $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(turnover) as total_turnover')
+            ->first();
+
+        // Calculate Growth (MTD/LM)
+        $growthMTDLM = $lastMonthData->total_turnover > 0
+            ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
+            : 0;
+        
+        $dayBeforeYesterday = now()->subDays(2);
+
+        $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
+            ->where('tenant_id', 2)
+            ->select('turnover')
+            ->first();
+
+        $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
+            ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
+            : 0;
+
+        $message = <<<EOD
+        🔥Laporan Transaksi AZRINA🔥
+        Periode: $yesterdayDateFormatted
+
+        📅 Kemarin
+        Total Omzet: Rp {$formattedTurnover}
+        Total Transaksi: {$orderData->transactions}
+        Total Customer: {$orderData->customers}
+        Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
+        Growth(Yesterday/Past 2 Days): {$growthYesterdayPast2Days}%
+
+        📅 Bulan Ini
+        Total Omzet: Rp {$formattedMonthTurnover}
+        Total Transaksi: {$formattedMonthTransactions}
+        Total Customer: {$formattedMonthCustomers}
+        Growth(MTD/LM) : {$growthMTDLM}%
+
+        📈 Proyeksi Bulan Ini
+        Proyeksi Omzet: Rp {$formattedProjectedTurnover}
+        Proyeksi Total Transaksi: {$formattedProjectedTransactions}
+        Proyeksi Total Customer: {$formattedProjectedCustomers}
+
+        📈 Omset Sales Channel Kemarin
+        {$salesChannelTurnover}
+
+        📈 Proyeksi Sales Channel
+        {$salesChannelProjection}
+        EOD;
+
         $response = $this->telegramService->sendMessage($message);
 
         return response()->json($response);
     }
 
+    public function importFromGoogleSheet()
+    {
+        $range = 'Sheet1!A2:K';
+        $sheetData = $this->googleSheetService->getSheetData($range);
 
+        foreach ($sheetData as $row) {
+            Sales::create([
+                'date'                  => $row[0],
+                'visit'                 => $row[1],
+                'qty'                   => $row[2],
+                'order'                 => $row[3],
+                'closing_rate'          => $row[4],
+                'turnover'              => $row[5],
+                'ad_spent_social_media' => $row[6],
+                'ad_spent_market_place' => $row[7],
+                'ad_spent_total'        => $row[8],
+                'roas'                  => $row[9],
+                'tenant_id'             => $row[10],
+            ]);
+        }
 
-    public function sendMessageTemplate()
-    {   
-        $yesterday = now()->subDay();
-        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y'); 
-        $yesterdayData = Sales::whereDate('date', $yesterday)
-            ->where('tenant_id', Auth::user()->current_tenant_id)
-            ->select('turnover')
-            ->first();
-
-        $message = <<<EOD
-        🔥Laporan Transaksi CLERINA🔥
-        Periode: $yesterdayDateFormatted
-
-        📅 Hari Ini Total Omzet: Rp {$yesterdayData->turnover}
-        Total Transaksi: 
-        Total Customer: 
-        Avg Rp/Trx: Rp 187.480
-        Avg Rp/Cust: Rp 187.480
-        Growth(Today/Yesterday) : 0%
-
-        🗓 Bulan Ini Total Omzet: Rp 99.491.500
-        Total Transaksi: 578
-        Total Customer: 543
-        Avg Rp/Trx: Rp 172.131
-        Avg Rp/Cust: Rp 183.226
-        Growth(MTD/LM) : -15.24%
-
-        📈 Proyeksi Total Omzet: Rp 110.151.304
-        Total Transaksi: 640
-        Total Customer: 601
-        Avg Rp/Trx: Rp 172.111
-        Avg Rp/Cust: Rp 183.280
-        Growth(MTD/LM) : Infinity%
-
-        📅 Hari Ini
-
-        Eyebost : 27
-        Zymuno : 8
-        Etawaku : 6
-        Etawalin : 4
-        Waji Herbal Oil : 2
-        Maxgreng : 1
-
-        🗓 Bulan Ini
-        Eyebost : 512 (567)
-        Zymuno : 263 (291)
-        Waji Herbal Oil : 103 (114)
-        Ben Rapat Kecil : 43 (48)
-        Etawalin : 42 (47)
-        Nutriflakes : 8 (9)
-        Freshmag : 7 (8)
-        Maxgreng : 7 (8)
-        Etawaku : 6 (7)
-        Vitameal : 6 (7)
-        WAJI SABUN 2PCS : 3 (3)
-        Samuralin : 3 (3)
-        WAJI SABUN 2 PCS PAKET 2 : 3 (3)
-        Vitasma : 2 (2)
-        Weight Herba : 2 (2)
-        Generos : 1 (1)
-        WAJI OIL 1 PCS DAN WAJI SABUN 1 PCS : 1 (1)
-        EOD;
-
-        $response = $this->telegramService->sendMessage($message);
-
-        return response()->json($response); 
+        return response()->json(['message' => 'Data imported successfully']);
     }
 }
