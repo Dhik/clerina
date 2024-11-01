@@ -26,8 +26,9 @@ class SendTelegramReport extends Command
      */
     public function handle()
     {
-        $controller = new SalesController(); // Replace with your actual controller name
-        $controller->sendMessage();
+        $controller = app(SalesController::class);
+        $controller->sendMessageCleora();
+
         $this->info('Telegram report sent successfully.');
         return Command::SUCCESS;
     }
