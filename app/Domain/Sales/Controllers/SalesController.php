@@ -254,6 +254,30 @@ class SalesController extends Controller
             return "{$channelName}: Rp {$formattedProjectedAmount}";
         })->implode("\n");
 
+        $startOfLastMonth = now()->subMonth()->startOfMonth();
+        $endOfLastMonth = now()->subMonth()->endOfMonth();
+
+        $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->selectRaw('SUM(turnover) as total_turnover')
+            ->first();
+
+        // Calculate Growth (MTD/LM)
+        $growthMTDLM = $lastMonthData->total_turnover > 0
+            ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
+            : 0;
+        
+        $dayBeforeYesterday = now()->subDays(2);
+
+        $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->select('turnover')
+            ->first();
+
+        $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
+            ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
+            : 0;
+
         // Message to be sent
         $message = <<<EOD
         🔥Laporan Transaksi CLERINA🔥
@@ -264,18 +288,20 @@ class SalesController extends Controller
         Total Transaksi: {$orderData->transactions}
         Total Customer: {$orderData->customers}
         Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
+        Growth(Yesterday/Past 2 Days): {$growthYesterdayPast2Days}%
 
         📅 Bulan Ini
         Total Omzet: Rp {$formattedMonthTurnover}
         Total Transaksi: {$formattedMonthTransactions}
         Total Customer: {$formattedMonthCustomers}
+        Growth(MTD/LM) : {$growthMTDLM}%
 
         📈 Proyeksi Bulan Ini
         Proyeksi Omzet: Rp {$formattedProjectedTurnover}
         Proyeksi Total Transaksi: {$formattedProjectedTransactions}
         Proyeksi Total Customer: {$formattedProjectedCustomers}
 
-        📈 Omset Sales Channel
+        📈 Omset Sales Channel Kemarin
         {$salesChannelTurnover}
 
         📈 Proyeksi Sales Channel
