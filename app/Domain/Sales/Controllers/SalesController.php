@@ -194,7 +194,6 @@ class SalesController extends Controller
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
-        // Monthly data
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
             ->where('tenant_id', 1)
@@ -266,7 +265,6 @@ class SalesController extends Controller
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
-        // Calculate Growth (MTD/LM)
         $growthMTDLM = $lastMonthData->total_turnover > 0
             ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
             : 0;
@@ -282,7 +280,6 @@ class SalesController extends Controller
             ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
             : 0;
 
-        // Message to be sent
         $message = <<<EOD
         🔥Laporan Transaksi CLEORA🔥
         Periode: $yesterdayDateFormatted
@@ -408,7 +405,6 @@ class SalesController extends Controller
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
-        // Calculate Growth (MTD/LM)
         $growthMTDLM = $lastMonthData->total_turnover > 0
             ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
             : 0;
