@@ -67,7 +67,7 @@
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
-                { data: 'slot_final', name: 'slot_final' },
+                { data: 'remaining', name: 'remaining', orderable: false},
                 {
                     data: 'rate_final',
                     name: 'rate_final',

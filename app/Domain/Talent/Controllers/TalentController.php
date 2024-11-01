@@ -38,9 +38,19 @@ class TalentController extends Controller
 
     public function data(Request $request)
     {
-        $talents = Talent::select(['id', 'username', 'talent_name', 'pengajuan_transfer_date', 'rate_final', 'slot_final']);
+        $talents = Talent::select(['talents.id', 'talents.username', 'talents.talent_name', 'talents.pengajuan_transfer_date', 'talents.rate_final', 'talents.slot_final'])
+        ->leftJoin('talent_content', 'talents.id', '=', 'talent_content.talent_id')
+        ->groupBy('talents.id', 'talents.username', 'talents.talent_name', 'talents.pengajuan_transfer_date', 'talents.rate_final', 'talents.slot_final')
+        ->selectRaw('COUNT(talent_content.id) as content_count')
+        ->selectRaw('CONCAT(COUNT(talent_content.id), " / ", IFNULL(talents.slot_final, 0)) AS remaining');
     
         return DataTables::of($talents)
+            ->addColumn('content_count', function ($talent) {
+                return $talent->content_count;
+            })  
+            ->addColumn('remaining', function ($talent) {
+                return $talent->remaining;
+            })
             ->addColumn('action', function ($talent) {
                 return '
                     <button class="btn btn-sm btn-primary viewButton" 
