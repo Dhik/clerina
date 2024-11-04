@@ -173,7 +173,7 @@ class SalesController extends Controller
         $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
             ->selectRaw('SUM(amount) as turnover')
-            ->get();
+            ->first(); 
 
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
