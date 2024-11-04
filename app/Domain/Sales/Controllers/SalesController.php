@@ -258,7 +258,7 @@ class SalesController extends Controller
         })->implode("\n");
 
         $startOfLastMonth = now()->subMonth()->startOfMonth();
-        $endOfLastMonth = now()->startOfMonth()->addDays(now()->day - 1);
+        $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
 
         $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
             ->where('tenant_id', 1)
