@@ -29,7 +29,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('orders:fetch-external')->cron('0 9,12,17,19,21,3,6 * * *')->timezone('Asia/Jakarta');
         $schedule->command('attendance:populate')->dailyAt('00:05');
         $schedule->command('campaign:refresh-contents')->dailyAt('06:00');
-        $schedule->command('report:send-telegram')->dailyAt('07:00');
+        $schedule->command('report:send-telegram')->dailyAt('13:15');
 
 
 

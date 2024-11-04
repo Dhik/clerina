@@ -16,7 +16,6 @@
             return;
         }
 
-        // Continue with the rest of your code
         console.log(rowData);
 
         // Update modal with the data
