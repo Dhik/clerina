@@ -4,7 +4,19 @@
     let statisticDetailChart;
 
     function detailContent() {
-        let rowData = contentTable.row($(this).closest('tr')).data();
+        let $btnRow = $(this).closest('tr');
+
+        if ($btnRow.hasClass('child')) {
+            $btnRow = $btnRow.prev();
+        }
+        let rowData = contentTable.row($btnRow).data();
+
+        if (!rowData) {
+            console.log("Row data is still undefined.");
+            return;
+        }
+
+        // Continue with the rest of your code
         console.log(rowData);
 
         // Update modal with the data
