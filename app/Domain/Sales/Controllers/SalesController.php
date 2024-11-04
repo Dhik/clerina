@@ -170,10 +170,10 @@ class SalesController extends Controller
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
 
         // Yesterday's sales and transaction data
-        $yesterdayData = Sales::whereDate('date', $yesterday)
+        $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
-            ->select('turnover')
-            ->first();
+            ->selectRaw('SUM(amount) as total_amount')
+            ->get();
 
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
@@ -182,22 +182,22 @@ class SalesController extends Controller
 
         // Average turnover per transaction and per customer
         $avgTurnoverPerTransaction = $orderData->transactions > 0 
-            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+            ? round($yesterdayData->total_amount / $orderData->transactions, 2) 
             : 0;
 
         $avgTurnoverPerCustomer = $orderData->customers > 0 
-            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+            ? round($yesterdayData->total_amount / $orderData->customers, 2) 
             : 0;
 
         // Format daily turnover
-        $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
+        $formattedTurnover = number_format($yesterdayData->total_amount, 0, ',', '.');
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
         $startOfMonth = now()->startOfMonth();
-        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, $yesterday])
+        $thisMonthData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 1)
-            ->selectRaw('SUM(turnover) as total_turnover')
+            ->selectRaw('SUM(amount) as total_amount')
             ->first();
 
         $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
@@ -206,7 +206,7 @@ class SalesController extends Controller
             ->first();
 
         // Format monthly turnover
-        $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
+        $formattedMonthTurnover = number_format($thisMonthData->total_amount, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
@@ -214,11 +214,11 @@ class SalesController extends Controller
         $daysPassed = now()->day - 1;
         $remainingDays = now()->daysInMonth - $daysPassed;
 
-        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
+        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_amount / $daysPassed : 0;
         $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
         $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
 
-        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
+        $projectedTurnover = $thisMonthData->total_amount + ($avgDailyTurnover * $remainingDays);
         $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
         $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
 
