@@ -431,7 +431,7 @@ class SalesController extends Controller
             : 0;
 
         $message = <<<EOD
-        🔥Laporan Transaksi CLEORA🔥
+        🫧 Laporan Transaksi AZRINA 🫧
         Periode: $yesterdayDateFormatted
 
         📅 Kemarin
