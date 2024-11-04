@@ -258,7 +258,7 @@ class SalesController extends Controller
         })->implode("\n");
 
         $startOfLastMonth = now()->subMonth()->startOfMonth();
-        $endOfLastMonth = now()->subMonth()->endOfMonth();
+        $endOfLastMonth = now()->startOfMonth()->addDays(now()->day - 1);
 
         $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
             ->where('tenant_id', 1)
@@ -341,12 +341,12 @@ class SalesController extends Controller
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
         $startOfMonth = now()->startOfMonth();
-        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, now()])
+        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 2)
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
-        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, now()])
+        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 2)
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
