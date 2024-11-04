@@ -315,19 +315,22 @@ class SalesController extends Controller
 
     public function sendMessageAzrina()
     {
+        // Get yesterday's data
         $yesterday = now()->subDay();
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
 
-        $yesterdayData = Sales::whereDate('date', $yesterday)
+        // Yesterday's sales and transaction data
+        $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
-            ->select('turnover')
-            ->first();
+            ->selectRaw('SUM(amount) as turnover')
+            ->first(); 
 
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
 
+        // Average turnover per transaction and per customer
         $avgTurnoverPerTransaction = $orderData->transactions > 0 
             ? round($yesterdayData->turnover / $orderData->transactions, 2) 
             : 0;
@@ -336,14 +339,15 @@ class SalesController extends Controller
             ? round($yesterdayData->turnover / $orderData->customers, 2) 
             : 0;
 
+        // Format daily turnover
         $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
 
         $startOfMonth = now()->startOfMonth();
-        $thisMonthData = Sales::whereBetween('date', [$startOfMonth, $yesterday])
+        $thisMonthData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 2)
-            ->selectRaw('SUM(turnover) as total_turnover')
+            ->selectRaw('SUM(amount) as total_turnover')
             ->first();
 
         $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
@@ -351,10 +355,12 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
+        // Format monthly turnover
         $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
+        // Monthly projection
         $daysPassed = now()->day - 1;
         $remainingDays = now()->daysInMonth - $daysPassed;
 
@@ -366,22 +372,26 @@ class SalesController extends Controller
         $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
         $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
 
+        // Format projections
         $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
         $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
         $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
 
+        // Calculate turnover per sales channel
         $salesChannelData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
 
+        // Monthly data per sales channel for projection
         $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 2)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
 
+        // Map sales channel data to names and calculate projections
         $salesChannelNames = SalesChannel::pluck('name', 'id');
         $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
             $channelName = $salesChannelNames->get($item->sales_channel_id);
@@ -398,10 +408,10 @@ class SalesController extends Controller
         })->implode("\n");
 
         $startOfLastMonth = now()->subMonth()->startOfMonth();
-        $endOfLastMonth = now()->subMonth()->endOfMonth();
+        $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
 
         $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-            ->where('tenant_id', 1)
+            ->where('tenant_id', 2)
             ->selectRaw('SUM(turnover) as total_turnover')
             ->first();
 
@@ -421,7 +431,7 @@ class SalesController extends Controller
             : 0;
 
         $message = <<<EOD
-        🔥Laporan Transaksi AZRINA🔥
+        🔥Laporan Transaksi CLEORA🔥
         Periode: $yesterdayDateFormatted
 
         📅 Kemarin
@@ -450,7 +460,6 @@ class SalesController extends Controller
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
-
         return response()->json($response);
     }
 
