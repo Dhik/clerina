@@ -9,10 +9,8 @@ use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Requests\TalentRequest;
 use Yajra\DataTables\Utilities\Request;
 use Yajra\DataTables\DataTables;
-use App\Domain\Talent\Import\TalentImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Talent\Exports\TalentTemplateExport;
-use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;  
 use Auth;
@@ -22,6 +20,7 @@ use Auth;
  */
 class TalentController extends Controller
 {
+    protected $talentBLL;
     public function __construct(TalentBLLInterface $talentBLL)
     {
         $this->talentBLL = $talentBLL;
@@ -38,54 +37,20 @@ class TalentController extends Controller
 
     public function data(Request $request)
     {
-        $talents = Talent::select(['talents.id', 'talents.username', 'talents.talent_name', 'talents.pengajuan_transfer_date', 'talents.rate_final', 'talents.slot_final'])
-        ->leftJoin('talent_content', 'talents.id', '=', 'talent_content.talent_id')
-        ->groupBy('talents.id', 'talents.username', 'talents.talent_name', 'talents.pengajuan_transfer_date', 'talents.rate_final', 'talents.slot_final')
-        ->selectRaw('COUNT(talent_content.id) as content_count')
-        ->selectRaw('CONCAT(COUNT(talent_content.id), " / ", IFNULL(talents.slot_final, 0)) AS remaining');
-    
+        $talents = $this->talentBLL->getAllTalentsWithContent();
+
         return DataTables::of($talents)
             ->addColumn('content_count', function ($talent) {
                 return $talent->content_count;
-            })  
+            })
             ->addColumn('remaining', function ($talent) {
                 return $talent->remaining;
             })
             ->addColumn('action', function ($talent) {
-                return '
-                    <button class="btn btn-sm btn-primary viewButton" 
-                        data-id="' . $talent->id . '" 
-                        data-toggle="modal" 
-                        data-target="#viewTalentModal">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-success editButton" 
-                        data-id="' . $talent->id . '">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger deleteButton" 
-                        data-id="' . $talent->id . '">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
+                return $this->generateActionButtons($talent);
             })
             ->addColumn('payment_action', function ($talent) {
-                return '
-                    <button class="btn btn-sm btn-info addPaymentButton" 
-                        data-id="' . $talent->id . '"
-                        data-toggle="modal" 
-                        data-target="#addPaymentModal">
-                        <i class="fas fa-wallet"> Payment</i>
-                    </button>
-                    <button class="btn btn-sm bg-purple exportData" 
-                        data-id="' . $talent->id . '">
-                        <i class="fas fa-file-invoice"> Invoice</i>
-                    </button>
-                    <button class="btn btn-sm bg-maroon exportSPK" 
-                        data-id="' . $talent->id . '">
-                        <i class="fas fa-file"> SPK</i>
-                    </button>
-                ';
+                return $this->generatePaymentButtons($talent);
             })
             ->rawColumns(['action', 'payment_action'])
             ->make(true);
@@ -99,9 +64,9 @@ class TalentController extends Controller
         //
     }
     public function downloadTalentTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
-{
-    return Excel::download(new TalentTemplateExport(), 'Talent Template.xlsx');
-}
+    {
+        return Excel::download(new TalentTemplateExport(), 'Talent Template.xlsx');
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -109,7 +74,6 @@ class TalentController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the incoming request data
         $validatedData = $request->validate([
             'username' => 'required|string|max:255|unique:talents,username',
             'talent_name' => 'required|string|max:255',
@@ -136,31 +100,11 @@ class TalentController extends Controller
             'platform' => 'nullable|string|max:255',
         ]);
 
-        // Calculate discount
-        $discount = 0;
-        if ($validatedData['price_rate'] && $validatedData['slot_final'] && $validatedData['rate_final']) {
-            $discount = $validatedData['price_rate'] - $validatedData['rate_final'];
-        }
+        $this->talentBLL->createTalent($validatedData);
 
-        // Calculate tax deduction
-        $tax_rate = (strpos($validatedData['talent_name'], 'PT') === 0 || strpos($validatedData['talent_name'], 'CV') === 0) ? 0.02 : 0.025;
-        $tax_deduction = $validatedData['rate_final'] ? $validatedData['rate_final'] * $tax_rate : 0;
-
-        // Calculate final transfer
-        $final_transfer = $validatedData['rate_final'] ? $validatedData['rate_final'] - $tax_deduction : 0;
-
-        // Add calculated fields to the validated data
-        $validatedData['discount'] = $discount;
-        $validatedData['tax_deduction'] = $tax_deduction;
-        $validatedData['final_transfer'] = $final_transfer;
-        $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
-
-        // Create a new Talent record
-        Talent::create($validatedData);
-
-        // Redirect back to the talents index page with a success message
         return redirect()->route('talent.index')->with('success', 'Talent created successfully.');
     }
+
 
     /**
      * Display the specified resource.
@@ -195,24 +139,7 @@ class TalentController extends Controller
     public function update(TalentRequest $request, Talent $talent)
     {
         try {
-            // Prepare the data for update
-            $data = $request->validated();
-    
-            // Handle money inputs (assuming they come in as formatted strings)
-            $data['price_rate'] = (int) str_replace(['Rp', '.', ' '], '', $data['price_rate']);
-            $data['rate_final'] = (int) str_replace(['Rp', '.', ' '], '', $data['rate_final']);
-    
-            // Calculate discount
-            $data['discount'] = ($data['price_rate'] * $data['slot_final']) - $data['rate_final'];
-    
-            // Calculate tax deduction
-            $taxRate = (strpos($data['talent_name'], 'PT') === 0 || strpos($data['talent_name'], 'CV') === 0) ? 0.02 : 0.025;
-            $data['tax_deduction'] = (int) ($data['rate_final'] * $taxRate);
-    
-            // Update the talent without transactions
-            $talent->update($data);
-    
-            // Redirect using the route name "Talent"
+            $this->talentBLL->updateTalent($talent, $request->validated());
             return redirect()->route('talent.index')->with('success', 'Talent updated successfully');
         } catch (\Exception $e) {
             return redirect()->route('talent.index')->with('error', 'Failed to update talent: ' . $e->getMessage());
@@ -226,22 +153,59 @@ class TalentController extends Controller
      */
     public function destroy($id)
     {
-        $talent = Talent::findOrFail($id);
-        $talent->delete();
+        $this->talentBLL->deleteTalent($id);
         return response()->json(['success' => true]);
     }
 
     public function import(Request $request)
     {
-        // Validate the incoming request for the file
         $request->validate([
             'file' => 'required|mimes:xlsx,csv,xls'
         ]);
 
-        // Perform the import using the TalentImport class
-        Excel::import(new TalentImport, $request->file('file'));
+        $this->talentBLL->handleTalentImport($request->file('file'));
 
         return redirect()->back()->with('success', 'Talent data imported successfully.');
+    }
+
+    private function generateActionButtons($talent)
+    {
+        return '
+            <button class="btn btn-sm btn-primary viewButton" 
+                data-id="' . $talent->id . '" 
+                data-toggle="modal" 
+                data-target="#viewTalentModal">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-success editButton" 
+                data-id="' . $talent->id . '">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button class="btn btn-sm btn-danger deleteButton" 
+                data-id="' . $talent->id . '">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        ';
+    }
+
+    private function generatePaymentButtons($talent)
+    {
+        return '
+            <button class="btn btn-sm btn-info addPaymentButton" 
+                data-id="' . $talent->id . '"
+                data-toggle="modal" 
+                data-target="#addPaymentModal">
+                <i class="fas fa-wallet"> Payment</i>
+            </button>
+            <button class="btn btn-sm bg-purple exportData" 
+                data-id="' . $talent->id . '">
+                <i class="fas fa-file-invoice"> Invoice</i>
+            </button>
+            <button class="btn btn-sm bg-maroon exportSPK" 
+                data-id="' . $talent->id . '">
+                <i class="fas fa-file"> SPK</i>
+            </button>
+        ';
     }
 
     public function exportInvoice(Request $request, $id)

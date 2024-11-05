@@ -7,7 +7,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use App\Domain\Tenant\Traits\FilterByTenant;
 
-class Talent extends Model
+class Talent extends Model implements HasMedia
 {
     use FilterByTenant, InteractsWithMedia;
     protected $table = 'talents';
