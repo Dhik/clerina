@@ -539,4 +539,38 @@ class SalesController extends Controller
     {
         return (int) str_replace(['Rp', '.', ','], '', $currency);
     }
+
+    public function updateMonthlyAdSpentData()
+    {
+        try {
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
+
+                $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+
+                $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+
+                $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
+                $dataToUpdate = [
+                    'ad_spent_social_media' => $sumSpentSocialMedia,
+                    'ad_spent_market_place' => $sumSpentMarketPlace,
+                    'ad_spent_total' => $totalAdSpent,
+                ];
+                Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
