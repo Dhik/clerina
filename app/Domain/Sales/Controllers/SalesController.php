@@ -319,11 +319,9 @@ class SalesController extends Controller
 
     public function sendMessageAzrina()
     {
-        // Get yesterday's data
         $yesterday = now()->subDay();
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
 
-        // Yesterday's sales and transaction data
         $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
             ->selectRaw('SUM(amount) as turnover')
@@ -343,7 +341,6 @@ class SalesController extends Controller
             ? round($yesterdayData->turnover / $orderData->customers, 2) 
             : 0;
 
-        // Format daily turnover
         $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
         $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
         $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
@@ -359,12 +356,10 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
-        // Format monthly turnover
         $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
-        // Monthly projection
         $daysPassed = now()->day - 1;
         $remainingDays = now()->daysInMonth - $daysPassed;
 
@@ -376,26 +371,22 @@ class SalesController extends Controller
         $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
         $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
 
-        // Format projections
         $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
         $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
         $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
 
-        // Calculate turnover per sales channel
         $salesChannelData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
 
-        // Monthly data per sales channel for projection
         $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
             ->where('tenant_id', 2)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
 
-        // Map sales channel data to names and calculate projections
         $salesChannelNames = SalesChannel::pluck('name', 'id');
         $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
             $channelName = $salesChannelNames->get($item->sales_channel_id);
@@ -484,11 +475,14 @@ class SalesController extends Controller
             ->toArray();
 
         $tenant_id = 1;
+        $currentMonth = Carbon::now()->format('Y-m');
 
         foreach ($sheetData as $row) {
             $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                continue; 
+            }
 
-            // Save or update for each social media platform
             foreach ($socialMediaMap as $platform => $socialMediaId) {
                 $amountColumnIndex = array_search($platform, array_keys($socialMediaMap)) + 1; 
                 if (!isset($row[$amountColumnIndex])) {
