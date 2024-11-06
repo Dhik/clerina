@@ -17,6 +17,7 @@ class SocialMediaTableSeeder extends Seeder
             'Snack Video',
             'Instagram',
             'Tiktok',
+            'Google',
         ];
 
         foreach ($salesChannels as $salesChannel) {

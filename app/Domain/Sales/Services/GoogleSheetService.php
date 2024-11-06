@@ -16,6 +16,7 @@ class GoogleSheetService
         $this->client = new Google_Client();
         $this->client->setAuthConfig(storage_path('app/google-sheets-credentials.json'));
         $this->client->addScope(Google_Service_Sheets::SPREADSHEETS);
+        $this->client->useApplicationDefaultCredentials();
 
         $this->service = new Google_Service_Sheets($this->client);
         $this->spreadsheetId = '1ksZm0fLUTdZbf8ITNQXxOizbhpOfjHj32nWAthDFyWI';

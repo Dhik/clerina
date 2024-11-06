@@ -7,6 +7,9 @@ use App\Domain\Sales\BLL\AdSpentMarketPlace\AdSpentMarketPlaceBLL;
 use App\Domain\Sales\BLL\AdSpentSocialMedia\AdSpentSocialMediaBLL;
 use App\Domain\Sales\BLL\Sales\SalesBLLInterface;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
+use App\Domain\Sales\Models\AdSpentSocialMedia;
+use App\Domain\Sales\Models\AdSpentMarketPlace;
+use App\Domain\Marketing\Models\SocialMedia;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\SalesChannel;
@@ -14,6 +17,7 @@ use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
+use Carbon\Carbon; 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -465,25 +469,68 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
-        $range = 'Sheet1!A2:K';
+        $range = 'Sheet1!A2:F';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
+        // Get only the last 5 rows from the sheet data
+        $sheetData = array_slice($sheetData, -5);
+
+        $socialMediaMap = SocialMedia::whereIn('name', ['Tiktok', 'Facebook', 'Snack Video', 'Google'])
+            ->pluck('id', 'name')
+            ->toArray();
+
+        $salesChannelsMap = SalesChannel::whereIn('name', ['Shopee', 'Tokopedia', 'Lazada'])
+            ->pluck('id', 'name')
+            ->toArray();
+
+        $tenant_id = 1;
+
         foreach ($sheetData as $row) {
-            Sales::create([
-                'date'                  => $row[0],
-                'visit'                 => $row[1],
-                'qty'                   => $row[2],
-                'order'                 => $row[3],
-                'closing_rate'          => $row[4],
-                'turnover'              => $row[5],
-                'ad_spent_social_media' => $row[6],
-                'ad_spent_market_place' => $row[7],
-                'ad_spent_total'        => $row[8],
-                'roas'                  => $row[9],
-                'tenant_id'             => $row[10],
-            ]);
+            $date = Carbon::parse($row[0])->format('Y-m-d');
+
+            // Save or update for each social media platform
+            foreach ($socialMediaMap as $platform => $socialMediaId) {
+                $amountColumnIndex = array_search($platform, array_keys($socialMediaMap)) + 1; // Adjust index as per layout
+                $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
+
+                AdSpentSocialMedia::updateOrCreate(
+                    [
+                        'date'            => $date,
+                        'social_media_id' => $socialMediaId,
+                        'tenant_id'       => $tenant_id,
+                    ],
+                    [
+                        'amount'          => $amount,
+                    ]
+                );
+            }
+
+            // Save or update for each sales channel
+            foreach ($salesChannelsMap as $channel => $salesChannelId) {
+                $amountColumnIndex = array_search($channel, array_keys($salesChannelsMap)) + 3; // Adjust index as per layout
+                $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
+
+                AdSpentMarketPlace::updateOrCreate(
+                    [
+                        'date'             => $date,
+                        'sales_channel_id' => $salesChannelId,
+                        'tenant_id'        => $tenant_id,
+                    ],
+                    [
+                        'amount'           => $amount,
+                    ]
+                );
+            }
         }
 
         return response()->json(['message' => 'Data imported successfully']);
+    }
+
+    /**
+     * Helper function to parse currency string to integer
+     */
+    private function parseCurrencyToInt($currency)
+    {
+        return (int) str_replace(['Rp', '.', ','], '', $currency);
     }
 }
