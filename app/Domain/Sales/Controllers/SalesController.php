@@ -460,54 +460,34 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
-        $range = 'Sheet1!A2:F';
+        $range = 'Sheet1!A2:H'; // Adjusted to match the columns being processed
         $sheetData = $this->googleSheetService->getSheetData($range);
-
-        // Get only the last 5 rows from the sheet data
-        // $sheetData = array_slice($sheetData, -5);
-
-        $socialMediaMap = SocialMedia::whereIn('name', ['Tiktok', 'Meta', 'Snack Video', 'Google Ads'])
-            ->pluck('id', 'name')
-            ->toArray();
-
-        $salesChannelsMap = SalesChannel::whereIn('name', ['Shopee', 'Tokopedia', 'Lazada'])
-            ->pluck('id', 'name')
-            ->toArray();
 
         $tenant_id = 1;
         $currentMonth = Carbon::now()->format('Y-m');
 
         foreach ($sheetData as $row) {
+            // Parse the date from row[0] and filter to process only current month data
             $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
             if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue; 
+                continue;
             }
 
-            foreach ($socialMediaMap as $platform => $socialMediaId) {
-                $amountColumnIndex = array_search($platform, array_keys($socialMediaMap)) + 1; 
-                if (!isset($row[$amountColumnIndex])) {
+            // Map each column to the appropriate model and field
+
+            // Sales Channels data
+            $salesChannelData = [
+                4 => $row[1] ?? null, // Tiktok Shop (sales_channel_id == 4)
+                1 => $row[3] ?? null, // Shopee (sales_channel_id == 1)
+                3 => $row[4] ?? null, // Tokopedia (sales_channel_id == 3)
+                2 => $row[5] ?? null, // Lazada (sales_channel_id == 2)
+            ];
+
+            foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                if (!isset($amountValue)) {
                     continue;
                 }
-                $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
-
-                AdSpentSocialMedia::updateOrCreate(
-                    [
-                        'date'            => $date,
-                        'social_media_id' => $socialMediaId,
-                        'tenant_id'       => $tenant_id,
-                    ],
-                    [
-                        'amount'          => $amount,
-                    ]
-                );
-            }
-
-            foreach ($salesChannelsMap as $channel => $salesChannelId) {
-                $amountColumnIndex = array_search($channel, array_keys($salesChannelsMap)) + 3; // Adjust index as per layout
-                if (!isset($row[$amountColumnIndex])) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
+                $amount = $this->parseCurrencyToInt($amountValue);
 
                 AdSpentMarketPlace::updateOrCreate(
                     [
@@ -520,10 +500,36 @@ class SalesController extends Controller
                     ]
                 );
             }
+
+            // Social Media data
+            $socialMediaData = [
+                1 => $row[2] ?? null, // Facebook (social_media_id == 1)
+                2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
+                5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
+            ];
+
+            foreach ($socialMediaData as $socialMediaId => $amountValue) {
+                if (!isset($amountValue)) {
+                    continue;
+                }
+                $amount = $this->parseCurrencyToInt($amountValue);
+
+                AdSpentSocialMedia::updateOrCreate(
+                    [
+                        'date'            => $date,
+                        'social_media_id' => $socialMediaId,
+                        'tenant_id'       => $tenant_id,
+                    ],
+                    [
+                        'amount'          => $amount,
+                    ]
+                );
+            }
         }
 
         return response()->json(['message' => 'Data imported successfully']);
     }
+
 
     /**
      * Helper function to parse currency string to integer
