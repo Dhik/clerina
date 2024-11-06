@@ -502,7 +502,6 @@ class SalesController extends Controller
                 );
             }
 
-            // Save or update for each sales channel
             foreach ($salesChannelsMap as $channel => $salesChannelId) {
                 $amountColumnIndex = array_search($channel, array_keys($salesChannelsMap)) + 3; // Adjust index as per layout
                 if (!isset($row[$amountColumnIndex])) {

@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\RefreshCampaignContents::class,
         \App\Console\Commands\ImportTalentCommand::class,
         \App\Console\Commands\SendTelegramReport::class,
+        \App\Console\Commands\ImportFromGoogleSheet::class,
     ];
 
 
@@ -30,6 +31,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('attendance:populate')->dailyAt('00:05');
         $schedule->command('campaign:refresh-contents')->dailyAt('06:00');
         $schedule->command('report:send-telegram')->dailyAt('07:00');
+        $schedule->command('google-sheet:import')->dailyAt('14:50');
 
 
 
