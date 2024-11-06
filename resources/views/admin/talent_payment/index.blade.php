@@ -29,6 +29,18 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-3 mb-2">
+                            <select name="status_payment" id="status_payment" class="form-control" required>
+                                <option value="">Select Status</option>
+                                <option value="Full Payment">Full Payment</option>
+                                <option value="DP 50%">DP 50%</option>
+                                <option value="Pelunasan 50%">Pelunasan 50%</option>
+                                <option value="Termin 1">Termin 1</option>
+                                <option value="Termin 2">Termin 2</option>
+                                <option value="Termin 3">Termin 3</option>
+                            </select>
+                        </div>
+
                         <div class="col-auto">
                             <button class="btn btn-primary" id="filterButton">
                                 <i class="fas fa-search"></i> Apply Filter
@@ -92,6 +104,7 @@
                 data: function(d) {
                     d.pic = $('#filterPic').val();
                     d.username = $('#filterUsername').val();
+                    d.status_payment = $('#status_payment').val();
                 }
             },
             columns: [
@@ -151,6 +164,7 @@
         $('#resetFilterButton').on('click', function() {
             $('#filterPic').val('').trigger('change');
             $('#filterUsername').val('').trigger('change');
+            $('#status_payment').val('').trigger('change');
             table.ajax.reload();
         });
 
@@ -201,13 +215,15 @@
         $('#exportButton').on('click', function() {
             var pic = $('#filterPic').val();
             var username = $('#filterUsername').val();
-            window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username;
+            var status_payment = $('#status_payment').val();
+            window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username + '&status_payment=' + status_payment;
         });
 
         $('#exportExcelButton').on('click', function() {
             var pic = $('#filterPic').val();
             var username = $('#filterUsername').val();
-            window.location.href = '{{ route('talent_payments.export_excel') }}?pic=' + pic + '&username=' + username;
+            var status_payment = $('#status_payment').val();
+            window.location.href = '{{ route('talent_payments.export_excel') }}?pic=' + pic + '&username=' + username + '&status_payment=' + status_payment;
         });
 
         // Handle edit button click

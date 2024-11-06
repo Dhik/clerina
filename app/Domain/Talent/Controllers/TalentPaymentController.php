@@ -67,6 +67,10 @@ class TalentPaymentController extends Controller
             $payments->where('talents.username', $request->username);
         }
 
+        if ($request->has('status_payment') && $request->status_payment != '') {
+            $payments->where('talent_payments.status_payment', $request->status_payment);
+        }
+
         return DataTables::of($payments)
             ->addColumn('action', function ($payment) {
                 return '
@@ -196,6 +200,10 @@ class TalentPaymentController extends Controller
             $query->whereHas('talent', function($q) use ($request) {
                 $q->where('username', $request->username);
             });
+        }
+
+        if ($request->has('status_payment') && $request->status_payment != '') {
+            $query->where('status_payment', $request->status_payment);
         }
 
         $talentContents = $query->get();

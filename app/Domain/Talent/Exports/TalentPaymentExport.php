@@ -84,6 +84,9 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     $q->where('username', $this->request->username);
                 });
             })
+            ->when($this->request->has('status_payment') && $this->request->status_payment != '', function($query) {
+                $query->where('status_payment', $this->request->status_payment);
+            })
             ->orderBy('id'); // Add ordering for consistent chunking
     }
 
