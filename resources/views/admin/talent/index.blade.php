@@ -67,16 +67,25 @@
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
-                { data: 'remaining', name: 'remaining', orderable: false},
+                { 
+                    data: 'remaining', 
+                    name: 'remaining', 
+                    orderable: false,
+                    render: function(data, type, row) {
+                        let values = data.split(" / ");
+                        if (values[0] === values[1]) {
+                            return '<span style="color: green;">'+data+'</span>';
+                        }
+                        return data;
+                    }
+                },
                 {
                     data: 'rate_final',
                     name: 'rate_final',
                     render: function(data, type, row) {
-                        // Check if the data is null or undefined
                         if (data == null) {
                             return '';
                         }
-                        // Convert to float and format as currency
                         return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0
