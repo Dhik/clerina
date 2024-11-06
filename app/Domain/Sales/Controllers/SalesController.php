@@ -466,7 +466,7 @@ class SalesController extends Controller
         // Get only the last 5 rows from the sheet data
         // $sheetData = array_slice($sheetData, -5);
 
-        $socialMediaMap = SocialMedia::whereIn('name', ['Tiktok', 'Facebook', 'Snack Video', 'Google'])
+        $socialMediaMap = SocialMedia::whereIn('name', ['Tiktok', 'Meta', 'Snack Video', 'Google Ads'])
             ->pluck('id', 'name')
             ->toArray();
 
