@@ -557,10 +557,18 @@ class SalesController extends Controller
                     ->sum('amount');
 
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
+
+                $turnover = Sales::where('tenant_id', 1)
+                ->where('date', $formattedDate)
+                ->value('turnover');
+
+                $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
+                
                 $dataToUpdate = [
                     'ad_spent_social_media' => $sumSpentSocialMedia,
                     'ad_spent_market_place' => $sumSpentMarketPlace,
                     'ad_spent_total' => $totalAdSpent,
+                    'roas' => $roas,
                 ];
                 Sales::where('tenant_id', 1)
                     ->where('date', $formattedDate)
