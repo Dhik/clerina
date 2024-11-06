@@ -473,7 +473,7 @@ class SalesController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         // Get only the last 5 rows from the sheet data
-        $sheetData = array_slice($sheetData, -5);
+        // $sheetData = array_slice($sheetData, -5);
 
         $socialMediaMap = SocialMedia::whereIn('name', ['Tiktok', 'Facebook', 'Snack Video', 'Google'])
             ->pluck('id', 'name')
@@ -486,11 +486,14 @@ class SalesController extends Controller
         $tenant_id = 1;
 
         foreach ($sheetData as $row) {
-            $date = Carbon::parse($row[0])->format('Y-m-d');
+            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
 
             // Save or update for each social media platform
             foreach ($socialMediaMap as $platform => $socialMediaId) {
-                $amountColumnIndex = array_search($platform, array_keys($socialMediaMap)) + 1; // Adjust index as per layout
+                $amountColumnIndex = array_search($platform, array_keys($socialMediaMap)) + 1; 
+                if (!isset($row[$amountColumnIndex])) {
+                    continue;
+                }
                 $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
 
                 AdSpentSocialMedia::updateOrCreate(
@@ -508,6 +511,9 @@ class SalesController extends Controller
             // Save or update for each sales channel
             foreach ($salesChannelsMap as $channel => $salesChannelId) {
                 $amountColumnIndex = array_search($channel, array_keys($salesChannelsMap)) + 3; // Adjust index as per layout
+                if (!isset($row[$amountColumnIndex])) {
+                    continue;
+                }
                 $amount = $this->parseCurrencyToInt($row[$amountColumnIndex]);
 
                 AdSpentMarketPlace::updateOrCreate(
