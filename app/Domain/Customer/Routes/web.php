@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Customer\Controllers\CustomerController;
+use App\Domain\Customer\Controllers\CustomerAnalysisController;
 use App\Domain\Customer\Controllers\CustomerNoteController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,5 +34,14 @@ Route::prefix('admin')
                 Route::post('/store', [CustomerNoteController::class, 'store'])->name('customerNote.store');
                 Route::put('/update/{customerNote}', [CustomerNoteController::class, 'update'])->name('customerNote.update');
                 Route::delete('/delete/{customerNote}', [CustomerNoteController::class, 'delete'])->name('customerNote.destroy');
+            });
+
+        Route::prefix('cstmr_analysis')
+            ->group(function () {
+                Route::get('/', [CustomerAnalysisController::class, 'index'])->name('customer_analysis.index');
+                Route::get('/get', [CustomerAnalysisController::class, 'data'])->name('customer_analysis.data');
+                Route::get('/import', [CustomerAnalysisController::class, 'importCustomers'])->name('customer_analysis.import');
+                Route::get('/total', [CustomerAnalysisController::class, 'countUniqueCustomers'])->name('customer_analysis.total');
+                Route::get('/product-pie', [CustomerAnalysisController::class, 'getProductCounts'])->name('customer_analysis.product_counts');
             });
     });

@@ -4,6 +4,7 @@ namespace App\Domain\Customer\Controllers;
 
 use App\Domain\Customer\BLL\Customer\CustomerBLLInterface;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Customer\Models\CustomerNote;
 use App\Domain\Customer\Requests\CustomerRequest;
@@ -18,15 +19,20 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
+use Carbon\Carbon; 
 use Yajra\DataTables\Utilities\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 use App\Domain\Customer\Exports\CustomersExport;
 
 class CustomerController extends Controller
 {
-    public function __construct(protected CustomerBLLInterface $customerBLL)
-    {}
+    protected $googleSheetService;
+    public function __construct(protected CustomerBLLInterface $customerBLL, GoogleSheetService $googleSheetService)
+    {
+        $this->googleSheetService = $googleSheetService;
+    }
 
     /**
      * @return JsonResponse

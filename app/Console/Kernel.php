@@ -32,6 +32,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('campaign:refresh-contents')->dailyAt('03:00');
         $schedule->command('report:send-telegram')->dailyAt('07:00');
         $schedule->command('google-sheet:import')->dailyAt('06:00');
+        $schedule->command('import:visit')->dailyAt('06:00');
 
         // $schedule->command('postings:update daily')->daily();
         // $schedule->command('postings:update 3days')->cron('0 0 */3 * *'); // Every 3 days
