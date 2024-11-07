@@ -337,5 +337,5 @@ return [
     'additional_info' => "Additional Info",
     'kode_ads' => 'Kode Ads',
     'actions' => 'Aksi',
-    'labels.engagement_rate' => "ER",
+    'engagement_rate' => "ER",
 ];
