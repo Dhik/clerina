@@ -23,15 +23,8 @@
                             </div>
                         </div>
                     </div>
-                    
-                </div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="card">
-                <div class="card-body">
-                <div class="row">
-                        <div class="col-lg-3 col-6">
+                    <div class="row">
+                        <div class="col-auto">
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h4 id="totalOrder">0</h4>
@@ -43,6 +36,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
