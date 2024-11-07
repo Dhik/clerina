@@ -123,50 +123,5 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($data);
     }
-    public function getDailyCustomerCounts(Request $request)
-    {
-        $month = '2024-01';
-
-        // Total daily count of unique customers by day
-        $totalDailyCount = CustomersAnalysis::selectRaw('DATE(tanggal_pesanan_dibuat) as date, COUNT(DISTINCT nama_penerima, nomor_telepon) as total_count')
-            ->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month])
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        // First-time customers: where there are no previous orders for the same nama_penerima and nomor_telepon
-        $firstTimers = CustomersAnalysis::selectRaw('DATE(t1.tanggal_pesanan_dibuat) as date, COUNT(*) as first_timer_count')
-            ->from('customers_analysis as t1')
-            ->whereRaw('DATE_FORMAT(t1.tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month])
-            ->whereRaw('NOT EXISTS (
-                SELECT 1 FROM customers_analysis as t2
-                WHERE t2.nama_penerima = t1.nama_penerima
-                AND t2.nomor_telepon = t1.nomor_telepon
-                AND t2.tanggal_pesanan_dibuat < t1.tanggal_pesanan_dibuat
-            )')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        // Repeated customers: where there is at least one previous order for the same nama_penerima and nomor_telepon
-        $repeatedCustomers = CustomersAnalysis::selectRaw('DATE(t1.tanggal_pesanan_dibuat) as date, COUNT(*) as repeated_count')
-            ->from('customers_analysis as t1')
-            ->whereRaw('DATE_FORMAT(t1.tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month])
-            ->whereRaw('EXISTS (
-                SELECT 1 FROM customers_analysis as t2
-                WHERE t2.nama_penerima = t1.nama_penerima
-                AND t2.nomor_telepon = t1.nomor_telepon
-                AND t2.tanggal_pesanan_dibuat < t1.tanggal_pesanan_dibuat
-            )')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return response()->json([
-            'totalDailyCount' => $totalDailyCount,
-            'firstTimers' => $firstTimers,
-            'repeatedCustomers' => $repeatedCustomers,
-        ]);
-    }
 
 }

@@ -156,7 +156,7 @@
                 fetch('{{ route('customer_analysis.product_counts') }}')
                     .then(response => response.json())
                     .then(data => {
-                        const productLabels = data.map(item => item.produk);
+                        const productLabels = data.map(item => item.short_name);
                         const productCounts = data.map(item => item.total_count);
 
                         // Render the pie chart
