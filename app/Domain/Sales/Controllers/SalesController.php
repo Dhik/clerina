@@ -580,4 +580,38 @@ class SalesController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+    private $accessToken = 'EAAvb8cyWo24BO7WfoZC7ROrDFa2lTz9hvMxaP9FZBZC6dOdiSE9LKpB8mGGJNZBwoupqVikudVuZBtB1BZAbkyBKeYsQFuM6JOuG0iexXpfznDIg9yWBwodIp06GF0VAYRtZAG3Sn4wZCkWkCMhVPPtZB8xFsthGtSDWfaOAtPgqy3SWL9T3qcPEl8g32StqUZAq54vSAZBQSUF';
+    private $adAccountId = '545160191589598';
+
+    public function getAdInsights()
+    {
+        $url = "https://graph.facebook.com/v13.0/act_{$this->adAccountId}/insights";
+
+        // Define the query parameters
+        $params = [
+            'access_token' => $this->accessToken,
+            'level' => 'account',
+            'fields' => 'results,result_rate,reach,frequency,impressions', // Add more fields if needed
+            'time_range' => json_encode([
+                'since' => '2024-10-08',
+                'until' => '2024-11-07',
+            ]),
+        ];
+
+        // Send a GET request to the Meta API
+        $response = Http::get($url, $params);
+
+        // Check if the response is successful
+        if ($response->successful()) {
+            return response()->json([
+                'data' => $response->json(),
+                'message' => 'Insights retrieved successfully',
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Failed to retrieve insights',
+                'error' => $response->json(),
+            ], $response->status());
+        }
+    }
 }

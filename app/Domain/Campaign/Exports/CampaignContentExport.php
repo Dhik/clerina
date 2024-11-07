@@ -36,6 +36,9 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
 
     public function map($row): array
     {
+        $viewCount = $row->latestStatistic->view ?? 0;
+        $likeCount = $row->latestStatistic->like ?? 0;
+        $commentCount = $row->latestStatistic->comment ?? 0;
         return [
             $row->username ?? '', // A
             $row->channel, // B
@@ -46,6 +49,7 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
             $row->latestStatistic->like ?? 0, // G
             $row->latestStatistic->comment ?? 0, // H
             $this->countCPM($row->rate_card, $row->latestStatistic->view ?? 0) , // I
+            $this->calculateER($likeCount, $commentCount, $viewCount),
             $row->rate_card, // J
             $row->is_paid ? trans('labels.paid') : trans('labels.unpaid'), // K
             $row->keyOpinionLeader->bank_name, // L
@@ -60,6 +64,14 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
         }
 
         return ($rateCard / $view) * 1000;
+    }
+    protected function calculateER($likeCount, $commentCount, $viewCount): float|int
+    {
+        if ($viewCount === 0) {
+            return 0;
+        }
+
+        return (($likeCount + $commentCount) / $viewCount) * 100; // ER in percentage
     }
 
     public function title(): string
@@ -79,10 +91,11 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
             trans('labels.like'), // G
             trans('labels.comment'), // H
             trans('labels.cpm'), // I
-            trans('labels.rate_card'), // J
-            trans('labels.payment'), // K
-            trans('labels.bank_name'), // L
-            trans('labels.kode_ads'), // L
+            trans('labels.engagement_rate'), // J
+            trans('labels.rate_card'), // K
+            trans('labels.payment'), // L
+            trans('labels.bank_name'), // M
+            trans('labels.kode_ads'), // N
         ];
     }
 
@@ -93,7 +106,8 @@ class CampaignContentExport implements FromQuery, ShouldAutoSize, WithColumnForm
             'G' => self::CUSTOM_NUMBER,
             'H' => self::CUSTOM_NUMBER,
             'I' => self::CUSTOM_NUMBER,
-            'J' => self::CUSTOM_NUMBER,
+            'K' => self::CUSTOM_NUMBER,
+            'J' => '0.00',
         ];
     }
 }
