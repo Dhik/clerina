@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-12">
+        <div class="col-4">
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-3">
@@ -23,7 +23,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                <div class="row">
                         <div class="col-lg-3 col-6">
                             <div class="small-box bg-info">
                                 <div class="inner">
@@ -49,6 +56,7 @@
                 </div>
             </div>
         </div>
+        
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
