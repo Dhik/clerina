@@ -670,11 +670,11 @@ class SalesController extends Controller
 
                 $sumVisitCleora = Visit::where('tenant_id', 1)
                     ->where('date', $formattedDate)
-                    ->sum('amount');
+                    ->sum('visit_amount');
 
                 $sumVisitAzrina = Visit::where('tenant_id', 2)
                     ->where('date', $formattedDate)
-                    ->sum('amount');
+                    ->sum('visit_amount');
                 
                 $dataToUpdate = [
                     'visit' => $sumVisitCleora,
