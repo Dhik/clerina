@@ -9,6 +9,7 @@ use App\Domain\Sales\BLL\Sales\SalesBLLInterface;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\AdSpentMarketPlace;
+use App\Domain\Sales\Models\Visit;
 use App\Domain\Marketing\Models\SocialMedia;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
@@ -460,7 +461,7 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
-        $range = 'Sheet1!A2:H'; // Adjusted to match the columns being processed
+        $range = 'Ads Summary!A2:H'; // Adjusted to match the columns being processed
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -472,10 +473,6 @@ class SalesController extends Controller
             if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                 continue;
             }
-
-            // Map each column to the appropriate model and field
-
-            // Sales Channels data
             $salesChannelData = [
                 4 => $row[1] ?? null, // Tiktok Shop (sales_channel_id == 4)
                 1 => $row[3] ?? null, // Shopee (sales_channel_id == 1)
@@ -530,6 +527,87 @@ class SalesController extends Controller
         return response()->json(['message' => 'Data imported successfully']);
     }
 
+    public function importVisitCleora()
+    {
+        $range = '[Cleora] Visit, Sales, Transaction!A3:E'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $currentMonth = Carbon::now()->format('Y-m');
+
+        foreach ($sheetData as $row) {
+            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                continue;
+            }
+            $salesChannelData = [
+                1 => $row[1] ?? null,
+                4 => $row[2] ?? null,
+                2 => $row[3] ?? null, 
+                3 => $row[4] ?? null, 
+            ];
+
+            foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                if (!isset($amountValue)) {
+                    continue;
+                }
+                $amount = $this->parseCurrencyToInt($amountValue);
+
+                Visit::updateOrCreate(
+                    [
+                        'date'             => $date,
+                        'sales_channel_id' => $salesChannelId,
+                        'tenant_id'        => $tenant_id,
+                    ],
+                    [
+                        'visit_amount'           => $amount,
+                    ]
+                );
+            }
+        }
+        return response()->json(['message' => 'Data imported successfully']);
+    }
+    public function importVisitAzrina()
+    {
+        $range = '[Azrina] Visit, Sales, Transaction!A3:E'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $currentMonth = Carbon::now()->format('Y-m');
+
+        foreach ($sheetData as $row) {
+            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                continue;
+            }
+            $salesChannelData = [
+                1 => $row[1] ?? null,
+                4 => $row[2] ?? null,
+                2 => $row[3] ?? null, 
+                3 => $row[4] ?? null, 
+            ];
+
+            foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                if (!isset($amountValue)) {
+                    continue;
+                }
+                $amount = $this->parseCurrencyToInt($amountValue);
+
+                Visit::updateOrCreate(
+                    [
+                        'date'             => $date,
+                        'sales_channel_id' => $salesChannelId,
+                        'tenant_id'        => $tenant_id,
+                    ],
+                    [
+                        'visit_amount'           => $amount,
+                    ]
+                );
+            }
+        }
+        return response()->json(['message' => 'Data imported successfully']);
+    }
+
 
     /**
      * Helper function to parse currency string to integer
@@ -571,6 +649,44 @@ class SalesController extends Controller
                     'roas' => $roas,
                 ];
                 Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateMonthlyVisitData()
+    {
+        try {
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
+
+                $sumVisitCleora = Visit::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+
+                $sumVisitAzrina = Visit::where('tenant_id', 2)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+                
+                $dataToUpdate = [
+                    'visit' => $sumVisitCleora,
+                ];
+                Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+
+                $dataToUpdate = [
+                    'visit' => $sumVisitAzrina,
+                ];
+                Sales::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
             }
