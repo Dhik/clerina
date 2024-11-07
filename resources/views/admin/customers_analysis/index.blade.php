@@ -191,7 +191,7 @@
                                 responsive: true,
                                 plugins: {
                                     legend: {
-                                        position: 'top',
+                                        display: false,
                                     },
                                     tooltip: {
                                         callbacks: {
