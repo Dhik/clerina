@@ -36,12 +36,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-5">
-                        <div class="col-lg-6">
-                            <canvas id="productPieChart"></canvas>
-                        </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Distribusi per Produk</h5>
+                    <div style="height: 350px;">
+                    <canvas id="productPieChart"></canvas>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card">
                 <div class="card-body">
                     <table id="customerAnalysisTable" class="table table-bordered table-striped">
                         <thead>
