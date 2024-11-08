@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-4">
+        <div class="col-12">
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-3">
@@ -24,7 +24,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-12">
+                        <div class="col-3">
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h4 id="totalOrder">0</h4>
@@ -49,6 +49,17 @@
                 </div>
             </div>
         </div>
+        <div class="col-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Jumlah Customer per Hari</h5>
+                    <div style="height: 350px;">
+                        <canvas id="dailyCustomersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
@@ -80,6 +91,7 @@
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@^2"></script>
     <script>
         $(document).ready(function() {
             var table = $('#customerAnalysisTable').DataTable({
@@ -114,6 +126,7 @@
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
                 fetchProductCounts();
+                fetchDailyUniqueCustomers();
             });
 
             $('#refreshButton').click(function() {
@@ -145,7 +158,10 @@
                                 showConfirmButton: false,
                                 timer: 1500
                             });
+                            table.ajax.reload(null, false);
+                            fetchTotalUniqueOrders();
                             fetchProductCounts();
+                            fetchDailyUniqueCustomers();
                         }
                     })
                     .catch(error => {
@@ -162,15 +178,19 @@
 
             // Fetch and render the product counts for the pie chart
             function fetchProductCounts() {
-                fetch('{{ route('customer_analysis.product_counts') }}')
+                const selectedMonth = $('#filterMonth').val();
+                const ctx = document.getElementById('productPieChart').getContext('2d');
+
+                if (window.productChart) {
+                    window.productChart.destroy();
+                }
+
+                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}`)
                     .then(response => response.json())
                     .then(data => {
                         const productLabels = data.map(item => item.short_name);
                         const productCounts = data.map(item => item.total_count);
-
-                        // Render the pie chart
-                        const ctx = document.getElementById('productPieChart').getContext('2d');
-                        new Chart(ctx, {
+                        window.productChart = new Chart(ctx, {
                             type: 'pie',
                             data: {
                                 labels: productLabels,
@@ -218,6 +238,64 @@
 
             // Fetch product counts initially on page load
             fetchProductCounts();
+
+            function fetchDailyUniqueCustomers() {
+                const selectedMonth = $('#filterMonth').val();
+                const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.dailyChart) {
+                    window.dailyChart.destroy();
+                }
+
+                fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const dates = data.map(item => item.date);
+                        const counts = data.map(item => item.unique_count);
+
+                        window.dailyChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: dates,
+                                datasets: [{
+                                    label: 'Unique Customers',
+                                    data: counts,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            precision: 0
+                                        }
+                                    },
+                                    x: {
+                                        ticks: {
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error fetching daily unique customers:', error));
+            }
+
+            // Add these lines to your existing document.ready function
+            fetchDailyUniqueCustomers();
         });
     </script>
 @endsection

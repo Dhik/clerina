@@ -115,13 +115,37 @@ class CustomerAnalysisController extends Controller
 
         return response()->json(['unique_customer_count' => $uniqueCount]);
     }
-    public function getProductCounts()
+    public function getProductCounts(Request $request)
     {
-        $data = CustomersAnalysis::selectRaw('SUBSTRING_INDEX(produk, " -", 1) as short_name, COUNT(*) as total_count')
+        $query = CustomersAnalysis::query();
+
+        if ($request->has('month') && $request->month) {
+            $month = $request->month;
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
+        }
+
+        $data = $query->selectRaw('SUBSTRING_INDEX(produk, " -", 1) as short_name, COUNT(*) as total_count')
             ->groupBy('short_name')
             ->get();
 
         return response()->json($data);
     }
+    public function getDailyUniqueCustomers(Request $request)
+    {
+        $query = CustomersAnalysis::query();
+        
+        if ($request->has('month') && $request->month) {
+            $month = $request->month;
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
+        }
+
+        $dailyCounts = $query->selectRaw('DATE(tanggal_pesanan_dibuat) as date, COUNT(DISTINCT CONCAT(nama_penerima, nomor_telepon)) as unique_count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return response()->json($dailyCounts);
+    }
+
 
 }
