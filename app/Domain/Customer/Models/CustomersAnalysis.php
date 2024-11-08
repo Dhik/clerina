@@ -19,6 +19,7 @@ class CustomersAnalysis extends Model
         'nomor_telepon',
         'tenant_id',
         'sales_channel_id',
+        'is_joined',
     ];
     public function tenant()
     {

@@ -43,31 +43,49 @@ class CustomerAnalysisController extends Controller
     }
     public function data(Request $request)
     {
-        // Start with a base query
         $query = CustomersAnalysis::query();
 
-        // Apply month filter if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+        $query = $query->selectRaw('
+            MIN(id) as id,
+            nama_penerima,
+            nomor_telepon,
+            SUM(qty) as total_qty,
+            MIN(is_joined) as is_joined
+        ')
+        ->groupBy('nama_penerima', 'nomor_telepon');
 
-        // Group by 'nama_penerima' and 'nomor_telepon' and calculate the sum of 'qty'
-        $query = $query->selectRaw('nama_penerima, nomor_telepon, SUM(qty) as total_qty')
-                    ->groupBy('nama_penerima', 'nomor_telepon');
-
-        // Initialize DataTables
         $dataTable = DataTables::of($query);
 
-        // Apply search filter if there's a search term
         $dataTable->filter(function ($query) use ($request) {
             if ($request->has('search') && $request->search['value']) {
                 $search = strtolower($request->search['value']);
                 $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_qty) LIKE ?', ["%$search%", "%$search%", "%$search%"]);
             }
         });
-
-        return $dataTable->make(true);
+                
+        $dataTable->addColumn('is_joined', function ($row) {
+            if ($row->is_joined == 0) {
+                return '
+                    <button class="btn btn-sm bg-maroon joinButton" 
+                        data-id="' . $row->id . '">
+                        <i class="fas fa-redo"></i> Join
+                    </button>
+                    ';
+                } else {
+                    return '
+                        <button class="btn btn-sm bg-info unJoinButton" 
+                            data-id="' . $row->id . '">
+                            <i class="fas fa-undo"></i> Joined
+                        </button>
+                    ';
+                }
+            });
+                
+        return $dataTable->rawColumns(['is_joined'])->make(true);
     }
 
 
@@ -123,8 +141,13 @@ class CustomerAnalysisController extends Controller
         $uniqueCount = $query->select('nama_penerima', 'nomor_telepon')
                             ->distinct()
                             ->count();
+        
+        $joinedCount = $query->where('is_joined', 1)
+                          ->select('nama_penerima', 'nomor_telepon')
+                          ->distinct()
+                          ->count();
 
-        return response()->json(['unique_customer_count' => $uniqueCount]);
+        return response()->json(['unique_customer_count' => $uniqueCount, 'joined_count' => $joinedCount]);
     }
     public function getProductCounts(Request $request)
     {
@@ -157,6 +180,46 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($dailyCounts);
     }
+    public function join($id)
+    {
+        try {
+            $customerAnalysis = CustomersAnalysis::findOrFail($id);
+            
+            $namaPenerima = $customerAnalysis->nama_penerima;
+            $nomorTelepon = $customerAnalysis->nomor_telepon;
+    
+            CustomersAnalysis::where('nama_penerima', $namaPenerima)
+                ->where('nomor_telepon', $nomorTelepon)
+                ->update(['is_joined' => 1]);
+    
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to unjoin customers: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to unjoin customers.'], 500);
+        }
+    }
+    public function unjoin($id)
+    {
+        try {
+            // First, get the customer analysis record by ID
+            $customerAnalysis = CustomersAnalysis::findOrFail($id);
+            
+            // Retrieve the nama_penerima and nomor_telepon from the found record
+            $namaPenerima = $customerAnalysis->nama_penerima;
+            $nomorTelepon = $customerAnalysis->nomor_telepon;
+    
+            // Update all records matching nama_penerima and nomor_telepon
+            CustomersAnalysis::where('nama_penerima', $namaPenerima)
+                ->where('nomor_telepon', $nomorTelepon)
+                ->update(['is_joined' => 0]); // Set is_joined to 0
+    
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to unjoin customers: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to unjoin customers.'], 500);
+        }
+    }
+
 
 
 }

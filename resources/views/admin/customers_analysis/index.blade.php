@@ -35,6 +35,17 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-3">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h4 id="totalJoined">0</h4>
+                                    <p>Total Joined</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-redo"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -69,6 +80,7 @@
                                 <th>Nama Penerima</th>
                                 <th>Nomor Telepon</th>
                                 <th>Total Quantity</th>
+                                <th>Sudah Bergabung</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -107,6 +119,7 @@
                     { data: 'nama_penerima', name: 'nama_penerima' },
                     { data: 'nomor_telepon', name: 'nomor_telepon' },
                     { data: 'total_qty', name: 'total_qty' },
+                    { data: 'is_joined', name: 'is_joined' },
                 ],
                 order: [[1, 'asc']]
             });
@@ -116,7 +129,8 @@
                 fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}`)
                     .then(response => response.json())
                     .then(data => {
-                        $('#totalOrder').text(data.unique_customer_count); // Update the total order count
+                        $('#totalOrder').text(data.unique_customer_count);
+                        $('#totalJoined').text(data.joined_count);
                     })
                     .catch(error => console.error('Error fetching total unique orders:', error));
             }
@@ -296,6 +310,79 @@
 
             // Add these lines to your existing document.ready function
             fetchDailyUniqueCustomers();
+
+            $('#customerAnalysisTable').on('click', '.joinButton', function() {
+            var id = $(this).data('id');
+            var url = '{{ route('customer_analysis.join', ':id') }}'.replace(':id', id);
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will mark the customer as joined.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, join them!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Joined!', 'Customer has been marked as joined.', 'success');
+                                table.ajax.reload();
+                            } else {
+                                Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Handle unjoin button click
+        $('#customerAnalysisTable').on('click', '.unJoinButton', function() {
+            var id = $(this).data('id');
+            var url = '{{ route('customer_analysis.unjoin', ':id') }}'.replace(':id', id);
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will unmark the customer as joined.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, unjoin them!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Unjoined!', 'Customer has been unmarked as joined.', 'success');
+                                table.ajax.reload();
+                            } else {
+                                Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
+                        }
+                    });
+                }
+            });
+        });
         });
     </script>
 @endsection
