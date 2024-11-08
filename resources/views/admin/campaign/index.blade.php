@@ -10,7 +10,6 @@
     <div class="row">
         <div class="col-12">
 
-            <!-- DataTables -->
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -92,6 +91,17 @@
                         </div>
                         <div class="icon">
                             <i class="fas fa-eye"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-pink">
+                        <div class="inner">
+                            <h4 id="engagement_rate">Loading...</h4>
+                            <p>Average ER</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
                         </div>
                     </div>
                 </div>
@@ -254,6 +264,7 @@
                 $('#kpi_cpm').text(response.cpm);
                 $('#views').text(response.views);
                 $('#kpi_total_content').text(response.total_content);
+                $('#engagement_rate').text(response.engagement_rate);
             },
             error: function(response) {
                 console.error('Error fetching campaign summary:', response);

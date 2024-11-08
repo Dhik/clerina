@@ -52,13 +52,24 @@ class CustomerAnalysisController extends Controller
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
 
-        // After filtering by month, group by 'nama_penerima' and 'nomor_telepon' and calculate sum of 'qty'
+        // Group by 'nama_penerima' and 'nomor_telepon' and calculate the sum of 'qty'
         $query = $query->selectRaw('nama_penerima, nomor_telepon, SUM(qty) as total_qty')
-            ->groupBy('nama_penerima', 'nomor_telepon');
+                    ->groupBy('nama_penerima', 'nomor_telepon');
 
-        return DataTables::of($query)
-            ->make(true);
+        // Initialize DataTables
+        $dataTable = DataTables::of($query);
+
+        // Apply search filter if there's a search term
+        $dataTable->filter(function ($query) use ($request) {
+            if ($request->has('search') && $request->search['value']) {
+                $search = strtolower($request->search['value']);
+                $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_qty) LIKE ?', ["%$search%", "%$search%", "%$search%"]);
+            }
+        });
+
+        return $dataTable->make(true);
     }
+
 
 
     public function importCustomers()

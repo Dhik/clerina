@@ -114,54 +114,66 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         return true;
     }
     public function getCampaignSummary(Request $request, int $tenantId): array
-{
-    $startDateString = null;
-    $endDateString = null;
+    {
+        $startDateString = null;
+        $endDateString = null;
 
-    if ($request->input('filterMonth')) {
-        $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
-        $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
-    }
+        if ($request->input('filterMonth')) {
+            $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
+            $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
+        }
 
-    $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
+        $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
 
-    if ($request->input('search')) {
-        $searchTerms = explode(' ', strtolower($request->input('search')));
-        
-        $campaigns = $campaigns->filter(function ($campaign) use ($searchTerms) {
-            foreach ($searchTerms as $term) {
-                if (stripos($campaign->title, $term) === false) {
-                    return false;
+        if ($request->input('search')) {
+            $searchTerms = explode(' ', strtolower($request->input('search')));
+            
+            $campaigns = $campaigns->filter(function ($campaign) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    if (stripos($campaign->title, $term) === false) {
+                        return false;
+                    }
                 }
-            }
-            return true;
+                return true;
+            });
+        }
+
+        // Group campaigns by normalized (lowercase) title and sum their values
+        $groupedCampaigns = $campaigns->groupBy(function ($campaign) {
+            return strtolower($campaign->title);
         });
+
+        $totalExpense = 0;
+        $totalContent = 0;
+        $totalViews = 0;
+        $totalEngagementRates = 0;
+        $validCampaignCount = 0;
+
+        foreach ($groupedCampaigns as $group) {
+            $totalExpense += $group->sum('total_expense');
+            $totalContent += $group->sum('total_content');
+            $totalViews += $group->sum('view');
+
+            $groupViews = $group->sum('view');
+            if ($groupViews > 0) {  // Only include campaigns with views
+                $groupEngagements = $group->sum('like') + $group->sum('comment');
+                $campaignEngagementRate = ($groupEngagements / $groupViews) * 100;
+                $totalEngagementRates += $campaignEngagementRate;
+                $validCampaignCount++;
+            }
+        }
+
+        $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
+        $averageEngagementRate = $validCampaignCount > 0 ? $totalEngagementRates / $validCampaignCount : 0;
+
+        return [
+            'total_expense' => $this->numberFormat($totalExpense),
+            'total_content' => $this->numberFormat($totalContent),
+            'cpm' => $this->numberFormat($cpm, 2),
+            'views' => $this->numberFormat($totalViews),
+            'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%'
+        ];
     }
-
-    // Group campaigns by normalized (lowercase) title and sum their values
-    $groupedCampaigns = $campaigns->groupBy(function ($campaign) {
-        return strtolower($campaign->title);
-    });
-
-    $totalExpense = 0;
-    $totalContent = 0;
-    $totalViews = 0;
-
-    foreach ($groupedCampaigns as $group) {
-        $totalExpense += $group->sum('total_expense');
-        $totalContent += $group->sum('total_content');
-        $totalViews += $group->sum('view');
-    }
-
-    $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
-
-    return [
-        'total_expense' => $this->numberFormat($totalExpense),
-        'total_content' => $this->numberFormat($totalContent),
-        'cpm' => $this->numberFormat($cpm, 2),
-        'views' => $this->numberFormat($totalViews),
-    ];
-}
 
 
 
