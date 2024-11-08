@@ -4,9 +4,12 @@ namespace App\Domain\Customer\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Domain\Tenant\Traits\FilterByTenant;
 
+    
 class CustomersAnalysis extends Model
 {
+    use FilterByTenant;
     protected $table = 'customers_analysis';
     protected $fillable = [
         'tanggal_pesanan_dibuat',
