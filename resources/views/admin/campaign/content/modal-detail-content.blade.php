@@ -56,6 +56,14 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-12 col-sm-12">
+                                <div class="info-box bg-light">
+                                    <div class="info-box-content">
+                                        <span class="info-box-text text-center text-muted">Kode Ads</span>
+                                        <span class="info-box-number text-center text-muted mb-0" id="kodeAdsModal">0</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

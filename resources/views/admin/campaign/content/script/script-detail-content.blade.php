@@ -23,6 +23,7 @@
         $('#viewModal').text(rowData.view);
         $('#commentModal').text(rowData.comment);
         $('#rateCardModal').text(rowData.rate_card_formatted);
+        $('#kodeAdsModal').text(rowData.kode_ads);
 
         if (rowData.upload_date !== null) {
             $('#uploadDateModal').text(rowData.upload_date);
