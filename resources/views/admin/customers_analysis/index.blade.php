@@ -484,6 +484,10 @@
                     }
                 });
             });
+            $('#viewCustomerModal').on('hidden.bs.modal', function () {
+                fetchProductCounts();
+                fetchDailyUniqueCustomers();
+            });
         });
     </script>
 @endsection
