@@ -80,6 +80,7 @@
                                 <th>Nama Penerima</th>
                                 <th>Nomor Telepon</th>
                                 <th>Total Quantity</th>
+                                <th>Details</th>
                                 <th>Sudah Bergabung</th>
                             </tr>
                         </thead>
@@ -89,7 +90,9 @@
             </div>
         </div>
     </div>
+    @include('admin.customers_analysis.modals.detail')
 @stop
+
 
 @section('css')
     <style>
@@ -119,6 +122,7 @@
                     { data: 'nama_penerima', name: 'nama_penerima' },
                     { data: 'nomor_telepon', name: 'nomor_telepon' },
                     { data: 'total_qty', name: 'total_qty' },
+                    { data: 'details', name: 'details' },
                     { data: 'is_joined', name: 'is_joined' },
                 ],
                 order: [[1, 'asc']]
@@ -312,77 +316,121 @@
             fetchDailyUniqueCustomers();
 
             $('#customerAnalysisTable').on('click', '.joinButton', function() {
-            var id = $(this).data('id');
-            var url = '{{ route('customer_analysis.join', ':id') }}'.replace(':id', id);
+                var id = $(this).data('id');
+                var url = '{{ route('customer_analysis.join', ':id') }}'.replace(':id', id);
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'This will mark the customer as joined.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, join them!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: url,
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire('Joined!', 'Customer has been marked as joined.', 'success');
-                                table.ajax.reload();
-                            } else {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This will mark the customer as joined.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, join them!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Joined!', 'Customer has been marked as joined.', 'success');
+                                    table.ajax.reload();
+                                } else {
+                                    Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
+                                }
+                            },
+                            error: function(xhr) {
                                 Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
                             }
-                        },
-                        error: function(xhr) {
-                            Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
-        });
 
-        // Handle unjoin button click
-        $('#customerAnalysisTable').on('click', '.unJoinButton', function() {
-            var id = $(this).data('id');
-            var url = '{{ route('customer_analysis.unjoin', ':id') }}'.replace(':id', id);
+            // Handle unjoin button click
+            $('#customerAnalysisTable').on('click', '.unJoinButton', function() {
+                var id = $(this).data('id');
+                var url = '{{ route('customer_analysis.unjoin', ':id') }}'.replace(':id', id);
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'This will unmark the customer as joined.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, unjoin them!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: url,
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire('Unjoined!', 'Customer has been unmarked as joined.', 'success');
-                                table.ajax.reload();
-                            } else {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This will unmark the customer as joined.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, unjoin them!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Unjoined!', 'Customer has been unmarked as joined.', 'success');
+                                    table.ajax.reload();
+                                } else {
+                                    Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
+                                }
+                            },
+                            error: function(xhr) {
                                 Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
                             }
-                        },
-                        error: function(xhr) {
-                            Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
-        });
+
+            var ordersTable = $('#ordersTable').DataTable({
+                searching: false,
+                paging: true,
+                info: false,
+                lengthChange: false,
+                pageLength: 5
+            });
+
+            $('#customerAnalysisTable').on('click', '.viewButton', function() {
+                var customerId = $(this).data('id');
+
+                $.ajax({
+                    url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerId),
+                    method: 'GET',
+                    success: function(response) {
+                        // Populate the customer name and phone number
+                        $('#view_customer_name').val(response.nama_penerima);
+                        $('#view_phone_number').val(response.nomor_telepon);
+                        $('#view_alamat').val(response.alamat);
+                        $('#view_kota_kabupaten').val(response.kota_kabupaten);
+                        $('#view_provinsi').val(response.provinsi);
+                        $('#view_quantity').val(response.quantity);
+
+                        // Clear the existing orders from DataTable
+                        ordersTable.clear();
+
+                        // Add new orders to the DataTable
+                        response.orders.forEach(function(order) {
+                            ordersTable.row.add([
+                                order.produk,
+                                order.tanggal_pesanan_dibuat
+                            ]).draw();
+                        });
+
+                        // Open the modal
+                        $('#viewCustomerModal').modal('show');
+                    },
+                    error: function(xhr) {
+                        console.error('Error fetching customer data:', xhr);
+                        Swal.fire('Error', 'Could not fetch customer data. Please try again later.', 'error');
+                    }
+                });
+            });
         });
     </script>
 @endsection

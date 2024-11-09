@@ -84,8 +84,19 @@ class CustomerAnalysisController extends Controller
                     ';
                 }
             });
+            $dataTable->addColumn('details', function ($row) {
+                return '
+                    <button class="btn btn-light viewButton" 
+                        data-id="' . $row->id . '" 
+                        data-toggle="modal" 
+                        data-target="#viewCustomerModal" 
+                        data-placement="top" title="View">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                ';
+            });
                 
-        return $dataTable->rawColumns(['is_joined'])->make(true);
+        return $dataTable->rawColumns(['is_joined', 'details'])->make(true);
     }
 
 
@@ -220,6 +231,40 @@ class CustomerAnalysisController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        $customer = CustomersAnalysis::find($id);
+
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+
+        // Retrieve and sort orders by date
+        $customerOrders = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
+            ->where('nomor_telepon', $customer->nomor_telepon)
+            ->orderBy('tanggal_pesanan_dibuat', 'asc') // Sort by date
+            ->get(['produk', 'tanggal_pesanan_dibuat', 'qty']);
+
+        $totalQty = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
+            ->where('nomor_telepon', $customer->nomor_telepon)
+            ->sum('qty');
+
+        return response()->json([
+            'nama_penerima' => $customer->nama_penerima,
+            'nomor_telepon' => $customer->nomor_telepon,
+            'alamat' => $customer->alamat,
+            'kota_kabupaten' => $customer->kota_kabupaten,
+            'provinsi' => $customer->provinsi,
+            'quantity' => $totalQty,
+            'orders' => $customerOrders->map(function($order) {
+                return [
+                    'produk' => $order->produk,
+                    'tanggal_pesanan_dibuat' => $order->tanggal_pesanan_dibuat,
+                    'qty' => $order->qty,
+                ];
+            })
+        ]);
+    }
 
 
 }

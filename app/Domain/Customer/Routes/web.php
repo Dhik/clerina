@@ -44,6 +44,8 @@ Route::prefix('admin')
                 Route::get('/total', [CustomerAnalysisController::class, 'countUniqueCustomers'])->name('customer_analysis.total');
                 Route::get('/product-pie', [CustomerAnalysisController::class, 'getProductCounts'])->name('customer_analysis.product_counts');
                 Route::get('/daily-unique', [CustomerAnalysisController::class, 'getDailyUniqueCustomers'])->name('customer_analysis.daily_unique');
+                
+                Route::get('/{id}', [CustomerAnalysisController::class, 'show'])->name('customer_analysis.show');
 
                 Route::post('/{id}/join', [CustomerAnalysisController::class, 'join'])->name('customer_analysis.join');
                 Route::post('/{id}/unjoin', [CustomerAnalysisController::class, 'unjoin'])->name('customer_analysis.unjoin');
