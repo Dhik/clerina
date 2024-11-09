@@ -423,6 +423,58 @@
                             ]).draw();
                         });
 
+                        fetch(`{{ route('customer_analysis.product_distribution', ':id') }}`.replace(':id', customerId))
+                            .then(response => response.json())
+                            .then(data => {
+                                var productLabels = data.map(item => item.produk);
+                                var productCounts = data.map(item => item.count);
+
+                                // Destroy previous chart instance if it exists
+                                if (productChart) {
+                                    productChart.destroy();
+                                }
+
+                                // Create the pie chart with new data
+                                var ctx = document.getElementById('productPieChartDetail').getContext('2d');
+                                productChart = new Chart(ctx, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: productLabels,
+                                        datasets: [{
+                                            label: 'Product Count',
+                                            data: productCounts,
+                                            backgroundColor: [
+                                                'rgba(75, 192, 192, 0.2)',
+                                                'rgba(255, 99, 132, 0.2)',
+                                                'rgba(255, 206, 86, 0.2)',
+                                                'rgba(54, 162, 235, 0.2)',
+                                                'rgba(153, 102, 255, 0.2)',
+                                                'rgba(255, 159, 64, 0.2)',
+                                            ],
+                                            borderColor: [
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(255, 99, 132, 1)',
+                                                'rgba(255, 206, 86, 1)',
+                                                'rgba(54, 162, 235, 1)',
+                                                'rgba(153, 102, 255, 1)',
+                                                'rgba(255, 159, 64, 1)',
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: false,
+                                            }
+                                        }
+                                    }
+                                });
+                            })
+                            .catch(error => console.error('Error fetching product distribution data:', error));
+
                         // Open the modal
                         $('#viewCustomerModal').modal('show');
                     },

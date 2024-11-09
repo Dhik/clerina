@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Yajra\DataTables\Utilities\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Domain\Sales\Services\GoogleSheetService;
+use Illuminate\Support\Facades\DB;
 
 use App\Domain\Customer\Exports\CustomersExport;
 
@@ -265,6 +266,24 @@ class CustomerAnalysisController extends Controller
             })
         ]);
     }
+
+    public function productDistribution($id)
+    {
+        $customer = CustomersAnalysis::find($id);
+
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+
+        $productDistribution = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
+            ->where('nomor_telepon', $customer->nomor_telepon)
+            ->select('produk', DB::raw('COUNT(*) as count'))
+            ->groupBy('produk')
+            ->get();
+
+        return response()->json($productDistribution);
+    }
+
 
 
 }
