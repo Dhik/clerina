@@ -66,6 +66,7 @@
                         <tr>
                             <th>Product</th>
                             <th>Order Date</th>
+                            <th width="10%">Quantity</th>
                         </tr>
                     </thead>
                     <tbody>

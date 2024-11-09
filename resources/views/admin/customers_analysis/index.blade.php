@@ -79,7 +79,7 @@
                             <tr>
                                 <th>Nama Penerima</th>
                                 <th>Nomor Telepon</th>
-                                <th>Total Quantity</th>
+                                <th>Total Orders</th>
                                 <th>Details</th>
                                 <th>Sudah Bergabung</th>
                             </tr>
@@ -121,7 +121,7 @@
                 columns: [
                     { data: 'nama_penerima', name: 'nama_penerima' },
                     { data: 'nomor_telepon', name: 'nomor_telepon' },
-                    { data: 'total_qty', name: 'total_qty' },
+                    { data: 'total_orders', name: 'total_orders' },
                     { data: 'details', name: 'details' },
                     { data: 'is_joined', name: 'is_joined' },
                 ],
@@ -418,7 +418,8 @@
                         response.orders.forEach(function(order) {
                             ordersTable.row.add([
                                 order.produk,
-                                order.tanggal_pesanan_dibuat
+                                order.tanggal_pesanan_dibuat,
+                                order.qty
                             ]).draw();
                         });
 
