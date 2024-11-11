@@ -64,7 +64,7 @@ class CustomerAnalysisController extends Controller
         $dataTable->filter(function ($query) use ($request) {
             if ($request->has('search') && $request->search['value']) {
                 $search = strtolower($request->search['value']);
-                $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_qty) LIKE ?', ["%$search%", "%$search%", "%$search%"]);
+                $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_orders) LIKE ?', ["%$search%", "%$search%", "%$search%"]);
             }
         });
                 
