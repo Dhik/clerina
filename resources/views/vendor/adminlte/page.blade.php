@@ -40,7 +40,7 @@
     <div class="wrapper">
 
         {{-- Preloader Animation --}}
-        @if($layoutHelper->isPreloaderEnabled())
+        @if(config('adminlte.preloader.enabled', false))
             @include('adminlte::partials.common.preloader')
         @endif
 
