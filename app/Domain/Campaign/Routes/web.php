@@ -28,6 +28,8 @@ Route::prefix('admin')
                 Route::get('/', [CampaignController::class, 'index'])->name('campaign.index');
                 Route::get('/get', [CampaignController::class, 'get'])->name('campaign.get');
                 Route::get('/summary', [CampaignController::class, 'getCampaignSummary'])->name('campaign.summary');
+                Route::get('/download', [CampaignController::class, 'downloadVideo'])->name('campaign.download');
+                Route::get('/nas', [CampaignController::class, 'listFiles'])->name('campaign.nas');
                 Route::get('/titles', [CampaignController::class, 'getCampaignsTitles'])->name('campaign.titles');
                 Route::get('/create', [CampaignController::class, 'create'])->name('campaign.create');
                 Route::post('/store', [CampaignController::class, 'store'])->name('campaign.store');

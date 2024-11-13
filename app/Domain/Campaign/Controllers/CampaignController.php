@@ -21,6 +21,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
+use Symfony\Component\Process\Process; 
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 
 class CampaignController extends Controller
@@ -260,5 +264,138 @@ class CampaignController extends Controller
     {
         $campaigns = Campaign::select('id', 'title')->get();
         return response()->json($campaigns);
+    }
+
+    public function listFiles()
+    {
+        try {
+            $files = Storage::disk('nas')->files('/'); // Adjust the directory path if needed
+            return response()->json($files);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function downloadVideo()
+    {
+        try {
+
+            $tiktokUrl = 'https://vt.tiktok.com/ZSjBBReDk/';
+            
+            // First, get the webpage content
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            ])->get($tiktokUrl);
+
+            // Get redirect URL if it's a short URL
+            if ($response->status() === 301 || $response->status() === 302) {
+                $tiktokUrl = $response->header('Location');
+                $response = Http::withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                ])->get($tiktokUrl);
+            }
+
+            $html = $response->body();
+
+            // Extract video URL using regex
+            preg_match('/"downloadAddr":"([^"]+)"/', $html, $matches);
+            
+            if (empty($matches[1])) {
+                preg_match('/"playAddr":"([^"]+)"/', $html, $matches);
+            }
+
+            if (empty($matches[1])) {
+                return response()->json([
+                    'error' => 'Could not find video URL'
+                ], 404);
+            }
+
+            // Properly decode the URL
+            $videoUrl = json_decode('"' . $matches[1] . '"'); // This will handle \u0026 and other escaped characters
+            
+            if (!$videoUrl) {
+                return response()->json([
+                    'error' => 'Invalid video URL encoding'
+                ], 400);
+            }
+
+            // Clean and validate the URL
+            $videoUrl = $this->sanitizeUrl($videoUrl);
+            
+            if (!filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+                return response()->json([
+                    'error' => 'Invalid video URL format'
+                ], 400);
+            }
+
+            // Download the video content
+            $videoResponse = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer' => 'https://www.tiktok.com/',
+                'Range' => 'bytes=0-'
+            ])->get($videoUrl);
+
+            if ($videoResponse->failed()) {
+                return response()->json([
+                    'error' => 'Failed to download video: ' . $videoResponse->status()
+                ], 500);
+            }
+
+            $videoContent = $videoResponse->body();
+
+            // Verify we actually got video content
+            if (strlen($videoContent) < 1024) { // Less than 1KB is probably an error
+                return response()->json([
+                    'error' => 'Retrieved content is too small to be a video'
+                ], 500);
+            }
+
+            // Generate a filename based on timestamp
+            $filename = 'tiktok_' . time() . '.mp4';
+
+            // Return video as download
+            return response($videoContent)
+                ->header('Content-Type', 'video/mp4')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while downloading the video: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function sanitizeUrl($url)
+    {
+        // Remove any escaped unicode sequences
+        $url = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($match) {
+            return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+        }, $url);
+        
+        // Convert backslashes to forward slashes
+        $url = str_replace('\\/', '/', $url);
+        
+        // Ensure proper URL encoding
+        $parts = parse_url($url);
+        if ($parts) {
+            // Rebuild the URL with properly encoded parts
+            $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : 'https://';
+            $host = $parts['host'] ?? '';
+            $path = isset($parts['path']) ? rawurlencode(ltrim($parts['path'], '/')) : '';
+            $path = str_replace('%2F', '/', $path); // Keep slashes readable
+            $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+            
+            $url = $scheme . $host . '/' . $path . $query;
+        }
+        
+        return $url;
+    }
+
+    private function debugUrl($url) 
+    {
+        \Log::info('Processing URL: ' . $url);
+        $parts = parse_url($url);
+        \Log::info('URL Parts:', $parts ?: ['parse_url_failed' => true]);
+        return $url;
     }
 }

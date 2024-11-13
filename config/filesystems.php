@@ -36,6 +36,18 @@ return [
             'throw' => false,
         ],
 
+        'nas' => [
+            'driver' => 'ftp',
+            'host' => '10.10.10.50',
+            'username' => env('NAS_FTP_USERNAME', 'Clerina'),
+            'password' => env('NAS_FTP_PASSWORD', 'Cleora@2023'),
+            'port' => 21,
+            'root' => '/',
+            'passive' => true,
+            'ssl' => true,
+            'timeout' => 300,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

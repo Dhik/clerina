@@ -12,7 +12,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-auto">
+                        <div class="col-12">
                             <div class="row">
                                 <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
@@ -28,6 +28,11 @@
                                 </div>
                                 <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" id="refreshDataBtn">
+                                        <i class="fas fa-sync-alt"></i> Refresh Data
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -429,6 +434,94 @@
             salesTable.draw();
             updateRecapCount();
             $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
+        });
+
+        function showLoadingSwal(message) {
+            Swal.fire({
+                title: message,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+        $('#refreshDataBtn').click(function () {
+            showLoadingSwal('Refreshing data, please wait...');
+
+            $.ajax({
+                url: "{{ route('sales.import_ads') }}",
+                method: 'GET',
+                success: function(response) {
+                    $.ajax({
+                        url: "{{ route('sales.update_ads') }}",
+                        method: 'GET',
+                        success: function(response) {
+                            $.ajax({
+                                url: "{{ route('visit.import_cleora') }}",
+                                method: 'GET',
+                                success: function(response) {
+                                    $.ajax({
+                                        url: "{{ route('visit.import_azrina') }}",
+                                        method: 'GET',
+                                        success: function(response) {
+                                            $.ajax({
+                                                url: "{{ route('visit.update') }}",
+                                                method: 'GET',
+                                                success: function(response) {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Data refreshed successfully!',
+                                                        text: 'All data has been imported and updated.',
+                                                        timer: 2000,
+                                                        showConfirmButton: false
+                                                    });
+                                                    updateRecapCount();
+                                                    salesTable.draw();
+                                                },
+                                                error: function(xhr, status, error) {
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Error updating monthly visit data!',
+                                                        text: xhr.responseJSON?.message || 'An error occurred.',
+                                                    });
+                                                }
+                                            });
+                                        },
+                                        error: function(xhr, status, error) {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Error importing Azrina data!',
+                                                text: xhr.responseJSON?.message || 'An error occurred.',
+                                            });
+                                        }
+                                    });
+                                },
+                                error: function(xhr, status, error) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error importing Cleora data!',
+                                        text: xhr.responseJSON?.message || 'An error occurred.',
+                                    });
+                                }
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error updating monthly ad spent data!',
+                                text: xhr.responseJSON?.message || 'An error occurred.',
+                            });
+                        }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error importing data from Google Sheets!',
+                        text: xhr.responseJSON?.message || 'An error occurred.',
+                    });
+                }
+            });
         });
     </script>
 

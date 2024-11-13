@@ -55,8 +55,8 @@ Route::prefix('admin')
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
                 Route::get('/omset/{date}', [SalesController::class, 'getOmsetByDate'])->name('sales.getOmsetByDate');
                 Route::get('/send-message', [SalesController::class, 'sendMessageCleora']);
-                Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet']);
-                Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData']);
+                Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet'])->name('sales.import_ads');
+                Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData'])->name('sales.update_ads');
 
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');
                 Route::get('/{sales}', [SalesController::class, 'show'])->name('sales.show');
@@ -82,6 +82,10 @@ Route::prefix('admin')
                 Route::get('/get', [VisitController::class, 'get'])->name('visit.get');
                 Route::get('/getByDate', [VisitController::class, 'getVisitByDate'])->name('visit.getByDate');
                 Route::get('/recap', [VisitController::class, 'getVisitRecap'])->name('visit.get-visit-recap');
+
+                Route::get('/import-cleora', [SalesController::class, 'importVisitCleora'])->name('visit.import_cleora');
+                Route::get('/import-azrina', [SalesController::class, 'importVisitAzrina'])->name('visit.import_azrina');
+                Route::get('/update', [SalesController::class, 'updateMonthlyVisitData'])->name('visit.update');
 
                 Route::post('/', [VisitController::class, 'store'])->name('visit.store');
 
