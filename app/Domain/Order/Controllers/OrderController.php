@@ -281,8 +281,9 @@ class OrderController extends Controller
                         ->groupBy('date')
                         ->get();
         foreach ($totals as $total) {
+            $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
             Sales::where('tenant_id', 1)
-                ->where('date', $total->date)
+                ->where('date', $formattedDate)
                 ->update(['turnover' => $total->total_amount]);
         }
         return response()->json(['message' => 'Sales turnover updated successfully']);
