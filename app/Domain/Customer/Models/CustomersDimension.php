@@ -8,7 +8,6 @@ use App\Domain\Tenant\Traits\FilterByTenant;
 
 class CustomersDimension extends Model
 {
-    use FilterByTenant;
 
     protected $table = 'customers_dimensions';
     
@@ -17,7 +16,6 @@ class CustomersDimension extends Model
         'produk',
         'qty',
         'tanggal_pesanan_dibuat',
-        'tenant_id',
     ];
 
     /**

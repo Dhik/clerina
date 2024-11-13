@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('produk')->nullable();
             $table->integer('qty')->nullable();
             $table->timestamp('tanggal_pesanan_dibuat')->nullable();
-            $table->unsignedBigInteger('tenant_id')->nullable();
             $table->foreign('id_customers_facts')->references('id')->on('customers_facts')->onDelete('cascade'); 
             $table->timestamps();
         });
