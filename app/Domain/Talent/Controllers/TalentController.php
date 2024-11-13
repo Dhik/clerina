@@ -113,7 +113,7 @@ class TalentController extends Controller
      */
     public function show(Talent $talent)
     {
-        $discount = $talent->price_rate - $talent->rate_final;
+        $discount = $talent->price_rate * $talent->slot_final - $talent->rate_final;
         return response()->json([
             'talent' => $talent,
             'discount' => $discount,

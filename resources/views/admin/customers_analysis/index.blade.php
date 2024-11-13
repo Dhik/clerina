@@ -19,7 +19,12 @@
                         </div>
                         <div class="col-auto">
                             <div class="btn-group">
-                            <button id="refreshButton" class="btn btn-primary">Refresh Data</button>
+                            <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group">
+                            <button id="refreshStatusButton" class="btn bg-pink"><i class="fas fa-sync-alt"></i> Refresh Status</button>
                             </div>
                         </div>
                     </div>
