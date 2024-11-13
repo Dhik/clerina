@@ -24,6 +24,7 @@ Route::prefix('admin')
                 Route::get('/orders-by-date', [OrderController::class, 'getOrdersByDate'])->name('order.getOrdersByDate');
                 Route::get('/fetch-external', [OrderController::class, 'fetchExternalOrders'])->name('order.fetch-external');
                 Route::get('/fetch-all', [OrderController::class, 'fetchAllOrders'])->name('order.fetch-all');
+                Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
 
                 Route::get('/exportTemplate', [OrderController::class, 'downloadTemplate'])
                     ->name('order.download-template');
