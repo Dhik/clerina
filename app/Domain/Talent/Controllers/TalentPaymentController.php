@@ -16,6 +16,7 @@ use Yajra\DataTables\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;  
 use Illuminate\Support\Facades\DB;
+use \Illuminate\Support\Str;
 use Auth;
 
 /**
@@ -134,7 +135,7 @@ class TalentPaymentController extends Controller
      *
      * @param TalentPayments $payment
      */
-    public function show(TalentPayments $payment)
+    public function show(TalentPayment $payment)
     {
         return response()->json($payment);
     }
@@ -142,7 +143,7 @@ class TalentPaymentController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param TalentPayments $payment
+     * @param TalentPayment $payment
      */
     public function edit(TalentPayments $payment)
     {
@@ -164,6 +165,20 @@ class TalentPaymentController extends Controller
                 'done_payment' => 'nullable|date',
             ]);
             $payment->update($validatedData);
+
+            if ($payment->status_payment === 'DP 50%' && $payment->done_payment !== null) {
+                $talent = $payment->talent;
+    
+                $rate_harga = $talent->price_rate * $talent->slot_final;
+                $harga_setelah_diskon = $rate_harga - $talent->discount;
+    
+                $pphPercentage = (Str::startsWith($talent->nama_rekening, ['PT', 'CV'])) ? 0.02 : 0.025;
+                $pphAmount = $harga_setelah_diskon * $pphPercentage;
+                $final_tf = $harga_setelah_diskon - $pphAmount;
+    
+                $talent->dp_amount = $final_tf / 2;
+                $talent->save();
+            }
 
             return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
         } catch (\Exception $e) {

@@ -36,7 +36,7 @@ class TalentBLL extends BaseBLL implements TalentBLLInterface
 
     public function updateTalent(Talent $talent, array $data)
     {
-        $financials = $this->calculateFinancials($data);
+        $financials = $this->calculateFinancialsUpdate($data);
         $data = array_merge($data, $financials);
         return $this->DAL->update($talent->id, $data);
     }
@@ -50,23 +50,39 @@ class TalentBLL extends BaseBLL implements TalentBLLInterface
     {
         $priceRate = (int) str_replace(['Rp', '.', ' '], '', $data['price_rate'] ?? 0);
         $rateFinal = (int) str_replace(['Rp', '.', ' '], '', $data['rate_final'] ?? 0);
-        $slotFinal = $data['slot_final'] ?? 0;
+        $slotFinal = $data['slot_final'] ?? 1;
 
-        // Calculate discount
+        $ratePerSlot = $slotFinal > 0 ? $rateFinal / $slotFinal : 0;
         $discount = ($priceRate * $slotFinal) - $rateFinal;
 
-        // Calculate tax
         $isPTorCV = Str::startsWith($data['talent_name'], ['PT', 'CV']);
         $taxRate = $isPTorCV ? 0.02 : 0.025;
         $taxDeduction = (int) ($rateFinal * $taxRate);
-
-        // Calculate final transfer
         $finalTransfer = $rateFinal - $taxDeduction;
+        return [
+            'rate_per_slot' => $ratePerSlot,
+            'discount' => $discount,
+            'tax_deduction' => $taxDeduction,
+            'final_transfer' => $finalTransfer,
+        ];
+    }
 
+    public function calculateFinancialsUpdate(array $data): array
+    {
+        $priceRate = (int) str_replace(['Rp', '.', ' '], '', $data['price_rate'] ?? 0);
+        $rateFinal = (int) str_replace(['Rp', '.', ' '], '', $data['rate_final'] ?? 0);
+        $slotFinal = $data['slot_final'] ?? 0;
+
+        $discount = ($priceRate * $slotFinal) - $rateFinal;
+
+        $isPTorCV = Str::startsWith($data['talent_name'], ['PT', 'CV']);
+        $taxRate = $isPTorCV ? 0.02 : 0.025;
+        $taxDeduction = (int) ($rateFinal * $taxRate);
+        $finalTransfer = $rateFinal - $taxDeduction;
         return [
             'discount' => $discount,
             'tax_deduction' => $taxDeduction,
-            'final_transfer' => $finalTransfer
+            'final_transfer' => $finalTransfer,
         ];
     }
 

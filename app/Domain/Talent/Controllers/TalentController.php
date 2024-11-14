@@ -217,7 +217,7 @@ class TalentController extends Controller
             $approval = Approval::findOrFail($approvalId);
         }
 
-        $harga = $talent->rate_final; 
+        $harga = $talent->rate_per_slot * $talent->slot_final; 
         $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
         if ($isPTorCV) {
             $pphPercentage = 2;
@@ -229,7 +229,7 @@ class TalentController extends Controller
             $pph = $harga * 0.025;
         }
         $total = $harga - $pph; 
-        $downPayment = $total / 2; 
+        $downPayment = $talent->dp_amount ?? ($total / 2);
         $remainingBalance = $total - $downPayment;
         $ttd = $approval->photo;
         $approval_name = $approval->name;

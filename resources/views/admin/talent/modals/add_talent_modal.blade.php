@@ -22,10 +22,6 @@
                                 <input type="text" name="talent_name" id="talent_name" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="video_slot">Video Slot</label>
-                                <input type="number" name="video_slot" id="video_slot" class="form-control">
-                            </div>
-                            <div class="form-group">
                                 <label for="content_type">Content Type</label>
                                 <input type="text" name="content_type" id="content_type" class="form-control">
                             </div>

@@ -25,6 +25,7 @@
                                 <th>ID</th>
                                 <th>Username</th>
                                 <th>Talent Name</th>
+                                <th>Paid DP</th>
                                 <th>Slot Final</th>
                                 <th>Rate Final</th>
                                 <th>Payment Action</th>
@@ -67,6 +68,19 @@
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
                 { data: 'talent_name', name: 'talent_name' },
+                {
+                    data: 'dp_amount',
+                    name: 'dp_amount',
+                    render: function(data, type, row) {
+                        if (data == null) {
+                            return '';
+                        }
+                        return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
                 { 
                     data: 'remaining', 
                     name: 'remaining', 
