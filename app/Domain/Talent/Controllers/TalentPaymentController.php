@@ -294,46 +294,54 @@ class TalentPaymentController extends Controller
         ], 200);
     }
     public function getHutangDatatable(Request $request)
-{
-    // Query talents with their related contents and payments
-    $query = Talent::with(['talentContents', 'talentPayments'])
-        ->select('talents.*');
+    {
+        // Query talents with their related contents and payments
+        $query = Talent::with(['talentContents', 'talentPayments'])
+            ->select('talents.*');
 
-    if ($request->input('username')) {
-        $query->where('username', $request->input('username'));
+        if ($request->input('username')) {
+            $query->where('username', $request->input('username'));
+        }
+
+        if ($request->filled('dateRange')) {
+            $dates = explode(' - ', $request->input('dateRange'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+            $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('done_payment', [$startDate, $endDate]);
+            });
+        }
+
+        // Retrieve the talents as a collection and calculate additional columns
+        $talents = $query->get()->map(function ($talent) {
+            $totalSpentForTalent = $this->calculateSpentForTalent($talent);
+            $contentCount = $talent->talentContents->count();
+            $talentShouldGet = ($talent->slot_final > 0) 
+                ? ($talent->rate_final / $talent->slot_final) * $contentCount 
+                : 0;
+
+            $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
+            $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
+
+            // Return an object with all the necessary fields for DataTables
+            return (object) [
+                'talent_name' => $talent->talent_name,
+                'username' => $talent->username,
+                'total_spent' => $totalSpentForTalent,
+                'talent_should_get' => $talentShouldGet,
+                'hutang' => $hutang,
+                'piutang' => $piutang,
+            ];
+        });
+
+        // Filter out talents where both total_spent and talent_should_get are zero
+        $filteredTalents = $talents->filter(function ($talent) {
+            return $talent->total_spent != 0 || $talent->talent_should_get != 0;
+        });
+
+        // Return the filtered data to DataTables
+        return DataTables::of($filteredTalents)->make(true);
     }
-
-    // Retrieve the talents as a collection and calculate additional columns
-    $talents = $query->get()->map(function ($talent) {
-        $totalSpentForTalent = $this->calculateSpentForTalent($talent);
-        $contentCount = $talent->talentContents->count();
-        $talentShouldGet = ($talent->slot_final > 0) 
-            ? ($talent->rate_final / $talent->slot_final) * $contentCount 
-            : 0;
-
-        $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
-        $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
-
-        // Return an object with all the necessary fields for DataTables
-        return (object) [
-            'talent_name' => $talent->talent_name,
-            'username' => $talent->username,
-            'total_spent' => $totalSpentForTalent,
-            'talent_should_get' => $talentShouldGet,
-            'hutang' => $hutang,
-            'piutang' => $piutang,
-        ];
-    });
-
-    // Filter out talents where both total_spent and talent_should_get are zero
-    $filteredTalents = $talents->filter(function ($talent) {
-        return $talent->total_spent != 0 || $talent->talent_should_get != 0;
-    });
-
-    // Return the filtered data to DataTables
-    return DataTables::of($filteredTalents)->make(true);
-}
-
 
     public function calculateTotals(Request $request)
     {
@@ -342,6 +350,16 @@ class TalentPaymentController extends Controller
 
         if ($request->input('username')) {
             $query->where('username', $request->input('username'));
+        }
+
+        if ($request->filled('dateRange')) {
+            $dates = explode(' - ', $request->input('dateRange'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+    
+            $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('done_payment', [$startDate, $endDate]);
+            });
         }
 
         $totalHutang = 0;
@@ -370,27 +388,6 @@ class TalentPaymentController extends Controller
         ]);
     }
 
-    protected function calculateSpentForTalent($talent)
-    {
-        return $talent->talentPayments->sum(function($payment) use ($talent) {
-            switch ($payment->status_payment) {
-                case 'Full Payment':
-                    return $payment->done_payment ? $talent->rate_final * 1 : 0;
-                case 'DP 50%':
-                case 'Pelunasan 50%':
-                    return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
-                case 'Termin 1':
-                case 'Termin 2':
-                case 'Termin 3':
-                    return $payment->done_payment ? $talent->rate_final / 3 : 0;
-                default:
-                    return 0;
-            }
-        });
-    }
-
-
-
     public function paymentReport(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
@@ -411,6 +408,14 @@ class TalentPaymentController extends Controller
 
             if ($request->input('username')) {
                 $payments->where('talents.username', $request->input('username'));
+            }
+
+            if ($request->filled('dateRange')) {
+                $dates = explode(' - ', $request->input('dateRange'));
+                $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+                $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+        
+                $payments->whereBetween('talent_payments.done_payment', [$startDate, $endDate]);
             }
 
         return DataTables::of($payments)
@@ -452,6 +457,29 @@ class TalentPaymentController extends Controller
             ->rawColumns(['action', 'spent'])
             ->make(true);
     }
+
+    protected function calculateSpentForTalent($talent)
+    {
+        return $talent->talentPayments->sum(function($payment) use ($talent) {
+            switch ($payment->status_payment) {
+                case 'Full Payment':
+                    return $payment->done_payment ? $talent->rate_final * 1 : 0;
+                case 'DP 50%':
+                case 'Pelunasan 50%':
+                    return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
+                case 'Termin 1':
+                case 'Termin 2':
+                case 'Termin 3':
+                    return $payment->done_payment ? $talent->rate_final / 3 : 0;
+                default:
+                    return 0;
+            }
+        });
+    }
+
+
+
+    
     public function exportReport(){
         return Excel::download(new TalentPaymentExport, 'kol_payment_report.xlsx');
     }

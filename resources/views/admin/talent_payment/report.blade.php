@@ -53,6 +53,9 @@
                 @endforeach
             </select>
         </div>
+        <div class="col-md-4">
+            <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select date range">
+        </div>
         <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
         <!-- <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
             <i class="fas fa-file-excel"></i> Export to Excel
@@ -137,6 +140,7 @@
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script>
         $(function () {
             // Initialize Select2 for filters
@@ -145,6 +149,21 @@
                 allowClear: true,
                 width: '100%',
                 theme: 'bootstrap4'
+            });
+
+            $('#filterDonePaymentDate').daterangepicker({
+                locale: { format: 'YYYY-MM-DD' },
+                autoUpdateInput: false
+            });
+
+            $('#filterDonePaymentDate').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+                reloadDataTables();
+            });
+
+            $('#filterDonePaymentDate').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                reloadDataTables();
             });
 
             // Currency formatter for Indonesian Rupiah (Rp.)
@@ -158,7 +177,11 @@
                 $.ajax({
                     url: "{{ route('talent_payments.hutangTotals') }}",
                     type: "GET",
-                    data: { username: $('#filterUsername').val() },
+                    data: { 
+                        username: $('#filterUsername').val(),
+                        dateRange: $('#filterDonePaymentDate').val(),
+                     },
+                    
                     success: function(data) {
                         $('#totalSpent').text(rupiahFormatter.format(data.totals.total_spent));
                         $('#totalHutang').text(rupiahFormatter.format(data.totals.total_hutang));
@@ -169,8 +192,6 @@
                     }
                 });
             }
-
-            // Initialize DataTable for Hutang and Piutang
             var tableHutangPiutang = $('#hutangPiutangTable').DataTable({
                 processing: true,
                 serverSide: true,
@@ -178,7 +199,8 @@
                     url: "{{ route('talent_payments.hutangData') }}",
                     type: 'GET',
                     data: function(d) {
-                        d.username = $('#filterUsername').val(); // Pass the selected username
+                        d.username = $('#filterUsername').val();
+                        d.dateRange = $('#filterDonePaymentDate').val(); 
                     }
                 },
                 columns: [
@@ -187,36 +209,34 @@
                         data: 'total_spent', 
                         name: 'Total Spent',
                         render: function(data) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     },
                     { 
                         data: 'talent_should_get', 
                         name: 'Should Get',
                         render: function(data) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     },
                     { 
                         data: 'hutang', 
                         name: 'Hutang',
                         render: function(data) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     },
                     { 
                         data: 'piutang', 
                         name: 'Piutang',
                         render: function(data) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     }
                 ],
                 order: [[0, 'asc']],
             });
 
-
-            // Initialize DataTable for Talent Payments
             var tablePayments = $('#talentPaymentsTable').DataTable({
                 processing: true,
                 serverSide: true,
@@ -224,6 +244,7 @@
                     url: '{{ route('talent_payments.paymentReport') }}',
                     data: function(d) {
                         d.username = $('#filterUsername').val();
+                        d.dateRange = $('#filterDonePaymentDate').val();
                     }
                 },
                 columns: [
@@ -271,24 +292,21 @@
                         data: 'spent', 
                         name: 'spent', 
                         render: function(data, type, row) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     }
                 ],
                 order: [[0, 'desc']]
             });
 
-            // Initialize DataTable for Talent Content
             var tableContent = $('#talentContentTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
                     url: '{{ route('talent_content.data') }}',
                     data: function(d) {
-                        d.username = $('#filterUsername').val(); // Pass the selected username
-                        d.filterDealingDate = $('#filterDealingDate').val(); 
-                        d.filterPostingDate = $('#filterPostingDate').val();
-                        d.filterDone = $('#filterDone').is(':checked') ? 1 : ''; 
+                        d.username = $('#filterUsername').val();
+                        d.dateRange = $('#filterDonePaymentDate').val(); 
                     }
                 },
                 columns: [
@@ -325,7 +343,7 @@
                         data: 'talent_should_get', 
                         name: 'talent_should_get', 
                         render: function(data, type, row) {
-                            return rupiahFormatter.format(data); // Format as Indonesian Rupiah
+                            return rupiahFormatter.format(data); 
                         }
                     }
                 ],
@@ -341,12 +359,17 @@
 
             // Reset filter button functionality for Talent Payments
             $('#resetFilterButton').on('click', function() {
+                $('#filterDonePaymentDate').val('').trigger('change');
                 $('#filterUsername').val('').trigger('change');
+                reloadDataTables();
+            });
+
+            function reloadDataTables() {
                 tableHutangPiutang.ajax.reload();
                 tablePayments.ajax.reload();
                 tableContent.ajax.reload();
                 fetchTotals();
-            });
+            }
             fetchTotals();
         });
     </script>

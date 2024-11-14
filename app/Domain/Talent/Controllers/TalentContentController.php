@@ -97,6 +97,16 @@ class TalentContentController extends Controller
             $talentContents->where('talents.username', $request->input('username'));
         }
 
+        if ($request->filled('dateRange')) {
+            $dates = explode(' - ', $request->input('dateRange'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+    
+            $talentContents->whereHas('talent.talentPayments', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('done_payment', [$startDate, $endDate]);
+            });
+        }
+
         if (! is_null($request->input('filterDealingDate'))) {
             $dates = explode(' - ', $request->input('filterDealingDate'));
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
