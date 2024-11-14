@@ -348,7 +348,7 @@ class SalesController extends Controller
         📊 Pengeluaran Iklan Marketplace Kemarin
         {$marketplaceSpendText}
 
-        Total: Rp {$formattedTotalSpend}
+        Total Ads Spent: Rp {$formattedTotalSpend}
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
