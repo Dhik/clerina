@@ -41,6 +41,7 @@ class Talent extends Model implements HasMedia
         'scope_of_work',
         'masa_kerjasama',
         'tenant_id',
+        'dp_amount',
     ];
     public function talentContents()
     {
