@@ -284,6 +284,38 @@ class SalesController extends Controller
         $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
             ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
             : 0;
+        
+        $socialMediaSpends = AdSpentSocialMedia::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->where('amount', '>', 0)
+            ->select('social_media_id', 'amount')
+            ->get();
+    
+        $socialMediaNames = SocialMedia::pluck('name', 'id');
+        $socialMediaSpendText = $socialMediaSpends->map(function ($spend) use ($socialMediaNames) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $formattedAmount = number_format($spend->amount, 0, ',', '.');
+            return "{$platformName}: Rp {$formattedAmount}";
+        })->implode("\n");
+    
+        $totalSocialMediaSpend = $socialMediaSpends->sum('amount');
+        $formattedTotalSocialMediaSpend = number_format($totalSocialMediaSpend, 0, ',', '.');
+    
+        $marketplaceSpends = AdSpentMarketPlace::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->where('amount', '>', 0)
+            ->select('sales_channel_id', 'amount')
+            ->get();
+    
+        $marketplaceNames = SalesChannel::pluck('name', 'id');
+        $marketplaceSpendText = $marketplaceSpends->map(function ($spend) use ($marketplaceNames) {
+            $channelName = $marketplaceNames->get($spend->sales_channel_id);
+            $formattedAmount = number_format($spend->amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+    
+        $totalMarketplaceSpend = $marketplaceSpends->sum('amount');
+        $formattedTotalMarketplaceSpend = number_format($totalMarketplaceSpend, 0, ',', '.');
 
         $message = <<<EOD
         🔥Laporan Transaksi CLEORA🔥
@@ -312,6 +344,14 @@ class SalesController extends Controller
 
         📈 Proyeksi Sales Channel
         {$salesChannelProjection}
+
+        📊 Pengeluaran Iklan Social Media Kemarin
+        {$socialMediaSpendText}
+        Total: Rp {$formattedTotalSocialMediaSpend}
+
+        📊 Pengeluaran Iklan Marketplace Kemarin
+        {$marketplaceSpendText}
+        Total: Rp {$formattedTotalMarketplaceSpend}
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
@@ -425,6 +465,38 @@ class SalesController extends Controller
         $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
             ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
             : 0;
+        
+        $socialMediaSpends = AdSpentSocialMedia::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->where('amount', '>', 0)
+            ->select('social_media_id', 'amount')
+            ->get();
+    
+        $socialMediaNames = SocialMedia::pluck('name', 'id');
+        $socialMediaSpendText = $socialMediaSpends->map(function ($spend) use ($socialMediaNames) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $formattedAmount = number_format($spend->amount, 0, ',', '.');
+            return "{$platformName}: Rp {$formattedAmount}";
+        })->implode("\n");
+    
+        $totalSocialMediaSpend = $socialMediaSpends->sum('amount');
+        $formattedTotalSocialMediaSpend = number_format($totalSocialMediaSpend, 0, ',', '.');
+    
+        $marketplaceSpends = AdSpentMarketPlace::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->where('amount', '>', 0)
+            ->select('sales_channel_id', 'amount')
+            ->get();
+    
+        $marketplaceNames = SalesChannel::pluck('name', 'id');
+        $marketplaceSpendText = $marketplaceSpends->map(function ($spend) use ($marketplaceNames) {
+            $channelName = $marketplaceNames->get($spend->sales_channel_id);
+            $formattedAmount = number_format($spend->amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+    
+        $totalMarketplaceSpend = $marketplaceSpends->sum('amount');
+        $formattedTotalMarketplaceSpend = number_format($totalMarketplaceSpend, 0, ',', '.');
 
         $message = <<<EOD
         🫧 Laporan Transaksi AZRINA 🫧
@@ -453,6 +525,14 @@ class SalesController extends Controller
 
         📈 Proyeksi Sales Channel
         {$salesChannelProjection}
+
+        📊 Pengeluaran Iklan Social Media Kemarin
+        {$socialMediaSpendText}
+        Total: Rp {$formattedTotalSocialMediaSpend}
+
+        📊 Pengeluaran Iklan Marketplace Kemarin
+        {$marketplaceSpendText}
+        Total: Rp {$formattedTotalMarketplaceSpend}
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
