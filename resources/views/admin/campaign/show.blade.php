@@ -87,6 +87,8 @@
                 { data: 'view', className: "text-right", orderable: true }, 
                 { data: 'cpm', className: "text-right", orderable: true }, 
                 { data: 'engagement_rate', className: "text-right", orderable: true }, 
+                { data: 'kol_followers', className: "text-right", orderable: true }, 
+                { data: 'tiering', className: "text-right", orderable: false }, 
                 { data: 'additional_info', orderable: false }, 
                 { data: 'actions', orderable: false, searchable: false },
             ],
@@ -174,6 +176,77 @@
         function updateProgressBar(completed, total) {
             const progressPercentage = Math.round((completed / total) * 100);
             $('#refreshProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
+            if (progressPercentage === 100) {
+                $('#refreshAllModal').modal('hide');
+                location.reload();
+            }
+        }
+
+        $('#refreshFollowersBtn').click(function() {
+            $('#refreshFollowersModal').modal('show');
+
+            $.ajax({
+                url: "{{ route('campaignContent.getDataTableForRefresh', ['campaignId' => $campaign->id]) }}",
+                method: 'GET',
+                success: function(data) {
+                    const uniqueUsers = {};
+                    let userList = '';
+                    data.forEach(function(user) {
+                        const baseUsername = user.username.replace(/\s*\(.*?\)\s*/g, '');
+                        if (!uniqueUsers[user.username]) {
+                            uniqueUsers[user.username] = user;
+                            userList += `
+                                <tr id="user-${user.id}">
+                                    <td>${user.username}</td>
+                                    <td>${user.channel}</td>
+                                    <td class="text-center"><i class="fas fa-clock text-warning"></i></td>
+                                </tr>
+                            `;
+                        }
+                    });
+                    $('#refreshFollowersList').html(userList);
+                },
+                error: function() {
+                    alert('Failed to load user list.');
+                }
+            });
+        });
+
+        $('#confirmRefreshFollowers').click(function() {
+            const rows = $('#refreshFollowersList tr');
+            const totalUsers = rows.length;
+            let completedUsers = 0;
+
+            rows.each(function(index, row) {
+                const username = $(row).find('td:first').text();
+                const userId = $(row).attr('id').split('-')[1];
+
+                $(`#user-${userId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
+
+                $.ajax({
+                    url: "{{ route('keyOpinionLeader.refreshFollowersFollowing', ['username' => ':username']) }}".replace(':username', username),
+                    method: 'GET',
+                    success: function(data) {
+                        $(`#user-${userId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
+                        completedUsers++;
+                        updateProgressBar(completedUsers, totalUsers);
+                    },
+                    error: function() {
+                        $(`#user-${userId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
+                        completedUsers++;
+                        updateProgressBar(completedUsers, totalUsers);
+                    }
+                });
+            });
+        });
+
+        function updateProgressBarFollowers(completed, total) {
+            const progressPercentage = Math.round((completed / total) * 100);
+            $('#refreshFollowersProgressBar').css('width', progressPercentage + '%').attr('aria-valuenow', progressPercentage).text(progressPercentage + '%');
+            if (progressPercentage === 100) {
+                $('#refreshFollowersModal').modal('hide');
+                location.reload();
+            }
         }
 
         let offerTable = $('#offerTable').DataTable({

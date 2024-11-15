@@ -111,7 +111,8 @@ Route::prefix('admin')
                 Route::get('/chart', [KeyOpinionLeaderController::class, 'chart'])->name('kol.chart');
                 Route::get('/average-rate', [KeyOpinionLeaderController::class, 'averageRate'])->name('kol.averageRate');
                 Route::get('/select', [KeyOpinionLeaderController::class, 'select'])->name('kol.select');
-                Route::get('{username}/refresh_follow', [KeyOpinionLeaderController::class, 'refreshFollowersFollowing'])->name('kol.refresh_follow');
+                Route::get('/refreshFollowersFollowing/{username}', [KeyOpinionLeaderController::class, 'refreshFollowersFollowing'])
+    ->name('keyOpinionLeader.refreshFollowersFollowing');
                 Route::get('/create', [KeyOpinionLeaderController::class, 'create'])->name('kol.create');
                 Route::get('/create-excel', [KeyOpinionLeaderController::class, 'createExcelForm'])->name('kol.create-excel');
                 Route::get('/export', [KeyOpinionLeaderController::class, 'export'])->name('kol.export');

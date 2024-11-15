@@ -81,7 +81,11 @@
                                 </button>
                             @endcan
                             <button id="refreshAllBtn" class="btn btn-success">
-                                <i class="fas fa-sync-alt"></i> {{ trans('labels.refresh') }} {{ trans('labels.all2') }}
+                                <i class="fas fa-sync-alt"></i> {{ trans('labels.refresh') }} Statistics
+                            </button>
+
+                            <button id="refreshFollowersBtn" class="btn btn-info">
+                                <i class="fas fa-sync-alt"></i> Refresh Followers
                             </button>
 
                             <a class="btn btn-outline-primary" href={{ route('campaignContent.export', $campaign->id) }}>
@@ -113,6 +117,8 @@
                                     {{ trans('labels.cpm_short') }}
                                 </th>
                                 <th>ER</th>
+                                <th>Followers</th>
+                                <th>Tierring</th>
                                 <th>{{ trans('labels.additional_info') }}</th>
                                 <th>{{ trans('labels.actions') }}</th>
                             </tr>
@@ -131,6 +137,7 @@
 
 
 @include('admin.campaign.content.modal-refresh-content')
+@include('admin.campaign.content.modal-refresh-followers')
 @include('admin.campaign.content.modal-create-content')
 @include('admin.campaign.content.modal-create-statistic')
 @include('admin.campaign.content.modal-update-content')

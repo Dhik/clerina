@@ -160,7 +160,6 @@ class TalentContentController extends Controller
                 ';
             })
             ->addColumn('refund', function ($talentContent) {
-                // Check the value of is_refund and return the appropriate button
                 if ($talentContent->is_refund == 0) {
                     return '
                         <button class="btn btn-sm bg-maroon refundButton" 

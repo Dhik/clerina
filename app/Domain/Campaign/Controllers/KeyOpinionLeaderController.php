@@ -4,6 +4,7 @@ namespace App\Domain\Campaign\Controllers;
 
 use App\Domain\Campaign\BLL\KOL\KeyOpinionLeaderBLLInterface;
 use App\Domain\Campaign\Enums\KeyOpinionLeaderEnum;
+use App\Domain\Campaign\Enums\CampaignContentEnum;
 use App\Domain\Campaign\Exports\KeyOpinionLeaderExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\Statistic;
@@ -298,14 +299,19 @@ class KeyOpinionLeaderController extends Controller
         if (!$keyOpinionLeader) {
             return response()->json(['error' => 'Key Opinion Leader not found'], 404);
         }
+
         try {
-            if ($keyOpinionLeader->channel === 'tiktok_video') {
+            $channel = $keyOpinionLeader->channel;
+            $url = '';
+            $headers = [];
+
+            if ($channel === CampaignContentEnum::TiktokVideo) {
                 $url = "https://tokapi-mobile-version.p.rapidapi.com/v1/user/@{$username}";
                 $headers = [
                     'x-rapidapi-host' => 'tokapi-mobile-version.p.rapidapi.com',
                     'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
                 ];
-            } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
+            } elseif ($channel === CampaignContentEnum::InstagramFeed) {
                 $url = "https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url={$username}";
                 $headers = [
                     'x-rapidapi-host' => 'instagram-scraper-api2.p.rapidapi.com',
@@ -314,31 +320,25 @@ class KeyOpinionLeaderController extends Controller
             } else {
                 return response()->json(['error' => 'Unsupported channel type'], 400);
             }
+
             $response = Http::withHeaders($headers)->get($url);
+
             if ($response->successful()) {
                 $data = $response->json();
-                if ($keyOpinionLeader->channel === 'tiktok_video') {
-                    $followers = $data['user']['follower_count'] ?? 0;
-                    $following = $data['user']['following_count'] ?? 0;
-                } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
-                    $followers = $data['data']['follower_count'] ?? 0;
-                    $following = $data['data']['following_count'] ?? 0;
-                }
+                $followers = $data['user']['follower_count'] ?? 0;
+                $following = $data['user']['following_count'] ?? 0;
+
                 $keyOpinionLeader->update([
                     'followers' => $followers,
                     'following' => $following,
                 ]);
 
-                return response()->json([
-                    'followers' => $followers,
-                    'following' => $following,
-                    'message' => 'Followers and Following counts updated successfully.',
-                ]);
+                return response()->json(['followers' => $followers, 'following' => $following]);
             } else {
-                return response()->json(['error' => 'Failed to fetch data from API'], $response->status());
+                return response()->json(['error' => 'Failed to fetch data'], $response->status());
             }
         } catch (Exception $e) {
-            return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
+            return response()->json(['error' => 'An error occurred'], 500);
         }
     }
 

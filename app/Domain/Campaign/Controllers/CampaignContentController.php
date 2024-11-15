@@ -6,6 +6,7 @@ use App\Domain\Campaign\BLL\CampaignContent\CampaignContentBLLInterface;
 use App\Domain\Campaign\Enums\CampaignContentEnum;
 use App\Domain\Campaign\Exports\CampaignContentExport;
 use App\Domain\Campaign\Exports\CampaignContentTemplateExport;
+use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Models\Statistic;
@@ -108,18 +109,68 @@ class CampaignContentController extends Controller
     public function getCampaignContentJson(int $campaignId, Request $request): JsonResponse
     {
         $this->authorize('viewCampaignContent', CampaignContent::class);
-
-        // Fetch the data using the BLL (Business Logic Layer)
         $query = $this->campaignContentBLL->getCampaignContentDataTable($campaignId, $request)->orderBy('upload_date', 'desc');
-
-        // Transform the query results into an array format
         $campaignContents = $query->get()->map(function ($row) {
+
+            $baseUsername = preg_replace('/\s*\(.*?\)\s*/', '', $row->username);
+            $keyOpinionLeader = KeyOpinionLeader::where('username', $baseUsername)->first();
+            $followers = $keyOpinionLeader->followers ?? 0;
 
             $likes = $row->latestStatistic->like ?? 0;
             $comments = $row->latestStatistic->comment ?? 0;
             $views = $row->latestStatistic->view ?? 0;
-            $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0; 
-            
+            $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0;
+
+            if ($followers >= 1000 && $followers < 10000) {
+                $tiering = "<button class='btn btn-sm bg-info>
+                                Nano
+                            </button>";
+                $er_top = 0.1;
+                $er_bottom = 0.04;
+                $cpm_target = 35000;
+            } elseif ($followers >= 10000 && $followers < 50000) {
+                $tiering = "<button class='btn btn-sm bg-purple'>
+                                Micro
+                            </button>";
+                $er_top = 0.05;
+                $er_bottom = 0.02;
+                $cpm_target = 35000;
+            } elseif ($followers >= 50000 && $followers < 250000) {
+                $tiering = "<button class='btn btn-sm bg-maroon'>
+                                Mid-Tier
+                            </button>";
+                $er_top = 0.03;
+                $er_bottom = 0.015;
+                $cpm_target = 25000;
+            } elseif ($followers >= 250000 && $followers < 1000000) {
+                $tiering = "<button class='btn btn-sm bg-success'>
+                                Macro TOFU
+                            </button>";
+                $er_top = 0.025;
+                $er_bottom = 0.01;
+                $cpm_target = 10000;
+            } elseif ($followers >= 1000000 && $followers < 2000000) {
+                $tiering = "<button class='btn btn-sm bg-teal'>
+                                Mega-TOFU
+                            </button>";
+                $er_top = 0.02;
+                $er_bottom = 0.01;
+                $cpm_target = 10000;
+            } elseif ($followers >= 2000000) {
+                $tiering = "<button class='btn btn-sm bg-pink'>
+                                Mega-MOFU
+                            </button>";
+                $er_top = 0.02;
+                $er_bottom = 0.01;
+                $cpm_target = 35000;
+            } else {
+                $tiering = "Unknown";
+                $er_top = null;
+                $er_bottom = null;
+                $cpm_target = null;
+            }
+
+            // Return the transformed row data
             return [
                 'id' => $row->id,
                 'channel' => $row->channel,
@@ -134,15 +185,20 @@ class CampaignContentController extends Controller
                 'is_paid' => $row->is_paid,
                 'created_by_name' => $row->createdBy->name ?? 'N/A',
                 'key_opinion_leader_username' => $row->keyOpinionLeader->username ?? 'N/A',
+                'kol_followers' => $followers,
                 'like' => !empty($row->latestStatistic->like) ? abs($row->latestStatistic->like) : 0,
                 'comment' => $row->latestStatistic->comment ?? 0,
                 'view' => $row->latestStatistic->view ?? 0,
                 'cpm' => number_format($row->latestStatistic->cpm ?? 0, 2, ',', '.'),
                 'rate_card_formatted' => number_format($row->rate_card, 0, ',', '.'),
-                'link' => $row->link ?? 'N/A',  // Retrieve the link from the campaign_contents table
+                'link' => $row->link ?? 'N/A',
                 'additional_info' => $this->additionalInfo($row),
                 'actions' => $this->actionsHtml($row),
-                'engagement_rate' => number_format($engagementRate, 2) . '%', // Format as percentage
+                'engagement_rate' => number_format($engagementRate, 2) . '%',
+                'tiering' => $tiering,
+                'er_top' => $er_top,
+                'er_bottom' => $er_bottom,
+                'cpm_target' => $cpm_target,
             ];
         });
 
@@ -151,6 +207,7 @@ class CampaignContentController extends Controller
             'data' => $campaignContents
         ]);
     }
+
 
 
     protected function actionsHtml($row): string
