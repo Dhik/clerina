@@ -294,10 +294,29 @@ class KeyOpinionLeaderController extends Controller
     }
     public function refreshFollowersFollowing(string $username): JsonResponse
     {
+        $username = preg_replace('/\s*\(.*?\)\s*/', '', $username);
         $keyOpinionLeader = KeyOpinionLeader::where('username', $username)->first();
 
         if (!$keyOpinionLeader) {
-            return response()->json(['error' => 'Key Opinion Leader not found'], 404);
+            $kol = KeyOpinionLeader::where('username', 'LIKE', '%' . $username . '%')->first();
+            $keyOpinionLeader = KeyOpinionLeader::create([
+                'username' => $username,
+                'channel' => $kol->channel,
+                'niche' => '-',
+                'average_view' => 0,
+                'skin_type' => '-',
+                'skin_concern' => '-',
+                'content_type' => '-',
+                'rate' => 0,
+                'cpm' => 0,
+                'created_by' => Auth::user()->id,
+                'pic_contact' => Auth::user()->id,
+                'followers' => 0,
+                'following' => 0,
+            ]);
+            if (!$keyOpinionLeader) {
+                return response()->json(['error' => 'Key Opinion Leader not found'], 404);
+            }
         }
 
         try {

@@ -54,7 +54,7 @@
             </select>
         </div>
         <div class="col-md-4">
-            <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select date range">
+            <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select Down Payment Date Range">
         </div>
         <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
         <!-- <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
