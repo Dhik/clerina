@@ -122,7 +122,7 @@ class CampaignContentController extends Controller
             $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0;
 
             if ($followers >= 1000 && $followers < 10000) {
-                $tiering = "<button class='btn btn-sm bg-info>
+                $tiering = "<button class='btn btn-sm bg-info'>
                                 Nano
                             </button>";
                 $er_top = 0.1;
