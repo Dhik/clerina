@@ -341,5 +341,55 @@ class KeyOpinionLeaderController extends Controller
             return response()->json(['error' => 'An error occurred'], 500);
         }
     }
+    public function refreshFollowersFollowingSingle(string $username): JsonResponse
+    {
+        $keyOpinionLeader = KeyOpinionLeader::where('username', $username)->first();
+
+        if (!$keyOpinionLeader) {
+            return response()->json(['error' => 'Key Opinion Leader not found'], 404);
+        }
+        try {
+            if ($keyOpinionLeader->channel === 'tiktok_video') {
+                $url = "https://tokapi-mobile-version.p.rapidapi.com/v1/user/@{$username}";
+                $headers = [
+                    'x-rapidapi-host' => 'tokapi-mobile-version.p.rapidapi.com',
+                    'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
+                ];
+            } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
+                $url = "https://instagram-scraper-api2.p.rapidapi.com/v1/info?username_or_id_or_url={$username}";
+                $headers = [
+                    'x-rapidapi-host' => 'instagram-scraper-api2.p.rapidapi.com',
+                    'x-rapidapi-key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986',
+                ];
+            } else {
+                return response()->json(['error' => 'Unsupported channel type'], 400);
+            }
+            $response = Http::withHeaders($headers)->get($url);
+            if ($response->successful()) {
+                $data = $response->json();
+                if ($keyOpinionLeader->channel === 'tiktok_video') {
+                    $followers = $data['user']['follower_count'] ?? 0;
+                    $following = $data['user']['following_count'] ?? 0;
+                } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
+                    $followers = $data['data']['follower_count'] ?? 0;
+                    $following = $data['data']['following_count'] ?? 0;
+                }
+                $keyOpinionLeader->update([
+                    'followers' => $followers,
+                    'following' => $following,
+                ]);
+
+                return response()->json([
+                    'followers' => $followers,
+                    'following' => $following,
+                    'message' => 'Followers and Following counts updated successfully.',
+                ]);
+            } else {
+                return response()->json(['error' => 'Failed to fetch data from API'], $response->status());
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
+        }
+    }
 
 }
