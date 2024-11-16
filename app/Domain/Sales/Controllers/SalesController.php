@@ -28,6 +28,7 @@ use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Sales\Services\TelegramService;
 use App\Domain\Sales\Services\GoogleSheetService;
+use Illuminate\Support\Facades\Http;
 
 class SalesController extends Controller
 {

@@ -59,6 +59,7 @@ Route::prefix('admin')
                 Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData'])->name('sales.update_ads');
 
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');
+                Route::get('/meta_data', [SalesController::class, 'getAdInsights']);
                 Route::get('/{sales}', [SalesController::class, 'show'])->name('sales.show');
                 Route::get('/sync/{sales}', [SalesController::class, 'syncSales'])->name('sales.sales-sync');
             });
