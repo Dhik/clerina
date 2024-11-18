@@ -429,19 +429,8 @@ class TalentContentController extends Controller
                 'pic_contact' => Auth::user()->id,
             ]);
         }
-        $campaignContent = CampaignContent::where('campaign_id', $talentContent->campaign_id)
-            ->where('link', $request->upload_link)
-            ->first();
-
-        if ($campaignContent) {
-            $campaignContent->update([
-                'username' => $talent->username,
-                'channel' => $request->channel,
-                'task_name' => $request->task_name,
-                'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
-                'kode_ads' => $request->kode_ads,
-            ]);
-        } else {
+        if ($request->channel === 'instagram_story') {
+            // Always create a new CampaignContent for instagram_story
             CampaignContent::create([
                 'campaign_id' => $talentContent->campaign_id,
                 'key_opinion_leader_id' => $kol->id,
@@ -461,6 +450,41 @@ class TalentContentController extends Controller
                 'created_by' => Auth::user()->id,
                 'tenant_id' => Auth::user()->current_tenant_id,
             ]);
+        } else {
+            // Check if CampaignContent already exists for other channels
+            $campaignContent = CampaignContent::where('campaign_id', $talentContent->campaign_id)
+                ->where('link', $request->upload_link)
+                ->first();
+    
+            if ($campaignContent) {
+                $campaignContent->update([
+                    'username' => $talent->username,
+                    'channel' => $request->channel,
+                    'task_name' => $request->task_name,
+                    'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
+                    'kode_ads' => $request->kode_ads,
+                ]);
+            } else {
+                CampaignContent::create([
+                    'campaign_id' => $talentContent->campaign_id,
+                    'key_opinion_leader_id' => $kol->id,
+                    'username' => $talent->username,
+                    'channel' => $request->channel,
+                    'task_name' => $request->task_name,
+                    'link' => $request->upload_link,
+                    'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
+                    'product' => $talentContent->product,
+                    'kode_ads' => $request->kode_ads,
+                    'upload_date' => null,
+                    'boost_code' => $talentContent->boost_code,
+                    'is_fyp' => 0,
+                    'is_product_deliver' => 0,
+                    'is_paid' => 0,
+                    'caption' => null,
+                    'created_by' => Auth::user()->id,
+                    'tenant_id' => Auth::user()->current_tenant_id,
+                ]);
+            }
         }
 
         return response()->json([

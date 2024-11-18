@@ -27,6 +27,7 @@
                             <option value="tiktok_video">Tiktok Video</option>
                             <option value="twitter_post">Twitter Post</option>
                             <option value="shopee_video">Shopee Video</option>
+                            <option value="instagram_story">Instagram Story</option>
                         </select>
                     </div>
                     <div class="form-group">
