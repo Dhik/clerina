@@ -37,25 +37,42 @@ class StatisticCardService
             $sumStartDate = Statistic::where('campaign_id', $campaignId)
                 ->whereDate('date', $startDate)
                 ->sum('view');
-
             $sumEndDate = Statistic::where('campaign_id', $campaignId)
                 ->whereDate('date', $endDate)
                 ->sum('view');
-
             $totalView = $sumEndDate - $sumStartDate;
+            $sumStartDateLikes = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $startDate)
+                ->sum('like');
+            $sumEndDateLikes = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $endDate)
+                ->sum('like');
+            $totalLike = $sumEndDateLikes - $sumStartDateLikes;
+            $sumStartDateComments = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $startDate)
+                ->sum('comment');
+            $sumEndDateComments = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $endDate)
+                ->sum('comment');
+            $totalComment = $sumEndDateComments - $sumStartDateComments;
         } else {
             $latestDate = Statistic::where('campaign_id', $campaignId)
                 ->max('date');
-
             $totalView = Statistic::where('campaign_id', $campaignId)
                 ->whereDate('date', $latestDate)
                 ->sum('view');
+            $totalLike = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $latestDate)
+                ->sum('like');
+            $totalComment = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $latestDate)
+                ->sum('comment');
         }
 
         $totals = [
             'totalView' => $totalView,
-            'totalLike' => $statistics->sum('like'),
-            'totalComment' => $statistics->sum('comment'),
+            'totalLike' => $totalLike,
+            'totalComment' => $totalComment,
             'totalExpense' => $allCampaignContents->sum('rate_card'),
             'cpm' => $totalView > 0 
                 ? ($allCampaignContents->sum('rate_card') / $totalView) * 1000 
