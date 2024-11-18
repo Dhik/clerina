@@ -38,10 +38,13 @@
                                 </div>
 
                                 <div class="col-auto">
-                                <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
+                                    <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
                                 </div>
                                 <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                </div>
+                                <div class="col-auto">
+                                    <input type="text" class="form-control" id="filterDates" placeholder="Select Date Range" autocomplete="off">
                                 </div>
                             </div>
                         </div>
@@ -120,15 +123,6 @@
                                     <th width="15%">{{ trans('labels.action') }}</th>
                                 </tr>
                                 </thead>
-                                <!-- <tfoot>
-                                <tr>
-                                    <th colspan="2"></th>
-                                    <th>Total Expense</th>
-                                    <th>CPM</th>
-                                    <th>Views</th>
-                                    <th colspan="3"></th>
-                                </tr>
-                                </tfoot> -->
                             </table>
                         </div>
                     </div>
@@ -141,6 +135,7 @@
 <script>
     let campaignTableSelector = $('#campaignTable');
     let filterMonth = $('#filterMonth');
+    let filterDates = $('#filterDates');
 
     // Initialize DataTables
     let campaignTable = campaignTableSelector.DataTable({
@@ -150,10 +145,15 @@
         ajax: {
             url: "{{ route('campaign.get') }}",
             data: function (d) {
-                if (filterMonth.val()) {
-                    d.filterMonth = filterMonth.val();
+                if (filterDates.val()) {
+                    d.filterDates = filterDates.val(); // Ensure filterDates is passed
                 } else {
-                    delete d.filterMonth; // Remove the filterMonth parameter when not used
+                    delete d.filterDates;
+                }
+                if (filterMonth.val()) {
+                    d.filterMonth = filterMonth.val(); // Ensure filterMonth is passed
+                } else {
+                    delete d.filterMonth;
                 }
             }
         },
@@ -274,6 +274,25 @@
 
     // Initial Load
     loadCampaignSummary();
+
+    $('#filterDates').daterangepicker({
+        autoUpdateInput: false,
+        locale: {
+            format: 'DD/MM/YYYY',
+            cancelLabel: 'Clear'
+        }
+    });
+
+    $('#filterDates').on('apply.daterangepicker', function(ev, picker) {
+        $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+        campaignTable.ajax.reload(); // Reload table with new date range
+    });
+
+    $('#filterDates').on('cancel.daterangepicker', function(ev, picker) {
+        $(this).val('');
+        campaignTable.ajax.reload(); // Reload table without date range
+    });
+
 
     function deleteAjax(route, id, table) {
     Swal.fire({

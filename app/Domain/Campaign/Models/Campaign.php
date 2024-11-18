@@ -40,6 +40,12 @@ class Campaign extends Model implements HasMedia
         'views_formatted'
     ];
 
+    public function statistics()
+    {
+        return $this->hasMany(Statistic::class);
+    }
+
+
     /**
      * Casting start date
      */

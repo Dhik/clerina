@@ -3,13 +3,14 @@
 namespace App\Domain\Campaign\BLL\Campaign;
 
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Requests\CampaignRequest;
 use App\DomainUtils\BaseBLL\BaseBLL;
 use App\DomainUtils\BaseBLL\BaseBLLFileUtils;
 use App\Domain\Campaign\DAL\Campaign\CampaignDALInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Utilities\Request;
 
@@ -28,20 +29,32 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     {
         $query = $this->campaignDAL->getCampaignDataTable();
 
+        // Check for search terms
         if ($request->input('search.value')) {
             $searchTerms = explode(' ', strtolower($request->input('search.value')));
             
-            $query->where(function($q) use ($searchTerms) {
+            $query->where(function ($q) use ($searchTerms) {
                 foreach ($searchTerms as $term) {
                     $q->whereRaw('LOWER(title) LIKE ?', ["%$term%"]);
                 }
             });
         }
 
+        // Check for date range filter
+        if ($request->input('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+            $query->with(['statistics' => function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('date', [$startDate, $endDate]);
+            }]);
+        } else {
+            $query->with('statistics');
+        }
+
         return $query;
     }
-
-
 
     /**
      * Create new campaign
