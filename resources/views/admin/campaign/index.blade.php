@@ -43,9 +43,9 @@
                                 <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <input type="text" class="form-control" id="filterDates" placeholder="Select Date Range" autocomplete="off">
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
