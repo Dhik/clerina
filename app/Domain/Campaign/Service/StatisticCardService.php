@@ -24,25 +24,45 @@ class StatisticCardService
         }
 
         $statistics = Statistic::where('campaign_id', $campaignId)
-            ->when($startDate && $endDate, function($query) use ($startDate, $endDate) {
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('date', [$startDate, $endDate]);
             })
-            ->orderBy('updated_at', 'desc') 
+            ->orderBy('updated_at', 'desc')
             ->get()
-            ->unique('campaign_content_id'); 
+            ->unique('campaign_content_id');
 
-        $campaignContents = $this->fetchCampaignContents($campaignId, $request);
+        $totalView = 0;
+
+        if ($startDate && $endDate) {
+            $sumStartDate = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $startDate)
+                ->sum('view');
+
+            $sumEndDate = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $endDate)
+                ->sum('view');
+
+            $totalView = $sumEndDate - $sumStartDate;
+        } else {
+            $latestDate = Statistic::where('campaign_id', $campaignId)
+                ->max('date');
+
+            $totalView = Statistic::where('campaign_id', $campaignId)
+                ->whereDate('date', $latestDate)
+                ->sum('view');
+        }
 
         $totals = [
-            'totalView' => $statistics->sum('view'),
+            'totalView' => $totalView,
             'totalLike' => $statistics->sum('like'),
             'totalComment' => $statistics->sum('comment'),
             'totalExpense' => $allCampaignContents->sum('rate_card'),
-            'cpm' => $statistics->sum('view') > 0 
-        ? ($allCampaignContents->sum('rate_card') / $statistics->sum('view')) * 1000 
-        : 0,
+            'cpm' => $totalView > 0 
+                ? ($allCampaignContents->sum('rate_card') / $totalView) * 1000 
+                : 0,
         ];
 
+        $campaignContents = $this->fetchCampaignContents($campaignId, $request);
         $groupedData = $this->groupDataByKeyOpinionLeader($campaignContents);
         $topData = $this->sortDataByCriteria($groupedData);
         $groupedProducts = $this->groupDataByProduct($campaignContents);

@@ -323,40 +323,40 @@ class EmployeeController extends Controller
             ->rawColumns(['actions'])
             ->toJson();
     }
-    public function getWeeklyWorkHours()
-{
-    $startOfWeek = Carbon::now()->startOfWeek();
-    $endOfWeek = Carbon::now()->endOfWeek();
+        public function getWeeklyWorkHours()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
 
-    $employees = Employee::all();
-    $data = [];
+        $employees = Employee::all();
+        $data = [];
 
-    foreach ($employees as $employee) {
-        $attendances = Attendance::where('employee_id', $employee->employee_id)
-            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->get();
+        foreach ($employees as $employee) {
+            $attendances = Attendance::where('employee_id', $employee->employee_id)
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->get();
 
-        $totalWorkHours = 0;
+            $totalWorkHours = 0;
 
-        foreach ($attendances as $attendance) {
-            if ($attendance->clock_in && $attendance->clock_out) {
-                $clockIn = Carbon::parse($attendance->clock_in);
-                $clockOut = Carbon::parse($attendance->clock_out);
-                $totalWorkHours += $clockOut->diffInMinutes($clockIn) / 60;
+            foreach ($attendances as $attendance) {
+                if ($attendance->clock_in && $attendance->clock_out) {
+                    $clockIn = Carbon::parse($attendance->clock_in);
+                    $clockOut = Carbon::parse($attendance->clock_out);
+                    $totalWorkHours += $clockOut->diffInMinutes($clockIn) / 60;
+                }
             }
+
+            $data[] = [
+                'employee_id' => $employee->employee_id,
+                'full_name' => $employee->full_name,
+                'totalWorkHours' => $totalWorkHours,
+                'organization' => $employee->organization
+            ];
         }
 
-        $data[] = [
-            'employee_id' => $employee->employee_id,
-            'full_name' => $employee->full_name,
-            'totalWorkHours' => $totalWorkHours,
-            'organization' => $employee->organization
-        ];
+        return response()->json($data);
     }
-
-    return response()->json($data);
-}
-public function export(Request $request)
+    public function export(Request $request)
     {
         $filename = 'employees_export_' . date('Ymd_His') . '.xlsx';
         return Excel::download(new EmployeesExport, $filename);
