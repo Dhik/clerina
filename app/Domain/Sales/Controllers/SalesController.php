@@ -159,23 +159,17 @@ class SalesController extends Controller
     {
         $this->authorize('viewAnySales', Sales::class);
 
-        // Assuming you have a Sales model and it's properly set up with relationships
-        // Adjust the query according to your actual database schema
-
         $omsetData = Sales::whereDate('created_at', $date)
             ->groupBy('date')
             ->get();
 
-        // Return the data as a JSON response
         return response()->json($omsetData);
     }
     public function sendMessageCleora()
     {
-        // Get yesterday's data
         $yesterday = now()->subDay();
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
 
-        // Yesterday's sales and transaction data
         $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
             ->selectRaw('SUM(amount) as turnover')
@@ -186,7 +180,6 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
 
-        // Average turnover per transaction and per customer
         $avgTurnoverPerTransaction = $orderData->transactions > 0 
             ? round($yesterdayData->turnover / $orderData->transactions, 2) 
             : 0;
@@ -211,12 +204,10 @@ class SalesController extends Controller
             ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
             ->first();
 
-        // Format monthly turnover
         $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
         $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
         $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
 
-        // Monthly projection
         $daysPassed = now()->day - 1;
         $remainingDays = now()->daysInMonth - $daysPassed;
 
@@ -285,35 +276,6 @@ class SalesController extends Controller
         $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
             ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
             : 0;
-        
-        $socialMediaSpends = AdSpentSocialMedia::whereDate('date', $yesterday)
-            ->where('tenant_id', 1)
-            ->where('amount', '>', 0)
-            ->select('social_media_id', 'amount')
-            ->get();
-    
-        $socialMediaNames = SocialMedia::pluck('name', 'id');
-        $socialMediaSpendText = $socialMediaSpends->map(function ($spend) use ($socialMediaNames) {
-            $platformName = $socialMediaNames->get($spend->social_media_id);
-            $formattedAmount = number_format($spend->amount, 0, ',', '.');
-            return "{$platformName}: Rp {$formattedAmount}";
-        })->implode("\n");
-    
-        $marketplaceSpends = AdSpentMarketPlace::whereDate('date', $yesterday)
-            ->where('tenant_id', 1)
-            ->where('amount', '>', 0)
-            ->select('sales_channel_id', 'amount')
-            ->get();
-    
-        $marketplaceNames = SalesChannel::pluck('name', 'id');
-        $marketplaceSpendText = $marketplaceSpends->map(function ($spend) use ($marketplaceNames) {
-            $channelName = $marketplaceNames->get($spend->sales_channel_id);
-            $formattedAmount = number_format($spend->amount, 0, ',', '.');
-            return "{$channelName}: Rp {$formattedAmount}";
-        })->implode("\n");
-    
-        $totalSpend = $marketplaceSpends->sum('amount') + $socialMediaSpends->sum('amount');
-        $formattedTotalSpend = number_format($totalSpend, 0, ',', '.');
 
         $message = <<<EOD
         🔥Laporan Transaksi CLEORA🔥
@@ -342,14 +304,6 @@ class SalesController extends Controller
 
         📈 Proyeksi Sales Channel
         {$salesChannelProjection}
-
-        📊 Pengeluaran Iklan Social Media Kemarin
-        {$socialMediaSpendText}
-
-        📊 Pengeluaran Iklan Marketplace Kemarin
-        {$marketplaceSpendText}
-
-        Total Ads Spent: Rp {$formattedTotalSpend}
         EOD;
 
         $response = $this->telegramService->sendMessage($message);
@@ -496,6 +450,143 @@ class SalesController extends Controller
         $response = $this->telegramService->sendMessage($message);
         return response()->json($response);
     }
+
+    public function sendMessageMarketingCleora()
+    {
+        $yesterday = now()->subDay();
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
+
+        // Data kunjungan kemarin
+        $visitData = Visit::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(visit_amount) as total_visits')
+            ->first();
+
+        $visitByChannel = Visit::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(visit_amount) as total_visits')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        // Data transaksi dan omzet kemarin
+        $yesterdayData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(amount) as turnover, COUNT(id) as transactions')
+            ->first();
+
+        $conversionRate = $visitData->total_visits > 0 
+            ? round(($yesterdayData->transactions / $visitData->total_visits) * 100, 2) 
+            : 0;
+
+        // Pengeluaran iklan kemarin
+        $socialMediaSpends = AdSpentSocialMedia::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('social_media_id, SUM(amount) as total_amount')
+            ->groupBy('social_media_id')
+            ->get();
+
+        $marketplaceSpends = AdSpentMarketPlace::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $totalAdsSpend = $socialMediaSpends->sum('total_amount') + $marketplaceSpends->sum('total_amount');
+        $roas = $totalAdsSpend > 0 
+            ? round($yesterdayData->turnover / $totalAdsSpend, 2) 
+            : 0;
+
+        $socialMediaNames = SocialMedia::pluck('name', 'id');
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+
+        $detailSocialMediaSpends = $socialMediaSpends->map(function ($spend) use ($socialMediaNames) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $formattedAmount = number_format($spend->total_amount, 0, ',', '.');
+            return "{$platformName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $detailMarketplaceSpends = $marketplaceSpends->map(function ($spend) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($spend->sales_channel_id);
+            $formattedAmount = number_format($spend->total_amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $detailVisitByChannel = $visitByChannel->map(function ($visit) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($visit->sales_channel_id);
+            $formattedVisit = number_format($visit->total_visits, 0, ',', '.');
+            return "{$channelName}: {$formattedVisit}";
+        })->implode("\n");
+
+        // Data bulan ini
+        $startOfMonth = now()->startOfMonth();
+
+        $monthlySocialMediaSpends = AdSpentSocialMedia::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('social_media_id, SUM(amount) as total_amount')
+            ->groupBy('social_media_id')
+            ->get();
+
+        $monthlyMarketplaceSpends = AdSpentMarketPlace::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $monthlyVisits = Visit::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(visit_amount) as total_visits')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $monthlyDetailSocialMediaSpends = $monthlySocialMediaSpends->map(function ($spend) use ($socialMediaNames) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $formattedAmount = number_format($spend->total_amount, 0, ',', '.');
+            return "{$platformName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $monthlyDetailMarketplaceSpends = $monthlyMarketplaceSpends->map(function ($spend) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($spend->sales_channel_id);
+            $formattedAmount = number_format($spend->total_amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $monthlyDetailVisits = $monthlyVisits->map(function ($visit) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($visit->sales_channel_id);
+            $formattedVisit = number_format($visit->total_visits, 0, ',', '.');
+            return "{$channelName}: {$formattedVisit}";
+        })->implode("\n");
+
+        $message = <<<EOD
+        🔥 Laporan Marketing Cleora 🔥
+        Periode $yesterdayDateFormatted
+
+        📅 Kemarin
+        Visit: {$visitData->total_visits}
+        Transaksi: {$yesterdayData->transactions}
+        Conversion Rate: {$conversionRate}%
+        Total Ads Spend: Rp {$totalAdsSpend}
+        Omzet: Rp {$yesterdayData->turnover}
+        ROAS: {$roas}
+
+        📈 Detail Ad Spent (Kemarin)
+        {$detailSocialMediaSpends}
+        {$detailMarketplaceSpends}
+
+        📈 Detail Visit (Kemarin)
+        {$detailVisitByChannel}
+
+        📅 Ad Spent (Bulan ini)
+        {$monthlyDetailSocialMediaSpends}
+        {$monthlyDetailMarketplaceSpends}
+
+        📈 Detail Visit (Bulan ini)
+        {$monthlyDetailVisits}
+        EOD;
+
+        $response = $this->telegramService->sendMessage($message);
+        return response()->json($response);
+    }
+
 
     public function importFromGoogleSheet()
     {
