@@ -556,6 +556,9 @@ class SalesController extends Controller
             return "{$channelName}: {$formattedVisit}";
         })->implode("\n");
 
+        $formattedOmzet = number_format($yesterdayData->turnover, 0, ',', '.');
+        $formattedtotalAdsSpend = number_format($totalAdsSpend, 0, ',', '.');
+
         $message = <<<EOD
         🔥 Laporan Marketing Cleora 🔥
         Periode $yesterdayDateFormatted
@@ -564,8 +567,8 @@ class SalesController extends Controller
         Visit: {$visitData->total_visits}
         Transaksi: {$yesterdayData->transactions}
         Conversion Rate: {$conversionRate}%
-        Total Ads Spend: Rp {$totalAdsSpend}
-        Omzet: Rp {$yesterdayData->turnover}
+        Total Ads Spend: Rp {$formattedtotalAdsSpend}
+        Omzet: Rp {$formattedOmzet}
         ROAS: {$roas}
 
         📈 Detail Ad Spent (Kemarin)
