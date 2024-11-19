@@ -43,6 +43,7 @@ class Talent extends Model implements HasMedia
         'tenant_id',
         'dp_amount',
         'rate_per_slot',
+        'tax_percentage',
     ];
     public function talentContents()
     {

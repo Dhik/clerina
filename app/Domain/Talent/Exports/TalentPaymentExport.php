@@ -105,8 +105,13 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             $rate_harga = $rate_card_per_slot * $slot;
             $discount = (float)$talent->discount;
             $harga_setelah_diskon = $rate_harga - $discount;
+
+            if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
+                $pphPercentage = $talent->tax_percentage / 100;
+            } else {
+                $pphPercentage = Str::startsWith($talent->nama_rekening, ['PT', 'CV']) ? 0.02 : 0.025;
+            }
             
-            $pphPercentage = Str::startsWith($talent->nama_rekening, ['PT', 'CV']) ? 0.02 : 0.025;
             $pphAmount = $harga_setelah_diskon * $pphPercentage;
             $final_tf = $harga_setelah_diskon - $pphAmount;
             

@@ -55,6 +55,10 @@
                             <label for="view_phone_number">Phone Number</label>
                             <input type="text" id="view_phone_number" class="form-control" readonly>
                         </div>
+                        <div class="form-group">
+                            <label for="view_tax_percentage">Tax Percentage</label>
+                            <input type="text" id="view_tax_percentage" class="form-control" readonly>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <h5 class="mb-3">Payment</h5>

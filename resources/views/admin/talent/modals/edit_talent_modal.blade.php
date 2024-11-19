@@ -67,6 +67,10 @@
                                 <label for="edit_address">Address</label>
                                 <input type="text" name="address" id="edit_address" class="form-control">
                             </div>
+                            <div class="form-group">
+                                <label for="edit_tax_percentage">Persentase Pajak (1-100)</label>
+                                <input type="number" name="tax_percentage" id="tax_percentage" class="form-control">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">

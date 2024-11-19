@@ -100,6 +100,8 @@ class TalentController extends Controller
             'platform' => 'nullable|string|max:255',
         ]);
 
+        $validatedData['tax_percentage'] = 0;
+
         $this->talentBLL->createTalent($validatedData);
 
         return redirect()->route('talent.index')->with('success', 'Talent created successfully.');
@@ -218,15 +220,21 @@ class TalentController extends Controller
         }
 
         $harga = $talent->rate_per_slot * $talent->slot_final; 
-        $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
-        if ($isPTorCV) {
-            $pphPercentage = 2;
-            $pphLabel = 'PPh 23 (2%)';
-            $pph = $harga * 0.02;
+        if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
+            $pphPercentage = $talent->tax_percentage;
+            $pphLabel = 'Custom Tax (' . $pphPercentage . '%)';
+            $pph = $harga * ($pphPercentage / 100);
         } else {
-            $pphPercentage = 2.5;
-            $pphLabel = 'PPh 21 (2.5%)';
-            $pph = $harga * 0.025;
+            $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
+            if ($isPTorCV) {
+                $pphPercentage = 2;
+                $pphLabel = 'PPh 23 (2%)';
+                $pph = $harga * 0.02;
+            } else {
+                $pphPercentage = 2.5;
+                $pphLabel = 'PPh 21 (2.5%)';
+                $pph = $harga * 0.025;
+            }
         }
         $total = $harga - $pph; 
         $downPayment = $talent->dp_amount ?? ($total / 2);

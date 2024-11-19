@@ -46,6 +46,7 @@ class TalentRequest extends FormRequest
             'rate_final' => 'required|string', // Ensure this is a string for money formatting
             'scope_of_work' => 'nullable|string|max:255',
             'masa_kerjasama' => 'nullable|string|max:255',
+            'tax_percentage' => 'nullable|integer',
         ];
     }
 

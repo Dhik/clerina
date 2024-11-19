@@ -138,6 +138,7 @@
                     $('#edit_no_rekening').val(response.no_rekening);
                     $('#edit_nama_rekening').val(response.nama_rekening);
                     $('#edit_no_npwp').val(response.no_npwp);
+                    $('#edit_tax_percentage').val(response.tax_percentage);
                     $('#edit_pengajuan_transfer_date').val(response.pengajuan_transfer_date);
                     $('#edit_nik').val(response.nik);
                     
@@ -203,6 +204,7 @@
                     $('#view_updated_at').val(response.talent.updated_at);
                     $('#view_scope_of_work').val(response.talent.scope_of_work);
                     $('#view_masa_kerjasama').val(response.talent.masa_kerjasama);
+                    $('#view_tax_percentage').val(response.talent.tax_percentage);
 
                     // Show the modal
                     $('#viewTalentModal').modal('show');

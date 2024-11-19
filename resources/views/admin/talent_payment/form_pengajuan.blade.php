@@ -39,10 +39,12 @@
                 <th>Harga Setelah Diskon</th>
                 <th>NPWP</th>
                 <th>
-                    @if($talentContents->first()->isPTorCV)
+                    @if (!is_null($talentContents->first()->talent->tax_percentage) && $talentContents->first()->talent->tax_percentage > 0)
+                        Custom Tax ({{ $talentContents->first()->talent->tax_percentage }}%)
+                    @elseif($talentContents->first()->isPTorCV)
                         PPh23 (2%)
                     @else
-                        PPh21 (2,5%)
+                        PPh21 (2.5%)
                     @endif
                 </th>
                 <th>Final TF</th>
@@ -66,7 +68,11 @@
                     $rate_harga = $rate_card_per_slot * $slot;
                     $discount = $content->talent->discount;
                     $harga_setelah_diskon = $rate_harga - $discount;
-                    $pphPercentage = $content->isPTorCV ? 0.02 : 0.025;
+                    if (!is_null($content->talent->tax_percentage) && $content->talent->tax_percentage > 0) {
+                        $pphPercentage = $content->talent->tax_percentage / 100;
+                    } else {
+                        $pphPercentage = $content->isPTorCV ? 0.02 : 0.025;
+                    }
                     $pphAmount = $harga_setelah_diskon * $pphPercentage;
                     $final_tf = $harga_setelah_diskon - $pphAmount;
                     $dp = $final_tf / 2; // DP 50%
