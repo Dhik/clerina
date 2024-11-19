@@ -70,7 +70,12 @@ class TalentContentController extends Controller
             </button>';
         return $doneButton;
     }
-    
+    private function adjustSpentForTax($spent, $accountName)
+    {
+        $isPTorCV = \Illuminate\Support\Str::startsWith($accountName, ['PT', 'CV']);
+        $pph = $isPTorCV ? $spent * 0.02 : $spent * 0.025;
+        return $spent - $pph;
+    }
         
     public function data(Request $request)
     {
@@ -87,6 +92,7 @@ class TalentContentController extends Controller
             'talent_content.is_refund',
             'talents.rate_final',
             'talents.slot_final',
+            'talents.nama_rekening',
             'campaigns.title as campaign_title'
         ])
         ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
@@ -128,12 +134,13 @@ class TalentContentController extends Controller
 
         return DataTables::of($talentContents)
             ->addColumn('talent_should_get', function ($talentContent) {
-                // Check if upload_link is not null
                 if (!is_null($talentContent->upload_link)) {
-                    // Calculate talent_should_get
-                    $rateFinal = $talentContent->rate_final ?? 0; // Get rate_final, default to 0 if null
-                    $slotFinal = $talentContent->slot_final ?? 1; // Get slot_final, default to 1 to avoid division by zero
-                    return $slotFinal > 0 ? $rateFinal / $slotFinal : 0; // Return the calculated value
+                    $rateFinal = $talentContent->rate_final ?? 0; 
+                    $slotFinal = $talentContent->slot_final ?? 1; 
+                    $accountName = $talentContent->nama_rekening ?? '';
+                    $totalPerSlot = $slotFinal > 0 ? $rateFinal / $slotFinal : 0;
+                    $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $accountName);
+                    return $totalPerSlot;
                 }
                 return 0; 
             })

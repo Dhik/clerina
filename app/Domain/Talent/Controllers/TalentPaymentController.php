@@ -315,9 +315,14 @@ class TalentPaymentController extends Controller
         // Retrieve the talents as a collection and calculate additional columns
         $talents = $query->get()->map(function ($talent) {
             $totalSpentForTalent = $this->calculateSpentForTalent($talent);
+            $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
             $contentCount = $talent->talentContents->count();
+
+            $totalPerSlot = $talent->rate_final / $talent->slot_final;
+            $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
+
             $talentShouldGet = ($talent->slot_final > 0) 
-                ? ($talent->rate_final / $talent->slot_final) * $contentCount 
+                ? ($totalPerSlot) * $contentCount 
                 : 0;
 
             $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
@@ -341,6 +346,13 @@ class TalentPaymentController extends Controller
 
         // Return the filtered data to DataTables
         return DataTables::of($filteredTalents)->make(true);
+    }
+
+    private function adjustSpentForTax($spent, $accountName)
+    {
+        $isPTorCV = \Illuminate\Support\Str::startsWith($accountName, ['PT', 'CV']);
+        $pph = $isPTorCV ? $spent * 0.02 : $spent * 0.025;
+        return $spent - $pph;
     }
 
     public function calculateTotals(Request $request)
@@ -368,8 +380,13 @@ class TalentPaymentController extends Controller
 
         $query->get()->each(function($talent) use (&$totalHutang, &$totalPiutang, &$totalSpent) {
             $totalSpentForTalent = $this->calculateSpentForTalent($talent);
+            $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
+
             $contentCount = $talent->talentContents->count();
-            $talentShouldGet = ($talent->slot_final > 0) ? ($talent->rate_final / $talent->slot_final) * $contentCount : 0;
+
+            $totalPerSlot = $talent->rate_final / $talent->slot_final;
+            $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
+            $talentShouldGet = ($talent->slot_final > 0) ? ($totalPerSlot) * $contentCount : 0;
             
             $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
             $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
@@ -420,15 +437,17 @@ class TalentPaymentController extends Controller
 
         return DataTables::of($payments)
             ->addColumn('spent', function ($payment) {
-                $rateFinal = $payment->rate_final ?? 0; // Get the rate_final, default to 0 if null
+                $rateFinal = $payment->rate_final ?? 0; 
+                $isPTorCV = \Illuminate\Support\Str::startsWith($payment->nama_rekening, ['PT', 'CV']);
+                $pph = $isPTorCV ? $rateFinal * 0.02 : $rateFinal * 0.025;
+                $netRateFinal = $rateFinal - $pph;
 
-                // Calculate spent based on the rules provided
                 if ($payment->status_payment === 'Full Payment' && !is_null($payment->done_payment)) {
-                    return $rateFinal * 1;
+                    return $netRateFinal * 1;
                 } elseif (in_array($payment->status_payment, ['DP 50%', 'Pelunasan 50%']) && !is_null($payment->done_payment)) {
-                    return $rateFinal * 0.5;
+                    return $netRateFinal * 0.5;
                 } elseif (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3']) && !is_null($payment->done_payment)) {
-                    return $rateFinal / 3;
+                    return $netRateFinal / 3;
                 } else {
                     return 0;
                 }
@@ -476,10 +495,6 @@ class TalentPaymentController extends Controller
             }
         });
     }
-
-
-
-    
     public function exportReport(){
         return Excel::download(new TalentPaymentExport, 'kol_payment_report.xlsx');
     }
