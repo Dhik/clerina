@@ -295,9 +295,20 @@ class TalentPaymentController extends Controller
     }
     public function getHutangDatatable(Request $request)
     {
-        // Query talents with their related contents and payments
-        $query = Talent::with(['talentContents', 'talentPayments'])
-            ->select('talents.*');
+        $startDate = null;
+        $endDate = null;
+
+        if ($request->filled('dateRange')) {
+            $dates = explode(' - ', $request->input('dateRange'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+        }
+
+        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
+        if ($startDate && $endDate) {
+            $q->whereBetween('done_payment', [$startDate, $endDate]);
+        }
+        }])->select('talents.*');
 
         if ($request->input('username')) {
             $query->where('username', $request->input('username'));
@@ -357,21 +368,23 @@ class TalentPaymentController extends Controller
 
     public function calculateTotals(Request $request)
     {
-        $query = Talent::with(['talentContents', 'talentPayments'])
-            ->select('talents.*');
-
-        if ($request->input('username')) {
-            $query->where('username', $request->input('username'));
-        }
-
+        $startDate = null;
+        $endDate = null;
+        
         if ($request->filled('dateRange')) {
             $dates = explode(' - ', $request->input('dateRange'));
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-    
-            $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
+        }
+        
+        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
                 $q->whereBetween('done_payment', [$startDate, $endDate]);
-            });
+            }
+        }])->select('talents.*');
+
+        if ($request->input('username')) {
+            $query->where('username', $request->input('username'));
         }
 
         $totalHutang = 0;
@@ -408,39 +421,39 @@ class TalentPaymentController extends Controller
     public function paymentReport(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
-        $payments = TalentPayment::select([
-                'talent_payments.id',
-                'talent_payments.done_payment',
-                'talent_payments.amount_tf',
-                'talent_payments.tanggal_pengajuan',
-                'talents.pic',
-                'talents.username',
-                'talent_payments.status_payment',
-                'talents.talent_name',
-                'talents.followers',
-                'talents.rate_final',
-            ])
-            ->join('talents', 'talent_payments.talent_id', '=', 'talents.id')
-            ->where('talents.tenant_id', $currentTenantId);
 
-            if ($request->input('username')) {
-                $payments->where('talents.username', $request->input('username'));
-            }
+        $baseQuery = TalentPayment::join('talents', 'talent_payments.talent_id', '=', 'talents.id')
+        ->where('talents.tenant_id', $currentTenantId);
 
-            if ($request->filled('dateRange')) {
-                $dates = explode(' - ', $request->input('dateRange'));
-                $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
-                $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-        
-                $payments->whereBetween('talent_payments.done_payment', [$startDate, $endDate]);
-            }
+        if ($request->input('username')) {
+            $baseQuery->where('talents.username', $request->input('username'));
+        }
+
+        if ($request->filled('dateRange')) {
+            $dates = explode(' - ', $request->input('dateRange'));
+            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+
+            $baseQuery->whereBetween('talent_payments.done_payment', [$startDate, $endDate]);
+        }
+
+        $payments = $baseQuery->select([
+            'talent_payments.id',
+            'talent_payments.done_payment',
+            'talent_payments.amount_tf',
+            'talent_payments.tanggal_pengajuan',
+            'talents.pic',
+            'talents.username',
+            'talent_payments.status_payment',
+            'talents.talent_name',
+            'talents.followers',
+            'talents.rate_final',
+        ]);
 
         return DataTables::of($payments)
             ->addColumn('spent', function ($payment) {
                 $rateFinal = $payment->rate_final ?? 0; 
-                $isPTorCV = \Illuminate\Support\Str::startsWith($payment->nama_rekening, ['PT', 'CV']);
-                $pph = $isPTorCV ? $rateFinal * 0.02 : $rateFinal * 0.025;
-                $netRateFinal = $rateFinal - $pph;
+                $netRateFinal = $this->adjustSpentForTax($rateFinal, $payment->nama_rekening);
 
                 if ($payment->status_payment === 'Full Payment' && !is_null($payment->done_payment)) {
                     return $netRateFinal * 1;
