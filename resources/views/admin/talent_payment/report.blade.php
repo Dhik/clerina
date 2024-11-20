@@ -20,7 +20,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-4">
+        <!-- <div class="col-4">
             <div class="small-box bg-warning">
                 <div class="inner">
                     <h4 id="totalHutang">Rp. 0</h4>
@@ -42,7 +42,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     
     <div class="row mb-3">
         <div class="col-md-4">
