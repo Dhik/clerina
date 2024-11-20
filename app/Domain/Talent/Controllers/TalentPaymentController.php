@@ -302,27 +302,22 @@ class TalentPaymentController extends Controller
             $dates = explode(' - ', $request->input('dateRange'));
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-        }
+        }     
+        $statusPayment = $request->input('status_payment');
 
-        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
-        if ($startDate && $endDate) {
-            $q->whereBetween('done_payment', [$startDate, $endDate]);
-        }
+        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate, $statusPayment) {
+            if ($startDate && $endDate) {
+                $q->whereBetween('done_payment', [$startDate, $endDate]);
+            }
+            if ($statusPayment) {
+                $q->where('status_payment', $statusPayment);
+            }
         }])->select('talents.*');
 
         if ($request->input('username')) {
             $query->where('username', $request->input('username'));
         }
-
-        if ($request->filled('dateRange')) {
-            $dates = explode(' - ', $request->input('dateRange'));
-            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
-            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-            $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('done_payment', [$startDate, $endDate]);
-            });
-        }
-
+        
         // Retrieve the talents as a collection and calculate additional columns
         $talents = $query->get()->map(function ($talent) {
             $totalSpentForTalent = $this->calculateSpentForTalent($talent);
@@ -376,17 +371,21 @@ class TalentPaymentController extends Controller
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
         }
+
+        $statusPayment = $request->input('statusPayment');
         
-        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
+        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate, $statusPayment) {
             if ($startDate && $endDate) {
                 $q->whereBetween('done_payment', [$startDate, $endDate]);
+            }
+            if ($statusPayment) {
+                $q->where('status_payment', $statusPayment);
             }
         }])->select('talents.*');
 
         if ($request->input('username')) {
             $query->where('username', $request->input('username'));
         }
-
         $totalHutang = 0;
         $totalPiutang = 0;
         $totalSpent = 0;
@@ -435,6 +434,9 @@ class TalentPaymentController extends Controller
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
 
             $baseQuery->whereBetween('talent_payments.done_payment', [$startDate, $endDate]);
+        }
+        if ($request->filled('status_payment')) {
+            $baseQuery->where('talent_payments.status_payment', $request->input('status_payment'));
         }
 
         $payments = $baseQuery->select([
