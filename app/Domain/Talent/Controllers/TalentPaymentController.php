@@ -324,8 +324,8 @@ class TalentPaymentController extends Controller
         }
 
         // Retrieve the talents as a collection and calculate additional columns
-        $talents = $query->get()->map(function ($talent) {
-            $totalSpentForTalent = $this->calculateSpentForTalent($talent);
+        $talents = $query->get()->map(function ($talent) use ($startDate, $endDate) {
+            $totalSpentForTalent = $this->calculateSpentForTalent($talent, $startDate, $endDate);
             $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
             $contentCount = $talent->talentContents->count();
 
@@ -482,22 +482,30 @@ class TalentPaymentController extends Controller
             ->make(true);
     }
 
-    protected function calculateSpentForTalent($talent)
+    protected function calculateSpentForTalent($talent, $startDate = null, $endDate = null)
     {
-        return $talent->talentPayments->sum(function($payment) use ($talent) {
-            switch ($payment->status_payment) {
-                case 'Full Payment':
-                    return $payment->done_payment ? $talent->rate_final * 1 : 0;
-                case 'DP 50%':
-                case 'Pelunasan 50%':
-                    return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
-                case 'Termin 1':
-                case 'Termin 2':
-                case 'Termin 3':
-                    return $payment->done_payment ? $talent->rate_final / 3 : 0;
-                default:
-                    return 0;
+        return $talent->talentPayments->sum(function ($payment) use ($talent, $startDate, $endDate) {
+            if (!$payment->done_payment) {
+                return 0; 
             }
+
+            $multiplier = match ($payment->status_payment) {
+                'Full Payment' => 1,
+                'DP 50%' => 0.5,
+                'Pelunasan 50%' => $this->isMissingDP50($talent, $startDate, $endDate) ? 1 : 0.5,
+                'Termin 1', 'Termin 2', 'Termin 3' => 1 / 3,
+                default => 0,
+            };
+
+            return $talent->rate_final * $multiplier;
+        });
+    }
+    protected function isMissingDP50($talent, $startDate, $endDate)
+    {
+        return !$talent->talentPayments->contains(function ($payment) use ($startDate, $endDate) {
+            return $payment->status_payment === 'DP 50%' &&
+                (!$startDate || $payment->done_payment >= $startDate) &&
+                (!$endDate || $payment->done_payment <= $endDate);
         });
     }
     public function exportReport(){
