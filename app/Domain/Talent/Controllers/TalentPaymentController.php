@@ -325,6 +325,8 @@ class TalentPaymentController extends Controller
 
         // Retrieve the talents as a collection and calculate additional columns
         $talents = $query->get()->map(function ($talent) use ($startDate, $endDate) {
+            $totalSpentForeachTalent = $this->calculateSpentForeachTalent($talent);
+            $totalSpentForeachTalent = $this->adjustSpentForTax($totalSpentForeachTalent, $talent->nama_rekening);
             $totalSpentForTalent = $this->calculateSpentForTalent($talent, $startDate, $endDate);
             $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
             $contentCount = $talent->talentContents->count();
@@ -343,7 +345,7 @@ class TalentPaymentController extends Controller
             return (object) [
                 'talent_name' => $talent->talent_name,
                 'username' => $talent->username,
-                'total_spent' => $totalSpentForTalent,
+                'total_spent' => $totalSpentForeachTalent,
                 'talent_should_get' => $talentShouldGet,
                 'hutang' => $hutang,
                 'piutang' => $piutang,
@@ -391,15 +393,7 @@ class TalentPaymentController extends Controller
         $datatableCollection = collect($hutangDatatable->getData()->data);
         $totalHutang = $datatableCollection->sum('hutang');
         $totalPiutang = $datatableCollection->sum('piutang');
-
-        $totalSpent = 0;
-
-        $query->get()->each(function($talent) use (&$totalSpent) {
-            $totalSpentForTalent = $this->calculateSpentForTalent($talent);
-            $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
-
-            $totalSpent += $totalSpentForTalent;
-        });
+        $totalSpent = $datatableCollection->sum('total_spent');
 
         return response()->json([
             'totals' => [
@@ -480,6 +474,25 @@ class TalentPaymentController extends Controller
             })
             ->rawColumns(['action', 'spent'])
             ->make(true);
+    }
+
+    protected function calculateSpentForeachTalent($talent)
+    {
+        return $talent->talentPayments->sum(function($payment) use ($talent) {
+            switch ($payment->status_payment) {
+                case 'Full Payment':
+                    return $payment->done_payment ? $talent->rate_final * 1 : 0;
+                case 'DP 50%':
+                case 'Pelunasan 50%':
+                    return $payment->done_payment ? $talent->rate_final * 0.5 : 0;
+                case 'Termin 1':
+                case 'Termin 2':
+                case 'Termin 3':
+                    return $payment->done_payment ? $talent->rate_final / 3 : 0;
+                default:
+                    return 0;
+            }
+        });
     }
 
     protected function calculateSpentForTalent($talent, $startDate = null, $endDate = null)
