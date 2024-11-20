@@ -71,7 +71,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     'no_rekening',
                     'bank',
                     'nama_rekening',
-                    'nik'
+                    'nik',
+                    'tax_percentage'
                 );
             }])
             ->when($this->request->has('pic') && $this->request->pic != '', function($query) {

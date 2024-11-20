@@ -69,7 +69,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="edit_tax_percentage">Persentase Pajak (1-100)</label>
-                                <input type="number" name="tax_percentage" id="tax_percentage" class="form-control">
+                                <input type="number" name="tax_percentage" id="edit_tax_percentage" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
