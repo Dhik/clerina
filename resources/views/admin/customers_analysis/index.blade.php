@@ -16,9 +16,8 @@
                             <input type="month" class="form-control mr-2" id="filterMonth" placeholder="Select Month" autocomplete="off">
                         </div>
                         <div class="col-3">
-                            <select id="filterProduk" class="form-control">
+                            <select id="filterProduk" class="form-control select2">
                                 <option value="">All Produk</option>
-                                <!-- Options will be dynamically populated -->
                             </select>
                         </div>
                         <div class="col-auto">
@@ -110,9 +109,17 @@
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@^2"></script>
     <script>
         $(document).ready(function() {
+            $('#filterProduk').select2({
+                placeholder: "All Product",
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap4'
+            });
+
             var table = $('#customerAnalysisTable').DataTable({
                 processing: true,
                 serverSide: true,
