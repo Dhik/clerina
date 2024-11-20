@@ -401,7 +401,7 @@ class TalentPaymentController extends Controller
             $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
             $talentShouldGet = ($talent->slot_final > 0) ? ($totalPerSlot) * $contentCount : 0;
             
-            $hutang = $talentShouldGet;
+            $hutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
             $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
 
             $totalSpent += $totalSpentForTalent;
