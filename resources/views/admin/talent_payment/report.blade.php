@@ -20,7 +20,7 @@
                 </div>
             </div>
         </div>
-        <!-- <div class="col-4">
+        <div class="col-4">
             <div class="small-box bg-warning">
                 <div class="inner">
                     <h4 id="totalHutang">Rp. 0</h4>
@@ -41,7 +41,7 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
             </div>
-        </div> -->
+        </div>
     </div>
     
     <div class="row mb-3">
@@ -53,23 +53,9 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-2">
-            <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select Done Payment Date Range">
+        <div class="col-md-4">
+            <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select Down Payment Date Range">
         </div>
-        <div class="col-md-2">
-            <select id="filterStatusPayment" class="form-control select2" style="width: 100%;">
-                <option value="">All Payment Status</option>
-                <option value="Full Payment">Full Payment</option>
-                <option value="DP 50%">DP 50%</option>
-                <option value="Pelunasan 50%">Pelunasan 50%</option>
-                <option value="Termin 1">Termin 1</option>
-                <option value="Termin 2">Termin 2</option>
-                <option value="Termin 3">Termin 3</option>
-            </select>
-        </div>
-        <!-- <div class="col-md-2">
-            <input type="text" id="filterPostingDate" class="form-control" placeholder="Select Posting Date Range">
-        </div> -->
         <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
         <!-- <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
             <i class="fas fa-file-excel"></i> Export to Excel
@@ -164,19 +150,8 @@
                 width: '100%',
                 theme: 'bootstrap4'
             });
-            $('#filterStatusPayment').select2({
-                placeholder: "All Payment Status",
-                allowClear: true,
-                width: '100%',
-                theme: 'bootstrap4'
-            });
 
             $('#filterDonePaymentDate').daterangepicker({
-                locale: { format: 'YYYY-MM-DD' },
-                autoUpdateInput: false
-            });
-
-            $('#filterPostingDate').daterangepicker({
                 locale: { format: 'YYYY-MM-DD' },
                 autoUpdateInput: false
             });
@@ -187,16 +162,6 @@
             });
 
             $('#filterDonePaymentDate').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val('');
-                reloadDataTables();
-            });
-
-            $('#filterPostingDate').on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
-                reloadDataTables();
-            });
-
-            $('#filterPostingDate').on('cancel.daterangepicker', function(ev, picker) {
                 $(this).val('');
                 reloadDataTables();
             });
@@ -215,7 +180,6 @@
                     data: { 
                         username: $('#filterUsername').val(),
                         dateRange: $('#filterDonePaymentDate').val(),
-                        statusPayment: $('#filterStatusPayment').val(),
                      },
                     
                     success: function(data) {
@@ -237,7 +201,6 @@
                     data: function(d) {
                         d.username = $('#filterUsername').val();
                         d.dateRange = $('#filterDonePaymentDate').val(); 
-                        d.status_payment = $('#filterStatusPayment').val();
                     }
                 },
                 columns: [
@@ -282,7 +245,6 @@
                     data: function(d) {
                         d.username = $('#filterUsername').val();
                         d.dateRange = $('#filterDonePaymentDate').val();
-                        d.status_payment = $('#filterStatusPayment').val();
                     }
                 },
                 columns: [
@@ -399,18 +361,8 @@
             $('#resetFilterButton').on('click', function() {
                 $('#filterDonePaymentDate').val('').trigger('change');
                 $('#filterUsername').val('').trigger('change');
-                $('#filterStatusPayment').val('').trigger('change');
-                $('#filterPostingDate').val('').trigger('change');
                 reloadDataTables();
             });
-
-            $('#filterStatusPayment').on('change', function () {
-                tableHutangPiutang.ajax.reload();
-                tablePayments.ajax.reload();
-                tableContent.ajax.reload();
-                fetchTotals();
-            });
-
 
             function reloadDataTables() {
                 tableHutangPiutang.ajax.reload();
