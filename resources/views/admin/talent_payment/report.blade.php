@@ -53,9 +53,20 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-2">
             <input type="text" id="filterDonePaymentDate" class="form-control" placeholder="Select Down Payment Date Range">
         </div>
+        <!-- <div class="col-md-2">
+            <select id="filterStatusPayment" class="form-control select2" style="width: 100%;">
+                <option value="">All Payment Status</option>
+                <option value="Full Payment">Full Payment</option>
+                <option value="DP 50%">DP 50%</option>
+                <option value="Pelunasan 50%">Pelunasan 50%</option>
+                <option value="Termin 1">Termin 1</option>
+                <option value="Termin 2">Termin 2</option>
+                <option value="Termin 3">Termin 3</option>
+            </select>
+        </div> -->
         <button id="resetFilterButton" class="btn btn-secondary ml-4">Reset Filter</button>
         <!-- <a href="{{ route('talent_payments.export') }}" class="btn btn-success ml-4">
             <i class="fas fa-file-excel"></i> Export to Excel
@@ -150,6 +161,12 @@
                 width: '100%',
                 theme: 'bootstrap4'
             });
+            $('#filterStatusPayment').select2({
+                placeholder: "All Payment Status",
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap4'
+            });
 
             $('#filterDonePaymentDate').daterangepicker({
                 locale: { format: 'YYYY-MM-DD' },
@@ -180,6 +197,7 @@
                     data: { 
                         username: $('#filterUsername').val(),
                         dateRange: $('#filterDonePaymentDate').val(),
+                        statusPayment: $('#filterStatusPayment').val(),
                      },
                     
                     success: function(data) {
@@ -200,7 +218,8 @@
                     type: 'GET',
                     data: function(d) {
                         d.username = $('#filterUsername').val();
-                        d.dateRange = $('#filterDonePaymentDate').val(); 
+                        d.dateRange = $('#filterDonePaymentDate').val();
+                        d.status_payment = $('#filterStatusPayment').val(); 
                     }
                 },
                 columns: [
@@ -245,6 +264,7 @@
                     data: function(d) {
                         d.username = $('#filterUsername').val();
                         d.dateRange = $('#filterDonePaymentDate').val();
+                        d.status_payment = $('#filterStatusPayment').val();
                     }
                 },
                 columns: [
