@@ -41,8 +41,8 @@
                     <i class="fas fa-hand-holding-usd"></i>
                 </div>
             </div>
-        </div>
-    </div> -->
+        </div> -->
+    </div>
     
     <div class="row mb-3">
         <div class="col-md-4">
