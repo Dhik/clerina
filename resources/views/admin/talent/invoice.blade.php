@@ -146,23 +146,23 @@
         <table class="totals-table">
             <tr>
                 <td>Subtotal</td>
-                <td>Rp {{ number_format($subtotal, 2, ',', '.') }}</td>
+                <td>Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>{{ $pphLabel }}</td>
-                <td>Rp {{ number_format($pph, 2, ',', '.') }}</td>
+                <td>Rp {{ number_format($pph, 0, ',', '.') }}</td>
             </tr>
             <tr>
                 <td><strong>TOTAL</strong></td>
-                <td><strong>Rp {{ number_format($total, 2, ',', '.') }}</strong></td>
+                <td><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
             </tr>
             <tr>
                 <td>Down Payment</td>
-                <td>Rp {{ number_format($down_payment, 2, ',', '.') }}</td>
+                <td>Rp {{ number_format($down_payment, 0, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Sisa</td>
-                <td>Rp {{ number_format($sisa, 2, ',', '.') }}</td>
+                <td>Rp {{ number_format($sisa, 0, ',', '.') }}</td>
             </tr>
         </table>
 
