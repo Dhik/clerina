@@ -386,10 +386,17 @@
                 method: 'GET',
                 success: function(response) {
                     $('#editTalentContentForm').attr('action', '{{ route('talent_content.update', ':id') }}'.replace(':id', id));
+
+                    const addOneDay = (dateString) => {
+                        if (!dateString) return '';
+                        const date = new Date(dateString);
+                        date.setDate(date.getDate() + 1);
+                        return date.toISOString().split('T')[0];
+                    };
                     
                     $('#edit_talent_id').val(response.talentContent.talent_id);
-                    $('#edit_dealing_upload_date').val(response.talentContent.dealing_upload_date.split('T')[0]);
-                    $('#edit_posting_date').val(response.talentContent.posting_date.split('T')[0]);
+                    $('#edit_dealing_upload_date').val(addOneDay(response.talentContent.dealing_upload_date));
+                    $('#edit_posting_date').val(addOneDay(response.talentContent.posting_date));
                     $('#edit_done').val(response.talentContent.done ? 1 : 0);
                     $('#edit_upload_link').val(response.talentContent.upload_link);
                     $('#edit_final_rate_card').val(response.talentContent.final_rate_card);
@@ -413,9 +420,17 @@
                 url: '{{ route('talent_content.show', ':id') }}'.replace(':id', id),
                 method: 'GET',
                 success: function(response) {
+                    const formatDate = (dateString) => {
+                        if (!dateString) return '';
+                        const date = new Date(dateString);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+                        const year = date.getFullYear();
+                        return `${day}/${month}/${year}`;
+                    };
                     $('#view_talent_name').val(response.talentContent.talent_name);
-                    $('#view_dealing_upload_date').val(response.talentContent.dealing_upload_date);
-                    $('#view_posting_date').val(response.talentContent.posting_date);
+                    $('#view_dealing_upload_date').val(formatDate(response.talentContent.dealing_upload_date));
+                    $('#view_posting_date').val(formatDate(response.talentContent.posting_date));
                     $('#view_product').val(response.talentContent.product);
                     $('#view_final_rate_card').val(response.talentContent.final_rate_card);
                     $('#view_done').val(response.talentContent.done ? 'Yes' : 'No');

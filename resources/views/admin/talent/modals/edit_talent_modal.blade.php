@@ -129,6 +129,7 @@
                                     <option value="Tiktok">Tiktok</option>
                                     <option value="Twitter">Twitter</option>
                                     <option value="Youtube">Youtube</option>
+                                    <option value="Shopee">Shopee</option>
                                 </select>
                             </div>
                         </div>
