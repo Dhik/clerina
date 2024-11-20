@@ -34,7 +34,9 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
     {
         return [
             'Tanggal Transfer',
+            'Tanggal Pengajuan',
             'Username',
+            'Nama Talent',
             'Rate Card Per Slot',
             'Slot',
             'Jenis Konten',
@@ -72,7 +74,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     'bank',
                     'nama_rekening',
                     'nik',
-                    'tax_percentage'
+                    'tax_percentage',
+                    'talent_name',
                 );
             }])
             ->when($this->request->has('pic') && $this->request->pic != '', function($query) {
@@ -126,7 +129,9 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             // Return array directly without storing in variable
             return [
                 $payment->done_payment,
+                $payment->tanggal_pengajuan,
                 $talent->username ?? '',
+                $talent->talent_name ?? '',
                 $rate_card_per_slot,
                 $slot,
                 $talent->content_type ?? '',

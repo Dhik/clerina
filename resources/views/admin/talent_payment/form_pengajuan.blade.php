@@ -114,9 +114,9 @@
                 </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="10" style="text-align: right;">Total Transfer:</td>
+                <td colspan="11" style="text-align: right;">Total Transfer:</td>
                 <td>{{ number_format($totalTransfer, 2) }}</td>
-                <td colspan="6"></td>
+                <td colspan="5"></td>
             </tr>
         </tbody>
     </table>
