@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('talents', function (Blueprint $table) {
-            $table->integer('tax_percentage')->nullable()->after('tax_deduction');
+            $table->decimal('tax_percentage', 5, 2)->nullable()->after('tax_deduction');
         });
     }
 
