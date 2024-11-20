@@ -405,7 +405,7 @@ class TalentPaymentController extends Controller
             $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
 
             $totalSpent += $totalSpentForTalent;
-            $totalHutang = $hutang;
+            $totalHutang += $hutang;
             $totalPiutang += $piutang;
         });
 
