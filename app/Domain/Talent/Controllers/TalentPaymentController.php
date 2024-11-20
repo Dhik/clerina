@@ -387,26 +387,18 @@ class TalentPaymentController extends Controller
             $query->where('username', $request->input('username'));
         }
 
-        $totalHutang = 0;
-        $totalPiutang = 0;
+        $hutangDatatable = $this->getHutangDatatable($request);
+        $datatableCollection = collect($hutangDatatable->getData()->data);
+        $totalHutang = $datatableCollection->sum('hutang');
+        $totalPiutang = $datatableCollection->sum('piutang');
+
         $totalSpent = 0;
 
-        $query->get()->each(function($talent) use (&$totalHutang, &$totalPiutang, &$totalSpent) {
+        $query->get()->each(function($talent) use (&$totalSpent) {
             $totalSpentForTalent = $this->calculateSpentForTalent($talent);
             $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
 
-            $contentCount = $talent->talentContents->count();
-
-            $totalPerSlot = $talent->rate_final / $talent->slot_final;
-            $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
-            $talentShouldGet = ($talent->slot_final > 0) ? ($totalPerSlot) * $contentCount : 0;
-            
-            $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
-            $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
-
             $totalSpent += $totalSpentForTalent;
-            $totalHutang += $hutang;
-            $totalPiutang += $piutang;
         });
 
         return response()->json([
