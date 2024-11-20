@@ -50,6 +50,12 @@ class CustomerAnalysisController extends Controller
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+
+        if ($request->has('produk') && $request->produk) {
+            $produk = $request->produk;
+            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
+        }
+
         $query = $query->selectRaw('
             MIN(id) as id,
             nama_penerima,
@@ -149,6 +155,10 @@ class CustomerAnalysisController extends Controller
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+        if ($request->has('produk') && $request->produk) {
+            $produk = $request->produk;
+            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
+        }
 
         $uniqueCount = $query->select('nama_penerima', 'nomor_telepon')
                             ->distinct()
@@ -169,6 +179,10 @@ class CustomerAnalysisController extends Controller
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+        if ($request->has('produk') && $request->produk) {
+            $produk = $request->produk;
+            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
+        }
 
         $data = $query->selectRaw('SUBSTRING_INDEX(produk, " -", 1) as short_name, COUNT(*) as total_count')
             ->groupBy('short_name')
@@ -183,6 +197,10 @@ class CustomerAnalysisController extends Controller
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
+        }
+        if ($request->has('produk') && $request->produk) {
+            $produk = $request->produk;
+            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
         }
 
         $dailyCounts = $query->selectRaw('DATE(tanggal_pesanan_dibuat) as date, COUNT(DISTINCT CONCAT(nama_penerima, nomor_telepon)) as unique_count')
@@ -283,6 +301,16 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($productDistribution);
     }
+
+    public function getProducts()
+    {
+        $products = CustomersAnalysis::selectRaw('DISTINCT SUBSTRING_INDEX(produk, " -", 1) as short_name')
+            ->orderBy('short_name')
+            ->get();
+
+        return response()->json($products);
+    }
+
 
 
 

@@ -12,10 +12,14 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-3">
-                        <div class="col-auto">
-                            <div class="btn-group">
+                        <div class="col-2">
                             <input type="month" class="form-control mr-2" id="filterMonth" placeholder="Select Month" autocomplete="off">
-                            </div>
+                        </div>
+                        <div class="col-3">
+                            <select id="filterProduk" class="form-control">
+                                <option value="">All Produk</option>
+                                <!-- Options will be dynamically populated -->
+                            </select>
                         </div>
                         <div class="col-auto">
                             <div class="btn-group">
@@ -115,7 +119,8 @@
                 ajax: {
                     url: '{{ route('customer_analysis.data') }}',
                     data: function(d) {
-                        d.month = $('#filterMonth').val(); // Add the selected month to the request
+                        d.month = $('#filterMonth').val();
+                        d.produk = $('#filterProduk').val();
                     }
                 },
                 columns: [
@@ -130,7 +135,9 @@
 
             function fetchTotalUniqueOrders() {
                 const selectedMonth = $('#filterMonth').val();
-                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}`)
+                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+
+                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}`)
                     .then(response => response.json())
                     .then(data => {
                         $('#totalOrder').text(data.unique_customer_count);
@@ -138,14 +145,32 @@
                     })
                     .catch(error => console.error('Error fetching total unique orders:', error));
             }
+
             fetchTotalUniqueOrders();
 
-            $('#filterMonth').change(function() {
+            $('#filterMonth, #filterProduk').change(function() {
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
                 fetchProductCounts();
                 fetchDailyUniqueCustomers();
             });
+
+            function populateProdukFilter() {
+                fetch('{{ route('customer_analysis.get_products') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const produkSelect = $('#filterProduk');
+                        produkSelect.empty();
+                        produkSelect.append('<option value="">All Produk</option>');
+                        data.forEach(produk => {
+                            produkSelect.append(`<option value="${produk.short_name}">${produk.short_name}</option>`);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching produk list:', error));
+            }
+
+            // Fetch produk list initially
+            populateProdukFilter();
 
             $('#refreshButton').click(function() {
                 Swal.fire({
@@ -197,13 +222,14 @@
             // Fetch and render the product counts for the pie chart
             function fetchProductCounts() {
                 const selectedMonth = $('#filterMonth').val();
+                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
                 const ctx = document.getElementById('productPieChart').getContext('2d');
 
                 if (window.productChart) {
                     window.productChart.destroy();
                 }
 
-                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}`)
+                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
                     .then(response => response.json())
                     .then(data => {
                         const productLabels = data.map(item => item.short_name);
@@ -259,14 +285,15 @@
 
             function fetchDailyUniqueCustomers() {
                 const selectedMonth = $('#filterMonth').val();
+                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
                 const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
-                
+
                 // Destroy existing chart if it exists
                 if (window.dailyChart) {
                     window.dailyChart.destroy();
                 }
 
-                fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}`)
+                fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}&produk=${selectedProduk}`)
                     .then(response => response.json())
                     .then(data => {
                         const dates = data.map(item => item.date);
@@ -311,6 +338,7 @@
                     })
                     .catch(error => console.error('Error fetching daily unique customers:', error));
             }
+
 
             // Add these lines to your existing document.ready function
             fetchDailyUniqueCustomers();
