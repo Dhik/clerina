@@ -100,6 +100,13 @@ class CustomerAnalysisController extends Controller
                         data-placement="top" title="View">
                         <i class="fas fa-eye"></i>
                     </button>
+                    <button class="btn btn-light editButton" 
+                        data-id="' . $row->id . '" 
+                        data-toggle="modal" 
+                        data-target="#editCustomerModal" 
+                        data-placement="top" title="Edit">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
                 ';
             });
                 

@@ -80,15 +80,15 @@
                 <tr>
                     <td>{{ $content->done_payment }}</td>
                     <td>{{ $content->talent->username }}</td>
-                    <td>{{ number_format($rate_card_per_slot, 2) }}</td>
+                    <td>{{ number_format($rate_card_per_slot, 0) }}</td>
                     <td>{{ $slot }}</td>
                     <td>{{ $content->talent->content_type }}</td>
-                    <td>{{ number_format($rate_harga, 2) }}</td>
-                    <td>{{ number_format($discount, 2) }}</td>
-                    <td>{{ number_format($harga_setelah_diskon, 2) }}</td>
+                    <td>{{ number_format($rate_harga, 0) }}</td>
+                    <td>{{ number_format($discount, 0) }}</td>
+                    <td>{{ number_format($harga_setelah_diskon, 0) }}</td>
                     <td>{{ $content->talent->no_npwp }}</td>
                     <td>{{ number_format($pphAmount, 0) }}</td>
-                    <td>{{ number_format($final_tf, 2) }}</td>
+                    <td>{{ number_format($final_tf, 0) }}</td>
                     <td>
                         @php
                             $displayValue = $final_tf;
@@ -103,7 +103,7 @@
                             }
                             $totalTransfer += $displayValue;
                         @endphp
-                        {{ number_format($displayValue, 2) }}
+                        {{ number_format($displayValue, 0) }}
                     </td>
                     <td>{{ $content->status_payment }}</td>
                     <td>{{ $content->talent->pic }}</td>

@@ -49,6 +49,7 @@ Route::prefix('admin')
                 
                 Route::get('/{id}', [CustomerAnalysisController::class, 'show'])->name('customer_analysis.show');
                 Route::get('/{id}/product-distribution', [CustomerAnalysisController::class, 'productDistribution'])->name('customer_analysis.product_distribution');
+                Route::get('/{id}/edit', [CustomerAnalysisController::class, 'edit'])->name('customer_analysis.edit');
 
                 Route::post('/{id}/join', [CustomerAnalysisController::class, 'join'])->name('customer_analysis.join');
                 Route::post('/{id}/unjoin', [CustomerAnalysisController::class, 'unjoin'])->name('customer_analysis.unjoin');

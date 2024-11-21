@@ -94,6 +94,7 @@
         </div>
     </div>
     @include('admin.customers_analysis.modals.detail')
+    @include('admin.customers_analysis.modals.edit')
 @stop
 
 
@@ -429,6 +430,24 @@
                 info: false,
                 lengthChange: false,
                 pageLength: 5
+            });
+
+            $('#customerAnalysisTable').on('click', '.editButton', function() {
+                var id = $(this).data('id');
+
+                $.ajax({
+                    url: '{{ route('talent.edit', ':id') }}'.replace(':id', id),
+                    method: 'GET',
+                    success: function(response) {
+                        $('#editCustomerForm').attr('action', '{{ route('talent.update', ':id') }}'.replace(':id', id));
+                        
+                        $('#edit_username').val(response.username);
+                        $('#editTalentModal').modal('show');
+                    },
+                    error: function(response) {
+                        console.error('Error fetching talent data:', response);
+                    }
+                });
             });
 
             $('#customerAnalysisTable').on('click', '.viewButton', function() {
