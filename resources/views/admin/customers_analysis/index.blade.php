@@ -436,12 +436,14 @@
                 var id = $(this).data('id');
 
                 $.ajax({
-                    url: '{{ route('talent.edit', ':id') }}'.replace(':id', id),
+                    url: '{{ route('customer_analysis.edit', ':id') }}'.replace(':id', id),
                     method: 'GET',
                     success: function(response) {
                         $('#editCustomerForm').attr('action', '{{ route('talent.update', ':id') }}'.replace(':id', id));
                         
-                        $('#edit_username').val(response.username);
+                        $('#edit_nama_penerima').val(response.customer.nama_penerima);
+                        $('#edit_produk').val(response.customer.produk);
+                        $('#edit_qty').val(response.customer.qty);
                         $('#editTalentModal').modal('show');
                     },
                     error: function(response) {

@@ -14,7 +14,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="edit_username">Username</label>
+                                <label for="edit_username">Nama Penerima</label>
                                 <input type="text" name="username" id="edit_username" class="form-control" required>
                             </div>
                         </div>

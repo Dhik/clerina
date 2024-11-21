@@ -100,17 +100,27 @@ class CustomerAnalysisController extends Controller
                         data-placement="top" title="View">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-light editButton" 
-                        data-id="' . $row->id . '" 
-                        data-toggle="modal" 
-                        data-target="#editCustomerModal" 
-                        data-placement="top" title="Edit">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
                 ';
             });
+            // <button class="btn btn-light editButton" 
+            //             data-id="' . $row->id . '" 
+            //             data-toggle="modal" 
+            //             data-target="#editCustomerModal" 
+            //             data-placement="top" title="Edit">
+            //             <i class="fas fa-pencil-alt"></i>
+            //         </button>
                 
         return $dataTable->rawColumns(['is_joined', 'details'])->make(true);
+    }
+
+    public function edit($id)
+    {
+        $customer = CustomersAnalysis::find($id);
+
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+        return response()->json(['customer' => $customer]);
     }
 
 
