@@ -87,7 +87,7 @@
                     <td>{{ number_format($discount, 2) }}</td>
                     <td>{{ number_format($harga_setelah_diskon, 2) }}</td>
                     <td>{{ $content->talent->no_npwp }}</td>
-                    <td>{{ number_format($pphAmount, 2) }}</td>
+                    <td>{{ number_format($pphAmount, 0) }}</td>
                     <td>{{ number_format($final_tf, 2) }}</td>
                     <td>
                         @php
