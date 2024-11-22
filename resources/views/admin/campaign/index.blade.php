@@ -43,9 +43,9 @@
                                 <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
-                                <!-- <div class="col-auto">
+                                <div class="col-auto">
                                     <input type="text" class="form-control" id="filterDates" placeholder="Select Date Range" autocomplete="off">
-                                </div> -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -228,12 +228,12 @@
         });
     });
 
-    // Reset Filter Button Click
     $('#resetFilterBtn').click(function () {
-        filterMonth.val(''); // Clear the month filter input
-        campaignTable.search(''); // Clear the search term
-        campaignTable.ajax.reload(); // Reload DataTables without filter
-        loadCampaignSummary(''); // Reload summary without filter and search term
+        filterMonth.val('');
+        filterDates.val('');
+        campaignTable.search('');
+        campaignTable.ajax.reload();
+        loadCampaignSummary('');
     });
 
     // When the filter changes, reload the DataTables with the new filter
@@ -259,7 +259,6 @@
                 search: searchTerm
             },
             success: function(response) {
-                // Update the KPI cards with formatted numbers
                 $('#kpi_total_expense').text(response.total_expense);
                 $('#kpi_cpm').text(response.cpm);
                 $('#views').text(response.views);

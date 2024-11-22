@@ -27,7 +27,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [CampaignController::class, 'index'])->name('campaign.index');
                 Route::get('/get', [CampaignController::class, 'get'])->name('campaign.get');
-                Route::get('/summary', [CampaignController::class, 'getCampaignSummary'])->name('campaign.summary');
+                Route::get('/summary', [CampaignController::class, 'getCampaignSummary2'])->name('campaign.summary');
                 Route::get('/download', [CampaignController::class, 'downloadVideo'])->name('campaign.download');
                 Route::get('/nas', [CampaignController::class, 'listFiles'])->name('campaign.nas');
                 Route::get('/titles', [CampaignController::class, 'getCampaignsTitles'])->name('campaign.titles');

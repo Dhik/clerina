@@ -370,25 +370,6 @@ class TalentPaymentController extends Controller
 
     public function calculateTotals(Request $request)
     {
-        $startDate = null;
-        $endDate = null;
-        
-        if ($request->filled('dateRange')) {
-            $dates = explode(' - ', $request->input('dateRange'));
-            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
-            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-        }
-        
-        $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
-            if ($startDate && $endDate) {
-                $q->whereBetween('done_payment', [$startDate, $endDate]);
-            }
-        }])->select('talents.*');
-
-        if ($request->input('username')) {
-            $query->where('username', $request->input('username'));
-        }
-
         $hutangDatatable = $this->getHutangDatatable($request);
         $datatableCollection = collect($hutangDatatable->getData()->data);
         $totalHutang = $datatableCollection->sum('hutang');

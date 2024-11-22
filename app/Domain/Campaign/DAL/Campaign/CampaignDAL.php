@@ -67,15 +67,15 @@ class CampaignDAL extends BaseDAL implements CampaignDALInterface
         return $this->campaignContent->where('campaign_id', $campaign->id)->first();
     }
     public function getCampaignsByDateRange($startDate, $endDate, int $tenantId): Collection
-{
-    $query = $this->campaign->where('tenant_id', $tenantId);
+    {
+        $query = $this->campaign->where('tenant_id', $tenantId);
 
-    if ($startDate && $endDate) {
-        $query->whereBetween('start_date', [$startDate, $endDate]);
+        if ($startDate && $endDate) {
+            $query->whereBetween('start_date', [$startDate, $endDate]);
+        }
+
+        return $query->get();
     }
-
-    return $query->get();
-}
 
 
 }

@@ -45,17 +45,14 @@ class CampaignController extends Controller
     {
         $this->authorize('viewCampaign', Campaign::class);
 
-        // Fetch campaigns with filtering by month
         $query = $this->campaignBLL->getCampaignDataTable($request);
 
-        // Apply filterMonth to campaigns.start_date
         if ($request->has('filterMonth')) {
             $month = $request->input('filterMonth');
             $query->whereMonth('start_date', '=', date('m', strtotime($month)))
                 ->whereYear('start_date', '=', date('Y', strtotime($month)));
         }
 
-        // Apply filterDates to statistics calculations
         if ($request->has('filterDates')) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
@@ -65,14 +62,12 @@ class CampaignController extends Controller
                 $q->whereBetween('date', [$startDate, $endDate]);
             }]);
         } else {
-            // If no filterDates, get statistics for the latest date
             $query->with(['statistics' => function ($q) {
                 $latestDate = Statistic::max('date');
                 $q->whereDate('date', $latestDate);
             }]);
         }
 
-        // Return data via DataTables
         return DataTables::of($query)
             ->addColumn('created_by_name', function ($row) {
                 return $row->createdBy->name;
@@ -319,6 +314,32 @@ class CampaignController extends Controller
     {
         $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
         return response()->json($summary);
+    }
+
+    public function getCampaignSummary2(Request $request): JsonResponse
+    {
+        $summaryDatatable = $this->get($request);
+        $datatableCollection = collect($summaryDatatable->getData()->data);
+        $totalExpense = $datatableCollection->sum('total_expense');
+        $totalContent = $datatableCollection->sum(function ($item) {
+            return count($item->statistics);
+        });
+        $totalViews = $datatableCollection->sum('view');
+        $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
+        $averageEngagementRate = $datatableCollection->avg('engagement_rate');
+        
+
+        return response()->json([
+            'total_expense' => $this->numberFormat($totalExpense),
+            'total_content' => $this->numberFormat($totalContent),
+            'cpm' => $this->numberFormat($cpm, 2),
+            'views' => $this->numberFormat($totalViews),
+            'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%'
+        ]);
+    }
+    protected function numberFormat($number, $decimals = 0): string
+    {
+        return number_format($number, $decimals, '.', ',');
     }
 
     public function getCampaignsTitles()
