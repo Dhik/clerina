@@ -5,6 +5,7 @@ namespace App\Domain\Talent\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\BLL\Talent\TalentBLLInterface;
 use App\Domain\Talent\Models\Talent;
+use App\Domain\Talent\Models\TalentPayment;
 use App\Domain\Talent\Models\Approval;
 use App\Domain\Talent\Requests\TalentRequest;
 use Yajra\DataTables\Utilities\Request;
@@ -239,6 +240,13 @@ class TalentController extends Controller
         $total = $harga - $pph; 
         $downPayment = $talent->dp_amount ?? ($total / 2);
         $remainingBalance = $total - $downPayment;
+
+        $latestPayment = TalentPayment::where('talent_id', $talent->id)
+                                  ->latest()
+                                  ->first();
+
+        $statusPayment = $latestPayment ? $latestPayment->status_payment : null;
+
         $ttd = $approval->photo;
         $approval_name = $approval->name;
         
@@ -265,6 +273,7 @@ class TalentController extends Controller
             'npwp' => $talent->no_npwp,
             'ttd' => $ttd,
             'approval_name' => $approval_name,
+            'status_payment' => $statusPayment,
         ];
 
         $pdf = Pdf::loadView('admin.talent.invoice', $data);

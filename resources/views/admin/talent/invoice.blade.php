@@ -156,14 +156,16 @@
                 <td><strong>TOTAL</strong></td>
                 <td><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
             </tr>
-            <tr>
-                <td>Down Payment</td>
-                <td>Rp {{ number_format($down_payment, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td>Sisa</td>
-                <td>Rp {{ number_format($sisa, 0, ',', '.') }}</td>
-            </tr>
+            @if($status_payment !== 'Full Payment')
+                <tr>
+                    <td>Down Payment</td>
+                    <td>Rp {{ number_format($down_payment, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>Sisa</td>
+                    <td>Rp {{ number_format($sisa, 0, ',', '.') }}</td>
+                </tr>
+            @endif
         </table>
 
         <!-- Payment and Signature section -->
