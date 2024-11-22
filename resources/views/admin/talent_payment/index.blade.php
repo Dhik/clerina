@@ -22,7 +22,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <select id="filterUsername" class="form-select select2" style="width: 100%;" multiple>
+                            <select id="filterUsername" class="form-select select2" style="width: 100%;">
                                 <option value="">All Usernames</option>
                                 @foreach($uniqueUsernames as $username)
                                     <option value="{{ $username }}">{{ $username }}</option>
@@ -92,7 +92,6 @@
         $('#filterUsername').select2({
             placeholder: "All Usernames",
             allowClear: true,
-            multiple: true,
             width: '100%',
             theme: 'bootstrap4'
         });
@@ -164,7 +163,7 @@
         // Handle reset filter button click
         $('#resetFilterButton').on('click', function() {
             $('#filterPic').val('').trigger('change');
-            $('#filterUsername').val(null).trigger('change');
+            $('#filterUsername').val('').trigger('change');
             $('#status_payment').val('').trigger('change');
             table.ajax.reload();
         });
