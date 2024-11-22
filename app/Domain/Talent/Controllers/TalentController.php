@@ -221,6 +221,7 @@ class TalentController extends Controller
         }
 
         $harga = $talent->rate_per_slot * $talent->slot_final; 
+        $slot_final = $talent->slot_final;
         if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
             $pphPercentage = $talent->tax_percentage;
             $pphLabel = 'Custom Tax (' . $pphPercentage . '%)';
@@ -257,7 +258,7 @@ class TalentController extends Controller
             'alamat_talent' => $talent->address,
             'no_hp_talent' => $talent->phone_number,
             'nama_akun' => $talent->username, 
-            'quantity_slot' => $talent->video_slot,
+            'quantity_slot' => $talent->slot_final,
             'deskripsi' => $talent->content_type,
             'harga' => $harga,
             'subtotal' => $harga,
