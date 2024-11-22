@@ -250,7 +250,7 @@
     });
 
     // Load the summary data with an optional month and search term
-    function loadCampaignSummary(month = '', searchTerm = '', dates = '',) {
+    function loadCampaignSummary(month = '', searchTerm = '', dates = '') {
         $.ajax({
             url: "{{ route('campaign.summary') }}",
             method: 'GET',
