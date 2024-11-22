@@ -312,7 +312,7 @@ class CampaignController extends Controller
 
     public function getCampaignSummary(Request $request): JsonResponse
     {
-        $summary = $this->campaignBLL->getCampaignSummary($request, Auth::user()->current_tenant_id);
+        $summary = $this->campaignBLL->getCampaignTotal($request, Auth::user()->current_tenant_id);
         return response()->json($summary);
     }
 

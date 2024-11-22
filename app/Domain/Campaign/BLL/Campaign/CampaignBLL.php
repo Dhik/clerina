@@ -126,6 +126,119 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
 
         return true;
     }
+    public function getCampaignTotal(Request $request, int $tenantId): array
+    {
+        $startDateString = null;
+        $endDateString = null;
+
+        if ($request->input('filterDates')) {
+            // Parse filterDates into start and end dates
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+            // Get campaigns and filter statistics by the date range
+            $campaigns = $this->campaignDAL->getCampaignsByTenant($tenantId)->map(function ($campaign) use ($startDate, $endDate) {
+                $campaign->filteredStatistics = $campaign->statistics->filter(function ($stat) use ($startDate, $endDate) {
+                    $statDate = Carbon::parse($stat->date);
+                    return $statDate->between($startDate, $endDate);
+                });
+
+                return $campaign;
+            });
+
+            $totalExpense = 0;
+            $totalContent = 0;
+            $totalViews = 0;
+            $totalEngagementRates = 0;
+            $validCampaignCount = 0;
+
+            foreach ($campaigns as $campaign) {
+                $filteredStats = $campaign->filteredStatistics;
+
+                $totalExpense += $campaign->total_expense; // Assuming expense isn't date-bound
+                $totalContent += $campaign->total_content;
+                $views = $filteredStats->sum('view');
+                $likes = $filteredStats->sum('like');
+                $comments = $filteredStats->sum('comment');
+
+                $totalViews += $views;
+
+                if ($views > 0) {
+                    $engagementRate = (($likes + $comments) / $views) * 100;
+                    $totalEngagementRates += $engagementRate;
+                    $validCampaignCount++;
+                }
+            }
+
+            $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
+            $averageEngagementRate = $validCampaignCount > 0 ? $totalEngagementRates / $validCampaignCount : 0;
+
+            return [
+                'total_expense' => $this->numberFormat($totalExpense),
+                'total_content' => $this->numberFormat($totalContent),
+                'cpm' => $this->numberFormat($cpm, 2),
+                'views' => $this->numberFormat($totalViews),
+                'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%',
+            ];
+        } else {
+            // Fallback logic for filterMonth or no filters
+            if ($request->input('filterMonth')) {
+                $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
+                $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
+            }
+
+            $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
+
+            if ($request->input('search')) {
+                $searchTerms = explode(' ', strtolower($request->input('search')));
+                $campaigns = $campaigns->filter(function ($campaign) use ($searchTerms) {
+                    foreach ($searchTerms as $term) {
+                        if (stripos($campaign->title, $term) === false) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            // Group campaigns by normalized (lowercase) title and sum their values
+            $groupedCampaigns = $campaigns->groupBy(function ($campaign) {
+                return strtolower($campaign->title);
+            });
+
+            $totalExpense = 0;
+            $totalContent = 0;
+            $totalViews = 0;
+            $totalEngagementRates = 0;
+            $validCampaignCount = 0;
+
+            foreach ($groupedCampaigns as $group) {
+                $totalExpense += $group->sum('total_expense');
+                $totalContent += $group->sum('total_content');
+                $totalViews += $group->sum('view');
+
+                $groupViews = $group->sum('view');
+                if ($groupViews > 0) {  // Only include campaigns with views
+                    $groupEngagements = $group->sum('like') + $group->sum('comment');
+                    $campaignEngagementRate = ($groupEngagements / $groupViews) * 100;
+                    $totalEngagementRates += $campaignEngagementRate;
+                    $validCampaignCount++;
+                }
+            }
+
+            $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
+            $averageEngagementRate = $validCampaignCount > 0 ? $totalEngagementRates / $validCampaignCount : 0;
+
+            return [
+                'total_expense' => $this->numberFormat($totalExpense),
+                'total_content' => $this->numberFormat($totalContent),
+                'cpm' => $this->numberFormat($cpm, 2),
+                'views' => $this->numberFormat($totalViews),
+                'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%',
+            ];
+        }
+    }
     public function getCampaignSummary(Request $request, int $tenantId): array
     {
         $startDateString = null;
@@ -134,9 +247,6 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         if ($request->input('filterMonth')) {
             $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
             $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
-        }
-        if ($request->input('filterDates')) {
-            // test
         }
 
         $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
