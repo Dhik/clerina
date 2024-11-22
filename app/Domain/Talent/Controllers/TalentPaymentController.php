@@ -64,10 +64,11 @@ class TalentPaymentController extends Controller
             $payments->where('talents.pic', $request->pic);
         }
 
-        if ($request->has('username') && $request->username != '') {
-            $payments->where('talents.username', $request->username);
+        if ($request->has('username') && !empty($request->username)) {
+            $usernames = $request->username;
+            $payments->whereIn('talents.username', $usernames);
         }
-
+        
         if ($request->has('status_payment') && $request->status_payment != '') {
             $payments->where('talent_payments.status_payment', $request->status_payment);
         }
