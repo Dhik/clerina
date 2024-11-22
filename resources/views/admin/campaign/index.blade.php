@@ -51,63 +51,64 @@
                     </div>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-info">
-                                    <div class="inner">
-                                        <h4 id="kpi_total_expense">Loading...</h4>
-                                        <p>Total Expense</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-credit-card"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-purple">
-                                    <div class="inner">
-                                        <h4 id="kpi_total_content">Loading...</h4>
-                                        <p>Total Content</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-video"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-success">
-                                    <div class="inner">
-                                        <h4 id="kpi_cpm">Loading...</h4>
-                                        <p>CPM</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-chart-bar"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-danger">
-                                    <div class="inner">
-                                        <h4 id="views">Loading...</h4>
-                                        <p>Total Views</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-pink">
-                                    <div class="inner">
-                                        <h4 id="engagement_rate">Loading...</h4>
-                                        <p>Average ER</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-chart-pie"></i>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="row">
+                <!-- Summary Card -->
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h4 id="kpi_total_expense">Loading...</h4>
+                            <p>Total Expense</p>
                         </div>
+                        <div class="icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-purple">
+                        <div class="inner">
+                            <h4 id="kpi_total_content">Loading...</h4>
+                            <p>Total Content</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h4 id="kpi_cpm">Loading...</h4>
+                            <p>CPM</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h4 id="views">Loading...</h4>
+                            <p>Total Views</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-pink">
+                        <div class="inner">
+                            <h4 id="engagement_rate">Loading...</h4>
+                            <p>Average ER</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
                             <table id="campaignTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
                                 <thead>
                                 <tr>
@@ -249,29 +250,26 @@
     });
 
     // Load the summary data with an optional month and search term
-    function loadCampaignSummary() {
+    function loadCampaignSummary(month = '', searchTerm = '') {
         $.ajax({
-            url: "{{ route('campaign.total') }}",
+            url: "{{ route('campaign.summary') }}",
             method: 'GET',
+            data: { 
+                filterMonth: month,
+                search: searchTerm
+            },
             success: function(response) {
-                $('#kpi_total_expense').text(response.total_expense); // Update Total Expense
-                $('#kpi_cpm').text(response.cpm); // Update CPM
-                $('#views').text(response.views); // Update Total Views
-                $('#kpi_total_content').text(response.total_content); // Update Total Content
-                $('#engagement_rate').text(response.engagement_rate); // Update Engagement Rate
+                $('#kpi_total_expense').text(response.total_expense);
+                $('#kpi_cpm').text(response.cpm);
+                $('#views').text(response.views);
+                $('#kpi_total_content').text(response.total_content);
+                $('#engagement_rate').text(response.engagement_rate);
             },
             error: function(response) {
                 console.error('Error fetching campaign summary:', response);
-                // Optionally, you can handle error state here, like showing a fallback message or hiding elements.
-                $('#kpi_total_expense').text("Error loading data");
-                $('#kpi_cpm').text("Error loading data");
-                $('#views').text("Error loading data");
-                $('#kpi_total_content').text("Error loading data");
-                $('#engagement_rate').text("Error loading data");
             }
         });
     }
-
 
     // Initial Load
     loadCampaignSummary();
@@ -287,7 +285,6 @@
     $('#filterDates').on('apply.daterangepicker', function(ev, picker) {
         $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
         campaignTable.ajax.reload(); // Reload table with new date range
-        loadCampaignSummary();
     });
 
     $('#filterDates').on('cancel.daterangepicker', function(ev, picker) {
