@@ -135,6 +135,9 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
             $startDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->startOfMonth()->format('Y-m-d');
             $endDateString = Carbon::createFromFormat('Y-m', $request->input('filterMonth'))->endOfMonth()->format('Y-m-d');
         }
+        if ($request->input('filterDates')) {
+            // test
+        }
 
         $campaigns = $this->campaignDAL->getCampaignsByDateRange($startDateString, $endDateString, $tenantId);
 
