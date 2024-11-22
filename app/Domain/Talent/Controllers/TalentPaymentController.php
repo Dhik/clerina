@@ -64,9 +64,9 @@ class TalentPaymentController extends Controller
             $payments->where('talents.pic', $request->pic);
         }
 
-        if ($request->has('username') && $request->username != '') {
-            $payments->where('talents.username', $request->username);
-        }
+        if ($request->has('username') && is_array($request->username)) {
+            $payments->whereIn('talents.username', $request->username);
+        }        
 
         if ($request->has('status_payment') && $request->status_payment != '') {
             $payments->where('talent_payments.status_payment', $request->status_payment);
@@ -211,9 +211,11 @@ class TalentPaymentController extends Controller
             });
         }
 
-        if ($request->has('username') && $request->username != '') {
-            $query->whereHas('talent', function($q) use ($request) {
-                $q->where('username', $request->username);
+        if ($request->has('username') && is_array($request->username)) {
+            $usernames = is_array($request->username) ? $request->username : json_decode($request->username, true);
+    
+            $query->whereHas('talent', function($q) use ($usernames) {
+                $q->whereIn('username', $usernames);
             });
         }
 
@@ -244,7 +246,6 @@ class TalentPaymentController extends Controller
             return Excel::download($export, 'form_pengajuan.xlsx');
         }
         catch (\Exception $e) {
-            Log::error('Export failed: ' . $e->getMessage());
             return back()->with('error', 'Export failed. Please try again.');
         }
     }

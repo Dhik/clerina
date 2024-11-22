@@ -22,8 +22,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <select id="filterUsername" class="form-select select2" style="width: 100%;">
-                                <option value="">All Usernames</option>
+                            <select id="filterUsername" class="form-select select2" style="width: 100%;" multiple="multiple">
                                 @foreach($uniqueUsernames as $username)
                                     <option value="{{ $username }}">{{ $username }}</option>
                                 @endforeach
@@ -84,6 +83,64 @@
     @include('admin.talent_payment.modals.edit_payment_modal')
 @stop
 
+@section('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Base Select2 styling */
+        .select2-container .select2-selection--multiple {
+            min-height: 38px;
+        }
+        /* Ensure the text is visible */
+        .select2-container--default .select2-selection--multiple .select2-search__field {
+            color: #495057; /* Text color */
+            background-color: #ffffff; /* Background color */
+            height: auto; /* Auto-adjust height */
+        }
+
+
+        /* Input text color */
+        .select2-container--default .select2-search--inline .select2-search__field {
+            color: #495057;
+        }
+
+        /* Selected option styling */
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #007bff;
+            border: 1px solid #006fe6;
+            color: #fff;
+            padding: 2px 8px;
+            margin: 4px 4px 0 0;
+        }
+
+        /* Remove button styling */
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #fff;
+            margin-right: 5px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            color: #fff;
+            opacity: 0.8;
+        }
+
+        /* Dropdown styling */
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #007bff;
+        }
+
+        /* Input container */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da;
+        }
+
+        /* Focus state */
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+@stop
+
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
@@ -92,6 +149,7 @@
         $('#filterUsername').select2({
             placeholder: "All Usernames",
             allowClear: true,
+            multiple: true,
             width: '100%',
             theme: 'bootstrap4'
         });
@@ -214,10 +272,18 @@
         // Handle export button click
         $('#exportButton').on('click', function() {
             var pic = $('#filterPic').val();
-            var username = $('#filterUsername').val();
+            var usernames = $('#filterUsername').val(); 
             var status_payment = $('#status_payment').val();
-            window.location.href = '{{ route('talent_payments.pengajuan') }}?pic=' + pic + '&username=' + username + '&status_payment=' + status_payment;
+            var queryString = '?pic=' + encodeURIComponent(pic) + 
+                            '&status_payment=' + encodeURIComponent(status_payment);
+            if (usernames && usernames.length > 0) {
+                usernames.forEach(function(username) {
+                    queryString += '&username[]=' + encodeURIComponent(username);
+                });
+            }
+            window.location.href = '{{ route('talent_payments.pengajuan') }}' + queryString;
         });
+
 
         $('#exportExcelButton').on('click', function() {
             var pic = $('#filterPic').val();
