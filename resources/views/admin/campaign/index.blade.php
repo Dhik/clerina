@@ -250,16 +250,16 @@
     });
 
     // Load the summary data with an optional month and search term
-    function loadCampaignSummary(month = '', searchTerm = '', dates = '') {
+    function loadCampaignSummary(month = '', searchTerm = '') {
         $.ajax({
             url: "{{ route('campaign.summary') }}",
             method: 'GET',
             data: { 
                 filterMonth: month,
-                filterDates: dates,
                 search: searchTerm
             },
             success: function(response) {
+                // Update the KPI cards with formatted numbers
                 $('#kpi_total_expense').text(response.total_expense);
                 $('#kpi_cpm').text(response.cpm);
                 $('#views').text(response.views);
