@@ -287,6 +287,7 @@
     $('#filterDates').on('apply.daterangepicker', function(ev, picker) {
         $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
         campaignTable.ajax.reload(); // Reload table with new date range
+        loadCampaignSummary();
     });
 
     $('#filterDates').on('cancel.daterangepicker', function(ev, picker) {
