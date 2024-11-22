@@ -316,7 +316,7 @@ class CampaignController extends Controller
         return response()->json($summary);
     }
 
-    public function getCampaignSummary2(Request $request): JsonResponse
+    public function getCampaignTotal(Request $request): JsonResponse
     {
         $summaryDatatable = $this->get($request);
         $datatableCollection = collect($summaryDatatable->getData()->data);
