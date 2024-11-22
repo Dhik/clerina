@@ -132,55 +132,24 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         $endDateString = null;
 
         if ($request->input('filterDates')) {
-            // Parse filterDates into start and end dates
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
-            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
-
-            // Get campaigns and filter statistics by the date range
-            $campaigns = $this->campaignDAL->getCampaignsByTenant($tenantId)->map(function ($campaign) use ($startDate, $endDate) {
-                $campaign->filteredStatistics = $campaign->statistics->filter(function ($stat) use ($startDate, $endDate) {
-                    $statDate = Carbon::parse($stat->date);
-                    return $statDate->between($startDate, $endDate);
-                });
-
-                return $campaign;
+            $summaryDatatable = $this->get($request);
+            $datatableCollection = collect($summaryDatatable->getData()->data);
+            $totalExpense = $datatableCollection->sum('total_expense');
+            $totalContent = $datatableCollection->sum(function ($item) {
+                return count($item->statistics);
             });
-
-            $totalExpense = 0;
-            $totalContent = 0;
-            $totalViews = 0;
-            $totalEngagementRates = 0;
-            $validCampaignCount = 0;
-
-            foreach ($campaigns as $campaign) {
-                $filteredStats = $campaign->filteredStatistics;
-
-                $totalExpense += $campaign->total_expense; // Assuming expense isn't date-bound
-                $totalContent += $campaign->total_content;
-                $views = $filteredStats->sum('view');
-                $likes = $filteredStats->sum('like');
-                $comments = $filteredStats->sum('comment');
-
-                $totalViews += $views;
-
-                if ($views > 0) {
-                    $engagementRate = (($likes + $comments) / $views) * 100;
-                    $totalEngagementRates += $engagementRate;
-                    $validCampaignCount++;
-                }
-            }
-
+            $totalViews = $datatableCollection->sum('view');
             $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
-            $averageEngagementRate = $validCampaignCount > 0 ? $totalEngagementRates / $validCampaignCount : 0;
+            $averageEngagementRate = $datatableCollection->avg('engagement_rate');
+            
 
-            return [
+            return response()->json([
                 'total_expense' => $this->numberFormat($totalExpense),
                 'total_content' => $this->numberFormat($totalContent),
                 'cpm' => $this->numberFormat($cpm, 2),
                 'views' => $this->numberFormat($totalViews),
-                'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%',
-            ];
+                'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%'
+            ]);
         } else {
             // Fallback logic for filterMonth or no filters
             if ($request->input('filterMonth')) {
@@ -306,5 +275,114 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
     protected function numberFormat($number, $decimals = 0): string
     {
         return number_format($number, $decimals, '.', ',');
+    }
+
+    public function get(Request $request): JsonResponse
+    {
+        $this->authorize('viewCampaign', Campaign::class);
+
+        $query = $this->campaignBLL->getCampaignDataTable($request);
+
+        if ($request->has('filterMonth')) {
+            $month = $request->input('filterMonth');
+            $query->whereMonth('start_date', '=', date('m', strtotime($month)))
+                ->whereYear('start_date', '=', date('Y', strtotime($month)));
+        }
+
+        if ($request->has('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+            $query->with(['statistics' => function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate]);
+            }]);
+        } else {
+            $query->with(['statistics' => function ($q) {
+                $latestDate = Statistic::max('date');
+                $q->whereDate('date', $latestDate);
+            }]);
+        }
+
+        return DataTables::of($query)
+            ->addColumn('created_by_name', function ($row) {
+                return $row->createdBy->name;
+            })
+            ->addColumn('engagement_rate', function ($row) {
+                $likes = $row->statistics->sum('like') ?? $row->like;
+                $comments = $row->statistics->sum('comment') ?? $row->comment;
+                $views = $row->statistics->sum('view') ?? $row->view;
+
+                if ($views > 0) {
+                    return round(($likes + $comments) / $views * 100, 2);
+                }
+                return 0;
+            })
+            ->addColumn('view', function ($row) use ($request) {
+                if ($request->has('filterDates')) {
+                    [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+                    $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+                    $sumStartDate = $row->statistics->where('date', $startDate->toDateString())->sum('view');
+                    $sumEndDate = $row->statistics->where('date', $endDate->toDateString())->sum('view');
+
+                    return $sumEndDate - $sumStartDate;
+                }
+
+                return $row->statistics->sum('view'); // Default to total view if no filterDates
+            })
+            ->addColumn('like', function ($row) use ($request) {
+                if ($request->has('filterDates')) {
+                    [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+                    $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+                    $sumStartDateLikes = $row->statistics->where('date', $startDate->toDateString())->sum('like');
+                    $sumEndDateLikes = $row->statistics->where('date', $endDate->toDateString())->sum('like');
+
+                    return $sumEndDateLikes - $sumStartDateLikes;
+                }
+
+                return $row->statistics->sum('like'); // Default to total likes if no filterDates
+            })
+            ->addColumn('comment', function ($row) use ($request) {
+                if ($request->has('filterDates')) {
+                    [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+                    $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
+
+                    $sumStartDateComments = $row->statistics->where('date', $startDate->toDateString())->sum('comment');
+                    $sumEndDateComments = $row->statistics->where('date', $endDate->toDateString())->sum('comment');
+
+                    return $sumEndDateComments - $sumStartDateComments;
+                }
+
+                return $row->statistics->sum('comment'); // Default to total comments if no filterDates
+            })
+            ->addColumn('actions', function ($row) {
+                $actions = '<a href="' . route('campaign.show', $row->id) . '" class="btn btn-success btn-xs">
+                            <i class="fas fa-eye"></i>
+                        </a>';
+
+                if (Gate::allows('UpdateCampaign', $row)) {
+                    $actions .= ' <a href="' . route('campaign.edit', $row->id) . '" class="btn btn-primary btn-xs">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>';
+                    $actions .= ' <a href="' . route('campaign.refresh', $row->id) . '" class="btn btn-warning btn-xs">
+                                <i class="fas fa-sync-alt"></i>
+                            </a>';
+                }
+
+                if (Gate::allows('deleteCampaign', $row)) {
+                    $actions .= ' <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>';
+                }
+
+                return $actions;
+            })
+            ->rawColumns(['actions'])
+            ->toJson();
     }
 }
