@@ -146,6 +146,7 @@ class SpentTargetController extends Controller
      */
     public function getSpentTargetThisMonth()
     {
+        $currentDate = now();
         $currentMonth = now()->format('m/Y'); // Get the current month in the format "11/2024"
         $currentTenantId = Auth::user()->current_tenant_id;
 
@@ -166,8 +167,14 @@ class SpentTargetController extends Controller
                 return 0;
             });
 
-        // Get the spent target data
-        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use ($talentShouldGetTotal) {
+        $daysInMonth = $currentDate->daysInMonth;
+
+        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use ($talentShouldGetTotal, $daysInMonth, $currentDate) {
+            $currentDay = $currentDate->day;
+
+            $kolTargetSpent = ($spentTarget->budget / 100) * $spentTarget->kol_percentage;
+            $kolTargetToday = ($kolTargetSpent / $daysInMonth) * $currentDay;
+            
             return [
                 'id' => $spentTarget->id,
                 'budget' => $spentTarget->budget,
@@ -180,14 +187,13 @@ class SpentTargetController extends Controller
                 'tenant_id' => $spentTarget->tenant_id,
                 'created_at' => $spentTarget->created_at,
                 'updated_at' => $spentTarget->updated_at,
-                // Calculated fields
                 'kol_target_spent' => ($spentTarget->budget / 100) * $spentTarget->kol_percentage,
                 'ads_target_spent' => ($spentTarget->budget / 100) * $spentTarget->ads_percentage,
                 'creative_target_spent' => ($spentTarget->budget / 100) * $spentTarget->creative_percentage,
                 'other_target_spent' => ($spentTarget->budget / 100) * $spentTarget->other_percentage,
                 'affiliate_target_spent' => ($spentTarget->budget / 100) * $spentTarget->affiliate_percentage,
-                // Total talent_should_get for the month
                 'talent_should_get_total' => $talentShouldGetTotal,
+                'kol_target_today' => $kolTargetToday,
             ];
         });
 

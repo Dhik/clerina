@@ -40,7 +40,16 @@
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h1 id="percentage">0</h1>
-                                        <p>Used</p>
+                                        <p>Achieved</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </div>
+                                </div>
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h1 id="percentage">0</h1>
+                                        <p id="underOrOver"></p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-chart-bar"></i>

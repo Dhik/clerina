@@ -247,13 +247,12 @@
                             return;
                         }
 
-                        const target = data[0]; // Assuming one entry for the current month
-                        const kolTarget = target.kol_target_spent;
+                        const target = data[0];
+                        const kolTarget = target.kol_target_today;
                         const talentShouldGet = target.talent_should_get_total;
-                        const daysInMonth = new Date().getDate(); // Current day of the month
+                        const daysInMonth = new Date().getDate(); 
                         const remainingDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - daysInMonth;
 
-                        // Calculate progress percentage
                         const progressPercentage = Math.min(
                             Math.round((talentShouldGet / kolTarget) * 100),
                             100
@@ -271,26 +270,22 @@
                         progressBar.classList.toggle('bg-info', progressPercentage < 100);
                         progressLabel.textContent = `${progressPercentage}%`;
 
-                        // Populate KOL tab
                         document.getElementById('kol-content').innerHTML = `
                             <p>Target: Rp ${kolTarget.toLocaleString()}</p>
                             <p>Realisasi: Rp ${talentShouldGet.toLocaleString()}</p>
-                            <p>Sisa: Rp ${remainingTarget.toLocaleString()}</p>
+                            <h3>Sisa: Rp ${remainingTarget.toLocaleString()}</h3>
                         `;
 
-                        // Populate Ads tab
                         document.getElementById('ads-content').innerHTML = `
                             <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>
                             <p>Percentage: ${target.ads_percentage}%</p>
                         `;
 
-                        // Populate Creative tab
                         document.getElementById('creative-content').innerHTML = `
                             <p>Target: Rp ${target.creative_target_spent.toLocaleString()}</p>
                             <p>Percentage: ${target.creative_percentage}%</p>
                         `;
 
-                        // Populate Others tab
                         document.getElementById('others-content').innerHTML = `
                             <p>Target (Other): Rp ${target.other_target_spent?.toLocaleString() || 0}</p>
                             <p>Target (Affiliate): Rp ${target.affiliate_target_spent?.toLocaleString() || 0}</p>
