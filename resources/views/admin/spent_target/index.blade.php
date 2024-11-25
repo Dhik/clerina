@@ -249,6 +249,7 @@
 
                         const target = data[0];
                         const kolTarget = target.kol_target_today;
+                        const kolTargetMonth = target.kol_target_spent;
                         const talentShouldGet = target.talent_should_get_total;
                         const daysInMonth = new Date().getDate(); 
                         const remainingDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - daysInMonth;
@@ -271,10 +272,12 @@
                         progressLabel.textContent = `${progressPercentage}%`;
 
                         document.getElementById('kol-content').innerHTML = `
-                            <p>Target: Rp ${kolTarget.toLocaleString()}</p>
+                            <p>Target: Rp ${kolTargetMonth.toLocaleString()}</p>
                             <p>Realisasi: Rp ${talentShouldGet.toLocaleString()}</p>
-                            <h3>Sisa: Rp ${remainingTarget.toLocaleString()}</h3>
                         `;
+
+                        document.getElementById('remainingKOL').textContent = `Rp ${Math.abs(remainingTarget).toLocaleString()}`;
+                        document.getElementById('statusKOL').textContent = remainingTarget >= 0 ? 'Sisa yang harus di Spent' : 'Over Spent';
 
                         document.getElementById('ads-content').innerHTML = `
                             <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>

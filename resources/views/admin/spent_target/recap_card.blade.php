@@ -39,11 +39,20 @@
                                 </div>
                                 <div class="small-box bg-info">
                                     <div class="inner">
-                                        <h1 id="percentage">0</h1>
+                                        <h1 id="percentage" style="font-size: 60px;">0</h1>
                                         <p>Achieved</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-chart-bar"></i>
+                                    </div>
+                                </div>
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h4 id="remainingKOL">0</h4>
+                                        <p id="statusKOL"></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-dollar-sign"></i>
                                     </div>
                                 </div>
                             </div>
