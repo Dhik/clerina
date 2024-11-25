@@ -1,0 +1,362 @@
+@extends('adminlte::page')
+
+@section('title', 'Spent Targets')
+
+@section('content_header')
+    <h1>Spent Targets</h1>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+            @include('admin.spent_target.recap_card')
+            <div class="card">
+                <div class="card-header">
+                    <a href="#" class="btn btn-primary" id="addSpentTargetButton">
+                        <i class="fas fa-plus"></i> Add Spent Target
+                    </a>
+                </div>
+                <div class="card-body">
+                    <table id="spentTargetTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Budget</th>
+                                <th>KOL Percentage</th>
+                                <th>Ads Percentage</th>
+                                <th>Creative Percentage</th>
+                                <th>Month</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @include('admin.spent_target.modals.add_spent_target_modal')
+    @include('admin.spent_target.modals.edit_spent_target_modal')
+    @include('admin.spent_target.modals.view_spent_target_modal')
+    @include('admin.spent_target.script_chart')
+@stop
+
+@section('css')
+    <style>
+        .invalid-feedback {
+            display: none;
+            color: #dc3545;
+            font-size: 80%;
+        }
+    </style>
+    <style>
+    .gauge {
+        width: 100%;
+        height: 300px;
+        position: relative;
+    }
+
+    .gauge-background {
+        fill: #f0f0f0;
+        stroke: #ccc;
+        stroke-width: 2px;
+    }
+
+    .gauge-value.green {
+        fill: #4CAF50;
+        stroke: #357a38;
+        stroke-width: 2px;
+        transition: all 1s ease-in-out;
+    }
+
+    .gauge-value.orange {
+        fill: orange;
+        stroke: #FFA500;
+        stroke-width: 2px;
+        transition: all 1s ease-in-out;
+    }
+
+    .gauge-label.green {
+        font-size: 36px;
+        font-weight: bold;
+        text-anchor: middle;
+        dominant-baseline: central;
+        fill: #4CAF50;
+    }
+
+    .gauge-label.orange {
+        font-size: 36px;
+        font-weight: bold;
+        text-anchor: middle;
+        dominant-baseline: central;
+        fill: orange;
+    }
+</style>
+@endsection
+
+@section('js')
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.7.0/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#spentTargetTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: '{{ route('spentTarget.data') }}',
+                columns: [
+                    { data: 'id', name: 'id', visible: false },
+                    { data: 'budget', name: 'budget' },
+                    { data: 'kol_percentage', name: 'kol_percentage' },
+                    { data: 'ads_percentage', name: 'ads_percentage' },
+                    { data: 'creative_percentage', name: 'creative_percentage' },
+                    { data: 'month', name: 'month' },
+                    { data: 'action', name: 'action', orderable: false, searchable: false },
+                ],
+                order: [[0, 'desc']]
+            });
+
+            $('#addSpentTargetButton').on('click', function() {
+                $('#addSpentTargetForm')[0].reset();
+                $('#addSpentTargetModal').modal('show');
+            });
+
+            @if (session('success'))
+                Swal.fire({
+                    title: 'Success!',
+                    text: '{{ session('success') }}',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+            @endif
+
+
+            // Handle View, Edit, and Delete actions
+            $('#spentTargetTable').on('click', '.viewButton', function (e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+
+                $.ajax({
+                    url: '{{ route('spentTarget.show', ':id') }}'.replace(':id', id),
+                    method: 'GET',
+                    success: function (response) {
+                        $('#view_budget').val(response.budget);
+                        $('#view_kol_percentage').val(response.kol_percentage + '%');
+                        $('#view_ads_percentage').val(response.ads_percentage + '%');
+                        $('#view_creative_percentage').val(response.creative_percentage + '%');
+                        $('#view_month').val(response.month);
+                        $('#view_tenant_id').val(response.tenant_id);
+                        $('#viewSpentTargetModal').modal('show');
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Unable to fetch data for view.', 'error');
+                    },
+                });
+            });
+
+            $('#spentTargetTable').on('click', '.editButton', function (e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+
+                $.ajax({
+                    url: '{{ route('spentTarget.edit', ':id') }}'.replace(':id', id),
+                    method: 'GET',
+                    success: function (response) {
+                        $('#editSpentTargetForm').attr(
+                            'action',
+                            '{{ route('spentTarget.update', ':id') }}'.replace(':id', id)
+                        );
+                        $('#edit_budget').val(response.budget);
+                        $('#edit_kol_percentage').val(response.kol_percentage);
+                        $('#edit_ads_percentage').val(response.ads_percentage);
+                        $('#edit_creative_percentage').val(response.creative_percentage);
+                        $('#edit_month').val(response.month);
+                        $('#edit_tenant_id').val(response.tenant_id);
+                        $('#editSpentTargetModal').modal('show');
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Unable to fetch data for editing.', 'error');
+                    },
+                });
+            });
+
+            $('#editSpentTargetForm').on('submit', function (e) {
+                e.preventDefault();
+                const form = $(this);
+                const url = form.attr('action');
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function () {
+                        Swal.fire('Success', 'Spent target updated successfully.', 'success');
+                        $('#editSpentTargetModal').modal('hide');
+                        $('#spentTargetTable').DataTable().ajax.reload();
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Failed to update spent target.', 'error');
+                    },
+                });
+            });
+
+            $('#spentTargetTable').on('click', '.deleteButton', function (e) {
+                e.preventDefault();
+                const rowData = $('#spentTargetTable').DataTable().row($(this).closest('tr')).data();
+                const route = '{{ route('spentTarget.destroy', ':id') }}'.replace(':id', rowData.id);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This action cannot be undone!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: route,
+                            type: 'DELETE',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                            },
+                            success: function () {
+                                Swal.fire('Deleted!', 'Spent target has been deleted.', 'success');
+                                $('#spentTargetTable').DataTable().ajax.reload();
+                            },
+                            error: function () {
+                                Swal.fire('Error!', 'There was an issue deleting the spent target.', 'error');
+                            },
+                        });
+                    }
+                });
+            });
+
+
+            function loadSpentTargets() {
+                fetch('{{ route('spentTarget.thisMonth') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            document.getElementById('kol-content').innerHTML = 'No data available';
+                            document.getElementById('ads-content').innerHTML = 'No data available';
+                            document.getElementById('creative-content').innerHTML = 'No data available';
+                            document.getElementById('others-content').innerHTML = 'No data available';
+                            return;
+                        }
+
+                        const target = data[0]; // Assuming one entry for the current month
+                        const kolTarget = target.kol_target_spent;
+                        const talentShouldGet = target.talent_should_get_total;
+                        const daysInMonth = new Date().getDate(); // Current day of the month
+                        const remainingDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - daysInMonth;
+
+                        // Calculate progress percentage
+                        const progressPercentage = Math.min(
+                            Math.round((talentShouldGet / kolTarget) * 100),
+                            100
+                        );
+
+                        document.getElementById('percentage').textContent = `${progressPercentage}%`;
+                        const remainingTarget = kolTarget - talentShouldGet;
+
+                        const progressBar = document.getElementById('kol-progress-bar');
+                        const progressLabel = document.getElementById('kol-progress-label');
+
+                        progressBar.style.width = `${progressPercentage}%`;
+                        progressBar.setAttribute('aria-valuenow', progressPercentage);
+                        progressBar.classList.toggle('bg-success', progressPercentage === 100);
+                        progressBar.classList.toggle('bg-info', progressPercentage < 100);
+                        progressLabel.textContent = `${progressPercentage}%`;
+
+                        // Populate KOL tab
+                        document.getElementById('kol-content').innerHTML = `
+                            <p>Target: Rp ${kolTarget.toLocaleString()}</p>
+                            <p>Realisasi: Rp ${talentShouldGet.toLocaleString()}</p>
+                            <p>Sisa: Rp ${remainingTarget.toLocaleString()}</p>
+                        `;
+
+                        // Populate Ads tab
+                        document.getElementById('ads-content').innerHTML = `
+                            <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>
+                            <p>Percentage: ${target.ads_percentage}%</p>
+                        `;
+
+                        // Populate Creative tab
+                        document.getElementById('creative-content').innerHTML = `
+                            <p>Target: Rp ${target.creative_target_spent.toLocaleString()}</p>
+                            <p>Percentage: ${target.creative_percentage}%</p>
+                        `;
+
+                        // Populate Others tab
+                        document.getElementById('others-content').innerHTML = `
+                            <p>Target (Other): Rp ${target.other_target_spent?.toLocaleString() || 0}</p>
+                            <p>Target (Affiliate): Rp ${target.affiliate_target_spent?.toLocaleString() || 0}</p>
+                            <p>Other Percentage: ${target.other_percentage || '0'}%</p>
+                            <p>Affiliate Percentage: ${target.affiliate_percentage || '0'}%</p>
+                        `;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching spent target data:', error);
+                        document.getElementById('kol-content').innerHTML = 'Error loading data';
+                        document.getElementById('ads-content').innerHTML = 'Error loading data';
+                        document.getElementById('creative-content').innerHTML = 'Error loading data';
+                        document.getElementById('others-content').innerHTML = 'Error loading data';
+                    });
+            }
+
+            loadSpentTargets();
+            function fetchAndRenderChart() {
+                fetch('{{ route("talentContent.byDay") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.labels || !data.datasets) {
+                            console.error('Invalid data format from API.');
+                            return;
+                        }
+
+                        const ctx = document.getElementById('kolLineChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: data.datasets
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false,
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Dates'
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Amount (in Thousands)'
+                                        }
+                                    }
+                                },
+                            },
+                        });
+                    })
+                    .catch(error => console.error('Error fetching chart data:', error));
+            }
+            fetchAndRenderChart();
+        });
+        
+    </script>
+@stop

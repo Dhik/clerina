@@ -185,6 +185,7 @@ return [
         App\Domain\KeywordMonitoring\Providers\KeywordMonitoringProvider::class,
         App\Domain\Competitor\Providers\CompetitorProvider::class,
         App\Domain\Talent\Providers\TalentProvider::class,
+        App\Domain\SpentTarget\Providers\SpentTargetProvider::class,
     ])->toArray(),
 
     /*

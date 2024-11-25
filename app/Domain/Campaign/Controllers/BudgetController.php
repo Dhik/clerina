@@ -107,32 +107,30 @@ class BudgetController extends Controller
 
 
     public function show()
-{
-    $budgets = Budget::all();
+    {
+        $budgets = Budget::all();
 
-    return DataTables::of($budgets)
-    ->addColumn('action', function ($budget) {
-        return '
-            <button class="btn btn-sm btn-primary viewButton" 
-                data-id="' . $budget->id . '" 
-                data-toggle="modal" 
-                data-target="#viewBudgetModal">
-                <i class="fas fa-eye"></i>
-            </button>
-            <button class="btn btn-sm btn-success editButton" 
-                data-id="' . $budget->id . '" 
-                data-nama_budget="' . htmlspecialchars($budget->nama_budget, ENT_QUOTES, 'UTF-8') . '" 
-                data-budget="' . $budget->budget . '" 
-                data-toggle="modal" 
-                data-target="#budgetModal">
-                <i class="fas fa-pencil-alt"></i>
-            </button>
-            <button class="btn btn-sm btn-danger deleteButton" data-id="' . $budget->id . '"><i class="fas fa-trash-alt"></i></button>
-        ';
-    })
-    ->make(true);
+        return DataTables::of($budgets)
+        ->addColumn('action', function ($budget) {
+            return '
+                <button class="btn btn-sm btn-primary viewButton" 
+                    data-id="' . $budget->id . '" 
+                    data-toggle="modal" 
+                    data-target="#viewBudgetModal">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-success editButton" 
+                    data-id="' . $budget->id . '" 
+                    data-nama_budget="' . htmlspecialchars($budget->nama_budget, ENT_QUOTES, 'UTF-8') . '" 
+                    data-budget="' . $budget->budget . '" 
+                    data-toggle="modal" 
+                    data-target="#budgetModal">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-danger deleteButton" data-id="' . $budget->id . '"><i class="fas fa-trash-alt"></i></button>
+            ';
+        })
+        ->make(true);
 
-}
-
-    
+    }
 }

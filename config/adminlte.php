@@ -343,6 +343,12 @@ return [
             'icon'    => 'fas fa-fw fa-book',
             'submenu' => [
                 [
+                    'text' => 'Spent Target',
+                    'url' => 'admin/spentTarget',
+                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
+                [
                     'text' => 'Ad Spent Market Place',
                     'url' => 'admin/ad-spent-market-place',
                     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
@@ -406,13 +412,13 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/budgets*']
                 ],
-                [
-                    'text' => 'Product',
-                    'url' => 'admin/products',
-                    'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/products*']
-                ],
+                // [
+                //     'text' => 'Product',
+                //     'url' => 'admin/products',
+                //     'can' => [PermissionEnum::ViewOffer],
+                //     'icon' => 'nav-icon far fa-circle',
+                //     'active' => ['admin/products*']
+                // ],
                 // [
                 //     'text' => 'Brief',
                 //     'url' => 'admin/brief',
@@ -473,19 +479,19 @@ return [
                 ],
             ]
         ],
-        [
-            'text' => 'Product Development',
-            'can' => [PermissionEnum::ViewOrder],
-            'icon'    => 'fas fa-fw fa-table',
-            'submenu' => [
-                [
-                    'text' => 'Keyword Monitoring',
-                    'url' => 'admin/keywordMonitoring',
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/offer*']
-                ],
-            ]
-        ],
+        // [
+        //     'text' => 'Product Development',
+        //     'can' => [PermissionEnum::ViewOrder],
+        //     'icon'    => 'fas fa-fw fa-table',
+        //     'submenu' => [
+        //         [
+        //             'text' => 'Keyword Monitoring',
+        //             'url' => 'admin/keywordMonitoring',
+        //             'icon' => 'nav-icon far fa-circle',
+        //             'active' => ['admin/offer*']
+        //         ],
+        //     ]
+        // ],
         // [
         //     'text' => 'Funnel',
         //     'can' => [PermissionEnum::ViewFunnel],
