@@ -281,6 +281,63 @@ class TalentController extends Controller
         $pdf->setPaper('A4', 'portrait');
         return $pdf->download('invoice.pdf');
     }
+    public function exportInvData(Request $request, $id)
+    {
+        $talent = Talent::findOrFail($id);
+
+        $harga = $talent->rate_per_slot * $talent->slot_final; 
+        $slot_final = $talent->slot_final;
+        if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
+            $pphPercentage = $talent->tax_percentage;
+            $pphLabel = 'Custom Tax (' . $pphPercentage . '%)';
+            $pph = $harga * ($pphPercentage / 100);
+        } else {
+            $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
+            if ($isPTorCV) {
+                $pphPercentage = 2;
+                $pphLabel = 'PPh 23 (2%)';
+                $pph = $harga * 0.02;
+            } else {
+                $pphPercentage = 2.5;
+                $pphLabel = 'PPh 21 (2.5%)';
+                $pph = $harga * 0.025;
+            }
+        }
+        $total = $harga - $pph; 
+        $downPayment = $talent->dp_amount ?? ($total / 2);
+        $remainingBalance = $total - $downPayment;
+
+        $latestPayment = TalentPayment::where('talent_id', $talent->id)
+                                  ->latest()
+                                  ->first();
+
+        $statusPayment = $latestPayment ? $latestPayment->status_payment : null;
+
+        $data = [
+            'nik' => $talent->nik,
+            'nama_talent' => $talent->talent_name,
+            'tanggal_hari_ini' => now()->format('d/m/Y'),
+            'alamat_talent' => $talent->address,
+            'no_hp_talent' => $talent->phone_number,
+            'nama_akun' => $talent->username, 
+            'quantity_slot' => $talent->slot_final,
+            'deskripsi' => $talent->content_type,
+            'harga' => $harga,
+            'subtotal' => $harga,
+            'pphLabel' => $pphLabel,
+            'pphPercentage' => $pphPercentage,
+            'pph' => $pph,
+            'total' => $total,
+            'down_payment' => $downPayment,
+            'sisa' => $remainingBalance,
+            'bank' => $talent->bank,
+            'nama_account' => $talent->nama_rekening,
+            'account_no' => $talent->no_rekening,
+            'npwp' => $talent->no_npwp,
+            'status_payment' => $statusPayment,
+        ];
+        return response()->json($data);
+    }
     public function showInvoice()
     {
         $talent = Talent::with('talent')->get();
