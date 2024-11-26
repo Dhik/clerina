@@ -10,6 +10,7 @@ use App\Domain\SpentTarget\Requests\SpentTargetRequest;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Talent\Models\TalentContent;
 use Yajra\DataTables\DataTables;
+use Carbon\Carbon;
 use Auth;
 
 /**
@@ -304,7 +305,7 @@ class SpentTargetController extends Controller
             ->whereYear('date', now()->year)
             ->get()
             ->groupBy(function ($item) {
-                return $item->date->format('Y-m-d'); 
+                return Carbon::parse($item->date)->format('Y-m-d'); 
             })
             ->map(function ($items) {
                 return $items->sum(function ($item) {
