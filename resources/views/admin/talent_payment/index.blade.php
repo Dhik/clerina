@@ -151,7 +151,6 @@
             allowClear: true,
             multiple: true,
             width: '100%',
-            theme: 'bootstrap4'
         });
 
         var table = $('#talentPaymentsTable').DataTable({
