@@ -22,9 +22,15 @@
                         </div>
                         <div class="col-auto">
                             <div class="btn-group">
-                            <button id="refreshButton" class="btn btn-primary">Refresh Data</button>
+                            <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
                             </div>
                         </div>
+                        <div class="col-auto ml-auto">
+                            <div class="btn-group">
+                            <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                            </div>
+                        </div>
+                        
                     </div>
                     <div class="row">
                         <div class="col-3">
@@ -422,6 +428,13 @@
                         });
                     }
                 });
+            });
+
+            $('#exportButton').click(function() {
+                let month = $('#filterMonth').val();
+                let produk = $('#filterProduk').val();
+
+                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&produk=${produk}`;
             });
 
             var ordersTable = $('#ordersTable').DataTable({

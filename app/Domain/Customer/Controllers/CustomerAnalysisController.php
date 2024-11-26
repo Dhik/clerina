@@ -11,6 +11,7 @@ use App\Domain\Customer\Requests\CustomerRequest;
 use App\Domain\User\Enums\PermissionEnum;
 use App\Domain\User\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 use Illuminate\Contracts\Foundation\Application as ApplicationAlias;
 use Illuminate\Contracts\View\Factory;
@@ -24,8 +25,8 @@ use Yajra\DataTables\Utilities\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\DB;
-
 use App\Domain\Customer\Exports\CustomersExport;
+use App\Domain\Customer\Exports\CustomersAnalysisExport;
 
 class CustomerAnalysisController extends Controller
 {
@@ -328,7 +329,13 @@ class CustomerAnalysisController extends Controller
         return response()->json($products);
     }
 
+    public function export(Request $request)
+    {
+        $month = $request->input('month');
+        $produk = $request->input('produk');
 
+        return Excel::download(new CustomersAnalysisExport($month, $produk), 'customer_analysis.xlsx');
+    }
 
 
 }
