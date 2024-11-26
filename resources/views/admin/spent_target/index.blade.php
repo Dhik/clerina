@@ -25,6 +25,8 @@
                                 <th>KOL Percentage</th>
                                 <th>Ads Percentage</th>
                                 <th>Creative Percentage</th>
+                                <th>Activation Percentage</th>
+                                <th>Free Product Percentage</th>
                                 <th>Month</th>
                                 <th>Actions</th>
                             </tr>
@@ -111,6 +113,8 @@
                     { data: 'kol_percentage', name: 'kol_percentage' },
                     { data: 'ads_percentage', name: 'ads_percentage' },
                     { data: 'creative_percentage', name: 'creative_percentage' },
+                    { data: 'activation_percentage', name: 'activation_percentage' },
+                    { data: 'free_product_percentage', name: 'free_product_percentage' },
                     { data: 'month', name: 'month' },
                     { data: 'action', name: 'action', orderable: false, searchable: false },
                 ],
@@ -145,6 +149,8 @@
                         $('#view_kol_percentage').val(response.kol_percentage + '%');
                         $('#view_ads_percentage').val(response.ads_percentage + '%');
                         $('#view_creative_percentage').val(response.creative_percentage + '%');
+                        $('#view_activation_percentage').val(response.activation_percentage + '%');
+                        $('#view_free_product_percentage').val(response.free_product_percentage + '%');
                         $('#view_month').val(response.month);
                         $('#view_tenant_id').val(response.tenant_id);
                         $('#viewSpentTargetModal').modal('show');
@@ -171,6 +177,8 @@
                         $('#edit_kol_percentage').val(response.kol_percentage);
                         $('#edit_ads_percentage').val(response.ads_percentage);
                         $('#edit_creative_percentage').val(response.creative_percentage);
+                        $('#edit_activation_percentage').val(response.activation_percentage);
+                        $('#edit_free_product_percentage').val(response.free_product_percentage);
                         $('#edit_month').val(response.month);
                         $('#edit_tenant_id').val(response.tenant_id);
                         $('#editSpentTargetModal').modal('show');
@@ -317,6 +325,16 @@
                         document.getElementById('creative-content').innerHTML = `
                             <p>Target: Rp ${target.creative_target_spent.toLocaleString()}</p>
                             <p>Percentage: ${target.creative_percentage}%</p>
+                        `;
+
+                        document.getElementById('activation-content').innerHTML = `
+                            <p>Target: Rp ${target.activation_target_spent.toLocaleString()}</p>
+                            <p>Percentage: ${target.activation_percentage}%</p>
+                        `;
+
+                        document.getElementById('free-product-content').innerHTML = `
+                            <p>Target: Rp ${target.free_product_target_spent.toLocaleString()}</p>
+                            <p>Percentage: ${target.free_product_percentage}%</p>
                         `;
 
                         document.getElementById('others-content').innerHTML = `

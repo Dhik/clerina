@@ -25,6 +25,14 @@
                     <input type="text" id="view_creative_percentage" class="form-control" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="view_activation_percentage">Activation Percentage</label>
+                    <input type="text" id="view_activation_percentage" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="view_free_product_percentage">Free Product Percentage</label>
+                    <input type="text" id="view_free_product_percentage" class="form-control" readonly>
+                </div>
+                <div class="form-group">
                     <label for="view_month">Month</label>
                     <input type="text" id="view_month" class="form-control" readonly>
                 </div>

@@ -22,6 +22,8 @@ class SpentTarget extends Model
         'affiliate_percentage',
         'month',
         'tenant_id',
+        'activation_percentage',
+        'free_product_percentage',
     ];
 
     // Set the data type of each column if necessary
@@ -32,6 +34,8 @@ class SpentTarget extends Model
         'creative_percentage' => 'decimal:2',
         'other_percentage' => 'decimal:2',
         'affiliate_percentage' => 'decimal:2',
+        'activation_percentage' => 'decimal:2',
+        'free_product_percentage' => 'decimal:2',
         'month' => 'string', // Or 'date' if stored as a date
     ];
 

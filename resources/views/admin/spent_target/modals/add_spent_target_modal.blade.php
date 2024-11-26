@@ -27,6 +27,14 @@
                         <input type="number" name="creative_percentage" id="creative_percentage" class="form-control" required>
                     </div>
                     <div class="form-group">
+                        <label for="activation_percentage">Activation Percentage</label>
+                        <input type="number" name="activation_percentage" id="activation_percentage" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="free_product_percentage">Free Product Percentage</label>
+                        <input type="number" name="free_product_percentage" id="free_product_percentage" class="form-control" required>
+                    </div>
+                    <div class="form-group">
                         <label for="month">Month</label>
                         <input type="text" name="month" id="month" class="form-control month-picker" placeholder="MM/YYYY" required>
                     </div>

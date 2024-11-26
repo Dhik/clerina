@@ -28,12 +28,12 @@
                         <input type="number" name="creative_percentage" id="edit_creative_percentage" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="month">Month</label>
-                        <input type="text" name="month" id="month" class="form-control month-picker" placeholder="MM/YYYY" required>
+                        <label for="edit_activation_percentage">Activation Percentage</label>
+                        <input type="number" name="activation_percentage" id="edit_activation_percentage" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_tenant_id">Tenant ID</label>
-                        <input type="number" name="tenant_id" id="edit_tenant_id" class="form-control">
+                        <label for="edit_free_product_percentage">Free Product Percentage</label>
+                        <input type="number" name="free_product_percentage" id="edit_free_product_percentage" class="form-control" required>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -71,6 +71,12 @@ class SpentTargetController extends Controller
             ->editColumn('creative_percentage', function ($spentTarget) {
                 return $spentTarget->creative_percentage . '%';
             })
+            ->editColumn('activation_percentage', function ($spentTarget) {
+                return $spentTarget->activation_percentage . '%';
+            })
+            ->editColumn('free_product_percentage', function ($spentTarget) {
+                return $spentTarget->free_product_percentage . '%';
+            })
             ->make(true);
     }
 
@@ -190,6 +196,8 @@ class SpentTargetController extends Controller
                 'kol_percentage' => $spentTarget->kol_percentage,
                 'ads_percentage' => $spentTarget->ads_percentage,
                 'creative_percentage' => $spentTarget->creative_percentage,
+                'activation_percentage' => $spentTarget->activation_percentage,
+                'free_product_percentage' => $spentTarget->free_product_percentage,
                 'other_percentage' => $spentTarget->other_percentage,
                 'affiliate_percentage' => $spentTarget->affiliate_percentage,
                 'month' => $spentTarget->month,
@@ -199,6 +207,8 @@ class SpentTargetController extends Controller
                 'kol_target_spent' => ($spentTarget->budget / 100) * $spentTarget->kol_percentage,
                 'ads_target_spent' => ($spentTarget->budget / 100) * $spentTarget->ads_percentage,
                 'creative_target_spent' => ($spentTarget->budget / 100) * $spentTarget->creative_percentage,
+                'activation_target_spent' => ($spentTarget->budget / 100) * $spentTarget->activation_percentage,
+                'free_product_target_spent' => ($spentTarget->budget / 100) * $spentTarget->free_product_percentage,
                 'other_target_spent' => ($spentTarget->budget / 100) * $spentTarget->other_percentage,
                 'affiliate_target_spent' => ($spentTarget->budget / 100) * $spentTarget->affiliate_percentage,
                 'talent_should_get_total' => $talentShouldGetTotal,
