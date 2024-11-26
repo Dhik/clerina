@@ -73,11 +73,57 @@
 
 
                     <div class="tab-pane" id="AdsTab">
-                        <h5>Ads Data</h5>
-                        <div id="ads-content" class="p-3">
-                            Loading...
+                        <div class="row">
+                            <!-- Progress Bar for Ads -->
+                            <div class="col-12 mb-3">
+                                <div class="progress" style="height: 30px;">
+                                    <div id="ads-progress-bar" 
+                                        class="progress-bar" 
+                                        role="progressbar" 
+                                        style="width: 0%;" 
+                                        aria-valuenow="0" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                        <span id="ads-progress-label" class="text-dark font-weight-bold">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ads Data Card -->
+                            <div class="col-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Ads Data</h5>
+                                    </div>
+                                    <div id="ads-content" class="card-body p-3">
+                                        <p>Loading...</p>
+                                    </div>
+                                </div>
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h1 id="ads-percentage" style="font-size: 60px;">0</h1>
+                                        <p>Achieved</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ads Daily Spend Card -->
+                            <div class="col-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Ads Daily Spend</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="adsLineChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
 
                     <div class="tab-pane" id="CreativeTab">
                         <h5>Creative Data</h5>

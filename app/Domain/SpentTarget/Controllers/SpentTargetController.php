@@ -5,6 +5,7 @@ namespace App\Domain\SpentTarget\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\SpentTarget\BLL\SpentTarget\SpentTargetBLLInterface;
 use App\Domain\SpentTarget\Models\SpentTarget;
+use App\Domain\Sales\Models\Sales;
 use App\Domain\SpentTarget\Requests\SpentTargetRequest;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Talent\Models\TalentContent;
@@ -147,21 +148,20 @@ class SpentTargetController extends Controller
     public function getSpentTargetThisMonth()
     {
         $currentDate = now();
-        $currentMonth = now()->format('m/Y'); // Get the current month in the format "11/2024"
+        $currentMonth = now()->format('m/Y'); 
         $currentTenantId = Auth::user()->current_tenant_id;
 
-        // Calculate total talent_should_get for the current month
         $talentShouldGetTotal = TalentContent::with('talent')
             ->whereHas('talent', function ($query) use ($currentTenantId) {
                 $query->where('tenant_id', $currentTenantId);
             })
-            ->whereRaw("DATE_FORMAT(posting_date, '%m/%Y') = ?", [$currentMonth]) // Compare with "m/Y" format
+            ->whereRaw("DATE_FORMAT(posting_date, '%m/%Y') = ?", [$currentMonth]) 
             ->get()
             ->sum(function ($item) {
                 $talent = $item->talent;
                 if ($item->upload_link) {
                     $rateFinal = $talent->rate_final ?? 0;
-                    $slotFinal = max($talent->slot_final ?? 1, 1); // Avoid division by zero
+                    $slotFinal = max($talent->slot_final ?? 1, 1);
                     return $rateFinal / $slotFinal;
                 }
                 return 0;
@@ -169,7 +169,15 @@ class SpentTargetController extends Controller
 
         $daysInMonth = $currentDate->daysInMonth;
 
-        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use ($talentShouldGetTotal, $daysInMonth, $currentDate) {
+        $adsSpent = Sales::where('tenant_id', $currentTenantId)
+            ->whereMonth('date', now()->month) 
+            ->whereYear('date', now()->year) 
+            ->get()
+            ->sum(function ($sale) {
+                return $sale->ad_spent_social_media + $sale->ad_spent_market_place;
+            });
+
+        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use ($talentShouldGetTotal, $daysInMonth, $currentDate, $adsSpent) {
             $currentDay = $currentDate->day;
 
             $kolTargetSpent = ($spentTarget->budget / 100) * $spentTarget->kol_percentage;
@@ -194,6 +202,7 @@ class SpentTargetController extends Controller
                 'affiliate_target_spent' => ($spentTarget->budget / 100) * $spentTarget->affiliate_percentage,
                 'talent_should_get_total' => $talentShouldGetTotal,
                 'kol_target_today' => $kolTargetToday,
+                'ads_spent' => $adsSpent,
             ];
         });
 
@@ -204,11 +213,10 @@ class SpentTargetController extends Controller
     public function getTalentShouldGetByDay(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
-        $currentMonth = now()->format('m/Y'); // Format as "11/2024"
+        $currentMonth = now()->format('m/Y'); 
 
-        // Get the SpentTarget data
         $spentTarget = SpentTarget::where('tenant_id', $currentTenantId)
-            ->where('month', $currentMonth) // Compare with "m/Y" format
+            ->where('month', $currentMonth) 
             ->first();
 
         $targetSpentKolDay = 0;
@@ -218,29 +226,27 @@ class SpentTargetController extends Controller
             $targetSpentKolDay = $targetSpentKolMonth / $daysInMonth;
         }
 
-        // Calculate Talent Should Get
         $talentShouldGets = TalentContent::with('talent')
             ->whereHas('talent', function ($query) use ($currentTenantId) {
                 $query->where('tenant_id', $currentTenantId);
             })
-            ->whereRaw("DATE_FORMAT(posting_date, '%m/%Y') = ?", [$currentMonth]) // Compare with "m/Y" format
+            ->whereRaw("DATE_FORMAT(posting_date, '%m/%Y') = ?", [$currentMonth]) 
             ->get()
             ->groupBy(function ($item) {
-                return $item->posting_date->format('Y-m-d'); // Group by date
+                return $item->posting_date->format('Y-m-d'); 
             })
             ->map(function ($items) {
                 return $items->sum(function ($item) {
                     $talent = $item->talent;
                     if ($item->upload_link) {
                         $rateFinal = $talent->rate_final ?? 0;
-                        $slotFinal = max($talent->slot_final ?? 1, 1); // Avoid division by zero
+                        $slotFinal = max($talent->slot_final ?? 1, 1); 
                         return $rateFinal / $slotFinal;
                     }
                     return 0;
                 });
             });
 
-        // Generate all dates for the current month
         $startDate = now()->startOfMonth();
         $endDate = now()->endOfMonth();
         $labels = [];
@@ -254,7 +260,6 @@ class SpentTargetController extends Controller
             $targetSpentKolDayValues[] = $targetSpentKolDay;
         }
 
-        // Prepare data for the line chart
         $chartData = [
             'labels' => $labels,
             'datasets' => [

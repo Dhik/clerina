@@ -254,33 +254,58 @@
                         const daysInMonth = new Date().getDate(); 
                         const remainingDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() - daysInMonth;
 
-                        const progressPercentage = Math.min(
+                        const kolProgressPercentage = Math.min(
                             Math.round((talentShouldGet / kolTarget) * 100),
                             100
                         );
 
-                        document.getElementById('percentage').textContent = `${progressPercentage}%`;
-                        const remainingTarget = kolTarget - talentShouldGet;
+                        document.getElementById('percentage').textContent = `${kolProgressPercentage}%`;
+                        const kolRemainingTarget = kolTarget - talentShouldGet;
 
-                        const progressBar = document.getElementById('kol-progress-bar');
-                        const progressLabel = document.getElementById('kol-progress-label');
+                        const kolProgressBar = document.getElementById('kol-progress-bar');
+                        const kolProgressLabel = document.getElementById('kol-progress-label');
 
-                        progressBar.style.width = `${progressPercentage}%`;
-                        progressBar.setAttribute('aria-valuenow', progressPercentage);
-                        progressBar.classList.toggle('bg-success', progressPercentage === 100);
-                        progressBar.classList.toggle('bg-info', progressPercentage < 100);
-                        progressLabel.textContent = `${progressPercentage}%`;
+                        kolProgressBar.style.width = `${kolProgressPercentage}%`;
+                        kolProgressBar.setAttribute('aria-valuenow', kolProgressPercentage);
+                        kolProgressBar.classList.toggle('bg-success', kolProgressPercentage === 100);
+                        kolProgressBar.classList.toggle('bg-info', kolProgressPercentage < 100);
+                        kolProgressLabel.textContent = `${kolProgressPercentage}%`;
 
                         document.getElementById('kol-content').innerHTML = `
                             <p>Target: Rp ${kolTargetMonth.toLocaleString()}</p>
                             <p>Realisasi: Rp ${talentShouldGet.toLocaleString()}</p>
                         `;
 
-                        document.getElementById('remainingKOL').textContent = `Rp ${Math.abs(remainingTarget).toLocaleString()}`;
-                        document.getElementById('statusKOL').textContent = remainingTarget >= 0 ? 'Sisa yang harus di Spent' : 'Over Spent';
+                        document.getElementById('remainingKOL').textContent = `Rp ${Math.abs(kolRemainingTarget).toLocaleString()}`;
+                        document.getElementById('statusKOL').textContent = kolRemainingTarget >= 0 ? 'Sisa yang harus di Spent' : 'Over Spent';
 
                         document.getElementById('ads-content').innerHTML = `
                             <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>
+                            <p>Percentage: ${target.ads_percentage}%</p>
+                        `;
+
+                        // Calculate Ads progress
+                        const adsProgressPercentage = Math.min(
+                            Math.round((target.ads_spent / target.ads_target_spent) * 100),
+                            100
+                        );
+
+                        // Update Ads progress bar
+                        document.getElementById('ads-percentage').textContent = `${adsProgressPercentage}%`;
+
+                        const adsProgressBar = document.getElementById('ads-progress-bar');
+                        const adsProgressLabel = document.getElementById('ads-progress-label');
+
+                        adsProgressBar.style.width = `${adsProgressPercentage}%`;
+                        adsProgressBar.setAttribute('aria-valuenow', adsProgressPercentage);
+                        adsProgressBar.classList.toggle('bg-success', adsProgressPercentage === 100);
+                        adsProgressBar.classList.toggle('bg-info', adsProgressPercentage < 100);
+                        adsProgressLabel.textContent = `${adsProgressPercentage}%`;
+
+                        // Set Ads Content
+                        document.getElementById('ads-content').innerHTML = `
+                            <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>
+                            <p>Realized: Rp ${target.ads_spent.toLocaleString()}</p>
                             <p>Percentage: ${target.ads_percentage}%</p>
                         `;
 
