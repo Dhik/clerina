@@ -283,4 +283,72 @@ class SpentTargetController extends Controller
         return response()->json($chartData);
     }
 
+    public function getAdsSpentByDay(Request $request)
+    {
+        $currentTenantId = Auth::user()->current_tenant_id;
+        $currentMonth = now()->format('m/Y'); 
+
+        $spentTarget = SpentTarget::where('tenant_id', $currentTenantId)
+            ->where('month', $currentMonth) 
+            ->first();
+
+        $targetAdsSpentDay = 0;
+        if ($spentTarget) {
+            $targetAdsSpentMonth = ($spentTarget->budget / 100) * $spentTarget->ads_percentage;
+            $daysInMonth = now()->daysInMonth;
+            $targetAdsSpentDay = $targetAdsSpentMonth / $daysInMonth;
+        }
+
+        $adsSpentByDay = Sales::where('tenant_id', $currentTenantId)
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->date->format('Y-m-d'); 
+            })
+            ->map(function ($items) {
+                return $items->sum(function ($item) {
+                    return $item->ad_spent_social_media + $item->ad_spent_market_place;
+                });
+            });
+
+        $startDate = now()->startOfMonth();
+        $endDate = now()->endOfMonth();
+        $labels = [];
+        $adsSpentValues = []; 
+        $targetSpentAdsDayValues = []; 
+
+        for ($date = $startDate; $date <= $endDate; $date->addDay()) {
+            $formattedDate = $date->format('Y-m-d');
+            $labels[] = $formattedDate;
+            $adsSpentValues[] = $adsSpentByDay->get($formattedDate, 0);
+            $targetSpentAdsDayValues[] = $targetAdsSpentDay; 
+        }
+
+        $chartData = [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Ads Spent',
+                    'data' => $adsSpentValues,
+                    'borderColor' => 'rgba(75, 192, 192, 1)',  
+                    'backgroundColor' => 'rgba(75, 192, 192, 0.2)', 
+                    'tension' => 0.4
+                ],
+                [
+                    'label' => 'Target Ads Spent Per Day',
+                    'data' => $targetSpentAdsDayValues,
+                    'borderColor' => 'rgba(255, 99, 132, 1)',  
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.2)', 
+                    'tension' => 0.4
+                ]
+            ]
+        ];
+
+        return response()->json($chartData);
+    }
+
+
+    
+
 }

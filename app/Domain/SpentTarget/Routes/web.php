@@ -26,6 +26,7 @@ Route::prefix('admin')
             Route::get('data', [SpentTargetController::class, 'data'])->name('spentTarget.data');
             Route::get('/this-month', [SpentTargetController::class, 'getSpentTargetThisMonth'])->name('spentTarget.thisMonth');
             Route::get('/kol-by-day', [SpentTargetController::class, 'getTalentShouldGetByDay'])->name('talentContent.byDay');
+            Route::get('/ads-by-day', [SpentTargetController::class, 'getAdsSpentByDay'])->name('talentContent.adsByDay');
 
             Route::get('/create', [SpentTargetController::class, 'create'])->name('spentTarget.create');
             Route::post('/', [SpentTargetController::class, 'store'])->name('spentTarget.store');

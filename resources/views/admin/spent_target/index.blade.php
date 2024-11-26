@@ -379,6 +379,55 @@
                     .catch(error => console.error('Error fetching chart data:', error));
             }
             fetchAndRenderChart();
+
+            function fetchAndRenderAdsChart() {
+                fetch('{{ route("talentContent.adsByDay") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.labels || !data.datasets) {
+                            console.error('Invalid data format from API.');
+                            return;
+                        }
+
+                        const ctx = document.getElementById('adsLineChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: data.datasets
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false,
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Dates'
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Amount (in Thousands)'
+                                        }
+                                    }
+                                },
+                            },
+                        });
+                    })
+                    .catch(error => console.error('Error fetching chart data:', error));
+            }
+            fetchAndRenderAdsChart();
         });
         
     </script>
