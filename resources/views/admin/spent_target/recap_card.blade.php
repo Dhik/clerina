@@ -108,6 +108,15 @@
                                         <i class="fas fa-chart-bar"></i>
                                     </div>
                                 </div>
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h4 id="remainingAds">0</h4>
+                                        <p id="statusAds"></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Ads Daily Spend Card -->

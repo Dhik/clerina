@@ -302,11 +302,16 @@
                         adsProgressBar.classList.toggle('bg-info', adsProgressPercentage < 100);
                         adsProgressLabel.textContent = `${adsProgressPercentage}%`;
 
+                        const remainingAdsTarget = target.ads_target_spent - target.ads_spent;
+
+                        document.getElementById('remainingAds').textContent = `Rp ${Math.abs(remainingAdsTarget).toLocaleString()}`;
+                        const statusAds = remainingAdsTarget >= 0 ? 'Remaining to be spent' : 'Over Spent';
+                        document.getElementById('statusAds').textContent = statusAds;
+
                         // Set Ads Content
                         document.getElementById('ads-content').innerHTML = `
                             <p>Target: Rp ${target.ads_target_spent.toLocaleString()}</p>
                             <p>Realized: Rp ${target.ads_spent.toLocaleString()}</p>
-                            <p>Percentage: ${target.ads_percentage}%</p>
                         `;
 
                         document.getElementById('creative-content').innerHTML = `
