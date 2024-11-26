@@ -220,7 +220,7 @@ class TalentController extends Controller
             $approval = Approval::findOrFail($approvalId);
         }
 
-        $harga = 0; 
+        $harga = $talent->rate_per_slot * $talent->slot_final; 
         $slot_final = $talent->slot_final;
         if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
             $pphPercentage = $talent->tax_percentage;
