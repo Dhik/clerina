@@ -8,6 +8,7 @@ use App\Domain\Campaign\Exports\CampaignContentExport;
 use App\Domain\Campaign\Exports\CampaignContentTemplateExport;
 use App\Domain\Campaign\Exports\CampaignContentTemplateKOLExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
+use App\Domain\Talent\Models\TalentContent;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Models\Statistic;
@@ -435,10 +436,13 @@ class CampaignContentController extends Controller
     public function destroy(CampaignContent $campaignContent): JsonResponse
     {
         $campaignContent = $campaignContent->load('campaign');
-
         $this->authorize('deleteCampaign', $campaignContent->campaign);
-
         $this->campaignContentBLL->deleteCampaignContent($campaignContent);
+
+        TalentContent::where('campaign_id', $campaignContent->campaign_id)
+                    ->where('upload_link', $campaignContent->link) 
+                    ->first() 
+                    ->delete(); 
 
         return response()->json(['message' => trans('messages.success_delete')]);
     }

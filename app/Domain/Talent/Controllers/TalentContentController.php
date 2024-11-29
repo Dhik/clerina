@@ -156,10 +156,6 @@ class TalentContentController extends Controller
                         data-id="' . $talentContent->id . '">
                         <i class="fas fa-pencil-alt"> Edit</i>
                     </button>
-                    <button class="btn btn-sm btn-danger deleteButton" 
-                        data-id="' . $talentContent->id . '">
-                        <i class="fas fa-trash-alt"> Delete</i>
-                    </button>
                 ';
             })
             ->addColumn('refund', function ($talentContent) {
