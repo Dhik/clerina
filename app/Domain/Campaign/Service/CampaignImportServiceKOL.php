@@ -94,12 +94,27 @@ class CampaignImportServiceKOL
                     ]);
                 }
 
-                CampaignContent::updateOrCreate(
-                    [
+                if ($data['channel'] !== 'instagram_story') {
+                    CampaignContent::updateOrCreate(
+                        [
+                            'link' => $data['link'],
+                            'campaign_id' => $campaign->id,
+                        ],
+                        [
+                            'channel' => $data['channel'],
+                            'username' => $data['username'],
+                            'key_opinion_leader_id' => $kol->id,
+                            'task_name' => $data['task_name'],
+                            'rate_card' => $data['rate_card'],
+                            'product' => $data['product'],
+                            'kode_ads' => $data['kode_ads'],
+                            'created_by' => Auth::user()->id,
+                        ]
+                    );
+                } else {
+                    CampaignContent::create([
                         'link' => $data['link'],
                         'campaign_id' => $campaign->id,
-                    ],
-                    [
                         'channel' => $data['channel'],
                         'username' => $data['username'],
                         'key_opinion_leader_id' => $kol->id,
@@ -108,8 +123,8 @@ class CampaignImportServiceKOL
                         'product' => $data['product'],
                         'kode_ads' => $data['kode_ads'],
                         'created_by' => Auth::user()->id,
-                    ]
-                );
+                    ]);
+                }
 
                 $talentContent = new TalentContent();
                 $talentContent->campaign_id = $campaign->id;
