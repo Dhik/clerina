@@ -196,8 +196,6 @@ class CampaignController extends Controller
      */
     public function show(Campaign $campaign): View|\Illuminate\Foundation\Application|Factory|Application
     {
-        $this->authorize('viewCampaign', Campaign::class);
-
         $negotiates = OfferEnum::Negotiation;
         $statuses = OfferEnum::Status;
         $platforms = CampaignContentEnum::Platform;

@@ -152,10 +152,6 @@ class TalentContentController extends Controller
             })
             ->addColumn('action', function ($talentContent) {
                 return '
-                    <button class="btn btn-sm btn-primary addLinkButton" 
-                        data-id="' . $talentContent->id . '">
-                        <i class="fas fa-link"> Add link</i>
-                    </button>
                     <button class="btn btn-sm btn-success editButton" 
                         data-id="' . $talentContent->id . '">
                         <i class="fas fa-pencil-alt"> Edit</i>

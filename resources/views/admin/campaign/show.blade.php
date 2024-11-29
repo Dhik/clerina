@@ -396,6 +396,7 @@
     @include('admin.campaign.content.script.script-add-content')
     @include('admin.campaign.content.script.script-update-content')
     @include('admin.campaign.content.script.script-import')
+    @include('admin.campaign.content.script.script-import-kol')
     @include('admin.campaign.content.script.script-detail-content')
     @include('admin.campaign.content.script.script-card')
     @include('admin.campaign.content.script.script-chart')

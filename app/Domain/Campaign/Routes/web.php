@@ -98,8 +98,12 @@ Route::prefix('admin')
                     ->name('campaignContent.export');
                 Route::get('/downloadTemplate', [CampaignContentController::class, 'downloadTemplate'])
                     ->name('campaignContent.template');
+                Route::get('/downloadTemplateKOL', [CampaignContentController::class, 'downloadTemplateKOL'])
+                    ->name('campaignContent.template_kol');
                 Route::post('/import/{campaign}', [CampaignContentController::class, 'import'])
                     ->name('campaignContent.import');
+                Route::post('/import_kol/{campaign}', [CampaignContentController::class, 'import_from_KOL'])
+                    ->name('campaignContent.import_kol');
                 Route::delete('/{campaignContent}', [CampaignContentController::class, 'destroy'])
                     ->name('campaignContent.destroy');
                     

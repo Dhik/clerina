@@ -338,4 +338,8 @@ return [
     'kode_ads' => 'Kode Ads',
     'actions' => 'Aksi',
     'engagement_rate' => "ER",
+    'dealing_upload_date' => "Dealing Upload Date {DD/MM/YYYY}",
+    'nama_pic' => "Nama PIC",
+    'kerkun' => "Kerkun (Yes/No)",
+    'posting_date' => "Posting Date {DD/MM/YYYY}",
 ];

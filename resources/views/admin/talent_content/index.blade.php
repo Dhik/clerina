@@ -11,9 +11,9 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
+                    <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
                         <i class="fas fa-plus"></i> Add Talent Content
-                    </button>
+                    </button> -->
                     <a href="{{ route('talent_content.export') }}" class="btn btn-success">
                         <i class="fas fa-file-excel"></i> Export to Excel
                     </a>

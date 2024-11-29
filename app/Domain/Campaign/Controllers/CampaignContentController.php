@@ -6,6 +6,7 @@ use App\Domain\Campaign\BLL\CampaignContent\CampaignContentBLLInterface;
 use App\Domain\Campaign\Enums\CampaignContentEnum;
 use App\Domain\Campaign\Exports\CampaignContentExport;
 use App\Domain\Campaign\Exports\CampaignContentTemplateExport;
+use App\Domain\Campaign\Exports\CampaignContentTemplateKOLExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Models\CampaignContent;
@@ -314,7 +315,6 @@ class CampaignContentController extends Controller
     public function updateFyp(CampaignContent $campaignContent): JsonResponse
     {
         $this->authorize('updateCampaignContent', CampaignContent::class);
-
         return response()->json(
             $this->campaignContentBLL->updateFyp($campaignContent)
         );
@@ -326,7 +326,6 @@ class CampaignContentController extends Controller
     public function updateDeliver(CampaignContent $campaignContent): JsonResponse
     {
         $this->authorize('updateCampaignContent', CampaignContent::class);
-
         return response()->json(
             $this->campaignContentBLL->updateDeliver($campaignContent)
         );
@@ -357,14 +356,31 @@ class CampaignContentController extends Controller
         return response()->json($data);
     }
 
+    public function import_from_KOL(Campaign $campaign, Request $request)
+    {
+        $this->authorize('updateCampaign', $campaign);
+
+        $data = $this->campaignContentBLL->importContentKOL(
+            $request,
+            Auth::user()->current_tenant_id,
+            $campaign
+        );
+
+        return response()->json($data);
+    }
+
     /**
      * Template import order
      */
     public function downloadTemplate(): BinaryFileResponse
     {
         $this->authorize('ViewCampaignContent', CampaignContent::class);
-
         return Excel::download(new CampaignContentTemplateExport(), 'Campaign Template.xlsx');
+    }
+    public function downloadTemplateKOL(): BinaryFileResponse
+    {
+        $this->authorize('ViewCampaignContent', CampaignContent::class);
+        return Excel::download(new CampaignContentTemplateKOLExport(), 'Campaign Template KOL.xlsx');
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Campaign\Requests\CampaignContentRequest;
 use App\Domain\Campaign\Requests\CampaignUpdateContentRequest;
 use App\Domain\Campaign\Service\CampaignImportService;
+use App\Domain\Campaign\Service\CampaignImportServiceKOL;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +24,8 @@ class CampaignContentBLL implements CampaignContentBLLInterface
 {
     public function __construct(
         protected CampaignContentDALInterface $campaignContentDAL,
-        protected CampaignImportService $campaignImportService
+        protected CampaignImportService $campaignImportService,
+        protected CampaignImportServiceKOL $campaignImportServiceKOL
     )
     {
     }
@@ -260,6 +262,11 @@ class CampaignContentBLL implements CampaignContentBLLInterface
     public function importContent(Request $request, int $tenantId, Campaign $campaign): string
     {
         return $this->campaignImportService->importContent($request, $tenantId, $campaign);
+    }
+
+    public function importContentKOL(Request $request, int $tenantId, Campaign $campaign): string
+    {
+        return $this->campaignImportServiceKOL->importContent($request, $tenantId, $campaign);
     }
 
     /**

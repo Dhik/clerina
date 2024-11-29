@@ -88,13 +88,22 @@
                                 <i class="fas fa-sync-alt"></i> Refresh Followers
                             </button>
 
+                            
+                        </div>
+                        <div class="col-auto">
                             <a class="btn btn-outline-primary" href={{ route('campaignContent.export', $campaign->id) }}>
                                 <i class="fas fa-file-download"></i> {{ trans('labels.export') }}
                             </a>
                             @can('UpdateCampaign', $campaign)
-                                <button class="btn btn-outline-success" data-toggle="modal" data-target="#contentImportModal">
-                                    <i class="fas fa-file-download"></i> {{ trans('labels.import') }}
-                                </button>
+                                @if(stripos($campaign->title, 'KOL') !== false)
+                                    <button class="btn btn-outline-danger" data-toggle="modal" data-target="#contentImportKOLModal">
+                                        <i class="fas fa-file-download"></i> {{ trans('labels.import') }} KOL 
+                                    </button>
+                                @else
+                                    <button class="btn btn-outline-success" data-toggle="modal" data-target="#contentImportModal">
+                                        <i class="fas fa-file-download"></i> {{ trans('labels.import') }}
+                                    </button>
+                                @endif
                             @endcan
 
                         </div>
@@ -142,4 +151,5 @@
 @include('admin.campaign.content.modal-create-statistic')
 @include('admin.campaign.content.modal-update-content')
 @include('admin.campaign.content.modal-import-content')
+@include('admin.campaign.content.modal-import-kol-content')
 @include('admin.campaign.content.modal-detail-content')
