@@ -127,7 +127,7 @@
 
                     <div class="tab-pane" id="CreativeTab">
                         <div class="row">
-                            <div class="col-12 mb-3">
+                            <div class="col-10 mb-3">
                                 <div class="progress" style="height: 30px;">
                                     <div id="ads-progress-bar" 
                                         class="progress-bar" 
@@ -138,6 +138,11 @@
                                         aria-valuemax="100">
                                         <span id="ads-progress-label" class="text-dark font-weight-bold">0%</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="btn-group">
+                                    <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -183,7 +188,7 @@
 
                     <div class="tab-pane" id="ActivationTab">
                         <div class="row">
-                            <div class="col-12 mb-3">
+                            <div class="col-10 mb-3">
                                 <div class="progress" style="height: 30px;">
                                     <div id="ads-progress-bar" 
                                         class="progress-bar" 
@@ -194,6 +199,11 @@
                                         aria-valuemax="100">
                                         <span id="ads-progress-label" class="text-dark font-weight-bold">0%</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="btn-group">
+                                    <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -239,7 +249,7 @@
 
                     <div class="tab-pane" id="FreeProductTab">
                         <div class="row">
-                            <div class="col-12 mb-3">
+                            <div class="col-10 mb-3">
                                 <div class="progress" style="height: 30px;">
                                     <div id="ads-progress-bar" 
                                         class="progress-bar" 
@@ -250,6 +260,11 @@
                                         aria-valuemax="100">
                                         <span id="ads-progress-label" class="text-dark font-weight-bold">0%</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="btn-group">
+                                    <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -295,7 +310,7 @@
 
                     <div class="tab-pane" id="OthersTab">
                         <div class="row">
-                            <div class="col-12 mb-3">
+                            <div class="col-10 mb-3">
                                 <div class="progress" style="height: 30px;">
                                     <div id="ads-progress-bar" 
                                         class="progress-bar" 
@@ -306,6 +321,11 @@
                                         aria-valuemax="100">
                                         <span id="ads-progress-label" class="text-dark font-weight-bold">0%</span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <div class="btn-group">
+                                    <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                                 </div>
                             </div>
                             <div class="col-4">

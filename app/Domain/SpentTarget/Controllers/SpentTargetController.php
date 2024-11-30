@@ -5,8 +5,10 @@ namespace App\Domain\SpentTarget\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\SpentTarget\BLL\SpentTarget\SpentTargetBLLInterface;
 use App\Domain\SpentTarget\Models\SpentTarget;
+use App\Domain\SpentTarget\Models\SpentAmount;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\SpentTarget\Requests\SpentTargetRequest;
+use App\Domain\Sales\Services\GoogleSheetService;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Talent\Models\TalentContent;
 use Yajra\DataTables\DataTables;
@@ -18,9 +20,10 @@ use Auth;
  */
 class SpentTargetController extends Controller
 {
-    public function __construct(SpentTargetBLLInterface $spentTargetBLL)
+    public function __construct(SpentTargetBLLInterface $spentTargetBLL, GoogleSheetService $googleSheetService)
     {
         $this->spentTargetBLL = $spentTargetBLL;
+        $this->googleSheetService = $googleSheetService;
     }
 
     /**
@@ -176,6 +179,15 @@ class SpentTargetController extends Controller
 
         $daysInMonth = $currentDate->daysInMonth;
 
+        $spentAmounts = SpentAmount::where('tenant_id', $currentTenantId)
+                ->whereRaw("DATE_FORMAT(date, '%m/%Y') = ?", [$currentMonth])
+                ->get();
+        
+        $activationSpentTotal = $spentAmounts->sum('activation_spent');
+        $creativeSpentTotal = $spentAmounts->sum('creative_spent');
+        $freeProductSpentTotal = $spentAmounts->sum('free_product_spent');
+        $otherSpentTotal = $spentAmounts->sum('other_spent');
+
         $adsSpent = Sales::where('tenant_id', $currentTenantId)
             ->whereMonth('date', now()->month) 
             ->whereYear('date', now()->year) 
@@ -184,7 +196,16 @@ class SpentTargetController extends Controller
                 return $sale->ad_spent_social_media + $sale->ad_spent_market_place;
             });
 
-        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use ($talentShouldGetTotal, $daysInMonth, $currentDate, $adsSpent) {
+        $spentTargets = SpentTarget::where('month', $currentMonth)->get()->map(function ($spentTarget) use (
+            $talentShouldGetTotal, 
+            $daysInMonth, 
+            $currentDate, 
+            $adsSpent,
+            $activationSpentTotal,
+            $creativeSpentTotal,
+            $freeProductSpentTotal,
+            $otherSpentTotal,
+        ) {
             $currentDay = $currentDate->day;
 
             $kolTargetSpent = ($spentTarget->budget / 100) * $spentTarget->kol_percentage;
@@ -214,6 +235,10 @@ class SpentTargetController extends Controller
                 'talent_should_get_total' => $talentShouldGetTotal,
                 'kol_target_today' => $kolTargetToday,
                 'ads_spent' => $adsSpent,
+                'activation_spent_total' => $activationSpentTotal, 
+                'creative_spent_total' => $creativeSpentTotal,    
+                'free_product_spent_total' => $freeProductSpentTotal, 
+                'other_spent_total' => $otherSpentTotal,
             ];
         });
 
@@ -358,8 +383,59 @@ class SpentTargetController extends Controller
 
         return response()->json($chartData);
     }
+    /**
+     * Parse the string value into a decimal number, accounting for thousands separator.
+     * 
+     * @param string|null $value
+     * @return float|null
+     */
+    private function parseCurrencyToDecimal($value)
+    {
+        if (empty($value)) {
+            return null;  
+        }
+        $value = str_replace('.', '', $value); 
+        $value = str_replace(',', '.', $value); 
+        return (float)$value;
+    }
+    public function importOtherSpent()
+    {
+        $ranges = [
+            'activation_spent' => 'Other Spents!A3:B',
+            'creative_spent' => 'Other Spents!D3:E',
+            'free_product_spent' => 'Other Spents!G3:H',
+            'other_spent' => 'Other Spents!J3:K'
+        ];
 
+        $tenant_id = 1;
+        $currentMonth = Carbon::now()->format('Y-m'); 
 
-    
+        foreach ($ranges as $spentType => $range) {
+            $sheetData = $this->googleSheetService->getSheetData($range); 
+            foreach ($sheetData as $row) {
+                if (!isset($row[0]) || !isset($row[1])) {
+                    continue; 
+                }
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                $spentAmount = $this->parseCurrencyToDecimal($row[1]);
+                $spentAmountData = [
+                    'date' => $date,
+                    'tenant_id' => $tenant_id,
+                    $spentType => $spentAmount
+                ];
+                SpentAmount::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'tenant_id' => $tenant_id,
+                    ],
+                    $spentAmountData
+                );
+            }
+        }
 
+        return response()->json(['message' => 'Data imported successfully']);
+    }
 }

@@ -355,14 +355,13 @@
 
             loadSpentTargets();
             function fetchAndRenderChart() {
-                fetch('{{ route("talentContent.byDay") }}')
+                fetch('{{ route("spentTarget.byDay") }}')
                     .then(response => response.json())
                     .then(data => {
                         if (!data.labels || !data.datasets) {
                             console.error('Invalid data format from API.');
                             return;
                         }
-
                         const ctx = document.getElementById('kolLineChart').getContext('2d');
                         new Chart(ctx, {
                             type: 'line',
@@ -404,7 +403,7 @@
             fetchAndRenderChart();
 
             function fetchAndRenderAdsChart() {
-                fetch('{{ route("talentContent.adsByDay") }}')
+                fetch('{{ route("spentTarget.adsByDay") }}')
                     .then(response => response.json())
                     .then(data => {
                         if (!data.labels || !data.datasets) {
