@@ -27,6 +27,7 @@ class TalentContent extends Model
         'product',
         'created_at',
         'updated_at',
+        'tenant_id',
     ];
 
     protected $casts = [

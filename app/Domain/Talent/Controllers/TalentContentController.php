@@ -539,14 +539,12 @@ class TalentContentController extends Controller
         $tenantId = Auth::user()->current_tenant_id;
 
         $products = TalentContent::distinct()
-            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')  // Join with talents table
-            ->where('talents.tenant_id', '=', $tenantId)  // Filter by tenant_id
-            ->pluck('talents.produk')  // Get distinct products from talents.produk instead of talent_content.product
+            ->where('talent_content.tenant_id', '=', $tenantId) 
+            ->pluck('talent_content.product')  
             ->map(function ($product) {
                 return ['short_name' => $product]; 
             });
 
         return response()->json($products);
     }
-
 }
