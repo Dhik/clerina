@@ -113,6 +113,10 @@ class TalentContentController extends Controller
             });
         }
 
+        if (!is_null($request->input('filterProduct'))) {
+            $talentContents->where('talent_content.product', $request->input('filterProduct'));
+        }
+
         if (! is_null($request->input('filterDealingDate'))) {
             $dates = explode(' - ', $request->input('filterDealingDate'));
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
@@ -231,6 +235,7 @@ class TalentContentController extends Controller
         if (!$talentContent) {
             return response()->json(['message' => 'Talent content not found'], 404);
         }
+        $campaignContent = CampaignContent::where('link', $talentContent->upload_link)->first();
         return response()->json([
             'talentContent' => [
                 'id' => $talentContent->id,
@@ -245,6 +250,7 @@ class TalentContentController extends Controller
                 'kerkun' => $talentContent->kerkun,
                 'product' => $talentContent->product,
                 'campaign_title' => $talentContent->campaign ? $talentContent->campaign->title : null,
+                'channel' => $campaignContent->channel,
             ],
         ]);
     }
@@ -521,5 +527,14 @@ class TalentContentController extends Controller
             \Log::error('Failed to unrefund talent content: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to unrefund talent content.'], 500);
         }
+    }
+    public function getProducts()
+    {
+        $products = TalentContent::distinct()->pluck('product')
+            ->map(function ($product) {
+                return ['short_name' => $product]; 
+            });
+
+        return response()->json($products);
     }
 }

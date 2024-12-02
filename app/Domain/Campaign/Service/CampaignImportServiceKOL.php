@@ -126,20 +126,24 @@ class CampaignImportServiceKOL
                     ]);
                 }
 
-                $talentContent = new TalentContent();
-                $talentContent->campaign_id = $campaign->id;
-                $talentContent->talent_id = Talent::where('username', $data['username'])->first()->id;
-                $talentContent->upload_link = $data['link'];
-                $talentContent->transfer_date = now(); 
-                $talentContent->dealing_upload_date = $data['dealing_upload_date'];
-                $talentContent->posting_date = $data['posting_date'];
-                $talentContent->product = $data['product'];
-                $talentContent->kerkun = $data['kerkun'];
-                $talentContent->done = 1;
-                $talentContent->pic_code = $data['nama_pic'];
-                $talentContent->created_at = now();
-                $talentContent->updated_at = now();
-                $talentContent->save();
+                TalentContent::updateOrCreate(
+                    [
+                        'upload_link' => $data['link'],
+                        'talent_id' => Talent::where('username', $data['username'])->first()->id,
+                        'campaign_id' => $campaign->id,
+                    ],
+                    [
+                        'transfer_date' => now(),
+                        'dealing_upload_date' => $data['dealing_upload_date'],
+                        'posting_date' => $data['posting_date'],
+                        'product' => $data['product'],
+                        'kerkun' => $data['kerkun'],
+                        'done' => 1,
+                        'pic_code' => $data['nama_pic'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
             }
 
             DB::commit();

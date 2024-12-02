@@ -85,29 +85,31 @@
                 </div>
                 
                 <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="justify-content-between align-items-center mb-3">
                     <div class="col-auto">
-                        <div class="row align-items-center">
-                            <div class="col-auto">
-                                <input type="text" class="form-control filterDate" id="filterDealingDate" placeholder="Select Dealing Date Range" autocomplete="off">
-                            </div>
-                            <div class="col-auto">
-                                <input type="text" class="form-control filterDate" id="filterPostingDate" placeholder="Select Posting Date Range" autocomplete="off">
-                            </div>
-                            <div class="col-auto">
-                                <div class="icheck-primary d-inline">
-                                    <input type="checkbox" id="filterDone">
-                                    <label for="filterDone">
-                                        Done
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <button id="resetFilterBtn" class="btn btn-outline-secondary">
-                                    Reset Filter
-                                </button>
+                    <div class="row align-items-center">
+                        <div class="col-3">
+                            <input type="text" class="form-control filterDate" id="filterDealingDate" placeholder="Select Dealing Date Range" autocomplete="off">
+                        </div>
+                        <div class="col-3">
+                            <input type="text" class="form-control filterDate" id="filterPostingDate" placeholder="Select Posting Date Range" autocomplete="off">
+                        </div>
+                        <div class="col-1">
+                            <div class="icheck-primary d-inline">
+                                <input type="checkbox" id="filterDone">
+                                <label for="filterDone"> Done </label>
                             </div>
                         </div>
+                        <div class="col-3">
+                            <select id="filterProduk" class="form-control select2">
+                                <option value="">All Product</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <button id="resetFilterBtn" class="btn btn-outline-secondary"> Reset Filter </button>
+                        </div>
+                    </div>
+
                     </div>
                 </div>
                     <table id="talentContentTable" class="table table-bordered table-striped">
@@ -160,6 +162,29 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
 <script>
     $(document).ready(function() {
+        $('#filterProduk').select2({
+            placeholder: "All Product",
+            allowClear: true,
+            width: '100%',
+            theme: 'bootstrap4'
+        });
+
+        function populateProdukFilter() {
+            fetch('{{ route('talent_content.get_products') }}')  
+                .then(response => response.json())
+                .then(data => {
+                    const produkSelect = $('#filterProduk');
+                    produkSelect.empty();  
+                    produkSelect.append('<option value="">All Product</option>'); 
+                    data.forEach(produk => {
+                        produkSelect.append(`<option value="${produk.short_name}">${produk.short_name}</option>`);
+                    });
+                })
+                .catch(error => console.error('Error fetching product list:', error));
+        }
+        populateProdukFilter();
+
+
         // Initialize DataTable with the date range filters
         const filterDone = $('#filterDone');
         var table = $('#talentContentTable').DataTable({
@@ -171,6 +196,7 @@
                     d.filterDealingDate = $('#filterDealingDate').val(); 
                     d.filterPostingDate = $('#filterPostingDate').val();
                     d.filterDone = $('#filterDone').is(':checked') ? 1 : ''; 
+                    d.filterProduct = $('#filterProduk').val();
                 }
             },
             columns: [
@@ -213,6 +239,10 @@
         filterDone.change(function() {
             table.ajax.reload();
         });
+
+        $('#filterProduk').change(function() {
+            table.ajax.reload();
+        });
         // Initialize daterangepicker for both Dealing Date and Posting Date
         const filterDealingDate = $('#filterDealingDate').daterangepicker({
             autoUpdateInput: false,
@@ -248,6 +278,7 @@
         $('#resetFilterBtn').click(function () {
             $('#filterDealingDate').val('');
             $('#filterPostingDate').val('');
+            $('#filterProduk').val('');
             $('#filterDone').prop('checked', false);
             table.ajax.reload();
         });
@@ -428,6 +459,7 @@
                         const year = date.getFullYear();
                         return `${day}/${month}/${year}`;
                     };
+
                     $('#view_talent_name').val(response.talentContent.talent_name);
                     $('#view_dealing_upload_date').val(formatDate(response.talentContent.dealing_upload_date));
                     $('#view_posting_date').val(formatDate(response.talentContent.posting_date));
@@ -440,6 +472,59 @@
                     $('#view_boost_code').val(response.talentContent.boost_code);
                     $('#view_kerkun').val(response.talentContent.kerkun ? 'Yes' : 'No');
                     
+                    // Embed content based on channel
+                    $('#contentEmbed').html('');  // Clear previous embed content
+
+                    if (response.talentContent.upload_link !== '') {
+                        if (response.talentContent.channel === 'tiktok_video') {
+                            // Embed TikTok video
+                            $.ajax({
+                                url: "https://www.tiktok.com/oembed?url=" + response.talentContent.upload_link,
+                                type: 'GET',
+                                success: function (response) {
+                                    $('#contentEmbed').html(response.html);
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error(xhr.responseText);
+                                }
+                            });
+                        } else if (response.talentContent.channel === 'twitter_post') {
+                            let twitterLink = response.talentContent.upload_link.replace('https://x.com/', 'https://twitter.com/');
+                            let tweetEmbed = `
+                                <blockquote class="twitter-tweet">
+                                    <a href="${twitterLink}"></a>
+                                </blockquote>
+                            `;
+                            $('#contentEmbed').html(tweetEmbed);
+                            twttr.widgets.load(document.getElementById('contentEmbed'));
+
+                        } else if (response.talentContent.channel === 'instagram_feed') {
+                            let cleanLink = response.talentContent.upload_link.split('?')[0];
+                            let linkIg = cleanLink.endsWith('/');
+                            let embedLink = linkIg ? cleanLink + 'embed' : cleanLink + '/embed';
+
+                            let embedIg = '<iframe width="315" height="560" src="' + embedLink + '" frameborder="0"></iframe>';
+                            $('#contentEmbed').html(embedIg);
+                        } else if (response.talentContent.channel === 'youtube_video') {
+                            let videoId = response.talentContent.upload_link.split('/').pop(); 
+                            let embedLink = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1'; 
+
+                            let embedYoutube = `<iframe width="315" height="560" src="${embedLink}" frameborder="0" allowfullscreen></iframe>`;
+                            $('#contentEmbed').html(embedYoutube);
+                        } else if (response.talentContent.channel === 'shopee_video') {
+                            let shopeeEmbed = `<iframe src="${response.talentContent.upload_link}" width="315" height="560" frameborder="0" allowfullscreen></iframe>`;
+                            $('#contentEmbed').html(shopeeEmbed);
+
+                        } else {
+                            let buttonEmbed = '<a href="'+ response.talentContent.upload_link +'" target="_blank" class="btn btn-primary">Go to Content</a>';
+                            $('#contentEmbed').html(buttonEmbed);
+                        }
+                        // You can add more channel conditions here (e.g., YouTube, Instagram, etc.)
+                    }
+                    else {
+                        $('#contentEmbed').html('');  // Clear contentEmbed if no link is provided
+                    }
+
                     $('#viewTalentContentModal').modal('show');
                 },
                 error: function(response) {
@@ -447,6 +532,7 @@
                 }
             });
         });
+
 
         $('#talentContentTable').on('click', '.deleteButton', function(e) {
             e.preventDefault(); 

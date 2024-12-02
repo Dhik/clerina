@@ -56,6 +56,9 @@ Route::prefix('admin')
             Route::get('/calendar', [TalentContentController::class, 'calendar'])->name('talent_content.calendar');
             Route::get('/count', [TalentContentController::class, 'countContent'])->name('talent_content.count');
             Route::get('/data', [TalentContentController::class, 'data'])->name('talent_content.data');
+
+            Route::get('/products', [TalentContentController::class, 'getProducts'])->name('talent_content.get_products');
+
             Route::get('/create', [TalentContentController::class, 'create'])->name('talent_content.create');
             Route::post('/', [TalentContentController::class, 'store'])->name('talent_content.store');
             Route::get('/{talentContent}', [TalentContentController::class, 'show'])->name('talent_content.show');
