@@ -332,7 +332,10 @@ class TalentPaymentController extends Controller
             $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
             $contentCount = $talent->talentContents->count();
 
-            $totalPerSlot = $talent->rate_final / $talent->slot_final;
+            $totalPerSlot = ($talent->slot_final > 0) 
+                ? $talent->rate_final / $talent->slot_final 
+                : 0;
+
             $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
 
             $talentShouldGet = ($talent->slot_final > 0) 
