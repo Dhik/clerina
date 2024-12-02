@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('dealing_upload_date')->nullable();
             $table->date('posting_date')->nullable();
             $table->boolean('done')->default(0);
-            $table->string('upload_link')->nullable();
+            $table->text('upload_link')->nullable();
             $table->string('pic_code')->nullable();
             $table->string('boost_code')->nullable();
             $table->boolean('kerkun')->default(0);

@@ -538,11 +538,17 @@ class TalentContentController extends Controller
     }
     public function getProducts()
     {
-        $products = TalentContent::distinct()->pluck('product')
+        $tenantId = Auth::user()->current_tenant_id;
+
+        $products = TalentContent::distinct()
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')  // Join with talents table
+            ->where('talents.tenant_id', '=', $tenantId)  // Filter by tenant_id
+            ->pluck('talent_content.product')  // Get distinct products from talent_content
             ->map(function ($product) {
                 return ['short_name' => $product]; 
             });
 
         return response()->json($products);
     }
+
 }
