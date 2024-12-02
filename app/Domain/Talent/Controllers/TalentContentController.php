@@ -541,7 +541,7 @@ class TalentContentController extends Controller
         $products = TalentContent::distinct()
             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')  // Join with talents table
             ->where('talents.tenant_id', '=', $tenantId)  // Filter by tenant_id
-            ->pluck('talent_content.product')  // Get distinct products from talent_content
+            ->pluck('talents.produk')  // Get distinct products from talents.produk instead of talent_content.product
             ->map(function ($product) {
                 return ['short_name' => $product]; 
             });
