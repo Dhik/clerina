@@ -26,8 +26,7 @@ class TalentContent extends Model
         'final_rate_card',
         'product',
         'created_at',
-        'updated_at',
-        'tenant_id',
+        'updated_at'
     ];
 
     protected $casts = [
