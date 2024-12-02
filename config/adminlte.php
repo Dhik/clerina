@@ -479,19 +479,19 @@ return [
                 ],
             ]
         ],
-        // [
-        //     'text' => 'Product Development',
-        //     'can' => [PermissionEnum::ViewOrder],
-        //     'icon'    => 'fas fa-fw fa-table',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'Keyword Monitoring',
-        //             'url' => 'admin/keywordMonitoring',
-        //             'icon' => 'nav-icon far fa-circle',
-        //             'active' => ['admin/offer*']
-        //         ],
-        //     ]
-        // ],
+        [
+            'text' => 'Product Development',
+            'can' => [PermissionEnum::ViewOrder],
+            'icon'    => 'fas fa-fw fa-table',
+            'submenu' => [
+                [
+                    'text' => 'Keyword Monitoring',
+                    'url' => 'admin/keywordMonitoring',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/offer*']
+                ],
+            ]
+        ],
         // [
         //     'text' => 'Funnel',
         //     'can' => [PermissionEnum::ViewFunnel],
