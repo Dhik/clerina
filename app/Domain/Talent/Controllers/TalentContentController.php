@@ -537,10 +537,10 @@ class TalentContentController extends Controller
     public function getProducts()
     {
         $tenantId = Auth::user()->current_tenant_id;
-
-        $products = TalentContent::distinct()
-            ->where('talent_content.tenant_id', '=', $tenantId) 
-            ->pluck('talent_content.product')  
+        
+        $products = Talent::distinct()
+            ->where('talents.tenant_id', '=', $tenantId) 
+            ->pluck('talents.produk')  
             ->map(function ($product) {
                 return ['short_name' => $product]; 
             });
