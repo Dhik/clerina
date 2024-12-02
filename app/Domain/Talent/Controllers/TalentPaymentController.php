@@ -330,13 +330,13 @@ class TalentPaymentController extends Controller
             $totalSpentForeachTalent = $this->adjustSpentForTax($totalSpentForeachTalent, $talent->nama_rekening);
             $totalSpentForTalent = $this->calculateSpentForTalent($talent, $startDate, $endDate);
             $totalSpentForTalent = $this->adjustSpentForTax($totalSpentForTalent, $talent->nama_rekening);
-            // $contentCount = $talent->talentContents->count();
+            $contentCount = $talent->talentContents->count();
 
-            $filteredTalentContents = $talent->talentContents->filter(function ($content) use ($startDate, $endDate) {
-                return $content->posting_date >= $startDate && $content->posting_date <= $endDate;
-            });
+            // $filteredTalentContents = $talent->talentContents->filter(function ($content) use ($startDate, $endDate) {
+            //     return $content->posting_date >= $startDate && $content->posting_date <= $endDate;
+            // });
 
-            $contentCount = $filteredTalentContents->count();
+            // $contentCount = $filteredTalentContents->count();
 
             $totalPerSlot = ($talent->slot_final > 0) 
                 ? $talent->rate_final / $talent->slot_final 
