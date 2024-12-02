@@ -30,7 +30,7 @@ class TalentDAL extends BaseDAL implements TalentDALInterface
             ])
             ->leftJoin('talent_content', 'talents.id', '=', 'talent_content.talent_id')
             ->whereNotNull('talents.produk')
-            ->whereNotNull('talents.tenant_id') 
+            ->where('talents.tenant_id', '=', 'talent_content.tenant_id')
             ->groupBy(
                 'talents.id',
                 'talents.username',
