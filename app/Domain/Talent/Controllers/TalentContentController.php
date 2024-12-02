@@ -108,9 +108,7 @@ class TalentContentController extends Controller
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
     
-            $talentContents->whereHas('talent.talentPayments', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('done_payment', [$startDate, $endDate]);
-            });
+            $talentContents->whereBetween('talent_content.posting_date', [$startDate, $endDate]);
         }
 
         if (!is_null($request->input('filterProduct'))) {
