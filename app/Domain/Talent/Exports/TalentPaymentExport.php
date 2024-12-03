@@ -17,17 +17,20 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use App\Domain\Talent\Models\TalentPayment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Auth;
 
 class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, ShouldAutoSize, WithEvents, WithHeadings, WithTitle
 {
     use Exportable;
 
     protected $request;
+    protected $tenantId;
     protected $chunkSize = 100; // Reduced chunk size
     
-    public function __construct(Request $request)
+    public function __construct(Request $request, $tenantId)
     {
         $this->request = $request;
+        $this->tenantId = $tenantId;
     }
 
     public function headings(): array
@@ -76,7 +79,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     'nik',
                     'tax_percentage',
                     'talent_name',
-                );
+                )
+                ->where('tenant_id', $this->tenantId);
             }])
             ->when($this->request->has('pic') && $this->request->pic != '', function($query) {
                 $query->whereHas('talent', function($q) {
@@ -91,7 +95,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             ->when($this->request->has('status_payment') && $this->request->status_payment != '', function($query) {
                 $query->where('status_payment', $this->request->status_payment);
             })
-            ->orderBy('id'); // Add ordering for consistent chunking
+            ->orderBy('id'); 
     }
 
     public function map($payment): array
@@ -100,7 +104,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             $talent = $payment->talent;
             
             if (!$talent) {
-                return array_fill(0, 18, 'N/A');
+                return [];
             }
 
             // Pre-calculate values to reduce memory usage

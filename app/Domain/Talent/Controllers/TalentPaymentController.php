@@ -202,12 +202,10 @@ class TalentPaymentController extends Controller
     public function exportPengajuan(Request $request)
     {
         $query = TalentPayment::with('talent');
-        // Apply filter for tenant_id based on authenticated user's current tenant
         $query->whereHas('talent', function($q) {
             $q->where('tenant_id', Auth::user()->current_tenant_id);
         });
 
-        // Apply filters if provided
         if ($request->has('pic') && $request->pic != '') {
             $query->whereHas('talent', function($q) use ($request) {
                 $q->where('pic', $request->pic);
@@ -227,32 +225,35 @@ class TalentPaymentController extends Controller
         }
 
         $talentContents = $query->get();
-
-        // Determine the tax type for each talent
         $talentContents->each(function ($content) {
             $content->isPTorCV = \Illuminate\Support\Str::startsWith($content->talent->nama_rekening, ['PT', 'CV']);
         });
 
-        // Generate PDF
         $pdf = PDF::loadView('admin.talent_payment.form_pengajuan', compact('talentContents'));
         $pdf->setPaper('A4', 'landscape');
-
-        // Download the PDF
         return $pdf->download('form_pengajuan.pdf');
     }
 
+        
     public function exportPengajuanExcel(Request $request)
     {
         try {
             ini_set('memory_limit', '512M');
-            $export = new TalentPaymentExport($request);
-            return Excel::download($export, 'form_pengajuan.xlsx');
-        }
-        catch (\Exception $e) {
+            $tenantId = Auth::user()->current_tenant_id;
+
+            $export = new TalentPaymentExport($request, $tenantId);
+            $data = $export->query()->get();
+            $mappedData = $data->map(function ($payment) use ($export) {
+                return $export->map($payment);
+            })->filter(function ($item) {
+                return !empty($item);
+            });
+            return Excel::download(new TalentPaymentExport($request, $tenantId, $mappedData), 'form_pengajuan.xlsx');
+
+        } catch (\Exception $e) {
             return back()->with('error', 'Export failed. Please try again.');
         }
     }
-
     public function report()
     {
         $usernames = Talent::select('username')->distinct()->pluck('username');
