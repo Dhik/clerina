@@ -72,8 +72,6 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
     public function collection(Collection $rows)
 {
     foreach ($rows as $row) {
-        $existingTalent = Talent::where('username', $row['username'])->first();
-
         $data = [
             'username' => $row['username'] ?? '',
             'talent_name' => $row['talent_name'] ?? '',
@@ -99,16 +97,10 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
             'discount' => $row['discount'] ?? 0,
             'slot_final' => $row['slot_final'] ?? 0,
             'tax_deduction' => $row['tax_deduction'] ?? 0,
-            'tenant_id' => 2,
+            'tenant_id' => 1,
             'tax_percentage' => 0,
         ];
-
-        if ($existingTalent) {
-            // Update the existing talent
-            $existingTalent->update($data);
-        } else {
-            Talent::create($data);
-        }
+        Talent::create($data);
     }
 }
 
@@ -132,12 +124,12 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
             'address' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:255',
             'bank' => 'nullable|string|max:255',
-            'no_rekening' => 'nullable|string|max:255',
+            'no_rekening' => 'nullable',
             'nama_rekening' => 'nullable|string|max:255',
-            'no_npwp' => 'nullable|string|max:255',
+            'no_npwp' => 'nullable',
             'pengajuan_transfer_date' => 'nullable|date',
             'gdrive_ttd_kol_accepting' => 'nullable|string|max:255',
-            'nik' => 'nullable|string|max:255',
+            'nik' => 'nullable',
             'price_rate' => 'nullable|integer',
             'first_rate_card' => 'nullable|integer',
             'discount' => 'nullable|integer',
