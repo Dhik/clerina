@@ -99,13 +99,14 @@ class TalentImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSta
             'discount' => $row['discount'] ?? 0,
             'slot_final' => $row['slot_final'] ?? 0,
             'tax_deduction' => $row['tax_deduction'] ?? 0,
+            'tenant_id' => 2,
+            'tax_percentage' => 0,
         ];
 
         if ($existingTalent) {
             // Update the existing talent
             $existingTalent->update($data);
         } else {
-            // Create a new talent record
             Talent::create($data);
         }
     }

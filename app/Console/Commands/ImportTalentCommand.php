@@ -26,27 +26,22 @@ class ImportTalentCommand extends Command
      */
     public function handle()
     {
-        // Get the file path from the argument
         $file = $this->argument('file');
         $filePath = storage_path('app/public/' . $file);
-
-        // Ensure the file exists before trying to import
         if (!file_exists($filePath)) {
             $this->error("File not found: $filePath");
-            return 1; // Return error code
+            return 1; 
         }
 
         try {
-            // Import the data using the TalentImport class
             Excel::import(new TalentImport, $filePath);
 
             $this->info('Talent data imported successfully.');
 
-            return 0; // Success
+            return 0; 
         } catch (\Exception $e) {
-            // If something goes wrong, catch the exception and show the error
             $this->error('Error importing data: ' . $e->getMessage());
-            return 1; // Return error code
+            return 1;
         }
     }
 }
