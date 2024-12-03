@@ -75,8 +75,11 @@ class TalentController extends Controller
      */
     public function store(Request $request)
     {
+        $tenant_id = Auth::user()->current_tenant_id;
+
+        // Modify the validation rule to check both username and tenant_id
         $validatedData = $request->validate([
-            'username' => 'required|string|max:255|unique:talents,username',
+            'username' => "required|string|max:255|unique:talents,username,NULL,id,tenant_id,$tenant_id", // Custom validation rule
             'talent_name' => 'required|string|max:255',
             'video_slot' => 'nullable|integer',
             'content_type' => 'nullable|string|max:255',
@@ -101,12 +104,26 @@ class TalentController extends Controller
             'platform' => 'nullable|string|max:255',
         ]);
 
+        // Automatically add tenant_id based on Auth::user()->current_tenant_id
+        $validatedData['tenant_id'] = $tenant_id;
         $validatedData['tax_percentage'] = 0;
 
+        // Check if username already exists for this tenant
+        $existingTalent = Talent::where('tenant_id', $tenant_id)
+                                ->where('username', $validatedData['username'])
+                                ->first();
+
+        // If the username already exists, return an error
+        if ($existingTalent) {
+            return back()->withErrors(['username' => 'This username is already taken by another talent in your tenant.'])->withInput();
+        }
+
+        // Proceed to create the talent if validation passes
         $this->talentBLL->createTalent($validatedData);
 
         return redirect()->route('talent.index')->with('success', 'Talent created successfully.');
     }
+
 
 
     /**

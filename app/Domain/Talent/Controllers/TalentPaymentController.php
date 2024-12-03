@@ -201,8 +201,11 @@ class TalentPaymentController extends Controller
 
     public function exportPengajuan(Request $request)
     {
-        // Fetch the talent contents based on filters
         $query = TalentPayment::with('talent');
+        // Apply filter for tenant_id based on authenticated user's current tenant
+        $query->whereHas('talent', function($q) {
+            $q->where('tenant_id', Auth::user()->current_tenant_id);
+        });
 
         // Apply filters if provided
         if ($request->has('pic') && $request->pic != '') {
