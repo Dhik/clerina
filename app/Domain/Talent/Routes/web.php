@@ -58,6 +58,7 @@ Route::prefix('admin')
             Route::get('/data', [TalentContentController::class, 'data'])->name('talent_content.data');
 
             Route::get('/products', [TalentContentController::class, 'getProducts'])->name('talent_content.get_products');
+            Route::get('/line_chart_data', [TalentContentController::class, 'getLineChartData'])->name('talent_content.get_line_data');
 
             Route::get('/create', [TalentContentController::class, 'create'])->name('talent_content.create');
             Route::post('/', [TalentContentController::class, 'store'])->name('talent_content.store');

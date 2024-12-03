@@ -11,18 +11,26 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
-                        <i class="fas fa-plus"></i> Add Talent Content
-                    </button>
-                    <a href="{{ route('talent_content.export') }}" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> Export to Excel
-                    </a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
+                                <i class="fas fa-plus"></i> Add Talent Content
+                            </button>
+                            <a href="{{ route('talent_content.export') }}" class="btn btn-success">
+                                <i class="fas fa-file-excel"></i> Export to Excel
+                            </a>
+                            <button id="toggleCalendarBtn" class="btn btn-info">
+                                <i class="fas fa-calendar"></i> See Calendar
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-4">
+                        <!-- Left Column (Statistics Cards) -->
+                        <div class="col-12 col-md-4">
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-6 mb-3">
                                     <div class="small-box bg-info">
                                         <div class="inner">
                                             <h4 id="todayCount">0</h4>
@@ -33,7 +41,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-6 mb-3">
                                     <div class="small-box bg-maroon">
                                         <div class="inner">
                                             <h4 id="doneFalseCount">0</h4>
@@ -44,7 +52,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-6 mb-3">
                                     <div class="small-box bg-success">
                                         <div class="inner">
                                             <h4 id="doneTrueCount">0</h4>
@@ -55,7 +63,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-6 mb-3">
                                     <div class="small-box bg-purple">
                                         <div class="inner">
                                             <h4 id="totalCount">0</h4>
@@ -67,22 +75,32 @@
                                     </div>
                                 </div>
                             </div>
+
                             <div class="card mt-3 outer-card">
                                 <div class="card-header">
                                     Notification
                                 </div>
                                 <div class="card-body">
-                                    <div class="inner-scrollable" id="todayTalentContainer">
-                                    </div>
+                                    <div class="inner-scrollable" id="todayTalentContainer"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-8">
-                            <div id='calendar'></div>
+                        <div class="col-12 col-md-8">
+                            <div id="calendar" style="display: none;"></div>
+                            <div id="lineChartContainer" class="mt-3">
+                                <div class="form-group">
+                                    <label for="productFilter">Select Product:</label>
+                                    <select id="productFilter" class="form-control">
+                                        <!-- Options will be populated dynamically -->
+                                    </select>
+                                </div>
+                                <canvas id="lineChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 
                 <div class="card-body">
                 <div class="justify-content-between align-items-center mb-3">
@@ -154,12 +172,17 @@
     .sub-card {
         border: 1px solid #ddd;
     }
+    #lineChartContainer {
+        height: 500px;
+    }
+
 </style>
 @endsection
 
 
 @section('js')
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(document).ready(function() {
         $('#filterProduk').select2({
@@ -184,8 +207,8 @@
         }
         populateProdukFilter();
 
+        
 
-        // Initialize DataTable with the date range filters
         const filterDone = $('#filterDone');
         var table = $('#talentContentTable').DataTable({
             processing: true,
@@ -243,7 +266,6 @@
         $('#filterProduk').change(function() {
             table.ajax.reload();
         });
-        // Initialize daterangepicker for both Dealing Date and Posting Date
         const filterDealingDate = $('#filterDealingDate').daterangepicker({
             autoUpdateInput: false,
             locale: { cancelLabel: 'Clear' }
@@ -615,7 +637,6 @@
             });
         });
 
-        // Handle refund button click
         $('#talentContentTable').on('click', '.refundButton', function() {
             var id = $(this).data('id');
             var url = '{{ route('talent_content.refund', ':id') }}'.replace(':id', id);
@@ -652,7 +673,6 @@
             });
         });
 
-        // Handle unrefund button click
         $('#talentContentTable').on('click', '.unRefundButton', function() {
             var id = $(this).data('id');
             var url = '{{ route('talent_content.unrefund', ':id') }}'.replace(':id', id);
@@ -688,6 +708,96 @@
                 }
             });
         });
+
+        let lineChart;
+
+        const fetchDataAndInitChart = () => {
+            fetch("{{ route('talent_content.get_line_data') }}")
+                .then(response => response.json()) 
+                .then(data => {
+                    const labels = data.labels;
+                    const datasets = data.datasets;
+
+                    // Extract unique product labels from the datasets
+                    const products = datasets.map(dataset => dataset.label);
+                    const uniqueProducts = [...new Set(products)];  // Remove duplicates
+
+                    // Populate the product filter with options dynamically
+                    const productFilter = document.getElementById('productFilter');
+                    uniqueProducts.forEach((product, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = product;
+                        productFilter.appendChild(option);
+                    });
+
+                    // Initialize the chart
+                    const ctx = document.getElementById('lineChart').getContext('2d');
+                    lineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets // Initially show all datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Count'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    productFilter.addEventListener('change', function (e) {
+                        const selectedProductIndex = parseInt(e.target.value);
+                        const selectedProduct = uniqueProducts[selectedProductIndex];
+
+                        // Filter datasets to show only the selected product
+                        const filteredDatasets = datasets.filter(dataset => {
+                            return dataset.label === selectedProduct || selectedProductIndex === 0;
+                        });
+
+                        // Update the chart with the filtered datasets
+                        lineChart.data.datasets = filteredDatasets;
+                        lineChart.update();
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching chart data:', error);
+                });
+        }
+
+        // Call the function to fetch and display the data
+        fetchDataAndInitChart();
+
+        $('#toggleCalendarBtn').click(function() {
+            var calendarEl = $('#calendar');
+            var buttonEl = $(this);
+            var lineChartContainer = $('#lineChartContainer'); 
+
+            if (calendarEl.is(':visible')) {
+                calendarEl.hide();
+                lineChartContainer.show();
+                buttonEl.html('<i class="fas fa-calendar"></i> Show Calendar');
+            } else {
+                calendarEl.show();
+                lineChartContainer.hide();
+                buttonEl.html('<i class="fas fa-calendar"></i> Hide Calendar');
+                calendar.render();
+            }
+        });
+
+
 
     });
 </script>

@@ -547,4 +547,44 @@ class TalentContentController extends Controller
 
         return response()->json($products);
     }
+    public function getLineChartData()
+    {
+        $data = TalentContent::selectRaw('DATE(posting_date) as posting_date, product, COUNT(id) as count_id')
+            ->whereNotNull('posting_date') 
+            ->groupByRaw('DATE(posting_date), product')
+            ->orderBy('posting_date')
+            ->get();
+
+        $labels = $data->groupBy('posting_date')->keys(); 
+        $products = $data->pluck('product')->unique();
+        $datasets = [];
+
+        foreach ($products as $product) {
+            $productData = $data->where('product', $product)->keyBy('posting_date');
+            $dataset = [
+                'label' => $product,
+                'data' => $labels->map(function ($date) use ($productData) {
+                    return isset($productData[$date]) ? $productData[$date]->count_id : 0;
+                })->toArray(),
+                'borderColor' => $this->getRandomColor(),
+                'fill' => false
+            ];
+            $datasets[] = $dataset;
+        }
+
+        return response()->json([
+            'labels' => $labels->values()->toArray(),
+            'datasets' => $datasets
+        ]);
+    }
+    private function getRandomColor()
+    {
+        $colors = [
+            'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)', 
+            'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)',
+            'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)'
+        ];
+        return $colors[array_rand($colors)];
+    }
 }
