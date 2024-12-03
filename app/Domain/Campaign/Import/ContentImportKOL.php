@@ -62,7 +62,7 @@ class ContentImportKOL implements SkipsEmptyRows, ToCollection, WithMapping, Wit
     public function map($row): array
     {
         return [
-            'username' => $row[0] ?? null,
+            'username' => trim($row[0] ?? ''),
             'task_name' => $row[1] ?? null,
             'channel' => trim($row[2] ?? ''),
             'link' => trim($row[3] ?? ''),
