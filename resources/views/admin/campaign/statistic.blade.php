@@ -95,9 +95,13 @@
                                 <i class="fas fa-file-download"></i> {{ trans('labels.export') }}
                             </a>
                             @can('UpdateCampaign', $campaign)
-                                @if(stripos($campaign->title, 'KOL') !== false)
+                                @if(stripos(strtolower($campaign->title), 'ibooming') !== false)
+                                    <button class="btn btn-outline-success" data-toggle="modal" data-target="#contentImportModal">
+                                        <i class="fas fa-file-download"></i> {{ trans('labels.import') }}
+                                    </button>
+                                @elseif(stripos(strtolower($campaign->title), 'kol') !== false)
                                     <button class="btn btn-outline-danger" data-toggle="modal" data-target="#contentImportKOLModal">
-                                        <i class="fas fa-file-download"></i> {{ trans('labels.import') }} KOL 
+                                        <i class="fas fa-file-download"></i> {{ trans('labels.import') }} KOL
                                     </button>
                                 @else
                                     <button class="btn btn-outline-success" data-toggle="modal" data-target="#contentImportModal">
@@ -105,6 +109,7 @@
                                     </button>
                                 @endif
                             @endcan
+
 
                         </div>
                     </div>

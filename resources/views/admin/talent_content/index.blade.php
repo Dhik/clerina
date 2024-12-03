@@ -87,7 +87,8 @@
                         </div>
 
                         <div class="col-12 col-md-8">
-                            <div id="calendar" style="display: none;"></div>
+                            <div id="calendar"></div>
+                            <!-- <div id="calendar" style="display: none;"></div> -->
                             <!-- <div id="lineChartContainer" class="mt-3">
                                 <div class="form-group">
                                     <label for="productFilter">Select Product:</label>
