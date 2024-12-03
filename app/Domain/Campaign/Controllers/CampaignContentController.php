@@ -16,6 +16,7 @@ use App\Domain\Campaign\Requests\CampaignContentRequest;
 use App\Domain\Campaign\Requests\CampaignUpdateContentRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -550,15 +551,57 @@ class CampaignContentController extends Controller
         'topComments' => $topComments,
     ]);
 }
-
-
-
-
-
-
-
     public function showDistinctProducts(): View
     {
         return view('admin.campaign.products');
+    }
+
+    public function updateAllShopeeVideoLinks()
+    {
+        $campaignContents = CampaignContent::where('channel', 'shopee_video')
+                                           ->whereNotNull('link') 
+                                           ->get();
+
+        if ($campaignContents->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No campaigns with channel "shopee_video" found.'
+            ]);
+        }
+
+        foreach ($campaignContents as $campaignContent) {
+            $finalUrl = $this->extractVideoIdFromShortLink($campaignContent->link, $campaignContent->username);
+
+            if ($finalUrl) {
+                $campaignContent->link = $finalUrl;
+                $campaignContent->save();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All Shopee video links updated successfully!'
+        ]);
+    }
+
+    private function extractVideoIdFromShortLink($shortUrl, $username)
+    {
+        try {
+            $response = Http::get($shortUrl);
+            $finalUrl = $response->effectiveUri();
+            $parsedUrl = parse_url($finalUrl);
+            parse_str($parsedUrl['query'] ?? '', $queryParams);
+            if (isset($queryParams['redir'])) {
+                $redirUrl = $queryParams['redir'];
+                if (preg_match('/\/share-video\/([a-zA-Z0-9=]+)=*/', $redirUrl, $matches)) {
+                    $videoId = $matches[1]; 
+                    $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
+                    return $finalVideoUrl;
+                }
+            }
+        } catch (\Exception $e) {
+        }
+
+        return null; 
     }
 }

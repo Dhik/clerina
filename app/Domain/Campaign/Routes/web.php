@@ -80,6 +80,7 @@ Route::prefix('admin')
                     ->name('campaignContent.getDataTable');
                 Route::get('/select/{campaignId}', [CampaignContentController::class, 'selectApprovedInfluencer'])
                     ->name('campaignContent.select');
+                Route::get('/update-shopee-video-links', [CampaignContentController::class, 'updateAllShopeeVideoLinks']);
                 Route::get('/getJson/{campaignId}', [CampaignContentController::class, 'getCampaignContentJson'])
                     ->name('campaignContent.getJson');
                 Route::post('/store/{campaignId}', [CampaignContentController::class, 'store'])
