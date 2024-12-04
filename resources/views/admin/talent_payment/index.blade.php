@@ -81,6 +81,7 @@
     </div>
 
     @include('admin.talent_payment.modals.edit_payment_modal')
+    @include('admin.talent_payment.modals.view_payment_modal')
 @stop
 
 @section('css')
@@ -212,12 +213,10 @@
             order: [[0, 'desc']]
         });
 
-        // Handle filter button click
         $('#filterButton').on('click', function() {
             table.ajax.reload();
         });
 
-        // Handle reset filter button click
         $('#resetFilterButton').on('click', function() {
             $('#filterPic').val('').trigger('change');
             $('#filterUsername').val('').trigger('change');
@@ -225,7 +224,6 @@
             table.ajax.reload();
         });
 
-        // Handle delete button click
         $('#talentPaymentsTable').on('click', '.deleteButton', function() {
             var paymentId = $(this).data('id');
             var route = '{{ route('talent_payments.destroy', ':id') }}'.replace(':id', paymentId);
@@ -268,7 +266,6 @@
             });
         });
 
-        // Handle export button click
         $('#exportButton').on('click', function() {
             var pic = $('#filterPic').val();
             var usernames = $('#filterUsername').val(); 
@@ -283,7 +280,6 @@
             window.location.href = '{{ route('talent_payments.pengajuan') }}' + queryString;
         });
 
-
         $('#exportExcelButton').on('click', function() {
             var pic = $('#filterPic').val();
             var username = $('#filterUsername').val();
@@ -291,7 +287,6 @@
             window.location.href = '{{ route('talent_payments.export_excel') }}?pic=' + pic + '&username=' + username + '&status_payment=' + status_payment;
         });
 
-        // Handle edit button click
         $('#talentPaymentsTable').on('click', '.editButton', function() {
             var paymentId = $(this).data('id');
             var row = table.row($(this).closest('tr')).data();
@@ -304,7 +299,6 @@
             $('#editPaymentModal').modal('show');
         });
 
-        // Handle edit form submission
         $('#editPaymentForm').on('submit', function(e) {
             e.preventDefault();
             var paymentId = $('#editPaymentId').val();
@@ -324,6 +318,27 @@
                     console.error(xhr.responseText);
                 }
             });
+        });
+
+        $('#talentPaymentsTable').on('click', '.viewButton', function() {
+            var paymentId = $(this).data('id');
+            var row = table.row($(this).closest('tr')).data();
+            
+            $('#viewUsername').text(row.username);
+            $('#viewTalentName').text(row.talent_name);
+            $('#viewNamaRekening').text(row.nama_rekening);
+            $('#viewFollowers').text(row.followers);
+            $('#viewPic').text(row.pic);
+            
+            $('#viewStatusPayment').text(row.status_payment);
+            $('#viewAmountTf').text('Rp ' + new Intl.NumberFormat('id-ID').format(row.amount_tf)); 
+            $('#viewTanggalPengajuan').text(row.tanggal_pengajuan ? 
+                moment(row.tanggal_pengajuan).format('DD/MM/YYYY') : '-');
+            
+            $('#viewDonePayment').text(row.done_payment ? 
+                moment(row.done_payment).format('DD/MM/YYYY') : '-');
+            
+            $('#viewPaymentModal').modal('show');
         });
     });
 </script>
