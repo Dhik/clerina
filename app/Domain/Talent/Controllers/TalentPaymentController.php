@@ -319,15 +319,6 @@ class TalentPaymentController extends Controller
             $query->where('username', $request->input('username'));
         }
 
-        // if ($request->filled('dateRange')) {
-        //     $dates = explode(' - ', $request->input('dateRange'));
-        //     $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
-        //     $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-        //     $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
-        //         $q->whereBetween('done_payment', [$startDate, $endDate]);
-        //     });
-        // }
-
         $talents = $query->get()->map(function ($talent) use ($startDate, $endDate) {
             $totalSpentForeachTalent = $this->calculateSpentForeachTalent($talent);
             $totalSpentForeachTalent = $this->adjustSpentForTax($totalSpentForeachTalent, $talent->nama_rekening);
