@@ -49,7 +49,7 @@
                 </th>
                 <th>Final TF</th>
                 <th>Total Payment</th>
-                <th>Keterangan (DP 50%)</th>
+                <th>Status Payment</th>
                 <th>Nama PIC</th>
                 <th>No Rekening</th>
                 <th>Nama Bank</th>
@@ -91,16 +91,19 @@
                     <td>{{ number_format($final_tf, 0) }}</td>
                     <td>
                         @php
-                            $displayValue = $final_tf;
-                            if (in_array($content->status_payment, ["Termin 1", "Termin 3", "Termin 2"])) {
+                        if ($content->amount_tf === null || $content->amount_tf == 0) {
+                            // If amount_tf is null or 0, calculate displayValue based on status_payment
+                            if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
                                 $displayValue = $final_tf / 3;
-                            } elseif ($content->status_payment === "DP 50%") {
+                            } elseif ($content->status_payment === "DP 50%" || $content->status_payment === "Pelunasan 50%") {
                                 $displayValue = $final_tf / 2;
                             } elseif ($content->status_payment === "Full Payment") {
                                 $displayValue = $final_tf;
-                            } elseif ($content->status_payment === "Pelunasan 50%") {
-                                $displayValue = $final_tf / 2;
                             }
+                        } else {
+                            // If amount_tf is not null, use it directly as the displayValue
+                            $displayValue = $content->amount_tf;
+                        }
                             $totalTransfer += $displayValue;
                         @endphp
                         {{ number_format($displayValue, 0) }}

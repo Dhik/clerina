@@ -120,8 +120,25 @@ class TalentPaymentController extends Controller
                 'talent_id' => 'required|integer',
                 'status_payment' => 'nullable|string|max:255',
             ]);
+            $talent = Talent::findOrFail($validatedData['talent_id']);
+            $rate_card_per_slot = $talent->price_rate;
+            $slot = $talent->slot_final;
+            $rate_harga = $rate_card_per_slot * $slot;
+            $discount = $talent->discount;
+            $harga_setelah_diskon = $rate_harga - $discount;
+
+            if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
+                $pphPercentage = $talent->tax_percentage / 100;
+            } else {
+                $pphPercentage = $talent->isPTorCV ? 0.02 : 0.025;
+            }
+            $pphAmount = $harga_setelah_diskon * $pphPercentage;
+            $final_tf = $harga_setelah_diskon - $pphAmount;
+
+            $amount_tf = $final_tf - $talent->dp_amount;
             $validatedData['tanggal_pengajuan'] = Carbon::today();
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
+            $validatedData['amount_tf'] = $amount_tf; 
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
         } catch (\Exception $e) {
@@ -157,35 +174,49 @@ class TalentPaymentController extends Controller
      * @param TalentPayments $payment
      */
     public function update(Request $request, $id)
-    {
-        try {
-            $payment = TalentPayment::findOrFail($id);
+{
+    try {
+        $payment = TalentPayment::findOrFail($id);
 
-            $validatedData = $request->validate([
-                'done_payment' => 'nullable|date',
-            ]);
-            $payment->update($validatedData);
+        // Validate input data
+        $validatedData = $request->validate([
+            'done_payment' => 'nullable|date',
+        ]);
+        $payment->update($validatedData);
 
-            if ($payment->status_payment === 'DP 50%' && $payment->done_payment !== null) {
-                $talent = $payment->talent;
-    
-                $rate_harga = $talent->price_rate * $talent->slot_final;
-                $harga_setelah_diskon = $rate_harga - $talent->discount;
-    
-                $pphPercentage = (Str::startsWith($talent->nama_rekening, ['PT', 'CV'])) ? 0.02 : 0.025;
-                $pphAmount = $harga_setelah_diskon * $pphPercentage;
-                $final_tf = $harga_setelah_diskon - $pphAmount;
-    
-                $talent->dp_amount = $final_tf / 2;
-                $talent->save();
+        if ($payment->done_payment !== null) {
+            $talent = $payment->talent;
+
+            $rate_harga = $talent->price_rate * $talent->slot_final;
+            $harga_setelah_diskon = $rate_harga - $talent->discount;
+
+            $pphPercentage = (Str::startsWith($talent->nama_rekening, ['PT', 'CV'])) ? 0.02 : 0.025;
+            $pphAmount = $harga_setelah_diskon * $pphPercentage;
+            $final_tf = $harga_setelah_diskon - $pphAmount;
+
+            $paymentStatuses = ['Termin 1', 'Termin 2', 'Termin 3', 'DP 50%', 'Pelunasan 50%'];
+
+            $relevantPaymentsCount = TalentPayment::where('talent_id', $talent->id)
+                ->whereIn('status_payment', $paymentStatuses)
+                ->count();
+
+            if ($relevantPaymentsCount > 0) {
+                if (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3'])) {
+                    $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
+                } elseif (in_array($payment->status_payment, ["DP 50%", "Pelunasan 50%"])) {
+                    $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
+                } elseif ($payment->status_payment === "Full Payment") {
+                    $talent->dp_amount = $final_tf;
+                }
             }
-
-            return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
-        } catch (\Exception $e) {
-            \Log::error('Payment update failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
+            $talent->save();
         }
+        return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
+    } catch (\Exception $e) {
+        \Log::error('Payment update failed: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
     }
+}
 
     /**
      * Remove the specified resource from storage.
