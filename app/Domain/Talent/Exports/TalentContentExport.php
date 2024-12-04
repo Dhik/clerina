@@ -59,7 +59,7 @@ class TalentContentExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             $talentContent->transfer_date,
-            $talentContent->talent->username,
+            $talentContent->talent ? $talentContent->talent->username : 'N/A',
             $talentContent->talent->slot_final,
             $talentContent->pic_code,
             $talentContent->talent->content_type,
