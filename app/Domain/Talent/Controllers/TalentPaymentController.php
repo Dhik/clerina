@@ -310,25 +310,24 @@ class TalentPaymentController extends Controller
         }
 
         $query = Talent::with(['talentContents', 'talentPayments' => function ($q) use ($startDate, $endDate) {
-        if ($startDate && $endDate) {
-            $q->whereBetween('done_payment', [$startDate, $endDate]);
-        }
+            if ($startDate && $endDate) {
+                $q->whereBetween('done_payment', [$startDate, $endDate]);
+            }
         }])->select('talents.*');
 
         if ($request->input('username')) {
             $query->where('username', $request->input('username'));
         }
 
-        if ($request->filled('dateRange')) {
-            $dates = explode(' - ', $request->input('dateRange'));
-            $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
-            $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-            $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('done_payment', [$startDate, $endDate]);
-            });
-        }
+        // if ($request->filled('dateRange')) {
+        //     $dates = explode(' - ', $request->input('dateRange'));
+        //     $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
+        //     $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
+        //     $query->whereHas('talentPayments', function ($q) use ($startDate, $endDate) {
+        //         $q->whereBetween('done_payment', [$startDate, $endDate]);
+        //     });
+        // }
 
-        // Retrieve the talents as a collection and calculate additional columns
         $talents = $query->get()->map(function ($talent) use ($startDate, $endDate) {
             $totalSpentForeachTalent = $this->calculateSpentForeachTalent($talent);
             $totalSpentForeachTalent = $this->adjustSpentForTax($totalSpentForeachTalent, $talent->nama_rekening);
@@ -356,7 +355,6 @@ class TalentPaymentController extends Controller
             $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
             $piutang = $talentShouldGet < $totalSpentForTalent ? $totalSpentForTalent - $talentShouldGet : 0;
 
-            // Return an object with all the necessary fields for DataTables
             return (object) [
                 'talent_name' => $talent->talent_name,
                 'username' => $talent->username,
@@ -367,12 +365,9 @@ class TalentPaymentController extends Controller
             ];
         });
 
-        // Filter out talents where both total_spent and talent_should_get are zero
         $filteredTalents = $talents->filter(function ($talent) {
             return $talent->total_spent != 0 || $talent->talent_should_get != 0;
         });
-
-        // Return the filtered data to DataTables
         return DataTables::of($filteredTalents)->make(true);
     }
 
