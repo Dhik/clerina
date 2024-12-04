@@ -6,12 +6,32 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use App\Domain\Talent\Models\TalentContent;
+use Yajra\DataTables\Utilities\Request;
 
 class TalentContentExport implements FromQuery, WithHeadings, WithMapping
 {
+    protected $startDate;
+    protected $endDate;
+
+    public function __construct(Request $request)
+    {
+        $dateRange = $request->input('filterPostingDate');
+        
+        if ($dateRange) {
+            $dates = explode(' - ', $dateRange);
+            $this->startDate = $dates[0];
+            $this->endDate = $dates[1];
+        }
+    }
+
     public function query()
     {
-        return TalentContent::query()->with('talent');
+        $query = TalentContent::query()->with('talent');
+
+        if ($this->startDate && $this->endDate) {
+            $query->whereBetween('posting_date', [$this->startDate, $this->endDate]);
+        }
+        return $query;
     }
 
     public function headings(): array

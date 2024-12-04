@@ -16,7 +16,7 @@
                             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentContentModal">
                                 <i class="fas fa-plus"></i> Add Talent Content
                             </button>
-                            <a href="{{ route('talent_content.export') }}" class="btn btn-success">
+                            <a href="#" id="exportButton" class="btn btn-success mr-2">
                                 <i class="fas fa-file-excel"></i> Export to Excel
                             </a>
                             <button id="toggleCalendarBtn" class="btn btn-info">
@@ -205,9 +205,7 @@
                 })
                 .catch(error => console.error('Error fetching product list:', error));
         }
-        populateProdukFilter();
-
-        
+        populateProdukFilter(); 
 
         const filterDone = $('#filterDone');
         var table = $('#talentContentTable').DataTable({
@@ -718,11 +716,9 @@
                     const labels = data.labels;
                     const datasets = data.datasets;
 
-                    // Extract unique product labels from the datasets
                     const products = datasets.map(dataset => dataset.label);
-                    const uniqueProducts = [...new Set(products)];  // Remove duplicates
+                    const uniqueProducts = [...new Set(products)];
 
-                    // Populate the product filter with options dynamically
                     const productFilter = document.getElementById('productFilter');
                     uniqueProducts.forEach((product, index) => {
                         const option = document.createElement('option');
@@ -731,13 +727,12 @@
                         productFilter.appendChild(option);
                     });
 
-                    // Initialize the chart
                     const ctx = document.getElementById('lineChart').getContext('2d');
                     lineChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: labels,
-                            datasets: datasets // Initially show all datasets
+                            datasets: datasets
                         },
                         options: {
                             responsive: true,
@@ -777,7 +772,6 @@
                 });
         }
 
-        // Call the function to fetch and display the data
         fetchDataAndInitChart();
 
         $('#toggleCalendarBtn').click(function() {
@@ -797,7 +791,15 @@
             }
         });
 
-
+        $('#exportButton').on('click', function(e) {
+            e.preventDefault();
+            var queryString = '?';
+            var postingDate = $('#filterPostingDate').val();
+            if (postingDate) {
+                queryString += 'filterPostingDate=' + encodeURIComponent(postingDate);
+            }
+            window.location.href = '{{ route('talent_content.export') }}' + queryString;
+        });
 
     });
 </script>

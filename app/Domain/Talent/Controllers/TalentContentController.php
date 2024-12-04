@@ -559,8 +559,8 @@ class TalentContentController extends Controller
         ]);
     }
 
-    public function export(){
-        return Excel::download(new TalentContentExport, 'talent_content.xlsx');
+    public function export(Request $request){
+        return Excel::download(new TalentContentExport($request), 'talent_content.xlsx');
     }
     public function refund($id)
     {
