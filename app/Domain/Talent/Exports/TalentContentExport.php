@@ -60,18 +60,18 @@ class TalentContentExport implements FromQuery, WithHeadings, WithMapping
         return [
             $talentContent->transfer_date,
             $talentContent->talent ? $talentContent->talent->username : 'N/A',
-            $talentContent->talent->slot_final,
+            $talentContent->talent ? $talentContent->talent->slot_final : 'N/A',
             $talentContent->pic_code,
-            $talentContent->talent->content_type,
-            $talentContent->talent->produk,
-            $talentContent->talent->rate_final,
+            $talentContent->talent ? $talentContent->talent->content_type : 'N/A',
+            $talentContent->talent ? $talentContent->talent->produk : 'N/A',
+            $talentContent->talent ? $talentContent->talent->rate_final : 'N/A',
             $talentContent->dealing_upload_date,
             $talentContent->posting_date,
             $talentContent->done ? 'Yes' : 'No',
             $talentContent->upload_link,
             $talentContent->pic_code,
             $talentContent->boost_code,
-            $talentContent->talent->bulan_running,
+            $talentContent->talent ? $talentContent->talent->bulan_running : 'N/A',
             $talentContent->kerkun ? 'Kerkun' : 'Non Kerkun',
         ];
     }
