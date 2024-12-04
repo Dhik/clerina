@@ -589,19 +589,23 @@ class CampaignContentController extends Controller
         try {
             $response = Http::get($shortUrl);
             $finalUrl = $response->effectiveUri();
+
             $parsedUrl = parse_url($finalUrl);
             parse_str($parsedUrl['query'] ?? '', $queryParams);
-            if (isset($queryParams['redir'])) {
-                $redirUrl = $queryParams['redir'];
-                if (preg_match('/\/share-video\/([a-zA-Z0-9=]+)=*/', $redirUrl, $matches)) {
-                    $videoId = $matches[1]; 
-                    $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
-                    return $finalVideoUrl;
-                }
+
+            $redirValue = $queryParams['redir'] ?? null;
+            if ($redirValue) {
+                $urlParts = explode('/', $redirValue);
+                $videoId = explode('?', $urlParts[4])[0]; 
+
+                $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
+                return $finalVideoUrl;
             }
         } catch (\Exception $e) {
+            // Handle any exceptions (optional logging could be added here)
         }
 
-        return null; 
+        return null;
     }
+
 }
