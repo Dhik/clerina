@@ -483,10 +483,7 @@ class CampaignContentController extends Controller
 
     public function getProductStatistics(string $productName)
 {
-    // Retrieve the product by name and ensure it exists
     $product = CampaignContent::where('product', $productName)->firstOrFail();
-
-    // Retrieve top 5 by views
     $topViews = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
         ->where('campaign_contents.product', $productName)
         ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.view) AS total_views')
@@ -495,7 +492,6 @@ class CampaignContentController extends Controller
         ->take(5)
         ->get();
 
-    // Retrieve top 5 by likes
     $topLikes = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
         ->where('campaign_contents.product', $productName)
         ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.like) AS total_likes')
@@ -504,7 +500,6 @@ class CampaignContentController extends Controller
         ->take(5)
         ->get();
 
-    // Retrieve top 5 by comments
     $topComments = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
         ->where('campaign_contents.product', $productName)
         ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.comment) AS total_comments')
@@ -513,7 +508,6 @@ class CampaignContentController extends Controller
         ->take(5)
         ->get();
 
-    // Retrieve top 5 by engagements
     $topEngagements = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
         ->where('campaign_contents.product', $productName)
         ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.engagement) AS total_engagement')

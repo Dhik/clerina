@@ -13,6 +13,7 @@ use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\CampaignContent;
 use App\Domain\Talent\Requests\TalentContentRequest;
 use Yajra\DataTables\Utilities\Request;
+use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -397,6 +398,31 @@ class TalentContentController extends Controller
             'total_count' => $totalCount,
         ]);
     }
+
+    public function extractVideoIdFromShortLink($shortUrl, $username)
+    {
+        try {
+            $response = Http::get($shortUrl);
+            $finalUrl = $response->effectiveUri();
+
+            $parsedUrl = parse_url($finalUrl);
+            parse_str($parsedUrl['query'] ?? '', $queryParams);
+
+            $redirValue = $queryParams['redir'] ?? null;
+            if ($redirValue) {
+                $urlParts = explode('/', $redirValue);
+                $videoId = explode('?', $urlParts[4])[0]; 
+
+                $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
+                return $finalVideoUrl;
+            }
+        } catch (\Exception $e) {
+            // Handle any exceptions (optional logging could be added here)
+        }
+
+        return null;
+    }
+
     public function addLink(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -408,19 +434,26 @@ class TalentContentController extends Controller
         ]);
 
         $talentContent = TalentContent::findOrFail($id);
-        $talentContent->upload_link = $request->upload_link;
+        $talent = Talent::findOrFail($talentContent->talent_id);
+
+        if ($request->channel === "shopee_video") {
+            $link_shopee = $this->extractVideoIdFromShortLink($request->upload_link, $talent->username);
+            $talentContent->upload_link = $link_shopee;
+        }
+        else {
+            $talentContent->upload_link = $request->upload_link;
+        }
+        
         $talentContent->done = 1;
         $talentContent->posting_date = $request->posting_date;
         $talentContent->save();
-
-        $talent = Talent::findOrFail($talentContent->talent_id);
 
         $existingKOL = KeyOpinionLeader::where('username', $talent->username)->first();
 
         if ($existingKOL) {
             $existingKOL->update([
                 'channel' => $request->channel,
-                'rate' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
+                'rate' => $talent->slot_final != 0 ? ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final : 0,
                 'created_by' => Auth::user()->id,
                 'pic_contact' => Auth::user()->id,
             ]);
@@ -441,7 +474,6 @@ class TalentContentController extends Controller
             ]);
         }
         if ($request->channel === 'instagram_story') {
-            // Always create a new CampaignContent for instagram_story
             CampaignContent::create([
                 'campaign_id' => $talentContent->campaign_id,
                 'key_opinion_leader_id' => $kol->id,
@@ -462,7 +494,6 @@ class TalentContentController extends Controller
                 'tenant_id' => Auth::user()->current_tenant_id,
             ]);
         } else {
-            // Check if CampaignContent already exists for other channels
             $campaignContent = CampaignContent::where('campaign_id', $talentContent->campaign_id)
                 ->where('link', $request->upload_link)
                 ->first();
@@ -472,29 +503,52 @@ class TalentContentController extends Controller
                     'username' => $talent->username,
                     'channel' => $request->channel,
                     'task_name' => $request->task_name,
-                    'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
+                    'rate_card' => $talent->slot_final != 0 ? ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final : 0,
                     'kode_ads' => $request->kode_ads,
                 ]);
             } else {
-                CampaignContent::create([
-                    'campaign_id' => $talentContent->campaign_id,
-                    'key_opinion_leader_id' => $kol->id,
-                    'username' => $talent->username,
-                    'channel' => $request->channel,
-                    'task_name' => $request->task_name,
-                    'link' => $request->upload_link,
-                    'rate_card' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
-                    'product' => $talentContent->product,
-                    'kode_ads' => $request->kode_ads,
-                    'upload_date' => null,
-                    'boost_code' => $talentContent->boost_code,
-                    'is_fyp' => 0,
-                    'is_product_deliver' => 0,
-                    'is_paid' => 0,
-                    'caption' => null,
-                    'created_by' => Auth::user()->id,
-                    'tenant_id' => Auth::user()->current_tenant_id,
-                ]);
+                if ($request->channel === 'shopee_video') {
+                    CampaignContent::create([
+                        'campaign_id' => $talentContent->campaign_id,
+                        'key_opinion_leader_id' => $kol->id,
+                        'username' => $talent->username,
+                        'channel' => $request->channel,
+                        'task_name' => $request->task_name,
+                        'link' => $link_shopee,
+                        'rate_card' => $talent->slot_final != 0 ? ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final : 0,
+                        'product' => $talentContent->product,
+                        'kode_ads' => $request->kode_ads,
+                        'upload_date' => null,
+                        'boost_code' => $talentContent->boost_code,
+                        'is_fyp' => 0,
+                        'is_product_deliver' => 0,
+                        'is_paid' => 0,
+                        'caption' => null,
+                        'created_by' => Auth::user()->id,
+                        'tenant_id' => Auth::user()->current_tenant_id,
+                    ]);
+                } else {
+                    CampaignContent::create([
+                        'campaign_id' => $talentContent->campaign_id,
+                        'key_opinion_leader_id' => $kol->id,
+                        'username' => $talent->username,
+                        'channel' => $request->channel,
+                        'task_name' => $request->task_name,
+                        'link' => $request->upload_link,
+                        'rate_card' => $talent->slot_final != 0 ? ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final : 0,
+                        'product' => $talentContent->product,
+                        'kode_ads' => $request->kode_ads,
+                        'upload_date' => null,
+                        'boost_code' => $talentContent->boost_code,
+                        'is_fyp' => 0,
+                        'is_product_deliver' => 0,
+                        'is_paid' => 0,
+                        'caption' => null,
+                        'created_by' => Auth::user()->id,
+                        'tenant_id' => Auth::user()->current_tenant_id,
+                    ]);
+                }
+                
             }
         }
 
@@ -504,6 +558,7 @@ class TalentContentController extends Controller
             'upload_link' => $talentContent->upload_link,
         ]);
     }
+
     public function export(){
         return Excel::download(new TalentContentExport, 'talent_content.xlsx');
     }
