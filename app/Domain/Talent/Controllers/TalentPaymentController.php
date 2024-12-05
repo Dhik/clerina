@@ -204,7 +204,7 @@ class TalentPaymentController extends Controller
                 if (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3'])) {
                     $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
                 } elseif (in_array($payment->status_payment, ["DP 50%", "Pelunasan 50%"])) {
-                    $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
+                    $talent->dp_amount = ($final_tf / 2) * $relevantPaymentsCount;
                 } elseif ($payment->status_payment === "Full Payment") {
                     $talent->dp_amount = $final_tf;
                 }
