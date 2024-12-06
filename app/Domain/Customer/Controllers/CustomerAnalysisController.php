@@ -337,5 +337,30 @@ class CustomerAnalysisController extends Controller
         return Excel::download(new CustomersAnalysisExport($month, $produk), 'customer_analysis.xlsx');
     }
 
+    
+    public function getCityCounts(Request $request)
+    {
+        $query = CustomersAnalysis::query();
+
+        // Optional filter for month
+        if ($request->has('month') && $request->month) {
+            $month = $request->month;
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
+        }
+
+        // Optional filter for specific city (kota_kabupaten)
+        if ($request->has('kota_kabupaten') && $request->kota_kabupaten) {
+            $kotaKabupaten = $request->kota_kabupaten;
+            $query->where('kota_kabupaten', $kotaKabupaten);
+        }
+
+        // Fetching count of orders per kota_kabupaten
+        $data = $query->selectRaw('kota_kabupaten, COUNT(*) as total_count')
+            ->groupBy('kota_kabupaten')
+            ->get();
+
+        return response()->json($data);
+    }
+
 
 }

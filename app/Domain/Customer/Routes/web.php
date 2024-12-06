@@ -43,6 +43,8 @@ Route::prefix('admin')
                 Route::get('/import', [CustomerAnalysisController::class, 'importCustomers'])->name('customer_analysis.import');
                 Route::get('/total', [CustomerAnalysisController::class, 'countUniqueCustomers'])->name('customer_analysis.total');
                 Route::get('/product-pie', [CustomerAnalysisController::class, 'getProductCounts'])->name('customer_analysis.product_counts');
+                Route::get('/city-pie', [CustomerAnalysisController::class, 'getCityCounts'])->name('customer_analysis.city_counts');
+
                 Route::get('/daily-unique', [CustomerAnalysisController::class, 'getDailyUniqueCustomers'])->name('customer_analysis.daily_unique');
                 Route::get('/export', [CustomerAnalysisController::class, 'export'])->name('customer_analysis.export');
                 Route::get('/products', [CustomerAnalysisController::class, 'getProducts'])->name('customer_analysis.get_products');
