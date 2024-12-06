@@ -24,35 +24,32 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function collection() 
     {
         $query = CustomersAnalysis::query();
+        
+        // Filter by month if provided
         if ($this->month) {
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$this->month]);
         }
 
+        // Filter by product if provided
         if ($this->produk) {
             $query->where('produk', 'LIKE', $this->produk . '%');
         }
 
-        // Perform grouping and aggregation
+        // Perform grouping and aggregation by kota_kabupaten and produk
         $groupedData = $query->select(
-            DB::raw('MIN(id) as id'),
-            'nama_penerima',
-            'nomor_telepon',
-            DB::raw('SUM(qty) as total_orders'),
-            DB::raw('MAX(is_joined) as is_joined'),
-            DB::raw('COUNT(DISTINCT produk) as unique_products')
+            'kota_kabupaten',    // Grouping by city/district
+            'produk',            // Grouping by product
+            DB::raw('SUM(qty) as total_orders') // Sum of qty as total orders
         )
-        ->groupBy('nama_penerima', 'nomor_telepon')
+        ->groupBy('kota_kabupaten', 'produk') // Group by city/district and product
         ->get();
 
         // Transform the collection for export
         return $groupedData->map(function ($item) {
             return [
-                'id' => $item->id,
-                'nama_penerima' => $item->nama_penerima,
-                'nomor_telepon' => $item->nomor_telepon,
-                'total_orders' => $item->total_orders,
-                'unique_products' => $item->unique_products,
-                'is_joined' => $item->is_joined ? 'Joined' : 'Not Joined'
+                'kota_kabupaten' => $item->kota_kabupaten,  // City/District
+                'produk' => $item->produk,                    // Product
+                'total_orders' => $item->total_orders        // Total orders for that product and city/district
             ];
         });
     }
@@ -61,12 +58,9 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function headings(): array 
     {
         return [
-            'ID', 
-            'Nama Penerima', 
-            'Nomor Telepon', 
-            'Total Quantity',
-            'Unique Products',
-            'Is Joined'
+            'Kota/Kabupaten',  // Heading for city/district
+            'Produk',          // Heading for product
+            'Total Quantity'   // Heading for total orders
         ];
     }
 
@@ -74,8 +68,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function columnFormats(): array 
     {
         return [
-            'D' => '#,##0', // Formats 'Total Quantity' column
-            'E' => '#,##0'  // Formats 'Unique Products' column
+            'C' => '#,##0'  // Format 'Total Quantity' column
         ];
     }
 }
