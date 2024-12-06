@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Customer\Models\CustomersAnalysis;
+use Illuminate\Http\Request;
 
 class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting 
 {
@@ -24,6 +25,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     // Use collection instead of query to have more control
     public function collection() 
     {
+        // Start with base query
         $query = CustomersAnalysis::query();
 
         // Apply filters dynamically
@@ -32,21 +34,20 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
         }
 
         if ($this->produk) {
-            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$this->produk]);
+            $query->where('produk', 'LIKE', $this->produk . '%');
         }
 
-        // Use DB::raw to create a subquery that handles grouping
-        $groupedData = DB::table(DB::raw("({$query->toSql()}) as sub"))
-            ->mergeBindings($query->getQuery())
-            ->select(
-                DB::raw('MIN(id) as id'),
-                'nama_penerima', 
-                'nomor_telepon', 
-                DB::raw('COUNT(*) as total_orders'), 
-                DB::raw('MIN(is_joined) as is_joined')
-            )
-            ->groupBy('nama_penerima', 'nomor_telepon')
-            ->get();
+        // Perform grouping and aggregation
+        $groupedData = $query->select(
+            DB::raw('MIN(id) as id'),
+            'nama_penerima',
+            'nomor_telepon',
+            DB::raw('SUM(qty) as total_orders'),
+            DB::raw('MAX(is_joined) as is_joined'),
+            DB::raw('COUNT(DISTINCT produk) as unique_products')
+        )
+        ->groupBy('nama_penerima', 'nomor_telepon')
+        ->get();
 
         // Transform the collection for export
         return $groupedData->map(function ($item) {
@@ -55,6 +56,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
                 'nama_penerima' => $item->nama_penerima,
                 'nomor_telepon' => $item->nomor_telepon,
                 'total_orders' => $item->total_orders,
+                'unique_products' => $item->unique_products,
                 'is_joined' => $item->is_joined ? 'Joined' : 'Not Joined'
             ];
         });
@@ -67,7 +69,8 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
             'ID', 
             'Nama Penerima', 
             'Nomor Telepon', 
-            'Total Orders', 
+            'Total Quantity',
+            'Unique Products',
             'Is Joined'
         ];
     }
@@ -76,7 +79,8 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function columnFormats(): array 
     {
         return [
-            'D' => '#,##0', // Formats 'Total Orders' column
+            'D' => '#,##0', // Formats 'Total Quantity' column
+            'E' => '#,##0'  // Formats 'Unique Products' column
         ];
     }
 }
