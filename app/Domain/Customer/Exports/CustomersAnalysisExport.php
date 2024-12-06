@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
-class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping
+class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithColumnFormatting
 {
     protected $month;
     protected $produk;
@@ -64,11 +64,19 @@ class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping
     public function map($row): array
     {
         return [
-            $row->id,
+            $row->id,  // This corresponds to MIN(id) in the query
             $row->nama_penerima,
             $row->nomor_telepon,
             $row->total_orders,
             $row->is_joined ? 'Joined' : 'Not Joined'
+        ];
+    }
+
+    // Optional column formatting (example)
+    public function columnFormats(): array
+    {
+        return [
+            'D' => '#,##0',  // Formats 'Total Orders' column
         ];
     }
 }
