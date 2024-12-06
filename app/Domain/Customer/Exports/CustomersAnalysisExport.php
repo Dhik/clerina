@@ -1,16 +1,15 @@
 <?php
 namespace App\Domain\Customer\Exports;
 
-use App\Domain\Customer\Models\CustomersAnalysis;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithTitle;
+use Illuminate\Support\Facades\DB;
+use App\Domain\Customer\Models\CustomersAnalysis;
 
-class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithColumnFormatting 
+class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting 
 {
     protected $month;
     protected $produk;
@@ -22,8 +21,8 @@ class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping, S
         $this->produk = $produk;
     }
 
-    // Define the query for fetching the data
-    public function query() 
+    // Use collection instead of query to have more control
+    public function collection() 
     {
         $query = CustomersAnalysis::query();
 
@@ -36,15 +35,29 @@ class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping, S
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$this->produk]);
         }
 
-        // Modify the query to resolve ONLY_FULL_GROUP_BY issue
-        return $query->select(
-            \DB::raw('MIN(id) as id'),
-            'nama_penerima', 
-            'nomor_telepon', 
-            \DB::raw('COUNT(id) as total_orders'), 
-            \DB::raw('MIN(is_joined) as is_joined')
-        )
-        ->groupBy('nama_penerima', 'nomor_telepon');
+        // Use DB::raw to create a subquery that handles grouping
+        $groupedData = DB::table(DB::raw("({$query->toSql()}) as sub"))
+            ->mergeBindings($query->getQuery())
+            ->select(
+                DB::raw('MIN(id) as id'),
+                'nama_penerima', 
+                'nomor_telepon', 
+                DB::raw('COUNT(*) as total_orders'), 
+                DB::raw('MIN(is_joined) as is_joined')
+            )
+            ->groupBy('nama_penerima', 'nomor_telepon')
+            ->get();
+
+        // Transform the collection for export
+        return $groupedData->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'nama_penerima' => $item->nama_penerima,
+                'nomor_telepon' => $item->nomor_telepon,
+                'total_orders' => $item->total_orders,
+                'is_joined' => $item->is_joined ? 'Joined' : 'Not Joined'
+            ];
+        });
     }
 
     // Define the headings for the Excel sheet
@@ -56,18 +69,6 @@ class CustomersAnalysisExport implements FromQuery, WithHeadings, WithMapping, S
             'Nomor Telepon', 
             'Total Orders', 
             'Is Joined'
-        ];
-    }
-
-    // Map the data to the Excel columns
-    public function map($row): array 
-    {
-        return [
-            $row->id, // This corresponds to MIN(id) in the query
-            $row->nama_penerima, 
-            $row->nomor_telepon, 
-            $row->total_orders, 
-            $row->is_joined ? 'Joined' : 'Not Joined'
         ];
     }
 
