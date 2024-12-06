@@ -35,21 +35,21 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
             $query->where('produk', 'LIKE', $this->produk . '%');
         }
 
-        // Perform grouping and aggregation by kota_kabupaten only
+        // Perform grouping and aggregation by kota_kabupaten and produk
         $groupedData = $query->select(
-            'kota_kabupaten', // Grouping by city/district
-            DB::raw('SUM(qty) as total_orders'),
-            DB::raw('COUNT(DISTINCT produk) as unique_products')
+            'kota_kabupaten',    // Grouping by city/district
+            'produk',            // Grouping by product
+            DB::raw('SUM(qty) as total_orders') // Sum of qty as total orders
         )
-        ->groupBy('kota_kabupaten')
+        ->groupBy('kota_kabupaten', 'produk') // Group by city/district and product
         ->get();
 
         // Transform the collection for export
         return $groupedData->map(function ($item) {
             return [
-                'kota_kabupaten' => $item->kota_kabupaten,  // Only include the city/district
-                'total_orders' => $item->total_orders,       // Total orders per city/district
-                'unique_products' => $item->unique_products  // Unique products per city/district
+                'kota_kabupaten' => $item->kota_kabupaten,  // City/District
+                'produk' => $item->produk,                    // Product
+                'total_orders' => $item->total_orders        // Total orders for that product and city/district
             ];
         });
     }
@@ -58,9 +58,9 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function headings(): array 
     {
         return [
-            'Kota/Kabupaten', // Heading for city/district
-            'Total Quantity',  // Heading for total orders
-            'Unique Products'  // Heading for unique products
+            'Kota/Kabupaten',  // Heading for city/district
+            'Produk',          // Heading for product
+            'Total Quantity'   // Heading for total orders
         ];
     }
 
@@ -68,8 +68,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
     public function columnFormats(): array 
     {
         return [
-            'B' => '#,##0', // Formats 'Total Quantity' column
-            'C' => '#,##0'  // Formats 'Unique Products' column
+            'C' => '#,##0'  // Format 'Total Quantity' column
         ];
     }
 }
