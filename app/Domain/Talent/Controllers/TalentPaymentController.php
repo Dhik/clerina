@@ -135,7 +135,12 @@ class TalentPaymentController extends Controller
             $pphAmount = $harga_setelah_diskon * $pphPercentage;
             $final_tf = $harga_setelah_diskon - $pphAmount;
 
-            $amount_tf = $final_tf - $talent->dp_amount;
+            if ($talent->dp_amount == 0) {
+                $amount_tf = 0;
+            }
+            else {
+                $amount_tf = $final_tf - $talent->dp_amount;
+            }
             $validatedData['tanggal_pengajuan'] = Carbon::today();
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
             $validatedData['amount_tf'] = $amount_tf; 
