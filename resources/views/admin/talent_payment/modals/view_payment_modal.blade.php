@@ -12,6 +12,9 @@
                         <div class="col-md-6">
                             <h6>Talent Information</h6>
                             <dl class="row">
+                                <dt class="col-sm-5">ID</dt>
+                                <dd class="col-sm-7" id="viewId"></dd>
+
                                 <dt class="col-sm-5">Username</dt>
                                 <dd class="col-sm-7" id="viewUsername"></dd>
 

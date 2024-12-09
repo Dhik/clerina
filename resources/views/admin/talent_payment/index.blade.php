@@ -324,6 +324,7 @@
             var paymentId = $(this).data('id');
             var row = table.row($(this).closest('tr')).data();
             
+            $('#viewId').text(paymentId);
             $('#viewUsername').text(row.username);
             $('#viewTalentName').text(row.talent_name);
             $('#viewNamaRekening').text(row.nama_rekening);
