@@ -249,7 +249,7 @@ class AttendanceController extends Controller
 
         if ($request->has('date') && !is_null($request->date)) {
             $date = Carbon::parse($request->date);
-            $query->whereDate('created_at', $date);
+            $query->whereDate('date', $date);
         }
 
         if ($request->has('employee_id') && !is_null($request->employee_id)) {
@@ -260,9 +260,9 @@ class AttendanceController extends Controller
 
         // No need for comparisonDate as we are not filtering by today's date unless explicitly provided
         $onTimeCount = $attendances->where('attendance_status', 'present')
-            ->where('clock_in', '<=', Carbon::parse('08:00'))->count();
+            ->where('clock_in', '<=', Carbon::parse('08:15'))->count();
         $lateClockInCount = $attendances->where('attendance_status', 'present')
-            ->where('clock_in', '>', Carbon::parse('08:00'))->count();
+            ->where('clock_in', '>', Carbon::parse('08:15'))->count();
         $earlyClockOutCount = $attendances->where('attendance_status', 'present')
             ->where('clock_out', '<', Carbon::parse('16:30'))->count();
         $absentCount = $attendances->where('attendance_status', 'absent')->count();
