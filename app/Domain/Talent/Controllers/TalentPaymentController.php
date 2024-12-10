@@ -64,6 +64,14 @@ class TalentPaymentController extends Controller
             $payments->where('talents.pic', $request->pic);
         }
 
+        if ($request->has('done_payment') && $request->done_payment != '') {
+            $payments->whereDate('talent_payments.done_payment', $request->done_payment);
+        }
+        
+        if ($request->has('tanggal_pengajuan') && $request->tanggal_pengajuan != '') {
+            $payments->whereDate('talent_payments.tanggal_pengajuan', $request->tanggal_pengajuan);
+        }        
+
         if ($request->has('username') && is_array($request->username)) {
             $payments->whereIn('talents.username', $request->username);
         }
@@ -258,6 +266,14 @@ class TalentPaymentController extends Controller
         if ($request->has('status_payment') && $request->status_payment != '') {
             $query->where('status_payment', $request->status_payment);
         }
+
+        if ($request->has('done_payment') && $request->done_payment != '') {
+            $query->whereDate('done_payment', $request->done_payment);
+        }
+        
+        if ($request->has('tanggal_pengajuan') && $request->tanggal_pengajuan != '') {
+            $query->whereDate('tanggal_pengajuan', $request->tanggal_pengajuan);
+        }   
 
         $talentContents = $query->get();
         $talentContents->each(function ($content) {

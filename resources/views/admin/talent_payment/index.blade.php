@@ -13,7 +13,8 @@
                 <div class="card-body">
                     <!-- Filter Dropdowns -->
                     <div class="row mb-3">
-                        <div class="col-auto">
+                        <div class="col-md-3 mb-2">
+                            <label>PIC</label>
                             <select id="filterPic" class="form-control">
                                 <option value="">Select PIC</option>
                                 @foreach($uniquePics as $pic)
@@ -22,6 +23,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
+                            <label>Usernames</label>
                             <select id="filterUsername" class="form-select select2" style="width: 100%;" multiple="multiple">
                                 @foreach($uniqueUsernames as $username)
                                     <option value="{{ $username }}">{{ $username }}</option>
@@ -29,6 +31,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
+                            <label>Status Payment</label>
                             <select name="status_payment" id="status_payment" class="form-control" required>
                                 <option value="">Select Status</option>
                                 <option value="Full Payment">Full Payment</option>
@@ -39,8 +42,15 @@
                                 <option value="Termin 3">Termin 3</option>
                             </select>
                         </div>
-
-                        <div class="col-auto">
+                        <div class="col-md-3 mb-2">
+                            <label for="filterDonePayment">Done Payment</label>
+                            <input type="date" id="filterDonePayment" class="form-control">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="filterTanggalPengajuan">Tanggal Pengajuan</label>
+                            <input type="date" id="filterTanggalPengajuan" class="form-control">
+                        </div>
+                        <div class="col-auto mt-4">
                             <button class="btn btn-primary" id="filterButton">
                                 <i class="fas fa-search"></i> Apply Filter
                             </button>
@@ -48,7 +58,7 @@
                                 <i class="fas fa-undo"></i> Reset Filter
                             </button>
                         </div>
-                        <div class="col-auto">
+                        <div class="col-auto mt-4">
                             <button type="button" class="btn btn-outline-primary exportForm" id="exportButton">
                                 <i class="fas fa-file-download"></i> {{ trans('labels.export') }} in PDF
                             </button>
@@ -163,6 +173,8 @@
                     d.pic = $('#filterPic').val();
                     d.username = $('#filterUsername').val();
                     d.status_payment = $('#status_payment').val();
+                    d.done_payment = $('#filterDonePayment').val();
+                    d.tanggal_pengajuan = $('#filterTanggalPengajuan').val();
                 }
             },
             columns: [
@@ -221,6 +233,8 @@
             $('#filterPic').val('').trigger('change');
             $('#filterUsername').val('').trigger('change');
             $('#status_payment').val('').trigger('change');
+            $('#filterDonePayment').val('');
+            $('#filterTanggalPengajuan').val('');
             table.ajax.reload();
         });
 
@@ -242,10 +256,9 @@
                         url: route,
                         type: 'DELETE',
                         data: {
-                            '_token': '{{ csrf_token() }}' // Include CSRF token for security
+                            '_token': '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            // Reload the DataTable to reflect the changes
                             table.ajax.reload();
                             Swal.fire(
                                 'Deleted!',
@@ -270,21 +283,41 @@
             var pic = $('#filterPic').val();
             var usernames = $('#filterUsername').val(); 
             var status_payment = $('#status_payment').val();
+            var done_payment = $('#filterDonePayment').val();  
+            var tanggal_pengajuan = $('#filterTanggalPengajuan').val();
+
             var queryString = '?pic=' + encodeURIComponent(pic) + 
-                            '&status_payment=' + encodeURIComponent(status_payment);
+                            '&status_payment=' + encodeURIComponent(status_payment) +
+                            '&done_payment=' + encodeURIComponent(done_payment) + 
+                            '&tanggal_pengajuan=' + encodeURIComponent(tanggal_pengajuan);  
+
             if (usernames && usernames.length > 0) {
                 usernames.forEach(function(username) {
                     queryString += '&username[]=' + encodeURIComponent(username);
                 });
             }
+
             window.location.href = '{{ route('talent_payments.pengajuan') }}' + queryString;
         });
 
+
         $('#exportExcelButton').on('click', function() {
             var pic = $('#filterPic').val();
-            var username = $('#filterUsername').val();
+            var usernames = $('#filterUsername').val();
             var status_payment = $('#status_payment').val();
-            window.location.href = '{{ route('talent_payments.export_excel') }}?pic=' + pic + '&username=' + username + '&status_payment=' + status_payment;
+            var done_payment = $('#filterDonePayment').val();
+            var tanggal_pengajuan = $('#filterTanggalPengajuan').val();
+            var queryString = '?pic=' + encodeURIComponent(pic) + 
+                      '&status_payment=' + encodeURIComponent(status_payment) +
+                      '&done_payment=' + encodeURIComponent(done_payment) + 
+                      '&tanggal_pengajuan=' + encodeURIComponent(tanggal_pengajuan);  
+
+            if (usernames && usernames.length > 0) {
+                usernames.forEach(function(username) {
+                    queryString += '&username[]=' + encodeURIComponent(username);
+                });
+            }
+            window.location.href = '{{ route('talent_payments.export_excel') }}' + queryString;
         });
 
         $('#talentPaymentsTable').on('click', '.editButton', function() {

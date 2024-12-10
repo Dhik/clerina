@@ -87,13 +87,19 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                     $q->where('pic', $this->request->pic);
                 });
             })
-            ->when($this->request->has('username') && $this->request->username != '', function($query) {
+            ->when($this->request->has('username') && is_array($this->request->username) && count($this->request->username) > 0, function($query) {
                 $query->whereHas('talent', function($q) {
-                    $q->where('username', $this->request->username);
+                    $q->whereIn('username', $this->request->username);
                 });
             })
             ->when($this->request->has('status_payment') && $this->request->status_payment != '', function($query) {
                 $query->where('status_payment', $this->request->status_payment);
+            })
+            ->when($this->request->has('done_payment') && $this->request->done_payment != '', function($query) {
+                $query->where('done_payment', $this->request->done_payment);
+            })
+            ->when($this->request->has('tanggal_pengajuan') && $this->request->tanggal_pengajuan != '', function($query) {
+                $query->whereDate('tanggal_pengajuan', $this->request->tanggal_pengajuan);
             })
             ->orderBy('id'); 
     }
@@ -180,10 +186,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $sheet = $event->sheet;
                 $spreadsheet = $sheet->getDelegate();
                 
-                // Apply validations in smaller chunks
                 $this->applyValidations($spreadsheet);
-                
-                // Clear any unnecessary formatting
                 $sheet->getStyle($sheet->calculateWorksheetDimension())->setQuotePrefix(false);
             },
         ];
