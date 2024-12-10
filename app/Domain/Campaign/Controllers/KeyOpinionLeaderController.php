@@ -32,8 +32,7 @@ class KeyOpinionLeaderController extends Controller
     public function __construct(
         protected KeyOpinionLeaderBLLInterface $kolBLL,
         protected UserBLLInterface $userBLL
-    )
-    {}
+    ) {}
 
     /**
      * Get common data
@@ -221,10 +220,10 @@ class KeyOpinionLeaderController extends Controller
             $er_bottom = null;
             $cpm_target = null;
         }
-        $statistics = Statistic::whereHas('campaignContent', function($query) use ($keyOpinionLeader) {
+        $statistics = Statistic::whereHas('campaignContent', function ($query) use ($keyOpinionLeader) {
             $query->where('username', $keyOpinionLeader->username);
         })->get();
-    
+
         $total_views = $statistics->sum('view');
         $total_likes = $statistics->sum('like');
         $total_comments = $statistics->sum('comment');
@@ -247,10 +246,10 @@ class KeyOpinionLeaderController extends Controller
             ->groupBy('channel')
             ->get();
         $response = [
-            'labels' => $data->pluck('channel'), 
-            'values' => $data->pluck('count'),  
+            'labels' => $data->pluck('channel'),
+            'values' => $data->pluck('count'),
         ];
-        return response()->json($response); 
+        return response()->json($response);
     }
     public function averageRate()
     {
@@ -260,10 +259,10 @@ class KeyOpinionLeaderController extends Controller
 
         $response = [
             'labels' => $data->pluck('channel'),
-            'values' => $data->pluck('average_rate') 
+            'values' => $data->pluck('average_rate')
         ];
 
-        return response()->json($response); 
+        return response()->json($response);
     }
 
     /**
@@ -410,5 +409,4 @@ class KeyOpinionLeaderController extends Controller
             return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
         }
     }
-
 }

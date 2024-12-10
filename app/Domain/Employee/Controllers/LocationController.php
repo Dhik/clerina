@@ -59,8 +59,8 @@ class LocationController extends Controller
         return DataTables::of($locations)
             ->addColumn('action', function ($location) {
                 return '
-                    <a href="'.route('location.edit', $location->id).'" class="btn btn-sm btn-primary">Edit</a>
-                    <button class="btn btn-sm btn-danger deleteButton" data-id="'.$location->id.'">Delete</button>
+                    <a href="' . route('location.edit', $location->id) . '" class="btn btn-sm btn-primary">Edit</a>
+                    <button class="btn btn-sm btn-danger deleteButton" data-id="' . $location->id . '">Delete</button>
                 ';
             })
             ->make(true);

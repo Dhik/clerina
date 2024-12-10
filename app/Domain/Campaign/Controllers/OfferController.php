@@ -34,9 +34,7 @@ use Yajra\DataTables\Utilities\Request;
 
 class OfferController extends Controller
 {
-    public function __construct(protected OfferBLLInterface $offerBLL)
-    {
-    }
+    public function __construct(protected OfferBLLInterface $offerBLL) {}
 
     /**
      * Return offer datatable
@@ -50,19 +48,19 @@ class OfferController extends Controller
 
         return DataTables::of($query)
             ->addColumn('campaign_title', function ($row) {
-                return '<a href="'. route("campaign.show", $row->campaign->id) .'" target="_blank">'.
+                return '<a href="' . route("campaign.show", $row->campaign->id) . '" target="_blank">' .
                     $row->campaign->title
-                    .'</a>';
+                    . '</a>';
             })
             ->addColumn('created_by_name', function ($row) {
-                return '<a href="'. route("users.show", $row->createdBy->id) .'" target="_blank">'.
+                return '<a href="' . route("users.show", $row->createdBy->id) . '" target="_blank">' .
                     $row->createdBy->name
-                    .'</a>';
+                    . '</a>';
             })
             ->addColumn('key_opinion_leader_username', function ($row) {
-                return '<a href="'. route("kol.show", $row->keyOpinionLeader->id) .'" target="_blank">'.
+                return '<a href="' . route("kol.show", $row->keyOpinionLeader->id) . '" target="_blank">' .
                     $row->keyOpinionLeader->username
-                    .'</a>';
+                    . '</a>';
             })
             ->addColumn('key_opinion_leader_cpm', function ($row) {
                 return number_format($row->keyOpinionLeader->cpm, '2', ',', '.');
@@ -95,14 +93,14 @@ class OfferController extends Controller
 
         return DataTables::of($query)
             ->addColumn('created_by_name', function ($row) {
-                return '<a href="'. route("users.show", $row->createdBy->id) .'" target="_blank">'.
-                            $row->createdBy->name
-                        .'</a>';
+                return '<a href="' . route("users.show", $row->createdBy->id) . '" target="_blank">' .
+                    $row->createdBy->name
+                    . '</a>';
             })
             ->addColumn('key_opinion_leader_username', function ($row) {
-                return '<a href="'. route("kol.show", $row->keyOpinionLeader->id) .'" target="_blank">'.
-                        $row->keyOpinionLeader->username
-                    .'</a>';
+                return '<a href="' . route("kol.show", $row->keyOpinionLeader->id) . '" target="_blank">' .
+                    $row->keyOpinionLeader->username
+                    . '</a>';
             })
             ->addColumn('key_opinion_leader_cpm', function ($row) {
                 return number_format($row->keyOpinionLeader->cpm, '2', ',', '.');
@@ -127,7 +125,7 @@ class OfferController extends Controller
     {
         $actionsHtml = '
                         <div class="btn-group">
-                            <a href='. route("offer.show", $row->id) .' type="button" class="btn btn-info btn-sm" target="_blank">'. trans("labels.detail") .'</a>
+                            <a href=' . route("offer.show", $row->id) . ' type="button" class="btn btn-info btn-sm" target="_blank">' . trans("labels.detail") . '</a>
                             <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                                 <span class="sr-only">Toggle Dropdown</span>
                             </button>
@@ -135,23 +133,23 @@ class OfferController extends Controller
 
         if (Gate::allows('updateOffer', $row)) {
             $actionsHtml .= '
-                <button class="dropdown-item btnUpdateOffer">'. trans("labels.update") .'</button>';
+                <button class="dropdown-item btnUpdateOffer">' . trans("labels.update") . '</button>';
         }
 
         if (Gate::allows('approveRejectOffer', $row)) {
             $actionsHtml .= '
-                <button class="dropdown-item btnUpdateStatus">'. trans("labels.approve_reject") .'</button>';
+                <button class="dropdown-item btnUpdateStatus">' . trans("labels.approve_reject") . '</button>';
         }
 
         // Check if the status is "approved" to show the "Review Offering" button
         if ($row->status === 'approved' && Gate::allows('reviewOffer', $row)) {
             $actionsHtml .= '
-                <button class="dropdown-item btnReviewOffer">'. trans("labels.review") . ' ' . trans("labels.offering") . '</button>';
+                <button class="dropdown-item btnReviewOffer">' . trans("labels.review") . ' ' . trans("labels.offering") . '</button>';
         }
 
 
         $actionsHtml .= '
-            <a class="dropdown-item" href="'. route('offer.show', $row->id) .'?tab=sign" target="_blank">'. trans("labels.view_sign") . '</a>';
+            <a class="dropdown-item" href="' . route('offer.show', $row->id) . '?tab=sign" target="_blank">' . trans("labels.view_sign") . '</a>';
 
 
         if (Gate::allows('financeOffer', $row)) {
@@ -162,7 +160,7 @@ class OfferController extends Controller
 
         $actionsHtml .= '
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">'. trans('labels.delete') .'</a>
+                <a class="dropdown-item" href="#">' . trans('labels.delete') . '</a>
                     </div>
                 </div>';
 
@@ -263,8 +261,7 @@ class OfferController extends Controller
         return view('admin.offer.show', compact('offer', 'negotiates', 'statuses', 'transferStatuses'));
     }
 
-    public function delete()
-    {}
+    public function delete() {}
 
     /**
      * View sign form for KOL
@@ -300,7 +297,7 @@ class OfferController extends Controller
             abort(404);
         }
 
-        $pathToFile = Storage::disk('private')->path($media->id.'/'.$media->file_name);
+        $pathToFile = Storage::disk('private')->path($media->id . '/' . $media->file_name);
 
         return response()->file($pathToFile);
     }
@@ -325,7 +322,7 @@ class OfferController extends Controller
      */
     public function previewChatProof(int $mediaId, string $filename): BinaryFileResponse
     {
-        $pathToFile = Storage::disk('private')->path($mediaId.'/'.$filename);
+        $pathToFile = Storage::disk('private')->path($mediaId . '/' . $filename);
         return response()->file($pathToFile);
     }
 
@@ -383,7 +380,6 @@ class OfferController extends Controller
 
         return (new OfferExport())
             ->forCampaign($campaign->id)
-            ->download($campaign->title .' offer.xlsx');
+            ->download($campaign->title . ' offer.xlsx');
     }
-
 }

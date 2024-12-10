@@ -18,7 +18,7 @@ use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
-use Carbon\Carbon; 
+use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -60,38 +60,38 @@ class SalesController extends Controller
 
         return DataTables::of($orderQuery)
             ->addColumn('visitFormatted', function ($row) {
-                return '<a href="#" class="visitButtonDetail">'.
-                        number_format($row->visit, 0, ',', '.').
+                return '<a href="#" class="visitButtonDetail">' .
+                    number_format($row->visit, 0, ',', '.') .
                     '</a>';
             })
             ->addColumn('qtyFormatted', function ($row) {
                 return number_format($row->qty, 0, ',', '.');
             })
             ->addColumn('totalFormatted', function ($row) {
-                return 'Rp.'. number_format($row->ad_spent_social_media + $row->ad_spent_market_place, 0, ',', '.');
+                return 'Rp.' . number_format($row->ad_spent_social_media + $row->ad_spent_market_place, 0, ',', '.');
             })
             ->addColumn('adSpentSocialMediaFormatted', function ($row) {
-                return 'Rp.'. number_format($row->ad_spent_social_media, 0, ',', '.');
+                return 'Rp.' . number_format($row->ad_spent_social_media, 0, ',', '.');
             })
             ->addColumn('adSpentMarketPlaceFormatted', function ($row) {
-                return 'Rp.'. number_format($row->ad_spent_market_place, 0, ',', '.');
+                return 'Rp.' . number_format($row->ad_spent_market_place, 0, ',', '.');
             })
             ->addColumn('orderFormatted', function ($row) {
                 return number_format($row->order, 0, ',', '.');
             })
             ->addColumn('closingRateFormatted', function ($row) {
-                return $row->visit === 0 ? 0 : number_format(($row->order/$row->visit)*100, 2, ',', '.').'%';
+                return $row->visit === 0 ? 0 : number_format(($row->order / $row->visit) * 100, 2, ',', '.') . '%';
             })
             ->addColumn('roasFormatted', function ($row) {
                 return number_format($row->roas, 2, ',', '.');
             })
             ->addColumn('adSpentTotalFormatted', function ($row) {
-                return '<a href="#" class="omsetButtonDetail">'.
-                    number_format($row->turnover, 0, ',', '.').
+                return '<a href="#" class="omsetButtonDetail">' .
+                    number_format($row->turnover, 0, ',', '.') .
                     '</a>';
             })
             ->addColumn('turnoverFormatted', function ($row) {
-                return 'Rp.'. number_format($row->turnover, 0, ',', '.');
+                return 'Rp.' . number_format($row->turnover, 0, ',', '.');
             })
             ->addColumn(
                 'actions',
@@ -116,6 +116,12 @@ class SalesController extends Controller
         return view('admin.sales.index', compact('salesChannels', 'socialMedia'));
     }
 
+    public function report(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        $this->authorize('viewAnySales', Sales::class);
+        return view('admin.sales.report');
+    }
+
     /**
      * Retrieves sales recap information based on the provided request.
      */
@@ -136,7 +142,10 @@ class SalesController extends Controller
         $adSpentSocialMedia = $this->adSpentSocialMediaBLL->getAdSpentSocialMediaByDate($sales->date, Auth::user()->current_tenant_id);
 
         return view('admin.sales.show', compact(
-            'sales', 'visits', 'adSpentMarketPlaces', 'adSpentSocialMedia'
+            'sales',
+            'visits',
+            'adSpentMarketPlaces',
+            'adSpentSocialMedia'
         ));
     }
 
@@ -173,19 +182,19 @@ class SalesController extends Controller
         $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
             ->selectRaw('SUM(amount) as turnover')
-            ->first(); 
+            ->first();
 
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 1)
             ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
             ->first();
 
-        $avgTurnoverPerTransaction = $orderData->transactions > 0 
-            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+        $avgTurnoverPerTransaction = $orderData->transactions > 0
+            ? round($yesterdayData->turnover / $orderData->transactions, 2)
             : 0;
 
-        $avgTurnoverPerCustomer = $orderData->customers > 0 
-            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+        $avgTurnoverPerCustomer = $orderData->customers > 0
+            ? round($yesterdayData->turnover / $orderData->customers, 2)
             : 0;
 
         // Format daily turnover
@@ -265,7 +274,7 @@ class SalesController extends Controller
         $growthMTDLM = $lastMonthData->total_turnover > 0
             ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
             : 0;
-        
+
         $dayBeforeYesterday = now()->subDays(2);
 
         $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
@@ -318,7 +327,7 @@ class SalesController extends Controller
         $yesterdayData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
             ->selectRaw('SUM(amount) as turnover')
-            ->first(); 
+            ->first();
 
         $orderData = Order::whereDate('date', $yesterday)
             ->where('tenant_id', 2)
@@ -326,12 +335,12 @@ class SalesController extends Controller
             ->first();
 
         // Average turnover per transaction and per customer
-        $avgTurnoverPerTransaction = $orderData->transactions > 0 
-            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+        $avgTurnoverPerTransaction = $orderData->transactions > 0
+            ? round($yesterdayData->turnover / $orderData->transactions, 2)
             : 0;
 
-        $avgTurnoverPerCustomer = $orderData->customers > 0 
-            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+        $avgTurnoverPerCustomer = $orderData->customers > 0
+            ? round($yesterdayData->turnover / $orderData->customers, 2)
             : 0;
 
         $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
@@ -406,7 +415,7 @@ class SalesController extends Controller
         $growthMTDLM = $lastMonthData->total_turnover > 0
             ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
             : 0;
-        
+
         $dayBeforeYesterday = now()->subDays(2);
 
         $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
@@ -474,8 +483,8 @@ class SalesController extends Controller
             ->selectRaw('SUM(amount) as turnover, COUNT(id) as transactions')
             ->first();
 
-        $conversionRate = $visitData->total_visits > 0 
-            ? round(($yesterdayData->transactions / $visitData->total_visits) * 100, 2) 
+        $conversionRate = $visitData->total_visits > 0
+            ? round(($yesterdayData->transactions / $visitData->total_visits) * 100, 2)
             : 0;
 
         // Pengeluaran iklan kemarin
@@ -492,8 +501,8 @@ class SalesController extends Controller
             ->get();
 
         $totalAdsSpend = $socialMediaSpends->sum('total_amount') + $marketplaceSpends->sum('total_amount');
-        $roas = $totalAdsSpend > 0 
-            ? round($yesterdayData->turnover / $totalAdsSpend, 2) 
+        $roas = $totalAdsSpend > 0
+            ? round($yesterdayData->turnover / $totalAdsSpend, 2)
             : 0;
 
         $socialMediaNames = SocialMedia::pluck('name', 'id');
@@ -663,7 +672,7 @@ class SalesController extends Controller
 
     public function importVisitCleora()
     {
-        $range = '[Cleora] Visit, Sales, Transaction!A3:E'; 
+        $range = '[Cleora] Visit, Sales, Transaction!A3:E';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -677,8 +686,8 @@ class SalesController extends Controller
             $salesChannelData = [
                 1 => $row[1] ?? null,
                 4 => $row[2] ?? null,
-                2 => $row[3] ?? null, 
-                3 => $row[4] ?? null, 
+                2 => $row[3] ?? null,
+                3 => $row[4] ?? null,
             ];
 
             foreach ($salesChannelData as $salesChannelId => $amountValue) {
@@ -703,7 +712,7 @@ class SalesController extends Controller
     }
     public function importVisitAzrina()
     {
-        $range = '[Azrina] Visit, Sales, Transaction!A3:E'; 
+        $range = '[Azrina] Visit, Sales, Transaction!A3:E';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
@@ -717,8 +726,8 @@ class SalesController extends Controller
             $salesChannelData = [
                 1 => $row[1] ?? null,
                 4 => $row[2] ?? null,
-                2 => $row[3] ?? null, 
-                3 => $row[4] ?? null, 
+                2 => $row[3] ?? null,
+                3 => $row[4] ?? null,
             ];
 
             foreach ($salesChannelData as $salesChannelId => $amountValue) {
@@ -771,11 +780,11 @@ class SalesController extends Controller
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
 
                 $turnover = Sales::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->value('turnover');
+                    ->where('date', $formattedDate)
+                    ->value('turnover');
 
                 $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
-                
+
                 $dataToUpdate = [
                     'ad_spent_social_media' => $sumSpentSocialMedia,
                     'ad_spent_market_place' => $sumSpentMarketPlace,
@@ -809,7 +818,7 @@ class SalesController extends Controller
                 $sumVisitAzrina = Visit::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->sum('visit_amount');
-                
+
                 $dataToUpdate = [
                     'visit' => $sumVisitCleora,
                 ];

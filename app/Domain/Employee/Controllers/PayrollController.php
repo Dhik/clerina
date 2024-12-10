@@ -46,61 +46,61 @@ class PayrollController extends Controller
     }
 
     public function getPayrollData(Employee $employee)
-{
-    $dateRanges = $this->cutOff();
+    {
+        $dateRanges = $this->cutOff();
 
-    // Fetch data for the defined date ranges
-    $timeOffs = TimeOff::where('employee_id', $employee->employee_id)
-        ->where('status_approval', 'approved')
-        ->where('time_off_type', 'Izin')
-        ->orderBy('date', 'asc');
-    $timeOffs = $this->filterByDateRange($timeOffs, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth'])->get();
+        // Fetch data for the defined date ranges
+        $timeOffs = TimeOff::where('employee_id', $employee->employee_id)
+            ->where('status_approval', 'approved')
+            ->where('time_off_type', 'Izin')
+            ->orderBy('date', 'asc');
+        $timeOffs = $this->filterByDateRange($timeOffs, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth'])->get();
 
-    // Fetch payroll and place details
-    $payroll = Payroll::where('employee_id', $employee->employee_id)->first();
-    $place = Location::where('id', $employee->place_id)->first();
+        // Fetch payroll and place details
+        $payroll = Payroll::where('employee_id', $employee->employee_id)->first();
+        $place = Location::where('id', $employee->place_id)->first();
 
-    // Initialize salary variables
-    $salary = 0;
-    $attendanceDaysQuery = Attendance::where('employee_id', $employee->employee_id);
-    $attendanceDaysQuery = $this->filterByDateRange($attendanceDaysQuery, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth']);
-    $attendanceDays = $attendanceDaysQuery->groupBy('date')->count();
+        // Initialize salary variables
+        $salary = 0;
+        $attendanceDaysQuery = Attendance::where('employee_id', $employee->employee_id);
+        $attendanceDaysQuery = $this->filterByDateRange($attendanceDaysQuery, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth']);
+        $attendanceDays = $attendanceDaysQuery->groupBy('date')->count();
 
-    $count_time_off = $timeOffs->count();
-    $salaryDeductions = 0;
+        $count_time_off = $timeOffs->count();
+        $salaryDeductions = 0;
 
-    if ($place && $place->setting_name == 'Warehouse') {
-        $count_attendanceQuery = Attendance::where('employee_id', $employee->employee_id)
-            ->where('attendance_status', 'present');
-        $count_attendanceQuery = $this->filterByDateRange($count_attendanceQuery, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth']);
-        $count_attendance = $count_attendanceQuery->count();
+        if ($place && $place->setting_name == 'Warehouse') {
+            $count_attendanceQuery = Attendance::where('employee_id', $employee->employee_id)
+                ->where('attendance_status', 'present');
+            $count_attendanceQuery = $this->filterByDateRange($count_attendanceQuery, $dateRanges['startOfCurrentMonth'], $dateRanges['endOfCurrentMonth'], $dateRanges['startOfPreviousMonth'], $dateRanges['endOfPreviousMonth']);
+            $count_attendance = $count_attendanceQuery->count();
 
-        $salary = ($payroll->gaji_pokok / 26 * $count_attendance) + ($count_attendance * 10000) + ($payroll->gaji_pokok / (26 * 7)) * $payroll->insentif;
-    } elseif ($place && $place->setting_name == 'Office') {
-        $salaryDeductions = ($payroll->gaji_pokok / 26 + 20000) * $count_time_off;
-        $salary = ($payroll->gaji_pokok + $payroll->function + 520000 + $payroll->insentif) - $salaryDeductions;
+            $salary = ($payroll->gaji_pokok / 26 * $count_attendance) + ($count_attendance * 10000) + ($payroll->gaji_pokok / (26 * 7)) * $payroll->insentif;
+        } elseif ($place && $place->setting_name == 'Office') {
+            $salaryDeductions = ($payroll->gaji_pokok / 26 + 20000) * $count_time_off;
+            $salary = ($payroll->gaji_pokok + $payroll->function + 520000 + $payroll->insentif) - $salaryDeductions;
+        }
+
+        $salaryPerDay = $payroll->gaji_pokok / 26;
+        $baseSalary = $attendanceDays * $salaryPerDay;
+        $netSalary = $salary;
+
+        return [
+            'employee' => $employee,
+            'timeOffs' => $timeOffs,
+            'netSalary' => $this->formatNumber($netSalary),
+            'salaryDeductions' => $this->formatNumber($salaryDeductions),
+            'baseSalary' => $this->formatNumber($baseSalary),
+            'salaryPerDay' => $this->formatNumber($salaryPerDay),
+            'attendanceDays' => $attendanceDays,
+            'payroll' => $payroll
+        ];
     }
 
-    $salaryPerDay = $payroll->gaji_pokok / 26;
-    $baseSalary = $attendanceDays * $salaryPerDay;
-    $netSalary = $salary;
-
-    return [
-        'employee' => $employee,
-        'timeOffs' => $timeOffs,
-        'netSalary' => $this->formatNumber($netSalary),
-        'salaryDeductions' => $this->formatNumber($salaryDeductions),
-        'baseSalary' => $this->formatNumber($baseSalary),
-        'salaryPerDay' => $this->formatNumber($salaryPerDay),
-        'attendanceDays' => $attendanceDays,
-        'payroll' => $payroll
-    ];
-}
-
-private function formatNumber($number)
-{
-    return number_format($number, 2, ',', '.');
-}
+    private function formatNumber($number)
+    {
+        return number_format($number, 2, ',', '.');
+    }
 
     public function getAttendanceData(Employee $employee)
     {
@@ -205,47 +205,47 @@ private function formatNumber($number)
     }
 
     public function edit($id)
-{
-    $payroll = Payroll::findOrFail($id);
-    return view('admin.payroll.edit', compact('payroll'));
-}
+    {
+        $payroll = Payroll::findOrFail($id);
+        return view('admin.payroll.edit', compact('payroll'));
+    }
 
-public function update(Request $request, $id)
-{
-    $request->validate([
-        'gaji_pokok' => 'numeric',
-        'tunjangan_jabatan' => 'numeric',
-        'insentif_live' => 'numeric',
-        'insentif' => 'numeric',
-        'function' => 'numeric',
-        'bpjs' => 'numeric',
-    ]);
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'gaji_pokok' => 'numeric',
+            'tunjangan_jabatan' => 'numeric',
+            'insentif_live' => 'numeric',
+            'insentif' => 'numeric',
+            'function' => 'numeric',
+            'bpjs' => 'numeric',
+        ]);
 
-    $payroll = Payroll::findOrFail($id);
-    $payroll->update($request->all());
+        $payroll = Payroll::findOrFail($id);
+        $payroll->update($request->all());
 
-    return redirect()->route('payroll.index')->with('success', 'Payroll updated successfully.');
-}
+        return redirect()->route('payroll.index')->with('success', 'Payroll updated successfully.');
+    }
 
-public function destroy($id)
-{
-    $payroll = Payroll::findOrFail($id);
-    $payroll->delete();
+    public function destroy($id)
+    {
+        $payroll = Payroll::findOrFail($id);
+        $payroll->delete();
 
-    return response()->json(['success' => true]);
-}
+        return response()->json(['success' => true]);
+    }
 
-public function getPayrollsData()
-{
-    $payrolls = Payroll::select(['id', 'employee_id', 'full_name', 'gaji_pokok', 'tunjangan_jabatan', 'insentif_live', 'insentif', 'function', 'bpjs', 'created_at', 'updated_at']);
-    return DataTables::of($payrolls)
-        ->addColumn('action', function ($payroll) {
-            return '
+    public function getPayrollsData()
+    {
+        $payrolls = Payroll::select(['id', 'employee_id', 'full_name', 'gaji_pokok', 'tunjangan_jabatan', 'insentif_live', 'insentif', 'function', 'bpjs', 'created_at', 'updated_at']);
+        return DataTables::of($payrolls)
+            ->addColumn('action', function ($payroll) {
+                return '
                 <a href="' . route('payroll.edit', $payroll->id) . '" class="btn btn-sm btn-primary">Edit</a>
                 <button class="btn btn-sm btn-danger deleteButton" data-id="' . $payroll->id . '">Delete</button>
             ';
-        })
-        ->rawColumns(['action'])
-        ->make(true);
-}
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
 }

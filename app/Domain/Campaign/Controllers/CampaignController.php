@@ -22,7 +22,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
-use Symfony\Component\Process\Process; 
+use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
@@ -34,8 +34,7 @@ class CampaignController extends Controller
     public function __construct(
         protected CampaignBLLInterface $campaignBLL,
         protected StatisticCardService $cardService
-    ) {
-    }
+    ) {}
 
     /**
      * @return JsonResponse
@@ -201,9 +200,9 @@ class CampaignController extends Controller
         $platforms = CampaignContentEnum::Platform;
 
         $usernames = CampaignContent::where('tenant_id', Auth::user()->current_tenant_id)
-                    ->distinct()
-                    ->pluck('username');
-                    
+            ->distinct()
+            ->pluck('username');
+
         return view('admin.campaign.show', compact('campaign', 'negotiates', 'statuses', 'platforms', 'usernames'));
     }
 
@@ -325,7 +324,7 @@ class CampaignController extends Controller
         $totalViews = $datatableCollection->sum('view');
         $cpm = $totalViews > 0 ? $totalExpense / ($totalViews / 1000) : 0;
         $averageEngagementRate = $datatableCollection->avg('engagement_rate');
-        
+
 
         return response()->json([
             'total_expense' => $this->numberFormat($totalExpense),
@@ -361,7 +360,7 @@ class CampaignController extends Controller
         try {
 
             $tiktokUrl = 'https://vt.tiktok.com/ZSjBBReDk/';
-            
+
             // First, get the webpage content
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -379,7 +378,7 @@ class CampaignController extends Controller
 
             // Extract video URL using regex
             preg_match('/"downloadAddr":"([^"]+)"/', $html, $matches);
-            
+
             if (empty($matches[1])) {
                 preg_match('/"playAddr":"([^"]+)"/', $html, $matches);
             }
@@ -392,7 +391,7 @@ class CampaignController extends Controller
 
             // Properly decode the URL
             $videoUrl = json_decode('"' . $matches[1] . '"'); // This will handle \u0026 and other escaped characters
-            
+
             if (!$videoUrl) {
                 return response()->json([
                     'error' => 'Invalid video URL encoding'
@@ -401,7 +400,7 @@ class CampaignController extends Controller
 
             // Clean and validate the URL
             $videoUrl = $this->sanitizeUrl($videoUrl);
-            
+
             if (!filter_var($videoUrl, FILTER_VALIDATE_URL)) {
                 return response()->json([
                     'error' => 'Invalid video URL format'
@@ -437,7 +436,6 @@ class CampaignController extends Controller
             return response($videoContent)
                 ->header('Content-Type', 'video/mp4')
                 ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
-
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while downloading the video: ' . $e->getMessage()
@@ -451,10 +449,10 @@ class CampaignController extends Controller
         $url = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($match) {
             return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
         }, $url);
-        
+
         // Convert backslashes to forward slashes
         $url = str_replace('\\/', '/', $url);
-        
+
         // Ensure proper URL encoding
         $parts = parse_url($url);
         if ($parts) {
@@ -464,14 +462,14 @@ class CampaignController extends Controller
             $path = isset($parts['path']) ? rawurlencode(ltrim($parts['path'], '/')) : '';
             $path = str_replace('%2F', '/', $path); // Keep slashes readable
             $query = isset($parts['query']) ? '?' . $parts['query'] : '';
-            
+
             $url = $scheme . $host . '/' . $path . $query;
         }
-        
+
         return $url;
     }
 
-    private function debugUrl($url) 
+    private function debugUrl($url)
     {
         \Log::info('Processing URL: ' . $url);
         $parts = parse_url($url);

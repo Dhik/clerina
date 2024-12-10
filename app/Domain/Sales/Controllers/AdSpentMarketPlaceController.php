@@ -27,9 +27,7 @@ class AdSpentMarketPlaceController extends Controller
         protected AdSpentMarketPlaceBLLInterface $adSpentMarketPlaceBLL,
         protected AdSpentSocialMediaBLLInterface $adSpentSocialMediaBLL,
         protected SalesChannelBLLInterface $salesChannelBLL
-    ) {
-
-    }
+    ) {}
 
     /**
      * @throws Exception

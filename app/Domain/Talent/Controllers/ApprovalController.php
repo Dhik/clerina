@@ -26,7 +26,7 @@ class ApprovalController extends Controller
     public function data(Request $request)
     {
         $approvals = Approval::select(['id', 'name', 'photo']);
-    
+
         return DataTables::of($approvals)
             ->addColumn('action', function ($approval) {
                 return '
@@ -58,9 +58,9 @@ class ApprovalController extends Controller
         //
     }
     public function downloadTalentTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
-{
-    return Excel::download(new TalentTemplateExport(), 'Talent Template.xlsx');
-}
+    {
+        return Excel::download(new TalentTemplateExport(), 'Talent Template.xlsx');
+    }
     /**
      * Store a newly created resource in storage.
      *

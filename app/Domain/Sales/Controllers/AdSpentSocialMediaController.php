@@ -22,9 +22,7 @@ class AdSpentSocialMediaController extends Controller
     public function __construct(
         protected AdSpentSocialMediaBLLInterface $adSpentSocialMediaBLL,
         protected SocialMediaBLLInterface $socialMediaBLL
-    ) {
-
-    }
+    ) {}
 
     /**
      * @throws Exception

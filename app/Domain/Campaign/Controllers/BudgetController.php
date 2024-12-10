@@ -34,9 +34,7 @@ use Yajra\DataTables\Utilities\Request;
 
 class BudgetController extends Controller
 {
-    public function __construct(protected OfferBLLInterface $offerBLL)
-    {
-    }
+    public function __construct(protected OfferBLLInterface $offerBLL) {}
 
     /**
      * Return offer datatable
@@ -46,7 +44,7 @@ class BudgetController extends Controller
      * Get offer by campaign id for datatable
      * @throws Exception
      */
-    
+
 
     /**
      * Return index page for offer
@@ -88,21 +86,21 @@ class BudgetController extends Controller
 
 
     public function showCampaigns($id)
-{
-    // Fetch the budget with related campaigns and their total expenses
-    $budget = Budget::with(['campaigns' => function($query) {
-        $query->select('id', 'id_budget', 'title', 'start_date', 'end_date', 'description', 'total_expense');
-    }])->findOrFail($id);
+    {
+        // Fetch the budget with related campaigns and their total expenses
+        $budget = Budget::with(['campaigns' => function ($query) {
+            $query->select('id', 'id_budget', 'title', 'start_date', 'end_date', 'description', 'total_expense');
+        }])->findOrFail($id);
 
-    // Calculate the sum of total expenses for the campaigns under this budget
-    $totalExpenseSum = $budget->campaigns->sum('total_expense');
+        // Calculate the sum of total expenses for the campaigns under this budget
+        $totalExpenseSum = $budget->campaigns->sum('total_expense');
 
-    return response()->json([
-        'budget' => $budget,
-        'campaigns' => $budget->campaigns,
-        'totalExpenseSum' => number_format($totalExpenseSum, 0, ',', '.')
-    ]);
-}
+        return response()->json([
+            'budget' => $budget,
+            'campaigns' => $budget->campaigns,
+            'totalExpenseSum' => number_format($totalExpenseSum, 0, ',', '.')
+        ]);
+    }
 
 
 
@@ -111,8 +109,8 @@ class BudgetController extends Controller
         $budgets = Budget::all();
 
         return DataTables::of($budgets)
-        ->addColumn('action', function ($budget) {
-            return '
+            ->addColumn('action', function ($budget) {
+                return '
                 <button class="btn btn-sm btn-primary viewButton" 
                     data-id="' . $budget->id . '" 
                     data-toggle="modal" 
@@ -129,8 +127,7 @@ class BudgetController extends Controller
                 </button>
                 <button class="btn btn-sm btn-danger deleteButton" data-id="' . $budget->id . '"><i class="fas fa-trash-alt"></i></button>
             ';
-        })
-        ->make(true);
-
+            })
+            ->make(true);
     }
 }

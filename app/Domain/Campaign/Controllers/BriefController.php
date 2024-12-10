@@ -22,7 +22,7 @@ class BriefController extends Controller
      * Get offer by campaign id for datatable
      * @throws Exception
      */
-    
+
 
     /**
      * Return index page for offer
@@ -41,11 +41,11 @@ class BriefController extends Controller
         return DataTables::of($briefs)
             ->addColumn('actions', function ($brief) {
                 return '
-                    <a href="'.route('brief.show', $brief->id).'" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i></a>
-                    <a href="'.route('brief.edit', $brief->id).'" class="btn btn-sm btn-success"><i class="fas fa-pencil-alt"></i></a>
-                    <form action="'.route('brief.destroy', $brief->id).'" method="POST" style="display:inline-block;">
-                        '.csrf_field().'
-                        '.method_field('DELETE').'
+                    <a href="' . route('brief.show', $brief->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i></a>
+                    <a href="' . route('brief.edit', $brief->id) . '" class="btn btn-sm btn-success"><i class="fas fa-pencil-alt"></i></a>
+                    <form action="' . route('brief.destroy', $brief->id) . '" method="POST" style="display:inline-block;">
+                        ' . csrf_field() . '
+                        ' . method_field('DELETE') . '
                         <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i></button>
                     </form>
                 ';
@@ -95,6 +95,4 @@ class BriefController extends Controller
         $brief->delete();
         return redirect()->route('brief.index')->with('success', 'Brief deleted successfully.');
     }
-
-    
 }

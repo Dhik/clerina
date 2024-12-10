@@ -25,8 +25,8 @@ class ShiftController extends Controller
         return DataTables::of($shifts)
             ->addColumn('action', function ($shift) {
                 return '
-                    <a href="'.route('shift.edit', $shift->id).'" class="btn btn-sm btn-primary">Edit</a>
-                    <button class="btn btn-sm btn-danger deleteButton" data-id="'.$shift->id.'">Delete</button>
+                    <a href="' . route('shift.edit', $shift->id) . '" class="btn btn-sm btn-primary">Edit</a>
+                    <button class="btn btn-sm btn-danger deleteButton" data-id="' . $shift->id . '">Delete</button>
                 ';
             })
             ->make(true);

@@ -25,9 +25,7 @@ class VisitController extends Controller
     public function __construct(
         protected SalesChannelBLLInterface $salesChannelBLL,
         protected VisitBLLInterface $visitBLL
-    ) {
-
-    }
+    ) {}
 
     /**
      * @throws Exception
@@ -81,7 +79,8 @@ class VisitController extends Controller
 
         return response()->json(
             $this->visitBLL->getVisitByDate(
-                Carbon::parse($request->input('date')), Auth::user()->current_tenant_id
+                Carbon::parse($request->input('date')),
+                Auth::user()->current_tenant_id
             )
         );
     }

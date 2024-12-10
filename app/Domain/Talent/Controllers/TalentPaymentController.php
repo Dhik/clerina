@@ -14,7 +14,7 @@ use Yajra\DataTables\Utilities\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;  
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use \Illuminate\Support\Str;
 use Auth;
@@ -45,17 +45,17 @@ class TalentPaymentController extends Controller
     {
         $currentTenantId = Auth::user()->current_tenant_id;
         $payments = TalentPayment::select([
-                'talent_payments.id',
-                'talent_payments.done_payment',
-                'talent_payments.amount_tf',
-                'talent_payments.tanggal_pengajuan',
-                'talents.pic',
-                'talents.username',
-                'talents.nama_rekening',
-                'talent_payments.status_payment',
-                'talents.talent_name',
-                'talents.followers'
-            ])
+            'talent_payments.id',
+            'talent_payments.done_payment',
+            'talent_payments.amount_tf',
+            'talent_payments.tanggal_pengajuan',
+            'talents.pic',
+            'talents.username',
+            'talents.nama_rekening',
+            'talent_payments.status_payment',
+            'talents.talent_name',
+            'talents.followers'
+        ])
             ->join('talents', 'talent_payments.talent_id', '=', 'talents.id')
             ->where('talents.tenant_id', $currentTenantId);
 
@@ -66,7 +66,7 @@ class TalentPaymentController extends Controller
 
         if ($request->has('username') && is_array($request->username)) {
             $payments->whereIn('talents.username', $request->username);
-        }        
+        }
 
         if ($request->has('status_payment') && $request->status_payment != '') {
             $payments->where('talent_payments.status_payment', $request->status_payment);
@@ -91,7 +91,7 @@ class TalentPaymentController extends Controller
                     </button>
                 ';
             })
-            ->filterColumn('pic', function($query, $keyword) {
+            ->filterColumn('pic', function ($query, $keyword) {
                 $query->whereRaw("talents.pic like ?", ["%{$keyword}%"]);
             })
             ->rawColumns(['action'])
@@ -137,13 +137,12 @@ class TalentPaymentController extends Controller
 
             if ($talent->dp_amount == 0) {
                 $amount_tf = 0;
-            }
-            else {
+            } else {
                 $amount_tf = $final_tf - $talent->dp_amount;
             }
             $validatedData['tanggal_pengajuan'] = Carbon::today();
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
-            $validatedData['amount_tf'] = $amount_tf; 
+            $validatedData['amount_tf'] = $amount_tf;
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
         } catch (\Exception $e) {
@@ -179,49 +178,49 @@ class TalentPaymentController extends Controller
      * @param TalentPayments $payment
      */
     public function update(Request $request, $id)
-{
-    try {
-        $payment = TalentPayment::findOrFail($id);
+    {
+        try {
+            $payment = TalentPayment::findOrFail($id);
 
-        // Validate input data
-        $validatedData = $request->validate([
-            'done_payment' => 'nullable|date',
-        ]);
-        $payment->update($validatedData);
+            // Validate input data
+            $validatedData = $request->validate([
+                'done_payment' => 'nullable|date',
+            ]);
+            $payment->update($validatedData);
 
-        if ($payment->done_payment !== null) {
-            $talent = $payment->talent;
+            if ($payment->done_payment !== null) {
+                $talent = $payment->talent;
 
-            $rate_harga = $talent->price_rate * $talent->slot_final;
-            $harga_setelah_diskon = $rate_harga - $talent->discount;
+                $rate_harga = $talent->price_rate * $talent->slot_final;
+                $harga_setelah_diskon = $rate_harga - $talent->discount;
 
-            $pphPercentage = (Str::startsWith($talent->nama_rekening, ['PT', 'CV'])) ? 0.02 : 0.025;
-            $pphAmount = $harga_setelah_diskon * $pphPercentage;
-            $final_tf = $harga_setelah_diskon - $pphAmount;
+                $pphPercentage = (Str::startsWith($talent->nama_rekening, ['PT', 'CV'])) ? 0.02 : 0.025;
+                $pphAmount = $harga_setelah_diskon * $pphPercentage;
+                $final_tf = $harga_setelah_diskon - $pphAmount;
 
-            $paymentStatuses = ['Termin 1', 'Termin 2', 'Termin 3', 'DP 50%', 'Pelunasan 50%'];
+                $paymentStatuses = ['Termin 1', 'Termin 2', 'Termin 3', 'DP 50%', 'Pelunasan 50%'];
 
-            $relevantPaymentsCount = TalentPayment::where('talent_id', $talent->id)
-                ->whereIn('status_payment', $paymentStatuses)
-                ->count();
+                $relevantPaymentsCount = TalentPayment::where('talent_id', $talent->id)
+                    ->whereIn('status_payment', $paymentStatuses)
+                    ->count();
 
-            if ($relevantPaymentsCount > 0) {
-                if (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3'])) {
-                    $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
-                } elseif (in_array($payment->status_payment, ["DP 50%", "Pelunasan 50%"])) {
-                    $talent->dp_amount = ($final_tf / 2) * $relevantPaymentsCount;
-                } elseif ($payment->status_payment === "Full Payment") {
-                    $talent->dp_amount = $final_tf;
+                if ($relevantPaymentsCount > 0) {
+                    if (in_array($payment->status_payment, ['Termin 1', 'Termin 2', 'Termin 3'])) {
+                        $talent->dp_amount = ($final_tf / 3) * $relevantPaymentsCount;
+                    } elseif (in_array($payment->status_payment, ["DP 50%", "Pelunasan 50%"])) {
+                        $talent->dp_amount = ($final_tf / 2) * $relevantPaymentsCount;
+                    } elseif ($payment->status_payment === "Full Payment") {
+                        $talent->dp_amount = $final_tf;
+                    }
                 }
+                $talent->save();
             }
-            $talent->save();
+            return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Payment update failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
         }
-        return redirect()->route('talent_payments.index')->with('success', 'Payment updated successfully.');
-    } catch (\Exception $e) {
-        \Log::error('Payment update failed: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
     }
-}
 
     /**
      * Remove the specified resource from storage.
@@ -238,20 +237,20 @@ class TalentPaymentController extends Controller
     public function exportPengajuan(Request $request)
     {
         $query = TalentPayment::with('talent');
-        $query->whereHas('talent', function($q) {
+        $query->whereHas('talent', function ($q) {
             $q->where('tenant_id', Auth::user()->current_tenant_id);
         });
 
         if ($request->has('pic') && $request->pic != '') {
-            $query->whereHas('talent', function($q) use ($request) {
+            $query->whereHas('talent', function ($q) use ($request) {
                 $q->where('pic', $request->pic);
             });
         }
 
         if ($request->has('username') && is_array($request->username)) {
             $usernames = is_array($request->username) ? $request->username : json_decode($request->username, true);
-    
-            $query->whereHas('talent', function($q) use ($usernames) {
+
+            $query->whereHas('talent', function ($q) use ($usernames) {
                 $q->whereIn('username', $usernames);
             });
         }
@@ -270,7 +269,7 @@ class TalentPaymentController extends Controller
         return $pdf->download('form_pengajuan.pdf');
     }
 
-        
+
     public function exportPengajuanExcel(Request $request)
     {
         try {
@@ -285,7 +284,6 @@ class TalentPaymentController extends Controller
                 return !empty($item);
             });
             return Excel::download(new TalentPaymentExport($request, $tenantId, $mappedData), 'form_pengajuan.xlsx');
-
         } catch (\Exception $e) {
             return back()->with('error', 'Export failed. Please try again.');
         }
@@ -369,14 +367,14 @@ class TalentPaymentController extends Controller
                 $contentCount = $talent->talentContents->count();
             }
 
-            $totalPerSlot = ($talent->slot_final > 0) 
-                ? $talent->rate_final / $talent->slot_final 
+            $totalPerSlot = ($talent->slot_final > 0)
+                ? $talent->rate_final / $talent->slot_final
                 : 0;
 
             $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $talent->nama_rekening);
 
-            $talentShouldGet = ($talent->slot_final > 0) 
-                ? ($totalPerSlot) * $contentCount 
+            $talentShouldGet = ($talent->slot_final > 0)
+                ? ($totalPerSlot) * $contentCount
                 : 0;
 
             $hutang = $talentShouldGet > $totalSpentForTalent ? $talentShouldGet - $totalSpentForTalent : 0;
@@ -427,7 +425,7 @@ class TalentPaymentController extends Controller
         $currentTenantId = Auth::user()->current_tenant_id;
 
         $baseQuery = TalentPayment::join('talents', 'talent_payments.talent_id', '=', 'talents.id')
-        ->where('talents.tenant_id', $currentTenantId);
+            ->where('talents.tenant_id', $currentTenantId);
 
         if ($request->input('username')) {
             $baseQuery->where('talents.username', $request->input('username'));
@@ -456,7 +454,7 @@ class TalentPaymentController extends Controller
 
         return DataTables::of($payments)
             ->addColumn('spent', function ($payment) {
-                $rateFinal = $payment->rate_final ?? 0; 
+                $rateFinal = $payment->rate_final ?? 0;
                 $netRateFinal = $this->adjustSpentForTax($rateFinal, $payment->nama_rekening);
 
                 if ($payment->status_payment === 'Full Payment' && !is_null($payment->done_payment)) {
@@ -487,7 +485,7 @@ class TalentPaymentController extends Controller
                     </button>
                 ';
             })
-            ->filterColumn('pic', function($query, $keyword) {
+            ->filterColumn('pic', function ($query, $keyword) {
                 $query->whereRaw("talents.pic like ?", ["%{$keyword}%"]);
             })
             ->rawColumns(['action', 'spent'])
@@ -496,7 +494,7 @@ class TalentPaymentController extends Controller
 
     protected function calculateSpentForeachTalent($talent)
     {
-        return $talent->talentPayments->sum(function($payment) use ($talent) {
+        return $talent->talentPayments->sum(function ($payment) use ($talent) {
             switch ($payment->status_payment) {
                 case 'Full Payment':
                     return $payment->done_payment ? $talent->rate_final * 1 : 0;
@@ -517,7 +515,7 @@ class TalentPaymentController extends Controller
     {
         return $talent->talentPayments->sum(function ($payment) use ($talent, $startDate, $endDate) {
             if (!$payment->done_payment) {
-                return 0; 
+                return 0;
             }
 
             $multiplier = match ($payment->status_payment) {
@@ -539,7 +537,8 @@ class TalentPaymentController extends Controller
                 (!$endDate || $payment->done_payment <= $endDate);
         });
     }
-    public function exportReport(){
+    public function exportReport()
+    {
         return Excel::download(new TalentPaymentExport, 'kol_payment_report.xlsx');
     }
 }

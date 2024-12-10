@@ -91,4 +91,9 @@ Route::prefix('admin')
                 Route::post('/', [VisitController::class, 'store'])->name('visit.store');
 
             });
+
+        Route::prefix('report')
+            ->group(function () {
+                Route::get('/', [SalesController::class, 'report'])->name('report.index');
+            });
     });

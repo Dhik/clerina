@@ -43,7 +43,7 @@ class TalentContentController extends Controller
     }
     protected function statusAndLinkHtml($talentContent): string
     {
-        $uploadLinkButton = !empty($talentContent->upload_link) 
+        $uploadLinkButton = !empty($talentContent->upload_link)
             ? '<a href="' . $talentContent->upload_link . '" target="_blank" class="btn btn-light" data-toggle="tooltip" data-placement="top" title="View Upload">
                 <i class="fas fa-link"></i>
             </a>'
@@ -62,7 +62,7 @@ class TalentContentController extends Controller
 
     protected function doneHtml($talentContent): string
     {
-        $doneButton = $talentContent->done 
+        $doneButton = $talentContent->done
             ? '<button class="btn btn-light" data-toggle="tooltip" data-placement="top" title="Done">
                 <i class="fas fa-check-circle text-success"></i>
             </button>'
@@ -77,17 +77,17 @@ class TalentContentController extends Controller
         $pph = $isPTorCV ? $spent * 0.02 : $spent * 0.025;
         return $spent - $pph;
     }
-        
+
     public function data(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
         $talentContents = TalentContent::select([
-            'talent_content.id', 
-            'talent_content.talent_id', 
+            'talent_content.id',
+            'talent_content.talent_id',
             'talent_content.dealing_upload_date',
-            'talent_content.posting_date', 
-            'talent_content.done', 
-            'talent_content.upload_link', 
+            'talent_content.posting_date',
+            'talent_content.done',
+            'talent_content.upload_link',
             'talents.username',
             'talent_content.final_rate_card',
             'talent_content.is_refund',
@@ -96,10 +96,10 @@ class TalentContentController extends Controller
             'talents.nama_rekening',
             'campaigns.title as campaign_title'
         ])
-        ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
-        ->join('campaigns', 'talent_content.campaign_id', '=', 'campaigns.id')
-        ->where('talents.tenant_id', $currentTenantId);
-        
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->join('campaigns', 'talent_content.campaign_id', '=', 'campaigns.id')
+            ->where('talents.tenant_id', $currentTenantId);
+
         if ($request->input('username')) {
             $talentContents->where('talents.username', $request->input('username'));
         }
@@ -108,7 +108,7 @@ class TalentContentController extends Controller
             $dates = explode(' - ', $request->input('dateRange'));
             $startDate = Carbon::createFromFormat('Y-m-d', $dates[0])->startOfDay();
             $endDate = Carbon::createFromFormat('Y-m-d', $dates[1])->endOfDay();
-    
+
             $talentContents->whereBetween('talent_content.posting_date', [$startDate, $endDate]);
         }
 
@@ -138,14 +138,14 @@ class TalentContentController extends Controller
         return DataTables::of($talentContents)
             ->addColumn('talent_should_get', function ($talentContent) {
                 if (!is_null($talentContent->upload_link)) {
-                    $rateFinal = $talentContent->rate_final ?? 0; 
-                    $slotFinal = $talentContent->slot_final ?? 1; 
+                    $rateFinal = $talentContent->rate_final ?? 0;
+                    $slotFinal = $talentContent->slot_final ?? 1;
                     $accountName = $talentContent->nama_rekening ?? '';
                     $totalPerSlot = $slotFinal > 0 ? $rateFinal / $slotFinal : 0;
                     $totalPerSlot = $this->adjustSpentForTax($totalPerSlot, $accountName);
                     return $totalPerSlot;
                 }
-                return 0; 
+                return 0;
             })
             ->addColumn('status_and_link', function ($talentContent) {
                 return $this->statusAndLinkHtml($talentContent);
@@ -192,7 +192,7 @@ class TalentContentController extends Controller
                 } else {
                     return '<span style="color:green;">On time</span>';
                 }
-            })            
+            })
             ->rawColumns(['action', 'status_and_link', 'done', 'refund', 'talent_should_get', 'deadline'])
             ->make(true);
     }
@@ -361,7 +361,7 @@ class TalentContentController extends Controller
         $data = $talentContents->map(function ($content) {
             return [
                 'id' => $content->id,
-                'talent_name' => $content->username, 
+                'talent_name' => $content->username,
                 'posting_date' => $content->dealing_upload_date ? (new \DateTime($content->dealing_upload_date))->format(DATE_ISO8601) : null, // Ensure ISO format
             ];
         });
@@ -411,7 +411,7 @@ class TalentContentController extends Controller
             $redirValue = $queryParams['redir'] ?? null;
             if ($redirValue) {
                 $urlParts = explode('/', $redirValue);
-                $videoId = explode('?', $urlParts[4])[0]; 
+                $videoId = explode('?', $urlParts[4])[0];
 
                 $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
                 return $finalVideoUrl;
@@ -439,11 +439,10 @@ class TalentContentController extends Controller
         if ($request->channel === "shopee_video") {
             $link_shopee = $this->extractVideoIdFromShortLink($request->upload_link, $talent->username);
             $talentContent->upload_link = $link_shopee;
-        }
-        else {
+        } else {
             $talentContent->upload_link = $request->upload_link;
         }
-        
+
         $talentContent->done = 1;
         $talentContent->posting_date = $request->posting_date;
         $talentContent->save();
@@ -467,7 +466,7 @@ class TalentContentController extends Controller
                 'skin_type' => '-',
                 'skin_concern' => '-',
                 'content_type' => '-',
-                'rate' => ($talent->rate_final-$talent->tax_deduction)/$talent->slot_final,
+                'rate' => ($talent->rate_final - $talent->tax_deduction) / $talent->slot_final,
                 'cpm' => 0,
                 'created_by' => Auth::user()->id,
                 'pic_contact' => Auth::user()->id,
@@ -497,7 +496,7 @@ class TalentContentController extends Controller
             $campaignContent = CampaignContent::where('campaign_id', $talentContent->campaign_id)
                 ->where('link', $request->upload_link)
                 ->first();
-    
+
             if ($campaignContent) {
                 $campaignContent->update([
                     'username' => $talent->username,
@@ -548,7 +547,6 @@ class TalentContentController extends Controller
                         'tenant_id' => Auth::user()->current_tenant_id,
                     ]);
                 }
-                
             }
         }
 
@@ -559,7 +557,8 @@ class TalentContentController extends Controller
         ]);
     }
 
-    public function export(Request $request){
+    public function export(Request $request)
+    {
         return Excel::download(new TalentContentExport($request), 'talent_content.xlsx');
     }
     public function refund($id)
@@ -592,12 +591,12 @@ class TalentContentController extends Controller
     public function getProducts()
     {
         $tenantId = Auth::user()->current_tenant_id;
-        
+
         $products = Talent::distinct()
-            ->where('talents.tenant_id', '=', $tenantId) 
-            ->pluck('talents.produk')  
+            ->where('talents.tenant_id', '=', $tenantId)
+            ->pluck('talents.produk')
             ->map(function ($product) {
-                return ['short_name' => $product]; 
+                return ['short_name' => $product];
             });
 
         return response()->json($products);
@@ -605,12 +604,12 @@ class TalentContentController extends Controller
     public function getLineChartData()
     {
         $data = TalentContent::selectRaw('DATE(posting_date) as posting_date, product, COUNT(id) as count_id')
-            ->whereNotNull('posting_date') 
+            ->whereNotNull('posting_date')
             ->groupByRaw('DATE(posting_date), product')
             ->orderBy('posting_date')
             ->get();
 
-        $labels = $data->groupBy('posting_date')->keys(); 
+        $labels = $data->groupBy('posting_date')->keys();
         $products = $data->pluck('product')->unique();
         $datasets = [];
 
@@ -635,9 +634,15 @@ class TalentContentController extends Controller
     private function getRandomColor()
     {
         $colors = [
-            'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)', 
-            'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)',
-            'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 99, 132, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 99, 132, 1)',
             'rgba(54, 162, 235, 1)'
         ];
         return $colors[array_rand($colors)];

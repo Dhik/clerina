@@ -27,7 +27,8 @@ class OvertimeController extends Controller
 
         return view('admin.attendance.overtime.index', compact('overtimes', 'shifts'));
     }
-    public function get(Request $request): JsonResponse {
+    public function get(Request $request): JsonResponse
+    {
         $user = Auth::user();
         $employeeId = $user->employee_id;
         $overtimes = Overtime::where('employee_id', $employeeId)->get();
@@ -47,54 +48,54 @@ class OvertimeController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-{
-    $validatedData = $request->validate([
-        'date' => 'required',
-        'shift_id' => 'required',
-        'compensation' => 'required',
-        'before_shift_overtime_duration' => 'nullable',
-        'before_shift_break_duration' => 'nullable',
-        'after_shift_overtime_duration' => 'nullable',
-        'after_shift_break_duration' => 'nullable',
-        'note' => 'nullable',
-        'file' => 'nullable|file|max:10240', // 10MB max size
-    ]);
+    {
+        $validatedData = $request->validate([
+            'date' => 'required',
+            'shift_id' => 'required',
+            'compensation' => 'required',
+            'before_shift_overtime_duration' => 'nullable',
+            'before_shift_break_duration' => 'nullable',
+            'after_shift_overtime_duration' => 'nullable',
+            'after_shift_break_duration' => 'nullable',
+            'note' => 'nullable',
+            'file' => 'nullable|file|max:20480', // 10MB max size
+        ]);
 
-    try {
-        $user = Auth::user();
-        $employeeId = $user->employee_id;
-        $validatedData['employee_id'] = $employeeId;
-        $validatedData['status_approval'] = 'Pending';
+        try {
+            $user = Auth::user();
+            $employeeId = $user->employee_id;
+            $validatedData['employee_id'] = $employeeId;
+            $validatedData['status_approval'] = 'Pending';
 
-        // Check if the overtime data already exists
-        $existingOvertime = Overtime::where('employee_id', $employeeId)
-            ->where('date', $validatedData['date'])
-            ->where('shift_id', $validatedData['shift_id'])
-            ->first();
+            // Check if the overtime data already exists
+            $existingOvertime = Overtime::where('employee_id', $employeeId)
+                ->where('date', $validatedData['date'])
+                ->where('shift_id', $validatedData['shift_id'])
+                ->first();
 
-        if (!$existingOvertime) {
-            if ($request->hasFile('file')) {
-                $validatedData['file'] = $request->file('file')->store('overtime_files', 'public');
+            if (!$existingOvertime) {
+                if ($request->hasFile('file')) {
+                    $validatedData['file'] = $request->file('file')->store('overtime_files', 'public');
+                }
+
+                Overtime::create($validatedData);
+
+                return redirect()
+                    ->route('overtimes.index')
+                    ->with('success', 'Overtime created successfully.');
+            } else {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['message' => 'Overtime entry already exists for this date and shift.']);
             }
-
-            Overtime::create($validatedData);
-
-            return redirect()
-                ->route('overtimes.index')
-                ->with('success', 'Overtime created successfully.');
-        } else {
+        } catch (Exception $e) {
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['message' => 'Overtime entry already exists for this date and shift.']);
+                ->withErrors(['message' => 'Failed to create overtime: ' . $e->getMessage()]);
         }
-    } catch (Exception $e) {
-        return redirect()
-            ->back()
-            ->withInput()
-            ->withErrors(['message' => 'Failed to create overtime: ' . $e->getMessage()]);
     }
-}
 
 
 
@@ -147,7 +148,7 @@ class OvertimeController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Overtime $overtime)
-    {   
+    {
         if ($overtime->file) {
             \Storage::disk('public')->delete($overtime->file);
         }
@@ -165,9 +166,9 @@ class OvertimeController extends Controller
         $pendingOvertime = Overtime::select('overtimes.*', 'employees.full_name', 'employees.profile_picture')
             ->join('employees', 'overtimes.employee_id', '=', 'employees.employee_id')
             ->where('overtimes.status_approval', 'pending');
-    
+
         return DataTables::of($pendingOvertime)
-            ->addColumn('actions', function($row) {
+            ->addColumn('actions', function ($row) {
                 return '
                     <a href="#" class="btn btn-sm btn-primary" id="overtimeShow" 
                        data-id="' . $row->id . '" 
@@ -191,15 +192,15 @@ class OvertimeController extends Controller
             ->rawColumns(['actions'])
             ->toJson();
     }
-    
+
     public function getApprovedOvertime()
     {
         $approvedOvertime = Overtime::select('overtimes.*', 'employees.full_name', 'employees.profile_picture')
             ->join('employees', 'overtimes.employee_id', '=', 'employees.employee_id')
             ->where('overtimes.status_approval', 'approved');
-    
+
         return DataTables::of($approvedOvertime)
-            ->addColumn('actions', function($row) {
+            ->addColumn('actions', function ($row) {
                 return '
                     <a href="#" class="btn btn-sm btn-primary" id="overtimeShow" 
                        data-id="' . $row->id . '" 
@@ -222,15 +223,15 @@ class OvertimeController extends Controller
             ->rawColumns(['actions'])
             ->toJson();
     }
-    
+
     public function getRejectedOvertime()
     {
         $rejectedOvertime = Overtime::select('overtimes.*', 'employees.full_name', 'employees.profile_picture')
             ->join('employees', 'overtimes.employee_id', '=', 'employees.employee_id')
             ->where('overtimes.status_approval', 'rejected');
-    
+
         return DataTables::of($rejectedOvertime)
-            ->addColumn('actions', function($row) {
+            ->addColumn('actions', function ($row) {
                 return '
                     <a href="#" class="btn btn-sm btn-primary" id="overtimeShow" 
                        data-id="' . $row->id . '" 

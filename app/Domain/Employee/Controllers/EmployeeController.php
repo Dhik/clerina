@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use App\Domain\Employee\Models\Attendance;
+
 /**
  * @property EmployeeBLLInterface employeeBLL
  */
@@ -24,8 +25,7 @@ class EmployeeController extends Controller
     public function __construct(
         EmployeeBLLInterface $employeeBLL,
         protected Employee $employee,
-        )
-    {
+    ) {
         $this->employeeBLL = $employeeBLL;
     }
 
@@ -39,7 +39,8 @@ class EmployeeController extends Controller
         return view('admin.employee.index');
     }
 
-    public function attendance_index() {
+    public function attendance_index()
+    {
         return view('admin.employee.attendance');
     }
 
@@ -160,17 +161,17 @@ class EmployeeController extends Controller
                 $kk = $request->file('kk')->store('kk_files', 'public');
                 $validatedData['kk'] = $kk;
             }
-    
+
             if ($request->hasFile('ktp')) {
                 $ktp = $request->file('ktp')->store('ktp_files', 'public');
                 $validatedData['ktp'] = $ktp;
             }
-    
+
             if ($request->hasFile('ijazah')) {
                 $ijazah = $request->file('ijazah')->store('ijazah_files', 'public');
                 $validatedData['ijazah'] = $ijazah;
             }
-    
+
             if ($request->hasFile('cv')) {
                 $cv = $request->file('cv')->store('cv_files', 'public');
                 $validatedData['cv'] = $cv;
@@ -244,10 +245,10 @@ class EmployeeController extends Controller
 
         $query->orderBy('created_at', 'ASC');
         $result = $query->get();
-        
+
         return DataTables::of($result)
-        ->addColumn('actions', function ($row) {
-            return '<a href="' . route('employee.show', $row->id) . '" class="btn btn-primary btn-xs">
+            ->addColumn('actions', function ($row) {
+                return '<a href="' . route('employee.show', $row->id) . '" class="btn btn-primary btn-xs">
                         <i class="fas fa-eye"></i>
                     </a>
                     <a href="' . route('employee.edit', $row->id) . '" class="btn btn-success btn-xs">
@@ -256,20 +257,21 @@ class EmployeeController extends Controller
                     <button class="btn btn-danger btn-xs deleteButton" data-id="' . $row->id . '">
                         <i class="fas fa-trash-alt"></i>
                     </button>';
-        })
-        
+            })
+
             ->rawColumns(['actions'])
             ->toJson();
         // return DataTables::of($userQuery)
-            
+
     }
-    public function performances() {
+    public function performances()
+    {
         return view('admin.employee.performances');
     }
     public function getNewHires(Request $request)
     {
         $query = Employee::whereMonth('join_date', now()->month)
-                    ->whereYear('join_date', now()->year);
+            ->whereYear('join_date', now()->year);
 
         $employees = $query->get();
 
@@ -323,7 +325,7 @@ class EmployeeController extends Controller
             ->rawColumns(['actions'])
             ->toJson();
     }
-        public function getWeeklyWorkHours()
+    public function getWeeklyWorkHours()
     {
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
@@ -361,5 +363,4 @@ class EmployeeController extends Controller
         $filename = 'employees_export_' . date('Ymd_His') . '.xlsx';
         return Excel::download(new EmployeesExport, $filename);
     }
-
 }

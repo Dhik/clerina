@@ -16,9 +16,7 @@ use Yajra\DataTables\DataTables;
 
 class SalesChannelController extends Controller
 {
-    public function __construct(public SalesChannelBLLInterface $salesChannelBLL)
-    {
-    }
+    public function __construct(public SalesChannelBLLInterface $salesChannelBLL) {}
 
     /**
      * @throws Exception

@@ -24,7 +24,7 @@ class BriefContentController extends Controller
      * Get offer by campaign id for datatable
      * @throws Exception
      */
-    
+
 
     /**
      * Return index page for offer
@@ -44,16 +44,16 @@ class BriefContentController extends Controller
     {
         // Get the latest statistics for each campaign content
         $briefContents = BriefContent::select(
-                'brief_contents.id',
-                'campaigns.title AS campaign_title',
-                'campaign_contents.username',
-                'campaign_contents.task_name',
-                'brief_contents.link AS brief_link',
-                'latest_stats.view',
-                'latest_stats.like',
-                'latest_stats.comment',
-                'latest_stats.cpm'
-            )
+            'brief_contents.id',
+            'campaigns.title AS campaign_title',
+            'campaign_contents.username',
+            'campaign_contents.task_name',
+            'brief_contents.link AS brief_link',
+            'latest_stats.view',
+            'latest_stats.like',
+            'latest_stats.comment',
+            'latest_stats.cpm'
+        )
             ->join('campaign_contents', 'brief_contents.link', '=', 'campaign_contents.link')
             ->join('campaigns', 'campaign_contents.campaign_id', '=', 'campaigns.id')
             ->join('statistics as latest_stats', function ($join) {
@@ -70,9 +70,9 @@ class BriefContentController extends Controller
         return DataTables::of($briefContents)
             ->addColumn('actions', function ($briefContent) {
                 return '
-                    <form action="'.route('brief_contents.destroy', $briefContent->id).'" method="POST" style="display:inline-block;">
-                        '.csrf_field().'
-                        '.method_field('DELETE').'
+                    <form action="' . route('brief_contents.destroy', $briefContent->id) . '" method="POST" style="display:inline-block;">
+                        ' . csrf_field() . '
+                        ' . method_field('DELETE') . '
                         <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i></button>
                     </form>
                 ';
@@ -94,11 +94,11 @@ class BriefContentController extends Controller
     public function getKPI($id_brief)
     {
         $kpiData = BriefContent::select(
-                DB::raw('SUM(statistics.like) as total_likes'),
-                DB::raw('SUM(statistics.comment) as total_comments'),
-                DB::raw('SUM(statistics.view) as total_views'),
-                DB::raw('AVG(statistics.cpm) as cpm')
-            )
+            DB::raw('SUM(statistics.like) as total_likes'),
+            DB::raw('SUM(statistics.comment) as total_comments'),
+            DB::raw('SUM(statistics.view) as total_views'),
+            DB::raw('AVG(statistics.cpm) as cpm')
+        )
             ->join('campaign_contents', 'brief_contents.link', '=', 'campaign_contents.link')
             ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
             ->where('brief_contents.id_brief', $id_brief)
@@ -114,12 +114,12 @@ class BriefContentController extends Controller
 
         // Fetch the statistics for the given brief
         $query = BriefContent::select(
-                'statistics.date',
-                DB::raw('SUM(statistics.view) as total_view'),
-                DB::raw('SUM(statistics.like) as total_like'),
-                DB::raw('SUM(statistics.comment) as total_comment'),
-                DB::raw('SUM(CASE WHEN statistics.like > 0 THEN statistics.like ELSE 0 END) as positive_like')
-            )
+            'statistics.date',
+            DB::raw('SUM(statistics.view) as total_view'),
+            DB::raw('SUM(statistics.like) as total_like'),
+            DB::raw('SUM(statistics.comment) as total_comment'),
+            DB::raw('SUM(CASE WHEN statistics.like > 0 THEN statistics.like ELSE 0 END) as positive_like')
+        )
             ->join('campaign_contents', 'brief_contents.link', '=', 'campaign_contents.link')
             ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
             ->where('brief_contents.id_brief', $id_brief)
@@ -140,6 +140,4 @@ class BriefContentController extends Controller
         // Return the data as JSON
         return response()->json($chartData);
     }
-
-    
 }

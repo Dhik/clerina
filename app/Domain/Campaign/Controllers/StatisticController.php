@@ -19,8 +19,7 @@ class StatisticController extends Controller
     public function __construct(
         protected StatisticBLLInterface $statisticBLL,
         protected StatisticCardService $cardService
-    ) {
-    }
+    ) {}
 
     /**
      * Update or create statistic
@@ -93,7 +92,7 @@ class StatisticController extends Controller
             if (!is_null($content->link)) {
                 ScrapJob::dispatch($data);
 
-                 // Retrieve statistics and update is_fyp if view count is above 10000
+                // Retrieve statistics and update is_fyp if view count is above 10000
                 $statistics = $this->statisticBLL->scrapData(
                     $campaign->id,
                     $content->id,
@@ -193,5 +192,4 @@ class StatisticController extends Controller
             'message' => trans('messages.process_ongoing'),
         ]);
     }
-
 }

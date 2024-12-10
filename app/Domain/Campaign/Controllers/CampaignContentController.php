@@ -30,9 +30,7 @@ use Yajra\DataTables\Utilities\Request;
 
 class CampaignContentController extends Controller
 {
-    public function __construct(protected CampaignContentBLLInterface $campaignContentBLL)
-    {
-    }
+    public function __construct(protected CampaignContentBLLInterface $campaignContentBLL) {}
 
     public function statistics(Campaign $campaign): \Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|Factory|View|Application
     {
@@ -41,7 +39,8 @@ class CampaignContentController extends Controller
         $platforms = CampaignContentEnum::Platform;
 
         return view('admin.campaign.content.statistics', compact(
-            'campaign', 'platforms'
+            'campaign',
+            'platforms'
         ));
     }
 
@@ -68,7 +67,7 @@ class CampaignContentController extends Controller
             ->addColumn('key_opinion_leader_username', function ($row) {
                 return $row->keyOpinionLeader->username;
             })
-            ->addColumn('like', function($row) {
+            ->addColumn('like', function ($row) {
                 if (!empty($row->latestStatistic->like)) {
                     $result = $row->latestStatistic->like < 0 ? abs($row->latestStatistic->like) : $row->latestStatistic->like;
                     return $this->numberFormatShort($result);
@@ -76,20 +75,20 @@ class CampaignContentController extends Controller
 
                 return 0;
             })
-            ->addColumn('comment', function($row) {
+            ->addColumn('comment', function ($row) {
                 $result = $row->latestStatistic->comment ?? 0;
                 return $this->numberFormatShort($result);
             })
-            ->addColumn('view', function($row) {
+            ->addColumn('view', function ($row) {
                 $result = $row->latestStatistic->view ?? 0;
                 return $this->numberFormatShort($result);
             })
-            ->addColumn('engagement_rate', function($row) {
+            ->addColumn('engagement_rate', function ($row) {
                 $likes = $row->latestStatistic->like ?? 0;
                 $comments = $row->latestStatistic->comment ?? 0;
                 $views = $row->latestStatistic->view ?? 0;
-                $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0; 
-                
+                $engagementRate = $views > 0 ? (($likes + $comments) / $views) * 100 : 0;
+
                 return number_format($engagementRate, 2) . '%'; // Format as percentage
             })
             ->addColumn('cpm', function ($row) {
@@ -217,7 +216,7 @@ class CampaignContentController extends Controller
     {
         $actionsHtml = '
             <div class="btn-group">
-                <button class="btn btn-info btn-sm btnDetail">'. trans("labels.detail") .'</button>
+                <button class="btn btn-info btn-sm btnDetail">' . trans("labels.detail") . '</button>
                 <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                     <span class="sr-only">Toggle Dropdown</span>
                 </button>
@@ -226,18 +225,18 @@ class CampaignContentController extends Controller
         if (in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo, CampaignContentEnum::ShopeeVideo])) {
             $actionsHtml .= '
             <button class="dropdown-item btnRefresh">
-                '. trans("labels.refresh").'
+                ' . trans("labels.refresh") . '
             </button>';
         }
 
         if (Gate::allows('updateCampaign', $row->campaign)) {
             $actionsHtml .= '
-                <button class="dropdown-item btnUpdateContent">'.trans("labels.update").'</button>';
+                <button class="dropdown-item btnUpdateContent">' . trans("labels.update") . '</button>';
         }
 
         if (Gate::allows('updateCampaign', $row->campaign) && !in_array($row->channel, [CampaignContentEnum::InstagramFeed, CampaignContentEnum::TiktokVideo, CampaignContentEnum::TwitterPost, CampaignContentEnum::YoutubeVideo, CampaignContentEnum::ShopeeVideo])) {
             $actionsHtml .= '
-                <button class="dropdown-item btnStatistic">'. trans("labels.manual") .' '. trans("labels.data") .'</button>';
+                <button class="dropdown-item btnStatistic">' . trans("labels.manual") . ' ' . trans("labels.data") . '</button>';
         }
 
         if (Gate::allows('deleteCampaign', $row->campaign)) {
@@ -394,7 +393,7 @@ class CampaignContentController extends Controller
 
         return (new CampaignContentExport())
             ->forCampaign($campaign->id)
-            ->download($campaign->title .' offer.xlsx');
+            ->download($campaign->title . ' offer.xlsx');
     }
 
     protected  function numberFormatShort($n, $precision = 1): string
@@ -441,9 +440,9 @@ class CampaignContentController extends Controller
         $this->campaignContentBLL->deleteCampaignContent($campaignContent);
 
         TalentContent::where('campaign_id', $campaignContent->campaign_id)
-                    ->where('upload_link', $campaignContent->link) 
-                    ->first() 
-                    ->delete(); 
+            ->where('upload_link', $campaignContent->link)
+            ->first()
+            ->delete();
 
         return response()->json(['message' => trans('messages.success_delete')]);
     }
@@ -463,7 +462,7 @@ class CampaignContentController extends Controller
             ->addColumn('actions', function ($product) {
                 if ($product->product) {
                     return '
-                        <a href="'.route('campaignContent.showProductDetails', ['productName' => $product->product]).'" class="btn btn-sm btn-primary">
+                        <a href="' . route('campaignContent.showProductDetails', ['productName' => $product->product]) . '" class="btn btn-sm btn-primary">
                             View Details
                         </a>';
                 } else {
@@ -482,69 +481,69 @@ class CampaignContentController extends Controller
 
 
     public function getProductStatistics(string $productName)
-{
-    $product = CampaignContent::where('product', $productName)->firstOrFail();
-    $topViews = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.view) AS total_views')
-        ->groupBy('campaign_contents.username', 'campaign_contents.product')
-        ->orderByDesc('total_views')
-        ->take(5)
-        ->get();
+    {
+        $product = CampaignContent::where('product', $productName)->firstOrFail();
+        $topViews = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.view) AS total_views')
+            ->groupBy('campaign_contents.username', 'campaign_contents.product')
+            ->orderByDesc('total_views')
+            ->take(5)
+            ->get();
 
-    $topLikes = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.like) AS total_likes')
-        ->groupBy('campaign_contents.username', 'campaign_contents.product')
-        ->orderByDesc('total_likes')
-        ->take(5)
-        ->get();
+        $topLikes = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.like) AS total_likes')
+            ->groupBy('campaign_contents.username', 'campaign_contents.product')
+            ->orderByDesc('total_likes')
+            ->take(5)
+            ->get();
 
-    $topComments = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.comment) AS total_comments')
-        ->groupBy('campaign_contents.username', 'campaign_contents.product')
-        ->orderByDesc('total_comments')
-        ->take(5)
-        ->get();
+        $topComments = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.comment) AS total_comments')
+            ->groupBy('campaign_contents.username', 'campaign_contents.product')
+            ->orderByDesc('total_comments')
+            ->take(5)
+            ->get();
 
-    $topEngagements = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.engagement) AS total_engagement')
-        ->groupBy('campaign_contents.username', 'campaign_contents.product')
-        ->orderByDesc('total_engagement')
-        ->take(5)
-        ->get();
+        $topEngagements = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->selectRaw('campaign_contents.username, campaign_contents.product, SUM(statistics.engagement) AS total_engagement')
+            ->groupBy('campaign_contents.username', 'campaign_contents.product')
+            ->orderByDesc('total_engagement')
+            ->take(5)
+            ->get();
 
-    // Calculate the overall totals for the product (not just from top 5)
-    $totalViews = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->sum('statistics.view');
+        // Calculate the overall totals for the product (not just from top 5)
+        $totalViews = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->sum('statistics.view');
 
-    $totalLikes = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->sum('statistics.like');
+        $totalLikes = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->sum('statistics.like');
 
-    $totalComments = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
-        ->where('campaign_contents.product', $productName)
-        ->sum('statistics.comment');
+        $totalComments = Statistic::join('campaign_contents', 'statistics.campaign_content_id', '=', 'campaign_contents.id')
+            ->where('campaign_contents.product', $productName)
+            ->sum('statistics.comment');
 
-    $totalInfluencers = CampaignContent::where('product', $productName)
-        ->distinct('username')
-        ->count('username');
+        $totalInfluencers = CampaignContent::where('product', $productName)
+            ->distinct('username')
+            ->count('username');
 
-    // Return the results as JSON
-    return response()->json([
-        'totalViews' => $totalViews,
-        'totalLikes' => $totalLikes,
-        'totalComments' => $totalComments,
-        'totalInfluencers' => $totalInfluencers,
-        'topEngagements' => $topEngagements,
-        'topViews' => $topViews,
-        'topLikes' => $topLikes,
-        'topComments' => $topComments,
-    ]);
-}
+        // Return the results as JSON
+        return response()->json([
+            'totalViews' => $totalViews,
+            'totalLikes' => $totalLikes,
+            'totalComments' => $totalComments,
+            'totalInfluencers' => $totalInfluencers,
+            'topEngagements' => $topEngagements,
+            'topViews' => $topViews,
+            'topLikes' => $topLikes,
+            'topComments' => $topComments,
+        ]);
+    }
     public function showDistinctProducts(): View
     {
         return view('admin.campaign.products');
@@ -553,8 +552,8 @@ class CampaignContentController extends Controller
     public function updateAllShopeeVideoLinks()
     {
         $campaignContents = CampaignContent::where('channel', 'shopee_video')
-                                           ->whereNotNull('link') 
-                                           ->get();
+            ->whereNotNull('link')
+            ->get();
 
         if ($campaignContents->isEmpty()) {
             return response()->json([
@@ -590,7 +589,7 @@ class CampaignContentController extends Controller
             $redirValue = $queryParams['redir'] ?? null;
             if ($redirValue) {
                 $urlParts = explode('/', $redirValue);
-                $videoId = explode('?', $urlParts[4])[0]; 
+                $videoId = explode('?', $urlParts[4])[0];
 
                 $finalVideoUrl = "https://sv.shopee.co.id/web/@{$username}/video/{$videoId}";
                 return $finalVideoUrl;
@@ -601,5 +600,4 @@ class CampaignContentController extends Controller
 
         return null;
     }
-
 }

@@ -13,7 +13,7 @@ use Yajra\DataTables\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Talent\Exports\TalentTemplateExport;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;  
+use Carbon\Carbon;
 use Auth;
 
 /**
@@ -110,8 +110,8 @@ class TalentController extends Controller
 
         // Check if username already exists for this tenant
         $existingTalent = Talent::where('tenant_id', $tenant_id)
-                                ->where('username', $validatedData['username'])
-                                ->first();
+            ->where('username', $validatedData['username'])
+            ->first();
 
         // If the username already exists, return an error
         if ($existingTalent) {
@@ -237,7 +237,7 @@ class TalentController extends Controller
             $approval = Approval::findOrFail($approvalId);
         }
 
-        $harga = $talent->rate_final;  
+        $harga = $talent->rate_final;
         $slot_final = $talent->slot_final;
         if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
             $pphPercentage = $talent->tax_percentage;
@@ -255,26 +255,26 @@ class TalentController extends Controller
                 $pph = $harga * 0.025;
             }
         }
-        $total = $harga - $pph; 
+        $total = $harga - $pph;
         $downPayment = $talent->dp_amount ?? ($total / 2);
         $remainingBalance = $total - $downPayment;
 
         $latestPayment = TalentPayment::where('talent_id', $talent->id)
-                                  ->latest()
-                                  ->first();
+            ->latest()
+            ->first();
 
         $statusPayment = $latestPayment ? $latestPayment->status_payment : null;
 
         $ttd = $approval->photo;
         $approval_name = $approval->name;
-        
+
         $data = [
             'nik' => $talent->nik,
             'nama_talent' => $talent->talent_name,
             'tanggal_hari_ini' => now()->format('d/m/Y'),
             'alamat_talent' => $talent->address,
             'no_hp_talent' => $talent->phone_number,
-            'nama_akun' => $talent->username, 
+            'nama_akun' => $talent->username,
             'quantity_slot' => $talent->slot_final,
             'deskripsi' => $talent->content_type,
             'harga' => $harga,
@@ -302,7 +302,7 @@ class TalentController extends Controller
     {
         $talent = Talent::findOrFail($id);
 
-        $harga = $talent->rate_final; 
+        $harga = $talent->rate_final;
         $slot_final = $talent->slot_final;
         if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
             $pphPercentage = $talent->tax_percentage;
@@ -320,13 +320,13 @@ class TalentController extends Controller
                 $pph = $harga * 0.025;
             }
         }
-        $total = $harga - $pph; 
+        $total = $harga - $pph;
         $downPayment = $talent->dp_amount ?? ($total / 2);
         $remainingBalance = $total - $downPayment;
 
         $latestPayment = TalentPayment::where('talent_id', $talent->id)
-                                  ->latest()
-                                  ->first();
+            ->latest()
+            ->first();
 
         $statusPayment = $latestPayment ? $latestPayment->status_payment : null;
 
@@ -336,7 +336,7 @@ class TalentController extends Controller
             'tanggal_hari_ini' => now()->format('d/m/Y'),
             'alamat_talent' => $talent->address,
             'no_hp_talent' => $talent->phone_number,
-            'nama_akun' => $talent->username, 
+            'nama_akun' => $talent->username,
             'quantity_slot' => $talent->slot_final,
             'deskripsi' => $talent->content_type,
             'harga' => $harga,
@@ -365,19 +365,19 @@ class TalentController extends Controller
         $currentTenantId = Auth::user()->current_tenant_id;
         $talent = Talent::findOrFail($id);
         $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
-        $harga = $talent->rate_final; 
+        $harga = $talent->rate_final;
         $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
         if ($isPTorCV) {
             $pph = $harga * 0.02;
         } else {
             $pph = $harga * 0.025;
         }
-        $total = $harga - $pph; 
+        $total = $harga - $pph;
         if ($talent->tenant_id == 1) {
             $pdf = PDF::loadView('admin.talent.mou_cleora', compact('talent', 'tanggal_hari_ini', 'total'));
         } else {
             $pdf = PDF::loadView('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
-        } 
+        }
         $pdf->setPaper('A4', 'potrait');
         return $pdf->download('SPK.pdf');
     }
@@ -386,14 +386,14 @@ class TalentController extends Controller
         $currentTenantId = Auth::user()->current_tenant_id;
         $talent = Talent::findOrFail(516);
         $tanggal_hari_ini = Carbon::now()->isoFormat('D MMMM YYYY');
-        $harga = $talent->rate_final; 
+        $harga = $talent->rate_final;
         $isPTorCV = \Illuminate\Support\Str::startsWith($talent->nama_rekening, ['PT', 'CV']);
         if ($isPTorCV) {
             $pph = $harga * 0.02;
         } else {
             $pph = $harga * 0.025;
         }
-        $total = $harga - $pph; 
+        $total = $harga - $pph;
         return view('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
     }
 }

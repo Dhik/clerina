@@ -17,6 +17,7 @@ use App\Domain\User\Models\User;
 use Yajra\DataTables\DataTables;
 use Illuminate\Http\JsonResponse;
 use App\Domain\Employee\Models\Overtime;
+
 /**
  * @property AttendanceBLLInterface employeeBLL
  */
@@ -26,8 +27,7 @@ class AttendanceController extends Controller
     public function __construct(
         protected AttendanceBLLInterface $attendanceBLL,
         protected Attendance $attendance,
-    ) {
-    }
+    ) {}
 
     public function attendance_log()
     {
@@ -37,112 +37,111 @@ class AttendanceController extends Controller
     }
 
     public function clockIn(Request $request)
-{
-    $user = Auth::user();
-    $employeeId = $user->employee_id;
-    $clockInTime = Carbon::now();
-    $employee = Employee::where('employee_id', $employeeId)->first();
-    $shiftId = $employee->shift_id;
+    {
+        $user = Auth::user();
+        $employeeId = $user->employee_id;
+        $clockInTime = Carbon::now();
+        $employee = Employee::where('employee_id', $employeeId)->first();
+        $shiftId = $employee->shift_id;
 
-    // Check if the attendance record already exists for today
-    $existingAttendance = Attendance::where('employee_id', $employeeId)
-        ->whereDate('date', Carbon::today())
-        ->first();
+        $existingAttendance = Attendance::where('employee_id', $employeeId)
+            ->whereDate('date', Carbon::today())
+            ->first();
 
-    if ($existingAttendance) {
-        $existingAttendance->update([
-            'attendance_status' => 'present',
-            'clock_in' => $clockInTime,
-        ]);
+        if ($existingAttendance) {
+            $existingAttendance->update([
+                'attendance_status' => 'present',
+                'clock_in' => $clockInTime,
+            ]);
+        }
+
+        return redirect()->route('attendance.absensi');
     }
 
-    return redirect()->route('attendance.absensi');
-}
+    public function clockOut(Request $request)
+    {
+        $user = Auth::user();
+        $employeeId = $user->employee_id;
+        $clockOutTime = Carbon::now();
 
-public function clockOut(Request $request)
-{   
-    $user = Auth::user();
-    $employeeId = $user->employee_id;
-    $clockOutTime = Carbon::now();
+        $attendance = Attendance::where('employee_id', $employeeId)
+            ->whereNull('clock_out')
+            ->whereDate('date', Carbon::today())
+            ->first();
 
-    $attendance = Attendance::where('employee_id', $employeeId)
-        ->whereNull('clock_out')
-        ->whereDate('date', Carbon::today())
-        ->first();
+        if ($attendance) {
+            $attendance->update([
+                'clock_out' => $clockOutTime,
+            ]);
+        }
 
-    if ($attendance) {
-        $attendance->update([
-            'clock_out' => $clockOutTime,
-        ]);
+        return redirect()->route('attendance.absensi');
     }
-
-    return redirect()->route('attendance.absensi');
-}
 
     public function get(Request $request): JsonResponse
-{
-    $this->authorize('viewAttendance', Employee::class);
+    {
+        $this->authorize('viewAttendance', Employee::class);
 
-    $query = $this->attendance->query();
+        $query = $this->attendance->query();
 
-    if (!is_null($request->input('date'))) {
-        $attendanceDateString = Carbon::createFromFormat('Y-m-d', $request->input('date'))->format('Y-m-d');
-        $query->whereDate('attendances.created_at', $attendanceDateString);
+        if (!is_null($request->input('date'))) {
+            $attendanceDateString = Carbon::createFromFormat('Y-m-d', $request->input('date'))->format('Y-m-d');
+            $query->whereDate('attendances.created_at', $attendanceDateString);
+        }
+
+        if (!is_null($request->input('employee_id'))) {
+            $query->where('attendances.employee_id', $request->input('employee_id'));
+        }
+
+        $query->join('employees', 'attendances.employee_id', '=', 'employees.employee_id')
+            ->leftJoin('shifts', 'employees.shift_id', '=', 'shifts.id')
+            ->select(
+                'attendances.*',
+                'employees.full_name',
+                'employees.employee_id as emp_id',
+                'employees.profile_picture',
+                'employees.shift_id',
+                'shifts.shift_name',
+                'shifts.schedule_in',
+                'shifts.schedule_out',
+                'employees.job_position',
+            );
+
+        $result = $query->get()->map(function ($attendance) {
+            $clockIn = $attendance->clock_in ? Carbon::parse($attendance->clock_in) : null;
+            $clockOut = $attendance->clock_out ? Carbon::parse($attendance->clock_out) : null;
+            $scheduleOut = Carbon::parse($attendance->schedule_out);
+            $overtime = $clockOut && $clockOut->gt($scheduleOut) ? $clockOut->diff($scheduleOut)->format('%H:%I') : '-';
+
+            return [
+                'id' => $attendance->id,
+                'employee_name' => $attendance->full_name,
+                'employee_id' => $attendance->emp_id,
+                'date' => Carbon::parse($attendance->created_at)->format('Y-m-d'),
+                'shift' => $attendance->shift_name ?? '-',
+                'schedule_in' => $attendance->schedule_in ?? '-',
+                'schedule_out' => $attendance->schedule_out ?? '-',
+                'clock_in' => $clockIn ? $clockIn->format('H:i') : '-',
+                'clock_out' => $clockOut ? $clockOut->format('H:i') : '-',
+                'attendance_code' => 'H',
+                'time_off_code' => '-',
+                'overtime' => $overtime,
+                'profile_picture' => $attendance->profile_picture,
+                'job_position' => $attendance->job_position,
+                'shift_id' => $attendance->shift_id,
+            ];
+        });
+
+        return DataTables::of($result)
+            ->addColumn(
+                'actions',
+                '<a href="#" class="btn btn-sm btn-success" id="attendanceEdit"><i class="fas fa-pencil-alt"></i></a>
+                <a href="#" class="btn btn-sm btn-primary" id="attendanceShow"><i class="fas fa-eye"></i></a>
+                <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>'
+            )
+            ->rawColumns(['actions'])
+            ->toJson();
     }
-
-    if (!is_null($request->input('employee_id'))) {
-        $query->where('attendances.employee_id', $request->input('employee_id'));
-    }
-
-    // Join the employees and shifts tables
-    $query->join('employees', 'attendances.employee_id', '=', 'employees.employee_id')
-        ->leftJoin('shifts', 'employees.shift_id', '=', 'shifts.id')
-        ->select(
-            'attendances.*',
-            'employees.full_name',
-            'employees.employee_id as emp_id',
-            'employees.profile_picture',
-            'employees.shift_id',
-            'shifts.shift_name',
-            'shifts.schedule_in',
-            'shifts.schedule_out',
-            'employees.job_position',
-        );
-
-    $result = $query->get()->map(function ($attendance) {
-        $clockIn = $attendance->clock_in ? Carbon::parse($attendance->clock_in) : null;
-        $clockOut = $attendance->clock_out ? Carbon::parse($attendance->clock_out) : null;
-        $scheduleOut = Carbon::parse($attendance->schedule_out);
-        $overtime = $clockOut && $clockOut->gt($scheduleOut) ? $clockOut->diff($scheduleOut)->format('%H:%I') : '-';
-
-        return [
-            'id' => $attendance->id,
-            'employee_name' => $attendance->full_name,
-            'employee_id' => $attendance->emp_id,
-            'date' => Carbon::parse($attendance->created_at)->format('Y-m-d'),
-            'shift' => $attendance->shift_name ?? '-',
-            'schedule_in' => $attendance->schedule_in ?? '-',
-            'schedule_out' => $attendance->schedule_out ?? '-',
-            'clock_in' => $clockIn ? $clockIn->format('H:i') : '-',
-            'clock_out' => $clockOut ? $clockOut->format('H:i') : '-',
-            'attendance_code' => 'H',
-            'time_off_code' => '-',
-            'overtime' => $overtime,
-            'profile_picture' => $attendance->profile_picture,
-            'job_position' => $attendance->job_position,
-            'shift_id' => $attendance->shift_id,
-        ];
-    });
-
-    return DataTables::of($result)
-        ->addColumn('actions', 
-            '<a href="#" class="btn btn-sm btn-success" id="attendanceEdit"><i class="fas fa-pencil-alt"></i></a>
-            <a href="#" class="btn btn-sm btn-primary" id="attendanceShow"><i class="fas fa-eye"></i></a>
-            <button class="btn btn-danger btn-sm deleteButton"><i class="fas fa-trash-alt"></i></button>'
-        )
-        ->rawColumns(['actions'])
-        ->toJson();
-}
 
 
 
@@ -177,114 +176,114 @@ public function clockOut(Request $request)
     }
 
     public function getAttendanceHistory(Request $request)
-{
-    $user = Auth::user();
-    $employeeId = $user->employee_id;
+    {
+        $user = Auth::user();
+        $employeeId = $user->employee_id;
 
-    $currentDate = Carbon::now();
+        $currentDate = Carbon::now();
 
-    // Define date ranges for the current and previous months
-    $startOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(0); // 1st of the current month
-    $endOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(20); // 20th of the current month
+        // Define date ranges for the current and previous months
+        $startOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(0); // 1st of the current month
+        $endOfCurrentMonth = $currentDate->copy()->startOfMonth()->addDays(20); // 20th of the current month
 
-    $startOfPreviousMonth = $currentDate->copy()->subMonth()->startOfMonth()->addDays(20); // 20th of the previous month
-    $endOfPreviousMonth = $currentDate->copy()->subMonth()->endOfMonth(); // End of the previous month
+        $startOfPreviousMonth = $currentDate->copy()->subMonth()->startOfMonth()->addDays(20); // 20th of the previous month
+        $endOfPreviousMonth = $currentDate->copy()->subMonth()->endOfMonth(); // End of the previous month
 
-    // Fetch attendance records for the defined date ranges
-    $attendancesCurrentMonth = Attendance::where('employee_id', $employeeId)
-        ->whereBetween('date', [$startOfCurrentMonth->format('Y-m-d'), $endOfCurrentMonth->format('Y-m-d')])
-        ->orderBy('date', 'asc')
-        ->get()
-        ->keyBy('date');
+        // Fetch attendance records for the defined date ranges
+        $attendancesCurrentMonth = Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startOfCurrentMonth->format('Y-m-d'), $endOfCurrentMonth->format('Y-m-d')])
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
 
-    $attendancesPreviousMonth = Attendance::where('employee_id', $employeeId)
-        ->whereBetween('date', [$startOfPreviousMonth->format('Y-m-d'), $endOfPreviousMonth->format('Y-m-d')])
-        ->orderBy('date', 'asc')
-        ->get()
-        ->keyBy('date');
+        $attendancesPreviousMonth = Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startOfPreviousMonth->format('Y-m-d'), $endOfPreviousMonth->format('Y-m-d')])
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
 
-    // Generate date sequences
-    $currentMonthDates = $this->generateDateRange($startOfCurrentMonth, $endOfCurrentMonth);
-    $previousMonthDates = $this->generateDateRange($startOfPreviousMonth, $endOfPreviousMonth);
+        // Generate date sequences
+        $currentMonthDates = $this->generateDateRange($startOfCurrentMonth, $endOfCurrentMonth);
+        $previousMonthDates = $this->generateDateRange($startOfPreviousMonth, $endOfPreviousMonth);
 
-    // Prepare the combined date range
-    $combinedDates = array_merge($previousMonthDates, $currentMonthDates);
+        // Prepare the combined date range
+        $combinedDates = array_merge($previousMonthDates, $currentMonthDates);
 
-    // Populate attendance data or empty values
-    $attendanceData = [];
-    foreach ($combinedDates as $date) {
-        $attendanceData[$date] = $attendancesPreviousMonth->get($date) ?? $attendancesCurrentMonth->get($date) ?? [
-            'shift_id' => null,
-            'attendance_status' => '-',
-            'clock_in' => null,
-            'clock_out' => null,
-            'date' => $date,
-            'created_at' => null,
-            'updated_at' => null,
-            'employee_id' => $employeeId,
-        ];
+        // Populate attendance data or empty values
+        $attendanceData = [];
+        foreach ($combinedDates as $date) {
+            $attendanceData[$date] = $attendancesPreviousMonth->get($date) ?? $attendancesCurrentMonth->get($date) ?? [
+                'shift_id' => null,
+                'attendance_status' => '-',
+                'clock_in' => null,
+                'clock_out' => null,
+                'date' => $date,
+                'created_at' => null,
+                'updated_at' => null,
+                'employee_id' => $employeeId,
+            ];
+        }
+
+        return response()->json($attendanceData);
     }
 
-    return response()->json($attendanceData);
-}
+    private function generateDateRange($startDate, $endDate)
+    {
+        $dates = [];
+        $current = $startDate->copy();
 
-private function generateDateRange($startDate, $endDate)
-{
-    $dates = [];
-    $current = $startDate->copy();
+        while ($current->lte($endDate)) {
+            $dates[] = $current->format('Y-m-d');
+            $current->addDay();
+        }
 
-    while ($current->lte($endDate)) {
-        $dates[] = $current->format('Y-m-d');
-        $current->addDay();
+        return $dates;
     }
 
-    return $dates;
-}
 
 
 
+    public function getOverview(Request $request)
+    {
+        $query = Attendance::query();
 
-public function getOverview(Request $request)
-{
-    $query = Attendance::query();
+        if ($request->has('date') && !is_null($request->date)) {
+            $date = Carbon::parse($request->date);
+            $query->whereDate('created_at', $date);
+        }
 
-    if ($request->has('date') && !is_null($request->date)) {
-        $date = Carbon::parse($request->date);
-        $query->whereDate('created_at', $date);
+        if ($request->has('employee_id') && !is_null($request->employee_id)) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        $attendances = $query->get();
+
+        // No need for comparisonDate as we are not filtering by today's date unless explicitly provided
+        $onTimeCount = $attendances->where('attendance_status', 'present')
+            ->where('clock_in', '<=', Carbon::parse('08:00'))->count();
+        $lateClockInCount = $attendances->where('attendance_status', 'present')
+            ->where('clock_in', '>', Carbon::parse('08:00'))->count();
+        $earlyClockOutCount = $attendances->where('attendance_status', 'present')
+            ->where('clock_out', '<', Carbon::parse('16:30'))->count();
+        $absentCount = $attendances->where('attendance_status', 'absent')->count();
+        $noClockInCount = $attendances->whereNull('clock_in')->count();
+        $noClockOutCount = $attendances->whereNull('clock_out')->count();
+        $invalidCount = 0; // Define your logic for invalid attendance
+        $dayOffCount = 0; // Define your logic for day off
+        $timeOffCount = 0; // Define your logic for time off
+
+        return response()->json([
+            'onTimeCount' => $onTimeCount,
+            'lateClockInCount' => $lateClockInCount,
+            'earlyClockOutCount' => $earlyClockOutCount,
+            'absentCount' => $absentCount,
+            'noClockInCount' => $noClockInCount,
+            'noClockOutCount' => $noClockOutCount,
+            'invalidCount' => $invalidCount,
+            'dayOffCount' => $dayOffCount,
+            'timeOffCount' => $timeOffCount,
+        ]);
     }
-
-    if ($request->has('employee_id') && !is_null($request->employee_id)) {
-        $query->where('employee_id', $request->employee_id);
-    }
-
-    $attendances = $query->get();
-
-    // No need for comparisonDate as we are not filtering by today's date unless explicitly provided
-    $onTimeCount = $attendances->where('attendance_status', 'present')
-                               ->where('clock_in', '<=', Carbon::parse('08:00'))->count();
-    $lateClockInCount = $attendances->where('attendance_status', 'present')
-                                    ->where('clock_in', '>', Carbon::parse('08:00'))->count();
-    $earlyClockOutCount = $attendances->where('attendance_status', 'present')
-                                      ->where('clock_out', '<', Carbon::parse('16:30'))->count();
-    $absentCount = $attendances->where('attendance_status', 'absent')->count();
-    $noClockInCount = $attendances->whereNull('clock_in')->count();
-    $noClockOutCount = $attendances->whereNull('clock_out')->count();
-    $invalidCount = 0; // Define your logic for invalid attendance
-    $dayOffCount = 0; // Define your logic for day off
-    $timeOffCount = 0; // Define your logic for time off
-
-    return response()->json([
-        'onTimeCount' => $onTimeCount,
-        'lateClockInCount' => $lateClockInCount,
-        'earlyClockOutCount' => $earlyClockOutCount,
-        'absentCount' => $absentCount,
-        'noClockInCount' => $noClockInCount,
-        'noClockOutCount' => $noClockOutCount,
-        'invalidCount' => $invalidCount,
-        'dayOffCount' => $dayOffCount,
-        'timeOffCount' => $timeOffCount,
-    ]);
-}
 
 
 
@@ -294,18 +293,18 @@ public function getOverview(Request $request)
         $user = Auth::user();
         $employeeId = $user->employee_id;
         $today = Carbon::today();
-        
+
         $attendance = Attendance::where('employee_id', $employeeId)
             ->whereDate('created_at', $today)
             ->first();
-            
+
         return view('admin.employee.attendance', compact('attendance'));
     }
 
     public function absensi()
     {
         $this->authorize('accessAttendance', Employee::class);
-        
+
         $user = Auth::user();
         $employeeId = $user->employee_id;
         $today = Carbon::today();
@@ -354,7 +353,7 @@ public function getOverview(Request $request)
             'created_at' => $attendance->created_at->format('Y-m-d'),
             'clock_in' => $attendance->clock_in ? $attendance->clock_in->format('H:i') : '',
             'clock_out' => $attendance->clock_out ? $attendance->clock_out->format('H:i') : '',
-            'shift_id' => $employee->shift_id, // Ensure this field exists in your Employee model
+            'shift_id' => $employee->shift_id,
             'shift_name' => $shiftName,
             'schedule_in' => $shift->schedule_in,
             'schedule_out' => $shift->schedule_out,
@@ -402,59 +401,58 @@ public function getOverview(Request $request)
     }
 
     public function store_request(Request $request)
-{
-    $validatedData = $request->validate([
-        'date' => 'required|date',
-        'shift_id' => 'required|integer',
-        'clock_in' => 'required|date_format:H:i',
-        'clock_out' => 'required|date_format:H:i',
-        'work_note' => 'nullable|string',
-        'file' => 'nullable|file|max:10240', // 10MB max size
-    ]);
+    {
+        $validatedData = $request->validate([
+            'date' => 'required|date',
+            'shift_id' => 'required|integer',
+            'clock_in' => 'required|date_format:H:i',
+            'clock_out' => 'required|date_format:H:i',
+            'work_note' => 'nullable|string',
+            'file' => 'nullable|file|max:10240',
+        ]);
 
-    try {
-        $user = Auth::user();
-        $employeeId = $user->employee_id;
-        $validatedData['employee_id'] = $employeeId;
-        $validatedData['status_approval'] = 'Pending';
+        try {
+            $user = Auth::user();
+            $employeeId = $user->employee_id;
+            $validatedData['employee_id'] = $employeeId;
+            $validatedData['status_approval'] = 'Pending';
 
-        // Format clock_in and clock_out times
-        $clockInDateTime = Carbon::createFromFormat('H:i', $request->clock_in)->format('Y-m-d H:i:s');
-        $clockOutDateTime = Carbon::createFromFormat('H:i', $request->clock_out)->format('Y-m-d H:i:s');
-        $validatedData['clock_in'] = $clockInDateTime;
-        $validatedData['clock_out'] = $clockOutDateTime;
+            $clockInDateTime = Carbon::createFromFormat('H:i', $request->clock_in)->format('Y-m-d H:i:s');
+            $clockOutDateTime = Carbon::createFromFormat('H:i', $request->clock_out)->format('Y-m-d H:i:s');
+            $validatedData['clock_in'] = $clockInDateTime;
+            $validatedData['clock_out'] = $clockOutDateTime;
 
-        // Check if the attendance request already exists
-        $existingRequest = AttendanceRequest::where('employee_id', $employeeId)
-            ->where('date', $validatedData['date'])
-            ->where('shift_id', $validatedData['shift_id'])
-            ->first();
+            $existingRequest = AttendanceRequest::where('employee_id', $employeeId)
+                ->where('date', $validatedData['date'])
+                ->where('shift_id', $validatedData['shift_id'])
+                ->first();
 
-        if (!$existingRequest) {
-            if ($request->hasFile('file')) {
-                $validatedData['file'] = $request->file('file')->store('attendance_files', 'public');
+            if (!$existingRequest) {
+                if ($request->hasFile('file')) {
+                    $validatedData['file'] = $request->file('file')->store('attendance_files', 'public');
+                }
+
+                AttendanceRequest::create($validatedData);
+
+                return redirect()
+                    ->route('attendance.log')
+                    ->with('success', 'Attendance request created successfully.');
+            } else {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors(['message' => 'Attendance request already exists for this date and shift.']);
             }
-
-            AttendanceRequest::create($validatedData);
-
-            return redirect()
-                ->route('attendance.log')
-                ->with('success', 'Attendance request created successfully.');
-        } else {
+        } catch (Exception $e) {
             return redirect()
                 ->back()
                 ->withInput()
-                ->withErrors(['message' => 'Attendance request already exists for this date and shift.']);
+                ->withErrors(['message' => 'Failed to create attendance request: ' . $e->getMessage()]);
         }
-    } catch (Exception $e) {
-        return redirect()
-            ->back()
-            ->withInput()
-            ->withErrors(['message' => 'Failed to create attendance request: ' . $e->getMessage()]);
     }
-}
 
-    public function get_request(Request $request): JsonResponse {
+    public function get_request(Request $request): JsonResponse
+    {
         $user = Auth::user();
         $employeeId = $user->employee_id;
         $attendance_requests = AttendanceRequest::where('employee_id', $employeeId)->get();
