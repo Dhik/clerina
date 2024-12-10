@@ -435,7 +435,6 @@ class SpentTargetController extends Controller
                 );
             }
         }
-
         return response()->json(['message' => 'Data imported successfully']);
     }
 }

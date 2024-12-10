@@ -3,7 +3,12 @@
 @section('title', 'Spent Targets')
 
 @section('content_header')
-    <h1>Spent Targets</h1>
+    <h1 class="d-flex justify-content-between align-items-center">
+        Spent Targets
+        <button class="btn btn-success" id="refreshDataButton">
+            <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+    </h1>
 @stop
 
 @section('content')
@@ -16,6 +21,7 @@
                         <i class="fas fa-plus"></i> Add Spent Target
                     </a>
                 </div>
+                
                 <div class="card-body">
                     <table id="spentTargetTable" class="table table-bordered table-striped">
                         <thead>
@@ -119,6 +125,44 @@
                     { data: 'action', name: 'action', orderable: false, searchable: false },
                 ],
                 order: [[0, 'desc']]
+            });
+
+            $('#refreshDataButton').on('click', function() {
+                // Show a loading indicator or message to inform the user
+                Swal.fire({
+                    title: 'Refreshing data...',
+                    text: 'Please wait while the data is being refreshed.',
+                    icon: 'info',
+                    showConfirmButton: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Send AJAX request to refresh data
+                $.ajax({
+                    url: '{{ route('spentTarget.importOtherSpent') }}',  // Make sure this matches your route
+                    method: 'GET',
+                    success: function(response) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: response.message || 'Data imported successfully.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+
+                        // Optionally, reload the DataTable or other relevant parts of the page
+                        $('#spentTargetTable').DataTable().ajax.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to refresh data. Please try again later.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
             });
 
             $('#addSpentTargetButton').on('click', function() {
