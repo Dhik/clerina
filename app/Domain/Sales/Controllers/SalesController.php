@@ -977,33 +977,35 @@ class SalesController extends Controller
 
         $salesChannelsData = [];
 
-        // Iterate through the sales data
+        // Initialize the months in chronological order
+        $monthsInOrder = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Add the months to the labels array in chronological order
+        $chartData['labels'] = $monthsInOrder;
+
+        // Initialize sales channel data for each month
         foreach ($salesData as $data) {
-            // Get the month name (e.g., January, February, etc.)
+            // Get the month name from the year and month
             $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
+            $monthIndex = array_search($month, $monthsInOrder);  // Find the index of the month
 
-            // Add the month to the labels array if it's not already there
-            if (!in_array($month, $chartData['labels'])) {
-                $chartData['labels'][] = $month;
-            }
-
-            // Initialize the sales channel data array if it's not set yet
+            // Initialize data for the sales channel if not already set
             if (!isset($salesChannelsData[$data->sales_channel_id])) {
                 $salesChannelsData[$data->sales_channel_id] = [
                     'label' => $salesChannelNames->get($data->sales_channel_id),
-                    'data' => array_fill(0, count($chartData['labels']), 0),
+                    'data' => array_fill(0, 12, 0),  // Ensure there are 12 months in data
                     'fill' => false,
                 ];
             }
 
-            // Find the index of the current month in the labels array
-            $monthIndex = array_search($month, $chartData['labels']);
-            
-            // Update the data for the corresponding sales channel and month
+            // Assign the total amount to the corresponding month in the data array
             $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
         }
 
-        // Add the sales channel data to the datasets array
+        // Add the datasets to the chart data
         foreach ($salesChannelsData as $channelData) {
             $chartData['datasets'][] = $channelData;
         }
@@ -1011,7 +1013,5 @@ class SalesController extends Controller
         // Return the chart data as a JSON response
         return response()->json($chartData);
     }
-
-
 
 }
