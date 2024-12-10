@@ -448,43 +448,43 @@ return [
                 // ],
             ]
         ],
-        // [
-        //     'text' => 'KOL',
-        //     'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
-        //     'icon'    => 'fas fa-fw fa-play',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'Talents',
-        //             'url' => 'admin/talent',
-        //             'icon' => 'nav-icon far fa-circle',
-        //             'active' => ['admin/talent*']
-        //         ],
-        //         [
-        //             'text' => 'Content',
-        //             'url' => 'admin/tlnt-content',
-        //             'icon' => 'nav-icon far fa-circle',
-        //             'active' => ['admin/tlnt-content*']
-        //         ],
-        //         [
-        //             'text' => 'Payment',
-        //             'url' => 'admin/talnt-payments',
-        //             'icon' => 'nav-icon far fa-circle',
-        //             'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
-        //         ],
-        //         [
-        //             'text' => 'Debt Report',
-        //             'url' => 'admin/talnt-payments/report',
-        //             'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
-        //             'icon' => 'nav-icon far fa-circle',
-        //         ],
-        //         [
-        //             'text' => 'Approval',
-        //             'url' => 'admin/approval',
-        //             'icon' => 'nav-icon far fa-circle',
-        //             'active' => ['admin/approval*']
-        //         ],
-        //     ]
-        // ],
+        [
+            'text' => 'KOL',
+            'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
+            'icon'    => 'fas fa-fw fa-play',
+            'submenu' => [
+                [
+                    'text' => 'Talents',
+                    'url' => 'admin/talent',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/talent*']
+                ],
+                [
+                    'text' => 'Content',
+                    'url' => 'admin/tlnt-content',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/tlnt-content*']
+                ],
+                [
+                    'text' => 'Payment',
+                    'url' => 'admin/talnt-payments',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
+                ],
+                [
+                    'text' => 'Debt Report',
+                    'url' => 'admin/talnt-payments/report',
+                    'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
+                [
+                    'text' => 'Approval',
+                    'url' => 'admin/approval',
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/approval*']
+                ],
+            ]
+        ],
         [
             'text' => 'Product Development',
             'can' => [PermissionEnum::ViewOrder],
@@ -523,20 +523,20 @@ return [
         //         ],
         //     ],
         // ],
-        // [
-        //     'text' => 'Contest',
-        //     'url' => 'admin/contest',
-        //     'icon' => 'nav-icon fas fa-trophy',
-        //     'can' => [PermissionEnum::ViewSales],
-        //     'active' => ['admin/contest*']
-        // ],
-        // [
-        //     'text' => 'Competitor Analysis',
-        //     'url' => 'admin/competitor_brands',
-        //     'icon' => 'nav-icon fas fa-certificate',
-        //     'can' => [PermissionEnum::ViewSales],
-        //     'active' => ['admin/competitor_brands*']
-        // ],
+        [
+            'text' => 'Contest',
+            'url' => 'admin/contest',
+            'icon' => 'nav-icon fas fa-trophy',
+            'can' => [PermissionEnum::ViewSales],
+            'active' => ['admin/contest*']
+        ],
+        [
+            'text' => 'Competitor Analysis',
+            'url' => 'admin/competitor_brands',
+            'icon' => 'nav-icon fas fa-certificate',
+            'can' => [PermissionEnum::ViewSales],
+            'active' => ['admin/competitor_brands*']
+        ],
         [
             'text'    => 'Master Data',
             'icon'    => 'fas fa-fw fa-database',
