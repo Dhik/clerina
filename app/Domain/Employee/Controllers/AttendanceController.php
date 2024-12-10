@@ -259,12 +259,9 @@ class AttendanceController extends Controller
         $attendances = $query->get();
 
         // No need for comparisonDate as we are not filtering by today's date unless explicitly provided
-        $onTimeCount = $attendances->where('attendance_status', 'present')
-            ->where('clock_in', '<=', Carbon::parse('08:15'))->count();
-        $lateClockInCount = $attendances->where('attendance_status', 'present')
-            ->where('clock_in', '>', Carbon::parse('08:15'))->count();
-        $earlyClockOutCount = $attendances->where('attendance_status', 'present')
-            ->where('clock_out', '<', Carbon::parse('16:30'))->count();
+        $onTimeCount = $attendances->where('clock_in', '<=', Carbon::parse('08:15'))->count();
+        $lateClockInCount = $attendances->where('clock_in', '>', Carbon::parse('08:15'))->count();
+        $earlyClockOutCount = $attendances->where('clock_out', '<', Carbon::parse('16:30'))->count();
         $absentCount = $attendances->where('attendance_status', 'absent')->count();
         $noClockInCount = $attendances->whereNull('clock_in')->count();
         $noClockOutCount = $attendances->whereNull('clock_out')->count();
