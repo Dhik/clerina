@@ -360,14 +360,44 @@
             }
         });
 
-        // Donut Chart 1 Data
-        const donutChartData1 = {
-            labels: ['Active', 'Inactive', 'Pending'],
-            datasets: [{
-                data: [300, 50, 100],
-                backgroundColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 159, 64, 1)', 'rgba(153, 102, 255, 1)']
-            }]
-        };
+        function renderSalesChannelDonutChart(chartElementId) {
+            // Fetch data from the server
+            fetch('{{ route('report.donut1') }}')
+                .then(response => response.json())
+                .then(data => {
+                    // Prepare the chart data
+                    const donutChartData = {
+                        labels: data.labels, // Labels from the fetched data
+                        datasets: [{
+                            label: 'Sales Channel Revenue', // Customize the label
+                            data: data.datasets[0].data, // Data from the fetched response
+                            backgroundColor: data.datasets[0].backgroundColor, // Background colors
+                            borderColor: data.datasets[0].borderColor || [], // Optional: Border colors
+                            borderWidth: 1
+                        }]
+                    };
+
+                    // Get the canvas context where the chart will be rendered
+                    const donutChart = document.getElementById(chartElementId).getContext('2d');
+                    
+                    // Initialize and render the donut chart
+                    new Chart(donutChart, {
+                        type: 'doughnut',
+                        data: donutChartData,
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right'  // Adjust position if needed
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching sales channel data:', error));
+        }
+        renderSalesChannelDonutChart('donutChart1');
+
 
         // Donut Chart 2 Data
         const donutChartData2 = {
@@ -377,29 +407,6 @@
                 backgroundColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)']
             }]
         };
-        // Donut Chart 1
-        const donutChart1 = document.getElementById('donutChart1').getContext('2d');
-        new Chart(donutChart1, {
-            type: 'doughnut',
-            data: {
-                labels: ['Red', 'Blue', 'Yellow'],
-                datasets: [{
-                    label: 'Donut Chart 1',
-                    data: [300, 50, 100],
-                    backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
-                    borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right'  
-                    }
-                }
-            }
-        });
 
         // Donut Chart 2
         const donutChart2 = document.getElementById('donutChart2').getContext('2d');

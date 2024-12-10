@@ -873,4 +873,38 @@ class SalesController extends Controller
             ], $response->status());
         }
     }
+    public function getSalesChannelDonutData()
+    {
+        $salesChannelData = Order::where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+
+        $labels = [];
+        $data = [];
+        $backgroundColors = [
+            'rgba(75, 192, 192, 1)', 
+            'rgba(255, 159, 64, 1)',  
+            'rgba(153, 102, 255, 1)',
+            'rgba(54, 162, 235, 1)',
+        ];
+
+        $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $labels[] = $channelName;
+            $data[] = $item->total_amount;
+        });
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColors,
+                ]
+            ]
+        ]);
+    }
+
 }
