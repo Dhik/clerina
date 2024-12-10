@@ -290,48 +290,51 @@
             }
         };
 
-        // Render the heatmap chart
         var chart = new ApexCharts(document.querySelector("#heatmapApexChart"), options);
         chart.render();
-        const lineChartData = {
-            labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-            datasets: [
-                {
-                    label: 'Talent Growth',
-                    data: [65, 59, 80, 81, 56, 55],
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1,
-                    fill: false
-                },
-                {
-                    label: 'Talent Engagement',
-                    data: [45, 75, 65, 55, 60, 85],
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1,
-                    fill: false
-                },
-                {
-                    label: 'Talent Retention',
-                    data: [45, 60, 50, 70, 80, 65],
-                    borderColor: 'rgba(255, 159, 64, 1)',
-                    borderWidth: 1,
-                    fill: false
-                }
-            ]
-        };
 
-        new Chart(document.getElementById('lineChart'), {
-            type: 'line',
-            data: lineChartData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+        function renderSalesChannelLineChart(chartElementId) {
+            fetch('{{ route('report.sales-channel-monthly') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const lineChartData = {
+                        labels: data.labels,
+                        datasets: data.datasets.map(dataset => ({
+                            label: dataset.label,
+                            data: dataset.data,
+                            borderColor: dataset.borderColor,
+                            borderWidth: dataset.borderWidth,
+                            fill: dataset.fill
+                        }))
+                    };
+                    const lineChart = document.getElementById(chartElementId).getContext('2d');
+                    new Chart(lineChart, {
+                        type: 'line',
+                        data: lineChartData,
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching sales channel data:', error));
+        }
+        renderSalesChannelLineChart('lineChart');
+
 
         // Bar Chart
         const barChartData = {

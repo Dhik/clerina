@@ -953,5 +953,46 @@ class SalesController extends Controller
         return response()->json($donutChartData);
     }
 
+    public function getTotalAmountPerSalesChannelPerMonth()
+    {
+        $salesData = Order::selectRaw('
+                YEAR(date) as year,
+                MONTH(date) as month,
+                sales_channel_id,
+                SUM(amount) as total_amount
+            ')
+            ->where('tenant_id', 1)
+            ->groupBy('year', 'month', 'sales_channel_id')
+            ->get();
+
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $chartData = [
+            'labels' => [],
+            'datasets' => []
+        ];
+        $salesChannelsData = [];
+
+        foreach ($salesData as $data) {
+            $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
+            if (!in_array($month, $chartData['labels'])) {
+                $chartData['labels'][] = $month;
+            }
+            if (!isset($salesChannelsData[$data->sales_channel_id])) {
+                $salesChannelsData[$data->sales_channel_id] = [
+                    'label' => $salesChannelNames->get($data->sales_channel_id),
+                    'data' => array_fill(0, count($chartData['labels']), 0),
+                    'fill' => false,
+                ];
+            }
+            $monthIndex = array_search($month, $chartData['labels']);
+            $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
+        }
+        foreach ($salesChannelsData as $channelData) {
+            $chartData['datasets'][] = $channelData;
+        }
+        return response()->json($chartData);
+    }
+
+
 
 }
