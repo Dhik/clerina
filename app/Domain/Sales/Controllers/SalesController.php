@@ -602,154 +602,154 @@ class SalesController extends Controller
     }
 
 
-    public function importFromGoogleSheet()
-    {
-        $range = 'Ads Summary!A2:H'; // Adjusted to match the columns being processed
-        $sheetData = $this->googleSheetService->getSheetData($range);
+    // public function importFromGoogleSheet()
+    // {
+    //     $range = 'Ads Summary!A2:H'; // Adjusted to match the columns being processed
+    //     $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
+    //     $tenant_id = 1;
+    //     $currentMonth = Carbon::now()->format('Y-m');
 
-        foreach ($sheetData as $row) {
-            // Parse the date from row[0] and filter to process only current month data
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue;
-            }
-            $salesChannelData = [
-                4 => $row[1] ?? null, // Tiktok Shop (sales_channel_id == 4)
-                1 => $row[3] ?? null, // Shopee (sales_channel_id == 1)
-                3 => $row[4] ?? null, // Tokopedia (sales_channel_id == 3)
-                2 => $row[5] ?? null, // Lazada (sales_channel_id == 2)
-            ];
+    //     foreach ($sheetData as $row) {
+    //         // Parse the date from row[0] and filter to process only current month data
+    //         $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+    //         if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+    //             continue;
+    //         }
+    //         $salesChannelData = [
+    //             4 => $row[1] ?? null, // Tiktok Shop (sales_channel_id == 4)
+    //             1 => $row[3] ?? null, // Shopee (sales_channel_id == 1)
+    //             3 => $row[4] ?? null, // Tokopedia (sales_channel_id == 3)
+    //             2 => $row[5] ?? null, // Lazada (sales_channel_id == 2)
+    //         ];
 
-            foreach ($salesChannelData as $salesChannelId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
+    //         foreach ($salesChannelData as $salesChannelId => $amountValue) {
+    //             if (!isset($amountValue)) {
+    //                 continue;
+    //             }
+    //             $amount = $this->parseCurrencyToInt($amountValue);
 
-                AdSpentMarketPlace::updateOrCreate(
-                    [
-                        'date'             => $date,
-                        'sales_channel_id' => $salesChannelId,
-                        'tenant_id'        => $tenant_id,
-                    ],
-                    [
-                        'amount'           => $amount,
-                    ]
-                );
-            }
+    //             AdSpentMarketPlace::updateOrCreate(
+    //                 [
+    //                     'date'             => $date,
+    //                     'sales_channel_id' => $salesChannelId,
+    //                     'tenant_id'        => $tenant_id,
+    //                 ],
+    //                 [
+    //                     'amount'           => $amount,
+    //                 ]
+    //             );
+    //         }
 
-            // Social Media data
-            $socialMediaData = [
-                1 => $row[2] ?? null, // Facebook (social_media_id == 1)
-                2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
-                5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
-            ];
+    //         // Social Media data
+    //         $socialMediaData = [
+    //             1 => $row[2] ?? null, // Facebook (social_media_id == 1)
+    //             2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
+    //             5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
+    //         ];
 
-            foreach ($socialMediaData as $socialMediaId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
+    //         foreach ($socialMediaData as $socialMediaId => $amountValue) {
+    //             if (!isset($amountValue)) {
+    //                 continue;
+    //             }
+    //             $amount = $this->parseCurrencyToInt($amountValue);
 
-                AdSpentSocialMedia::updateOrCreate(
-                    [
-                        'date'            => $date,
-                        'social_media_id' => $socialMediaId,
-                        'tenant_id'       => $tenant_id,
-                    ],
-                    [
-                        'amount'          => $amount,
-                    ]
-                );
-            }
-        }
+    //             AdSpentSocialMedia::updateOrCreate(
+    //                 [
+    //                     'date'            => $date,
+    //                     'social_media_id' => $socialMediaId,
+    //                     'tenant_id'       => $tenant_id,
+    //                 ],
+    //                 [
+    //                     'amount'          => $amount,
+    //                 ]
+    //             );
+    //         }
+    //     }
 
-        return response()->json(['message' => 'Data imported successfully']);
-    }
+    //     return response()->json(['message' => 'Data imported successfully']);
+    // }
 
-    public function importVisitCleora()
-    {
-        $range = '[Cleora] Visit, Sales, Transaction!A3:E';
-        $sheetData = $this->googleSheetService->getSheetData($range);
+    // public function importVisitCleora()
+    // {
+    //     $range = '[Cleora] Visit, Sales, Transaction!A3:E';
+    //     $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
+    //     $tenant_id = 1;
+    //     $currentMonth = Carbon::now()->format('Y-m');
 
-        foreach ($sheetData as $row) {
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue;
-            }
-            $salesChannelData = [
-                1 => $row[1] ?? null,
-                4 => $row[2] ?? null,
-                2 => $row[3] ?? null,
-                3 => $row[4] ?? null,
-            ];
+    //     foreach ($sheetData as $row) {
+    //         $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+    //         if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+    //             continue;
+    //         }
+    //         $salesChannelData = [
+    //             1 => $row[1] ?? null,
+    //             4 => $row[2] ?? null,
+    //             2 => $row[3] ?? null,
+    //             3 => $row[4] ?? null,
+    //         ];
 
-            foreach ($salesChannelData as $salesChannelId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
+    //         foreach ($salesChannelData as $salesChannelId => $amountValue) {
+    //             if (!isset($amountValue)) {
+    //                 continue;
+    //             }
+    //             $amount = $this->parseCurrencyToInt($amountValue);
 
-                Visit::updateOrCreate(
-                    [
-                        'date'             => $date,
-                        'sales_channel_id' => $salesChannelId,
-                        'tenant_id'        => $tenant_id,
-                    ],
-                    [
-                        'visit_amount'           => $amount,
-                    ]
-                );
-            }
-        }
-        return response()->json(['message' => 'Data imported successfully']);
-    }
-    public function importVisitAzrina()
-    {
-        $range = '[Azrina] Visit, Sales, Transaction!A3:E';
-        $sheetData = $this->googleSheetService->getSheetData($range);
+    //             Visit::updateOrCreate(
+    //                 [
+    //                     'date'             => $date,
+    //                     'sales_channel_id' => $salesChannelId,
+    //                     'tenant_id'        => $tenant_id,
+    //                 ],
+    //                 [
+    //                     'visit_amount'           => $amount,
+    //                 ]
+    //             );
+    //         }
+    //     }
+    //     return response()->json(['message' => 'Data imported successfully']);
+    // }
+    // public function importVisitAzrina()
+    // {
+    //     $range = '[Azrina] Visit, Sales, Transaction!A3:E';
+    //     $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 2;
-        $currentMonth = Carbon::now()->format('Y-m');
+    //     $tenant_id = 2;
+    //     $currentMonth = Carbon::now()->format('Y-m');
 
-        foreach ($sheetData as $row) {
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue;
-            }
-            $salesChannelData = [
-                1 => $row[1] ?? null,
-                4 => $row[2] ?? null,
-                2 => $row[3] ?? null,
-                3 => $row[4] ?? null,
-            ];
+    //     foreach ($sheetData as $row) {
+    //         $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+    //         if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+    //             continue;
+    //         }
+    //         $salesChannelData = [
+    //             1 => $row[1] ?? null,
+    //             4 => $row[2] ?? null,
+    //             2 => $row[3] ?? null,
+    //             3 => $row[4] ?? null,
+    //         ];
 
-            foreach ($salesChannelData as $salesChannelId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
+    //         foreach ($salesChannelData as $salesChannelId => $amountValue) {
+    //             if (!isset($amountValue)) {
+    //                 continue;
+    //             }
+    //             $amount = $this->parseCurrencyToInt($amountValue);
 
-                Visit::updateOrCreate(
-                    [
-                        'date'             => $date,
-                        'sales_channel_id' => $salesChannelId,
-                        'tenant_id'        => $tenant_id,
-                    ],
-                    [
-                        'visit_amount'           => $amount,
-                    ]
-                );
-            }
-        }
-        return response()->json(['message' => 'Data imported successfully']);
-    }
+    //             Visit::updateOrCreate(
+    //                 [
+    //                     'date'             => $date,
+    //                     'sales_channel_id' => $salesChannelId,
+    //                     'tenant_id'        => $tenant_id,
+    //                 ],
+    //                 [
+    //                     'visit_amount'           => $amount,
+    //                 ]
+    //             );
+    //         }
+    //     }
+    //     return response()->json(['message' => 'Data imported successfully']);
+    // }
 
 
     /**
