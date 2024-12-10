@@ -79,7 +79,7 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Line Chart</h5>
+                        <h5>Revenue per Sales per Month</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="lineChart" width="400" height="200"></canvas>
