@@ -372,7 +372,6 @@
                             label: 'Sales Channel Revenue', // Customize the label
                             data: data.datasets[0].data, // Data from the fetched response
                             backgroundColor: data.datasets[0].backgroundColor, // Background colors
-                            borderColor: data.datasets[0].borderColor || [], // Optional: Border colors
                         }]
                     };
 
