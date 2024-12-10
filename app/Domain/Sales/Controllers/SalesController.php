@@ -906,5 +906,52 @@ class SalesController extends Controller
             ]
         ]);
     }
+    public function getTotalAdSpentForDonutChart()
+    {
+        $socialMediaSpends = AdSpentSocialMedia::where('tenant_id', 1)
+            ->selectRaw('social_media_id, SUM(amount) as total_amount')
+            ->groupBy('social_media_id')
+            ->get();
+
+        $marketplaceSpends = AdSpentMarketPlace::where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        $socialMediaNames = SocialMedia::pluck('name', 'id');
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+
+        $labels = [];
+        $data = [];
+        $backgroundColor = [];
+        $borderColor = [];
+
+        foreach ($socialMediaSpends as $spend) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $labels[] = $platformName;
+            $data[] = $spend->total_amount;
+            $backgroundColor[] = 'rgba(75, 192, 192, 0.2)';
+        }
+
+        foreach ($marketplaceSpends as $spend) {
+            $channelName = $salesChannelNames->get($spend->sales_channel_id);
+            $labels[] = $channelName;
+            $data[] = $spend->total_amount;
+            $backgroundColor[] = 'rgba(153, 102, 255, 0.2)';
+        }
+
+        $donutChartData = [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                ]
+            ]
+        ];
+
+        return response()->json($donutChartData);
+    }
+
 
 }

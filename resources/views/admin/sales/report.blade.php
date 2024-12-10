@@ -93,7 +93,7 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Donut Chart 1</h5>
+                        <h5>Revenue per Sales Channel</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="donutChart1" width="400"></canvas>
@@ -105,7 +105,7 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Donut Chart 2</h5>
+                        <h5>Ads Spent per Channel</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="donutChart2" width="400"></canvas>
@@ -361,24 +361,20 @@
         });
 
         function renderSalesChannelDonutChart(chartElementId) {
-            // Fetch data from the server
             fetch('{{ route('report.donut1') }}')
                 .then(response => response.json())
                 .then(data => {
-                    // Prepare the chart data
                     const donutChartData = {
-                        labels: data.labels, // Labels from the fetched data
+                        labels: data.labels,
                         datasets: [{
-                            label: 'Sales Channel Revenue', // Customize the label
-                            data: data.datasets[0].data, // Data from the fetched response
-                            backgroundColor: data.datasets[0].backgroundColor, // Background colors
+                            label: 'Sales Channel Revenue',
+                            data: data.datasets[0].data,
+                            backgroundColor: data.datasets[0].backgroundColor,
                         }]
                     };
 
-                    // Get the canvas context where the chart will be rendered
                     const donutChart = document.getElementById(chartElementId).getContext('2d');
                     
-                    // Initialize and render the donut chart
                     new Chart(donutChart, {
                         type: 'doughnut',
                         data: donutChartData,
@@ -386,7 +382,7 @@
                             responsive: true,
                             plugins: {
                                 legend: {
-                                    position: 'right'  // Adjust position if needed
+                                    position: 'right'
                                 }
                             }
                         }
@@ -396,38 +392,36 @@
         }
         renderSalesChannelDonutChart('donutChart1');
 
+        
+        function renderTotalAdSpentDonutChart(chartElementId) {
+            fetch('{{ route('report.donut2') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const donutChartData = {
+                        labels: data.labels, 
+                        datasets: [{
+                            label: 'Total Ad Spend', 
+                            data: data.datasets[0].data, 
+                            backgroundColor: data.datasets[0].backgroundColor,
+                        }]
+                    };
 
-        // Donut Chart 2 Data
-        const donutChartData2 = {
-            labels: ['Completed', 'In Progress', 'Not Started'],
-            datasets: [{
-                data: [200, 150, 50],
-                backgroundColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)']
-            }]
-        };
-
-        // Donut Chart 2
-        const donutChart2 = document.getElementById('donutChart2').getContext('2d');
-        new Chart(donutChart2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Green', 'Purple', 'Orange'],
-                datasets: [{
-                    label: 'Donut Chart 2',
-                    data: [200, 150, 50],
-                    backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64, 0.2)'],
-                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right' 
-                    }
-                }
-            }
-        });
+                    const donutChart = document.getElementById(chartElementId).getContext('2d');
+                    new Chart(donutChart, {
+                        type: 'doughnut',
+                        data: donutChartData,
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching ad spend data:', error));
+        }
+        renderTotalAdSpentDonutChart('donutChart2');
     </script>
 @stop

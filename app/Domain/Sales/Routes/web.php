@@ -60,6 +60,7 @@ Route::prefix('admin')
 
                 // Report
                 Route::get('/sales-channel-donut-data', [SalesController::class, 'getSalesChannelDonutData'])->name('report.donut1');
+                Route::get('/ads-channel-donut-data', [SalesController::class, 'getTotalAdSpentForDonutChart'])->name('report.donut2');
 
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');
                 Route::get('/meta_data', [SalesController::class, 'getAdInsights']);
