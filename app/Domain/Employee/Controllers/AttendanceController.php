@@ -265,9 +265,9 @@ class AttendanceController extends Controller
         $absentCount = $attendances->where('attendance_status', 'absent')->count();
         $noClockInCount = $attendances->whereNull('clock_in')->count();
         $noClockOutCount = $attendances->whereNull('clock_out')->count();
-        $invalidCount = 0; // Define your logic for invalid attendance
-        $dayOffCount = 0; // Define your logic for day off
-        $timeOffCount = 0; // Define your logic for time off
+        $invalidCount = 0;
+        $dayOffCount = 0; 
+        $timeOffCount = 0;
 
         return response()->json([
             'onTimeCount' => $onTimeCount,
