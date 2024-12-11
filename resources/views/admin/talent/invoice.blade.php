@@ -97,7 +97,7 @@
                             </td>
                             @elseif($tenant_id == 2)
                             <td>
-                                AZRINA BEAUTY<br>
+                                <strong>AZRINA BEAUTY</strong><br>
                                 @azrinabeauty<br>
                             </td>
                             @endif
