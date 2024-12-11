@@ -870,4 +870,124 @@ class SalesController extends Controller
             ], $response->status());
         }
     }
+
+    public function getSalesChannelDonutData()
+    {
+        $salesChannelData = Order::where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $labels = [];
+        $data = [];
+        $backgroundColors = [
+            'rgba(75, 192, 192, 1)', 
+            'rgba(255, 159, 64, 1)',  
+            'rgba(153, 102, 255, 1)',
+            'rgba(54, 162, 235, 1)',
+        ];
+        $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $labels[] = $channelName;
+            $data[] = $item->total_amount;
+        });
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColors,
+                ]
+            ]
+        ]);
+    }
+    public function getTotalAdSpentForDonutChart()
+    {
+        $socialMediaSpends = AdSpentSocialMedia::where('tenant_id', 1)
+            ->selectRaw('social_media_id, SUM(amount) as total_amount')
+            ->groupBy('social_media_id')
+            ->get();
+        $marketplaceSpends = AdSpentMarketPlace::where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+        $socialMediaNames = SocialMedia::pluck('name', 'id');
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $labels = [];
+        $data = [];
+        $backgroundColor = [];
+        $borderColor = [];
+        foreach ($socialMediaSpends as $spend) {
+            $platformName = $socialMediaNames->get($spend->social_media_id);
+            $labels[] = $platformName;
+            $data[] = $spend->total_amount;
+            $backgroundColor[] = 'rgba(75, 192, 192, 0.2)';
+        }
+        foreach ($marketplaceSpends as $spend) {
+            $channelName = $salesChannelNames->get($spend->sales_channel_id);
+            $labels[] = $channelName;
+            $data[] = $spend->total_amount;
+            $backgroundColor[] = 'rgba(153, 102, 255, 0.2)';
+        }
+        $donutChartData = [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $backgroundColor,
+                ]
+            ]
+        ];
+        return response()->json($donutChartData);
+    }
+    public function getTotalAmountPerSalesChannelPerMonth()
+    {
+        // Get the sales data grouped by year, month, and sales channel
+        $salesData = Order::selectRaw('
+                YEAR(date) as year,
+                MONTH(date) as month,
+                sales_channel_id,
+                SUM(amount) as total_amount
+            ')
+            ->where('tenant_id', 1)
+            ->groupBy('year', 'month', 'sales_channel_id')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc') // Ensure data is ordered by year and month
+            ->get();
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $chartData = [
+            'labels' => [],
+            'datasets' => []
+        ];
+        $salesChannelsData = [];
+        // Initialize the months in chronological order
+        $monthsInOrder = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        // Add the months to the labels array in chronological order
+        $chartData['labels'] = $monthsInOrder;
+        // Initialize sales channel data for each month
+        foreach ($salesData as $data) {
+            // Get the month name from the year and month
+            $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
+            $monthIndex = array_search($month, $monthsInOrder);  // Find the index of the month
+            // Initialize data for the sales channel if not already set
+            if (!isset($salesChannelsData[$data->sales_channel_id])) {
+                $salesChannelsData[$data->sales_channel_id] = [
+                    'label' => $salesChannelNames->get($data->sales_channel_id),
+                    'data' => array_fill(0, 12, 0),  // Ensure there are 12 months in data
+                    'fill' => false,
+                ];
+            }
+            // Assign the total amount to the corresponding month in the data array
+            $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
+        }
+        // Add the datasets to the chart data
+        foreach ($salesChannelsData as $channelData) {
+            $chartData['datasets'][] = $channelData;
+        }
+        // Return the chart data as a JSON response
+        return response()->json($chartData);
+    }
 }
