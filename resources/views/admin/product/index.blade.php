@@ -19,9 +19,9 @@
                 <table id="productsTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th>Product Name</th>
-                            <th>Stock</th>
                             <th>SKU</th>
+                            <th>Stock</th>
+                            <th>Product Name</th>
                             <th>Harga Jual</th>
                             <th>Actions</th>
                         </tr>
@@ -49,9 +49,9 @@
                 serverSide: true,
                 ajax: '{{ route('product.data') }}',
                 columns: [
-                    { data: 'product', name: 'product' },
-                    { data: 'stock', name: 'stock' },
                     { data: 'sku', name: 'sku' },
+                    { data: 'stock', name: 'stock' },
+                    { data: 'product', name: 'product' },
                     { data: 'harga_jual', name: 'harga_jual' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ]

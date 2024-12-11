@@ -8,6 +8,7 @@ use App\Domain\Product\Models\Product;
 use App\Domain\Product\Requests\ProductRequest;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
+use App\Domain\Product\Import\ProductImport;
 use Auth;
 
 /**
@@ -31,7 +32,7 @@ class ProductController extends Controller
 
     public function data()
     {
-        $products = Product::all();
+        $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
         return DataTables::of($products)
             ->addColumn('action', function ($product) {
                 return '
@@ -169,5 +170,4 @@ class ProductController extends Controller
             ], 500);
         }
     }
-
 }
