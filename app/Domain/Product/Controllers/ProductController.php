@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Domain\Product\BLL\Product\ProductBLLInterface;
 use App\Domain\Product\Models\Product;
 use App\Domain\Product\Requests\ProductRequest;
+use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Utilities\Request;
+use Auth;
 
 /**
  * @property ProductBLLInterface productBLL
@@ -26,6 +29,39 @@ class ProductController extends Controller
         return view('admin.product.index');
     }
 
+    public function data()
+    {
+        $products = Product::all();
+        return DataTables::of($products)
+            ->addColumn('action', function ($product) {
+                return '
+                    <button class="btn btn-sm btn-primary viewButton" 
+                        data-id="' . $product->id . '" 
+                        data-toggle="modal" 
+                        data-target="#viewProductModal">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success editButton" 
+                        data-id="' . $product->id . '" 
+                        data-product="' . htmlspecialchars($product->product, ENT_QUOTES, 'UTF-8') . '" 
+                        data-stock="' . $product->stock . '" 
+                        data-sku="' . $product->sku . '" 
+                        data-harga_jual="' . $product->harga_jual . '" 
+                        data-harga_markup="' . $product->harga_markup . '" 
+                        data-harga_cogs="' . $product->harga_cogs . '" 
+                        data-harga_batas_bawah="' . $product->harga_batas_bawah . '" 
+                        data-tenant_id="' . $product->tenant_id . '" 
+                        data-toggle="modal" 
+                        data-target="#productModal">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
+                ';
+            })
+            ->rawColumns(['action']) // Let DataTables know the 'action' column contains HTML
+            ->make(true);
+    }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -42,47 +78,96 @@ class ProductController extends Controller
      */
     public function store(ProductRequest $request)
     {
-        //
+        try {
+            $product = new Product();
+            $product->product = $request->product;
+            $product->stock = $request->stock;
+            $product->sku = $request->sku;
+            $product->harga_jual = $request->harga_jual;
+            $product->harga_markup = $request->harga_markup;
+            $product->harga_cogs = $request->harga_cogs;
+            $product->harga_batas_bawah = $request->harga_batas_bawah;
+            $product->save();
+
+            return response()->json(['message' => 'Product added successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to add product'], 500);
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Show the details of the specified product.
      *
      * @param Product $product
+     * @return \Illuminate\Http\Response
      */
     public function show(Product $product)
     {
-        //
+        // Return product data in JSON format for the AJAX call
+        return response()->json([
+            'product' => $product,
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified product.
      *
-     * @param  Product  $product
+     * @param Product $product
+     * @return \Illuminate\Http\Response
      */
     public function edit(Product $product)
     {
-        //
+        // Return product data in JSON format for the AJAX call
+        return response()->json([
+            'product' => $product,
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified product in storage.
      *
      * @param ProductRequest $request
-     * @param  Product  $product
+     * @param Product $product
+     * @return \Illuminate\Http\Response
      */
     public function update(ProductRequest $request, Product $product)
     {
-        //
+        // Validate and update the product data
+        $validatedData = $request->validated();
+        $product->update($validatedData);
+
+        // Return a success response
+        return response()->json([
+            'success' => true,
+            'message' => 'Product updated successfully!',
+            'product' => $product
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified product from storage.
      *
      * @param Product $product
+     * @return \Illuminate\Http\Response
      */
     public function destroy(Product $product)
     {
-        //
+        try {
+            // Delete the product from the database
+            $product->delete();
+
+            // Return a success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Product deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            // Handle any errors
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting product: ' . $e->getMessage()
+            ], 500);
+        }
     }
+
 }

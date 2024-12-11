@@ -90,10 +90,17 @@
                 <td colspan="2">
                     <table>
                         <tr>
+                            @if($tenant_id == 1)
                             <td>
                                 <img src="{{ public_path('img/cleora-logo.png') }}" style="width:100%; max-width:250px;"><br>
                                 PT. Summer Cantika Indonesia<br>
                             </td>
+                            @elseif($tenant_id == 2)
+                            <td>
+                                AZRINA BEAUTY<br>
+                                @azrinabeauty<br>
+                            </td>
+                            @endif
                             <td class="title">
                                 INVOICE<br>
                             </td>

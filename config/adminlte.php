@@ -332,6 +332,12 @@ return [
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
+        [
+            'text' => 'Product',
+            'url' => 'admin/product',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewCustomer],
+        ],
 
         [
             'text' => 'Report',

@@ -182,9 +182,7 @@ class TalentController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,csv,xls'
         ]);
-
         $this->talentBLL->handleTalentImport($request->file('file'));
-
         return redirect()->back()->with('success', 'Talent data imported successfully.');
     }
 
@@ -292,6 +290,7 @@ class TalentController extends Controller
             'ttd' => $ttd,
             'approval_name' => $approval_name,
             'status_payment' => $statusPayment,
+            'tenant_id' => Auth::user()->current_tenant_id,
         ];
 
         $pdf = Pdf::loadView('admin.talent.invoice', $data);
