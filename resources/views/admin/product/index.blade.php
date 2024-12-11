@@ -20,7 +20,6 @@
                     <thead>
                         <tr>
                             <th>SKU</th>
-                            <th>Stock</th>
                             <th>Product Name</th>
                             <th>Harga Jual</th>
                             <th>Actions</th>
@@ -50,11 +49,11 @@
                 ajax: '{{ route('product.data') }}',
                 columns: [
                     { data: 'sku', name: 'sku' },
-                    { data: 'stock', name: 'stock' },
                     { data: 'product', name: 'product' },
                     { data: 'harga_jual', name: 'harga_jual' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
-                ]
+                ],
+                order: [[2, 'desc']] 
             });
 
             $('#addProductForm').on('submit', function(e) {
