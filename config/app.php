@@ -186,6 +186,7 @@ return [
         App\Domain\Competitor\Providers\CompetitorProvider::class,
         App\Domain\Talent\Providers\TalentProvider::class,
         App\Domain\SpentTarget\Providers\SpentTargetProvider::class,
+        App\Domain\Product\Providers\ProductProvider::class,
     ])->toArray(),
 
     /*

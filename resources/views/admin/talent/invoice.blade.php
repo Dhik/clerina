@@ -156,7 +156,20 @@
                 <td><strong>TOTAL</strong></td>
                 <td><strong>Rp {{ number_format($total, 0, ',', '.') }}</strong></td>
             </tr>
-            @if($status_payment !== 'Full Payment')
+            @if($status_payment == 'Termin 1' || $status_payment == 'Termin 2' || $status_payment == 'Termin 3')
+                <tr>
+                    <td>Termin 1</td>
+                    <td>Rp {{ number_format($total / 3, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>Termin 2</td>
+                    <td>Rp {{ number_format($total / 3, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td>Termin 3</td>
+                    <td>Rp {{ number_format($total / 3, 0, ',', '.') }}</td>
+                </tr>
+            @elseif($status_payment !== 'Full Payment')
                 <tr>
                     <td>Down Payment</td>
                     <td>Rp {{ number_format($down_payment, 0, ',', '.') }}</td>
