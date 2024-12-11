@@ -28,7 +28,7 @@ class ProductRequest extends FormRequest
         return [
             'product' => 'required|string|max:255',        // Product name is required, should be a string, and have a maximum length of 255 characters.
             'stock' => 'required|integer|min:0',           // Stock is required, should be an integer, and cannot be negative.
-            'sku' => 'required|string|max:255|unique:products,sku',  // SKU is required, must be unique in the `products` table.
+            'sku' => 'required|string|max:255',  // SKU is required, must be unique in the `products` table.
             'harga_jual' => 'required|numeric|min:0',      // Harga Jual is required and must be a numeric value greater than or equal to 0.
             'harga_markup' => 'nullable|numeric|min:0',    // Harga Markup is optional but if provided, it must be numeric and greater than or equal to 0.
             'harga_cogs' => 'nullable|numeric|min:0',      // Harga COGS is optional but if provided, it must be numeric and greater than or equal to 0.
@@ -54,7 +54,6 @@ class ProductRequest extends FormRequest
             'sku.required' => 'SKU is required.',
             'sku.string' => 'SKU must be a string.',
             'sku.max' => 'SKU cannot exceed 255 characters.',
-            'sku.unique' => 'SKU must be unique.',
             'harga_jual.required' => 'Harga Jual is required.',
             'harga_jual.numeric' => 'Harga Jual must be a valid number.',
             'harga_jual.min' => 'Harga Jual cannot be less than 0.',

@@ -135,6 +135,40 @@
                 });
             });
 
+            $('#editProductForm').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var url = form.attr('action');
+                
+                $.ajax({
+                    type: "PUT",
+                    url: url,
+                    data: form.serialize(),
+                    success: function(response) {
+                        $('#editProductModal').modal('hide');
+                        $('#productsTable').DataTable().ajax.reload();
+                        Swal.fire('Success', 'Product updated successfully!', 'success');
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            // Display error messages
+                            if (errors.product) {
+                                $('#edit_product_name').addClass('is-invalid');
+                                $('#edit_product_name-error').text(errors.product[0]).show();
+                            }
+                            if (errors.stock) {
+                                $('#edit_stock').addClass('is-invalid');
+                                $('#edit_stock-error').text(errors.stock[0]).show();
+                            }
+                        } else {
+                            Swal.fire('Error', 'Failed to update product', 'error');
+                        }
+                    }
+                });
+            });
+
+
             $('#productsTable').on('click', '.deleteButton', function() {
                 let rowData = table.row($(this).closest('tr')).data();
                 let route = '{{ route('product.destroy', ':id') }}'.replace(':id', rowData.id);

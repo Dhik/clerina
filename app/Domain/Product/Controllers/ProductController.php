@@ -133,16 +133,22 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request, Product $product)
     {
-        // Validate and update the product data
-        $validatedData = $request->validated();
-        $product->update($validatedData);
-
-        // Return a success response
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully!',
-            'product' => $product
-        ]);
+        try {
+            // Validate and update the product data
+            $validatedData = $request->validated();
+            $product->update($validatedData);
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully!',
+                'product' => $product
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating product: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
