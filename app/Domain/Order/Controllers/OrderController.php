@@ -5,6 +5,7 @@ namespace App\Domain\Order\Controllers;
 use App\Domain\Order\BLL\Order\OrderBLLInterface;
 use App\Domain\Order\DAL\Order\OrderDALInterface;
 use App\Domain\Order\Exports\OrdersExport;
+use App\Domain\Order\Exports\UniqueSkuExport;
 use App\Domain\Order\Exports\OrderTemplateExport;
 use App\Domain\Order\Models\Order;
 use App\Domain\Sales\Models\Sales;
@@ -436,30 +437,31 @@ class OrderController extends Controller
     }
 
     public function getOrdersByDate(Request $request): JsonResponse
-{
-    // Fetch the orders with the sales channel relationship
-    $orders = Order::with('salesChannel')
-        ->where('tenant_id', Auth::user()->current_tenant_id)
-        ->where('date', Carbon::parse($request->input('date')))
-        ->orderBy('date', 'asc')
-        ->get();
+    {
+        $orders = Order::with('salesChannel')
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('date', Carbon::parse($request->input('date')))
+            ->orderBy('date', 'asc')
+            ->get();
 
-    // Group the orders by sales channel name and calculate the sum of the amount
-    $groupedOrders = $orders->groupBy(function($order) {
-        return $order->salesChannel->name;
-    });
+        $groupedOrders = $orders->groupBy(function($order) {
+            return $order->salesChannel->name;
+        });
 
-    // Format the grouped data into an array with the sum of the amount
-    $result = $groupedOrders->map(function ($orders, $salesChannelName) {
-        return [
-            'sales_channel' => $salesChannelName,
-            'total_amount' => $orders->sum('amount'),
-            'orders' => $orders
-        ];
-    })->values();
+        // Format the grouped data into an array with the sum of the amount
+        $result = $groupedOrders->map(function ($orders, $salesChannelName) {
+            return [
+                'sales_channel' => $salesChannelName,
+                'total_amount' => $orders->sum('amount'),
+                'orders' => $orders
+            ];
+        })->values();
+        return response()->json($result);
+    }
 
-    // Return the grouped data as a JSON response
-    return response()->json($result);
-}
+    public function exportUniqueSku()
+    {
+        return Excel::download(new UniqueSkuExport, 'unique_skus.xlsx');
+    }
 
 }
