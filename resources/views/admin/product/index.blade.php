@@ -50,7 +50,19 @@
                 columns: [
                     { data: 'sku', name: 'sku' },
                     { data: 'product', name: 'product' },
-                    { data: 'harga_jual', name: 'harga_jual' },
+                    { 
+                        data: 'harga_jual', 
+                        name: 'harga_jual', 
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '';
+                            }
+                            return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],
                 order: [[2, 'desc']] 
