@@ -56,16 +56,19 @@ class ProductImport implements ToCollection, SkipsEmptyRows, WithMapping, WithSt
     public function collection(Collection $rows)
 {
     foreach ($rows as $row) {
-        Product::create([
-            'product' => $row['product'] ?? '',
-            'stock' => $row['stock'] ?? 0,
-            'sku' => $row['sku'] ?? '',
-            'harga_jual' => $row['harga_jual'] ?? 0.00,
-            'harga_markup' => $row['harga_markup'] ?? 0.00,
-            'harga_cogs' => $row['harga_cogs'] ?? 0.00,
-            'harga_batas_bawah' => $row['harga_batas_bawah'] ?? 0.00,
-            'tenant_id' => $row['tenant_id'] ?? 1,
-        ]);
+        Product::updateOrCreate(
+            ['sku' => $row['sku']], // Search by SKU
+            [
+                'product' => $row['product'] ?? '',
+                'stock' => $row['stock'] ?? 0,
+                'sku' => $row['sku'] ?? '',
+                'harga_jual' => $row['harga_jual'] ?? 0.00,
+                'harga_markup' => $row['harga_markup'] ?? 0.00,
+                'harga_cogs' => $row['harga_cogs'] ?? 0.00,
+                'harga_batas_bawah' => $row['harga_batas_bawah'] ?? 0.00,
+                'tenant_id' => $row['tenant_id'] ?? 1,
+            ]
+        );
     }
 }
 
