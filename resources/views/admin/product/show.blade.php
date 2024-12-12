@@ -60,6 +60,7 @@
         </div>
     </div>
 </div>
+
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -80,17 +81,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($orders as $order)
-                            <tr>
-                                <td>{{ $order->id_order }}</td>
-                                <td>{{ $order->customer_name }}</td>
-                                <td>{{ $order->qty }}</td>
-                                <td>{{ number_format($order->amount, 0, ',', '.') }}</td>
-                                <td>{{ $order->shipment }}</td>
-                                <td>{{ $order->sku }}</td>
-                                <td>{{ $order->date }}</td>
-                            </tr>
-                        @endforeach
+                        <!-- Data will be populated by DataTables -->
                     </tbody>
                 </table>
             </div>
@@ -105,12 +96,19 @@
     $(document).ready(function() {
         $('#ordersTable').DataTable({
             processing: true,
-            serverSide: false, // Because we're passing data directly from the controller
-            paging: true,
-            ordering: true,
+            serverSide: true, // Enable server-side processing
+            ajax: '{{ route('product.orders', $product->id) }}', // AJAX call to fetch orders
+            columns: [
+                { data: 'id_order', name: 'id_order' },
+                { data: 'customer_name', name: 'customer_name' },
+                { data: 'qty', name: 'qty' },
+                { data: 'total_price', name: 'total_price' },
+                { data: 'shipment', name: 'shipment' },
+                { data: 'sku', name: 'sku' },
+                { data: 'date', name: 'date' }
+            ],
             order: [[6, 'desc']] // Order by date
         });
     });
 </script>
 @stop
-

@@ -98,6 +98,23 @@ class ProductController extends Controller
         }
     }
 
+    public function getOrders(Product $product)
+    {
+        // Fetch orders where the SKU matches the product SKU using LIKE
+        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
+                    ->orderBy('date', 'desc');
+
+        // Use DataTables for server-side processing
+        return datatables()->of($orders)
+            ->addColumn('total_price', function($order) {
+                return number_format($order->amount, 0, ',', '.');
+            })
+            ->addColumn('date', function($order) {
+                return $order->date->format('Y-m-d');
+            })
+            ->make(true);
+    }
+
     /**
      * Show the details of the specified product.
      *
@@ -106,10 +123,8 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')->get();
-        return view('admin.product.show', compact('product', 'orders'));
+        return view('admin.product.show', compact('product'));
     }
-
 
     /**
      * Show the form for editing the specified product.

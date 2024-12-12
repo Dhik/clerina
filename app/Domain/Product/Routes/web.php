@@ -24,6 +24,7 @@ Route::prefix('admin')
                 Route::get('/get', [ProductController::class, 'data'])->name('product.data');
                 Route::post('/', [ProductController::class, 'store'])->name('product.store');
                 Route::get('/{product}', [ProductController::class, 'show'])->name('product.show');
+                Route::get('/{product}/orders', [ProductController::class, 'getOrders'])->name('product.orders');
                 Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('product.edit');
                 Route::put('/{product}', [ProductController::class, 'update'])->name('product.update');
                 Route::delete('{product}', [ProductController::class, 'destroy'])->name('product.destroy');
