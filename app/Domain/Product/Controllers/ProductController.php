@@ -100,20 +100,22 @@ class ProductController extends Controller
 
     public function getOrders(Product $product)
     {
+        // Use query builder to efficiently process large datasets
         $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
-                    ->orderBy('date', 'desc')
-                    ->get();
+                    ->orderBy('date', 'desc'); // Keep the query efficient without fetching all rows at once
 
+        // Use DataTables for server-side processing
         return datatables()->of($orders)
             ->addColumn('total_price', function($order) {
                 return number_format($order->amount, 0, ',', '.');
             })
             ->addColumn('date', function($order) {
+                // Parse the date to a Carbon instance and format it
                 return \Carbon\Carbon::parse($order->date)->format('Y-m-d');
             })
+            ->rawColumns(['total_price']) // Optional: if you need to render raw HTML in a column
             ->make(true);
     }
-
 
     /**
      * Show the details of the specified product.
