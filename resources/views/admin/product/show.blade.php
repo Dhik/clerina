@@ -75,7 +75,7 @@
                             <th>Quantity</th>
                             <th>Total Price</th>
                             <th>Shipment</th>
-                            <th>Payment Method</th>
+                            <th>SKU</th>
                             <th>Date</th>
                         </tr>
                     </thead>
@@ -87,7 +87,7 @@
                                 <td>{{ $order->qty }}</td>
                                 <td>{{ number_format($order->amount, 0, ',', '.') }}</td>
                                 <td>{{ $order->shipment }}</td>
-                                <td>{{ $order->payment_method }}</td>
+                                <td>{{ $order->sku }}</td>
                                 <td>{{ $order->date }}</td>
                             </tr>
                         @endforeach
