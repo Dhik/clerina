@@ -5,6 +5,7 @@ namespace App\Domain\Product\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Product\BLL\Product\ProductBLLInterface;
 use App\Domain\Product\Models\Product;
+use App\Domain\Order\Models\Order;
 use App\Domain\Product\Requests\ProductRequest;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
@@ -105,8 +106,8 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        // Return the show view and pass the product data
-        return view('admin.product.show', compact('product'));
+        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')->get();
+        return view('admin.product.show', compact('product', 'orders'));
     }
 
 

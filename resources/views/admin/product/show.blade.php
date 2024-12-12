@@ -13,39 +13,104 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="product_name">Product Name</label>
-                    <input type="text" id="product_name" class="form-control" value="{{ $product->product }}" readonly>
+            <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h4 id="newSalesCount">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</h4>
+                            <p>Harga Jual</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="sku">SKU</label>
-                    <input type="text" id="sku" class="form-control" value="{{ $product->sku }}" readonly>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-purple">
+                        <div class="inner">
+                            <h4 id="newVisitCount">Rp {{ number_format($product->harga_markup, 0, ',', '.') }}</h4>
+                            <p>Harga Markup</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="stock">Stock</label>
-                    <input type="number" id="stock" class="form-control" value="{{ $product->stock }}" readonly>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h4 id="newOrderCount">Rp {{ number_format($product->harga_cogs, 0, ',', '.') }}</h4>
+                            <p>Harga COGS</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </div>
                 </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-teal">
+                        <div class="inner">
+                            <h4 id="newRoasCount">Rp {{ number_format($product->harga_batas_bawah, 0, ',', '.') }}</h4>
+                            <p>Harga Batas Bawah</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
             </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="harga_jual">Harga Jual</label>
-                    <input type="text" id="harga_jual" class="form-control" value="Rp {{ number_format($product->harga_jual, 0, ',', '.') }}" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="harga_markup">Harga Markup</label>
-                    <input type="text" id="harga_markup" class="form-control" value="Rp {{ number_format($product->harga_markup, 0, ',', '.') }}" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="harga_cogs">Harga COGS</label>
-                    <input type="text" id="harga_cogs" class="form-control" value="Rp {{ number_format($product->harga_cogs, 0, ',', '.') }}" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="harga_batas_bawah">Harga Batas Bawah</label>
-                    <input type="text" id="harga_batas_bawah" class="form-control" value="Rp {{ number_format($product->harga_batas_bawah, 0, ',', '.') }}" readonly>
-                </div>
+            <div class="card-body">
+                <table id="ordersTable" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Name</th>
+                            <th>Quantity</th>
+                            <th>Total Price</th>
+                            <th>Shipment</th>
+                            <th>Payment Method</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($orders as $order)
+                            <tr>
+                                <td>{{ $order->id_order }}</td>
+                                <td>{{ $order->customer_name }}</td>
+                                <td>{{ $order->qty }}</td>
+                                <td>{{ number_format($order->amount, 0, ',', '.') }}</td>
+                                <td>{{ $order->shipment }}</td>
+                                <td>{{ $order->payment_method }}</td>
+                                <td>{{ $order->date }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 @stop
+
+@section('js')
+<!-- DataTables JS -->
+<script>
+    $(document).ready(function() {
+        $('#ordersTable').DataTable({
+            processing: true,
+            serverSide: false, // Because we're passing data directly from the controller
+            paging: true,
+            ordering: true,
+            order: [[6, 'desc']] // Order by date
+        });
+    });
+</script>
+@stop
+
