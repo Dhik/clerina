@@ -100,11 +100,9 @@ class ProductController extends Controller
 
     public function getOrders(Product $product)
     {
-        // Use query builder to efficiently process large datasets
         $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
-                    ->orderBy('date', 'desc'); // Keep the query efficient without fetching all rows at once
+                    ->orderBy('date', 'desc'); 
 
-        // Use DataTables for server-side processing
         return datatables()->of($orders)
             ->addColumn('total_price', function($order) {
                 return number_format($order->amount, 0, ',', '.');
@@ -115,6 +113,23 @@ class ProductController extends Controller
             })
             ->rawColumns(['total_price']) // Optional: if you need to render raw HTML in a column
             ->make(true);
+    }
+
+    public function getOrderCountPerDay(Product $product)
+    {
+        $orderCounts = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
+            ->selectRaw('DATE(date) as order_date, COUNT(id_order) as order_count')
+            ->groupBy('order_date')
+            ->orderBy('order_date', 'asc')
+            ->get();
+
+        $labels = $orderCounts->pluck('order_date');
+        $data = $orderCounts->pluck('order_count');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data
+        ]);
     }
 
     /**
