@@ -88,6 +88,7 @@ class ProductController extends Controller
             $product->harga_markup = $request->harga_markup;
             $product->harga_cogs = $request->harga_cogs;
             $product->harga_batas_bawah = $request->harga_batas_bawah;
+            $product->tenant_id = Auth::user()->current_tenant_id;
             $product->save();
 
             return response()->json(['message' => 'Product added successfully'], 200);
@@ -104,11 +105,10 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        // Return product data in JSON format for the AJAX call
-        return response()->json([
-            'product' => $product,
-        ]);
+        // Return the show view and pass the product data
+        return view('admin.product.show', compact('product'));
     }
+
 
     /**
      * Show the form for editing the specified product.

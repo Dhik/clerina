@@ -378,13 +378,6 @@ return [
                     'can' => [PermissionEnum::ViewVisit],
                     'icon' => 'nav-icon far fa-circle',
                 ],
-                
-                // [
-                //     'text' => 'Product',
-                //     'url' => 'admin/product',
-                //     'can' => [PermissionEnum::ViewVisit],
-                //     'icon' => 'nav-icon far fa-circle',
-                // ],
             ]
         ],
         [
@@ -424,13 +417,13 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'active' => ['admin/budgets*']
                 ],
-                // [
-                //     'text' => 'Product',
-                //     'url' => 'admin/products',
-                //     'can' => [PermissionEnum::ViewOffer],
-                //     'icon' => 'nav-icon far fa-circle',
-                //     'active' => ['admin/products*']
-                // ],
+                [
+                    'text' => 'Product',
+                    'url' => 'admin/products',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                    'active' => ['admin/products*']
+                ],
                 // [
                 //     'text' => 'Brief',
                 //     'url' => 'admin/brief',

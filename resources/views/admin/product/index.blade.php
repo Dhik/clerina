@@ -35,7 +35,6 @@
 
     @include('admin.product.modals.add_product')
     @include('admin.product.modals.edit_product')
-    @include('admin.product.modals.view_product')
 @stop
 
 
@@ -49,7 +48,13 @@
                 ajax: '{{ route('product.data') }}',
                 columns: [
                     { data: 'sku', name: 'sku' },
-                    { data: 'product', name: 'product' },
+                    { 
+                        data: 'product', 
+                        name: 'product', 
+                        render: function(data, type, row) {
+                            return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
+                        }
+                    },
                     { 
                         data: 'harga_jual', 
                         name: 'harga_jual', 
@@ -108,22 +113,9 @@
 
             $('#productsTable').on('click', '.viewButton', function() {
                 var id = $(this).data('id');
-                $.ajax({
-                    url: '{{ route('product.show', ':id') }}'.replace(':id', id),
-                    method: 'GET',
-                    success: function(response) {
-                        // Populate the view modal with product data
-                        $('#view_product_name').val(response.product.product);
-                        $('#view_stock').val(response.product.stock);
-                        $('#view_sku').val(response.product.sku);
-                        $('#view_harga_jual').val(response.product.harga_jual);
-                        $('#viewProductModal').modal('show');
-                    },
-                    error: function() {
-                        Swal.fire('Error', 'Failed to load product details', 'error');
-                    }
-                });
+                window.location.href = '{{ route('product.show', ':id') }}'.replace(':id', id);
             });
+
 
             $('#productsTable').on('click', '.editButton', function() {
                 var id = $(this).data('id');
@@ -179,7 +171,6 @@
                     }
                 });
             });
-
 
             $('#productsTable').on('click', '.deleteButton', function() {
                 let rowData = table.row($(this).closest('tr')).data();

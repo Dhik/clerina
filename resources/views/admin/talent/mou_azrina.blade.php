@@ -180,7 +180,7 @@ program endorsement, yang selanjutnya disebut juga sebagai “<strong>PERJANJIAN
             <table class="no-border">
                 <tr>
                     <td style="width: 30%;">Nama Akun</td>
-                    <td>: {{ $talent->talent_name }}</td>
+                    <td>: {{ $talent->username }}</td>
                 </tr>
                 <tr>
                     <td>Jumlah Followers</td>

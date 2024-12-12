@@ -38,7 +38,7 @@ Route::prefix('admin')
                 Route::delete('{order}', [OrderController::class, 'destroy'])->name('order.destroy');
                 
             });
-        Route::prefix('product')
+        Route::prefix('producte')
             ->group(function () {
                 Route::get('/', [OrderController::class, 'product'])->name('order.product');
                 Route::get('/get', [OrderController::class, 'getPerformanceData'])->name('order.getProduct');
