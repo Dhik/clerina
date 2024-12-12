@@ -3,6 +3,7 @@
 namespace App\Domain\Campaign\Service;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class InstagramScrapperService
@@ -17,14 +18,20 @@ class InstagramScrapperService
                 'X-RapidAPI-Host' => 'instagram-scraper-api2.p.rapidapi.com',
                 'X-RapidAPI-Key' => config('rapidapi.rapid_api_key')
             ],
+            'allow_redirects' => true, // Ensure redirects are followed automatically
         ]);
     }
 
     public function getPostInfo($link): ?array
     {
         try {
-            $shortCode = $this->extractShortCode($link);
+            // Follow the link and get the final URL after redirection
+            $finalUrl = $this->getFinalUrl($link);
 
+            // Extract the shortcode from the final URL
+            $shortCode = $this->extractShortCode($finalUrl);
+
+            // Fetch post info using the shortcode
             $response = $this->client->request('GET', 'post_info', [
                 'query' => ['code_or_id_or_url' => $shortCode],
             ]);
@@ -43,6 +50,23 @@ class InstagramScrapperService
         }
     }
 
+    protected function getFinalUrl($url): string
+    {
+        try {
+            // Perform the HTTP request and follow redirects automatically
+            $response = Http::get($url);
+
+            // Get the final redirected URL
+            $finalUrl = $response->effectiveUri();
+
+            return $finalUrl;
+        } catch (\Exception $e) {
+            Log::error('Error following URL redirect: ' . $e);
+            return '';
+        }
+    }
+
+    // Extract the shortcode (post ID) from the URL
     protected function extractShortCode(string $link): string
     {
         // Define the patterns to match the reel ID or post ID
