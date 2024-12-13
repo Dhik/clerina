@@ -257,7 +257,7 @@ class TalentContentController extends Controller
                 'kerkun' => $talentContent->kerkun,
                 'product' => $talentContent->product,
                 'campaign_title' => $talentContent->campaign ? $talentContent->campaign->title : null,
-                'channel' => $campaignContent->channel ? $campaignContent->channel : null,
+                'channel' => $campaignContent ? $campaignContent->channel : null,
             ],
         ]);
     }
