@@ -56,7 +56,19 @@
                             return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
                         }
                     },
-                    { data: 'order_count', name: 'order_count' },
+                    { 
+                        data: 'order_count', 
+                        name: 'order_count', 
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '';
+                            }
+                            return parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
                     { 
                         data: 'harga_jual', 
                         name: 'harga_jual', 
