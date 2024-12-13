@@ -233,36 +233,28 @@ class ProductController extends Controller
 
     public function topProduct(Request $request)
     {
-        $month = $request->input('month', date('Y-m'));
-        $tenantId = Auth::user()->current_tenant_id;
+        $dataResponse = $this->data($request);
+        $productsData = json_decode($dataResponse->getContent(), true)['data'];
 
-        // Find the top product by order count for the specific month
-        $topProduct = Order::where('tenant_id', $tenantId)
-            ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
-                date('Y', strtotime($month)), 
-                date('m', strtotime($month))
-            ])
-            ->select('sku', 
-                DB::raw('COUNT(*) as order_count'), 
-                DB::raw('SUM(amount) as total_revenue')
-            )
-            ->groupBy('sku')
-            ->orderBy('order_count', 'desc')
-            ->first();
+        $topProduct = null;
+        $maxOrderCount = 0;
 
-        if ($topProduct) {
-            // Get full product details
-            $product = Product::where('sku', $topProduct->sku)
-                ->where('tenant_id', $tenantId)
-                ->first();
-
-            return response()->json([
-                'product' => $topProduct->sku,
-                'order_count' => $topProduct->order_count,
-                'total_revenue' => $topProduct->total_revenue
-            ]);
+        foreach ($productsData as $product) {
+            if ($product['order_count'] > $maxOrderCount) {
+                $maxOrderCount = $product['order_count'];
+                $topProduct = $product;
+            }
         }
 
+        if ($topProduct) {
+            return response()->json([
+                'product' => $topProduct['product'],
+                'sku' => $topProduct['sku'], 
+                'order_count' => $topProduct['order_count'],
+                'total_revenue' => 0 
+            ]);
+        }
         return response()->json(['message' => 'No top product found']);
     }
+
 }
