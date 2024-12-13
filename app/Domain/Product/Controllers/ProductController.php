@@ -31,11 +31,20 @@ class ProductController extends Controller
         return view('admin.product.index');
     }
 
-    public function data()
+    public function data(Request $request)
     {
+        // Get the selected month from the request, default to current month if not provided
+        $selectedMonth = $request->input('month', date('Y-m'));
+
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
 
-        $orderCounts = Order::selectRaw('sku, COUNT(*) as count')
+        // Filter orders by the selected month and current tenant
+        $orderCounts = Order::where('tenant_id', Auth::user()->current_tenant_id)
+            ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($selectedMonth)), 
+                date('m', strtotime($selectedMonth))
+            ])
+            ->selectRaw('sku, COUNT(*) as count')
             ->groupBy('sku')
             ->pluck('count', 'sku');
 
@@ -73,6 +82,7 @@ class ProductController extends Controller
             ->rawColumns(['action'])
             ->make(true);
     }
+
 
     /**
      * Show the form for creating a new resource.

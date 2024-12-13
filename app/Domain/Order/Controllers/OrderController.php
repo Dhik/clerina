@@ -334,15 +334,12 @@ class OrderController extends Controller
                 }
 
                 foreach ($data['data'] as $orderData) {
-                    // Convert datetime strings to MySQL-compatible format
                     $date = $this->convertToMySQLDateTime($orderData['created_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
 
-                    // Check if the order already exists
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
 
                     if ($existingOrder) {
-                        // Update only amount and sku if the order exists
                         $amount = $orderData['amount'] - $orderData['shipping_fee'];
                         $amount = $amount < 0 ? 0 : $amount;
 
@@ -354,7 +351,6 @@ class OrderController extends Controller
                         ]);
 
                     } else {
-                        // Create new order if it doesn't exist
                         Order::create([
                             'id_order' => $orderData['reference_no'],
                             'date' => $date,

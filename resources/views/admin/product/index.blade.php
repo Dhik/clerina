@@ -44,10 +44,23 @@
     <!-- DataTables JS -->
     <script>
         $(document).ready(function() {
+
+            var monthSelector = `
+                <div class="form-group col-md-3 mt-3">
+                    <input type="month" id="monthFilter" class="form-control" value="${new Date().toISOString().slice(0, 7)}">
+                </div>
+            `;
+            $('.card-header').append(monthSelector);
+            
             var table = $('#productsTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('product.data') }}',
+            ajax: { 
+                url: '{{ route('product.data') }}',
+                data: function(d) {
+                    d.month = $('#monthFilter').val();
+                }
+            },
             columns: [
                 { 
                     data: null, 
@@ -102,9 +115,8 @@
                 },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
-            order: [[3, 'desc']], // Sort by order_count (column index 3) in descending order
+            order: [[3, 'desc']], 
             drawCallback: function(settings) {
-                // After the table is drawn and sorted, update the rank column
                 var api = this.api();
                 api.rows().every(function() {
                     var row = this.node();
@@ -123,6 +135,10 @@
                     }
                 });
             }
+        });
+
+        $('#monthFilter').on('change', function() {
+            table.ajax.reload();
         });
 
             $('#addProductForm').on('submit', function(e) {
