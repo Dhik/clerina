@@ -62,7 +62,10 @@ class ProductController extends Controller
                 ';
             })
             ->addColumn('order_count', function ($product) {
-                return Order::where('sku', 'LIKE', '%' . $product->sku . '%')->count();
+                return Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->count();
             })
             ->rawColumns(['action'])
             ->make(true);
