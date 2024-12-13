@@ -8,12 +8,7 @@
 
 @section('content')
 <div class="row mb-4">
-    <div class="col-12">
-        <div class="form-group">
-            <label for="monthFilter">Select Month:</label>
-            <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
-        </div>
-    </div>
+    
 </div>
 <div class="row mb-4">
     <div class="col-12">
@@ -32,11 +27,23 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
-                    <i class="fas fa-plus"></i> Add Product
-                </button>
+            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="col-12">
+                            <div class="row">
+                                <div class="col-auto">
+                                    <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
+                                        <i class="fas fa-plus"></i> Add Product
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                <!-- Add Product Button -->
             </div>
+
+
             <div class="card-body">
                 <table id="productsTable" class="table table-bordered table-striped">
                     <thead>
@@ -182,55 +189,58 @@
 
         $('#monthFilter').on('change', function() {
             table.ajax.reload();
+
+            var month = $(this).val();
+            fetchTopProduct(month);
         });
 
         function fetchTopProduct(month) {
-    $.ajax({
-        url: '{{ route('product.top') }}', // You'll need to create this route
-        method: 'GET',
-        data: { month: month },
-        success: function(response) {
-            if (response.product) {
-                // Create top product content
-                var content = `
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="font-weight-bold">${response.product}</h2>
-                            <p class="lead">
-                                <strong>SKU:</strong> ${response.sku}<br>
-                                <strong>Total Orders:</strong> ${response.order_count.toLocaleString('id-ID')}<br>
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <i class="fas fa-trophy fa-4x text-warning"></i>
-                        </div>
-                    </div>
-                `;
-                $('#topProductContent').html(content);
-                
-                // Trigger confetti
-                fireConfetti();
-            } else {
-                $('#topProductContent').html('<p class="text-muted">No top product found this month.</p>');
-            }
-        },
-        error: function() {
-            $('#topProductContent').html('<p class="text-danger">Failed to load top product.</p>');
+            $.ajax({
+                url: '{{ route('product.top') }}', // You'll need to create this route
+                method: 'GET',
+                data: { month: month },
+                success: function(response) {
+                    if (response.product) {
+                        // Create top product content
+                        var content = `
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h2 class="font-weight-bold">${response.product}</h2>
+                                    <p class="lead">
+                                        <strong>SKU:</strong> ${response.sku}<br>
+                                        <strong>Total Orders:</strong> ${response.order_count.toLocaleString('id-ID')}<br>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <i class="fas fa-trophy fa-4x text-warning"></i>
+                                </div>
+                            </div>
+                        `;
+                        $('#topProductContent').html(content);
+                        
+                        // Trigger confetti
+                        fireConfetti();
+                    } else {
+                        $('#topProductContent').html('<p class="text-muted">No top product found this month.</p>');
+                    }
+                },
+                error: function() {
+                    $('#topProductContent').html('<p class="text-danger">Failed to load top product.</p>');
+                }
+            });
         }
-    });
-}
 
-function fireConfetti() {
-    // Use canvas-confetti library
-    if (window.confetti) {
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#FFD700', '#FFA500', '#FFFF00']
-        });
-    }
-}
+        function fireConfetti() {
+            // Use canvas-confetti library
+            if (window.confetti) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#FFA500', '#FFFF00']
+                });
+            }
+        }
 
             $('#addProductForm').on('submit', function(e) {
                 e.preventDefault();
