@@ -21,6 +21,7 @@
                         <tr>
                             <th>SKU</th>
                             <th width="60%">Product Name</th>
+                            <th>Jumlah Order</th>
                             <th>Harga Jual</th>
                             <th>Actions</th>
                         </tr>
@@ -55,6 +56,7 @@
                             return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
                         }
                     },
+                    { data: 'order_count', name: 'order_count' },
                     { 
                         data: 'harga_jual', 
                         name: 'harga_jual', 

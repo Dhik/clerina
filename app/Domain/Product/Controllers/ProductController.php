@@ -60,7 +60,13 @@ class ProductController extends Controller
                     <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
                 ';
             })
-            ->rawColumns(['action']) // Let DataTables know the 'action' column contains HTML
+            ->addColumn('order_count', function ($product) {
+                $orderCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+                    ->selectRaw('COUNT(id_order) as order_count')
+                    ->first();
+                return $orderCount->order_count;
+            })
+            ->rawColumns(['action'])
             ->make(true);
     }
 
