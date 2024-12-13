@@ -22,10 +22,12 @@ Route::prefix('admin')
                 Route::get('/', [ProductController::class, 'index'])->name('product.index');
                 Route::get('/create', [ProductController::class, 'create'])->name('product.create');
                 Route::get('/get', [ProductController::class, 'data'])->name('product.data');
+                Route::get('/top-product', [ProductController::class, 'topProduct'])->name('product.top');
                 Route::post('/', [ProductController::class, 'store'])->name('product.store');
                 Route::get('/{product}', [ProductController::class, 'show'])->name('product.show');
                 Route::get('/{product}/orders', [ProductController::class, 'getOrders'])->name('product.orders');
                 Route::get('/{product}/order-count-per-day', [ProductController::class, 'getOrderCountPerDay'])->name('product.getOrderCountPerDay');
+                
 
                 Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('product.edit');
                 Route::put('/{product}', [ProductController::class, 'update'])->name('product.update');

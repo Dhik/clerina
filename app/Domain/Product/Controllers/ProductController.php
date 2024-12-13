@@ -10,6 +10,7 @@ use App\Domain\Product\Requests\ProductRequest;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Product\Import\ProductImport;
+use Illuminate\Support\Facades\DB;
 use Auth;
 
 /**
@@ -228,5 +229,40 @@ class ProductController extends Controller
                 'message' => 'Error deleting product: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function topProduct(Request $request)
+    {
+        $month = $request->input('month', date('Y-m'));
+        $tenantId = Auth::user()->current_tenant_id;
+
+        // Find the top product by order count for the specific month
+        $topProduct = Order::where('tenant_id', $tenantId)
+            ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($month)), 
+                date('m', strtotime($month))
+            ])
+            ->select('sku', 
+                DB::raw('COUNT(*) as order_count'), 
+                DB::raw('SUM(amount) as total_revenue')
+            )
+            ->groupBy('sku')
+            ->orderBy('order_count', 'desc')
+            ->first();
+
+        if ($topProduct) {
+            // Get full product details
+            $product = Product::where('sku', $topProduct->sku)
+                ->where('tenant_id', $tenantId)
+                ->first();
+
+            return response()->json([
+                'product' => $product,
+                'order_count' => $topProduct->order_count,
+                'total_revenue' => $topProduct->total_revenue
+            ]);
+        }
+
+        return response()->json(['message' => 'No top product found']);
     }
 }

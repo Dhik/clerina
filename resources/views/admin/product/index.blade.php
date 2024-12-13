@@ -7,6 +7,20 @@
 @stop
 
 @section('content')
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="topProductCard" class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">🏆 Top Performing Product of the Month</h3>
+            </div>
+            <div class="card-body">
+                <div id="topProductContent" class="text-center">
+                    <p class="text-muted">Loading top product...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -39,18 +53,39 @@
     @include('admin.product.modals.edit_product')
 @stop
 
+@section('css')
+<style>
+    .medal-icon {
+        position: relative;
+        top: -2px; /* Slight vertical adjustment */
+        margin-left: 5px; /* Space between rank number and medal */
+    }
+
+    .medal-gold {
+        color: #FFD700; /* Gold color */
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+
+    .medal-silver {
+        color: #C0C0C0; /* Silver color */
+        text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+    }
+
+    .medal-bronze {
+        color: #CD7F32; /* Bronze color */
+        text-shadow: 0 0 5px rgba(205, 127, 50, 0.5);
+    }
+</style>
+@endsection
 
 @section('js')
     <!-- DataTables JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
         $(document).ready(function() {
 
-            var monthSelector = `
-                <div class="form-group col-md-3 mt-3">
-                    <input type="month" id="monthFilter" class="form-control" value="${new Date().toISOString().slice(0, 7)}">
-                </div>
-            `;
-            $('.card-header').append(monthSelector);
+            var initialMonth = $('#monthFilter').val();
+            fetchTopProduct(initialMonth);
             
             var table = $('#productsTable').DataTable({
             processing: true,
@@ -69,11 +104,11 @@
                         var rank = meta.row + 1;
 
                         if (rank === 1) {
-                            return rank + ' <i class="fas fa-medal text-warning"></i>'; // Gold Medal for rank 1
+                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'; // Gold Medal for rank 1
                         } else if (rank === 2) {
-                            return rank + ' <i class="fas fa-medal text-secondary"></i>'; // Silver Medal for rank 2
+                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'; // Silver Medal for rank 2
                         } else if (rank === 3) {
-                            return rank + ' <i class="fas fa-medal text-bronze"></i>'; // Bronze Medal for rank 3
+                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'; // Bronze Medal for rank 3
                         } else {
                             return rank;
                         }
@@ -125,11 +160,11 @@
 
                     // Set the rank and add the medal icon
                     if (rank === 1) {
-                        rankCell.html(rank + ' <i class="fas fa-medal text-warning"></i>'); // Gold Medal
+                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'); // Gold Medal
                     } else if (rank === 2) {
-                        rankCell.html(rank + ' <i class="fas fa-medal text-secondary"></i>'); // Silver Medal
+                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'); // Silver Medal
                     } else if (rank === 3) {
-                        rankCell.html(rank + ' <i class="fas fa-medal text-bronze"></i>'); // Bronze Medal
+                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'); // Bronze Medal
                     } else {
                         rankCell.html(rank); // For all other ranks
                     }
@@ -140,6 +175,55 @@
         $('#monthFilter').on('change', function() {
             table.ajax.reload();
         });
+
+        function fetchTopProduct(month) {
+    $.ajax({
+        url: '{{ route('product.top') }}', // You'll need to create this route
+        method: 'GET',
+        data: { month: month },
+        success: function(response) {
+            if (response.product) {
+                // Create top product content
+                var content = `
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="font-weight-bold">${response.product.product}</h2>
+                            <p class="lead">
+                                <strong>SKU:</strong> ${response.product.sku}<br>
+                                <strong>Total Orders:</strong> ${response.order_count.toLocaleString('id-ID')}<br>
+                                <strong>Total Revenue:</strong> Rp ${response.total_revenue.toLocaleString('id-ID')}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-trophy fa-4x text-warning"></i>
+                        </div>
+                    </div>
+                `;
+                $('#topProductContent').html(content);
+                
+                // Trigger confetti
+                fireConfetti();
+            } else {
+                $('#topProductContent').html('<p class="text-muted">No top product found this month.</p>');
+            }
+        },
+        error: function() {
+            $('#topProductContent').html('<p class="text-danger">Failed to load top product.</p>');
+        }
+    });
+}
+
+function fireConfetti() {
+    // Use canvas-confetti library
+    if (window.confetti) {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FFD700', '#FFA500', '#FFFF00']
+        });
+    }
+}
 
             $('#addProductForm').on('submit', function(e) {
                 e.preventDefault();
