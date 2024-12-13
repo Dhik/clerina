@@ -257,7 +257,7 @@ class ProductController extends Controller
                 ->first();
 
             return response()->json([
-                'product' => $product,
+                'product' => $topProduct->sku,
                 'order_count' => $topProduct->order_count,
                 'total_revenue' => $topProduct->total_revenue
             ]);
