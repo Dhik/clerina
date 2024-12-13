@@ -53,10 +53,8 @@
                     data: null, 
                     name: 'rank', 
                     render: function(data, type, row, meta) {
-                        // Rank will be calculated after the table is sorted
                         var rank = meta.row + 1;
 
-                        // Return the appropriate medal based on the rank
                         if (rank === 1) {
                             return rank + ' <i class="fas fa-medal text-warning"></i>'; // Gold Medal for rank 1
                         } else if (rank === 2) {
