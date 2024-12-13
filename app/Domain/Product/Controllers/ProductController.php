@@ -35,9 +35,7 @@ class ProductController extends Controller
     {
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
 
-        $orderCounts = Order::where('date', '>=', now()->startOfMonth())
-            ->where('date', '<=', now()->endOfMonth())
-            ->selectRaw('sku, COUNT(*) as count')
+        $orderCounts = Order::selectRaw('sku, COUNT(*) as count')
             ->groupBy('sku')
             ->pluck('count', 'sku');
 
