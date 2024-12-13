@@ -20,7 +20,7 @@
                     <thead>
                         <tr>
                             <th>SKU</th>
-                            <th width="60%">Product Name</th>
+                            <th width="50%">Product Name</th>
                             <th>Jumlah Order</th>
                             <th>Harga Jual</th>
                             <th>Actions</th>

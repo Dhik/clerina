@@ -34,13 +34,7 @@ class ProductController extends Controller
     public function data()
     {
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
-
-        $orderCounts = Order::where('tenant_id', Auth::user()->current_tenant_id) // Ensure it is for the correct tenant
-            ->selectRaw('sku, COUNT(id_order) as order_count')
-            ->groupBy('sku')
-            ->get()
-            ->keyBy('sku');
-
+        
         return DataTables::of($products)
             ->addColumn('action', function ($product) {
                 return '
@@ -67,14 +61,12 @@ class ProductController extends Controller
                     <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
                 ';
             })
-            ->addColumn('order_count', function ($product) use ($orderCounts) {
-                $orderCount = $orderCounts->get($product->sku);
-                return $orderCount ? $orderCount->order_count : 0;
+            ->addColumn('order_count', function ($product) {
+                return Order::where('sku', 'LIKE', '%' . $product->sku . '%')->count();
             })
             ->rawColumns(['action'])
             ->make(true);
     }
-
 
     /**
      * Show the form for creating a new resource.
