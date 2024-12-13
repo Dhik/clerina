@@ -243,6 +243,9 @@ class TalentContentController extends Controller
             return response()->json(['message' => 'Talent content not found'], 404);
         }
         $campaignContent = CampaignContent::where('link', $talentContent->upload_link)->first();
+        if (!$campaignContent) {
+            return response()->json(['message' => 'Campaign content not found for this talent'], 404);
+        }
         return response()->json([
             'talentContent' => [
                 'id' => $talentContent->id,
