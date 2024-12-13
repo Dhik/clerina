@@ -251,7 +251,6 @@ class ProductController extends Controller
                 'product' => $topProduct['product'],
                 'sku' => $topProduct['sku'], 
                 'order_count' => $topProduct['order_count'],
-                'total_revenue' => 0 
             ]);
         }
         return response()->json(['message' => 'No top product found']);

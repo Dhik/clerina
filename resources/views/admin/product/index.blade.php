@@ -187,11 +187,10 @@
                 var content = `
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h2 class="font-weight-bold">${response.product.product}</h2>
+                            <h2 class="font-weight-bold">${response.product}</h2>
                             <p class="lead">
-                                <strong>SKU:</strong> ${response.product.sku}<br>
+                                <strong>SKU:</strong> ${response.sku}<br>
                                 <strong>Total Orders:</strong> ${response.order_count.toLocaleString('id-ID')}<br>
-                                <strong>Total Revenue:</strong> Rp ${response.total_revenue.toLocaleString('id-ID')}
                             </p>
                         </div>
                         <div class="col-md-4 text-center">
