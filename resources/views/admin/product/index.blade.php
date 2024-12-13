@@ -9,6 +9,14 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
+        <div class="form-group">
+            <label for="monthFilter">Select Month:</label>
+            <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-12">
         <div id="topProductCard" class="card card-primary card-outline">
             <div class="card-header">
                 <h3 class="card-title">🏆 Top Performing Product of the Month</h3>
