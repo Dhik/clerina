@@ -34,7 +34,13 @@ class ProductController extends Controller
     public function data()
     {
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
-        
+
+        $orderCounts = Order::where('date', '>=', now()->startOfMonth())
+            ->where('date', '<=', now()->endOfMonth())
+            ->selectRaw('sku, COUNT(*) as count')
+            ->groupBy('sku')
+            ->pluck('count', 'sku');
+
         return DataTables::of($products)
             ->addColumn('action', function ($product) {
                 return '
@@ -61,11 +67,10 @@ class ProductController extends Controller
                     <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
                 ';
             })
-            ->addColumn('order_count', function ($product) {
-                return Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
-                ->count();
+            ->addColumn('order_count', function ($product) use ($orderCounts) {
+                return $orderCounts->filter(function($count, $sku) use ($product) {
+                    return strpos($sku, $product->sku) !== false;
+                })->sum() ?? 0;
             })
             ->rawColumns(['action'])
             ->make(true);
