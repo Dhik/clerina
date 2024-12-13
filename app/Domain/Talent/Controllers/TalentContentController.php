@@ -243,9 +243,6 @@ class TalentContentController extends Controller
             return response()->json(['message' => 'Talent content not found'], 404);
         }
         $campaignContent = CampaignContent::where('link', $talentContent->upload_link)->first();
-        if (!$campaignContent) {
-            return response()->json(['message' => 'Campaign content not found for this talent'], 404);
-        }
         return response()->json([
             'talentContent' => [
                 'id' => $talentContent->id,
@@ -260,7 +257,7 @@ class TalentContentController extends Controller
                 'kerkun' => $talentContent->kerkun,
                 'product' => $talentContent->product,
                 'campaign_title' => $talentContent->campaign ? $talentContent->campaign->title : null,
-                'channel' => $campaignContent->channel,
+                'channel' => $campaignContent->channel ? $campaignContent->channel : null,
             ],
         ]);
     }
