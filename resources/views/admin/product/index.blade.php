@@ -19,6 +19,7 @@
                 <table id="productsTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
+                            <th>Rank</th>
                             <th>SKU</th>
                             <th width="50%">Product Name</th>
                             <th>Jumlah Order</th>
@@ -44,48 +45,87 @@
     <script>
         $(document).ready(function() {
             var table = $('#productsTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: '{{ route('product.data') }}',
-                columns: [
-                    { data: 'sku', name: 'sku' },
-                    { 
-                        data: 'product', 
-                        name: 'product', 
-                        render: function(data, type, row) {
-                            return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route('product.data') }}',
+            columns: [
+                { 
+                    data: null, 
+                    name: 'rank', 
+                    render: function(data, type, row, meta) {
+                        // Rank will be calculated after the table is sorted
+                        var rank = meta.row + 1;
+
+                        // Return the appropriate medal based on the rank
+                        if (rank === 1) {
+                            return rank + ' <i class="fas fa-medal text-warning"></i>'; // Gold Medal for rank 1
+                        } else if (rank === 2) {
+                            return rank + ' <i class="fas fa-medal text-secondary"></i>'; // Silver Medal for rank 2
+                        } else if (rank === 3) {
+                            return rank + ' <i class="fas fa-medal text-bronze"></i>'; // Bronze Medal for rank 3
+                        } else {
+                            return rank;
                         }
-                    },
-                    { 
-                        data: 'order_count', 
-                        name: 'order_count', 
-                        render: function(data, type, row) {
-                            if (data == null) {
-                                return '';
-                            }
-                            return parseFloat(data).toLocaleString('id-ID', {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                            });
+                    }
+                },
+                { data: 'sku', name: 'sku' },
+                { 
+                    data: 'product', 
+                    name: 'product', 
+                    render: function(data, type, row) {
+                        return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
+                    }
+                },
+                { 
+                    data: 'order_count', 
+                    name: 'order_count', 
+                    render: function(data, type, row) {
+                        if (data == null) {
+                            return '';
                         }
-                    },
-                    { 
-                        data: 'harga_jual', 
-                        name: 'harga_jual', 
-                        render: function(data, type, row) {
-                            if (data == null) {
-                                return '';
-                            }
-                            return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                            });
+                        return parseFloat(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
+                { 
+                    data: 'harga_jual', 
+                    name: 'harga_jual', 
+                    render: function(data, type, row) {
+                        if (data == null) {
+                            return '';
                         }
-                    },
-                    { data: 'action', name: 'action', orderable: false, searchable: false }
-                ],
-                order: [[2, 'desc']] 
-            });
+                        return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ],
+            order: [[3, 'desc']], // Sort by order_count (column index 3) in descending order
+            drawCallback: function(settings) {
+                // After the table is drawn and sorted, update the rank column
+                var api = this.api();
+                api.rows().every(function() {
+                    var row = this.node();
+                    var rankCell = $(row).find('td').eq(0); // The rank column (0 index)
+                    var rank = api.row(row).index() + 1; // Get the rank (1-based index)
+
+                    // Set the rank and add the medal icon
+                    if (rank === 1) {
+                        rankCell.html(rank + ' <i class="fas fa-medal text-warning"></i>'); // Gold Medal
+                    } else if (rank === 2) {
+                        rankCell.html(rank + ' <i class="fas fa-medal text-secondary"></i>'); // Silver Medal
+                    } else if (rank === 3) {
+                        rankCell.html(rank + ' <i class="fas fa-medal text-bronze"></i>'); // Bronze Medal
+                    } else {
+                        rankCell.html(rank); // For all other ranks
+                    }
+                });
+            }
+        });
 
             $('#addProductForm').on('submit', function(e) {
                 e.preventDefault();
