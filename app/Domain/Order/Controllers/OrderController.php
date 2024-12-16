@@ -505,11 +505,12 @@ class OrderController extends Controller
                                                         ->where('nomor_telepon', $orderData['customer_phone_number'])
                                                         ->first();
                     if (!$existingRecord) {
+                        $qty = $order->qty ?? null;
                         $customersAnalysisData = [
                             'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
                             'nama_penerima'          => $orderData['customer_name'],
                             'produk'                 => $orderData['product'],
-                            'qty'                    => $row[9] ?? null,
+                            'qty'                    => $qty,
                             'alamat'                 => $orderData['shipping_address'],
                             'kota_kabupaten'         => $orderData['city'],
                             'provinsi'               => $orderData['province'],
