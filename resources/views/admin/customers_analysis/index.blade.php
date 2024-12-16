@@ -187,8 +187,6 @@
             populateProdukFilter();
 
             $('#refreshButton').click(function() {
-                let progressInterval;
-
                 Swal.fire({
                     title: 'Refreshing Data',
                     text: 'Importing customer data from Google Sheets. Please wait.',
@@ -197,11 +195,9 @@
                     }
                 });
 
-                fetch('{{ route('order.import_customer') }}')
+                fetch('{{ route('customer_analysis.import') }}')
                     .then(response => response.json())
                     .then(data => {
-                        // Clear any existing interval
-                        clearInterval(progressInterval);
 
                         if (data.error) {
                             Swal.fire({
@@ -230,7 +226,6 @@
                         }
                     })
                     .catch(error => {
-                        clearInterval(progressInterval);
                         console.error('Error:', error);
 
                         Swal.fire({
