@@ -45,7 +45,7 @@ class PopulateDailyAttendance extends Command
                 ],
                 [
                     'shift_id' => $employee->shift_id,
-                    'attendance_status' => 'absent', // Default to absent until clock in
+                    'attendance_status' => 'absent',
                     'clock_in' => null,
                     'clock_out' => null,
                 ]
