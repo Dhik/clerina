@@ -246,6 +246,32 @@ class CustomerAnalysisController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to unjoin customers.'], 500);
         }
     }
+    public function importJoin()
+    {
+        try {
+            $range = 'Import Status Customers!A2:C'; 
+            $sheetData = $this->googleSheetService->getSheetData($range);
+
+            foreach ($sheetData as $row) {
+                $isJoined = strtolower($row[2]) === 'join' ? 1 : 0;
+
+                $customerData = [
+                    'nama_penerima'          => $row[0] ?? null,
+                    'nomor_telepon'          => $row[1] ?? null,
+                    'is_joined'              => $isJoined, 
+                ];
+                CustomersAnalysis::where('nama_penerima', $customerData['nama_penerima'])
+                                ->where('nomor_telepon', $customerData['nomor_telepon'])
+                                ->update(['is_joined' => $isJoined]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Customers updated successfully.'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Failed to update customers: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to update customers.'], 500);
+        }
+    }
+
     public function unjoin($id)
     {
         try {
@@ -342,19 +368,14 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Optional filter for month
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
-
-        // Optional filter for specific city (kota_kabupaten)
         if ($request->has('kota_kabupaten') && $request->kota_kabupaten) {
             $kotaKabupaten = $request->kota_kabupaten;
             $query->where('kota_kabupaten', $kotaKabupaten);
         }
-
-        // Fetching count of orders per kota_kabupaten
         $data = $query->selectRaw('kota_kabupaten, COUNT(*) as total_count')
             ->groupBy('kota_kabupaten')
             ->get();

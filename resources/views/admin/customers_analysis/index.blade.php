@@ -25,9 +25,14 @@
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
                             </div>
                         </div>
-                        <div class="col-auto ml-auto">
+                        <div class="col-auto">
                             <div class="btn-group">
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
                             </div>
                         </div>
                         
@@ -237,6 +242,54 @@
                         });
                     });
             });
+            $('#importButton').click(function() {
+                    Swal.fire({
+                        title: 'Refreshing Data',
+                        text: 'Importing customer data from Google Sheets. Please wait.',
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // fetch('{{ route('customer_analysis.import') }}')
+                    fetch('{{ route('customer_analysis.import_join') }}')
+                        .then(response => response.json())
+                        .then(data => {
+
+                            if (data.error) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: data.error,
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    html: `
+                                        Import Complete
+                                    `,
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                });
+
+                                // Reload tables and update widgets
+                                table.ajax.reload(null, false);
+                                fetchTotalUniqueOrders();
+                                fetchProductCounts();
+                                fetchDailyUniqueCustomers();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while refreshing data. Please try again later.',
+                            });
+                        });
+                    });
 
             function fetchProductCounts() {
                 const selectedMonth = $('#filterMonth').val();
@@ -620,7 +673,7 @@
                     .catch(error => console.error('Error fetching product counts:', error));
             }
             fetchCityCounts();
-
+            
         });
     </script>
 @endsection
