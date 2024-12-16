@@ -187,18 +187,21 @@
             populateProdukFilter();
 
             $('#refreshButton').click(function() {
+                let progressInterval;
+
                 Swal.fire({
-                    title: 'Refreshing...',
+                    title: 'Refreshing Data',
                     text: 'Importing customer data from Google Sheets. Please wait.',
                     didOpen: () => {
-                        Swal.showLoading(); // Show loading animation while request is in progress
+                        Swal.showLoading();
                     }
                 });
 
                 fetch('{{ route('order.import_customer') }}')
                     .then(response => response.json())
                     .then(data => {
-                        Swal.close();
+                        // Clear any existing interval
+                        clearInterval(progressInterval);
 
                         if (data.error) {
                             Swal.fire({
@@ -207,14 +210,19 @@
                                 text: data.error,
                             });
                         } else {
-                            table.ajax.reload(null, false);
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Success!',
-                                text: data.message,
+                                html: `
+                                    Import Complete<br>
+                                    Total Rows: ${data.total_rows}<br>
+                                    Processed Rows: ${data.processed_rows}
+                                `,
                                 showConfirmButton: false,
-                                timer: 1500
+                                timer: 2000
                             });
+
+                            // Reload tables and update widgets
                             table.ajax.reload(null, false);
                             fetchTotalUniqueOrders();
                             fetchProductCounts();
@@ -222,7 +230,7 @@
                         }
                     })
                     .catch(error => {
-                        Swal.close();
+                        clearInterval(progressInterval);
                         console.error('Error:', error);
 
                         Swal.fire({

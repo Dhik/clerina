@@ -468,59 +468,75 @@ class OrderController extends Controller
     }
     public function importOrdersCleora()
     {
+        set_time_limit(0);
         $range = 'Orders Shopee Data!A2:I'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
 
-        foreach ($sheetData as $row) {
-            $orderData = [
-                'id_order'            => $row[0] ?? null,
-                'product'            => $row[2] ?? null,
-                'username'            => $row[3] ?? null,
-                'customer_name'       => $row[4] ?? null, 
-                'customer_phone_number' => $row[5] ?? null,
-                'shipping_address'    => $row[6] ?? null,
-                'city'                => $row[7] ?? null, 
-                'province'            => $row[8] ?? null,
-                'tenant_id'           => $tenant_id,
-            ];
+        // Process data in chunks
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                $orderData = [
+                    'id_order'            => $row[0] ?? null,
+                    'product'            => $row[2] ?? null,
+                    'username'            => $row[3] ?? null,
+                    'customer_name'       => $row[4] ?? null, 
+                    'customer_phone_number' => $row[5] ?? null,
+                    'shipping_address'    => $row[6] ?? null,
+                    'city'                => $row[7] ?? null, 
+                    'province'            => $row[8] ?? null,
+                    'tenant_id'           => $tenant_id,
+                ];
 
-            $order = Order::where('id_order', $orderData['id_order'])->first();
+                $order = Order::where('id_order', $orderData['id_order'])->first();
 
-            if ($order) {
-                if (!empty($row[1])) {
-                    $tanggal_pesanan_dibuat = Carbon::createFromFormat('Y-m-d H:i', $row[1])->format('Y-m-d H:i:s');
-                } else {
-                    $tanggal_pesanan_dibuat = $order->date->format('Y-m-d H:i:s');
-                }
-                $existingRecord = CustomersAnalysis::where('tanggal_pesanan_dibuat', $tanggal_pesanan_dibuat)
+                if ($order) {
+                    if (!empty($row[1])) {
+                        $tanggal_pesanan_dibuat = Carbon::createFromFormat('Y-m-d H:i', $row[1])->format('Y-m-d H:i:s');
+                    } else {
+                        $tanggal_pesanan_dibuat = $order->date->format('Y-m-d H:i:s');
+                    }
+                    $existingRecord = CustomersAnalysis::where('tanggal_pesanan_dibuat', $tanggal_pesanan_dibuat)
                                                         ->where('nama_penerima', $orderData['customer_name'])
                                                         ->where('nomor_telepon', $orderData['customer_phone_number'])
                                                         ->first();
-                if (!$existingRecord) {
-                    $customersAnalysisData = [
-                        'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
-                        'nama_penerima'          => $orderData['customer_name'],
-                        'produk'                 => $orderData['product'],
-                        'qty'                    => $row[9] ?? null,
-                        'alamat'                 => $orderData['shipping_address'],
-                        'kota_kabupaten'         => $orderData['city'],
-                        'provinsi'               => $orderData['province'],
-                        'nomor_telepon'          => $orderData['customer_phone_number'],
-                        'tenant_id'              => $orderData['tenant_id'],
-                        'sales_channel_id'       => 1,
-                        'social_media_id'        => null,
-                        'is_joined'              => 0,
-                        'created_at'             => now(),
-                        'updated_at'             => now(), 
-                    ];
-                    CustomersAnalysis::create($customersAnalysisData);
+                    if (!$existingRecord) {
+                        $customersAnalysisData = [
+                            'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
+                            'nama_penerima'          => $orderData['customer_name'],
+                            'produk'                 => $orderData['product'],
+                            'qty'                    => $row[9] ?? null,
+                            'alamat'                 => $orderData['shipping_address'],
+                            'kota_kabupaten'         => $orderData['city'],
+                            'provinsi'               => $orderData['province'],
+                            'nomor_telepon'          => $orderData['customer_phone_number'],
+                            'tenant_id'              => $orderData['tenant_id'],
+                            'sales_channel_id'       => 1,
+                            'social_media_id'        => null,
+                            'is_joined'              => 0,
+                            'created_at'             => now(),
+                            'updated_at'             => now(), 
+                        ];
+                        CustomersAnalysis::create($customersAnalysisData);
+                    }
+                    $order->update($orderData);
                 }
-                $order->update($orderData);
+
+                $processedRows++;
             }
+
+            // Optional: Add a small delay to prevent overwhelming the server
+            usleep(100000); // 0.1 seconds
         }
 
-        return response()->json(['message' => 'Data imported successfully']);
+        return response()->json([
+            'message' => 'Data imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows
+        ]);
     }
 }
