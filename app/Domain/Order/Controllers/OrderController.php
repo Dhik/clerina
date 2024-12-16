@@ -10,6 +10,7 @@ use App\Domain\Order\Exports\OrderTemplateExport;
 use App\Domain\Order\Models\Order;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Order\Requests\OrderStoreRequest;
+use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Http\Controllers\Controller;
 use Auth;
@@ -26,15 +27,19 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 class OrderController extends Controller
 {
+    protected $googleSheetService;
+
     public function __construct(
         protected OrderBLLInterface $orderBLL,
         protected OrderDALInterface $orderDAL,
-        protected SalesChannelBLLInterface $salesChannelBLL
-    ) {
-
+        protected SalesChannelBLLInterface $salesChannelBLL,
+        GoogleSheetService $googleSheetService
+    ) { 
+        $this->googleSheetService = $googleSheetService;
     }
 
     /**
@@ -302,6 +307,8 @@ class OrderController extends Controller
         $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
         $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
+        // $startDate = '2024-10-25';
+        // $endDate = '2024-10-30';
         $allOrders = [];
 
         foreach ($statuses as $status) {
@@ -459,5 +466,61 @@ class OrderController extends Controller
     {
         return Excel::download(new UniqueSkuExport, 'unique_skus.xlsx');
     }
+    public function importOrdersCleora()
+    {
+        $range = 'Orders Shopee Data!A2:I'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
 
+        $tenant_id = 1;
+
+        foreach ($sheetData as $row) {
+            $orderData = [
+                'id_order'            => $row[0] ?? null,
+                'product'            => $row[2] ?? null,
+                'username'            => $row[3] ?? null,
+                'customer_name'       => $row[4] ?? null, 
+                'customer_phone_number' => $row[5] ?? null,
+                'shipping_address'    => $row[6] ?? null,
+                'city'                => $row[7] ?? null, 
+                'province'            => $row[8] ?? null,
+                'tenant_id'           => $tenant_id,
+            ];
+
+            $order = Order::where('id_order', $orderData['id_order'])->first();
+
+            if ($order) {
+                if (!empty($row[1])) {
+                    $tanggal_pesanan_dibuat = Carbon::createFromFormat('Y-m-d H:i', $row[1])->format('Y-m-d H:i:s');
+                } else {
+                    $tanggal_pesanan_dibuat = $order->date->format('Y-m-d H:i:s');
+                }
+                $existingRecord = CustomersAnalysis::where('tanggal_pesanan_dibuat', $tanggal_pesanan_dibuat)
+                                                        ->where('nama_penerima', $orderData['customer_name'])
+                                                        ->where('nomor_telepon', $orderData['customer_phone_number'])
+                                                        ->first();
+                if (!$existingRecord) {
+                    $customersAnalysisData = [
+                        'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
+                        'nama_penerima'          => $orderData['customer_name'],
+                        'produk'                 => $orderData['product'],
+                        'qty'                    => $row[9] ?? null,
+                        'alamat'                 => $orderData['shipping_address'],
+                        'kota_kabupaten'         => $orderData['city'],
+                        'provinsi'               => $orderData['province'],
+                        'nomor_telepon'          => $orderData['customer_phone_number'],
+                        'tenant_id'              => $orderData['tenant_id'],
+                        'sales_channel_id'       => 1,
+                        'social_media_id'        => null,
+                        'is_joined'              => 0,
+                        'created_at'             => now(),
+                        'updated_at'             => now(), 
+                    ];
+                    CustomersAnalysis::create($customersAnalysisData);
+                }
+                $order->update($orderData);
+            }
+        }
+
+        return response()->json(['message' => 'Data imported successfully']);
+    }
 }

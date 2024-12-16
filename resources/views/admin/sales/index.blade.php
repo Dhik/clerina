@@ -462,81 +462,81 @@
                         success: function(response) {
                             console.log('Sales turnover updated successfully');
 
-                            // Proceed with the rest of the data import/update process
-                            $.ajax({
-                                url: "{{ route('sales.import_ads') }}",
-                                method: 'GET',
-                                success: function(response) {
-                                    $.ajax({
-                                        url: "{{ route('sales.update_ads') }}",
-                                        method: 'GET',
-                                        success: function(response) {
-                                            $.ajax({
-                                                url: "{{ route('visit.import_cleora') }}",
-                                                method: 'GET',
-                                                success: function(response) {
-                                                    $.ajax({
-                                                        url: "{{ route('visit.import_azrina') }}",
-                                                        method: 'GET',
-                                                        success: function(response) {
-                                                            $.ajax({
-                                                                url: "{{ route('visit.update') }}",
-                                                                method: 'GET',
-                                                                success: function(response) {
-                                                                    Swal.fire({
-                                                                        icon: 'success',
-                                                                        title: 'Data refreshed successfully!',
-                                                                        text: 'All data has been imported and updated.',
-                                                                        timer: 2000,
-                                                                        showConfirmButton: false
-                                                                    });
-                                                                    updateRecapCount();
-                                                                    salesTable.draw();
-                                                                },
-                                                                error: function(xhr, status, error) {
-                                                                    Swal.fire({
-                                                                        icon: 'error',
-                                                                        title: 'Error updating monthly visit data!',
-                                                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                                                    });
-                                                                }
-                                                            });
-                                                        },
-                                                        error: function(xhr, status, error) {
-                                                            Swal.fire({
-                                                                icon: 'error',
-                                                                title: 'Error importing Azrina data!',
-                                                                text: xhr.responseJSON?.message || 'An error occurred.',
-                                                            });
-                                                        }
-                                                    });
-                                                },
-                                                error: function(xhr, status, error) {
-                                                    Swal.fire({
-                                                        icon: 'error',
-                                                        title: 'Error importing Cleora data!',
-                                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                                    });
-                                                }
-                                            });
-                                        },
-                                        error: function(xhr, status, error) {
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: 'Error updating monthly ad spent data!',
-                                                text: xhr.responseJSON?.message || 'An error occurred.',
-                                            });
-                                        }
-                                    });
-                                },
-                                error: function(xhr, status, error) {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error importing data from Google Sheets!',
-                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                    });
-                                }
-                            });
+                            // // Proceed with the rest of the data import/update process
+                            // $.ajax({
+                            //     url: "{{ route('sales.import_ads') }}",
+                            //     method: 'GET',
+                            //     success: function(response) {
+                            //         $.ajax({
+                            //             url: "{{ route('sales.update_ads') }}",
+                            //             method: 'GET',
+                            //             success: function(response) {
+                            //                 $.ajax({
+                            //                     url: "{{ route('visit.import_cleora') }}",
+                            //                     method: 'GET',
+                            //                     success: function(response) {
+                            //                         $.ajax({
+                            //                             url: "{{ route('visit.import_azrina') }}",
+                            //                             method: 'GET',
+                            //                             success: function(response) {
+                            //                                 $.ajax({
+                            //                                     url: "{{ route('visit.update') }}",
+                            //                                     method: 'GET',
+                            //                                     success: function(response) {
+                            //                                         Swal.fire({
+                            //                                             icon: 'success',
+                            //                                             title: 'Data refreshed successfully!',
+                            //                                             text: 'All data has been imported and updated.',
+                            //                                             timer: 2000,
+                            //                                             showConfirmButton: false
+                            //                                         });
+                            //                                         updateRecapCount();
+                            //                                         salesTable.draw();
+                            //                                     },
+                            //                                     error: function(xhr, status, error) {
+                            //                                         Swal.fire({
+                            //                                             icon: 'error',
+                            //                                             title: 'Error updating monthly visit data!',
+                            //                                             text: xhr.responseJSON?.message || 'An error occurred.',
+                            //                                         });
+                            //                                     }
+                            //                                 });
+                            //                             },
+                            //                             error: function(xhr, status, error) {
+                            //                                 Swal.fire({
+                            //                                     icon: 'error',
+                            //                                     title: 'Error importing Azrina data!',
+                            //                                     text: xhr.responseJSON?.message || 'An error occurred.',
+                            //                                 });
+                            //                             }
+                            //                         });
+                            //                     },
+                            //                     error: function(xhr, status, error) {
+                            //                         Swal.fire({
+                            //                             icon: 'error',
+                            //                             title: 'Error importing Cleora data!',
+                            //                             text: xhr.responseJSON?.message || 'An error occurred.',
+                            //                         });
+                            //                     }
+                            //                 });
+                            //             },
+                            //             error: function(xhr, status, error) {
+                            //                 Swal.fire({
+                            //                     icon: 'error',
+                            //                     title: 'Error updating monthly ad spent data!',
+                            //                     text: xhr.responseJSON?.message || 'An error occurred.',
+                            //                 });
+                            //             }
+                            //         });
+                            //     },
+                            //     error: function(xhr, status, error) {
+                            //         Swal.fire({
+                            //             icon: 'error',
+                            //             title: 'Error importing data from Google Sheets!',
+                            //             text: xhr.responseJSON?.message || 'An error occurred.',
+                            //         });
+                            //     }
+                            // });
                         },
                         error: function(xhr, status, error) {
                             Swal.fire({

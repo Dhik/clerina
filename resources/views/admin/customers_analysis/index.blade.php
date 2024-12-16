@@ -195,7 +195,7 @@
                     }
                 });
 
-                fetch('{{ route('customer_analysis.import') }}')
+                fetch('{{ route('order.import_customer') }}')
                     .then(response => response.json())
                     .then(data => {
                         Swal.close();
