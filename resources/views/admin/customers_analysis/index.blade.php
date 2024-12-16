@@ -187,6 +187,7 @@
             populateProdukFilter();
 
             $('#refreshButton').click(function() {
+
                 Swal.fire({
                     title: 'Refreshing Data',
                     text: 'Importing customer data from Google Sheets. Please wait.',
@@ -195,7 +196,8 @@
                     }
                 });
 
-                fetch('{{ route('customer_analysis.import') }}')
+                // fetch('{{ route('customer_analysis.import') }}')
+                fetch('{{ route('order.import_customer') }}')
                     .then(response => response.json())
                     .then(data => {
 
