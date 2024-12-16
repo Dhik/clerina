@@ -116,7 +116,7 @@
         </div>
 
         <p class="indent">
-        Pada tanggal 11 September 2024 dibuat dan ditandatangani perjanjian kerjasama untuk
+        Pada tanggal {{ $tanggal_hari_ini }} dibuat dan ditandatangani perjanjian kerjasama untuk
 program endorsement, yang selanjutnya disebut juga sebagai “<strong>PERJANJIAN KERJA SAMA</strong>” antara :
         </p>
 
