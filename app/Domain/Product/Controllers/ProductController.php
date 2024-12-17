@@ -199,7 +199,7 @@ class ProductController extends Controller
         // Optional: Add additional filtering or eager loading if needed
         $talentContent = TalentContent::where('sku', $product->sku)
             ->with('product')
-            ->latest(); // Optional: sort by most recent first
+            ->select('talent_content.*');
 
         return DataTables::of($talentContent)
             ->addColumn('product_name', function($row) {
