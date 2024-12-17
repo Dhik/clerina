@@ -129,11 +129,49 @@ class ProductController extends Controller
                 return number_format($order->amount, 0, ',', '.');
             })
             ->addColumn('date', function($order) {
-                // Parse the date to a Carbon instance and format it
                 return \Carbon\Carbon::parse($order->date)->format('Y-m-d');
             })
-            ->rawColumns(['total_price']) // Optional: if you need to render raw HTML in a column
+            ->rawColumns(['total_price'])
             ->make(true);
+    }
+
+    public function getOrderCountBySku(Product $product)
+    {
+        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
+                        ->select('sku', DB::raw('count(*) as count'))
+                        ->groupBy('sku')
+                        ->get();
+
+        $skuData = $orders->map(function($order) {
+            return [
+                'sku' => $order->sku,
+                'count' => $order->count
+            ];
+        });
+
+        return response()->json($skuData);
+    }
+
+    public function getOrderCountBySalesChannel($productId)
+    {
+        // Find the product by ID
+        $product = Product::findOrFail($productId);
+
+        // Retrieve orders for the specific product SKU and count orders per sales channel
+        $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+            ->select('sales_channels.name as sales_channel', DB::raw('COUNT(orders.id) as order_count'))
+            ->groupBy('sales_channels.id', 'sales_channels.name')  // Add sales_channels.name here
+            ->get();
+
+        // Prepare data for the bar chart
+        $labels = $orderCounts->pluck('sales_channel');
+        $data = $orderCounts->pluck('order_count');
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data
+        ]);
     }
 
     public function getOrderCountPerDay(Product $product)

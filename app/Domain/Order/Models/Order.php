@@ -69,4 +69,9 @@ class Order extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'sku', 'sku');
+    }
 }
