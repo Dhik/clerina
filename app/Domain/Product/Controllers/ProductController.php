@@ -196,15 +196,10 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($productId);
         
-        // Optional: Add additional filtering or eager loading if needed
         $talentContent = TalentContent::where('sku', $product->sku)
-            ->with('product')
-            ->select('talent_content.*');
+            ->select('talent_content.*', 'product as product_name'); // Use the 'product' column directly
 
         return DataTables::of($talentContent)
-            ->addColumn('product_name', function($row) {
-                return $row->product ? $row->product->product : 'N/A';
-            })
             ->addColumn('actions', function($row) use ($productId) {
                 return '
                     <button class="btn btn-sm btn-primary viewTalentContentButton" 
