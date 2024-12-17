@@ -5,6 +5,7 @@ namespace App\Domain\Talent\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Campaign\Models\Campaign;
+use App\Domain\Product\Models\Product;
 
 class TalentContent extends Model
 {
