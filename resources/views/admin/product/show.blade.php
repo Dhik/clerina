@@ -3,17 +3,24 @@
 @section('title', 'Product Details')
 
 @section('content_header')
-    <h1>Product Details</h1>
+    <h1>Product Details </h1>
+    <h4>{{ $product->product }} (SKU: {{ $product->sku }})</h4>
+    
 @stop
 
 @section('content')
 <div class="card">
     <div class="card-header">
         <a href="{{ route('product.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Product List</a>
+        <div class="btn-group ml-4" role="group" aria-label="Switch View">
+            <button type="button" class="btn btn-primary" id="salesBtn">Sales</button>
+            <button type="button" class="btn btn-secondary" id="marketingBtn">Marketing</button>
+        </div>
     </div>
 </div>
 
-<div class="card">
+<!-- Sales content (Initially visible) -->
+<div class="card" id="salesContent">
     <div class="card-body">
         <div class="row">
             <div class="col-8">
@@ -39,8 +46,6 @@
             </div>
 
             <div class="col-6">
-                
-                    
                 <div class="card">
                     <div class="card-header">
                         <h3>Product Sales Performance</h3>
@@ -122,25 +127,106 @@
             </div>
         </div>
     </div>
+    <!-- Orders Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                </div>
+                <div class="card-body">
+                    <table id="ordersTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer Name</th>
+                                <th>Quantity</th>
+                                <th>Total Price</th>
+                                <th>Shipment</th>
+                                <th>SKU</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated by DataTables -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row">
+<!-- Marketing content (Initially hidden) -->
+<div class="card" id="marketingContent" style="display: none;">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h4 id="newSalesCount">0</h4>
+                            <p>Content Count</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-purple">
+                        <div class="inner">
+                            <h4 id="newVisitCount">0</h4>
+                            <p>Talent Count</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h4 id="newOrderCount">0</h4>
+                            <p>Avg. Engagement Rate</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-teal">
+                        <div class="inner">
+                            <h4 id="newRoasCount">0</h4>
+                            <p>Avg. CPM</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
+    </div>
+    <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                <h3>Talent Content for {{ $product->product }} (SKU: {{ $product->sku }})</h3>
             </div>
             <div class="card-body">
-                <table id="ordersTable" class="table table-bordered table-striped">
+                <table id="talentContentTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th>Order ID</th>
-                            <th>Customer Name</th>
-                            <th>Quantity</th>
-                            <th>Total Price</th>
-                            <th>Shipment</th>
-                            <th>SKU</th>
-                            <th>Date</th>
+                            <th>ID</th>
+                            <th>Campaign ID</th>
+                            <th>Talent ID</th>
+                            <th>Transfer Date</th>
+                            <th>Posting Date</th>
+                            <th>Status</th>
+                            <th>Upload Link</th>
+                            <th>Rate Card</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -151,6 +237,11 @@
         </div>
     </div>
 </div>
+
+</div>
+
+
+
 @stop
 
 
@@ -158,6 +249,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(document).ready(function() {
+        $('#salesBtn').on('click', function() {
+            $('#salesContent').show();
+            $('#marketingContent').hide();
+            $('#salesBtn').addClass('btn-primary').removeClass('btn-secondary');
+            $('#marketingBtn').addClass('btn-secondary').removeClass('btn-primary');
+        });
+
+        // Switch to Marketing view
+        $('#marketingBtn').on('click', function() {
+            $('#salesContent').hide();
+            $('#marketingContent').show();
+            $('#marketingBtn').addClass('btn-primary').removeClass('btn-secondary');
+            $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
+        });
+
+        // Initial state: Show Sales content
+        $('#salesBtn').click();
+
         $('#ordersTable').DataTable({
             processing: true,
             serverSide: true, // Enable server-side processing
@@ -172,6 +281,46 @@
                 { data: 'date', name: 'date' }
             ],
             order: [[6, 'desc']] // Order by date
+        });
+        $('#talentContentTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: '{{ route('product.talent-content', $product->id) }}',
+            columns: [
+                { data: 'id', name: 'id' },
+                { data: 'campaign_id', name: 'campaign_id' },
+                { data: 'talent_id', name: 'talent_id' },
+                { data: 'transfer_date', name: 'transfer_date' },
+                { data: 'posting_date', name: 'posting_date' },
+                { 
+                    data: 'status', 
+                    name: 'status',
+                    render: function(data, type, row) {
+                        return row.done ? 
+                            '<span class="badge badge-success">Completed</span>' : 
+                            '<span class="badge badge-warning">Pending</span>';
+                    }
+                },
+                { data: 'upload_link', name: 'upload_link' },
+                { 
+                    data: 'final_rate_card', 
+                    name: 'final_rate_card',
+                    render: function(data) {
+                        return data ? 'Rp ' + Number(data).toLocaleString() : '-';
+                    }
+                },
+                { 
+                    data: 'actions', 
+                    name: 'actions', 
+                    orderable: false, 
+                    searchable: false 
+                }
+            ],
+            order: [[0, 'desc']], // Order by ID descending
+            responsive: true,
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
+            }
         });
         $.ajax({
             url: '{{ route('product.getOrderCountPerDay', $product->id) }}',

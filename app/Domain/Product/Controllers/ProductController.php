@@ -5,6 +5,7 @@ namespace App\Domain\Product\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\Product\BLL\Product\ProductBLLInterface;
 use App\Domain\Product\Models\Product;
+use App\Domain\Talent\Models\TalentContent;
 use App\Domain\Order\Models\Order;
 use App\Domain\Product\Requests\ProductRequest;
 use Yajra\DataTables\DataTables;
@@ -189,6 +190,47 @@ class ProductController extends Controller
             'labels' => $labels,
             'data' => $data
         ]);
+    }
+
+    public function getTalentContent($productId)
+    {
+        $product = Product::findOrFail($productId);
+        
+        // Optional: Add additional filtering or eager loading if needed
+        $talentContent = TalentContent::where('sku', $product->sku)
+            ->with('product')
+            ->latest(); // Optional: sort by most recent first
+
+        return DataTables::of($talentContent)
+            ->addColumn('product_name', function($row) {
+                return $row->product ? $row->product->product : 'N/A';
+            })
+            ->addColumn('actions', function($row) use ($productId) {
+                return '
+                    <button class="btn btn-sm btn-primary viewTalentContentButton" 
+                        data-id="' . $row->id . '" 
+                        data-product-id="' . $productId . '"
+                        data-toggle="modal" 
+                        data-target="#viewTalentContentModal">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success editTalentContentButton" 
+                        data-id="' . $row->id . '"
+                        data-product-id="' . $productId . '">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger deleteTalentContentButton" 
+                        data-id="' . $row->id . '"
+                        data-product-id="' . $productId . '">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                ';
+            })
+            ->addColumn('status', function($row) {
+                return $row->done ? 'Completed' : 'Pending';
+            })
+            ->rawColumns(['actions', 'status'])
+            ->make(true);
     }
 
     /**
