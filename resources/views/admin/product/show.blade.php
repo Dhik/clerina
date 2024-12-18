@@ -404,90 +404,113 @@
             responsive: true,
         });
 
-        $.ajax({
-            url: '{{ route('product.getOrderCountBySku', $product->id) }}',
-            method: 'GET',
-            success: function(response) {
-                var ctx = document.getElementById('skuOrderCountChart').getContext('2d');
-                var skuOrderCountChart = new Chart(ctx, {
-                    type: 'pie',  // Change to 'pie' for a pie chart
-                    data: {
-                        labels: response.map(item => item.sku), // SKU labels
-                        datasets: [{
-                            label: 'Order Count',
-                            data: response.map(item => item.count), // Order count values
-                            backgroundColor: [
-                                'rgba(75, 192, 192, 0.6)', 
-                                'rgba(255, 99, 132, 0.6)', 
-                                'rgba(54, 162, 235, 0.6)',
-                                'rgba(153, 102, 255, 0.6)',
-                                'rgba(255, 159, 64, 0.6)', 
-                            ],
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false, // Position of the legend
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(tooltipItem) {
-                                        // Format the tooltip to display the count with 'SKU: count'
-                                        return tooltipItem.label + ': ' + tooltipItem.raw + ' orders';
-                                    }
+        // Function to fetch data and create the SKU order count chart
+        function loadSkuOrderCountChart() {
+            $.ajax({
+                url: '{{ route("product.getOrderCountBySku", $product->id) }}',
+                method: 'GET',
+                success: function (response) {
+                    createSkuOrderCountChart('skuOrderCountChart', response);
+                },
+                error: function (error) {
+                    console.error('Error fetching SKU order count data:', error);
+                }
+            });
+        }
+
+        // Function to fetch data and create the sales channel order count chart
+        function loadSalesChannelOrderCountChart() {
+            $.ajax({
+                url: '{{ route("product.getOrderCountBySalesChannel", $product->id) }}',
+                method: 'GET',
+                success: function (response) {
+                    createSalesChannelOrderCountChart('salesChannelOrderCountChart', response);
+                },
+                error: function (error) {
+                    console.error('Error fetching sales channel order count data:', error);
+                }
+            });
+        }
+
+        // Function to create a pie chart for SKU order counts
+        function createSkuOrderCountChart(chartId, data) {
+            var ctx = document.getElementById(chartId).getContext('2d');
+            new Chart(ctx, {
+                type: 'pie', // Pie chart
+                data: {
+                    labels: data.map(item => item.sku), // SKU labels
+                    datasets: [{
+                        label: 'Order Count',
+                        data: data.map(item => item.count), // Order count values
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)', 
+                            'rgba(255, 99, 132, 0.6)', 
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false // Hide legend
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw + ' orders';
                                 }
                             }
                         }
                     }
-                });
-            }
-        });
-        $.ajax({
-            url: '{{ route('product.getOrderCountBySalesChannel', $product->id) }}',
-            method: 'GET',
-            success: function(response) {
-                var ctx = document.getElementById('salesChannelOrderCountChart').getContext('2d');
-                var salesChannelOrderCountChart = new Chart(ctx, {
-                    type: 'bar',  // Bar chart
-                    data: {
-                        labels: response.labels, // Access the 'labels' directly from the response
-                        datasets: [{
-                            label: 'Order Count by Sales Channel',
-                            data: response.data, // Access the 'data' directly from the response
-                            backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
-                            borderColor: 'rgba(54, 162, 235, 1)', // Border color
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Sales Channel'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Order Count'
-                                },
-                                beginAtZero: true
+                }
+            });
+        }
+
+        // Function to create a bar chart for sales channel order counts
+        function createSalesChannelOrderCountChart(chartId, response) {
+            var ctx = document.getElementById(chartId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar', // Bar chart
+                data: {
+                    labels: response.labels, // Sales channel labels
+                    datasets: [{
+                        label: 'Order Count by Sales Channel',
+                        data: response.data, // Order count values
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
+                        borderColor: 'rgba(54, 162, 235, 1)', // Border color
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sales Channel'
                             }
                         },
-                        plugins: {
-                            legend: {
-                                display: false // Hide legend for the bar chart
-                            }
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Order Count'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Hide legend
                         }
                     }
-                });
-            }
-        });
-
+                }
+            });
+        }
+        loadSkuOrderCountChart();
+        loadSalesChannelOrderCountChart();
     });
 </script>
 @stop
