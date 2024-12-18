@@ -402,9 +402,6 @@
             ],
             order: [[0, 'desc']], // Order by ID descending
             responsive: true,
-            language: {
-                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
-            }
         });
 
         $.ajax({
