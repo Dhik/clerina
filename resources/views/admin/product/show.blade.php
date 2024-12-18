@@ -202,17 +202,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-6">
-                        <div class="small-box bg-teal">
-                            <div class="inner">
-                                <h4 id="newRoasCount">Rp {{ number_format($averageCPM, 0, ',', '.') }}</h4>
-                                <p>Avg. CPM</p>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-area"></i>
-                            </div>
-                        </div>
-                    </div>
             </div>
             <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
         </div>
