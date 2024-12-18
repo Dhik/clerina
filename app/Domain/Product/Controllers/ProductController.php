@@ -281,6 +281,40 @@ class ProductController extends Controller
             ->distinct('talent_id')
             ->count('talent_id');
 
+        $engagementData = TalentContent::where('talent_content.sku', $product->sku)
+            ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
+            ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
+            ->select('statistics.view', 'statistics.like', 'statistics.comment', 'campaign_contents.rate_card')
+            ->get();
+    
+        // Calculate engagement rate and CPM for each record
+        $metrics = $engagementData->map(function ($stat) {
+            $views = $stat->view;
+            $likes = $stat->like;
+            $comments = $stat->comment;
+            $rateCard = $stat->rate_card;
+    
+            // Calculate engagement rate
+            $engagementRate = $views > 0 ? round(($likes + $comments) / $views * 100, 2) : 0;
+    
+            // Calculate CPM
+            $cpm = $views > 0 ? round(($rateCard / $views) * 1000, 2) : 0;
+    
+            return [
+                'engagement_rate' => $engagementRate,
+                'cpm' => $cpm,
+            ];
+        });
+    
+        // Calculate averages
+        $averageEngagementRate = $metrics->count() > 0
+            ? round($metrics->pluck('engagement_rate')->average(), 2)
+            : 0;
+    
+        $averageCPM = $metrics->count() > 0
+            ? round($metrics->pluck('cpm')->average(), 2)
+            : 0;
+
             return view('admin.product.show', compact(
                 'product',
                 'uniqueCustomerCount',
@@ -290,7 +324,9 @@ class ProductController extends Controller
                 'ordersPerCustomerRatio',
                 'averageOrderValue',
                 'talentContentCount',
-                'uniqueTalentIdCount'
+                'uniqueTalentIdCount',
+                'averageEngagementRate',
+                'averageCPM'
             ));
     }
 

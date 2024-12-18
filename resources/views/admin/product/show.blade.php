@@ -9,149 +9,232 @@
 @stop
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <a href="{{ route('product.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Product List</a>
-        <div class="btn-group ml-4" role="group" aria-label="Switch View">
-            <button type="button" class="btn btn-primary" id="salesBtn">Sales</button>
-            <button type="button" class="btn btn-secondary" id="marketingBtn">Marketing</button>
+<div>
+    <div class="card">
+        <div class="card-header">
+            <a href="{{ route('product.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Product List</a>
+            <div class="btn-group ml-4" role="group" aria-label="Switch View">
+                <button type="button" class="btn btn-primary" id="salesBtn">Sales</button>
+                <button type="button" class="btn btn-secondary" id="marketingBtn">Marketing</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Sales content (Initially visible) -->
-<div class="card" id="salesContent">
-    <div class="card-body">
+    <!-- Sales content (Initially visible) -->
+    <div class="card" id="salesContent">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-8">
+                    <div class="card">
+                        <div class="card-header p-2">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="#dailyTab" data-toggle="tab" onclick="updateChart('daily')">Daily</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#monthlyTab" data-toggle="tab" onclick="updateChart('monthly')">Monthly</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="orderCountChart" width="400" height="160"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-4 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Order Count by SKU</h3>
+                        </div>
+                        <div class="card-body" style="height: 350px;">
+                            <canvas id="skuOrderCountChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Product Sales Performance</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td>Unique Customers Count (on Shopee)</td>
+                                        <td style="font-size: 18px;"><strong>{{ number_format($uniqueCustomerCount, 0, ',', '.') }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Order</td>
+                                        <td style="font-size: 18px;"><strong>{{ number_format($totalOrdersCount, 0, ',', '.') }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total Revenue</td>
+                                        <td style="font-size: 18px;"><strong>Rp {{ number_format($totalAmountSum, 0, ',', '.') }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Avg. Daily Order</td>
+                                        <td style="font-size: 18px;"><strong>{{ number_format($avgDailyOrdersCount, 0, ',', '.') }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Harga Jual</td>
+                                        <td>Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Harga MarkUp</td>
+                                        <td>Rp {{ number_format($product->harga_markup, 0, ',', '.') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Harga COGS</td>
+                                        <td>Rp {{ number_format($product->harga_cogs, 0, ',', '.') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Harga Batas Bawah</td>
+                                        <td>Rp {{ number_format($product->harga_batas_bawah, 0, ',', '.') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <p>Customer Repeat Rate</p>
+                                    <h1 id="newSalesCount">{{ number_format($ordersPerCustomerRatio, 2, ',', '.') }}</h1>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <p>Average Order Value</p>
+                                    <h1 id="newSalesCount">Rp {{ number_format($averageOrderValue, 0, ',', '.') }}</h1>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Order Count by Sales Channel (SKU: {{ $product->sku }})</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChannelOrderCountChart" width="400" height="160"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Orders Table -->
         <div class="row">
-            <div class="col-8">
-                <div class="card">
-                    <div class="card-header p-2">
-                        <ul class="nav nav-pills">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="#dailyTab" data-toggle="tab" onclick="updateChart('daily')">Daily</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#monthlyTab" data-toggle="tab" onclick="updateChart('monthly')">Monthly</a>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="orderCountChart" width="400" height="160"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-4 mb-3">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Order Count by SKU</h3>
-                    </div>
-                    <div class="card-body" style="height: 350px;">
-                        <canvas id="skuOrderCountChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Product Sales Performance</h3>
+                        <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
                     </div>
                     <div class="card-body">
-                        <table class="table table-bordered">
+                        <table id="ordersTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer Name</th>
+                                    <th>Quantity</th>
+                                    <th>Total Price</th>
+                                    <th>Shipment</th>
+                                    <th>SKU</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                <tr>
-                                    <td>Unique Customers Count (on Shopee)</td>
-                                    <td style="font-size: 18px;"><strong>{{ number_format($uniqueCustomerCount, 0, ',', '.') }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Total Order</td>
-                                    <td style="font-size: 18px;"><strong>{{ number_format($totalOrdersCount, 0, ',', '.') }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Total Revenue</td>
-                                    <td style="font-size: 18px;"><strong>Rp {{ number_format($totalAmountSum, 0, ',', '.') }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Avg. Daily Order</td>
-                                    <td style="font-size: 18px;"><strong>{{ number_format($avgDailyOrdersCount, 0, ',', '.') }}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td>Harga Jual</td>
-                                    <td>Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Harga MarkUp</td>
-                                    <td>Rp {{ number_format($product->harga_markup, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Harga COGS</td>
-                                    <td>Rp {{ number_format($product->harga_cogs, 0, ',', '.') }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Harga Batas Bawah</td>
-                                    <td>Rp {{ number_format($product->harga_batas_bawah, 0, ',', '.') }}</td>
-                                </tr>
+                                <!-- Data will be populated by DataTables -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-6">
-                <div class="row">
-                    <div class="col-6">
-                        <div class="small-box bg-info">
-                            <div class="inner">
-                                <p>Customer Repeat Rate</p>
-                                <h1 id="newSalesCount">{{ number_format($ordersPerCustomerRatio, 2, ',', '.') }}</h1>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="small-box bg-success">
-                            <div class="inner">
-                                <p>Average Order Value</p>
-                                <h1 id="newSalesCount">Rp {{ number_format($averageOrderValue, 0, ',', '.') }}</h1>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Order Count by Sales Channel (SKU: {{ $product->sku }})</h3>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="salesChannelOrderCountChart" width="400" height="160"></canvas>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-    <!-- Orders Table -->
-    <div class="row">
+
+    <!-- Marketing content (Initially hidden) -->
+    <div class="card" id="marketingContent" style="display: none;">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                        <div class="small-box bg-info">
+                            <div class="inner">
+                                <h4>{{ number_format($talentContentCount, 0, ',', '.') }}</h4>
+                                <p>Content Count</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-purple">
+                            <div class="inner">
+                                <h4>{{ number_format($uniqueTalentIdCount, 0, ',', '.') }}</h4>
+                                <p>Talent Count</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-success">
+                            <div class="inner">
+                                <h4 id="newOrderCount">{{ number_format($averageEngagementRate, 0, ',', '.') }}</h4>
+                                <p>Avg. Engagement Rate</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-teal">
+                            <div class="inner">
+                                <h4 id="newRoasCount">Rp {{ number_format($averageCPM, 0, ',', '.') }}</h4>
+                                <p>Avg. CPM</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-area"></i>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
+        </div>
+        <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                    <h3>Talent Content for {{ $product->product }} (SKU: {{ $product->sku }})</h3>
                 </div>
                 <div class="card-body">
-                    <table id="ordersTable" class="table table-bordered table-striped">
+                    <table id="talentContentTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>Order ID</th>
-                                <th>Customer Name</th>
-                                <th>Quantity</th>
-                                <th>Total Price</th>
-                                <th>Shipment</th>
-                                <th>SKU</th>
-                                <th>Date</th>
+                                <th>ID</th>
+                                <th>Campaign ID</th>
+                                <th>Talent ID</th>
+                                <th>Transfer Date</th>
+                                <th>Posting Date</th>
+                                <th>Status</th>
+                                <th>Upload Link</th>
+                                <th>Rate Card</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -162,88 +245,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- Marketing content (Initially hidden) -->
-<div class="card" id="marketingContent" style="display: none;">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h4>{{ number_format($talentContentCount, 0, ',', '.') }}</h4>
-                            <p>Content Count</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-purple">
-                        <div class="inner">
-                            <h4>{{ number_format($uniqueTalentIdCount, 0, ',', '.') }}</h4>
-                            <p>Talent Count</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h4 id="newOrderCount">0</h4>
-                            <p>Avg. Engagement Rate</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-teal">
-                        <div class="inner">
-                            <h4 id="newRoasCount">0</h4>
-                            <p>Avg. CPM</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-area"></i>
-                        </div>
-                    </div>
-                </div>
-        </div>
-        <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
-    </div>
-    <div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h3>Talent Content for {{ $product->product }} (SKU: {{ $product->sku }})</h3>
-            </div>
-            <div class="card-body">
-                <table id="talentContentTable" class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Campaign ID</th>
-                            <th>Talent ID</th>
-                            <th>Transfer Date</th>
-                            <th>Posting Date</th>
-                            <th>Status</th>
-                            <th>Upload Link</th>
-                            <th>Rate Card</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Data will be populated by DataTables -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 
 </div>
 
