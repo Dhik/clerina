@@ -215,31 +215,10 @@ class ProductController extends Controller
             ->select('talent_content.*', 'product as product_name'); // Use the 'product' column directly
 
         return DataTables::of($talentContent)
-            ->addColumn('actions', function($row) use ($productId) {
-                return '
-                    <button class="btn btn-sm btn-primary viewTalentContentButton" 
-                        data-id="' . $row->id . '" 
-                        data-product-id="' . $productId . '"
-                        data-toggle="modal" 
-                        data-target="#viewTalentContentModal">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-success editTalentContentButton" 
-                        data-id="' . $row->id . '"
-                        data-product-id="' . $productId . '">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger deleteTalentContentButton" 
-                        data-id="' . $row->id . '"
-                        data-product-id="' . $productId . '">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                ';
-            })
             ->addColumn('status', function($row) {
                 return $row->done ? 'Completed' : 'Pending';
             })
-            ->rawColumns(['actions', 'status'])
+            ->rawColumns(['status'])
             ->make(true);
     }
 

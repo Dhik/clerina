@@ -203,7 +203,6 @@
                     </div>
                 </div>
             </div>
-            <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
         </div>
         <div class="row">
         <div class="col-12">
@@ -223,7 +222,6 @@
                                 <th>Status</th>
                                 <th>Upload Link</th>
                                 <th>Rate Card</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -293,7 +291,7 @@
                     });
                 }
             });
-        }
+    }
 
     // Ensure the function is accessible globally
     window.updateChart = updateChart;
@@ -394,12 +392,6 @@
                     render: function(data) {
                         return data ? 'Rp ' + Number(data).toLocaleString() : '-';
                     }
-                },
-                { 
-                    data: 'actions', 
-                    name: 'actions', 
-                    orderable: false, 
-                    searchable: false 
                 }
             ],
             order: [[0, 'desc']], // Order by ID descending
