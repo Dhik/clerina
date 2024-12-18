@@ -170,38 +170,38 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-3 col-6">
-                        <div class="small-box bg-info">
-                            <div class="inner">
-                                <h4>{{ number_format($talentContentCount, 0, ',', '.') }}</h4>
-                                <p>Content Count</p>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h4 id="talentContentCount">0</h4>
+                            <p>Content Count</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-6">
-                        <div class="small-box bg-purple">
-                            <div class="inner">
-                                <h4>{{ number_format($uniqueTalentIdCount, 0, ',', '.') }}</h4>
-                                <p>Talent Count</p>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-pie"></i>
-                            </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-purple">
+                        <div class="inner">
+                            <h4 id="uniqueTalentIdCount">0</h4>
+                            <p>Talent Count</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-6">
-                        <div class="small-box bg-success">
-                            <div class="inner">
-                                <h4 id="newOrderCount">{{ number_format($averageEngagementRate, 0, ',', '.') }}</h4>
-                                <p>Avg. Engagement Rate</p>
-                            </div>
-                            <div class="icon">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h4 id="averageEngagementRate">0</h4>
+                            <p>Avg. Engagement Rate</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-bar"></i>
                         </div>
                     </div>
+                </div>
             </div>
             <p>Marketing content will be displayed here. You can add marketing-related information or analytics as needed.</p>
         </div>
@@ -317,12 +317,37 @@
             $('#marketingBtn').addClass('btn-secondary').removeClass('btn-primary');
         });
 
+        function updateMarketingMetrics() {
+            const marketingUrl = '{{ route("product.marketing", $product->id) }}'; // Use the route name
+
+            fetch(marketingUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update the marketing metrics values
+                    document.getElementById('talentContentCount').textContent =
+                        new Intl.NumberFormat('en-US').format(data.talentContentCount);
+                    document.getElementById('uniqueTalentIdCount').textContent =
+                        new Intl.NumberFormat('en-US').format(data.uniqueTalentIdCount);
+                    document.getElementById('averageEngagementRate').textContent =
+                        `${new Intl.NumberFormat('en-US').format(data.averageEngagementRate)}%`;
+                })
+                .catch(error => {
+                    console.error('Error fetching marketing data:', error);
+                });
+        }
+
         // Switch to Marketing view
         $('#marketingBtn').on('click', function() {
             $('#salesContent').hide();
             $('#marketingContent').show();
             $('#marketingBtn').addClass('btn-primary').removeClass('btn-secondary');
             $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
+            updateMarketingMetrics();
         });
 
         // Initial state: Show Sales content
