@@ -343,48 +343,11 @@
             $('#marketingBtn').addClass('btn-primary').removeClass('btn-secondary');
             $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
             updateMarketingMetrics();
-            if (!$.fn.DataTable.isDataTable('#talentContentTable')) {
-                $('#talentContentTable').DataTable({
-                    processing: true,
-                    serverSide: true,
-                    ajax: '{{ route('product.talent-content', $product->id) }}',
-                    columns: [
-                        { data: 'talent_id', name: 'talent_id' },
-                        {
-                            data: 'posting_date',
-                            name: 'posting_date',
-                            render: function (data) {
-                                if (data) {
-                                    let date = new Date(data);
-                                    return ('0' + date.getDate()).slice(-2) + '/' +
-                                        ('0' + (date.getMonth() + 1)).slice(-2) + '/' +
-                                        date.getFullYear();
-                                }
-                                return '';
-                            }
-                        },
-                        {
-                            data: 'status',
-                            name: 'status',
-                            render: function (data, type, row) {
-                                return row.done ?
-                                    '<span class="badge badge-success">Completed</span>' :
-                                    '<span class="badge badge-warning">Pending</span>';
-                            }
-                        },
-                        { data: 'upload_link', name: 'upload_link' },
-                        {
-                            data: 'final_rate_card',
-                            name: 'final_rate_card',
-                            render: function (data) {
-                                return data ? 'Rp ' + Number(data).toLocaleString() : '-';
-                            }
-                        }
-                    ],
-                    order: [[0, 'desc']], // Order by ID descending
-                    responsive: true,
-                });
+
+            if ($.fn.DataTable.isDataTable('#talentContentTable')) {
+                $('#talentContentTable').DataTable().columns.adjust().responsive.recalc();
             }
+            
         });
 
         // Initial state: Show Sales content
