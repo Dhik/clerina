@@ -236,7 +236,30 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        return view('admin.product.show', compact('product'));
+        $uniqueCustomerCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->where('customer_name', 'NOT LIKE', '%*%')
+            ->where('customer_phone_number', 'NOT LIKE', '%*%')
+            ->select('customer_name', 'customer_phone_number')
+            ->distinct()
+            ->count();
+        
+        // Get total count of orders
+        $totalOrdersCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->count();
+
+        $ordersPerCustomerRatio = $uniqueCustomerCount > 0 ? $totalOrdersCount / $uniqueCustomerCount : 0;
+
+        // Get total amount sum
+        $totalAmountSum = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->sum('amount');
+
+        $averageOrderValue = $totalOrdersCount > 0 ? $totalAmountSum / $totalOrdersCount : 0;
+        
+        $avgDailyOrdersCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->selectRaw('COUNT(id) / COUNT(DISTINCT DATE(date)) as avg_daily_orders')
+            ->value('avg_daily_orders');
+
+        return view('admin.product.show', compact('product', 'uniqueCustomerCount', 'totalOrdersCount', 'totalAmountSum', 'avgDailyOrdersCount', 'ordersPerCustomerRatio', 'averageOrderValue'));
     }
 
     /**

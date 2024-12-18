@@ -26,7 +26,7 @@
             <div class="col-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Order Count Per Day (SKU: {{ $product->sku }})</h3>
+                        <h3>Order Count Per Day</h3>
                     </div>
                     <div class="card-body">
                         <canvas id="orderCountChart" width="400" height="160"></canvas>
@@ -37,7 +37,7 @@
             <div class="col-4 mb-3">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Order Count by SKU (SKU: {{ $product->sku }})</h3>
+                        <h3>Order Count by SKU</h3>
                     </div>
                     <div class="card-body" style="height: 350px;">
                         <canvas id="skuOrderCountChart"></canvas>
@@ -55,35 +55,35 @@
                             <tbody>
                                 <tr>
                                     <td>Unique Customers Count (on Shopee)</td>
-                                    <td>3000</td>
+                                    <td style="font-size: 18px;"><strong>{{ number_format($uniqueCustomerCount, 0, ',', '.') }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td>Total Order</td>
-                                    <td>7000</td>
+                                    <td style="font-size: 18px;"><strong>{{ number_format($totalOrdersCount, 0, ',', '.') }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td>Total Revenue</td>
-                                    <td>Rp. 500.000.000</td>
+                                    <td style="font-size: 18px;"><strong>Rp {{ number_format($totalAmountSum, 0, ',', '.') }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td>Avg. Daily Order</td>
-                                    <td>50</td>
+                                    <td style="font-size: 18px;"><strong>{{ number_format($avgDailyOrdersCount, 0, ',', '.') }}</strong></td>
                                 </tr>
                                 <tr>
                                     <td>Harga Jual</td>
-                                    <td>Rp. 50.000</td>
+                                    <td>Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
                                     <td>Harga MarkUp</td>
-                                    <td>Rp. 50.000</td>
+                                    <td>Rp {{ number_format($product->harga_markup, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
                                     <td>Harga COGS</td>
-                                    <td>Rp. 50.000</td>
+                                    <td>Rp {{ number_format($product->harga_cogs, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
                                     <td>Harga Batas Bawah</td>
-                                    <td>Rp. 50.000</td>
+                                    <td>Rp {{ number_format($product->harga_batas_bawah, 0, ',', '.') }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -97,7 +97,7 @@
                         <div class="small-box bg-info">
                             <div class="inner">
                                 <p>Customer Repeat Rate</p>
-                                <h1 id="newSalesCount">45 %</h1>
+                                <h1 id="newSalesCount">{{ number_format($ordersPerCustomerRatio, 2, ',', '.') }}</h1>
                             </div>
                             <div class="icon">
                                 <i class="fas fa-chart-line"></i>
@@ -107,8 +107,8 @@
                     <div class="col-6">
                         <div class="small-box bg-success">
                             <div class="inner">
-                                <p>Customer Repeat Rate</p>
-                                <h1 id="newSalesCount">45 %</h1>
+                                <p>Average Order Value</p>
+                                <h1 id="newSalesCount">Rp {{ number_format($averageOrderValue, 0, ',', '.') }}</h1>
                             </div>
                             <div class="icon">
                                 <i class="fas fa-chart-line"></i>
