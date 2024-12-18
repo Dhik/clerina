@@ -62,20 +62,20 @@
                             <table class="table table-bordered">
                                 <tbody>
                                     <tr>
-                                        <td>Unique Customers Count (on Shopee)</td>
-                                        <td style="font-size: 18px;"><strong>{{ number_format($uniqueCustomerCount, 0, ',', '.') }}</strong></td>
+                                        <td>Unique Customers Count</td>
+                                        <td style="font-size: 18px;"><strong id="uniqueCustomerCount">0</strong></td>
                                     </tr>
                                     <tr>
-                                        <td>Total Order</td>
-                                        <td style="font-size: 18px;"><strong>{{ number_format($totalOrdersCount, 0, ',', '.') }}</strong></td>
+                                        <td>Total Orders</td>
+                                        <td style="font-size: 18px;"><strong id="totalOrdersCount">0</strong></td>
                                     </tr>
                                     <tr>
                                         <td>Total Revenue</td>
-                                        <td style="font-size: 18px;"><strong>Rp {{ number_format($totalAmountSum, 0, ',', '.') }}</strong></td>
+                                        <td style="font-size: 18px;"><strong id="totalAmountSum">Rp 0</strong></td>
                                     </tr>
                                     <tr>
-                                        <td>Avg. Daily Order</td>
-                                        <td style="font-size: 18px;"><strong>{{ number_format($avgDailyOrdersCount, 0, ',', '.') }}</strong></td>
+                                        <td>Avg. Daily Orders</td>
+                                        <td style="font-size: 18px;"><strong id="avgDailyOrdersCount">0</strong></td>
                                     </tr>
                                     <tr>
                                         <td>Harga Jual</td>
@@ -95,6 +95,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                 </div>
@@ -105,7 +106,7 @@
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <p>Customer Repeat Rate</p>
-                                    <h1 id="newSalesCount">{{ number_format($ordersPerCustomerRatio, 2, ',', '.') }}</h1>
+                                    <h1 id="ordersPerCustomerRatio">0</h1>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-chart-line"></i>
@@ -116,7 +117,7 @@
                             <div class="small-box bg-success">
                                 <div class="inner">
                                     <p>Average Order Value</p>
-                                    <h1 id="newSalesCount">Rp {{ number_format($averageOrderValue, 0, ',', '.') }}</h1>
+                                    <h1 id="averageOrderValue">0</h1>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-chart-line"></i>
@@ -141,6 +142,17 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select class="form-control" id="filterChannel">
+                                    <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
+                                    <option value="">{{ trans('labels.all') }}</option>
+                                    @foreach($salesChannels as $salesChannel)
+                                        <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <table id="ordersTable" class="table table-bordered table-striped">
@@ -240,6 +252,7 @@
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    filterChannel = $('#filterChannel');
     function updateChart(type) {
             // Make an AJAX call to fetch data based on the type (daily or monthly)
             $.ajax({
@@ -290,7 +303,6 @@
             });
     }
 
-    // Ensure the function is accessible globally
     window.updateChart = updateChart;
     $(document).ready(function() {
         updateChart('daily');
@@ -348,10 +360,15 @@
         // Initial state: Show Sales content
         $('#salesBtn').click();
 
-        $('#ordersTable').DataTable({
+        var ordersTable = $('#ordersTable').DataTable({
             processing: true,
-            serverSide: true, // Enable server-side processing
-            ajax: '{{ route('product.orders', $product->id) }}', // AJAX call to fetch orders
+            serverSide: true,
+            ajax: {
+                url: '{{ route('product.orders', $product->id) }}',
+                data: function (d) {
+                    d.sales_channel = $('#filterChannel').val();
+                }
+            },
             columns: [
                 { data: 'id_order', name: 'id_order' },
                 { data: 'customer_name', name: 'customer_name' },
@@ -363,6 +380,12 @@
             ],
             order: [[6, 'desc']] // Order by date
         });
+
+        filterChannel.change(function () {
+            ordersTable.draw();
+            fetchSalesMetrics();
+        });
+
         $('#talentContentTable').DataTable({
             processing: true,
             serverSide: true,
@@ -511,6 +534,34 @@
         }
         loadSkuOrderCountChart();
         loadSalesChannelOrderCountChart();
+
+        function fetchSalesMetrics() {
+        const url = '{{ route("product.sales", $product->id) }}';
+        const salesChannel = $('#filterChannel').val(); // Get the selected sales channel
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            data: {
+                sales_channel: salesChannel // Pass the sales_channel filter
+            },
+            success: function (data) {
+                // Update the HTML with the fetched metrics
+                $('#uniqueCustomerCount').text(new Intl.NumberFormat().format(data.uniqueCustomerCount));
+                $('#totalOrdersCount').text(new Intl.NumberFormat().format(data.totalOrdersCount));
+                $('#totalAmountSum').text('Rp ' + new Intl.NumberFormat().format(data.totalAmountSum));
+                $('#avgDailyOrdersCount').text(new Intl.NumberFormat().format(data.avgDailyOrdersCount));
+                $('#ordersPerCustomerRatio').text(new Intl.NumberFormat().format(data.ordersPerCustomerRatio));
+                $('#averageOrderValue').text('Rp ' + new Intl.NumberFormat().format(data.averageOrderValue));
+            },
+            error: function (error) {
+                console.error('Error fetching sales metrics:', error);
+            }
+        });
+    }
+
+    // Fetch metrics when the page loads
+    fetchSalesMetrics();
     });
 </script>
 @stop

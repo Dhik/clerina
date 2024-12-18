@@ -27,6 +27,8 @@ Route::prefix('admin')
                 Route::get('/{product}', [ProductController::class, 'show'])->name('product.show');
                 Route::get('/{product}/orders', [ProductController::class, 'getOrders'])->name('product.orders');
                 Route::get('/{product}/marketing', [ProductController::class, 'getMarketingMetrics'])->name('product.marketing');
+                Route::get('/{product}/sales', [ProductController::class, 'getSalesMetrics'])->name('product.sales');
+
 
                 Route::get('/{product}/order-count-by-sku', [ProductController::class, 'getOrderCountBySku'])->name('product.getOrderCountBySku');
                 Route::get('/{product}/order-count-per-day', [ProductController::class, 'getOrderCountPerDay'])->name('product.getOrderCountPerDay');

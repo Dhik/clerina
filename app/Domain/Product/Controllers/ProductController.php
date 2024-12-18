@@ -11,6 +11,9 @@ use App\Domain\Product\Requests\ProductRequest;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use App\Domain\Product\Import\ProductImport;
+use App\Domain\Sales\Enums\SalesChannelEnum;
+use App\Domain\Sales\Models\SalesChannel;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Auth;
 
@@ -122,19 +125,27 @@ class ProductController extends Controller
 
     public function getOrders(Product $product)
     {
-        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
-                    ->orderBy('date', 'desc'); 
+        // Start building the query
+        $ordersQuery = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+            ->orderBy('date', 'desc');
 
-        return datatables()->of($orders)
-            ->addColumn('total_price', function($order) {
+        // Apply filter if sales_channel is provided
+        if (request('sales_channel')) {
+            $ordersQuery->where('sales_channel_id', request('sales_channel'));
+        }
+
+        // Return DataTable response
+        return datatables()->of($ordersQuery)
+            ->addColumn('total_price', function ($order) {
                 return number_format($order->amount, 0, ',', '.');
             })
-            ->addColumn('date', function($order) {
+            ->addColumn('date', function ($order) {
                 return \Carbon\Carbon::parse($order->date)->format('Y-m-d');
             })
             ->rawColumns(['total_price'])
             ->make(true);
     }
+
 
     public function getOrderCountBySku(Product $product)
     {
@@ -222,6 +233,13 @@ class ProductController extends Controller
             ->make(true);
     }
 
+    public function getSalesChannels(): mixed
+    {
+        return Cache::rememberForever(SalesChannelEnum::AllSalesChannelCacheTag, function () {
+            return SalesChannel::orderBy('name')->get();
+        });
+    }
+
     /**
      * Show the details of the specified product.
      *
@@ -230,39 +248,50 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $uniqueCustomerCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+        $salesChannels = $this->getSalesChannels();
+        return view('admin.product.show', compact('product', 'salesChannels'));
+    }
+
+    public function getSalesMetrics(Product $product)
+    {
+        // Retrieve the sales_channel filter from the request
+        $salesChannelId = request('sales_channel');
+
+        // Base query
+        $baseQuery = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
+
+        // Apply sales_channel filter if provided
+        if ($salesChannelId) {
+            $baseQuery->where('sales_channel_id', $salesChannelId);
+        }
+
+        $uniqueCustomerCount = (clone $baseQuery)
             ->where('customer_name', 'NOT LIKE', '%*%')
             ->where('customer_phone_number', 'NOT LIKE', '%*%')
             ->select('customer_name', 'customer_phone_number')
             ->distinct()
             ->count();
-        
-        // Get total count of orders
-        $totalOrdersCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-            ->count();
 
+        $totalOrdersCount = (clone $baseQuery)->count();
+        $totalAmountSum = (clone $baseQuery)->sum('amount');
         $ordersPerCustomerRatio = $uniqueCustomerCount > 0 ? $totalOrdersCount / $uniqueCustomerCount : 0;
 
-        // Get total amount sum
-        $totalAmountSum = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-            ->sum('amount');
-
         $averageOrderValue = $totalOrdersCount > 0 ? $totalAmountSum / $totalOrdersCount : 0;
-        
-        $avgDailyOrdersCount = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+        $avgDailyOrdersCount = (clone $baseQuery)
             ->selectRaw('COUNT(id) / COUNT(DISTINCT DATE(date)) as avg_daily_orders')
             ->value('avg_daily_orders');
 
-            return view('admin.product.show', compact(
-                'product',
-                'uniqueCustomerCount',
-                'totalOrdersCount',
-                'totalAmountSum',
-                'avgDailyOrdersCount',
-                'ordersPerCustomerRatio',
-                'averageOrderValue',
-            ));
+        return response()->json([
+            'uniqueCustomerCount' => $uniqueCustomerCount,
+            'totalOrdersCount' => $totalOrdersCount,
+            'totalAmountSum' => $totalAmountSum,
+            'avgDailyOrdersCount' => round($avgDailyOrdersCount, 2),
+            'ordersPerCustomerRatio' => round($ordersPerCustomerRatio, 2),
+            'averageOrderValue' => round($averageOrderValue, 2),
+        ]);
     }
+
+
 
     public function getMarketingMetrics(Product $product)
     {
