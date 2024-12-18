@@ -177,13 +177,26 @@ class ProductController extends Controller
 
     public function getOrderCountPerDay(Product $product)
     {
-        $orderCounts = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
-            ->selectRaw('DATE(date) as order_date, COUNT(id_order) as order_count')
-            ->groupBy('order_date')
-            ->orderBy('order_date', 'asc')
-            ->get();
+        $type = request('type', 'daily'); // Default to daily if no type is specified
 
-        $labels = $orderCounts->pluck('order_date');
+        if ($type === 'daily') {
+            $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+                ->selectRaw('DATE(date) as order_date, COUNT(id_order) as order_count')
+                ->groupBy('order_date')
+                ->orderBy('order_date', 'asc')
+                ->get();
+
+            $labels = $orderCounts->pluck('order_date');
+        } else {
+            $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
+                ->selectRaw('DATE_FORMAT(date, "%Y-%m") as order_month, COUNT(id_order) as order_count')
+                ->groupBy('order_month')
+                ->orderBy('order_month', 'asc')
+                ->get();
+
+            $labels = $orderCounts->pluck('order_month');
+        }
+
         $data = $orderCounts->pluck('order_count');
 
         return response()->json([
@@ -191,6 +204,8 @@ class ProductController extends Controller
             'data' => $data
         ]);
     }
+
+
 
     public function getTalentContent($productId)
     {

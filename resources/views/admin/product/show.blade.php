@@ -25,8 +25,15 @@
         <div class="row">
             <div class="col-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h3>Order Count Per Day</h3>
+                    <div class="card-header p-2">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#dailyTab" data-toggle="tab" onclick="updateChart('daily')">Daily</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#monthlyTab" data-toggle="tab" onclick="updateChart('monthly')">Monthly</a>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body">
                         <canvas id="orderCountChart" width="400" height="160"></canvas>
@@ -248,7 +255,71 @@
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    function updateChart(type) {
+            // Make an AJAX call to fetch data based on the type (daily or monthly)
+            $.ajax({
+                url: '{{ route('product.getOrderCountPerDay', $product->id) }}',
+                method: 'GET',
+                data: { type: type }, // Pass type parameter
+                success: function(response) {
+                    const ctx = document.getElementById('orderCountChart').getContext('2d');
+
+                    // If the chart exists, destroy it before reinitializing
+                    if (window.orderCountChart instanceof Chart) {
+                        window.orderCountChart.destroy();
+                    }
+
+                    // Create a new chart instance
+                    orderCountChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: response.labels, // x-axis labels (dates or months)
+                            datasets: [{
+                                label: 'Order Count',
+                                data: response.data, // y-axis data (order count)
+                                borderColor: 'rgba(75, 192, 192, 1)', // Line color
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Area color
+                                fill: true, // Fill the area under the line
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: type === 'daily' ? 'Date' : 'Month'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Order Count'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+    // Ensure the function is accessible globally
+    window.updateChart = updateChart;
     $(document).ready(function() {
+        updateChart('daily');
+
+        // Event listeners for daily and monthly tabs
+        $('a[href="#dailyTab"]').on('click', function() {
+            updateChart('daily');
+        });
+
+        $('a[href="#monthlyTab"]').on('click', function() {
+            updateChart('monthly');
+        });
+
+
         $('#salesBtn').on('click', function() {
             $('#salesContent').show();
             $('#marketingContent').hide();
@@ -322,45 +393,7 @@
                 processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
             }
         });
-        $.ajax({
-            url: '{{ route('product.getOrderCountPerDay', $product->id) }}',
-            method: 'GET',
-            success: function(response) {
-                // Initialize the chart
-                var ctx = document.getElementById('orderCountChart').getContext('2d');
-                var orderCountChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: response.labels, // x-axis labels (dates)
-                        datasets: [{
-                            label: 'Order Count',
-                            data: response.data, // y-axis data (order count)
-                            borderColor: 'rgba(75, 192, 192, 1)', // Line color
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)', // Area color
-                            fill: true, // Fill the area under the line
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Date'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Order Count'
-                                },
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-        });
+
         $.ajax({
             url: '{{ route('product.getOrderCountBySku', $product->id) }}',
             method: 'GET',
@@ -444,9 +477,6 @@
                 });
             }
         });
-
-
-
 
     });
 </script>
