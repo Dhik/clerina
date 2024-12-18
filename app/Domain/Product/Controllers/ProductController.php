@@ -274,19 +274,33 @@ class ProductController extends Controller
             ->selectRaw('COUNT(id) / COUNT(DISTINCT DATE(date)) as avg_daily_orders')
             ->value('avg_daily_orders');
 
-        $talentContentCount = TalentContent::where('sku', $product->sku)
-            ->count();
+            return view('admin.product.show', compact(
+                'product',
+                'uniqueCustomerCount',
+                'totalOrdersCount',
+                'totalAmountSum',
+                'avgDailyOrdersCount',
+                'ordersPerCustomerRatio',
+                'averageOrderValue',
+            ));
+    }
+
+    public function getMarketingMetrics(Product $product)
+    {
+        // Count talent content
+        $talentContentCount = TalentContent::where('sku', $product->sku)->count();
         
+        // Count unique talent IDs
         $uniqueTalentIdCount = TalentContent::where('sku', $product->sku)
             ->distinct('talent_id')
             ->count('talent_id');
 
         // Join tables: TalentContent -> CampaignContents -> Statistics
         $engagementData = TalentContent::where('talent_content.sku', $product->sku)
-        ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
-        ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
-        ->select('statistics.view', 'statistics.like', 'statistics.comment')
-        ->get();
+            ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
+            ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
+            ->select('statistics.view', 'statistics.like', 'statistics.comment')
+            ->get();
 
         // Calculate engagement rate for each record
         $engagementRates = $engagementData->map(function ($stat) {
@@ -301,18 +315,11 @@ class ProductController extends Controller
             ? round($engagementRates->average(), 2)
             : 0;
 
-            return view('admin.product.show', compact(
-                'product',
-                'uniqueCustomerCount',
-                'totalOrdersCount',
-                'totalAmountSum',
-                'avgDailyOrdersCount',
-                'ordersPerCustomerRatio',
-                'averageOrderValue',
-                'talentContentCount',
-                'uniqueTalentIdCount',
-                'averageEngagementRate'
-            ));
+        return response()->json([
+            'talentContentCount' => $talentContentCount,
+            'uniqueTalentIdCount' => $uniqueTalentIdCount,
+            'averageEngagementRate' => $averageEngagementRate,
+        ]);
     }
 
     /**
