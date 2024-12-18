@@ -211,7 +211,7 @@
                     <h3>Talent Content for {{ $product->product }} (SKU: {{ $product->sku }})</h3>
                 </div>
                 <div class="card-body">
-                    <table id="talentContentTable" class="table table-bordered table-striped">
+                    <table id="talentContentTable" class="table table-bordered table-striped" style="width: 100% !important;">
                         <thead>
                             <tr>
                                 <th>Talent ID</th>
@@ -343,11 +343,6 @@
             $('#marketingBtn').addClass('btn-primary').removeClass('btn-secondary');
             $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
             updateMarketingMetrics();
-
-            if ($.fn.DataTable.isDataTable('#talentContentTable')) {
-                $('#talentContentTable').DataTable().columns.adjust().responsive.recalc();
-            }
-            
         });
 
         // Initial state: Show Sales content
