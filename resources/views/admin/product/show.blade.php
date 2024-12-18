@@ -214,10 +214,7 @@
                     <table id="talentContentTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Campaign ID</th>
                                 <th>Talent ID</th>
-                                <th>Transfer Date</th>
                                 <th>Posting Date</th>
                                 <th>Status</th>
                                 <th>Upload Link</th>
@@ -371,11 +368,20 @@
             serverSide: true,
             ajax: '{{ route('product.talent-content', $product->id) }}',
             columns: [
-                { data: 'id', name: 'id' },
-                { data: 'campaign_id', name: 'campaign_id' },
                 { data: 'talent_id', name: 'talent_id' },
-                { data: 'transfer_date', name: 'transfer_date' },
-                { data: 'posting_date', name: 'posting_date' },
+                {
+                    data: 'posting_date', 
+                    name: 'posting_date',
+                    render: function(data) {
+                        if (data) {
+                            let date = new Date(data);
+                            return ('0' + date.getDate()).slice(-2) + '/' + 
+                                   ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                   date.getFullYear();
+                        }
+                        return '';
+                    }
+                }, 
                 { 
                     data: 'status', 
                     name: 'status',
