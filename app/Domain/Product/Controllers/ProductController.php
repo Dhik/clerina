@@ -274,7 +274,24 @@ class ProductController extends Controller
             ->selectRaw('COUNT(id) / COUNT(DISTINCT DATE(date)) as avg_daily_orders')
             ->value('avg_daily_orders');
 
-        return view('admin.product.show', compact('product', 'uniqueCustomerCount', 'totalOrdersCount', 'totalAmountSum', 'avgDailyOrdersCount', 'ordersPerCustomerRatio', 'averageOrderValue'));
+        $talentContentCount = TalentContent::where('sku', $product->sku)
+            ->count();
+        
+        $uniqueTalentIdCount = TalentContent::where('sku', $product->sku)
+            ->distinct('talent_id')
+            ->count('talent_id');
+
+            return view('admin.product.show', compact(
+                'product',
+                'uniqueCustomerCount',
+                'totalOrdersCount',
+                'totalAmountSum',
+                'avgDailyOrdersCount',
+                'ordersPerCustomerRatio',
+                'averageOrderValue',
+                'talentContentCount',
+                'uniqueTalentIdCount'
+            ));
     }
 
     /**

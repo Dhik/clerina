@@ -171,7 +171,7 @@
             <div class="col-lg-3 col-6">
                     <div class="small-box bg-info">
                         <div class="inner">
-                            <h4 id="newSalesCount">0</h4>
+                            <h4>{{ number_format($talentContentCount, 0, ',', '.') }}</h4>
                             <p>Content Count</p>
                         </div>
                         <div class="icon">
@@ -182,7 +182,7 @@
                 <div class="col-lg-3 col-6">
                     <div class="small-box bg-purple">
                         <div class="inner">
-                            <h4 id="newVisitCount">0</h4>
+                            <h4>{{ number_format($uniqueTalentIdCount, 0, ',', '.') }}</h4>
                             <p>Talent Count</p>
                         </div>
                         <div class="icon">
