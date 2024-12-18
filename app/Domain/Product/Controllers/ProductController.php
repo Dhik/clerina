@@ -286,41 +286,36 @@ class ProductController extends Controller
     }
 
     public function getMarketingMetrics(Product $product)
-    {
-        // Count talent content
-        $talentContentCount = TalentContent::where('sku', $product->sku)->count();
-        
-        // Count unique talent IDs
-        $uniqueTalentIdCount = TalentContent::where('sku', $product->sku)
-            ->distinct('talent_id')
-            ->count('talent_id');
+{
+    // Use aggregate queries for counts to reduce memory usage
+    $talentContentCount = TalentContent::where('sku', $product->sku)->count();
+    
+    $uniqueTalentIdCount = TalentContent::where('sku', $product->sku)
+        ->distinct('talent_id')
+        ->count('talent_id');
 
-        // Join tables: TalentContent -> CampaignContents -> Statistics
-        $engagementData = TalentContent::where('talent_content.sku', $product->sku)
-            ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
-            ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
-            ->select('statistics.view', 'statistics.like', 'statistics.comment')
-            ->get();
+    // Use aggregate query to calculate total views, likes, and comments directly in the database
+    $engagementData = TalentContent::where('talent_content.sku', $product->sku)
+        ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
+        ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
+        ->selectRaw('SUM(statistics.view) as total_views, SUM(statistics.like) as total_likes, SUM(statistics.comment) as total_comments')
+        ->first();
 
-        // Calculate engagement rate for each record
-        $engagementRates = $engagementData->map(function ($stat) {
-            if ($stat->view > 0) {
-                return round(($stat->like + $stat->comment) / $stat->view * 100, 2);
-            }
-            return 0;
-        });
+    // Prevent division by zero and calculate average engagement rate
+    $totalViews = $engagementData->total_views ?? 0;
+    $totalLikes = $engagementData->total_likes ?? 0;
+    $totalComments = $engagementData->total_comments ?? 0;
 
-        // Calculate average engagement rate
-        $averageEngagementRate = $engagementRates->count() > 0
-            ? round($engagementRates->average(), 2)
-            : 0;
+    $averageEngagementRate = $totalViews > 0
+        ? round(($totalLikes + $totalComments) / $totalViews * 100, 2)
+        : 0;
 
-        return response()->json([
-            'talentContentCount' => $talentContentCount,
-            'uniqueTalentIdCount' => $uniqueTalentIdCount,
-            'averageEngagementRate' => $averageEngagementRate,
-        ]);
-    }
+    return response()->json([
+        'talentContentCount' => $talentContentCount,
+        'uniqueTalentIdCount' => $uniqueTalentIdCount,
+        'averageEngagementRate' => $averageEngagementRate,
+    ]);
+}
 
     /**
      * Show the form for editing the specified product.
