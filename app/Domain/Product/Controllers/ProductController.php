@@ -281,38 +281,24 @@ class ProductController extends Controller
             ->distinct('talent_id')
             ->count('talent_id');
 
+        // Join tables: TalentContent -> CampaignContents -> Statistics
         $engagementData = TalentContent::where('talent_content.sku', $product->sku)
-            ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
-            ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
-            ->select('statistics.view', 'statistics.like', 'statistics.comment', 'campaign_contents.rate_card')
-            ->get();
-    
-        // Calculate engagement rate and CPM for each record
-        $metrics = $engagementData->map(function ($stat) {
-            $views = $stat->view;
-            $likes = $stat->like;
-            $comments = $stat->comment;
-            $rateCard = $stat->rate_card;
-    
-            // Calculate engagement rate
-            $engagementRate = $views > 0 ? round(($likes + $comments) / $views * 100, 2) : 0;
-    
-            // Calculate CPM
-            $cpm = $views > 0 ? round(($rateCard / $views) * 1000, 2) : 0;
-    
-            return [
-                'engagement_rate' => $engagementRate,
-                'cpm' => $cpm,
-            ];
+        ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
+        ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
+        ->select('statistics.view', 'statistics.like', 'statistics.comment')
+        ->get();
+
+        // Calculate engagement rate for each record
+        $engagementRates = $engagementData->map(function ($stat) {
+            if ($stat->view > 0) {
+                return round(($stat->like + $stat->comment) / $stat->view * 100, 2);
+            }
+            return 0;
         });
-    
-        // Calculate averages
-        $averageEngagementRate = $metrics->count() > 0
-            ? round($metrics->pluck('engagement_rate')->average(), 2)
-            : 0;
-    
-        $averageCPM = $metrics->count() > 0
-            ? round($metrics->pluck('cpm')->average(), 2)
+
+        // Calculate average engagement rate
+        $averageEngagementRate = $engagementRates->count() > 0
+            ? round($engagementRates->average(), 2)
             : 0;
 
             return view('admin.product.show', compact(
@@ -325,8 +311,7 @@ class ProductController extends Controller
                 'averageOrderValue',
                 'talentContentCount',
                 'uniqueTalentIdCount',
-                'averageEngagementRate',
-                'averageCPM'
+                'averageEngagementRate'
             ));
     }
 
