@@ -149,12 +149,20 @@ class ProductController extends Controller
 
     public function getOrderCountBySku(Product $product)
     {
-        $orders = Order::where('sku', 'LIKE', '%'.$product->sku.'%')
-                        ->select('sku', DB::raw('count(*) as count'))
+        $salesChannelId = request('sales_channel');
+
+        $orders = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
+
+        // Apply sales_channel filter if provided
+        if ($salesChannelId) {
+            $orders->where('sales_channel_id', $salesChannelId);
+        }
+
+        $orders = $orders->select('sku', DB::raw('count(*) as count'))
                         ->groupBy('sku')
                         ->get();
 
-        $skuData = $orders->map(function($order) {
+        $skuData = $orders->map(function ($order) {
             return [
                 'sku' => $order->sku,
                 'count' => $order->count
@@ -164,19 +172,24 @@ class ProductController extends Controller
         return response()->json($skuData);
     }
 
+
     public function getOrderCountBySalesChannel($productId)
     {
-        // Find the product by ID
         $product = Product::findOrFail($productId);
+        $salesChannelId = request('sales_channel');
 
-        // Retrieve orders for the specific product SKU and count orders per sales channel
-        $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-            ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
-            ->select('sales_channels.name as sales_channel', DB::raw('COUNT(orders.id) as order_count'))
-            ->groupBy('sales_channels.id', 'sales_channels.name')  // Add sales_channels.name here
-            ->get();
+        $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
 
-        // Prepare data for the bar chart
+        // Apply sales_channel filter if provided
+        if ($salesChannelId) {
+            $orderCounts->where('sales_channel_id', $salesChannelId);
+        }
+
+        $orderCounts = $orderCounts->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+                                ->select('sales_channels.name as sales_channel', DB::raw('COUNT(orders.id) as order_count'))
+                                ->groupBy('sales_channels.id', 'sales_channels.name')
+                                ->get();
+
         $labels = $orderCounts->pluck('sales_channel');
         $data = $orderCounts->pluck('order_count');
 
@@ -186,26 +199,33 @@ class ProductController extends Controller
         ]);
     }
 
+
     public function getOrderCountPerDay(Product $product)
     {
         $type = request('type', 'daily'); // Default to daily if no type is specified
+        $salesChannel = request('sales_channel'); // Get the sales channel filter
+
+        $query = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
+
+        // Apply the sales channel filter if provided
+        if (!is_null($salesChannel)) {
+            $query->where('sales_channel_id', $salesChannel);
+        }
 
         if ($type === 'daily') {
-            $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-                ->selectRaw('DATE(date) as order_date, COUNT(id_order) as order_count')
-                ->groupBy('order_date')
-                ->orderBy('order_date', 'asc')
+            $orderCounts = $query->selectRaw('DATE(date) as period, COUNT(id_order) as order_count')
+                ->groupBy('period')
+                ->orderBy('period', 'asc')
                 ->get();
 
-            $labels = $orderCounts->pluck('order_date');
+            $labels = $orderCounts->pluck('period');
         } else {
-            $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
-                ->selectRaw('DATE_FORMAT(date, "%Y-%m") as order_month, COUNT(id_order) as order_count')
-                ->groupBy('order_month')
-                ->orderBy('order_month', 'asc')
+            $orderCounts = $query->selectRaw('DATE_FORMAT(date, "%Y-%m") as period, COUNT(id_order) as order_count')
+                ->groupBy('period')
+                ->orderBy('period', 'asc')
                 ->get();
 
-            $labels = $orderCounts->pluck('order_month');
+            $labels = $orderCounts->pluck('period');
         }
 
         $data = $orderCounts->pluck('order_count');
@@ -215,6 +235,7 @@ class ProductController extends Controller
             'data' => $data
         ]);
     }
+
 
 
 
