@@ -237,8 +237,6 @@ class ProductController extends Controller
     }
 
 
-
-
     public function getTalentContent($productId)
     {
         $product = Product::findOrFail($productId);
