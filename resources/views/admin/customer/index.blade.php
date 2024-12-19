@@ -222,8 +222,8 @@
         window.loadCustomerLineChart = loadCustomerLineChart;
         window.loadMultipleLineChart = loadMultipleLineChart;
         $(document).ready(function () {
-            loadCustomerLineChart('daily');
-            loadMultipleLineChart('daily');
+            loadCustomerLineChart('monthly');
+            loadMultipleLineChart('monthly');
 
             $('a[href="#dailyCustomerTab"]').on('click', function() {
                 loadCustomerLineChart('daily');
