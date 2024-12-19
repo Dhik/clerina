@@ -62,44 +62,148 @@
         </div>
         <div class="row">
             <!-- KPI Cards Section -->
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-churned-customers">--</div>
-                    <div class="kpi-label">Churned Customers</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-churned-customers">0</h4>
+                        <p>Churned Customers</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-churn-rate">--%</div>
-                    <div class="kpi-label">Churn Rate</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-churn-rate">0</h4>
+                        <p>Churn Rate</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-avg-lifespan">-- days</div>
-                    <div class="kpi-label">Avg. Customer Lifespan</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-avg-lifespan">0</h4>
+                        <p>Avg. Customer Lifespan</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-max-lifespan">-- days</div>
-                    <div class="kpi-label">Max Customer Lifespan</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-max-lifespan">0</h4>
+                        <p>Max Customer Lifespan</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-avg-clv">--</div>
-                    <div class="kpi-label">Avg. Customer Lifespan Value</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-avg-clv">0</h4>
+                        <p>Avg. Customer Lifespan Value</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="kpi-card">
-                    <div class="kpi-value" id="kpi-repeat-purchase-rate">--%</div>
-                    <div class="kpi-label">Repeat Purchase Rate</div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h4 id="kpi-repeat-purchase-rate">0</h4>
+                        <p>Repeat Purchase Rate</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
                 </div>
             </div>
         </div>
+        <!-- Add this right after the KPI cards row -->
+        <div class="row mt-4" id="kpiDetailsSection" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="kpiDetailTitle"></h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" id="closeKpiDetails">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Churned Customers Details -->
+                        <div class="kpi-detail-content" id="kpi-churned-customers-detail" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="info-box bg-info">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Current Value</span>
+                                            <span class="info-box-number current-value">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Churned customers represent those who haven't made a purchase in the last 90 days.</p>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Last Month</span>
+                                            <span class="info-box-number">12%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Industry Average</span>
+                                            <span class="info-box-number">15%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box bg-light">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Target</span>
+                                            <span class="info-box-number">8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Churn Rate Details -->
+                        <div class="kpi-detail-content" id="kpi-churn-rate-detail" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="info-box bg-info">
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Current Value</span>
+                                            <span class="info-box-number current-value">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                            <!-- Rest of the content... -->
+                        </div>
+
+                        <!-- Continue with other KPI details following the same pattern... -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
     <div class="row">
@@ -125,29 +229,30 @@
     @include('admin.socialMedia.modal')
     @include('admin.socialMedia.modal-update')
 @stop
+
 @section('css')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 <style>
-.kpi-card {
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    background-color: #f8f9fa;
-    margin-bottom: 20px;
-    text-align: center;
-}
-.kpi-value {
-    font-size: 2.5em;
-    font-weight: bold;
-    color: #007bff;
-}
-.kpi-label {
-    font-size: 1.2em;
-    color: #6c757d;
-}
+    .small-box {
+        transition: transform 0.2s;
+    }
+    .small-box:hover {
+        transform: translateY(-3px);
+    }
+    .kpi-detail-content {
+        transition: all 0.3s ease;
+    }
+    .info-box.bg-info {
+        color: #fff;
+    }
+    .info-box.bg-info .info-box-content {
+        padding: 15px;
+    }
+    .info-box.bg-info .current-value {
+        font-size: 24px;
+        font-weight: bold;
+    }
 </style>
 @stop
-
 
 @section('js')
     <script>
@@ -358,6 +463,37 @@
                     console.error('Error fetching KPI data:', error);
                 }
             });
+            $('.small-box').click(function() {
+                const kpiId = $(this).find('h4').attr('id');
+                const kpiTitle = $(this).find('p').text();
+                const kpiValue = $(this).find('h4').text(); // Get the KPI value
+                
+                // Hide all KPI detail content first
+                $('.kpi-detail-content').hide();
+                
+                // Show the details section
+                $('#kpiDetailsSection').show();
+                
+                // Show the specific KPI detail and update its current value
+                $(`#${kpiId}-detail`).show();
+                $(`#${kpiId}-detail .current-value`).text(kpiValue);
+                
+                // Update the title with the current value
+                $('#kpiDetailTitle').text(`${kpiTitle} Details - Current Value: ${kpiValue}`);
+                
+                // Scroll to the details section
+                $('html, body').animate({
+                    scrollTop: $('#kpiDetailsSection').offset().top - 100
+                }, 500);
+            });
+
+            // Close button handler
+            $('#closeKpiDetails').click(function() {
+                $('#kpiDetailsSection').hide();
+            });
+
+            // Make KPI cards look clickable
+            $('.small-box').css('cursor', 'pointer');
 
         });
     </script>
