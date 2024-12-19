@@ -248,7 +248,7 @@
                 responsive: true,
                 processing: true,
                 serverSide: true,
-                pageLength: 25,
+                pageLength: 10,
                 ajax: {
                     url: "{{ route('customer.get') }}",
                     data: function (d) {
