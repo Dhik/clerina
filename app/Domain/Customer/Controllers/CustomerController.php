@@ -176,10 +176,21 @@ class CustomerController extends Controller
             ->get()
             ->avg('lifespan');
 
+        // Calculate average customer lifetime value (CLV)
+        $avgCLV = Customer::join('orders', function ($join) {
+                $join->on('customers.name', '=', 'orders.customer_name')
+                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
+            })
+            ->selectRaw('AVG(orders.amount) * COUNT(orders.id) * DATEDIFF(MAX(orders.date), MIN(orders.date)) as clv')
+            ->groupBy('customers.id')
+            ->get()
+            ->avg('clv');
+
         return response()->json([
             'churned_customers' => $churnedCustomersCount,
             'churn_rate' => $churnRate,
-            'average_customer_lifespan_days' => $customerLifespanDays
+            'average_customer_lifespan_days' => $customerLifespanDays,
+            'average_customer_lifetime_value' => $avgCLV
         ]);
     }
 }
