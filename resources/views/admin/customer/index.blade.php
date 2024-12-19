@@ -9,14 +9,15 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <div class="btn-group">
+        <!-- <div class="btn-group">
             <form id="orderExportForm" action="{{ route('customer.export') }}" method="post">
                 @csrf
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-file-download"></i> {{ trans('labels.export') }}
                 </button>
             </form>
-        </div>
+        </div> -->
+        <a href="{{ route('customer.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Customers Data from January 2024</a>
         <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
     </div>
 </div>
