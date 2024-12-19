@@ -74,7 +74,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
+                <div class="small-box bg-success">
                     <div class="inner">
                         <h4 id="kpi-churn-rate">0</h4>
                         <p>Churn Rate</p>
@@ -85,7 +85,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
+                <div class="small-box bg-maroon">
                     <div class="inner">
                         <h4 id="kpi-avg-lifespan">0</h4>
                         <p>Avg. Customer Lifespan</p>
@@ -96,7 +96,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
+                <div class="small-box bg-teal">
                     <div class="inner">
                         <h4 id="kpi-max-lifespan">0</h4>
                         <p>Max Customer Lifespan</p>
@@ -107,7 +107,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
+                <div class="small-box bg-pink">
                     <div class="inner">
                         <h4 id="kpi-avg-clv">0</h4>
                         <p>Avg. Customer Lifespan Value</p>
@@ -118,7 +118,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-6">
-                <div class="small-box bg-info">
+                <div class="small-box bg-purple">
                     <div class="inner">
                         <h4 id="kpi-repeat-purchase-rate">0</h4>
                         <p>Repeat Purchase Rate</p>
@@ -154,33 +154,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Churned customers represent those who haven't made a purchase in the last 90 days.</p>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="info-box bg-light">
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">Last Month</span>
-                                            <span class="info-box-number">12%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="info-box bg-light">
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">Industry Average</span>
-                                            <span class="info-box-number">15%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="info-box bg-light">
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">Target</span>
-                                            <span class="info-box-number">8%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Churn Rate Details -->
@@ -195,8 +168,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                            <!-- Rest of the content... -->
                         </div>
 
                         <!-- Continue with other KPI details following the same pattern... -->
