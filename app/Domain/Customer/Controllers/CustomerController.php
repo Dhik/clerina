@@ -100,16 +100,23 @@ class CustomerController extends Controller
     {
         $type = $request->get('type', 'daily'); // Default ke 'daily'
 
-        $data = Order::query()
-            ->join('customers', function ($join) {
-                $join->on('orders.customer_name', '=', 'customers.name')
-                    ->on('orders.customer_phone_number', '=', 'customers.phone_number');
-            })
-            ->selectRaw($type === 'daily' ? 'DATE(orders.date) as period' : 'DATE_FORMAT(orders.date, "%Y-%m") as period')
-            ->selectRaw('COUNT(DISTINCT customers.id) as customer_count')
-            ->groupBy('period')
-            ->orderBy('period', 'ASC')
-            ->get();
+        $query = Order::query()
+        ->join('customers', function ($join) {
+            $join->on('orders.customer_name', '=', 'customers.name')
+                ->on('orders.customer_phone_number', '=', 'customers.phone_number');
+        });
+
+        if ($type === 'daily') {
+            $data = $query->selectRaw('DATE(orders.date) as period, COUNT(DISTINCT customers.id) as customer_count')
+                ->groupBy('period')
+                ->orderBy('period', 'ASC')
+                ->get();
+        } else {
+            $data = $query->selectRaw('DATE_FORMAT(orders.date, "%Y-%m") as period, COUNT(DISTINCT customers.id) as customer_count')
+                ->groupBy('period')
+                ->orderBy('period', 'ASC')
+                ->get();
+        }
 
         return response()->json($data);
     }
@@ -118,17 +125,26 @@ class CustomerController extends Controller
     {
         $type = $request->get('type', 'daily'); // Default ke 'daily'
 
-        $data = Order::query()
-            ->join('customers', function ($join) {
-                $join->on('orders.customer_name', '=', 'customers.name')
-                    ->on('orders.customer_phone_number', '=', 'customers.phone_number');
-            })
-            ->selectRaw($type === 'daily' ? 'DATE(orders.date) as period' : 'DATE_FORMAT(orders.date, "%Y-%m") as period')
-            ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
-            ->selectRaw('SUM(IF(customers.count_orders > 1, 1, 0)) as repeated_order_count')
-            ->groupBy('period')
-            ->orderBy('period', 'ASC')
-            ->get();
+        $query = Order::query()
+        ->join('customers', function ($join) {
+            $join->on('orders.customer_name', '=', 'customers.name')
+                ->on('orders.customer_phone_number', '=', 'customers.phone_number');
+        });
+        if ($type === 'daily') {
+            $data = $query->selectRaw('DATE(orders.date) as period')
+                ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
+                ->selectRaw('SUM(IF(customers.count_orders > 1, 1, 0)) as repeated_order_count')
+                ->groupBy('period')
+                ->orderBy('period', 'ASC')
+                ->get();
+        } else {
+            $data = $query->selectRaw('DATE_FORMAT(orders.date, "%Y-%m") as period')
+                ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
+                ->selectRaw('SUM(IF(customers.count_orders > 1, 1, 0)) as repeated_order_count')
+                ->groupBy('period')
+                ->orderBy('period', 'ASC')
+                ->get();
+        }
 
         return response()->json($data);
     }
