@@ -123,7 +123,7 @@ class CustomerController extends Controller
 
     public function getCustomerOrders(Request $request): JsonResponse
     {
-        $type = $request->get('type', 'daily'); // Default ke 'daily'
+        $type = $request->get('type', 'daily');
 
         $query = Order::query()
         ->join('customers', function ($join) {

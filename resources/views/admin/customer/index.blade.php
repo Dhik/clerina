@@ -88,7 +88,158 @@
 
 @section('js')
     <script>
-        $(function () {
+        function loadCustomerLineChart(type) {
+            const ctx = document.getElementById('customerLineChart').getContext('2d');
+
+            $.ajax({
+                url: '{{ route('customer.daily-count') }}',
+                method: 'GET',
+                data: { type: type },
+                success: function(data) {
+                    const labels = data.map(item => item.period);
+                    const counts = data.map(item => item.customer_count);
+
+                    if (window.customerLineChart instanceof Chart) {
+                        window.customerLineChart.destroy();
+                    }
+
+                    window.customerLineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: type === 'daily' ? 'Daily Customer Count' : 'Monthly Customer Count',
+                                data: counts,
+                                borderWidth: 1,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: type === 'daily' ? 'Date' : 'Month'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Customer Count'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('Error fetching data:', error);
+                }
+            });
+        }
+
+        function loadMultipleLineChart(type) {
+            const ctx = document.getElementById('customerOrderChart').getContext('2d');
+
+            $.ajax({
+                url: '{{ route('customer.daily-order-stats') }}',
+                method: 'GET',
+                data: { type: type },
+                success: function(data) {
+                    const labels = data.map(item => item.period);
+                    const firstTimers = data.map(item => item.first_timer_count);
+                    const repeatedOrders = data.map(item => item.repeated_order_count);
+
+                    if (window.customerOrderChart instanceof Chart) {
+                        window.customerOrderChart.destroy();
+                    }
+
+                    window.customerOrderChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: type === 'daily' ? 'First Timer Orders (Daily)' : 'First Timer Orders (Monthly)',
+                                    data: firstTimers,
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                    tension: 0.4
+                                },
+                                {
+                                    label: type === 'daily' ? 'Repeated Orders (Daily)' : 'Repeated Orders (Monthly)',
+                                    data: repeatedOrders,
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                    tension: 0.4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: type === 'daily' ? 'Date' : 'Month'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Order Count'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('Error fetching data:', error);
+                }
+            });
+        }
+    
+        window.loadCustomerLineChart = loadCustomerLineChart;
+        window.loadMultipleLineChart = loadMultipleLineChart;
+        $(document).ready(function () {
+            loadCustomerLineChart('daily');
+            loadMultipleLineChart('daily');
+
+            $('a[href="#dailyCustomerTab"]').on('click', function() {
+                loadCustomerLineChart('daily');
+            });
+
+            $('a[href="#monthlyCustomerTab"]').on('click', function() {
+                loadCustomerLineChart('monthly');
+            });
+
+            $('a[href="#dailyTab"]').on('click', function() {
+                loadMultipleLineChart('daily');
+            });
+
+            $('a[href="#monthlyTab"]').on('click', function() {
+                loadMultipleLineChart('monthly');
+            });
             const customerTableSelector = $('#customerTable');
             const filterCountOrders = $('#filterCountOrders');
             const filterTenant = $('#filterTenant');
@@ -126,136 +277,6 @@
                 filterCountOrders.val('');
                 filterTenant.val('');
                 customerTable.draw();
-            });
-            function loadCustomerLineChart(chartId, endpoint, type = 'daily') {
-                const ctx = document.getElementById(chartId).getContext('2d');
-
-                fetch(endpoint + '?type=' + type)
-                    .then(response => response.json())
-                    .then(data => {
-                        const labels = data.map(item => item.period);
-                        const counts = data.map(item => item.customer_count);
-
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: type === 'daily' ? 'Daily Customer Count' : 'Monthly Customer Count',
-                                    data: counts,
-                                    borderWidth: 1,
-                                    borderColor: 'rgba(75, 192, 192, 1)',
-                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                    tension: 0.4
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'top'
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        title: {
-                                            display: true,
-                                            text: type === 'daily' ? 'Date' : 'Month'
-                                        }
-                                    },
-                                    y: {
-                                        title: {
-                                            display: true,
-                                            text: 'Customer Count'
-                                        },
-                                        beginAtZero: true
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => console.error('Error fetching data:', error));
-            }
-            loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'daily');
-
-            function loadMultipleLineChart(chartId, endpoint, type = 'daily') {
-                const ctx = document.getElementById(chartId).getContext('2d');
-
-                fetch(endpoint + '?type=' + type)
-                    .then(response => response.json())
-                    .then(data => {
-                        const labels = data.map(item => item.period);
-                        const firstTimers = data.map(item => item.first_timer_count);
-                        const repeatedOrders = data.map(item => item.repeated_order_count);
-
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [
-                                    {
-                                        label: type === 'daily' ? 'First Timer Orders (Daily)' : 'First Timer Orders (Monthly)',
-                                        data: firstTimers,
-                                        borderWidth: 1,
-                                        borderColor: 'rgba(54, 162, 235, 1)',
-                                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                        tension: 0.4
-                                    },
-                                    {
-                                        label: type === 'daily' ? 'Repeated Orders (Daily)' : 'Repeated Orders (Monthly)',
-                                        data: repeatedOrders,
-                                        borderWidth: 1,
-                                        borderColor: 'rgba(255, 99, 132, 1)',
-                                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                        tension: 0.4
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'top'
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        title: {
-                                            display: true,
-                                            text: type === 'daily' ? 'Date' : 'Month'
-                                        }
-                                    },
-                                    y: {
-                                        title: {
-                                            display: true,
-                                            text: 'Order Count'
-                                        },
-                                        beginAtZero: true
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => console.error('Error fetching data:', error));
-            }
-            loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'daily');
-
-            $('a[href="#dailyCustomerTab"]').on('click', function() {
-                loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'daily');
-            });
-
-            $('a[href="#monthlyCustomerTab"]').on('click', function() {
-                loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'monthly');
-            });
-
-            $('a[href="#dailyTab"]').on('click', function() {
-                loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'daily');
-            });
-
-            $('a[href="#monthlyTab"]').on('click', function() {
-                loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'monthly');
             });
 
         });
