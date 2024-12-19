@@ -68,9 +68,6 @@
                         <h4 id="kpi-churned-customers">0</h4>
                         <p>Churned Customers</p>
                     </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
                 </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -78,9 +75,6 @@
                     <div class="inner">
                         <h4 id="kpi-churn-rate">0</h4>
                         <p>Churn Rate</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
                     </div>
                 </div>
             </div>
@@ -90,9 +84,6 @@
                         <h4 id="kpi-avg-lifespan">0</h4>
                         <p>Avg. Customer Lifespan</p>
                     </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
                 </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -100,9 +91,6 @@
                     <div class="inner">
                         <h4 id="kpi-max-lifespan">0</h4>
                         <p>Max Customer Lifespan</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
                     </div>
                 </div>
             </div>
@@ -112,9 +100,6 @@
                         <h4 id="kpi-avg-clv">0</h4>
                         <p>Avg. Customer Lifespan Value</p>
                     </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
                 </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -122,9 +107,6 @@
                     <div class="inner">
                         <h4 id="kpi-repeat-purchase-rate">0</h4>
                         <p>Repeat Purchase Rate</p>
-                    </div>
-                    <div class="icon">
-                        <i class="fas fa-chart-line"></i>
                     </div>
                 </div>
             </div>
