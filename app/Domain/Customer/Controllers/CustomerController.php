@@ -4,6 +4,7 @@ namespace App\Domain\Customer\Controllers;
 
 use App\Domain\Customer\BLL\Customer\CustomerBLLInterface;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Order\Models\Order;
 use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Customer\Models\CustomerNote;
@@ -95,4 +96,35 @@ class CustomerController extends Controller
         $tenantId = Auth::user()->current_tenant_id;
         return (new CustomersExport($tenantId))->download('customers.xlsx');
     }
+    public function getDailyCustomerCount(): JsonResponse
+    {
+        $data = Order::query()
+            ->join('customers', function ($join) {
+                $join->on('orders.customer_name', '=', 'customers.name')
+                    ->on('orders.customer_phone_number', '=', 'customers.phone_number');
+            })
+            ->selectRaw('DATE(orders.date) as date, COUNT(DISTINCT customers.id) as customer_count')
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        return response()->json($data);
+    }
+    public function getDailyCustomerOrders(): JsonResponse
+    {
+        $data = Order::query()
+            ->join('customers', function ($join) {
+                $join->on('orders.customer_name', '=', 'customers.name')
+                    ->on('orders.customer_phone_number', '=', 'customers.phone_number');
+            })
+            ->selectRaw('DATE(orders.date) as date')
+            ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
+            ->selectRaw('SUM(IF(customers.count_orders > 1, 1, 0)) as repeated_order_count')
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        return response()->json($data);
+    }
+
 }
