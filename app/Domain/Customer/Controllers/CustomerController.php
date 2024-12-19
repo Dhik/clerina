@@ -148,22 +148,38 @@ class CustomerController extends Controller
 
         return response()->json($data);
     }
+    
     public function getChurnedCustomers(): JsonResponse
     {
         $sixMonthsAgo = Carbon::now()->subMonths(6);
+
+        // Count distinct churned customers
         $churnedCustomersCount = Customer::whereDoesntHave('orders', function ($query) use ($sixMonthsAgo) {
             $query->where('date', '>=', $sixMonthsAgo);
         })->distinct('id')->count('id');
 
+        // Count total distinct customers
         $totalCustomersCount = Customer::distinct('id')->count('id');
+
+        // Calculate churn rate
         $churnRate = $totalCustomersCount > 0 
             ? ($churnedCustomersCount / $totalCustomersCount) * 100 
             : 0;
 
+        // Calculate average customer lifespan
+        $customerLifespanDays = Customer::join('orders', function ($join) {
+                $join->on('customers.name', '=', 'orders.customer_name')
+                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
+            })
+            ->selectRaw('DATEDIFF(MAX(orders.date), MIN(orders.date)) as lifespan')
+            ->groupBy('customers.id')
+            ->get()
+            ->avg('lifespan');
+
         return response()->json([
             'churned_customers' => $churnedCustomersCount,
-            'churn_rate' => $churnRate
+            'churn_rate' => $churnRate,
+            'average_customer_lifespan_days' => $customerLifespanDays
         ]);
     }
-
 }
