@@ -62,7 +62,7 @@
         </div>
         <div class="row">
             <!-- KPI Cards Section -->
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-info">
                     <div class="inner">
                         <h4 id="kpi-churned-customers">0</h4>
@@ -73,7 +73,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-success">
                     <div class="inner">
                         <h4 id="kpi-churn-rate">0</h4>
@@ -84,7 +84,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-maroon">
                     <div class="inner">
                         <h4 id="kpi-avg-lifespan">0</h4>
@@ -95,7 +95,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-teal">
                     <div class="inner">
                         <h4 id="kpi-max-lifespan">0</h4>
@@ -106,7 +106,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-pink">
                     <div class="inner">
                         <h4 id="kpi-avg-clv">0</h4>
@@ -117,7 +117,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-6">
+            <div class="col-lg-2 col-6">
                 <div class="small-box bg-purple">
                     <div class="inner">
                         <h4 id="kpi-repeat-purchase-rate">0</h4>
