@@ -148,5 +148,17 @@ class CustomerController extends Controller
 
         return response()->json($data);
     }
+    public function getChurnedCustomers(): JsonResponse
+    {
+        $sixMonthsAgo = Carbon::now()->subMonths(6);
+
+        $churnedCustomersCount = Customer::whereDoesntHave('orders', function ($query) use ($sixMonthsAgo) {
+            $query->where('date', '>=', $sixMonthsAgo);
+        })->distinct('id')->count('id');
+
+        return response()->json([
+            'churned_customers' => $churnedCustomersCount
+        ]);
+    }
 
 }

@@ -3,6 +3,7 @@
 namespace App\Domain\Customer\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Domain\Order\Models\Order;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +14,10 @@ class Customer extends Model
         'phone_number',
         'count_orders',
         'tenant_id',
+        'username',
+        'shipping_address',
+        'city',
+        'province',
     ];
 
     protected $appends = [
@@ -58,5 +63,11 @@ class Customer extends Model
         }
 
         return 'https://wa.me/' . $phoneNumber;
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customer_phone_number', 'phone_number')
+            ->whereColumn('orders.customer_name', '=', 'customers.name');
     }
 }
