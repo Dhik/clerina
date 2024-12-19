@@ -60,6 +60,46 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <!-- KPI Cards Section -->
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-churned-customers">--</div>
+                    <div class="kpi-label">Churned Customers</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-churn-rate">--%</div>
+                    <div class="kpi-label">Churn Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-avg-lifespan">-- days</div>
+                    <div class="kpi-label">Avg. Customer Lifespan</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-max-lifespan">-- days</div>
+                    <div class="kpi-label">Max Customer Lifespan</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-avg-clv">--</div>
+                    <div class="kpi-label">Avg. Customer Lifespan Value</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-repeat-purchase-rate">--%</div>
+                    <div class="kpi-label">Repeat Purchase Rate</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
     <div class="row">
@@ -85,6 +125,29 @@
     @include('admin.socialMedia.modal')
     @include('admin.socialMedia.modal-update')
 @stop
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+<style>
+.kpi-card {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.kpi-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #007bff;
+}
+.kpi-label {
+    font-size: 1.2em;
+    color: #6c757d;
+}
+</style>
+@stop
+
 
 @section('js')
     <script>
@@ -277,6 +340,23 @@
                 filterCountOrders.val('');
                 filterTenant.val('');
                 customerTable.draw();
+            });
+
+            $.ajax({
+                url: "{{ route('customer.stats') }}", // Update this route to match your API endpoint
+                method: 'GET',
+                success: function(data) {
+                    $('#kpi-churned-customers').text(data.churned_customers);
+                    $('#kpi-churn-rate').text(data.churn_rate.toFixed(2) + '%');
+                    $('#kpi-avg-lifespan').text(data.average_customer_lifespan_days.toFixed(2) + ' days');
+                    $('#kpi-max-lifespan').text(data.max_customer_lifespan_days + ' days');
+                    $('#kpi-min-lifespan').text(data.min_customer_lifespan_days + ' days');
+                    $('#kpi-avg-clv').text(data.average_customer_lifetime_value.toFixed(2));
+                    $('#kpi-repeat-purchase-rate').text(data.repeat_purchase_rate.toFixed(2) + '%');
+                },
+                error: function(error) {
+                    console.error('Error fetching KPI data:', error);
+                }
             });
 
         });
