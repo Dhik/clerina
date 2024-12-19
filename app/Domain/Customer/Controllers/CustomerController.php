@@ -166,15 +166,19 @@ class CustomerController extends Controller
             ? ($churnedCustomersCount / $totalCustomersCount) * 100 
             : 0;
 
-        // Calculate average customer lifespan
-        $customerLifespanDays = Customer::join('orders', function ($join) {
+        // Calculate customer lifespans (average, max, min)
+        $lifespans = Customer::join('orders', function ($join) {
                 $join->on('customers.name', '=', 'orders.customer_name')
                      ->on('customers.phone_number', '=', 'orders.customer_phone_number');
             })
             ->selectRaw('DATEDIFF(MAX(orders.date), MIN(orders.date)) as lifespan')
             ->groupBy('customers.id')
             ->get()
-            ->avg('lifespan');
+            ->pluck('lifespan');
+
+        $customerLifespanDays = $lifespans->avg();
+        $maxLifespan = $lifespans->max();
+        $minLifespan = $lifespans->min();
 
         // Calculate average customer lifetime value (CLV)
         $avgCLV = Customer::join('orders', function ($join) {
@@ -186,11 +190,26 @@ class CustomerController extends Controller
             ->get()
             ->avg('clv');
 
+        // Calculate repeat purchase rate
+        $repeatPurchaseRate = Customer::join('orders', function ($join) {
+                $join->on('customers.name', '=', 'orders.customer_name')
+                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
+            })
+            ->selectRaw('COUNT(orders.id) > 1 as repeat_customer')
+            ->groupBy('customers.id')
+            ->get()
+            ->pluck('repeat_customer')
+            ->filter(fn($value) => $value) // Only keep customers with more than one purchase
+            ->count() / $totalCustomersCount * 100;
+
         return response()->json([
             'churned_customers' => $churnedCustomersCount,
             'churn_rate' => $churnRate,
             'average_customer_lifespan_days' => $customerLifespanDays,
-            'average_customer_lifetime_value' => $avgCLV
+            'max_customer_lifespan_days' => $maxLifespan,
+            'min_customer_lifespan_days' => $minLifespan,
+            'average_customer_lifetime_value' => $avgCLV,
+            'repeat_purchase_rate' => $repeatPurchaseRate
         ]);
     }
 }
