@@ -24,8 +24,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [CustomerController::class, 'index'])->name('customer.index');
                 Route::get('/get', [CustomerController::class, 'getCustomer'])->name('customer.get');
-                Route::get('/daily-count', [CustomerController::class, 'getDailyCustomerCount'])->name('customer.daily-count');
-                Route::get('/daily-order', [CustomerController::class, 'getDailyCustomerOrders'])->name('customer.daily-order-stats');
+                Route::get('/daily-count', [CustomerController::class, 'getCustomerCount'])->name('customer.daily-count');
+                Route::get('/daily-order', [CustomerController::class, 'getCustomerOrders'])->name('customer.daily-order-stats');
 
                 Route::get('/{customer}', [CustomerController::class, 'show'])->name('customer.show');
                 Route::post('/export', [CustomerController::class, 'export'])->name('customer.export');

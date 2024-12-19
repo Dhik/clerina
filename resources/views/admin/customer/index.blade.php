@@ -27,6 +27,14 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>Trend Customer Count</h3>
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#dailyCustomerTab" data-toggle="tab" onclick="loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'daily')">Daily</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#monthlyCustomerTab" data-toggle="tab" onclick="loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'monthly')">Monthly</a>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body">
                         <canvas id="customerLineChart" width="400" height="200"></canvas>
@@ -37,6 +45,14 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>First Timer vs Repeated</h3>
+                        <ul class="nav nav-pills">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#dailyTab" data-toggle="tab" onclick="loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'daily')">Daily</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#monthlyTab" data-toggle="tab" onclick="loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'monthly')">Monthly</a>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body">
                         <canvas id="customerOrderChart" width="400" height="200"></canvas>
@@ -111,13 +127,13 @@
                 filterTenant.val('');
                 customerTable.draw();
             });
-            function loadCustomerLineChart(chartId, endpoint) {
+            function loadCustomerLineChart(chartId, endpoint, type = 'daily') {
                 const ctx = document.getElementById(chartId).getContext('2d');
 
-                fetch(endpoint)
+                fetch(endpoint + '?type=' + type)
                     .then(response => response.json())
                     .then(data => {
-                        const labels = data.map(item => item.date);
+                        const labels = data.map(item => item.period);
                         const counts = data.map(item => item.customer_count);
 
                         new Chart(ctx, {
@@ -125,7 +141,7 @@
                             data: {
                                 labels: labels,
                                 datasets: [{
-                                    label: 'Daily Customer Count',
+                                    label: type === 'daily' ? 'Daily Customer Count' : 'Monthly Customer Count',
                                     data: counts,
                                     borderWidth: 1,
                                     borderColor: 'rgba(75, 192, 192, 1)',
@@ -135,11 +151,17 @@
                             },
                             options: {
                                 responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    }
+                                },
                                 scales: {
                                     x: {
                                         title: {
                                             display: true,
-                                            text: 'Date'
+                                            text: type === 'daily' ? 'Date' : 'Month'
                                         }
                                     },
                                     y: {
@@ -155,14 +177,15 @@
                     })
                     .catch(error => console.error('Error fetching data:', error));
             }
-            loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}');
-            function loadMultipleLineChart(chartId, endpoint) {
+            loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'daily');
+
+            function loadMultipleLineChart(chartId, endpoint, type = 'daily') {
                 const ctx = document.getElementById(chartId).getContext('2d');
 
-                fetch(endpoint)
+                fetch(endpoint + '?type=' + type)
                     .then(response => response.json())
                     .then(data => {
-                        const labels = data.map(item => item.date);
+                        const labels = data.map(item => item.period);
                         const firstTimers = data.map(item => item.first_timer_count);
                         const repeatedOrders = data.map(item => item.repeated_order_count);
 
@@ -172,7 +195,7 @@
                                 labels: labels,
                                 datasets: [
                                     {
-                                        label: 'First Timer Orders',
+                                        label: type === 'daily' ? 'First Timer Orders (Daily)' : 'First Timer Orders (Monthly)',
                                         data: firstTimers,
                                         borderWidth: 1,
                                         borderColor: 'rgba(54, 162, 235, 1)',
@@ -180,7 +203,7 @@
                                         tension: 0.4
                                     },
                                     {
-                                        label: 'Repeated Orders',
+                                        label: type === 'daily' ? 'Repeated Orders (Daily)' : 'Repeated Orders (Monthly)',
                                         data: repeatedOrders,
                                         borderWidth: 1,
                                         borderColor: 'rgba(255, 99, 132, 1)',
@@ -201,7 +224,7 @@
                                     x: {
                                         title: {
                                             display: true,
-                                            text: 'Date'
+                                            text: type === 'daily' ? 'Date' : 'Month'
                                         }
                                     },
                                     y: {
@@ -217,7 +240,23 @@
                     })
                     .catch(error => console.error('Error fetching data:', error));
             }
-            loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}');
+            loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'daily');
+
+            $('a[href="#dailyCustomerTab"]').on('click', function() {
+                loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'daily');
+            });
+
+            $('a[href="#monthlyCustomerTab"]').on('click', function() {
+                loadCustomerLineChart('customerLineChart', '{{ route('customer.daily-count') }}', 'monthly');
+            });
+
+            $('a[href="#dailyTab"]').on('click', function() {
+                loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'daily');
+            });
+
+            $('a[href="#monthlyTab"]').on('click', function() {
+                loadMultipleLineChart('customerOrderChart', '{{ route('customer.daily-order-stats') }}', 'monthly');
+            });
 
         });
     </script>

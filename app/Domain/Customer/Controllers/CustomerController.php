@@ -96,32 +96,38 @@ class CustomerController extends Controller
         $tenantId = Auth::user()->current_tenant_id;
         return (new CustomersExport($tenantId))->download('customers.xlsx');
     }
-    public function getDailyCustomerCount(): JsonResponse
+    public function getCustomerCount(Request $request): JsonResponse
     {
+        $type = $request->get('type', 'daily'); // Default ke 'daily'
+
         $data = Order::query()
             ->join('customers', function ($join) {
                 $join->on('orders.customer_name', '=', 'customers.name')
                     ->on('orders.customer_phone_number', '=', 'customers.phone_number');
             })
-            ->selectRaw('DATE(orders.date) as date, COUNT(DISTINCT customers.id) as customer_count')
-            ->groupBy('date')
-            ->orderBy('date', 'ASC')
+            ->selectRaw($type === 'daily' ? 'DATE(orders.date) as period' : 'DATE_FORMAT(orders.date, "%Y-%m") as period')
+            ->selectRaw('COUNT(DISTINCT customers.id) as customer_count')
+            ->groupBy('period')
+            ->orderBy('period', 'ASC')
             ->get();
 
         return response()->json($data);
     }
-    public function getDailyCustomerOrders(): JsonResponse
+
+    public function getCustomerOrders(Request $request): JsonResponse
     {
+        $type = $request->get('type', 'daily'); // Default ke 'daily'
+
         $data = Order::query()
             ->join('customers', function ($join) {
                 $join->on('orders.customer_name', '=', 'customers.name')
                     ->on('orders.customer_phone_number', '=', 'customers.phone_number');
             })
-            ->selectRaw('DATE(orders.date) as date')
+            ->selectRaw($type === 'daily' ? 'DATE(orders.date) as period' : 'DATE_FORMAT(orders.date, "%Y-%m") as period')
             ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
             ->selectRaw('SUM(IF(customers.count_orders > 1, 1, 0)) as repeated_order_count')
-            ->groupBy('date')
-            ->orderBy('date', 'ASC')
+            ->groupBy('period')
+            ->orderBy('period', 'ASC')
             ->get();
 
         return response()->json($data);
