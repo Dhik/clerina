@@ -313,12 +313,17 @@ class ProductController extends Controller
 
         $totalOrdersCount = (clone $baseQuery)->count();
         $totalAmountSum = (clone $baseQuery)->sum('amount');
+        $ordersWithoutCommas = (clone $baseQuery)->where('sku', 'NOT LIKE', '%,%');
         $ordersPerCustomerRatio = $uniqueCustomerCount > 0 ? $totalOrdersCount / $uniqueCustomerCount : 0;
 
         $averageOrderValue = $totalOrdersCount > 0 ? $totalAmountSum / $totalOrdersCount : 0;
-        $avgDailyOrdersCount = (clone $baseQuery)
+        $avgDailyOrdersCount = (clone $ordersWithoutCommas)
             ->selectRaw('COUNT(id) / COUNT(DISTINCT DATE(date)) as avg_daily_orders')
             ->value('avg_daily_orders');
+
+        $netProfit = (clone $ordersWithoutCommas)
+            ->selectRaw('SUM(amount - ?) as net_profit', [$product->harga_cogs])
+            ->value('net_profit') ?? 0;
 
         return response()->json([
             'uniqueCustomerCount' => $uniqueCustomerCount,
@@ -327,6 +332,7 @@ class ProductController extends Controller
             'avgDailyOrdersCount' => round($avgDailyOrdersCount, 2),
             'ordersPerCustomerRatio' => round($ordersPerCustomerRatio, 2),
             'averageOrderValue' => round($averageOrderValue, 2),
+            'netProfitSingleProduct' => $netProfit,
         ]);
     }
 

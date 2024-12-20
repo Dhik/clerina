@@ -23,8 +23,8 @@
     <!-- Sales content (Initially visible) -->
     <div class="card" id="salesContent">
         <div class="card-body">
-        <div class="row mb-4">
-                            <div class="col-md-4">
+            <div class="row mb-4">
+                <div class="col-md-4">
                                 <select class="form-control" id="filterChannel">
                                     <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
                                     <option value="">{{ trans('labels.all') }}</option>
@@ -86,6 +86,10 @@
                                     <tr>
                                         <td>Total Revenue</td>
                                         <td style="font-size: 18px;"><strong id="totalAmountSum">Rp 0</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Net Profit for Single Product</td>
+                                        <td style="font-size: 18px;"><strong id="netProfit">Rp 0</strong></td>
                                     </tr>
                                     <tr>
                                         <td>Avg. Daily Orders</td>
@@ -534,6 +538,7 @@
                     $('#avgDailyOrdersCount').text(new Intl.NumberFormat().format(data.avgDailyOrdersCount));
                     $('#ordersPerCustomerRatio').text(new Intl.NumberFormat().format(data.ordersPerCustomerRatio));
                     $('#averageOrderValue').text('Rp ' + new Intl.NumberFormat().format(data.averageOrderValue));
+                    $('#netProfit').text('Rp ' + new Intl.NumberFormat().format(data.netProfitSingleProduct));
                 },
                 error: function (error) {
                     console.error('Error fetching sales metrics:', error);
