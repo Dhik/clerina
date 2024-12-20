@@ -400,7 +400,7 @@
             $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
             updateMarketingMetrics();
         });
-
+        updateMarketingMetrics();
         // Initial state: Show Sales content
         $('#salesBtn').click();
 
@@ -423,7 +423,7 @@
                 { data: 'sku', name: 'sku' },
                 { data: 'date', name: 'date' }
             ],
-            order: [[6, 'desc']] // Order by date
+            order: [[6, 'desc']]
         });
 
         filterChannel.change(function () {
@@ -440,11 +440,19 @@
             loadSalesChannelOrderCountChart();
             lineDailyChart();
         });
+        monthFilterMarketing.change(function () {
+            talentContentTable.draw();
+        });
 
-        $('#talentContentTable').DataTable({
+        var talentContentTable = $('#talentContentTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('product.talent-content', $product->id) }}',
+            ajax: {
+                url: '{{ route('product.talent-content', $product->id) }}',
+                data: function (d) {
+                    d.month = $('#monthFilterMarketing').val();
+                }
+            },
             columns: [
                 { data: 'talent_id', name: 'talent_id' },
                 {
