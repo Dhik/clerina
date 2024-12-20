@@ -423,7 +423,7 @@
                 { data: 'sku', name: 'sku' },
                 { data: 'date', name: 'date' }
             ],
-            order: [[6, 'desc']]
+            order: [[6, 'desc']] // Order by date
         });
 
         filterChannel.change(function () {
@@ -444,12 +444,7 @@
         $('#talentContentTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: {
-                url: '{{ route('product.talent-content', $product->id) }}',
-                data: function (d) {
-                    d.month = $('#monthFilterMarketing').val();
-                }
-            },
+            ajax: '{{ route('product.talent-content', $product->id) }}',
             columns: [
                 { data: 'talent_id', name: 'talent_id' },
                 {
