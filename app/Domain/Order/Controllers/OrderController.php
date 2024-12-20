@@ -295,6 +295,16 @@ class OrderController extends Controller
         return response()->json(['message' => 'Sales turnover updated successfully']);
     }
 
+
+    private function processSku($sku)
+    {
+        if (strpos($sku, '1 ') === 0) {
+            return substr($sku, 2); 
+        }
+        return $sku;
+    }
+
+
     public function fetchAllOrders(): JsonResponse
     {
         set_time_limit(0);
@@ -341,6 +351,8 @@ class OrderController extends Controller
                 }
 
                 foreach ($data['data'] as $orderData) {
+                    $orderData['product_summary'] = $this->processSku($orderData['product_summary']);
+                    
                     $date = $this->convertToMySQLDateTime($orderData['created_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
 
