@@ -123,9 +123,8 @@ class ProductController extends Controller
         }
     }
 
-    public function getOrders(Product $product)
+    public function getOrders(Product $product, Request $request)
     {
-        // Start building the query
         $ordersQuery = Order::where('sku', 'LIKE', '%' . $product->sku . '%')
             ->orderBy('date', 'desc');
 
@@ -133,7 +132,13 @@ class ProductController extends Controller
         if (request('sales_channel')) {
             $ordersQuery->where('sales_channel_id', request('sales_channel'));
         }
-
+        if (request('month')) {
+            $selectedMonth = $request->input('month', date('Y-m'));
+            $ordersQuery->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($selectedMonth)), 
+                date('m', strtotime($selectedMonth))
+            ]);
+        }
         // Return DataTable response
         return datatables()->of($ordersQuery)
             ->addColumn('total_price', function ($order) {

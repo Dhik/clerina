@@ -134,9 +134,7 @@ class OrderController extends Controller
     public function destroy(Order $order): JsonResponse
     {
         $this->authorize('deleteOrder', Order::class);
-
         $this->orderBLL->deleteOrder($order);
-
         return response()->json(['message' => trans('messages.success_delete')]);
     }
 
@@ -352,7 +350,7 @@ class OrderController extends Controller
 
                 foreach ($data['data'] as $orderData) {
                     $orderData['product_summary'] = $this->processSku($orderData['product_summary']);
-                    
+
                     $date = $this->convertToMySQLDateTime($orderData['created_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
 

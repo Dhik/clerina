@@ -143,14 +143,17 @@
                     <div class="card-header">
                         <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <select class="form-control" id="filterChannel">
                                     <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
                                     <option value="">{{ trans('labels.all') }}</option>
                                     @foreach($salesChannels as $salesChannel)
-                                        <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
+                                        <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
                             </div>
                         </div>
                     </div>
@@ -253,6 +256,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     filterChannel = $('#filterChannel');
+    monthFilter = $('#monthFilter');
     function updateChart(type, salesChannel = null) {
         // Make an AJAX call to fetch data based on the type (daily or monthly) and sales channel
         $.ajax({
@@ -470,6 +474,7 @@
                 url: '{{ route('product.orders', $product->id) }}',
                 data: function (d) {
                     d.sales_channel = $('#filterChannel').val();
+                    d.month = $('#monthFilter').val();
                 }
             },
             columns: [
@@ -493,6 +498,9 @@
             const type = activeTab === '#dailyTab' ? 'daily' : 'monthly'; // Determine the type based on the active tab
             const salesChannel = $(this).val(); // Get the selected sales channel
             updateChart(type, salesChannel); // Update the chart with the selected filter
+        });
+        monthFilter.change(function () {
+            ordersTable.draw();
         });
 
         $('#talentContentTable').DataTable({
