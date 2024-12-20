@@ -440,11 +440,8 @@
             loadSalesChannelOrderCountChart();
             lineDailyChart();
         });
-        monthFilterMarketing.change(function () {
-            talentContentTable.draw();
-        });
 
-        var talentContentTable = $('#talentContentTable').DataTable({
+        $('#talentContentTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: {

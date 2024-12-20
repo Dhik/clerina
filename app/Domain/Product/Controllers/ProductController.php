@@ -344,14 +344,12 @@ class ProductController extends Controller
 
     public function getMarketingMetrics(Product $product)
     {
-        // Use aggregate queries for counts to reduce memory usage
         $talentContentCount = TalentContent::where('sku', $product->sku)->count();
         
         $uniqueTalentIdCount = TalentContent::where('sku', $product->sku)
             ->distinct('talent_id')
             ->count('talent_id');
 
-        // Use aggregate query to calculate total views, likes, and comments directly in the database
         $engagementData = TalentContent::where('talent_content.sku', $product->sku)
             ->join('campaign_contents', 'talent_content.upload_link', '=', 'campaign_contents.link')
             ->join('statistics', 'campaign_contents.id', '=', 'statistics.campaign_content_id')
