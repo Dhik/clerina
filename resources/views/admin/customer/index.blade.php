@@ -127,33 +127,29 @@
                     <div class="card-body">
                         <!-- Churned Customers Details -->
                         <div class="kpi-detail-content" id="kpi-churned-customers-detail" style="display: none;">
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <div class="info-box bg-info">
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">Current Value</span>
-                                            <span class="info-box-number current-value">0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p>Ini menunjukkan jumlah pelanggan yang berhenti membeli selama 6 bulan ada <span class="info-box-number current-value"></span> pelanggan.</p>
                         </div>
 
                         <!-- Churn Rate Details -->
                         <div class="kpi-detail-content" id="kpi-churn-rate-detail" style="display: none;">
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <div class="info-box bg-info">
-                                        <div class="info-box-content">
-                                            <span class="info-box-text">Current Value</span>
-                                            <span class="info-box-number current-value">0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p>Ini adalah persentase pelanggan yang melakukan churn terhadap total basis pelanggan anda dalam periode 6 bulan. Tingkat churn sebesar <span class="info-box-number current-value"></span> berarti sekitar <span class="info-box-number current-value"></span> pelanggan anda telah berhenti membeli dalam jangka waktu tersebut.</p>
                         </div>
 
-                        <!-- Continue with other KPI details following the same pattern... -->
+                        <div class="kpi-detail-content" id="kpi-avg-lifespan-detail" style="display: none;">
+                            <p>Ini adalah jumlah hari rata-rata pelanggan bertahan dengan bisnis anda sebelum mereka berpindah. Rata-rata, pelanggan bertahan selama <span class="info-box-number current-value"></span> hari sebelum menghentikan pembelian mereka.</p>
+                        </div>
+
+                        <div class="kpi-detail-content" id="kpi-max-lifespan-detail" style="display: none;">
+                            <p>Durasi terlama seorang pelanggan bertahan dengan bisnis Anda. Dalam hal ini, pelanggan dengan jangka waktu terpanjang bertahan selama <span class="info-box-number current-value"></span>. Hal ini penting karena menunjukkan bahwa beberapa pelanggan tetap bertahan dalam jangka waktu yang relatif lama.</p>
+                        </div>
+
+                        <div class="kpi-detail-content" id="kpi-avg-clv-detail" style="display: none;">
+                            <p>Ini adalah jumlah rata-rata pendapatan yang dihasilkan bisnis Anda per pelanggan selama hubungan mereka dengan bisnis Anda. CLV rata-rata adalah <span class="info-box-number current-value"></span>.</p>
+                        </div>
+
+                        <div class="kpi-detail-content" id="kpi-repeat-purchase-rate-detail" style="display: none;">
+                            <p>Metrik ini menunjukkan persentase pelanggan yang telah melakukan lebih dari satu kali pembelian. Tingkat pembelian berulang sebesar <span class="info-box-number current-value"></span> berarti sekitar <span class="info-box-number current-value"></span> pelanggan anda yang telah melakukan lebih dari satu kali pembelian.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -410,7 +406,7 @@
                     $('#kpi-avg-lifespan').text(data.average_customer_lifespan_days.toFixed(2) + ' days');
                     $('#kpi-max-lifespan').text(data.max_customer_lifespan_days + ' days');
                     $('#kpi-min-lifespan').text(data.min_customer_lifespan_days + ' days');
-                    $('#kpi-avg-clv').text(data.average_customer_lifetime_value.toFixed(2));
+                    $('#kpi-avg-clv').text('Rp. ' + data.average_customer_lifetime_value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","));
                     $('#kpi-repeat-purchase-rate').text(data.repeat_purchase_rate.toFixed(2) + '%');
                 },
                 error: function(error) {
