@@ -250,12 +250,20 @@ class ProductController extends Controller
     }
 
 
-    public function getTalentContent($productId)
+    public function getTalentContent($productId, Request $request)
     {
         $product = Product::findOrFail($productId);
+        $month = $request->input('month');
         
         $talentContent = TalentContent::where('sku', $product->sku)
-            ->select('talent_content.*', 'product as product_name'); // Use the 'product' column directly
+            ->select('talent_content.*', 'product as product_name'); 
+        
+        if ($month) {
+            $talentContent->whereRaw('YEAR(posting_date) = ? AND MONTH(posting_date) = ?', [
+                date('Y', strtotime($month)), 
+                date('m', strtotime($month))
+            ]);
+        }
 
         return DataTables::of($talentContent)
             ->addColumn('status', function($row) {

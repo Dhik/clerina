@@ -228,6 +228,11 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Talent Content for {{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                    <div class="row">
+                            <div class="col-md-4">
+                                <input type="month" id="monthFilterMarketing" class="form-control" value="{{ date('Y-m') }}">
+                            </div>
+                        </div>
                 </div>
                 <div class="card-body">
                     <table id="talentContentTable" class="table table-bordered table-striped" style="width: 100% !important;">
@@ -261,6 +266,7 @@
 <script>
     filterChannel = $('#filterChannel');
     monthFilter = $('#monthFilter');
+    monthFilterMarketing = $('#monthFilterMarketing');
 
     let skuOrderCountChartInstance = null;
     let salesChannelOrderCountChartInstance = null;
@@ -357,8 +363,8 @@
 
     $(document).ready(function() {
         $('#salesBtn').on('click', function() {
-            $('#salesContent').show();
-            $('#marketingContent').hide();
+            $('#salesContent').hide();
+            $('#marketingContent').show();
             $('#salesBtn').addClass('btn-primary').removeClass('btn-secondary');
             $('#marketingBtn').addClass('btn-secondary').removeClass('btn-primary');
         });
@@ -417,7 +423,7 @@
                 { data: 'sku', name: 'sku' },
                 { data: 'date', name: 'date' }
             ],
-            order: [[6, 'desc']] // Order by date
+            order: [[6, 'desc']]
         });
 
         filterChannel.change(function () {
@@ -434,11 +440,19 @@
             loadSalesChannelOrderCountChart();
             lineDailyChart();
         });
+        monthFilterMarketing.change(function () {
+            talentContentTable.draw();
+        });
 
-        $('#talentContentTable').DataTable({
+        var talentContentTable = $('#talentContentTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('product.talent-content', $product->id) }}',
+            ajax: {
+                url: '{{ route('product.talent-content', $product->id) }}',
+                data: function (d) {
+                    d.month = $('#monthFilterMarketing').val();
+                }
+            },
             columns: [
                 { data: 'talent_id', name: 'talent_id' },
                 {
