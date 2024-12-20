@@ -148,7 +148,7 @@
                             <h3>Order Count by Sales Channel (SKU: {{ $product->sku }})</h3>
                         </div>
                         <div class="card-body">
-                            <canvas id="salesChannelOrderCountChart" width="400" height="160"></canvas>
+                            <canvas id="salesChannelOrderCountChart" width="400" height="200"></canvas>
                         </div>
                     </div>
                 </div>

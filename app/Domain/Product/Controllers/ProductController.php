@@ -286,14 +286,10 @@ class ProductController extends Controller
 
     public function getSalesMetrics(Product $product, Request $request)
     {
-        // Retrieve the sales_channel filter from the request
         $salesChannelId = request('sales_channel');
         $month = $request->input('month');
 
-        // Base query
         $baseQuery = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
-
-        // Apply sales_channel filter if provided
         if ($salesChannelId) {
             $baseQuery->where('sales_channel_id', $salesChannelId);
         }
