@@ -363,8 +363,8 @@
 
     $(document).ready(function() {
         $('#salesBtn').on('click', function() {
-            $('#salesContent').hide();
-            $('#marketingContent').show();
+            $('#salesContent').show();
+            $('#marketingContent').hide();
             $('#salesBtn').addClass('btn-primary').removeClass('btn-secondary');
             $('#marketingBtn').addClass('btn-secondary').removeClass('btn-primary');
         });
@@ -400,7 +400,7 @@
             $('#salesBtn').addClass('btn-secondary').removeClass('btn-primary');
             updateMarketingMetrics();
         });
-        updateMarketingMetrics();
+
         // Initial state: Show Sales content
         $('#salesBtn').click();
 
