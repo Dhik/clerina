@@ -129,7 +129,9 @@ class CustomerController extends Controller
         ->join('customers', function ($join) {
             $join->on('orders.customer_name', '=', 'customers.name')
                 ->on('orders.customer_phone_number', '=', 'customers.phone_number');
-        });
+        })
+        ->where('orders.tenant_id', Auth::user()->current_tenant_id);
+        
         if ($type === 'daily') {
             $data = $query->selectRaw('DATE(orders.date) as period')
                 ->selectRaw('SUM(IF(customers.count_orders = 1, 1, 0)) as first_timer_count')
