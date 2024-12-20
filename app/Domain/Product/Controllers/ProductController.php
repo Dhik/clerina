@@ -152,15 +152,20 @@ class ProductController extends Controller
     }
 
 
-    public function getOrderCountBySku(Product $product)
+    public function getOrderCountBySku(Product $product, Request $request)
     {
         $salesChannelId = request('sales_channel');
+        $month = $request->input('month', date('Y-m'));
 
         $orders = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
-
-        // Apply sales_channel filter if provided
         if ($salesChannelId) {
             $orders->where('sales_channel_id', $salesChannelId);
+        }
+        if ($month) {
+            $orders->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($month)),
+                date('m', strtotime($month))
+            ]);
         }
 
         $orders = $orders->select('sku', DB::raw('count(*) as count'))
@@ -178,10 +183,11 @@ class ProductController extends Controller
     }
 
 
-    public function getOrderCountBySalesChannel($productId)
+    public function getOrderCountBySalesChannel($productId, Request $request)
     {
         $product = Product::findOrFail($productId);
         $salesChannelId = request('sales_channel');
+        $month = $request->input('month', date('Y-m'));
 
         $orderCounts = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
 
@@ -189,6 +195,13 @@ class ProductController extends Controller
         if ($salesChannelId) {
             $orderCounts->where('sales_channel_id', $salesChannelId);
         }
+
+        if ($month) {
+            $orderCounts->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($month)),
+                date('m', strtotime($month))
+            ]);
+        }    
 
         $orderCounts = $orderCounts->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
                                 ->select('sales_channels.name as sales_channel', DB::raw('COUNT(orders.id) as order_count'))
@@ -205,34 +218,29 @@ class ProductController extends Controller
     }
 
 
-    public function getOrderCountPerDay(Product $product)
+    public function getOrderCountPerDay(Product $product, Request $request)
     {
-        $type = request('type', 'daily'); // Default to daily if no type is specified
-        $salesChannel = request('sales_channel'); // Get the sales channel filter
+        $type = request('type', 'daily');
+        $salesChannel = request('sales_channel');
+        $month = $request->input('month', date('Y-m'));
 
         $query = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
 
-        // Apply the sales channel filter if provided
         if (!is_null($salesChannel)) {
             $query->where('sales_channel_id', $salesChannel);
         }
-
-        if ($type === 'daily') {
-            $orderCounts = $query->selectRaw('DATE(date) as period, COUNT(id_order) as order_count')
+        if ($month) {
+            $query->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($month)),
+                date('m', strtotime($month))
+            ]);
+        }    
+        $orderCounts = $query->selectRaw('DATE(date) as period, COUNT(id_order) as order_count')
                 ->groupBy('period')
                 ->orderBy('period', 'asc')
                 ->get();
 
-            $labels = $orderCounts->pluck('period');
-        } else {
-            $orderCounts = $query->selectRaw('DATE_FORMAT(date, "%Y-%m") as period, COUNT(id_order) as order_count')
-                ->groupBy('period')
-                ->orderBy('period', 'asc')
-                ->get();
-
-            $labels = $orderCounts->pluck('period');
-        }
-
+        $labels = $orderCounts->pluck('period');
         $data = $orderCounts->pluck('order_count');
 
         return response()->json([
@@ -276,10 +284,11 @@ class ProductController extends Controller
         return view('admin.product.show', compact('product', 'salesChannels'));
     }
 
-    public function getSalesMetrics(Product $product)
+    public function getSalesMetrics(Product $product, Request $request)
     {
         // Retrieve the sales_channel filter from the request
         $salesChannelId = request('sales_channel');
+        $month = $request->input('month');
 
         // Base query
         $baseQuery = Order::where('sku', 'LIKE', '%' . $product->sku . '%');
@@ -287,6 +296,12 @@ class ProductController extends Controller
         // Apply sales_channel filter if provided
         if ($salesChannelId) {
             $baseQuery->where('sales_channel_id', $salesChannelId);
+        }
+        if ($month) {
+            $baseQuery->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
+                date('Y', strtotime($month)), 
+                date('m', strtotime($month))
+            ]);
         }
 
         $uniqueCustomerCount = (clone $baseQuery)

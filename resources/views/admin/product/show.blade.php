@@ -23,16 +23,30 @@
     <!-- Sales content (Initially visible) -->
     <div class="card" id="salesContent">
         <div class="card-body">
+        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <select class="form-control" id="filterChannel">
+                                    <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
+                                    <option value="">{{ trans('labels.all') }}</option>
+                                    @foreach($salesChannels as $salesChannel)
+                                        <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
+                            </div>
+                        </div>
             <div class="row">
                 <div class="col-8">
                     <div class="card">
                         <div class="card-header p-2">
                             <ul class="nav nav-pills">
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="#dailyTab" data-toggle="tab" onclick="updateChart('daily')">Daily</a>
+                                    <a class="nav-link active" href="#dailyTab" data-toggle="tab">Daily</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#monthlyTab" data-toggle="tab" onclick="updateChart('monthly')">Monthly</a>
+                                    <a class="nav-link" href="#monthlyTab" data-toggle="tab">Monthly</a>
                                 </li>
                             </ul>
                         </div>
@@ -142,20 +156,6 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <select class="form-control" id="filterChannel">
-                                    <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
-                                    <option value="">{{ trans('labels.all') }}</option>
-                                    @foreach($salesChannels as $salesChannel)
-                                        <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
-                            </div>
-                        </div>
                     </div>
                     <div class="card-body">
                         <table id="ordersTable" class="table table-bordered table-striped">
@@ -257,66 +257,7 @@
 <script>
     filterChannel = $('#filterChannel');
     monthFilter = $('#monthFilter');
-    function updateChart(type, salesChannel = null) {
-        // Make an AJAX call to fetch data based on the type (daily or monthly) and sales channel
-        $.ajax({
-            url: '{{ route('product.getOrderCountPerDay', $product->id) }}',
-            method: 'GET',
-            data: { 
-                type: type, // Pass the type parameter (daily/monthly)
-                sales_channel: salesChannel // Pass the sales channel filter
-            },
-            success: function(response) {
-                const ctx = document.getElementById('orderCountChart').getContext('2d');
 
-                // If the chart exists, destroy it before reinitializing
-                if (window.orderCountChart instanceof Chart) {
-                    window.orderCountChart.destroy();
-                }
-
-                // Create a new chart instance
-                window.orderCountChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: response.labels, // x-axis labels (dates or months)
-                        datasets: [{
-                            label: 'Order Count',
-                            data: response.data, // y-axis data (order count)
-                            borderColor: 'rgba(75, 192, 192, 1)', // Line color
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)', // Area color
-                            fill: true // Fill the area under the line
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: type === 'daily' ? 'Date' : 'Month'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Order Count'
-                                },
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            },
-            error: function(error) {
-                console.error('Error fetching chart data:', error);
-            }
-        });
-    }
-
-    // Ensure the function is globally accessible
-    window.updateChart = updateChart;
-
-    // Global variables to hold chart instances
     let skuOrderCountChartInstance = null;
     let salesChannelOrderCountChartInstance = null;
 
@@ -411,19 +352,6 @@
     }
 
     $(document).ready(function() {
-        updateChart('daily');
-
-        // Event listeners for daily and monthly tabs
-        $('a[href="#dailyTab"]').on('click', function() {
-            const salesChannel = $('#filterChannel').val(); // Get the selected sales channel from the dropdown
-            updateChart('daily', salesChannel); // Pass the selected sales channel
-        });
-
-        $('a[href="#monthlyTab"]').on('click', function() {
-            const salesChannel = $('#filterChannel').val(); // Get the selected sales channel from the dropdown
-            updateChart('monthly', salesChannel); // Pass the selected sales channel
-        });
-
         $('#salesBtn').on('click', function() {
             $('#salesContent').show();
             $('#marketingContent').hide();
@@ -454,7 +382,6 @@
                     console.error('Error fetching marketing data:', error);
                 });
         }
-
         // Switch to Marketing view
         $('#marketingBtn').on('click', function() {
             $('#salesContent').hide();
@@ -494,13 +421,14 @@
             fetchSalesMetrics();
             loadSkuOrderCountChart();
             loadSalesChannelOrderCountChart();
-            const activeTab = $('a.nav-link.active').attr('href'); // Get the active tab
-            const type = activeTab === '#dailyTab' ? 'daily' : 'monthly'; // Determine the type based on the active tab
-            const salesChannel = $(this).val(); // Get the selected sales channel
-            updateChart(type, salesChannel); // Update the chart with the selected filter
+            lineDailyChart();
         });
         monthFilter.change(function () {
             ordersTable.draw();
+            fetchSalesMetrics();
+            loadSkuOrderCountChart();
+            loadSalesChannelOrderCountChart();
+            lineDailyChart();
         });
 
         $('#talentContentTable').DataTable({
@@ -545,13 +473,15 @@
         });
 
         function loadSkuOrderCountChart() {
-            const salesChannel = $('#filterChannel').val(); // Get the selected sales channel
+            const salesChannel = $('#filterChannel').val();
+            const month = $('#monthFilter').val();
 
             $.ajax({
                 url: '{{ route("product.getOrderCountBySku", $product->id) }}',
                 method: 'GET',
                 data: {
-                    sales_channel: salesChannel // Pass the sales_channel filter
+                    sales_channel: salesChannel,
+                    month: month
                 },
                 success: function (response) {
                     createSkuOrderCountChart('skuOrderCountChart', response);
@@ -563,13 +493,15 @@
         }
 
         function loadSalesChannelOrderCountChart() {
-            const salesChannel = $('#filterChannel').val(); // Get the selected sales channel
+            const salesChannel = $('#filterChannel').val();
+            const month = $('#monthFilter').val();
 
             $.ajax({
                 url: '{{ route("product.getOrderCountBySalesChannel", $product->id) }}',
                 method: 'GET',
                 data: {
-                    sales_channel: salesChannel // Pass the sales_channel filter
+                    sales_channel: salesChannel,
+                    month: month
                 },
                 success: function (response) {
                     createSalesChannelOrderCountChart('salesChannelOrderCountChart', response);
@@ -584,13 +516,15 @@
 
         function fetchSalesMetrics() {
             const url = '{{ route("product.sales", $product->id) }}';
-            const salesChannel = $('#filterChannel').val(); // Get the selected sales channel
+            const salesChannel = $('#filterChannel').val();
+            const monthFilter = $('#monthFilter').val();
 
             $.ajax({
                 url: url,
                 method: 'GET',
                 data: {
-                    sales_channel: salesChannel // Pass the sales_channel filter
+                    sales_channel: salesChannel,
+                    month: monthFilter
                 },
                 success: function (data) {
                     // Update the HTML with the fetched metrics
@@ -606,9 +540,63 @@
                 }
             });
         }
-
-        // Fetch metrics when the page loads
         fetchSalesMetrics();
+
+        function lineDailyChart() {
+            const salesChannel = $('#filterChannel').val();
+            const monthFilter = $('#monthFilter').val();
+
+            $.ajax({
+                url: '{{ route('product.getOrderCountPerDay', $product->id) }}',
+                method: 'GET',
+                data: { 
+                    sales_channel: salesChannel,
+                    month: monthFilter
+                },
+                success: function(response) {
+                    const ctx = document.getElementById('orderCountChart').getContext('2d');
+
+                    if (window.orderCountChart instanceof Chart) {
+                        window.orderCountChart.destroy();
+                    }
+                    window.orderCountChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: response.labels,
+                            datasets: [{
+                                label: 'Order Count',
+                                data: response.data, // y-axis data (order count)
+                                borderColor: 'rgba(75, 192, 192, 1)', // Line color
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Area color
+                                fill: true // Fill the area under the line
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Order Count'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function(error) {
+                    console.error('Error fetching chart data:', error);
+                }
+            });
+        }
+        lineDailyChart();
     });
 </script>
 @stop
