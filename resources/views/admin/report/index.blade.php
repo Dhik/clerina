@@ -41,10 +41,10 @@
         
         if (divElement.offsetWidth > 800) {
             vizElement.style.width = '100%';
-            vizElement.style.height = (divElement.offsetWidth * 0.75 * 0.8) + 'px';  // Reduce height by 20%
+            vizElement.style.height = (divElement.offsetWidth * 0.75 * 0.75) + 'px';  // Reduce height by 20%
         } else if (divElement.offsetWidth > 500) {
             vizElement.style.width = '100%';
-            vizElement.style.height = (divElement.offsetWidth * 0.75 * 0.8) + 'px';  // Reduce height by 20%
+            vizElement.style.height = (divElement.offsetWidth * 0.75 * 0.75) + 'px';  // Reduce height by 20%
         } else {
             vizElement.style.width = '100%';
             vizElement.style.height = '902px';  // Set a fixed height that is 20% less than the original 1127px
