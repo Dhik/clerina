@@ -252,12 +252,18 @@ class SalesController extends Controller
             return "{$channelName}: Rp {$formattedAmount}";
         })->implode("\n");
 
-        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays) {
+        $totalProjectedTurnover = $thisMonthSalesChannelData->reduce(function ($carry, $item) use ($daysPassed, $remainingDays) {
+            $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+            return $carry + $item->total_amount + ($dailyAverage * $remainingDays);
+        }, 0);
+        
+        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays, $totalProjectedTurnover) {
             $channelName = $salesChannelNames->get($item->sales_channel_id);
             $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
             $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
+            $percentage = $totalProjectedTurnover > 0 ? round(($projectedAmount / $totalProjectedTurnover) * 100, 2) : 0;
             $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
-            return "{$channelName}: Rp {$formattedProjectedAmount}";
+            return "{$channelName}: Rp {$formattedProjectedAmount} ({$percentage}%)";
         })->implode("\n");
 
         $startOfLastMonth = now()->subMonth()->startOfMonth();
