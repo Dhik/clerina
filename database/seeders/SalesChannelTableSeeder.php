@@ -17,6 +17,8 @@ class SalesChannelTableSeeder extends Seeder
             'Lazada',
             'Tokopedia',
             'Tiktok Shop',
+            'Manual',
+            'Others',
         ];
 
         foreach ($salesChannels as $salesChannel) {
