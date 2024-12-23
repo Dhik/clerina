@@ -29,18 +29,17 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="col-12">
-                            <div class="row">
-                                <div class="col-auto">
-                                    <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
-                                </div>
-                                <div class="col-auto">
-                                    <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
-                                        <i class="fas fa-plus"></i> Add Product
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="row">
+                        <div class="col-auto">
+                            <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
                         </div>
-                <!-- Add Product Button -->
+                        <div class="col-auto">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
 
