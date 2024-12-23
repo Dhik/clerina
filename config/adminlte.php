@@ -327,36 +327,17 @@ return [
         //     'can' => [PermissionEnum::ViewMarketing],
         // ],
         [
+            'text' => 'Customer',
+            'url' => 'admin/cstmr_analysis',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewCustomer],
+        ],
+        [
             'text' => 'Product',
             'url' => 'admin/product',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
-        [
-            'text' => 'Customer',
-            'can' => [
-                PermissionEnum::ViewAdSpentMarketPlace,
-                PermissionEnum::ViewAdSpentSocialMedia,
-                PermissionEnum::ViewVisit,
-            ],
-            'icon'    => 'fas fa-fw fa-users',
-            'submenu' => [
-                [
-                    'text' => 'Report',
-                    'url' => 'admin/cstmr_analysis',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
-                [
-                    'text' => 'Demography',
-                    'url' => 'admin/demography',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ]
-            ]
-        ],
-        
-
         [
             'text' => 'Report',
             'can' => [
@@ -372,6 +353,12 @@ return [
                 //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
                 //     'icon' => 'nav-icon far fa-circle',
                 // ],
+                [
+                    'text' => 'Demography',
+                    'url' => 'admin/demography',
+                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
                 [
                     'text' => 'Spent Target',
                     'url' => 'admin/spentTarget',
