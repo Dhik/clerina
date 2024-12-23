@@ -38,35 +38,42 @@
                             </div>
                         </div>
             <div class="row">
-                <div class="col-8">
-                    <div class="card">
-                        <div class="card-header p-2">
-                            <ul class="nav nav-pills">
-                                <li class="nav-item">
-                                    <a class="nav-link active" href="#dailyTab" data-toggle="tab">Daily</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#monthlyTab" data-toggle="tab">Monthly</a>
-                                </li>
-                            </ul>
+                
+
+                <div class="col-6">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <p>Customer Repeat Rate</p>
+                                    <h1 id="ordersPerCustomerRatio">0</h1>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <canvas id="orderCountChart" width="400" height="160"></canvas>
+                        <div class="col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <p>Average Order Value</p>
+                                    <h1 id="averageOrderValue">0</h1>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-4 mb-3">
                     <div class="card">
                         <div class="card-header">
-                            <h3>Order Count by SKU</h3>
+                            <h3>Order Count by Sales Channel (SKU: {{ $product->sku }})</h3>
                         </div>
-                        <div class="card-body" style="height: 350px;">
-                            <canvas id="skuOrderCountChart"></canvas>
+                        <div class="card-body">
+                            <canvas id="salesChannelOrderCountChart" width="400" height="200"></canvas>
                         </div>
                     </div>
                 </div>
-
                 <div class="col-6">
                     <div class="card">
                         <div class="card-header">
@@ -117,41 +124,36 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="col-6">
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="small-box bg-info">
-                                <div class="inner">
-                                    <p>Customer Repeat Rate</p>
-                                    <h1 id="ordersPerCustomerRatio">0</h1>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-chart-line"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="small-box bg-success">
-                                <div class="inner">
-                                    <p>Average Order Value</p>
-                                    <h1 id="averageOrderValue">0</h1>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-chart-line"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-8">
                     <div class="card">
-                        <div class="card-header">
-                            <h3>Order Count by Sales Channel (SKU: {{ $product->sku }})</h3>
+                        <div class="card-header p-2">
+                            <ul class="nav nav-pills">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="#dailyTab" data-toggle="tab">Daily</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#monthlyTab" data-toggle="tab">Monthly</a>
+                                </li>
+                            </ul>
                         </div>
                         <div class="card-body">
-                            <canvas id="salesChannelOrderCountChart" width="400" height="200"></canvas>
+                            <canvas id="orderCountChart" width="400" height="160"></canvas>
                         </div>
                     </div>
                 </div>
+
+                <div class="col-4 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Order Count by SKU</h3>
+                        </div>
+                        <div class="card-body" style="height: 350px;">
+                            <canvas id="skuOrderCountChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                
             </div>
         </div>
         <!-- Orders Table -->
