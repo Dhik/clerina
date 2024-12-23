@@ -44,4 +44,6 @@ Route::prefix('admin')
                 Route::get('/', [OrderController::class, 'product'])->name('order.product');
                 Route::get('/get', [OrderController::class, 'getPerformanceData'])->name('order.getProduct');
             });
+        
+        Route::get('/demography', [OrderController::class, 'showDemography']);
     });

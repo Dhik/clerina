@@ -94,6 +94,10 @@ class OrderController extends Controller
         return view('admin.order.index', compact('salesChannels', 'cities'));
     }
 
+    public function showDemography() {
+        return view('admin.report.index');
+    }
+
     /**
      * Create new order
      */
