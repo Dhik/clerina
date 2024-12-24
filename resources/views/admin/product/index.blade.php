@@ -97,9 +97,27 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
         $(document).ready(function() {
+            Swal.fire({
+                title: 'Loading Products',
+                html: 'Please wait while we prepare your data...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            let loadingCounter = 0;
+            const totalLoads = 2;
+
+            function checkAllLoaded() {
+                loadingCounter++;
+                if (loadingCounter === totalLoads) {
+                    Swal.close();   
+                }
+            }
 
             var initialMonth = $('#monthFilter').val();
-            fetchTopProduct(initialMonth);
+            
             
             var table = $('#productsTable').DataTable({
             processing: true,
@@ -108,6 +126,10 @@
                 url: '{{ route('product.data') }}',
                 data: function(d) {
                     d.month = $('#monthFilter').val();
+                },
+                dataSrc: function(response) {
+                    checkAllLoaded();
+                    return response.data;
                 }
             },
             columns: [
@@ -187,6 +209,16 @@
         });
 
         $('#monthFilter').on('change', function() {
+            Swal.fire({
+                title: 'Updating Data',
+                html: 'Please wait...',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            loadingCounter = 0;
             table.ajax.reload();
 
             var month = $(this).val();
@@ -222,12 +254,20 @@
                     } else {
                         $('#topProductContent').html('<p class="text-muted">No top product found this month.</p>');
                     }
+                    checkAllLoaded();
                 },
                 error: function() {
                     $('#topProductContent').html('<p class="text-danger">Failed to load top product.</p>');
+                    checkAllLoaded();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Failed to load top product data.',
+                    });
                 }
             });
         }
+        fetchTopProduct(initialMonth);
 
         function fireConfetti() {
             // Use canvas-confetti library
