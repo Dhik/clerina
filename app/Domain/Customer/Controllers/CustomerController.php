@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Yajra\DataTables\Utilities\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Domain\Sales\Services\GoogleSheetService;
+use Illuminate\Support\Facades\DB;
 
 use App\Domain\Customer\Exports\CustomersExport;
 
@@ -152,66 +153,59 @@ class CustomerController extends Controller
     }
     
     public function getChurnedCustomers(): JsonResponse
-    {
-        $sixMonthsAgo = Carbon::now()->subMonths(6);
+{
+    $sixMonthsAgo = Carbon::now()->subMonths(6);
+    
+    // First CTE for customer metrics
+    $customerMetrics = DB::table('customers AS c')
+        ->leftJoin('orders AS o', function($join) {
+            $join->on('c.name', '=', 'o.customer_name')
+                 ->on('c.phone_number', '=', 'o.customer_phone_number');
+        })
+        ->select([
+            'c.id',
+            DB::raw('COUNT(o.id) as order_count'),
+            DB::raw('MIN(o.date) as first_order'),
+            DB::raw('MAX(o.date) as last_order'),
+            DB::raw('SUM(o.amount) as total_amount'),
+            DB::raw('MAX(CASE WHEN o.date >= ? THEN 1 ELSE 0 END) as has_recent_order')
+        ])
+        ->groupBy('c.id');
 
-        // Count distinct churned customers
-        $churnedCustomersCount = Customer::whereDoesntHave('orders', function ($query) use ($sixMonthsAgo) {
-            $query->where('date', '>=', $sixMonthsAgo);
-        })->distinct('id')->count('id');
+    // Final calculations using the metrics
+    $metrics = DB::query()
+        ->fromSub($customerMetrics, 'customer_order_metrics')
+        ->select([
+            DB::raw('COUNT(*) as total_customers'),
+            DB::raw('SUM(CASE WHEN has_recent_order = 0 THEN 1 ELSE 0 END) as churned_customers'),
+            DB::raw('AVG(CASE WHEN order_count > 0 THEN DATEDIFF(last_order, first_order) ELSE 0 END) as average_customer_lifespan_days'),
+            DB::raw('MAX(CASE WHEN order_count > 0 THEN DATEDIFF(last_order, first_order) ELSE 0 END) as max_customer_lifespan_days'),
+            DB::raw('MIN(CASE WHEN order_count > 0 THEN DATEDIFF(last_order, first_order) ELSE 0 END) as min_customer_lifespan_days'),
+            DB::raw('AVG(CASE WHEN order_count > 0 THEN (total_amount / order_count) * DATEDIFF(last_order, first_order) ELSE 0 END) as average_customer_lifetime_value'),
+            DB::raw('(SUM(CASE WHEN order_count > 1 THEN 1 ELSE 0 END) / COUNT(*) * 100) as repeat_purchase_rate')
+        ])
+        ->setBindings([$sixMonthsAgo])
+        ->first();
 
-        // Count total distinct customers
-        $totalCustomersCount = Customer::distinct('id')->count('id');
-
-        // Calculate churn rate
-        $churnRate = $totalCustomersCount > 0 
-            ? ($churnedCustomersCount / $totalCustomersCount) * 100 
-            : 0;
-
-        // Calculate customer lifespans (average, max, min)
-        $lifespans = Customer::join('orders', function ($join) {
-                $join->on('customers.name', '=', 'orders.customer_name')
-                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
-            })
-            ->selectRaw('DATEDIFF(MAX(orders.date), MIN(orders.date)) as lifespan')
-            ->groupBy('customers.id')
-            ->get()
-            ->pluck('lifespan');
-
-        $customerLifespanDays = $lifespans->avg();
-        $maxLifespan = $lifespans->max();
-        $minLifespan = $lifespans->min();
-
-        // Calculate average customer lifetime value (CLV)
-        $avgCLV = Customer::join('orders', function ($join) {
-                $join->on('customers.name', '=', 'orders.customer_name')
-                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
-            })
-            ->selectRaw('AVG(orders.amount) * COUNT(orders.id) * DATEDIFF(MAX(orders.date), MIN(orders.date)) as clv')
-            ->groupBy('customers.id')
-            ->get()
-            ->avg('clv');
-
-        // Calculate repeat purchase rate
-        $repeatPurchaseRate = Customer::join('orders', function ($join) {
-                $join->on('customers.name', '=', 'orders.customer_name')
-                     ->on('customers.phone_number', '=', 'orders.customer_phone_number');
-            })
-            ->selectRaw('COUNT(orders.id) > 1 as repeat_customer')
-            ->groupBy('customers.id')
-            ->get()
-            ->pluck('repeat_customer')
-            ->filter(fn($value) => $value) // Only keep customers with more than one purchase
-            ->count() / $totalCustomersCount * 100;
-
+    if (!$metrics) {
         return response()->json([
-            'churned_customers' => $churnedCustomersCount,
-            'churn_rate' => $churnRate,
-            'average_customer_lifespan_days' => $customerLifespanDays,
-            'max_customer_lifespan_days' => $maxLifespan,
-            'min_customer_lifespan_days' => $minLifespan,
-            'average_customer_lifetime_value' => $avgCLV,
-            'repeat_purchase_rate' => $repeatPurchaseRate
-        ]);
+            'error' => 'No data available'
+        ], 404);
     }
+
+    // Calculate churn rate
+    $metrics->churn_rate = $metrics->total_customers > 0 
+        ? ($metrics->churned_customers / $metrics->total_customers * 100) 
+        : 0;
+
+    return response()->json([
+        'churned_customers' => $metrics->churned_customers,
+        'churn_rate' => $metrics->churn_rate,
+        'average_customer_lifespan_days' => $metrics->average_customer_lifespan_days,
+        'max_customer_lifespan_days' => $metrics->max_customer_lifespan_days,
+        'min_customer_lifespan_days' => $metrics->min_customer_lifespan_days,
+        'average_customer_lifetime_value' => $metrics->average_customer_lifetime_value,
+        'repeat_purchase_rate' => $metrics->repeat_purchase_rate
+    ]);
+}
 }
