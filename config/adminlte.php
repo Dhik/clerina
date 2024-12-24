@@ -328,7 +328,7 @@ return [
         // ],
         [
             'text' => 'Customer',
-            'url' => 'admin/customer',
+            'url' => 'admin/cstmr_analysis',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
