@@ -558,94 +558,64 @@
             });
         });
         function renderWaterfallChart() {
-            fetch('{{ route('sales.waterfall-data') }}')
-                .then(response => response.json())
-                .then(salesData => {
-                    const combinedData = [];
-                    let weeklyTotal = 0;
-                    let weekCounter = 1;
-                    let dayCounter = 0;
+    fetch('{{ route('sales.waterfall-data') }}')
+        .then(response => response.json())
+        .then(salesData => {
+            const chartData = salesData.map(day => ({
+                x: day.date,
+                y: day.is_weekly_total ? day.net : (day.turnover - day.ad_spent),
+                measure: day.is_weekly_total ? 'total' : 'relative',
+                text: ((day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)) >= 0 ? '+' : '') + 
+                      (day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)).toLocaleString(),
+                textposition: 'outside'
+            }));
 
-                    salesData.forEach((day, index) => {
-                        dayCounter++;
-                        
-                        // Calculate net for this day
-                        const dayNet = day.turnover - day.ad_spent;
-                        weeklyTotal += dayNet;
+            const data = [{
+                type: 'waterfall',
+                orientation: 'v',
+                x: chartData.map(d => d.x),
+                y: chartData.map(d => d.y),
+                measure: chartData.map(d => d.measure),
+                text: chartData.map(d => d.text),
+                textposition: chartData.map(d => d.textposition),
+                connector: { 
+                    line: { color: 'rgb(63, 63, 63)' } 
+                },
+                increasing: { 
+                    marker: { color: '#2ecc71' }  // Green for positive net
+                },
+                decreasing: { 
+                    marker: { color: '#e74c3c' }  // Red for negative net
+                },
+                totals: { 
+                    marker: { color: '#3498db' }  // Blue for weekly totals
+                }
+            }];
 
-                        // Add net value for the day
-                        combinedData.push({
-                            x: day.date,
-                            y: dayNet,
-                            measure: 'relative',
-                            text: dayNet >= 0 ? 
-                                `+${dayNet.toLocaleString()}` : 
-                                dayNet.toLocaleString(),
-                            textposition: 'outside'
-                        });
+            const layout = {
+                title: 'Daily Net Revenue with Weekly Totals',
+                xaxis: {
+                    title: 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: 'Amount (Rp)',
+                    tickformat: ',d'
+                },
+                autosize: true,
+                height: 600,
+                margin: { 
+                    l: 80, 
+                    r: 20, 
+                    t: 40, 
+                    b: 120 
+                }
+            };
 
-                        // Add weekly total every 7 days or at end of data
-                        if (dayCounter % 7 === 0 || index === salesData.length - 1) {
-                            combinedData.push({
-                                x: `Week ${weekCounter} Total`,
-                                y: weeklyTotal,
-                                measure: 'total',
-                                text: weeklyTotal >= 0 ? 
-                                    `+${weeklyTotal.toLocaleString()}` : 
-                                    weeklyTotal.toLocaleString(),
-                                textposition: 'outside'
-                            });
-                            weeklyTotal = 0;
-                            weekCounter++;
-                        }
-                    });
-
-                    const data = [{
-                        type: 'waterfall',
-                        orientation: 'v',
-                        x: combinedData.map(d => d.x),
-                        y: combinedData.map(d => d.y),
-                        measure: combinedData.map(d => d.measure),
-                        text: combinedData.map(d => d.text),
-                        textposition: combinedData.map(d => d.textposition),
-                        connector: { 
-                            line: { color: 'rgb(63, 63, 63)' } 
-                        },
-                        increasing: { 
-                            marker: { color: '#2ecc71' }  // Green for positive net
-                        },
-                        decreasing: { 
-                            marker: { color: '#e74c3c' }  // Red for negative net
-                        },
-                        totals: { 
-                            marker: { color: '#3498db' }  // Blue for weekly totals
-                        }
-                    }];
-
-                    const layout = {
-                        title: 'Daily Net Revenue with Weekly Totals',
-                        xaxis: {
-                            title: 'Date',
-                            tickangle: -45
-                        },
-                        yaxis: {
-                            title: 'Amount (Rp)',
-                            tickformat: ',d'
-                        },
-                        autosize: true,
-                        height: 600,
-                        margin: { 
-                            l: 80, 
-                            r: 20, 
-                            t: 40, 
-                            b: 120 
-                        }
-                    };
-
-                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                })
-                .catch(error => console.error('Error fetching waterfall data:', error));
-        }
+            Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
+        })
+        .catch(error => console.error('Error fetching waterfall data:', error));
+}
 
         document.addEventListener('DOMContentLoaded', function() {
             renderWaterfallChart();

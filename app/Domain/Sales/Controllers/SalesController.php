@@ -1013,15 +1013,40 @@ class SalesController extends Controller
         ->whereYear('date', now()->year)
         ->groupBy('date')
         ->orderBy('date', 'asc')
-        ->get()
-        ->map(function($sale) {
-            return [
-                'date' => date('Y-m-d', strtotime($sale->date)),
-                'turnover' => (int)$sale->turnover,
-                'ad_spent' => (int)$sale->ad_spent_total
-            ];
-        });
+        ->get();
 
-    return response()->json($sales);
+    $response = [];
+    $weeklyTotal = 0;
+    $dayCounter = 0;
+    $weekCounter = 1;
+
+    foreach ($sales as $index => $sale) {
+        $dayCounter++;
+        $dailyNet = $sale->turnover - $sale->ad_spent_total;
+        $weeklyTotal += $dailyNet;
+
+        // Add daily data
+        $response[] = [
+            'date' => date('Y-m-d', strtotime($sale->date)),
+            'turnover' => (int)$sale->turnover,
+            'ad_spent' => (int)$sale->ad_spent_total,
+            'net' => $dailyNet
+        ];
+
+        // Add weekly total after every 7 days or at the end
+        if ($dayCounter % 7 === 0 || $index === count($sales) - 1) {
+            $response[] = [
+                'date' => "Week {$weekCounter} Total",
+                'turnover' => 0,
+                'ad_spent' => 0,
+                'net' => $weeklyTotal,
+                'is_weekly_total' => true
+            ];
+            $weeklyTotal = 0;
+            $weekCounter++;
+        }
+    }
+
+    return response()->json($response);
 }
 }
