@@ -1008,16 +1008,15 @@ class SalesController extends Controller
         $sales = Sales::select('date', 'turnover', 'ad_spent_total')
             ->whereMonth('date', now()->month)
             ->whereYear('date', now()->year)
+            ->orderBy('date')
             ->get()
-            ->groupBy('date')
-            ->map(function($dayData) {
+            ->map(function($sale) {
                 return [
-                    'date' => date('Y-m-d', strtotime($dayData->first()->date)),
-                    'turnover' => $dayData->sum('turnover'),
-                    'ad_spent_total' => $dayData->sum('ad_spent_total')
+                    'date' => date('Y-m-d', strtotime($sale->date)),
+                    'turnover' => (int)$sale->turnover,
+                    'ad_spent_total' => (int)$sale->ad_spent_total
                 ];
-            })
-            ->values();
+            });
 
         return response()->json($sales);
     }
