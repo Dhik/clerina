@@ -353,18 +353,18 @@ return [
             ],
             'icon'    => 'fas fa-fw fa-book',
             'submenu' => [
-                [
-                    'text' => 'Main Report',
-                    'url' => 'admin/main-report',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
                 // [
-                //     'text' => 'Demography',
-                //     'url' => 'admin/demography',
+                //     'text' => 'Main Report',
+                //     'url' => 'admin/main-report',
                 //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
                 //     'icon' => 'nav-icon far fa-circle',
                 // ],
+                [
+                    'text' => 'Demography',
+                    'url' => 'admin/demography',
+                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
                 [
                     'text' => 'Spent Target',
                     'url' => 'admin/spentTarget',
