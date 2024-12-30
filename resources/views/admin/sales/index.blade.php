@@ -566,31 +566,23 @@
                     let weekCounter = 1;
                     let dayCounter = 0;
 
-                    salesData.forEach((sale, index) => {
+                    salesData.forEach((day, index) => {
                         dayCounter++;
                         
-                        // Daily combined turnover (positive value)
+                        // Calculate net for this day
+                        const dayNet = day.turnover - day.ad_spent_total;
+                        weeklyTotal += dayNet;
+
+                        // Add net value for the day
                         combinedData.push({
-                            x: `${sale.date}`,
-                            y: sale.turnover,
+                            x: day.date,
+                            y: dayNet,
                             measure: 'relative',
-                            text: `+${sale.turnover.toLocaleString()}`,
+                            text: dayNet >= 0 ? 
+                                `+${dayNet.toLocaleString()}` : 
+                                dayNet.toLocaleString(),
                             textposition: 'outside'
                         });
-                        
-                        // Daily combined spend (negative value)
-                        if (sale.ad_spent_total > 0) {
-                            combinedData.push({
-                                x: `${sale.date}`,
-                                y: -sale.ad_spent_total,
-                                measure: 'relative',
-                                text: (-sale.ad_spent_total).toLocaleString(),
-                                textposition: 'outside'
-                            });
-                        }
-
-                        // Calculate weekly total
-                        weeklyTotal += (sale.turnover - sale.ad_spent_total);
 
                         // Add weekly total every 7 days or at end of data
                         if (dayCounter % 7 === 0 || index === salesData.length - 1) {
@@ -616,14 +608,22 @@
                         measure: combinedData.map(d => d.measure),
                         text: combinedData.map(d => d.text),
                         textposition: combinedData.map(d => d.textposition),
-                        connector: { line: { color: 'rgb(63, 63, 63)' } },
-                        increasing: { marker: { color: '#2ecc71' } },  // Green for turnover
-                        decreasing: { marker: { color: '#e74c3c' } },  // Red for ad spend
-                        totals: { marker: { color: '#3498db' } }      // Blue for weekly totals
+                        connector: { 
+                            line: { color: 'rgb(63, 63, 63)' } 
+                        },
+                        increasing: { 
+                            marker: { color: '#2ecc71' }  // Green for positive net
+                        },
+                        decreasing: { 
+                            marker: { color: '#e74c3c' }  // Red for negative net
+                        },
+                        totals: { 
+                            marker: { color: '#3498db' }  // Blue for weekly totals
+                        }
                     }];
 
                     const layout = {
-                        title: 'Daily Sales and Ad Spend Analysis',
+                        title: 'Daily Net Revenue with Weekly Totals',
                         xaxis: {
                             title: 'Date',
                             tickangle: -45
@@ -634,7 +634,12 @@
                         },
                         autosize: true,
                         height: 600,
-                        margin: { l: 80, r: 20, t: 40, b: 120 }
+                        margin: { 
+                            l: 80, 
+                            r: 20, 
+                            t: 40, 
+                            b: 120 
+                        }
                     };
 
                     Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
