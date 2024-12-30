@@ -1002,23 +1002,26 @@ class SalesController extends Controller
         // Return the chart data as a JSON response
         return response()->json($chartData);
     }
-
     public function getWaterfallData()
-    {
-        $sales = Sales::select('date', 'turnover', 'ad_spent_total')
-            ->whereMonth('date', now()->month)
-            ->whereYear('date', now()->year)
-            ->orderBy('date', 'asc')  // Added this line to sort by date
-            ->groupBy('date')
-            ->get()
-            ->map(function($sale) {
-                return [
-                    'date' => date('Y-m-d', strtotime($sale->date)),
-                    'turnover' => (int)$sale->turnover,
-                    'ad_spent' => (int)$sale->ad_spent_total
-                ];
-            });
+{
+    $sales = Sales::selectRaw('
+            date,
+            SUM(turnover) as turnover,
+            SUM(ad_spent_total) as ad_spent_total
+        ')
+        ->whereMonth('date', now()->month)
+        ->whereYear('date', now()->year)
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->get()
+        ->map(function($sale) {
+            return [
+                'date' => date('Y-m-d', strtotime($sale->date)),
+                'turnover' => (int)$sale->turnover,
+                'ad_spent' => (int)$sale->ad_spent_total
+            ];
+        });
 
-        return response()->json($sales);
-    }
+    return response()->json($sales);
+}
 }
