@@ -570,7 +570,7 @@
                         dayCounter++;
                         
                         // Calculate net for this day
-                        const dayNet = day.turnover - day.ad_spent_total;
+                        const dayNet = day.turnover - day.ad_spent;
                         weeklyTotal += dayNet;
 
                         // Add net value for the day
