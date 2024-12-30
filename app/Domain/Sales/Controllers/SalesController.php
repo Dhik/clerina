@@ -1012,7 +1012,7 @@ class SalesController extends Controller
             ->get()
             ->map(function($sale) {
                 return [
-                    'date' => $sale->date->format('Y-m-d'),
+                    'date' => date('Y-m-d', strtotime($sale->date)),
                     'turnover' => (int)$sale->turnover,
                     'ad_spent_total' => (int)$sale->ad_spent_total
                 ];
