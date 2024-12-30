@@ -57,6 +57,7 @@ Route::prefix('admin')
                 Route::get('/send-message', [SalesController::class, 'sendMessageCleora']);
                 Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet'])->name('sales.import_ads');
                 Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData'])->name('sales.update_ads');
+                Route::get('/waterfall-data', [SalesController::class, 'getWaterfallData'])->name('sales.waterfall-data');
 
                 // Report
                 Route::get('/sales-channel-donut-data', [SalesController::class, 'getSalesChannelDonutData'])->name('report.donut1');
@@ -97,7 +98,7 @@ Route::prefix('admin')
 
             });
 
-        Route::prefix('report')
+        Route::prefix('main-report')
             ->group(function () {
                 Route::get('/', [SalesController::class, 'report'])->name('report.index');
             });

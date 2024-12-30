@@ -3,7 +3,8 @@
         <div class="card">
             <div class="card-header p-2">
                 <ul class="nav nav-pills">
-                    <li class="nav-item"><a class="nav-link active" href="#visitChartTab" data-toggle="tab">{{ trans('labels.visit') }}</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#visitChartTab" data-toggle="tab">{{ trans('labels.visit') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#closingRateChartTab" data-toggle="tab">{{ trans('labels.closing_rate') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#orderChartTab" data-toggle="tab">{{ trans('labels.order') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#turnOverChartTab" data-toggle="tab">{{ trans('labels.sales') }}</a></li>
@@ -14,7 +15,10 @@
             </div>
             <div class="card-body">
                 <div class="tab-content">
-                    <div class="tab-pane active" id="visitChartTab">
+                    <div class="tab-pane active" id="recapChartTab">
+                        <div id="waterfallChart"></div>
+                    </div>
+                    <div class="tab-pane" id="visitChartTab">
                         <canvas id="visitChart" width="800" height="200"></canvas>
                     </div>
                     <div class="tab-pane" id="closingRateChartTab">

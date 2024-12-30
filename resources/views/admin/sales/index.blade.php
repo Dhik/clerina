@@ -234,6 +234,7 @@
 @stop
 
 @section('js')
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
         salesTableSelector = $('#salesTable');
         filterDate = $('#filterDates');
@@ -555,6 +556,88 @@
                     });
                 }
             });
+        });
+        function renderWaterfallChart() {
+            fetch('{{ route('sales.waterfall-data') }}')
+                .then(response => response.json())
+                .then(salesData => {
+                    const combinedData = [];
+                    let weeklyTotal = 0;
+                    let weekCounter = 1;
+                    let dayCounter = 0;
+
+                    salesData.forEach((sale, index) => {
+                        dayCounter++;
+                        
+                        // Add turnover (positive value)
+                        combinedData.push({
+                            x: `${sale.date} (Omset)`,
+                            y: sale.turnover,
+                            measure: 'relative',
+                            text: `+${sale.turnover.toLocaleString()}`,
+                            textposition: 'outside'
+                        });
+                        
+                        // Add spend (negative value)
+                        combinedData.push({
+                            x: `${sale.date} (Spend)`,
+                            y: -sale.ad_spent_total,
+                            measure: 'relative',
+                            text: (-sale.ad_spent_total).toLocaleString(),
+                            textposition: 'outside'
+                        });
+
+                        weeklyTotal += (sale.turnover - sale.ad_spent_total);
+
+                        if (dayCounter % 7 === 0 || index === salesData.length - 1) {
+                            combinedData.push({
+                                x: `Week ${weekCounter} Total`,
+                                y: weeklyTotal,
+                                measure: 'total',
+                                text: weeklyTotal >= 0 ? 
+                                    `+${weeklyTotal.toLocaleString()}` : 
+                                    weeklyTotal.toLocaleString(),
+                                textposition: 'outside'
+                            });
+                            weeklyTotal = 0;
+                            weekCounter++;
+                        }
+                    });
+
+                    const data = [{
+                        type: 'waterfall',
+                        orientation: 'v',
+                        x: combinedData.map(d => d.x),
+                        y: combinedData.map(d => d.y),
+                        measure: combinedData.map(d => d.measure),
+                        text: combinedData.map(d => d.text),
+                        textposition: combinedData.map(d => d.textposition),
+                        connector: { line: { color: 'rgb(63, 63, 63)' } },
+                        increasing: { marker: { color: '#2ecc71' } },
+                        decreasing: { marker: { color: '#e74c3c' } },
+                        totals: { marker: { color: '#3498db' } }
+                    }];
+
+                    const layout = {
+                        title: 'Daily Omset and Spend Analysis',
+                        autosize: true,
+                        height: 600,
+                        margin: { l: 60, r: 20, t: 40, b: 120 }
+                    };
+
+                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
+                })
+                .catch(error => console.error('Error fetching waterfall data:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderWaterfallChart();
+        });
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            if (e.target.getAttribute('href') === '#recapChartTab') {
+                renderWaterfallChart();
+            }
         });
     </script>
 

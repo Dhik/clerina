@@ -1002,4 +1002,22 @@ class SalesController extends Controller
         // Return the chart data as a JSON response
         return response()->json($chartData);
     }
+
+    public function getWaterfallData()
+    {
+        $sales = Sales::select('date', 'turnover', 'ad_spent_total')
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->orderBy('date')
+            ->get()
+            ->map(function($sale) {
+                return [
+                    'date' => $sale->date->format('Y-m-d'),
+                    'turnover' => (int)$sale->turnover,
+                    'ad_spent_total' => (int)$sale->ad_spent_total
+                ];
+            });
+
+        return response()->json($sales);
+    }
 }
