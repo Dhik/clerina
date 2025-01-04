@@ -78,6 +78,10 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
             $queryOrder->where('city', 'like', '%' . $request->input('filterCity') . '%');
         }
 
+        if (!is_null($request->input('filterBooking'))) {
+            $queryOrder->where('is_booking', '1');
+        }
+
         return $queryOrder;
     }
 

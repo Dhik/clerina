@@ -32,6 +32,7 @@
                                 <!-- <div class="col-md-2">
                                     <input type="text" class="form-control" id="filterSku" placeholder="{{ trans('placeholder.sku') }}" autocomplete="off">
                                 </div> -->
+                                
                                 <div class="col-md-3">
                                     <select class="form-control" id="filterCity">
                                         <option value="" selected>{{ trans('placeholder.select_city') }}</option>
@@ -39,6 +40,12 @@
                                             <option value="{{ $city->city }}">{{ $city->city }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div class="col-2 pt-2">
+                                    <div class="icheck-primary d-inline">
+                                        <input type="checkbox" id="filterBooking">
+                                        <label for="filterBooking"> Is Booking </label>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
@@ -126,6 +133,8 @@
                                 <th>{{ trans('labels.sku') }}</th>
                                 <th>{{ trans('labels.qty') }}</th>
                                 <th>{{ trans('labels.price') }}</th>
+                                <th>Status</th>
+                                <th>Is Booking</th>
                                 <th width="10%">{{ trans('labels.action') }}</th>
                             </tr>
                         </thead>
@@ -153,6 +162,7 @@
         const errorSubmitOrder = $('#errorSubmitOrder');
         const errorUpdateSubmitOrder = $('#errorUpdateSubmitOrder');
         const filterDate = $('#filterDates');
+        const filterBooking = $('#filterBooking');
 
         let turnoverOrderChart;
         let orderPieChart;
@@ -163,6 +173,7 @@
             $('#filterQty').val('')
             $('#filterSku').val('')
             $('#filterCity').val('')
+            $('#filterBooking').val('')
             orderTable.draw()
             updateRecapCount()
         })
@@ -187,6 +198,9 @@
         $('#filterCity').change(function () {
             orderTable.draw()
         });
+        $('#filterBooking').change(function () {
+            orderTable.draw()
+        });
 
         // datatable
         let orderTable = orderTableSelector.DataTable({
@@ -202,6 +216,7 @@
                     d.filterQty = $('#filterQty').val()
                     d.filterSku = $('#filterSku').val()
                     d.filterCity = $('#filterCity').val()
+                    d.filterCity = $('#filterBooking').val()
                 }
             },
             columns: [
@@ -214,12 +229,20 @@
                 {data: 'sku', name: 'sku', sortable: false},
                 {data: 'qtyFormatted', name: 'qty', sortable: false},
                 {data: 'priceFormatted', name:'price'},
+                {data: 'status', name:'status'},
+                {data: 'is_booking', name:'is_booking'},
                 {data: 'actions', sortable: false}
             ],
             columnDefs: [
                 { "targets": [6], "className": "text-right" },
                 { "targets": [7], "className": "text-right" },
-                { "targets": [8], "className": "text-center" }
+                { "targets": [8], "className": "text-center" },
+                { 
+                    "targets": [10], // Index of is_booking column
+                    "render": function(data, type, row) {
+                        return data === '1' ? 'is booking' : null;
+                    }
+                }
             ],
             order: [[0, 'desc']]
         });
