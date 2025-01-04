@@ -284,13 +284,14 @@ class OrderController extends Controller
         $endDate = Carbon::now()->format('Y-m-d');
 
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
-                        ->where('tenant_id', 1)
+                        ->where('tenant_id', Auth::user()->current_tenant_id)
+                        ->where('is_booking', '0')
                         ->whereBetween('date', [$startDate, $endDate])
                         ->groupBy('date')
                         ->get();
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
-            Sales::where('tenant_id', 1)
+            Sales::where('tenant_id', Auth::user()->current_tenant_id)
                 ->where('date', $formattedDate)
                 ->update(['turnover' => $total->total_amount]);
         }
@@ -424,6 +425,8 @@ class OrderController extends Controller
                             'payment_method' => $orderData['courier_label'],
                             'sku' => $orderData['product_summary'],
                             'price' => $orderData['amount'],
+                            'is_booking' => $orderData['is_booking'],
+                            'status' => $orderData['status'],
                             'shipping_address' => $orderData['integration_store'],
                             'amount' => $orderData['amount'] - $orderData['shipping_fee'],
                             'username' => $orderData['customer_username'],

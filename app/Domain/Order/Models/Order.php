@@ -28,6 +28,8 @@ class Order extends Model
         'shipping_address',
         'city',
         'province',
+        'is_booking',
+        'status',
         'amount',
         'tenant_id',
     ];
