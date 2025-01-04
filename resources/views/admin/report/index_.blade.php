@@ -15,7 +15,7 @@
                         <div class="row">
                             <div class="col-auto">
                                 <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
-                                    <i class="fas fa-plus"></i> Add Product
+                                    <i class="fas fa-plus"></i> Add Report
                                 </button>
                             </div>
                         </div>

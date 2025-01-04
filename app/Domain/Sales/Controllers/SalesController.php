@@ -171,6 +171,148 @@ class SalesController extends Controller
 
         return response()->json($omsetData);
     }
+    public function forAISalesCleora()
+    {
+        $yesterday = now()->subDay();
+        $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
+
+        $yesterdayData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(amount) as turnover')
+            ->first(); 
+
+        $orderData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
+            ->first();
+
+        $avgTurnoverPerTransaction = $orderData->transactions > 0 
+            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+            : 0;
+
+        $avgTurnoverPerCustomer = $orderData->customers > 0 
+            ? round($yesterdayData->turnover / $orderData->customers, 2) 
+            : 0;
+
+        // Format daily turnover
+        $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
+        $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
+        $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
+
+        $startOfMonth = now()->startOfMonth();
+        $thisMonthData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(amount) as total_turnover')
+            ->first();
+
+        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
+            ->first();
+
+        $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
+        $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
+        $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
+
+        $daysPassed = now()->day - 1;
+        $remainingDays = now()->daysInMonth - $daysPassed;
+
+        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
+        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
+        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
+
+        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
+        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
+        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
+
+        // Format projections
+        $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
+        $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
+        $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
+
+        // Calculate turnover per sales channel
+        $salesChannelData = Order::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        // Monthly data per sales channel for projection
+        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
+            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+            ->groupBy('sales_channel_id')
+            ->get();
+
+        // Map sales channel data to names and calculate projections
+        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $formattedAmount = number_format($item->total_amount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedAmount}";
+        })->implode("\n");
+
+        $totalProjectedTurnover = $thisMonthSalesChannelData->reduce(function ($carry, $item) use ($daysPassed, $remainingDays) {
+            $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+            return $carry + $item->total_amount + ($dailyAverage * $remainingDays);
+        }, 0);
+        
+        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays, $totalProjectedTurnover) {
+            $channelName = $salesChannelNames->get($item->sales_channel_id);
+            $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+            $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
+            $percentage = $totalProjectedTurnover > 0 ? round(($projectedAmount / $totalProjectedTurnover) * 100, 2) : 0;
+            $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
+            return "{$channelName}: Rp {$formattedProjectedAmount} ({$percentage}%)";
+        })->implode("\n");
+
+        $startOfLastMonth = now()->subMonth()->startOfMonth();
+        $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
+
+        $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->where('tenant_id', 1)
+            ->selectRaw('SUM(turnover) as total_turnover')
+            ->first();
+
+        $growthMTDLM = $lastMonthData->total_turnover > 0
+            ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
+            : 0;
+        
+        $dayBeforeYesterday = now()->subDays(2);
+
+        $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
+            ->where('tenant_id', 1)
+            ->select('turnover')
+            ->first();
+
+        $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
+            ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
+            : 0;
+        $response = [
+            "report_date" => $yesterdayDateFormatted,
+            "report_type" => "daily",
+            "daily_metrics" => [
+                "date" => $yesterdayDateFormatted,
+                "transactions" => [
+                    "total_revenue" => (int)$yesterdayData->turnover,
+                    "total_transactions" => (int)$orderData->transactions,
+                    "unique_customers" => (int)$orderData->customers,
+                    "average_transaction_value" => (int)$avgTurnoverPerTransaction,
+                    "daily_growth_rate" => $growthYesterdayPast2Days
+                ],
+            ],
+            "financial_metrics" => [
+                "gross_profit_margin" => 35.8,
+                "operating_margin" => 22.4,
+                "net_profit_margin" => 18.6,
+                "current_ratio" => 2.3,
+                "debt_to_equity" => 0.5,
+                "working_capital" => 850000000
+            ]
+        ];
+
+        return response()->json($response);
+    }
     public function sendMessageCleora()
     {
         $yesterday = now()->subDay();

@@ -6,6 +6,16 @@ use App\Domain\Sales\Controllers\SalesChannelController;
 use App\Domain\Sales\Controllers\SalesController;
 use App\Domain\Sales\Controllers\VisitController;
 use Illuminate\Support\Facades\Route;
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+// Route::prefix('api')
+//     ->middleware('api.key')
+//     ->group(function () {
+//         Route::get('/public-stats', [SalesController::class, 'forAISalesCleora']);
+// });
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +27,6 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
 Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
@@ -103,3 +112,4 @@ Route::prefix('admin')
                 Route::get('/', [SalesController::class, 'report'])->name('report.index');
             });
     });
+    

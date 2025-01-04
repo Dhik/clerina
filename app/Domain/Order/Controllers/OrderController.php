@@ -306,6 +306,43 @@ class OrderController extends Controller
         return $sku;
     }
 
+    public function webhook(Request $request) {
+        $signature = $request->header('X-Webhook-Signature');
+        $payload = $request->getContent();
+        Log::info('Webhook received', [
+            'payload' => $request->all(),
+            'headers' => $request->headers->all()
+        ]);
+        
+        try {
+            $this->processWebhook($request->all());
+            
+            return response()->json(['message' => 'Webhook processed successfully'], 200);
+        } catch (\Exception $e) {
+            Log::error('Webhook processing failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Webhook processing failed'], 500);
+        }
+    }
+
+    private function processWebhook(array $data)
+    {
+        $eventType = $data['event_type'] ?? null;
+        
+        switch ($eventType) {
+            case 'payment.successful':
+                break;
+            case 'subscription.updated':
+                break;
+            default:
+                Log::warning('Unknown webhook event type', ['event_type' => $eventType]);
+        }
+    }
+    private function verifySignature(string $payload, string $signature)
+    {
+        $calculatedSignature = hash_hmac('sha256', $payload, config('services.webhook.secret'));
+        return hash_equals($calculatedSignature, $signature);
+    }
+
 
     public function fetchAllOrders(): JsonResponse
     {
