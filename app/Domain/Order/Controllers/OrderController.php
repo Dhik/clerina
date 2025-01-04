@@ -90,8 +90,9 @@ class OrderController extends Controller
 
         $salesChannels = $this->salesChannelBLL->getSalesChannel();
         $cities = Order::select('city')->distinct()->orderBy('city')->get();
+        $status = Order::select('status')->distinct()->orderBy('status')->get();
 
-        return view('admin.order.index', compact('salesChannels', 'cities'));
+        return view('admin.order.index', compact('salesChannels', 'cities', 'status'));
     }
 
     public function showDemography() {

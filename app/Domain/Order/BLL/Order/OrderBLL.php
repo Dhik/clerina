@@ -81,6 +81,10 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
         if (!is_null($request->input('filterBooking'))) {
             $queryOrder->where('is_booking', '1');
         }
+        
+        if (!is_null($request->input('filterStatus'))) {
+            $queryOrder->where('status', $request->input('filterStatus'));
+        }
 
         return $queryOrder;
     }

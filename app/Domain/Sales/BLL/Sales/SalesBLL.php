@@ -76,6 +76,7 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
         $sales = $this->salesDAL->getSalesByDateRange($startDateString, $endDateString, $tenantId);
         $channelId = $request->input('filterChannel');
         $isBooking = $request->input('filterBooking');
+        $status = $request->input('filterStatus');
 
         $ordersQuery = Order::where('tenant_id', $tenantId)
         ->where('date', '>=', $startDateString)
@@ -83,6 +84,10 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
 
         if ($isBooking === '1') {
             $ordersQuery->where('is_booking', '1');
+        }
+
+        if (! is_null($status)) {
+            $ordersQuery->where('status', $status);
         }
 
         $salesByChannelByDate = $this->salesDAL

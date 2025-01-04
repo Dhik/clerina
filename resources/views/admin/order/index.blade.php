@@ -33,11 +33,19 @@
                                     <input type="text" class="form-control" id="filterSku" placeholder="{{ trans('placeholder.sku') }}" autocomplete="off">
                                 </div> -->
                                 
-                                <div class="col-md-3">
+                                <!-- <div class="col-md-3">
                                     <select class="form-control" id="filterCity">
                                         <option value="" selected>{{ trans('placeholder.select_city') }}</option>
                                         @foreach($cities as $city)
                                             <option value="{{ $city->city }}">{{ $city->city }}</option>
+                                        @endforeach
+                                    </select>
+                                </div> -->
+                                <div class="col-md-3">
+                                    <select class="form-control" id="filterStatus">
+                                        <option value="" selected>Pilih status</option>
+                                        @foreach($status as $stat)
+                                            <option value="{{ $stat->status }}">{{ $stat->status }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -163,6 +171,7 @@
         const errorUpdateSubmitOrder = $('#errorUpdateSubmitOrder');
         const filterDate = $('#filterDates');
         const filterBooking = $('#filterBooking');
+        const filterStatus = $('#filterStatus');
 
         let turnoverOrderChart;
         let orderPieChart;
@@ -174,6 +183,7 @@
             $('#filterSku').val('')
             $('#filterCity').val('')
             $('#filterBooking').val('')
+            $('#filterStatus').val('')
             orderTable.draw()
             updateRecapCount()
         })
@@ -206,6 +216,10 @@
             orderTable.draw()
             updateRecapCount()
         });
+        $('#filterStatus').change(function () {
+            orderTable.draw()
+            updateRecapCount()
+        });
 
         // datatable
         let orderTable = orderTableSelector.DataTable({
@@ -221,7 +235,8 @@
                     d.filterQty = $('#filterQty').val()
                     d.filterSku = $('#filterSku').val()
                     d.filterCity = $('#filterCity').val()
-                    d.filterBooking = $('#filterBooking').val()
+                    d.filterBooking = $('#filterBooking').prop('checked') ? '1' : null
+                    d.filterStatus = $('#filterStatus').val()
                 }
             },
             columns: [
@@ -293,7 +308,8 @@
                 method: 'GET',
                 data: {
                     filterDates: filterDate.val(),
-                    filterBooking: filterBooking.prop('checked') ? '1' : '0'  // Add this line
+                    filterBooking: filterBooking.prop('checked') ? '1' : '0',  // Add this line
+                    filterStatus: filterStatus.val()
                 },
                 success: function(response) {
                     // Update the count with the retrieved value
