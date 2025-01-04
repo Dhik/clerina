@@ -216,7 +216,7 @@
                     d.filterQty = $('#filterQty').val()
                     d.filterSku = $('#filterSku').val()
                     d.filterCity = $('#filterCity').val()
-                    d.filterCity = $('#filterBooking').val()
+                    d.filterBooking = $('#filterBooking').val()
                 }
             },
             columns: [
