@@ -185,21 +185,26 @@
 
         $('#filterChannel').change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
 
         $('#filterQty').change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
 
         $('#filterSku').change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
 
         $('#filterCity').change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
         $('#filterBooking').change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
 
         // datatable
@@ -284,8 +289,12 @@
 
         function updateRecapCount() {
             $.ajax({
-                url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val(), // Endpoint URL to fetch updated count
-                method: 'GET', // You can use 'POST' if required
+                url: '{{ route('sales.get-sales-recap') }}',
+                method: 'GET',
+                data: {
+                    filterDates: filterDate.val(),
+                    filterBooking: filterBooking.prop('checked') ? '1' : '0'  // Add this line
+                },
                 success: function(response) {
                     // Update the count with the retrieved value
                     $('#newSalesCount').text(response.total_sales);

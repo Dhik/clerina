@@ -74,9 +74,18 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
 
         $sales = $this->salesDAL->getSalesByDateRange($startDateString, $endDateString, $tenantId);
         $channelId = $request->input('filterChannel');
+        $isBooking = $request->input('filterBooking'); 
+
+        if ($isBooking === '1') {
+            $sales = $sales->where('is_booking', '1');
+        }
 
         $salesByChannelByDate = $this->salesDAL
             ->getSalesByChannelByDateRange($startDateString, $endDateString, $tenantId);
+
+        if ($isBooking === '1') {
+            $salesByChannelByDate = $salesByChannelByDate->where('is_booking', '1');
+        }
 
         if (! is_null($channelId)) {
             $salesByChannel = $salesByChannelByDate->where('sales_channel_id', $channelId);
