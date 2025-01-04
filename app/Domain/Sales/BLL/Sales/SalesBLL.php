@@ -3,6 +3,7 @@
 namespace App\Domain\Sales\BLL\Sales;
 
 use App\Domain\Order\DAL\Order\OrderDALInterface;
+use App\Domain\Order\Models\Order;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Domain\Sales\DAL\AdSpentMarketPlace\AdSpentMarketPlaceDALInterface;
 use App\Domain\Sales\DAL\AdSpentSocialMedia\AdSpentSocialMediaDALInterface;
@@ -74,27 +75,32 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
 
         $sales = $this->salesDAL->getSalesByDateRange($startDateString, $endDateString, $tenantId);
         $channelId = $request->input('filterChannel');
-        $isBooking = $request->input('filterBooking'); 
+        $isBooking = $request->input('filterBooking');
+
+        $ordersQuery = Order::where('tenant_id', $tenantId)
+        ->where('date', '>=', $startDateString)
+        ->where('date', '<=', $endDateString);
 
         if ($isBooking === '1') {
-            $sales = $sales->where('is_booking', '1');
+            $ordersQuery->where('is_booking', '1');
         }
 
         $salesByChannelByDate = $this->salesDAL
             ->getSalesByChannelByDateRange($startDateString, $endDateString, $tenantId);
 
-        if ($isBooking === '1') {
-            $salesByChannelByDate = $salesByChannelByDate->where('is_booking', '1');
-        }
-
         if (! is_null($channelId)) {
             $salesByChannel = $salesByChannelByDate->where('sales_channel_id', $channelId);
+            $ordersQuery->where('sales_channel_id', $channelId);
         }
 
-        $tempSales = $channelId ? $salesByChannel->sum('turnover') : $sales->sum('turnover');
+        $tempQty = (clone $ordersQuery)->sum('qty');
+        $tempSales = (clone $ordersQuery)->sum('amount');
+        $tempOrder = (clone $ordersQuery)->distinct('id_order')->count('id_order');
+
+        // $tempSales = $channelId ? $salesByChannel->sum('turnover') : $sales->sum('turnover');
         $tempVisit = $channelId ? $salesByChannel->sum('visit') : $sales->sum('visit');
-        $tempOrder = $channelId ? $salesByChannel->sum('order') : $sales->sum('order');
-        $tempQty = $channelId ? $salesByChannel->sum('qty') : $sales->sum('qty');
+        // $tempOrder = $channelId ? $salesByChannel->sum('order') : $sales->sum('order');
+        // $tempQty = $channelId ? $salesByChannel->sum('qty') : $sales->sum('qty');
         $tempClosingRate = $channelId ?
             ($salesByChannel->count() === 0 ? 0 : $salesByChannel->sum('closing_rate') / $salesByChannel->count()) :
             ($sales->count() === 0 ? 0 : $sales->sum('closing_rate') / $sales->count());
