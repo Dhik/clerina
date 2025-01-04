@@ -357,8 +357,8 @@ class OrderController extends Controller
         $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
         // $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
         // $endDate = Carbon::now()->format('Y-m-d');
-        $startDate = '2025-01-01';
-        $endDate = '2025-01-02';
+        $startDate = '2025-01-02';
+        $endDate = '2025-01-03';
         $allOrders = [];
 
         foreach ($statuses as $status) {
