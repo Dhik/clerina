@@ -28,6 +28,7 @@ use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\GoogleSheetService;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -90,7 +91,11 @@ class OrderController extends Controller
 
         $salesChannels = $this->salesChannelBLL->getSalesChannel();
         $cities = Order::select('city')->distinct()->orderBy('city')->get();
-        $status = Order::select('status')->distinct()->orderBy('status')->get();
+        $status = Order::select('status')
+            ->distinct()
+            ->whereNotNull('status')
+            ->orderBy('status')
+            ->get();
 
         return view('admin.order.index', compact('salesChannels', 'cities', 'status'));
     }
@@ -308,17 +313,30 @@ class OrderController extends Controller
         return $sku;
     }
 
-    public function webhook(Request $request) {
-        $signature = $request->header('X-Webhook-Signature');
+    public function webhook(Request $request) 
+    {
+        // Get raw payload first
         $payload = $request->getContent();
+        
+        // Decode JSON payload if needed
+        $data = json_decode($payload, true) ?: [];
+        
+        // Get signature from header
+        $signature = $request->header('X-Webhook-Signature');
+
         Log::info('Webhook received', [
-            'payload' => $request->all(),
-            'headers' => $request->headers->all()
+            'payload' => $data,
+            'headers' => $request->headers->all() ?: []
         ]);
         
+        // Verify signature first
+        if (!$this->verifySignature($payload, $signature)) {
+            Log::warning('Invalid webhook signature');
+            return response()->json(['message' => 'Invalid signature'], 401);
+        }
+        
         try {
-            $this->processWebhook($request->all());
-            
+            $this->processWebhook($data);
             return response()->json(['message' => 'Webhook processed successfully'], 200);
         } catch (\Exception $e) {
             Log::error('Webhook processing failed', ['error' => $e->getMessage()]);
@@ -339,8 +357,13 @@ class OrderController extends Controller
                 Log::warning('Unknown webhook event type', ['event_type' => $eventType]);
         }
     }
-    private function verifySignature(string $payload, string $signature)
+
+    private function verifySignature(string $payload, ?string $signature): bool
     {
+        if (!$signature) {
+            return false;
+        }
+        
         $calculatedSignature = hash_hmac('sha256', $payload, config('services.webhook.secret'));
         return hash_equals($calculatedSignature, $signature);
     }

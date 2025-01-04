@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('webhook', [OrderController::class, 'handle']);
+Route::post('api/webhook', [OrderController::class, 'webhook']);
 
 Route::prefix('admin')
     ->middleware('auth')
