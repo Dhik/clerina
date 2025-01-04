@@ -26,12 +26,12 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <!-- <div class="col-md-2">
                                     <input type="number" class="form-control" id="filterQty" placeholder="{{ trans('placeholder.qty') }}" autocomplete="off">
-                                </div>
-                                <div class="col-md-2">
+                                </div> -->
+                                <!-- <div class="col-md-2">
                                     <input type="text" class="form-control" id="filterSku" placeholder="{{ trans('placeholder.sku') }}" autocomplete="off">
-                                </div>
+                                </div> -->
                                 <div class="col-md-3">
                                     <select class="form-control" id="filterCity">
                                         <option value="" selected>{{ trans('placeholder.select_city') }}</option>
