@@ -300,19 +300,11 @@ class SalesController extends Controller
                     "average_transaction_value" => (int)$avgTurnoverPerTransaction,
                     "daily_growth_rate" => $growthYesterdayPast2Days
                 ],
-            ],
-            "financial_metrics" => [
-                "gross_profit_margin" => 35.8,
-                "operating_margin" => 22.4,
-                "net_profit_margin" => 18.6,
-                "current_ratio" => 2.3,
-                "debt_to_equity" => 0.5,
-                "working_capital" => 850000000
             ]
         ];
-
         return response()->json($response);
     }
+    
     public function sendMessageCleora()
     {
         $yesterday = now()->subDay();

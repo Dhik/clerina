@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Route;
 | Public Routes
 |--------------------------------------------------------------------------
 */
-// Route::prefix('api')
-//     ->middleware('api.key')
-//     ->group(function () {
-//         Route::get('/public-stats', [SalesController::class, 'forAISalesCleora']);
-// });
+Route::prefix('api')
+    ->middleware('api.key')
+    ->group(function () {
+        Route::get('/public-stats', [SalesController::class, 'forAISalesCleora']);
+});
 
 /*
 |--------------------------------------------------------------------------
