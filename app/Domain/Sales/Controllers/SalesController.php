@@ -1191,6 +1191,7 @@ public function getMonthlySalesChart()
     $sales = Sales::select('date', 'turnover')
         ->whereYear('date', $currentMonth->year)
         ->whereMonth('date', $currentMonth->month)
+        ->where('tenant_id', 1)
         ->orderBy('date')
         ->get();
 
