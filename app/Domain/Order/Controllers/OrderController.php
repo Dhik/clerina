@@ -291,7 +291,6 @@ class OrderController extends Controller
 
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
                         ->where('tenant_id', Auth::user()->current_tenant_id)
-                        ->where('is_booking', '0')
                         ->whereBetween('date', [$startDate, $endDate])
                         ->groupBy('date')
                         ->get();
