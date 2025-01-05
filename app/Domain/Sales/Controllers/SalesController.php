@@ -304,7 +304,7 @@ class SalesController extends Controller
         ];
         return response()->json($response);
     }
-    
+
     public function sendMessageCleora()
     {
         $yesterday = now()->subDay();
@@ -1182,5 +1182,37 @@ class SalesController extends Controller
     }
 
     return response()->json($response);
+}
+
+public function getMonthlySalesChart()
+{
+    $currentMonth = now()->startOfMonth();
+    
+    $sales = Sales::select('date', 'turnover')
+        ->whereYear('date', $currentMonth->year)
+        ->whereMonth('date', $currentMonth->month)
+        ->orderBy('date')
+        ->get();
+
+    $labels = [];
+    $turnoverData = [];
+
+    foreach ($sales as $sale) {
+        $labels[] = Carbon::parse($sale->date)->format('d M');
+        $turnoverData[] = $sale->turnover;
+    }
+
+    return response()->json([
+        'labels' => $labels,
+        'datasets' => [
+            [
+                'label' => 'Turnover',
+                'data' => $turnoverData,
+                'borderColor' => '#4CAF50',
+                'tension' => 0.1,
+                'fill' => false
+            ]
+        ]
+    ]);
 }
 }

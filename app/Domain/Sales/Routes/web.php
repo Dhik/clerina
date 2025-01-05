@@ -15,6 +15,7 @@ Route::prefix('api')
     ->middleware('api.key')
     ->group(function () {
         Route::get('/public-stats', [SalesController::class, 'forAISalesCleora']);
+        Route::get('/sales_this_month_line_chart', [SalesController::class, 'getMonthlySalesChart']);
 });
 
 /*
