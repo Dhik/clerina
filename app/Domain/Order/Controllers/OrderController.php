@@ -515,6 +515,7 @@ class OrderController extends Controller
                             'shipment' => $orderData['courier'],
                             'payment_method' => $orderData['courier_label'],
                             'sku' => $orderData['product_summary'],
+                            'cogs' => $orderData['cogs'],
                             'price' => $orderData['amount'],
                             'is_booking' => $orderData['is_booking'],
                             'status' => $orderData['status'],
