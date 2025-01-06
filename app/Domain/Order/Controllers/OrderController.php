@@ -464,7 +464,74 @@ class OrderController extends Controller
 
         return response()->json(['message' => 'Orders fetched and saved successfully']);
     }
+    public function fetchUpdateStatus(): JsonResponse
+    {
+        set_time_limit(0);
 
+        $client = new Client();
+        $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
+        $headers = [
+            'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
+        ];
+        
+        // Set start date to first day of current month and end date to today
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->format('Y-m-d');
+
+        try {
+            $page = 1;
+            $totalPages = 1;
+
+            do {
+                $response = $client->get($baseUrl, [
+                    'headers' => $headers,
+                    'query' => [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'page' => $page
+                    ]
+                ]);
+
+                if ($response->getStatusCode() !== 200) {
+                    return response()->json([
+                        'error' => 'Failed to fetch data from API', 
+                        'status_code' => $response->getStatusCode()
+                    ], 500);
+                }
+
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                if ($page === 1) {
+                    $totalPages = $data['metadata']['total_page'] ?? 1;
+                }
+
+                if (!isset($data['data'])) {
+                    return response()->json([
+                        'error' => 'Unexpected response format', 
+                        'response' => $data
+                    ], 500);
+                }
+
+                foreach ($data['data'] as $orderData) {
+                    // Check if order exists and update status if it does
+                    Order::where('id_order', $orderData['reference_no'])
+                        ->update(['status' => $orderData['status']]);
+                }
+
+                $page++;
+            } while ($page <= $totalPages);
+
+            return response()->json([
+                'message' => 'Orders status updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error processing orders',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     private function getSalesChannelId($channelName)
     {
