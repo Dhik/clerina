@@ -553,8 +553,8 @@ class OrderController extends Controller
         // $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         // $endDate = Carbon::now()->format('Y-m-d');
 
-        $startDate = '2024-12-10';
-        $endDate = '2024-12-12';
+        $startDate = '2024-12-12';
+        $endDate = '2024-12-14';
 
         try {
             $page = 1;
