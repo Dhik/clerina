@@ -366,72 +366,78 @@ class OrderController extends Controller
         $calculatedSignature = hash_hmac('sha256', $payload, config('services.webhook.secret'));
         return hash_equals($calculatedSignature, $signature);
     }
-
-
     public function fetchAllOrders(): JsonResponse
     {
         set_time_limit(0);
-
+    
         $client = new Client();
         $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
         $headers = [
             'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
         ];
-        $statuses = ['paid', 'process', 'pick', 'packing', 'packed', 'sent', 'completed'];
+        
         $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
         // $startDate = '2025-01-03';
         // $endDate = '2025-01-04';
-        $allOrders = [];
-
-        foreach ($statuses as $status) {
+    
+        try {
             $page = 1;
             $totalPages = 1;
-
+    
             do {
                 $response = $client->get($baseUrl, [
                     'headers' => $headers,
                     'query' => [
-                        'status' => $status,
                         'start_date' => $startDate,
                         'end_date' => $endDate,
                         'page' => $page
                     ]
                 ]);
-
+    
                 if ($response->getStatusCode() !== 200) {
-                    return response()->json(['error' => 'Failed to fetch data from API', 'status_code' => $response->getStatusCode()], 500);
+                    return response()->json([
+                        'error' => 'Failed to fetch data from API', 
+                        'status_code' => $response->getStatusCode()
+                    ], 500);
                 }
-
+    
                 $data = json_decode($response->getBody()->getContents(), true);
-
+    
                 if ($page === 1) {
                     $totalPages = $data['metadata']['total_page'] ?? 1;
                 }
-
+    
                 if (!isset($data['data'])) {
-                    return response()->json(['error' => 'Unexpected response format', 'response' => $data], 500);
+                    return response()->json([
+                        'error' => 'Unexpected response format', 
+                        'response' => $data
+                    ], 500);
                 }
-
-                foreach ($data['data'] as $orderData) {
+    
+                // Filter out cancelled orders
+                $filteredOrders = array_filter($data['data'], function($orderData) {
+                    return $orderData['status'] !== 'cancelled';
+                });
+    
+                foreach ($filteredOrders as $orderData) {
                     $orderData['product_summary'] = $this->processSku($orderData['product_summary']);
-
+    
                     $date = $this->convertToMySQLDateTime($orderData['created_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
-
+    
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
-
+    
                     if ($existingOrder) {
                         $amount = $orderData['amount'] - $orderData['shipping_fee'];
                         $amount = $amount < 0 ? 0 : $amount;
-
+    
                         $existingOrder->update([
                             'amount' => $amount,
                             'sku' => $orderData['product_summary'],
                             'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
                             'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                         ]);
-
                     } else {
                         Order::create([
                             'id_order' => $orderData['reference_no'],
@@ -457,13 +463,20 @@ class OrderController extends Controller
                         ]);
                     }
                 }
-
+    
                 $page++;
             } while ($page <= $totalPages);
+    
+            return response()->json(['message' => 'Orders fetched and saved successfully']);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error processing orders',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json(['message' => 'Orders fetched and saved successfully']);
     }
+
     public function fetchUpdateStatus(): JsonResponse
     {
         set_time_limit(0);
