@@ -289,18 +289,22 @@ class OrderController extends Controller
         $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
 
-        $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
+        $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount, SUM(cogs) AS total_cogs'))
                         ->where('tenant_id', Auth::user()->current_tenant_id)
                         ->whereBetween('date', [$startDate, $endDate])
                         ->groupBy('date')
                         ->get();
+
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
             Sales::where('tenant_id', Auth::user()->current_tenant_id)
                 ->where('date', $formattedDate)
-                ->update(['turnover' => $total->total_amount]);
+                ->update([
+                    'turnover' => $total->total_amount,
+                    'cogs' => $total->total_cogs
+                ]);
         }
-        return response()->json(['message' => 'Sales turnover updated successfully']);
+        return response()->json(['message' => 'Sales turnover and COGS updated successfully']);
     }
 
 
