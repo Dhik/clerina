@@ -495,7 +495,7 @@ class OrderController extends Controller
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
     
                     if ($existingOrder) {
-                        $amount = $orderData['amount'] - $orderData['shipping_fee'];
+                        $amount = $orderData['amount'];
                         $amount = $amount < 0 ? 0 : $amount;
     
                         $existingOrder->update([
