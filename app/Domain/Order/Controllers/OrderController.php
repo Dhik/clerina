@@ -25,7 +25,7 @@ use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Yajra\DataTables\DataTables;
-use Illuminate\Http\Request;
+use Yajra\DataTables\Utilities\Request;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\Log;
