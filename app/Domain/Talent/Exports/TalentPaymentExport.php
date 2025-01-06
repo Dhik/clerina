@@ -95,11 +95,13 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             ->when($this->request->has('status_payment') && $this->request->status_payment != '', function($query) {
                 $query->where('status_payment', $this->request->status_payment);
             })
-            ->when($this->request->has('done_payment') && $this->request->done_payment != '', function($query) {
-                $query->where('done_payment', $this->request->done_payment);
+            ->when($this->request->has('done_payment_start') && $this->request->has('done_payment_end'), function($query) {
+                $query->whereDate('done_payment', '>=', $this->request->done_payment_start)
+                      ->whereDate('done_payment', '<=', $this->request->done_payment_end);
             })
-            ->when($this->request->has('tanggal_pengajuan') && $this->request->tanggal_pengajuan != '', function($query) {
-                $query->whereDate('tanggal_pengajuan', $this->request->tanggal_pengajuan);
+            ->when($this->request->has('tanggal_pengajuan_start') && $this->request->has('tanggal_pengajuan_end'), function($query) {
+                $query->whereDate('tanggal_pengajuan', '>=', $this->request->tanggal_pengajuan_start)
+                      ->whereDate('tanggal_pengajuan', '<=', $this->request->tanggal_pengajuan_end);
             })
             ->orderBy('id'); 
     }

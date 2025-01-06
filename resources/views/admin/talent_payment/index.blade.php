@@ -43,12 +43,12 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <label for="filterDonePayment">Done Payment</label>
-                            <input type="date" id="filterDonePayment" class="form-control">
+                            <label for="filterDonePayment">Done Payment Range</label>
+                            <input type="text" id="filterDonePayment" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                         </div>
                         <div class="col-md-3 mb-2">
-                            <label for="filterTanggalPengajuan">Tanggal Pengajuan</label>
-                            <input type="date" id="filterTanggalPengajuan" class="form-control">
+                            <label for="filterTanggalPengajuan">Tanggal Pengajuan Range</label>
+                            <input type="text" id="filterTanggalPengajuan" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                         </div>
                         <div class="col-auto mt-4">
                             <button class="btn btn-primary" id="filterButton">
@@ -155,8 +155,36 @@
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $('.daterange').daterangepicker({
+        autoUpdateInput: false,
+        autoApply: true,  // Remove apply button from daterangepicker
+        alwaysShowCalendars: true,
+        locale: {
+            cancelLabel: 'Clear',
+            format: 'DD/MM/YYYY'
+        },
+        ranges: {
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+        'This Month': [moment().startOf('month'), moment().endOf('month')],
+        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    });
+
+    // Handle date selection
+    $('.daterange').on('apply.daterangepicker', function(ev, picker) {
+        $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+    });
+
+    // Handle date clearing
+    $('.daterange').on('cancel.daterangepicker', function(ev, picker) {
+        $(this).val('');
+    });
     $(document).ready(function() {
         // Initialize Select2
+        
         $('#filterUsername').select2({
             placeholder: "All Usernames",
             allowClear: true,
@@ -173,8 +201,19 @@
                     d.pic = $('#filterPic').val();
                     d.username = $('#filterUsername').val();
                     d.status_payment = $('#status_payment').val();
-                    d.done_payment = $('#filterDonePayment').val();
-                    d.tanggal_pengajuan = $('#filterTanggalPengajuan').val();
+                    let donePaymentRange = $('#filterDonePayment').val();
+            if (donePaymentRange) {
+                let [startDate, endDate] = donePaymentRange.split(' - ');
+                d.done_payment_start = moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                d.done_payment_end = moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            }
+            
+            let tanggalPengajuanRange = $('#filterTanggalPengajuan').val();
+            if (tanggalPengajuanRange) {
+                let [startDate, endDate] = tanggalPengajuanRange.split(' - ');
+                d.tanggal_pengajuan_start = moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                d.tanggal_pengajuan_end = moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD');
+            }
                 }
             },
             columns: [
@@ -226,17 +265,18 @@
         });
 
         $('#filterButton').on('click', function() {
-            table.ajax.reload();
-        });
+    table.ajax.reload();
+});
 
-        $('#resetFilterButton').on('click', function() {
-            $('#filterPic').val('').trigger('change');
-            $('#filterUsername').val('').trigger('change');
-            $('#status_payment').val('').trigger('change');
-            $('#filterDonePayment').val('');
-            $('#filterTanggalPengajuan').val('');
-            table.ajax.reload();
-        });
+
+$('#resetFilterButton').on('click', function() {
+    $('#filterPic').val('').trigger('change');
+    $('#filterUsername').val('').trigger('change');
+    $('#status_payment').val('').trigger('change');
+    $('#filterDonePayment').val('');
+    $('#filterTanggalPengajuan').val('');
+    table.ajax.reload();
+});
 
         $('#talentPaymentsTable').on('click', '.deleteButton', function() {
             var paymentId = $(this).data('id');
@@ -280,45 +320,67 @@
         });
 
         $('#exportButton').on('click', function() {
-            var pic = $('#filterPic').val();
-            var usernames = $('#filterUsername').val(); 
-            var status_payment = $('#status_payment').val();
-            var done_payment = $('#filterDonePayment').val();  
-            var tanggal_pengajuan = $('#filterTanggalPengajuan').val();
+    var pic = $('#filterPic').val();
+    var usernames = $('#filterUsername').val(); 
+    var status_payment = $('#status_payment').val();
+    
+    var queryString = '?pic=' + encodeURIComponent(pic) + 
+            '&status_payment=' + encodeURIComponent(status_payment);
 
-            var queryString = '?pic=' + encodeURIComponent(pic) + 
-                            '&status_payment=' + encodeURIComponent(status_payment) +
-                            '&done_payment=' + encodeURIComponent(done_payment) + 
-                            '&tanggal_pengajuan=' + encodeURIComponent(tanggal_pengajuan);  
+    // Get date ranges directly from inputs
+    let donePaymentRange = $('#filterDonePayment').val();
+    if (donePaymentRange) {
+        let [startDate, endDate] = donePaymentRange.split(' - ');
+        queryString += '&done_payment_start=' + encodeURIComponent(moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+        queryString += '&done_payment_end=' + encodeURIComponent(moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+    }
 
-            if (usernames && usernames.length > 0) {
-                usernames.forEach(function(username) {
-                    queryString += '&username[]=' + encodeURIComponent(username);
-                });
-            }
+    let tanggalPengajuanRange = $('#filterTanggalPengajuan').val();
+    if (tanggalPengajuanRange) {
+        let [startDate, endDate] = tanggalPengajuanRange.split(' - ');
+        queryString += '&tanggal_pengajuan_start=' + encodeURIComponent(moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+        queryString += '&tanggal_pengajuan_end=' + encodeURIComponent(moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+    }
 
-            window.location.href = '{{ route('talent_payments.pengajuan') }}' + queryString;
+    if (usernames && usernames.length > 0) {
+        usernames.forEach(function(username) {
+            queryString += '&username[]=' + encodeURIComponent(username);
         });
+    }
+
+    window.location.href = '{{ route('talent_payments.pengajuan') }}' + queryString;
+});
 
 
-        $('#exportExcelButton').on('click', function() {
-            var pic = $('#filterPic').val();
-            var usernames = $('#filterUsername').val();
-            var status_payment = $('#status_payment').val();
-            var done_payment = $('#filterDonePayment').val();
-            var tanggal_pengajuan = $('#filterTanggalPengajuan').val();
-            var queryString = '?pic=' + encodeURIComponent(pic) + 
-                      '&status_payment=' + encodeURIComponent(status_payment) +
-                      '&done_payment=' + encodeURIComponent(done_payment) + 
-                      '&tanggal_pengajuan=' + encodeURIComponent(tanggal_pengajuan);  
+$('#exportExcelButton').on('click', function() {
+    var pic = $('#filterPic').val();
+    var usernames = $('#filterUsername').val();
+    var status_payment = $('#status_payment').val();
+    
+    var queryString = '?pic=' + encodeURIComponent(pic) + 
+            '&status_payment=' + encodeURIComponent(status_payment);
 
-            if (usernames && usernames.length > 0) {
-                usernames.forEach(function(username) {
-                    queryString += '&username[]=' + encodeURIComponent(username);
-                });
-            }
-            window.location.href = '{{ route('talent_payments.export_excel') }}' + queryString;
+    let donePaymentRange = $('#filterDonePayment').val();
+    if (donePaymentRange) {
+        let [startDate, endDate] = donePaymentRange.split(' - ');
+        queryString += '&done_payment_start=' + encodeURIComponent(moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+        queryString += '&done_payment_end=' + encodeURIComponent(moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+    }
+    
+    let tanggalPengajuanRange = $('#filterTanggalPengajuan').val();
+    if (tanggalPengajuanRange) {
+        let [startDate, endDate] = tanggalPengajuanRange.split(' - ');
+        queryString += '&tanggal_pengajuan_start=' + encodeURIComponent(moment(startDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+        queryString += '&tanggal_pengajuan_end=' + encodeURIComponent(moment(endDate, 'DD/MM/YYYY').format('YYYY-MM-DD'));
+    }
+
+    if (usernames && usernames.length > 0) {
+        usernames.forEach(function(username) {
+            queryString += '&username[]=' + encodeURIComponent(username);
         });
+    }
+    window.location.href = '{{ route('talent_payments.export_excel') }}' + queryString;
+});
 
         $('#talentPaymentsTable').on('click', '.editButton', function() {
             var paymentId = $(this).data('id');

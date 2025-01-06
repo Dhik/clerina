@@ -64,13 +64,15 @@ class TalentPaymentController extends Controller
             $payments->where('talents.pic', $request->pic);
         }
 
-        if ($request->has('done_payment') && $request->done_payment != '') {
-            $payments->whereDate('talent_payments.done_payment', $request->done_payment);
+        if ($request->has('done_payment_start') && $request->has('done_payment_end')) {
+            $payments->whereDate('talent_payments.done_payment', '>=', $request->done_payment_start)
+                    ->whereDate('talent_payments.done_payment', '<=', $request->done_payment_end);
         }
-        
-        if ($request->has('tanggal_pengajuan') && $request->tanggal_pengajuan != '') {
-            $payments->whereDate('talent_payments.tanggal_pengajuan', $request->tanggal_pengajuan);
-        }        
+    
+        if ($request->has('tanggal_pengajuan_start') && $request->has('tanggal_pengajuan_end')) {
+            $payments->whereDate('talent_payments.tanggal_pengajuan', '>=', $request->tanggal_pengajuan_start)
+                    ->whereDate('talent_payments.tanggal_pengajuan', '<=', $request->tanggal_pengajuan_end);
+        }    
 
         if ($request->has('username') && is_array($request->username)) {
             $payments->whereIn('talents.username', $request->username);
@@ -267,13 +269,15 @@ class TalentPaymentController extends Controller
             $query->where('status_payment', $request->status_payment);
         }
 
-        if ($request->has('done_payment') && $request->done_payment != '') {
-            $query->whereDate('done_payment', $request->done_payment);
+        if ($request->has('done_payment_start') && $request->has('done_payment_end')) {
+            $query->whereDate('done_payment', '>=', $request->done_payment_start)
+                  ->whereDate('done_payment', '<=', $request->done_payment_end);
         }
         
-        if ($request->has('tanggal_pengajuan') && $request->tanggal_pengajuan != '') {
-            $query->whereDate('tanggal_pengajuan', $request->tanggal_pengajuan);
-        }   
+        if ($request->has('tanggal_pengajuan_start') && $request->has('tanggal_pengajuan_end')) {
+            $query->whereDate('tanggal_pengajuan', '>=', $request->tanggal_pengajuan_start)
+                  ->whereDate('tanggal_pengajuan', '<=', $request->tanggal_pengajuan_end);
+        }
 
         $talentContents = $query->get();
         $talentContents->each(function ($content) {
