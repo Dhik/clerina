@@ -21,7 +21,6 @@ class Sales extends Model
         'ad_spent_total',
         'roas',
         'tenant_id',
-        'cogs',
     ];
 
     /**

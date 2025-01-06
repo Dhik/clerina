@@ -31,8 +31,6 @@ class Order extends Model
         'is_booking',
         'status',
         'amount',
-        'cogs',
-        'shipping_fee',
         'tenant_id',
     ];
 
