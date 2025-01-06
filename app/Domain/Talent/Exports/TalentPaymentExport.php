@@ -131,13 +131,12 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             $pphAmount = $harga_setelah_diskon * $pphPercentage;
             $final_tf = $harga_setelah_diskon - $pphAmount;
             
-            // Calculate display value
-            $displayValue = match($payment->status_payment) {
+            $displayValue = $payment->amount_tf ?? match($payment->status_payment) {
                 "Termin 1", "Termin 2", "Termin 3" => $final_tf / 3,
                 "DP 50%", "Pelunasan 50%" => $final_tf / 2,
                 default => $final_tf
             };
-
+            
             // Return array directly without storing in variable
             return [
                 $payment->done_payment,
