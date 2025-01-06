@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('api/webhook', [OrderController::class, 'webhook']);
+Route::post('api/update-status', [OrderController::class, 'updateStatus']);
+Route::post('api/update-date-amount', [OrderController::class, 'updateDateAmount']);
 
 Route::prefix('admin')
     ->middleware('auth')

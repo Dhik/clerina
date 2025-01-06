@@ -25,7 +25,7 @@ use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Yajra\DataTables\DataTables;
-use Yajra\DataTables\Utilities\Request;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\Log;
@@ -314,25 +314,19 @@ class OrderController extends Controller
 
     public function webhook(Request $request) 
     {
-        // Get raw payload first
         $payload = $request->getContent();
-        
-        // Decode JSON payload if needed
         $data = json_decode($payload, true) ?: [];
-        
-        // Get signature from header
         $signature = $request->header('X-Webhook-Signature');
-
+        
+        if ($signature !== config('services.webhook.secret')) {
+            Log::warning('Invalid webhook key');
+            return response()->json(['message' => 'Invalid key'], 401);
+        }
+        
         Log::info('Webhook received', [
             'payload' => $data,
-            'headers' => $request->headers->all() ?: []
+            'headers' => $request->header()
         ]);
-        
-        // Verify signature first
-        if (!$this->verifySignature($payload, $signature)) {
-            Log::warning('Invalid webhook signature');
-            return response()->json(['message' => 'Invalid signature'], 401);
-        }
         
         try {
             $this->processWebhook($data);
@@ -349,22 +343,90 @@ class OrderController extends Controller
         
         switch ($eventType) {
             case 'payment.successful':
+                Log::info('Payment successful event received', $data);
                 break;
             case 'subscription.updated':
+                Log::info('Subscription updated event received', $data);
                 break;
             default:
                 Log::warning('Unknown webhook event type', ['event_type' => $eventType]);
         }
     }
-
-    private function verifySignature(string $payload, ?string $signature): bool
+    public function updateStatus(Request $request) 
     {
-        if (!$signature) {
-            return false;
+        $payload = $request->getContent();
+        $data = json_decode($payload, true) ?: [];
+        
+        $signature = $request->header('X-Webhook-Signature');
+        
+        if ($signature !== config('services.webhook.secret')) {
+            Log::warning('Invalid webhook key');
+            return response()->json(['message' => 'Invalid key'], 401);
         }
         
-        $calculatedSignature = hash_hmac('sha256', $payload, config('services.webhook.secret'));
-        return hash_equals($calculatedSignature, $signature);
+        Log::info('Status update webhook received', [
+            'payload' => $data
+        ]);
+        
+        try {
+            $order = Order::where('id_order', $data['id_order'])->first();
+            
+            if (!$order) {
+                return response()->json(['message' => 'Order not found'], 404);
+            }
+
+            $order->status = $data['data']['status'];
+            $order->save();
+
+            return response()->json([
+                'message' => 'Order status updated successfully',
+                'data' => $order
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Webhook processing failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Webhook processing failed'], 500);
+        }
+    }
+
+    public function updateDateAmount(Request $request) 
+    {
+        // Get raw payload
+        $payload = $request->getContent();
+        $data = json_decode($payload, true) ?: [];
+        
+        $signature = $request->header('X-Webhook-Signature');
+        
+        if ($signature !== config('services.webhook.secret')) {
+            Log::warning('Invalid webhook key');
+            return response()->json(['message' => 'Invalid key'], 401);
+        }
+        
+        Log::info('Date and amount update webhook received', [
+            'payload' => $data
+        ]);
+        
+        try {
+            $order = Order::where('id_order', $data['id_order'])->first();
+            
+            if (!$order) {
+                return response()->json(['message' => 'Order not found'], 404);
+            }
+
+            $order->update([
+                'date' => $data['data']['date'],
+                'amount' => $data['data']['amount']
+            ]);
+
+            return response()->json([
+                'message' => 'Order date and amount updated successfully',
+                'data' => $order
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Webhook processing failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Webhook processing failed'], 500);
+        }
     }
     public function fetchAllOrders(): JsonResponse
     {
@@ -528,7 +590,6 @@ class OrderController extends Controller
                 }
 
                 foreach ($data['data'] as $orderData) {
-                    // Check if order exists and update status if it does
                     Order::where('id_order', $orderData['reference_no'])
                         ->update(['status' => $orderData['status']]);
                 }
