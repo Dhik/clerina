@@ -495,7 +495,7 @@ class OrderController extends Controller
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
     
                     if ($existingOrder) {
-                        $amount = $orderData['amount'];
+                        $amount = $orderData['amount'] - $orderData['shipping_fee'];
                         $amount = $amount < 0 ? 0 : $amount;
     
                         $existingOrder->update([
@@ -525,6 +525,7 @@ class OrderController extends Controller
                             'status' => $orderData['status'],
                             'shipping_address' => $orderData['integration_store'],
                             'amount' => $orderData['amount'] - $orderData['shipping_fee'],
+                            'shipping_fee' => $orderData['shipping_fee'],
                             'username' => $orderData['customer_username'],
                             'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                         ]);

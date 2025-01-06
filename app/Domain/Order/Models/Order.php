@@ -32,6 +32,7 @@ class Order extends Model
         'status',
         'amount',
         'cogs',
+        'shipping_fee',
         'tenant_id',
     ];
 
