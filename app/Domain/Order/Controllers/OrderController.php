@@ -491,7 +491,7 @@ class OrderController extends Controller
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
     
                     if ($existingOrder) {
-                        $amount = $orderData['amount'] - $orderData['shipping_fee'];
+                        $amount = $orderData['cogs'];
                         $amount = $amount < 0 ? 0 : $amount;
     
                         $existingOrder->update([
@@ -520,7 +520,7 @@ class OrderController extends Controller
                             'is_booking' => $orderData['is_booking'],
                             'status' => $orderData['status'],
                             'shipping_address' => $orderData['integration_store'],
-                            'amount' => $orderData['amount'] - $orderData['shipping_fee'],
+                            'amount' => $orderData['cogs'],
                             'username' => $orderData['customer_username'],
                             'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
                         ]);
