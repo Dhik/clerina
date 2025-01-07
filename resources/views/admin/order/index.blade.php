@@ -158,6 +158,22 @@
     @include('admin.order.modal-order-update')
 @stop
 
+@section('css')
+<style>
+    .channel-logo {
+    height: 34px;
+    width: auto;
+    vertical-align: middle;
+    object-fit: contain;
+}
+
+td.text-center .channel-logo {
+    margin: 0 auto;
+    padding: 2px 0;
+}
+</style>
+@stop
+
 @section('js')
     <script>
         $(function () {
@@ -242,7 +258,29 @@
             columns: [
                 {data: 'date', name: 'date'},
                 {data: 'id_order', name: 'id_order', sortable: false},
-                {data: 'salesChannel', name: 'salesChannel', sortable: false},
+                {
+                    data: 'salesChannel', 
+                    name: 'salesChannel', 
+                    sortable: false,
+                    className: 'text-center', // Add this line to center-align the content
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            switch(data) {
+                                case 'Shopee':
+                                    return '<img src="{{ asset("img/shopee.png") }}" alt="Shopee" class="channel-logo">';
+                                case 'Tiktok Shop':
+                                    return '<img src="{{ asset("img/tiktok_shop.png") }}" alt="Tiktok Shop" class="channel-logo">';
+                                case 'Tokopedia':
+                                    return '<img src="{{ asset("img/tokopedia.png") }}" alt="Tokopedia" class="channel-logo">';
+                                case 'Lazada':
+                                    return '<img src="{{ asset("img/lazada.png") }}" alt="Lazada" class="channel-logo">';
+                                default:
+                                    return data;
+                            }
+                        }
+                        return data;
+                    }
+                },
                 {data: 'customer_name', name: 'customer_name', sortable: false},
                 {data: 'username', name: 'username', sortable: false},
                 {data: 'customer_phone_number', name: 'customer_phone_number', sortable: false},
@@ -258,7 +296,7 @@
                 { "targets": [7], "className": "text-right" },
                 { "targets": [8], "className": "text-center" },
                 { 
-                    "targets": [10], // Index of is_booking column
+                    "targets": [10],
                     "render": function(data, type, row) {
                         return data === '1' ? 'is booking' : null;
                     }
