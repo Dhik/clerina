@@ -359,12 +359,12 @@ return [
                 //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
                 //     'icon' => 'nav-icon far fa-circle',
                 // ],
-                [
-                    'text' => 'Demography',
-                    'url' => 'admin/demography',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
+                // [
+                //     'text' => 'Demography',
+                //     'url' => 'admin/demography',
+                //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                //     'icon' => 'nav-icon far fa-circle',
+                // ],
                 [
                     'text' => 'Spent Target',
                     'url' => 'admin/spentTarget',
