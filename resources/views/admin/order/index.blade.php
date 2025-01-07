@@ -351,95 +351,95 @@ td.text-center .channel-logo {
         });
 
         function loadDailyOrdersChart() {
-            fetch('{{ route("orders.daily-by-channel") }}')
-                .then(response => response.json())
-                .then(data => {
-                    const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
-                    
-                    if (window.dailyOrdersChart instanceof Chart) {
-                        window.dailyOrdersChart.destroy();
-                    }
-                    
-                    window.dailyOrdersChart = new Chart(ctx, {
-                        type: 'line',
-                        data: data,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {
-                                mode: 'nearest',
-                                axis: 'x',
-                                intersect: false
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    align: 'center',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: 20,
-                                        font: {
-                                            size: 12
-                                        },
-                                        boxWidth: 8
-                                    }
+    fetch('{{ route("orders.daily-by-channel") }}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
+            
+            if (window.dailyOrdersChart instanceof Chart) {
+                window.dailyOrdersChart.destroy();
+            }
+            
+            window.dailyOrdersChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12
                                 },
-                                title: {
-                                    display: true,
-                                    text: 'Daily Orders by Channel',
-                                    font: {
-                                        size: 14
-                                    }
+                                boxWidth: 8
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Daily Orders by Channel',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    });
                                 },
-                                tooltip: {
-                                    mode: 'index',
-                                    intersect: false,
-                                    callbacks: {
-                                        title: function(context) {
-                                            return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
-                                                day: 'numeric',
-                                                month: 'short',
-                                                year: 'numeric'
-                                            });
-                                        },
-                                        label: function(context) {
-                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    type: 'time',
-                                    time: {
-                                        unit: 'day',
-                                        displayFormats: {
-                                            day: 'd MMM'
-                                        }
-                                    },
-                                    grid: {
-                                        display: false
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: {
-                                        drawBorder: true,
-                                        drawOnChartArea: true,
-                                    },
-                                    ticks: {
-                                        stepSize: 1,
-                                        callback: function(value) {
-                                            return value.toLocaleString('id-ID');
-                                        }
-                                    }
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
                                 }
                             }
                         }
-                    });
-                })
-                .catch(error => console.error('Error loading daily orders chart:', error));
-        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'd MMM'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: true,
+                                drawOnChartArea: true,
+                            },
+                            ticks: {
+                                stepSize: 1000,  // Changed from 1 to 1000
+                                callback: function(value) {
+                                    return value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading daily orders chart:', error));
+}
         loadDailyOrdersChart();
 
         orderTable.on('draw.dt', function() {
