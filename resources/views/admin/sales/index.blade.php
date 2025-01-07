@@ -328,8 +328,8 @@
 
 @section('js')
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
         salesTableSelector = $('#salesTable');
         filterDate = $('#filterDates');
@@ -537,110 +537,109 @@
         });
 
         function loadTrendChart() {
-    fetch('{{ route("order.daily-trend") }}')
-        .then(response => response.json())
-        .then(chartData => {
-            const ctx = document.getElementById('salesTrendChart').getContext('2d');
-            
-            if (salesTrendChart instanceof Chart) {
-                salesTrendChart.destroy();
-            }
-
-            // Process datasets
-            const processedDatasets = chartData.datasets.map(dataset => ({
-                ...dataset,
-                data: dataset.data.map(point => ({
-                    // Parse the date string properly
-                    x: new Date(point.x.split(' ').join(' ')),
-                    y: parseInt(point.y)
-                })),
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                borderWidth: 2,
-                fill: true
-            }));
-            
-            salesTrendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: processedDatasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            align: 'start',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20,
-                                font: {
-                                    size: 11
-                                },
-                                boxWidth: 8
-                            }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                title: function(context) {
-                                    return new Date(context[0].parsed.x).toLocaleDateString('id-ID', {
-                                        day: 'numeric',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    });
-                                },
-                                label: function(context) {
-                                    const value = context.parsed.y;
-                                    return ` ${context.dataset.label}: Rp ${value.toLocaleString('id-ID')}`;
-                                }
-                            },
-                            padding: 10
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                displayFormats: {
-                                    day: 'dd MMM'
-                                }
-                            },
-                            ticks: {
-                                source: 'auto',
-                                autoSkip: true,
-                                maxRotation: 0
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: true,
-                                drawOnChartArea: true,
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return 'Rp ' + value.toLocaleString('id-ID');
-                                },
-                                padding: 10
-                            }
-                        }
+            fetch('{{ route("order.daily-trend") }}')
+                .then(response => response.json())
+                .then(chartData => {
+                    const ctx = document.getElementById('salesTrendChart').getContext('2d');
+                    
+                    if (salesTrendChart instanceof Chart) {
+                        salesTrendChart.destroy();
                     }
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error loading trend chart data:', error);
-        });
-}
+
+                    // Process datasets
+                    const processedDatasets = chartData.datasets.map(dataset => ({
+                        ...dataset,
+                        data: dataset.data.map(point => ({
+                            x: new Date(point.x.split(' ').join(' ')),
+                            y: parseInt(point.y)
+                        })),
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2,
+                        fill: true
+                    }));
+                    
+                    salesTrendChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            datasets: processedDatasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    align: 'start',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 11
+                                        },
+                                        boxWidth: 8
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return new Date(context[0].parsed.x).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            });
+                                        },
+                                        label: function(context) {
+                                            const value = context.parsed.y;
+                                            return ` ${context.dataset.label}: Rp ${value.toLocaleString('id-ID')}`;
+                                        }
+                                    },
+                                    padding: 10
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        displayFormats: {
+                                            day: 'dd MMM'
+                                        }
+                                    },
+                                    ticks: {
+                                        source: 'auto',
+                                        autoSkip: true,
+                                        maxRotation: 0
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawBorder: true,
+                                        drawOnChartArea: true,
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + value.toLocaleString('id-ID');
+                                        },
+                                        padding: 10
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading trend chart data:', error);
+                });
+        }
         function loadPieChart() {
             fetch('{{ route("order.pie-status") }}')
                 .then(response => response.json())
