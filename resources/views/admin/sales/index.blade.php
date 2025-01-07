@@ -41,7 +41,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
+                    <div class="small-box bg-info" id="totalSalesCard" style="cursor: pointer;">
                         <div class="inner">
                             <h4 id="newSalesCount">0</h4>
                             <p>Total Sales</p>
@@ -230,11 +230,106 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="detailSalesModal" tabindex="-1" role="dialog" aria-labelledby="detailSalesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 90%;">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title font-weight-bold">Sales Status Distribution</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Pie Chart Section -->
+                <div class="row mb-4">
+                    <div class="col-lg-7">
+                        <div style="width: 100%; height: 400px;">
+                            <canvas id="salesPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr class="bg-light">
+                                        <th class="font-weight-bold">Status</th>
+                                        <th class="text-right font-weight-bold">Amount (Rp)</th>
+                                        <th class="text-right font-weight-bold">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesDetailTable">
+                                </tbody>
+                                <tfoot>
+                                    <tr class="bg-light font-weight-bold">
+                                        <td>Total</td>
+                                        <td class="text-right" id="totalAmount">0</td>
+                                        <td class="text-right">100%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Line Chart Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="font-weight-bold mb-3">Daily Status Trend</h6>
+                        <div style="width: 100%; height: 400px;">
+                            <canvas id="salesTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+    
+
+@stop
+
+@section('css')
+<style>
+    #salesPieChart {
+        height: 400px !important;
+        width: 100% !important;
+    }
+    .modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table th, .table td {
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+#salesDetailTable td {
+    border-top: 1px solid #dee2e6;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+</style>
 @stop
 
 @section('js')
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script>
         salesTableSelector = $('#salesTable');
         filterDate = $('#filterDates');
@@ -429,6 +524,208 @@
 
             // Show the modal
             $('#detailSpentModal').modal('show');
+        });
+
+        let salesPieChart = null;
+
+        $('#totalSalesCard').click(function() {
+            $('#detailSalesModal').modal('show');
+            
+            // Load both charts
+            loadPieChart();
+            loadTrendChart();
+        });
+
+        function loadTrendChart() {
+    fetch('{{ route("order.daily-trend") }}')
+        .then(response => response.json())
+        .then(chartData => {
+            const ctx = document.getElementById('salesTrendChart').getContext('2d');
+            
+            if (salesTrendChart instanceof Chart) {
+                salesTrendChart.destroy();
+            }
+
+            // Process datasets
+            const processedDatasets = chartData.datasets.map(dataset => ({
+                ...dataset,
+                data: dataset.data.map(point => ({
+                    // Parse the date string properly
+                    x: new Date(point.x.split(' ').join(' ')),
+                    y: parseInt(point.y)
+                })),
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 2,
+                fill: true
+            }));
+            
+            salesTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: processedDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 11
+                                },
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    return new Date(context[0].parsed.x).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    });
+                                },
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    return ` ${context.dataset.label}: Rp ${value.toLocaleString('id-ID')}`;
+                                }
+                            },
+                            padding: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'dd MMM'
+                                }
+                            },
+                            ticks: {
+                                source: 'auto',
+                                autoSkip: true,
+                                maxRotation: 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: true,
+                                drawOnChartArea: true,
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                },
+                                padding: 10
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading trend chart data:', error);
+        });
+}
+        function loadPieChart() {
+            fetch('{{ route("order.pie-status") }}')
+                .then(response => response.json())
+                .then(chartData => {
+                    const ctx = document.getElementById('salesPieChart').getContext('2d');
+                    
+                    if (salesPieChart instanceof Chart) {
+                        salesPieChart.destroy();
+                    }
+                    
+                    salesPieChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: chartData.data.labels,
+                            datasets: [{
+                                data: chartData.data.datasets[0].data,
+                                backgroundColor: chartData.data.datasets[0].backgroundColor,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    align: 'center',
+                                    labels: {
+                                        padding: 15,
+                                        usePointStyle: true,
+                                        font: {
+                                            size: 11
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const value = parseInt(context.raw);
+                                            return ` ${context.label}: Rp ${value.toLocaleString('id-ID')}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Update table...
+                    updateTable(chartData);
+                })
+                .catch(error => {
+                    console.error('Error loading pie chart data:', error);
+                });
+        }
+        function updateTable(chartData) {
+            const tableBody = $('#salesDetailTable');
+            tableBody.empty();
+
+            const { labels, values, percentages } = chartData.rawData;
+            
+            labels.forEach((label, index) => {
+                const amount = parseInt(values[index]);
+                const percentage = percentages[index];
+                const row = `
+                    <tr>
+                        <td>${label}</td>
+                        <td class="text-right">${amount ? amount.toLocaleString('id-ID') : '0'}</td>
+                        <td class="text-right">${percentage.toFixed(2)}%</td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+
+            $('#totalAmount').text(parseInt(chartData.rawData.totalAmount).toLocaleString('id-ID'));
+        }        
+        
+        $('#detailSalesModal').on('hidden.bs.modal', function () {
+            if (salesPieChart instanceof Chart) {
+                salesPieChart.destroy();
+                salesPieChart = null;
+            }
+            if (salesTrendChart instanceof Chart) {
+                salesTrendChart.destroy();
+                salesTrendChart = null;
+            }
         });
 
         $(function () {

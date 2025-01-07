@@ -763,4 +763,145 @@ class OrderController extends Controller
             'processed_rows' => $processedRows
         ]);
     }
+
+    public function getMonthlyOrderStatusDistribution(): JsonResponse
+    {
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
+        $tenantId = Auth::user()->current_tenant_id;
+
+        $orderData = Order::where('tenant_id', $tenantId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->selectRaw('status, SUM(amount) as total_amount')
+            ->groupBy('status')
+            ->get();
+
+        // Calculate total amount for percentage calculation
+        $totalAmount = $orderData->sum('total_amount');
+
+        // Prepare data for ChartJS
+        $labels = [];
+        $data = [];
+        $percentages = [];
+        $backgroundColor = [
+            '#36A2EB',  // blue
+            '#FF6384',  // red
+            '#4BC0C0',  // turquoise
+            '#FF9F40',  // orange
+            '#9966FF',  // purple
+            '#FFCD56',  // yellow
+            '#C9CBCF',  // grey
+            '#7BC8A4'   // green
+        ];
+
+        foreach ($orderData as $index => $order) {
+            $labels[] = ucfirst($order->status);
+            $data[] = $order->total_amount;
+            
+            // Calculate percentage with 2 decimal places
+            $percentage = $totalAmount > 0 
+                ? round(($order->total_amount / $totalAmount) * 100, 2) 
+                : 0;
+            $percentages[] = $percentage;
+        }
+
+        // Format the response for ChartJS
+        $response = [
+            'type' => 'pie',
+            'data' => [
+                'labels' => array_map(function($label, $percentage) {
+                    return "$label ($percentage%)";
+                }, $labels, $percentages),
+                'datasets' => [[
+                    'data' => $data,
+                    'backgroundColor' => array_slice($backgroundColor, 0, count($data)),
+                    'borderWidth' => 1
+                ]]
+            ],
+            'options' => [
+                'plugins' => [
+                    'legend' => [
+                        'position' => 'right'
+                    ],
+                    'tooltip' => [
+                        'callbacks' => [
+                            'label' => '
+                                function(context) {
+                                    var label = context.label || "";
+                                    var value = context.raw || 0;
+                                    return label + ": Rp " + value.toLocaleString("id-ID");
+                                }
+                            '
+                        ]
+                    ]
+                ]
+            ],
+            'rawData' => [
+                'labels' => $labels,
+                'values' => $data,
+                'percentages' => $percentages,
+                'totalAmount' => $totalAmount
+            ]
+        ];
+
+        return response()->json($response);
+    }
+    public function getDailyStatusTrend(): JsonResponse
+    {
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
+        $tenantId = Auth::user()->current_tenant_id;
+
+        $orders = Order::where('tenant_id', $tenantId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->select('date', 'status', DB::raw('SUM(amount) as total_amount'))
+            ->groupBy('date', 'status')
+            ->orderBy('date')
+            ->get();
+
+        // Get unique dates and statuses
+        $dates = $orders->pluck('date')->unique()->sort()->values();
+        $statuses = $orders->pluck('status')->unique()->values();
+
+        // Prepare data structure
+        $datasets = [];
+        $colors = [
+            'cancelled' => '#36A2EB',      // blue
+            'completed' => '#FF6384',      // red
+            'packing' => '#4BC0C0',        // turquoise
+            'paid' => '#FF9F40',          // orange
+            'process' => '#9966FF',       // purple
+            'request_cancel' => '#FFCD56', // yellow
+            'sent' => '#C9CBCF',          // grey
+            'sent_booking' => '#7BC8A4'    // green
+        ];
+
+        // Create dataset for each status
+        foreach ($statuses as $status) {
+            $data = [];
+            foreach ($dates as $date) {
+                $amount = $orders->where('date', $date)
+                            ->where('status', $status)
+                            ->first()->total_amount ?? 0;
+                $data[] = [
+                    'x' => $date,
+                    'y' => $amount
+                ];
+            }
+
+            $datasets[] = [
+                'label' => ucfirst($status),
+                'data' => $data,
+                'borderColor' => $colors[strtolower($status)] ?? '#' . substr(md5($status), 0, 6),
+                'backgroundColor' => ($colors[strtolower($status)] ?? '#' . substr(md5($status), 0, 6)) . '20',
+                'tension' => 0.4,
+                'fill' => true
+            ];
+        }
+
+        return response()->json([
+            'datasets' => $datasets,
+            'dates' => $dates
+        ]);
+    }
 }
