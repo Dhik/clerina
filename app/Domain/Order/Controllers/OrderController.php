@@ -436,7 +436,7 @@ class OrderController extends Controller
         $client = new Client();
         $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
         $headers = [
-            'x-api-key' => 'f5c80067e1da48e0b2b124558f5c533f1fda9fea72aa4a2a866c6a15a1a31ca8'
+            'x-api-key' => '29baec8f417f44c7ac981680fcaee5a070c7ad7320ea439fb5bf28150a1310ad'
         ];
         
         $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
