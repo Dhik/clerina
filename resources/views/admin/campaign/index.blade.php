@@ -51,64 +51,86 @@
                     </div>
                         </div>
                         <div class="card-body">
-                        <div class="row">
-                <!-- Summary Card -->
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h4 id="kpi_total_expense">Loading...</h4>
-                            <p>Total Expense</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-credit-card"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-purple">
-                        <div class="inner">
-                            <h4 id="kpi_total_content">Loading...</h4>
-                            <p>Total Content</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-video"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h4 id="kpi_cpm">Loading...</h4>
-                            <p>CPM</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
-                        <div class="inner">
-                            <h4 id="views">Loading...</h4>
-                            <p>Total Views</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-eye"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-pink">
-                        <div class="inner">
-                            <h4 id="engagement_rate">Loading...</h4>
-                            <p>Average ER</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <div class="row">
+                                <!-- Summary Card -->
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-info">
+                                        <div class="inner">
+                                            <h4 id="kpi_total_expense">Loading...</h4>
+                                            <p>Total Expense</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-credit-card"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-purple">
+                                        <div class="inner">
+                                            <h4 id="kpi_total_content">Loading...</h4>
+                                            <p>Total Content</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-video"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-success">
+                                        <div class="inner">
+                                            <h4 id="kpi_cpm">Loading...</h4>
+                                            <p>CPM</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-danger">
+                                        <div class="inner">
+                                            <h4 id="views">Loading...</h4>
+                                            <p>Total Views</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-eye"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-pink">
+                                        <div class="inner">
+                                            <h4 id="engagement_rate">Loading...</h4>
+                                            <p>Average ER</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-chart-pie"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-teal">
+                                        <div class="inner">
+                                            <h4 id="likes">Loading...</h4>
+                                            <p>Total Likes</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-thumbs-up"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6">
+                                    <div class="small-box bg-maroon">
+                                        <div class="inner">
+                                            <h4 id="comments">Loading...</h4>
+                                            <p>Total Comments</p>
+                                        </div>
+                                        <div class="icon">
+                                            <i class="fas fa-comment"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <table id="campaignTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
                                 <thead>
                                 <tr>
@@ -263,6 +285,8 @@
                 $('#kpi_total_expense').text(response.total_expense);
                 $('#kpi_cpm').text(response.cpm);
                 $('#views').text(response.views);
+                $('#likes').text(response.likes);
+                $('#comments').text(response.comments);
                 $('#kpi_total_content').text(response.total_content);
                 $('#engagement_rate').text(response.engagement_rate);
             },

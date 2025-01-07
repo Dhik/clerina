@@ -159,6 +159,8 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
         $totalExpense = 0;
         $totalContent = 0;
         $totalViews = 0;
+        $totalLikes = 0;
+        $totalComments = 0;
         $totalEngagementRates = 0;
         $validCampaignCount = 0;
 
@@ -166,6 +168,8 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
             $totalExpense += $group->sum('total_expense');
             $totalContent += $group->sum('total_content');
             $totalViews += $group->sum('view');
+            $totalLikes += $group->sum('like');
+            $totalComments += $group->sum('comment');
 
             $groupViews = $group->sum('view');
             if ($groupViews > 0) {  // Only include campaigns with views
@@ -184,6 +188,8 @@ class CampaignBLL extends BaseBLL implements CampaignBLLInterface
             'total_content' => $this->numberFormat($totalContent),
             'cpm' => $this->numberFormat($cpm, 2),
             'views' => $this->numberFormat($totalViews),
+            'likes' => $this->numberFormat($totalLikes),
+            'comments' => $this->numberFormat($totalComments),
             'engagement_rate' => $this->numberFormat($averageEngagementRate, 2) . '%'
         ];
     }
