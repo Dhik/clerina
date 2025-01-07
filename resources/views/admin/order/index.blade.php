@@ -98,14 +98,24 @@
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8 col-sm-12">
-                            <canvas id="turnoverOrderChart" width="800" height="400"></canvas>
+            <div class="row">
+                <div class="col-md-8 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Trend Count Order per Channel</h5>
                         </div>
-                        <div class="col-md-4 col-sm-12">
-                            <canvas id="orderChannelPie" width="800" height="200"></canvas>
+                        <div class="card-body">
+                            <canvas id="dailyOrdersChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Count Order per Channel</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChannelChart" height="300"></canvas>
                         </div>
                     </div>
                 </div>
@@ -181,6 +191,9 @@ td.text-center .channel-logo {
 @stop
 
 @section('js')
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
         $(function () {
             orderTable.draw();
@@ -337,7 +350,98 @@ td.text-center .channel-logo {
             order: [[0, 'desc']]
         });
 
-        // Handle row click event to open modal and fill form
+        function loadDailyOrdersChart() {
+            fetch('{{ route("orders.daily-by-channel") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
+                    
+                    if (window.dailyOrdersChart instanceof Chart) {
+                        window.dailyOrdersChart.destroy();
+                    }
+                    
+                    window.dailyOrdersChart = new Chart(ctx, {
+                        type: 'line',
+                        data: data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    align: 'center',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12
+                                        },
+                                        boxWidth: 8
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Daily Orders by Channel',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            });
+                                        },
+                                        label: function(context) {
+                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        displayFormats: {
+                                            day: 'd MMM'
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawBorder: true,
+                                        drawOnChartArea: true,
+                                    },
+                                    ticks: {
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            return value.toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading daily orders chart:', error));
+        }
+        loadDailyOrdersChart();
+
         orderTable.on('draw.dt', function() {
             const tableBodySelector =  $('#orderTable tbody');
 
@@ -371,6 +475,62 @@ td.text-center .channel-logo {
                 $('#orderUpdateModal').modal('show');
             });
         });
+
+        function loadSalesChannelChart() {
+            fetch('{{ route("orders.by-channel") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('salesChannelChart').getContext('2d');
+                    
+                    if (window.salesChannelChart instanceof Chart) {
+                        window.salesChannelChart.destroy();
+                    }
+                    
+                    window.salesChannelChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    align: 'center',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true,
+                                        font: {
+                                            size: 12
+                                        },
+                                        boxWidth: 15
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Orders by Sales Channel',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value * 100) / total).toFixed(1);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading chart data:', error));
+        }
+
+        loadSalesChannelChart();
 
         function updateRecapCount() {
             $.ajax({

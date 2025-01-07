@@ -31,6 +31,8 @@ Route::prefix('admin')
                 Route::get('/update-status', [OrderController::class, 'fetchUpdateStatus'])->name('order.fetch-status');
                 Route::get('/pie-status', [OrderController::class, 'getMonthlyOrderStatusDistribution'])->name('order.pie-status');
                 Route::get('/daily-trend', [OrderController::class, 'getDailyStatusTrend'])->name('order.daily-trend');
+                Route::get('/by-channel', [OrderController::class, 'getOrdersBySalesChannel'])->name('orders.by-channel');
+                Route::get('/daily-by-channel', [OrderController::class, 'getDailyOrdersByChannel'])->name('orders.daily-by-channel');
                 Route::get('/import_customer', [OrderController::class, 'importOrdersCleora'])->name('order.import_customer');
                 Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
                 Route::get('/export-unique-skus', [OrderController::class, 'exportUniqueSku']);

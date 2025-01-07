@@ -9,6 +9,7 @@ use App\Domain\Order\Exports\UniqueSkuExport;
 use App\Domain\Order\Exports\OrderTemplateExport;
 use App\Domain\Order\Models\Order;
 use App\Domain\Sales\Models\Sales;
+use App\Domain\Sales\Models\SalesChannel;
 use App\Domain\Order\Requests\OrderStoreRequest;
 use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
@@ -904,4 +905,119 @@ class OrderController extends Controller
             'dates' => $dates
         ]);
     }
+
+    public function getOrdersBySalesChannel()
+    {
+        $orderCounts = Order::select('sales_channels.name', DB::raw('COUNT(orders.id) as count'))
+            ->rightJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+            ->groupBy('sales_channels.id', 'sales_channels.name')
+            ->get();
+
+        // Prepare data for Chart.js
+        $labels = $orderCounts->pluck('name')->toArray();
+        $data = $orderCounts->pluck('count')->toArray();
+        
+        // Define colors for each channel
+        $backgroundColors = [
+            'Shopee' => '#EE4D2D',      // Shopee orange
+            'Lazada' => '#0F146D',      // Lazada blue
+            'Tokopedia' => '#42B549',   // Tokopedia green
+            'Tiktok Shop' => '#000000', // TikTok black
+            'Reseller' => '#FF6B6B',    // Coral color
+            'Others' => '#6C757D',      // Gray
+        ];
+
+        // Map colors to channels
+        $colors = $orderCounts->map(function($item) use ($backgroundColors) {
+            return $backgroundColors[$item->name] ?? '#6C757D';
+        })->toArray();
+
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $colors,
+                    'hoverBackgroundColor' => $colors,
+                    'borderWidth' => 0
+                ]
+            ]
+        ]);
+    }
+    public function getDailyOrdersByChannel()
+{
+    // Get start and end date of current month
+    $startDate = Carbon::now()->startOfMonth();
+    $endDate = Carbon::now()->endOfMonth();
+
+    // Define colors for each channel
+    $channelColors = [
+        'Shopee' => '#EE4D2D',
+        'Lazada' => '#0F146D',
+        'Tokopedia' => '#42B549',
+        'Tiktok Shop' => '#000000',
+        'Reseller' => '#FF6B6B',
+        'Others' => '#6C757D',
+    ];
+
+    // Get daily orders for all channels using Eloquent
+    $orderCounts = SalesChannel::select(
+            'sales_channels.name',
+            'orders.date',
+            Order::raw('COUNT(orders.id) as count')
+        )
+        ->leftJoin('orders', function($join) use ($startDate, $endDate) {
+            $join->on('orders.sales_channel_id', '=', 'sales_channels.id')
+                 ->whereNotNull('orders.date')
+                 ->whereBetween('orders.date', [
+                    $startDate->format('Y-m-d'),
+                    $endDate->format('Y-m-d')
+                 ]);
+        })
+        ->groupBy('sales_channels.name', 'orders.date')
+        ->orderBy('orders.date')
+        ->get();
+
+    // Group the results by channel
+    $groupedCounts = $orderCounts->groupBy('name');
+
+    // Prepare datasets
+    $datasets = [];
+    foreach ($groupedCounts as $channelName => $channelData) {
+        $dataset = [
+            'label' => $channelName,
+            'data' => [],
+            'borderColor' => $channelColors[$channelName] ?? '#6C757D',
+            'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
+            'tension' => 0.4,
+            'fill' => true
+        ];
+
+        // Fill in data for all dates
+        for ($date = clone $startDate; $date <= $endDate; $date->addDay()) {
+            $dateStr = $date->format('Y-m-d');
+            
+            // Find the count for this date, default to 0 if not found
+            $dayData = $channelData->first(function($item) use ($dateStr) {
+                return $item->date === $dateStr;
+            });
+            
+            $dataset['data'][] = [
+                'x' => $dateStr,
+                'y' => $dayData ? (int)$dayData->count : 0
+            ];
+        }
+        $datasets[] = $dataset;
+    }
+
+    // Get all dates for x-axis
+    $dates = collect($startDate->daysUntil($endDate))
+        ->map(fn($date) => $date->format('Y-m-d'))
+        ->toArray();
+
+    return response()->json([
+        'datasets' => $datasets,
+        'dates' => $dates
+    ]);
+}
 }
