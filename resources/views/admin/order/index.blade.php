@@ -98,18 +98,18 @@
                     </div>
                 </div>
             </div>
-            <!-- <div class="card">
+            <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 col-sm-12">
+                        <div class="col-md-8 col-sm-12">
                             <canvas id="turnoverOrderChart" width="800" height="400"></canvas>
                         </div>
-                        <div class="col-md-6 col-sm-12">
+                        <div class="col-md-4 col-sm-12">
                             <canvas id="orderChannelPie" width="800" height="200"></canvas>
                         </div>
                     </div>
                 </div>
-            </div> -->
+            </div>
             <div class="card">
                 <div class="card-body">
                     <div class="row">
