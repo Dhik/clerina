@@ -171,6 +171,12 @@ td.text-center .channel-logo {
     margin: 0 auto;
     padding: 2px 0;
 }
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
 </style>
 @stop
 
@@ -287,7 +293,33 @@ td.text-center .channel-logo {
                 {data: 'sku', name: 'sku', sortable: false},
                 {data: 'qtyFormatted', name: 'qty', sortable: false},
                 {data: 'priceFormatted', name:'price'},
-                {data: 'status', name:'status'},
+                {
+                    data: 'status', 
+                    name: 'status',
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            if (!data) return '<span class="btn btn-sm btn-secondary">NULL</span>';
+                            
+                            const statusColors = {
+                                'sent': 'bg-teal',
+                                'completed': 'bg-success',
+                                'cancelled': 'bg-danger',
+                                'request_return': 'bg-warning',
+                                'request_cancel': 'bg-warning',
+                                'sent_booking': 'bg-info',
+                                'packing': 'bg-purple',
+                                'paid': 'bg-primary',
+                                'process': 'bg-info',
+                                'pending': 'bg-secondary'
+                            };
+
+                            const color = statusColors[data.toLowerCase()] || 'bg-secondary';
+                            return `<button class="btn btn-sm ${color}">${data}</button>`;
+                        }
+                        return data;
+                    }
+                },
                 {data: 'is_booking', name:'is_booking'},
                 {data: 'actions', sortable: false}
             ],
