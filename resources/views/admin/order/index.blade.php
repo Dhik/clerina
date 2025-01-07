@@ -231,6 +231,8 @@ td.text-center .channel-logo {
         $('#filterChannel').change(function () {
             orderTable.draw()
             updateRecapCount()
+            loadDailyOrdersChart();
+            loadSalesChannelChart();
         });
 
         $('#filterQty').change(function () {
@@ -254,6 +256,8 @@ td.text-center .channel-logo {
         $('#filterStatus').change(function () {
             orderTable.draw()
             updateRecapCount()
+            loadDailyOrdersChart();
+            loadSalesChannelChart();
         });
 
         // datatable
@@ -351,133 +355,105 @@ td.text-center .channel-logo {
         });
 
         function loadDailyOrdersChart() {
-    fetch('{{ route("orders.daily-by-channel") }}')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
-            
-            if (window.dailyOrdersChart instanceof Chart) {
-                window.dailyOrdersChart.destroy();
-            }
-            
-            window.dailyOrdersChart = new Chart(ctx, {
-                type: 'line',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            align: 'center',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20,
-                                font: {
-                                    size: 12
-                                },
-                                boxWidth: 8
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Daily Orders by Channel',
-                            font: {
-                                size: 14
-                            }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                title: function(context) {
-                                    return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
-                                        day: 'numeric',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    });
-                                },
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                displayFormats: {
-                                    day: 'd MMM'
-                                }
-                            },
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: true,
-                                drawOnChartArea: true,
-                            },
-                            ticks: {
-                                stepSize: 1000,  // Changed from 1 to 1000
-                                callback: function(value) {
-                                    return value.toLocaleString('id-ID');
-                                }
-                            }
-                        }
+            const filterChannel = $('#filterChannel').val();
+            const filterStatus = $('#filterStatus').val();
+
+            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
+                    
+                    if (window.dailyOrdersChart instanceof Chart) {
+                        window.dailyOrdersChart.destroy();
                     }
-                }
-            });
-        })
-        .catch(error => console.error('Error loading daily orders chart:', error));
-}
+                    
+                    window.dailyOrdersChart = new Chart(ctx, {
+                        type: 'line',
+                        data: data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    align: 'center',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12
+                                        },
+                                        boxWidth: 8
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Daily Orders by Channel',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            });
+                                        },
+                                        label: function(context) {
+                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        displayFormats: {
+                                            day: 'd MMM'
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawBorder: true,
+                                        drawOnChartArea: true,
+                                    },
+                                    ticks: {
+                                        stepSize: 1000,  // Changed from 1 to 1000
+                                        callback: function(value) {
+                                            return value.toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading daily orders chart:', error));
+        }
         loadDailyOrdersChart();
 
-        orderTable.on('draw.dt', function() {
-            const tableBodySelector =  $('#orderTable tbody');
-
-            tableBodySelector.on('click', '.updateButton', function() {
-                let rowData = orderTable.row($(this).closest('tr')).data();
-
-                let dateObject = moment(rowData.date, "DD MMM YYYY");
-                let formattedDate = dateObject.format("DD/MM/YYYY");
-
-                if (rowData.sales_channel_id !== null) {
-                    $('#salesChannelIdUpdate').val(rowData.sales_channel_id)
-                }
-
-                $('#dateUpdate').val(formattedDate);
-                $('#idOrderUpdate').val(rowData.id_order);
-                $('#receiptNumberUpdate').val(rowData.receipt_number);
-                $('#shipmentUpdate').val(rowData.shipment);
-                $('#paymentMethodUpdate').val(rowData.payment_method);
-                $('#variantUpdate').val(rowData.variant);
-                $('#customerNameUpdate').val(rowData.customer_name);
-                $('#customerPhoneNumberUpdate').val(rowData.customer_phone_number);
-                $('#productUpdate').val(rowData.product);
-                $('#qtyUpdate').val(rowData.qty);
-                $('#priceUpdate').val(rowData.price);
-                $('#usernameUpdate').val(rowData.username);
-                $('#shippingAddressUpdate').val(rowData.shipping_address);
-                $('#cityUpdate').val(rowData.city);
-                $('#provinceUpdate').val(rowData.province);
-                $('#skuUpdate').val(rowData.sku);
-                $('#orderId').val(rowData.id);
-                $('#orderUpdateModal').modal('show');
-            });
-        });
-
         function loadSalesChannelChart() {
-            fetch('{{ route("orders.by-channel") }}')
+            const filterChannel = $('#filterChannel').val();
+            const filterStatus = $('#filterStatus').val();
+
+            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('salesChannelChart').getContext('2d');
@@ -529,8 +505,43 @@ td.text-center .channel-logo {
                 })
                 .catch(error => console.error('Error loading chart data:', error));
         }
-
         loadSalesChannelChart();
+
+        orderTable.on('draw.dt', function() {
+            const tableBodySelector =  $('#orderTable tbody');
+
+            tableBodySelector.on('click', '.updateButton', function() {
+                let rowData = orderTable.row($(this).closest('tr')).data();
+
+                let dateObject = moment(rowData.date, "DD MMM YYYY");
+                let formattedDate = dateObject.format("DD/MM/YYYY");
+
+                if (rowData.sales_channel_id !== null) {
+                    $('#salesChannelIdUpdate').val(rowData.sales_channel_id)
+                }
+
+                $('#dateUpdate').val(formattedDate);
+                $('#idOrderUpdate').val(rowData.id_order);
+                $('#receiptNumberUpdate').val(rowData.receipt_number);
+                $('#shipmentUpdate').val(rowData.shipment);
+                $('#paymentMethodUpdate').val(rowData.payment_method);
+                $('#variantUpdate').val(rowData.variant);
+                $('#customerNameUpdate').val(rowData.customer_name);
+                $('#customerPhoneNumberUpdate').val(rowData.customer_phone_number);
+                $('#productUpdate').val(rowData.product);
+                $('#qtyUpdate').val(rowData.qty);
+                $('#priceUpdate').val(rowData.price);
+                $('#usernameUpdate').val(rowData.username);
+                $('#shippingAddressUpdate').val(rowData.shipping_address);
+                $('#cityUpdate').val(rowData.city);
+                $('#provinceUpdate').val(rowData.province);
+                $('#skuUpdate').val(rowData.sku);
+                $('#orderId').val(rowData.id);
+                $('#orderUpdateModal').modal('show');
+            });
+        });
+
+        
 
         function updateRecapCount() {
             $.ajax({

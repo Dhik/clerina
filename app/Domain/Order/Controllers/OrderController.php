@@ -906,112 +906,127 @@ class OrderController extends Controller
         ]);
     }
 
-    public function getOrdersBySalesChannel()
-{
-    $orderCounts = Order::select('sales_channels.name', DB::raw('COUNT(orders.id) as count'))
-        ->rightJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
-        ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-        ->groupBy('sales_channels.id', 'sales_channels.name')
-        ->get();
+    public function getOrdersBySalesChannel(Request $request)
+    {
+        $query = Order::select('sales_channels.name', DB::raw('COUNT(orders.id) as count'))
+            ->rightJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id);
 
-    // Prepare data for Chart.js
-    $labels = $orderCounts->pluck('name')->toArray();
-    $data = $orderCounts->pluck('count')->toArray();
-    
-    // Define colors for each channel
-    $backgroundColors = [
-        'Shopee' => '#EE4D2D',
-        'Lazada' => '#0F146D',
-        'Tokopedia' => '#42B549',
-        'Tiktok Shop' => '#000000',
-        'Reseller' => '#FF6B6B',
-        'Others' => '#6C757D',
-    ];
+        // Apply filters
+        if ($request->filterChannel) {
+            $query->where('orders.sales_channel_id', $request->filterChannel);
+        }
+        
+        if ($request->filterStatus) {
+            $query->where('orders.status', $request->filterStatus);
+        }
 
-    // Map colors to channels
-    $colors = $orderCounts->map(function($item) use ($backgroundColors) {
-        return $backgroundColors[$item->name] ?? '#6C757D';
-    })->toArray();
+        $orderCounts = $query->groupBy('sales_channels.id', 'sales_channels.name')
+            ->get();
 
-    return response()->json([
-        'labels' => $labels,
-        'datasets' => [
-            [
-                'data' => $data,
-                'backgroundColor' => $colors,
-                'hoverBackgroundColor' => $colors,
-                'borderWidth' => 0
-            ]
-        ]
-    ]);
-}
-
-public function getDailyOrdersByChannel()
-{
-    $startDate = Carbon::now()->startOfMonth();
-    $endDate = Carbon::now()->endOfMonth();
-
-    $channelColors = [
-        'Shopee' => '#EE4D2D',
-        'Lazada' => '#0F146D',
-        'Tokopedia' => '#42B549',
-        'Tiktok Shop' => '#000000',
-        'Reseller' => '#FF6B6B',
-        'Others' => '#6C757D',
-    ];
-
-    $orderCounts = SalesChannel::select(
-            'sales_channels.name',
-            'orders.date',
-            Order::raw('COUNT(orders.id) as count')
-        )
-        ->leftJoin('orders', function($join) use ($startDate, $endDate) {
-            $join->on('orders.sales_channel_id', '=', 'sales_channels.id')
-                ->whereNotNull('orders.date')
-                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-                ->whereBetween('orders.date', [
-                    $startDate->format('Y-m-d'),
-                    $endDate->format('Y-m-d')
-                ]);
-        })
-        ->groupBy('sales_channels.name', 'orders.date')
-        ->having(Order::raw('COUNT(orders.id)'), '>', 0)  // Only get counts greater than 0
-        ->orderBy('orders.date')
-        ->get();
-
-    $groupedCounts = $orderCounts->groupBy('name');
-
-    $datasets = [];
-    foreach ($groupedCounts as $channelName => $channelData) {
-        $dataset = [
-            'label' => $channelName,
-            'data' => [],
-            'borderColor' => $channelColors[$channelName] ?? '#6C757D',
-            'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
-            'tension' => 0.4,
-            'fill' => true
+        // Rest of the code remains the same...
+        $labels = $orderCounts->pluck('name')->toArray();
+        $data = $orderCounts->pluck('count')->toArray();
+        
+        $backgroundColors = [
+            'Shopee' => '#EE4D2D',
+            'Lazada' => '#0F146D',
+            'Tokopedia' => '#42B549',
+            'Tiktok Shop' => '#000000',
+            'Reseller' => '#FF6B6B',
+            'Others' => '#6C757D',
         ];
 
-        // Only add dates with actual data
-        foreach ($channelData as $data) {
-            $dataset['data'][] = [
-                'x' => $data->date,
-                'y' => (int)$data->count
-            ];
-        }
+        $colors = $orderCounts->map(function($item) use ($backgroundColors) {
+            return $backgroundColors[$item->name] ?? '#6C757D';
+        })->toArray();
 
-        // Only add dataset if it has data
-        if (!empty($dataset['data'])) {
-            $datasets[] = $dataset;
-        }
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => $colors,
+                    'hoverBackgroundColor' => $colors,
+                    'borderWidth' => 0
+                ]
+            ]
+        ]);
     }
 
-    // Get dates that have data
-    $dates = $orderCounts->pluck('date')->unique()->sort()->values()->toArray();
+    public function getDailyOrdersByChannel(Request $request)
+    {
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
 
-    return response()->json([
-        'datasets' => $datasets,
-        'dates' => $dates
-    ]);
-}
+        $channelColors = [
+            'Shopee' => '#EE4D2D',
+            'Lazada' => '#0F146D',
+            'Tokopedia' => '#42B549',
+            'Tiktok Shop' => '#000000',
+            'Reseller' => '#FF6B6B',
+            'Others' => '#6C757D',
+        ];
+
+        $orderCounts = SalesChannel::select(
+                'sales_channels.name',
+                'orders.date',
+                Order::raw('COUNT(orders.id) as count')
+            )
+            ->leftJoin('orders', function($join) use ($startDate, $endDate, $request) {
+                $join->on('orders.sales_channel_id', '=', 'sales_channels.id')
+                    ->whereNotNull('orders.date')
+                    ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                    ->whereBetween('orders.date', [
+                        $startDate->format('Y-m-d'),
+                        $endDate->format('Y-m-d')
+                    ]);
+
+                // Apply filters in the join
+                if ($request->filterChannel) {
+                    $join->where('orders.sales_channel_id', $request->filterChannel);
+                }
+                
+                if ($request->filterStatus) {
+                    $join->where('orders.status', $request->filterStatus);
+                }
+            })
+            ->groupBy('sales_channels.name', 'orders.date')
+            ->having(Order::raw('COUNT(orders.id)'), '>', 0)
+            ->orderBy('orders.date')
+            ->get();
+
+        // Rest of the code remains the same...
+        $groupedCounts = $orderCounts->groupBy('name');
+
+        $datasets = [];
+        foreach ($groupedCounts as $channelName => $channelData) {
+            $dataset = [
+                'label' => $channelName,
+                'data' => [],
+                'borderColor' => $channelColors[$channelName] ?? '#6C757D',
+                'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
+                'tension' => 0.4,
+                'fill' => true
+            ];
+
+            foreach ($channelData as $data) {
+                $dataset['data'][] = [
+                    'x' => $data->date,
+                    'y' => (int)$data->count
+                ];
+            }
+
+            if (!empty($dataset['data'])) {
+                $datasets[] = $dataset;
+            }
+        }
+
+        $dates = $orderCounts->pluck('date')->unique()->sort()->values()->toArray();
+
+        return response()->json([
+            'datasets' => $datasets,
+            'dates' => $dates
+        ]);
+    }
 }
