@@ -46,12 +46,13 @@ class CustomerAnalysisController extends Controller
     public function data(Request $request)
     {
         $query = CustomersAnalysis::query();
-        $lastMonth = now()->subMonth()->format('Y-m');
 
-        // Apply last month filter by default
-        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        // Apply last month filter only if no filters are provided
+        if (!$request->has('month') && !$request->has('produk')) {
+            $lastMonth = now()->subMonth()->format('Y-m');
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        }
 
-        // If month filter is explicitly provided, override the default last month filter
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
@@ -168,13 +169,12 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Get last month's date range
-        $lastMonth = now()->subMonth()->format('Y-m');
+        // Apply last month filter only if no filters are provided
+        if (!$request->has('month') && !$request->has('produk')) {
+            $lastMonth = now()->subMonth()->format('Y-m');
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        }
 
-        // Apply last month filter by default
-        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
-
-        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
@@ -201,13 +201,12 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Get last month's date range
-        $lastMonth = now()->subMonth()->format('Y-m');
+        // Apply last month filter only if no filters are provided
+        if (!$request->has('month') && !$request->has('produk')) {
+            $lastMonth = now()->subMonth()->format('Y-m');
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        }
 
-        // Apply last month filter by default
-        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
-
-        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
@@ -229,13 +228,12 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Get last month's date range
-        $lastMonth = now()->subMonth()->format('Y-m');
-
-        // Apply last month filter by default
-        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        // Apply last month filter only if no filters are provided
+        if (!$request->has('month') && !$request->has('produk')) {
+            $lastMonth = now()->subMonth()->format('Y-m');
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        }
         
-        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
