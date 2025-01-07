@@ -948,11 +948,9 @@ class OrderController extends Controller
 
 public function getDailyOrdersByChannel()
 {
-    // Get start and end date of current month
     $startDate = Carbon::now()->startOfMonth();
     $endDate = Carbon::now()->endOfMonth();
 
-    // Define colors for each channel
     $channelColors = [
         'Shopee' => '#EE4D2D',
         'Lazada' => '#0F146D',
@@ -962,7 +960,6 @@ public function getDailyOrdersByChannel()
         'Others' => '#6C757D',
     ];
 
-    // Get daily orders for all channels using Eloquent
     $orderCounts = SalesChannel::select(
             'sales_channels.name',
             'orders.date',
@@ -971,17 +968,17 @@ public function getDailyOrdersByChannel()
         ->leftJoin('orders', function($join) use ($startDate, $endDate) {
             $join->on('orders.sales_channel_id', '=', 'sales_channels.id')
                 ->whereNotNull('orders.date')
-                ->where('orders.tenant_id', Auth::user()->current_tenant_id)  // Added tenant condition
+                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereBetween('orders.date', [
                     $startDate->format('Y-m-d'),
                     $endDate->format('Y-m-d')
                 ]);
         })
         ->groupBy('sales_channels.name', 'orders.date')
+        ->having(Order::raw('COUNT(orders.id)'), '>', 0)  // Only get counts greater than 0
         ->orderBy('orders.date')
         ->get();
 
-    // Rest of the code remains the same...
     $groupedCounts = $orderCounts->groupBy('name');
 
     $datasets = [];
@@ -995,24 +992,22 @@ public function getDailyOrdersByChannel()
             'fill' => true
         ];
 
-        for ($date = clone $startDate; $date <= $endDate; $date->addDay()) {
-            $dateStr = $date->format('Y-m-d');
-            
-            $dayData = $channelData->first(function($item) use ($dateStr) {
-                return $item->date === $dateStr;
-            });
-            
+        // Only add dates with actual data
+        foreach ($channelData as $data) {
             $dataset['data'][] = [
-                'x' => $dateStr,
-                'y' => $dayData ? (int)$dayData->count : 0
+                'x' => $data->date,
+                'y' => (int)$data->count
             ];
         }
-        $datasets[] = $dataset;
+
+        // Only add dataset if it has data
+        if (!empty($dataset['data'])) {
+            $datasets[] = $dataset;
+        }
     }
 
-    $dates = collect($startDate->daysUntil($endDate))
-        ->map(fn($date) => $date->format('Y-m-d'))
-        ->toArray();
+    // Get dates that have data
+    $dates = $orderCounts->pluck('date')->unique()->sort()->values()->toArray();
 
     return response()->json([
         'datasets' => $datasets,
