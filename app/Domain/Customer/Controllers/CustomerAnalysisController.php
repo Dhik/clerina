@@ -46,7 +46,12 @@ class CustomerAnalysisController extends Controller
     public function data(Request $request)
     {
         $query = CustomersAnalysis::query();
+        $lastMonth = now()->subMonth()->format('Y-m');
 
+        // Apply last month filter by default
+        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+
+        // If month filter is explicitly provided, override the default last month filter
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
@@ -92,24 +97,18 @@ class CustomerAnalysisController extends Controller
                     ';
                 }
             });
-            $dataTable->addColumn('details', function ($row) {
-                return '
-                    <button class="btn btn-light viewButton" 
-                        data-id="' . $row->id . '" 
-                        data-toggle="modal" 
-                        data-target="#viewCustomerModal" 
-                        data-placement="top" title="View">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                ';
-            });
-            // <button class="btn btn-light editButton" 
-            //             data-id="' . $row->id . '" 
-            //             data-toggle="modal" 
-            //             data-target="#editCustomerModal" 
-            //             data-placement="top" title="Edit">
-            //             <i class="fas fa-pencil-alt"></i>
-            //         </button>
+            
+        $dataTable->addColumn('details', function ($row) {
+            return '
+                <button class="btn btn-light viewButton" 
+                    data-id="' . $row->id . '" 
+                    data-toggle="modal" 
+                    data-target="#viewCustomerModal" 
+                    data-placement="top" title="View">
+                    <i class="fas fa-eye"></i>
+                </button>
+            ';
+        });
                 
         return $dataTable->rawColumns(['is_joined', 'details'])->make(true);
     }
@@ -169,10 +168,18 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
+        // Get last month's date range
+        $lastMonth = now()->subMonth()->format('Y-m');
+
+        // Apply last month filter by default
+        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+
+        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+
         if ($request->has('produk') && $request->produk) {
             $produk = $request->produk;
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
@@ -183,20 +190,29 @@ class CustomerAnalysisController extends Controller
                             ->count();
         
         $joinedCount = $query->where('is_joined', 1)
-                          ->select('nama_penerima', 'nomor_telepon')
-                          ->distinct()
-                          ->count();
+                        ->select('nama_penerima', 'nomor_telepon')
+                        ->distinct()
+                        ->count();
 
         return response()->json(['unique_customer_count' => $uniqueCount, 'joined_count' => $joinedCount]);
     }
+
     public function getProductCounts(Request $request)
     {
         $query = CustomersAnalysis::query();
 
+        // Get last month's date range
+        $lastMonth = now()->subMonth()->format('Y-m');
+
+        // Apply last month filter by default
+        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+
+        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+
         if ($request->has('produk') && $request->produk) {
             $produk = $request->produk;
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
@@ -208,14 +224,23 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($data);
     }
+
     public function getDailyUniqueCustomers(Request $request)
     {
         $query = CustomersAnalysis::query();
+
+        // Get last month's date range
+        $lastMonth = now()->subMonth()->format('Y-m');
+
+        // Apply last month filter by default
+        $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         
+        // Override with specific month if provided
         if ($request->has('month') && $request->month) {
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
+
         if ($request->has('produk') && $request->produk) {
             $produk = $request->produk;
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
