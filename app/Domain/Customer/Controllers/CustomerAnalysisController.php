@@ -47,8 +47,7 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Apply last month filter only if no filters are provided
-        if (!$request->has('month') && !$request->has('produk')) {
+        if (!$request->month && !$request->produk) {
             $lastMonth = now()->subMonth()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
@@ -170,7 +169,7 @@ class CustomerAnalysisController extends Controller
         $query = CustomersAnalysis::query();
 
         // Apply last month filter only if no filters are provided
-        if (!$request->has('month') && !$request->has('produk')) {
+        if (!$request->month && !$request->produk) {
             $lastMonth = now()->subMonth()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
@@ -201,8 +200,7 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Apply last month filter only if no filters are provided
-        if (!$request->has('month') && !$request->has('produk')) {
+        if (!$request->month && !$request->produk) {
             $lastMonth = now()->subMonth()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
@@ -228,8 +226,7 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Apply last month filter only if no filters are provided
-        if (!$request->has('month') && !$request->has('produk')) {
+        if (!$request->month && !$request->produk) {
             $lastMonth = now()->subMonth()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
