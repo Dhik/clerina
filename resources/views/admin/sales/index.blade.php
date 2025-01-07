@@ -231,7 +231,7 @@
         </div>
     </div>
     <div class="modal fade" id="detailSalesModal" tabindex="-1" role="dialog" aria-labelledby="detailSalesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document" style="max-width: 90%;">
+    <div class="modal-dialog" role="document" style="max-width: 60%;">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h5 class="modal-title font-weight-bold">Sales Status Distribution</h5>
