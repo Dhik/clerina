@@ -889,7 +889,7 @@
                     }];
 
                     const layout = {
-                        title: 'Daily Net Revenue with Weekly Totals',
+                        title: 'Daily Net Revenue (Omset - Ads Spent)',
                         xaxis: {
                             title: 'Date',
                             tickangle: -45
