@@ -486,7 +486,7 @@ class OrderController extends Controller
                 foreach ($filteredOrders as $orderData) {
                     $orderData['product_summary'] = $this->processSku($orderData['product_summary']);
     
-                    $date = $this->convertToMySQLDateTime($orderData['created_at']);
+                    $date = $this->convertToMySQLDateTime($orderData['order_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
     
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
