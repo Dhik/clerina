@@ -706,13 +706,14 @@ class OrderController extends Controller
             foreach ($chunk as $row) {
                 $orderData = [
                     'id_order'            => $row[0] ?? null,
-                    'product'            => $row[2] ?? null,
-                    'username'            => $row[3] ?? null,
-                    'customer_name'       => $row[4] ?? null, 
-                    'customer_phone_number' => $row[5] ?? null,
-                    'shipping_address'    => $row[6] ?? null,
-                    'city'                => $row[7] ?? null, 
-                    'province'            => $row[8] ?? null,
+                    'product'            => $row[3] ?? null,
+                    'sku'            => $row[2] ?? null,
+                    'username'            => $row[4] ?? null,
+                    'customer_name'       => $row[5] ?? null, 
+                    'customer_phone_number' => $row[6] ?? null,
+                    'shipping_address'    => $row[7] ?? null,
+                    'city'                => $row[8] ?? null, 
+                    'province'            => $row[9] ?? null,
                     'tenant_id'           => $tenant_id,
                 ];
 
@@ -740,6 +741,7 @@ class OrderController extends Controller
                             'provinsi'               => $orderData['province'],
                             'nomor_telepon'          => $orderData['customer_phone_number'],
                             'tenant_id'              => $orderData['tenant_id'],
+                            'sku'              => $orderData['sku'],
                             'sales_channel_id'       => 1,
                             'social_media_id'        => null,
                             'is_joined'              => 0,

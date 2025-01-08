@@ -21,6 +21,7 @@ class CustomersAnalysis extends Model
         'provinsi',
         'nomor_telepon',
         'tenant_id',
+        'sku',
         'sales_channel_id',
         'is_joined',
     ];
