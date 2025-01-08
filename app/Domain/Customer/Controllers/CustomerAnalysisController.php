@@ -216,6 +216,7 @@ class CustomerAnalysisController extends Controller
         }
 
         $data = $query->selectRaw('sku as short_name, COUNT(*) as total_count')
+            ->whereNotNull('sku')
             ->groupBy('short_name')
             ->get();
 
