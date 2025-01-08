@@ -1137,83 +1137,84 @@ class SalesController extends Controller
         return response()->json($chartData);
     }
     public function getWaterfallData()
-{
-    $sales = Sales::selectRaw('
-            date,
-            SUM(turnover) as turnover,
-            SUM(ad_spent_total) as ad_spent_total
-        ')
-        ->whereMonth('date', now()->month)
-        ->whereYear('date', now()->year)
-        ->groupBy('date')
-        ->orderBy('date', 'asc')
-        ->get();
+    {
+        $sales = Sales::selectRaw('
+                date,
+                SUM(turnover) as turnover,
+                SUM(ad_spent_total) as ad_spent_total
+            ')
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
 
-    $response = [];
-    $weeklyTotal = 0;
-    $dayCounter = 0;
-    $weekCounter = 1;
+        $response = [];
+        $weeklyTotal = 0;
+        $dayCounter = 0;
+        $weekCounter = 1;
 
-    foreach ($sales as $index => $sale) {
-        $dayCounter++;
-        $dailyNet = $sale->turnover - $sale->ad_spent_total;
-        $weeklyTotal += $dailyNet;
+        foreach ($sales as $index => $sale) {
+            $dayCounter++;
+            $dailyNet = $sale->turnover - $sale->ad_spent_total;
+            $weeklyTotal += $dailyNet;
 
-        // Add daily data
-        $response[] = [
-            'date' => date('Y-m-d', strtotime($sale->date)),
-            'turnover' => (int)$sale->turnover,
-            'ad_spent' => (int)$sale->ad_spent_total,
-            'net' => $dailyNet
-        ];
-
-        // Add weekly total after every 7 days or at the end
-        if ($dayCounter % 7 === 0 || $index === count($sales) - 1) {
+            // Add daily data
             $response[] = [
-                'date' => "Week {$weekCounter} Total",
-                'turnover' => 0,
-                'ad_spent' => 0,
-                'net' => $weeklyTotal,
-                'is_weekly_total' => true
+                'date' => date('Y-m-d', strtotime($sale->date)),
+                'turnover' => (int)$sale->turnover,
+                'ad_spent' => (int)$sale->ad_spent_total,
+                'net' => $dailyNet
             ];
-            $weeklyTotal = 0;
-            $weekCounter++;
+
+            // Add weekly total after every 7 days or at the end
+            if ($dayCounter % 7 === 0 || $index === count($sales) - 1) {
+                $response[] = [
+                    'date' => "Week {$weekCounter} Total",
+                    'turnover' => 0,
+                    'ad_spent' => 0,
+                    'net' => $weeklyTotal,
+                    'is_weekly_total' => true
+                ];
+                $weeklyTotal = 0;
+                $weekCounter++;
+            }
         }
+
+        return response()->json($response);
     }
 
-    return response()->json($response);
-}
+    public function getMonthlySalesChart()
+    {
+        $currentMonth = now()->startOfMonth();
+        
+        $sales = Sales::select('date', 'turnover')
+            ->whereYear('date', $currentMonth->year)
+            ->whereMonth('date', $currentMonth->month)
+            ->where('tenant_id', 1)
+            ->orderBy('date')
+            ->get();
 
-public function getMonthlySalesChart()
-{
-    $currentMonth = now()->startOfMonth();
-    
-    $sales = Sales::select('date', 'turnover')
-        ->whereYear('date', $currentMonth->year)
-        ->whereMonth('date', $currentMonth->month)
-        ->where('tenant_id', 1)
-        ->orderBy('date')
-        ->get();
+        $labels = [];
+        $turnoverData = [];
 
-    $labels = [];
-    $turnoverData = [];
+        foreach ($sales as $sale) {
+            $labels[] = Carbon::parse($sale->date)->format('d M');
+            $turnoverData[] = $sale->turnover;
+        }
 
-    foreach ($sales as $sale) {
-        $labels[] = Carbon::parse($sale->date)->format('d M');
-        $turnoverData[] = $sale->turnover;
-    }
-
-    return response()->json([
-        'labels' => $labels,
-        'datasets' => [
-            [
-                'label' => 'Turnover',
-                'data' => $turnoverData,
-                'borderColor' => '#4CAF50',
-                'tension' => 0.1,
-                'fill' => false
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Turnover',
+                    'data' => $turnoverData,
+                    'borderColor' => '#4CAF50',
+                    'tension' => 0.1,
+                    'fill' => false
+                ]
             ]
-        ]
-    ]);
-}
+        ]);
+    }
 }
