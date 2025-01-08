@@ -215,7 +215,7 @@ class CustomerAnalysisController extends Controller
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
         }
 
-        $data = $query->selectRaw('SUBSTRING_INDEX(produk, " -", 1) as short_name, COUNT(*) as total_count')
+        $data = $query->selectRaw('sku as short_name, COUNT(*) as total_count')
             ->groupBy('short_name')
             ->get();
 
