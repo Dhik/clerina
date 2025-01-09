@@ -1,88 +1,105 @@
 @extends('adminlte::page')
 
-@section('title', 'Main Reports')
+@section('title', 'Analytics Dashboard')
 
 @section('content_header')
-    <h1>Reports</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Analytics Dashboard</h1>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary">Daily</button>
+            <button type="button" class="btn btn-primary">Monthly</button>
+            <button type="button" class="btn btn-outline-primary">Yearly</button>
+        </div>
+    </div>
 @stop
 
 @section('content')
-    <div class="mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="row">
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="check-circle" class="card-icon"></i>
-                                <p>Completed</p>
-                                <h3 id="completed">Loading...</h3>
-                                <p id="completed_count" style="color: blue;">here</p>
+    <div class="container-fluid">
+        <!-- Summary Cards Row -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body p-0">
+                        <div class="row m-0">
+                            <!-- Status Cards -->
+                            <div class="col-md-2 p-3 border-right">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Completed</p>
+                                        <h3 id="completed" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="check-circle" class="text-success"></i>
+                                </div>
+                                <p id="completed_count" class="text-primary mb-0 small">here</p>
+                            </div>
+
+                            <div class="col-md-2 p-3 border-right">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Sent</p>
+                                        <h3 id="sent" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="send" class="text-info"></i>
+                                </div>
+                                <p id="sent_count" class="text-primary mb-0 small">here</p>
+                            </div>
+
+                            <div class="col-md-2 p-3 border-right">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Cancelled</p>
+                                        <h3 id="cancelled" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="x-circle" class="text-danger"></i>
+                                </div>
+                                <p id="cancelled_count" class="text-primary mb-0 small">here</p>
+                            </div>
+
+                            <div class="col-md-2 p-3 border-right">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Pending</p>
+                                        <h3 id="pending" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="clock" class="text-warning"></i>
+                                </div>
+                                <p id="pending_count" class="text-primary mb-0 small">here</p>
+                            </div>
+
+                            <div class="col-md-2 p-3 border-right">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Sent Booking</p>
+                                        <h3 id="sent_booking" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="book-open" class="text-primary"></i>
+                                </div>
+                                <p id="sent_booking_count" class="text-primary mb-0 small">here</p>
+                            </div>
+
+                            <div class="col-md-2 p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <p class="text-muted mb-0">Process</p>
+                                        <h3 id="process" class="mb-0">Loading...</h3>
+                                    </div>
+                                    <i data-lucide="activity" class="text-info"></i>
+                                </div>
+                                <p id="process_count" class="text-primary mb-0 small">here</p>
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="send" class="card-icon"></i>
-                                <p>Sent</p>
-                                <h3 id="sent">Loading...</h3>
-                                <p id="sent_count" style="color: blue;">here</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="x-circle" class="card-icon"></i>
-                                <p>Cancelled</p>
-                                <h3 id="cancelled">Loading...</h3>
-                                <p id="cancelled_count" style="color: blue;">here</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="clock" class="card-icon"></i>
-                                <p>Pending</p>
-                                <h3 id="pending">Loading...</h3>
-                                <p id="pending_count" style="color: blue;">here</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="book-open" class="card-icon"></i>
-                                <p>Sent Booking</p>
-                                <h3 id="sent_booking">Loading...</h3>
-                                <p id="sent_booking_count" style="color: blue;">here</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <i data-lucide="activity" class="card-icon"></i>
-                                <p>Process</p>
-                                <h3 id="process">Loading...</h3>
-                                <p id="process_count" style="color: blue;">here</p>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
+        </div>
+
+        <!-- Revenue Charts Row -->
+        <div class="row mb-4">
+            <!-- Revenue per Sales Channel -->
             <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Revenue per Sales Channel</h5>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Revenue by Channel</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="donutChart1"></canvas>
@@ -90,10 +107,11 @@
                 </div>
             </div>
 
+            <!-- Monthly Revenue Trend -->
             <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Revenue per Sales per Month</h5>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Monthly Revenue Trend</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="lineChart" height="100"></canvas>
@@ -102,25 +120,25 @@
             </div>
         </div>
 
-        <div class="row mt-4">
-            <!-- Donut Chart Card 1 -->
-            
-
-            <!-- Donut Chart Card 2 -->
+        <!-- Ad Spent Charts Row -->
+        <div class="row">
+            <!-- Ad Spent per Channel -->
             <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Ads Spent per Channel</h5>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Ad Spend by Channel</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="donutChart2"></canvas>
                     </div>
                 </div>
             </div>
+
+            <!-- Monthly Ad Spent Trend -->
             <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Ads Spent per Month</h5>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">Monthly Ad Spend Trend</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="lineChart2" height="100"></canvas>
@@ -128,7 +146,6 @@
                 </div>
             </div>
         </div>
-
         <!-- <div class="row mt-4">
                     <div class="col-md-3">
                         <div class="card">
@@ -198,17 +215,49 @@
 
 @section('css')
     <style>
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,.05);
+            padding: 1rem;
+        }
+
+        .border-right {
+            border-right: 1px solid rgba(0,0,0,.05) !important;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+        }
+
+        [data-lucide] {
+            width: 24px;
+            height: 24px;
+        }
+
         #donutChart1, #donutChart2 {
-            height: 300px !important; /* Force the height to 150px */
+            height: 300px !important;
         }
-        .card-icon {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            color: #3B82F6;
+
+        .btn-group .btn {
+            border-radius: 0.25rem;
+            padding: 0.375rem 1rem;
         }
-        .card-body {
-            position: relative;
+
+        .container-fluid {
+            padding: 0 0.5rem;
         }
     </style>
 @stop
