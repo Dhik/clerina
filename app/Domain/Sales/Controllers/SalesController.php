@@ -1106,6 +1106,7 @@ class SalesController extends Controller
             'Google Ads' => '#4285F4',
             'Snack Video' => '#FFDA00',
             'Meta' => '#4267B2',
+            'Tiktok' => '#000000',
 
         ];
 
