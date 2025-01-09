@@ -1024,12 +1024,14 @@ class SalesController extends Controller
             ->groupBy('sales_channel_id')
             ->get();
         
+        // Get sales channel names, excluding those with null or 'Others'
         $salesChannelNames = SalesChannel::whereNotNull('name')
             ->where('name', '!=', 'Others')
             ->pluck('name', 'id');
+
         $labels = [];
         $data = [];
-        
+
         // Define the custom color mapping based on channel names
         $backgroundColors = [
             'Shopee' => '#EE4D2D', // Shopee orange
@@ -1037,36 +1039,44 @@ class SalesController extends Controller
             'Tokopedia' => '#42B549', // Tokopedia green
             'Tiktok Shop' => '#000000', // Tiktok Shop black
             'Reseller' => '#FF6B6B', // Reseller red
-            'Others' => '#6C757D', // Default gray for others
+            'Others' => '#6C757D',  // Default gray for others
         ];
 
-        // Initialize an array to store the colors corresponding to each sales channel
+        // Array to store the dynamically assigned colors
         $colors = [];
 
-        $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors, &$colors) {
-            // Get the channel name using the sales_channel_id
+        // Loop through each sales channel data
+        $salesChannelData->each(function ($item) use ($salesChannelNames, &$labels, &$data, &$backgroundColors, &$colors) {
+            // Check if the channel name is valid (i.e., not null or 'Others')
             $channelName = $salesChannelNames->get($item->sales_channel_id);
-            
-            // Push the channel name and total amount data
+
+            // Skip if the channel name is null or excluded
+            if ($channelName === null) {
+                return; // Continue to the next iteration
+            }
+
+            // Push the channel name and total amount into the arrays
             $labels[] = $channelName;
             $data[] = $item->total_amount;
 
-            // Assign the corresponding background color from the $backgroundColors map
-            $colors[] = $backgroundColors[$channelName] ?? '#6C757D'; // Fallback color for unknown channels
+            // Assign the color for the channel
+            $colors[] = $backgroundColors[$channelName] ?? '#6C757D'; // Fallback to gray for unknown channels
         });
         
+        // Return the JSON response
         return response()->json([
             'labels' => $labels,
             'datasets' => [
                 [
                     'data' => $data,
-                    'backgroundColor' => $colors, // Use the dynamically created colors array
+                    'backgroundColor' => $colors, // Use the dynamically generated colors
                     'hoverBackgroundColor' => $colors, // Optional: hover effect with same colors
                     'borderWidth' => 0, // Optional: remove borders between segments
                 ]
             ]
         ]);
     }
+
 
 
     public function getTotalAdSpentForDonutChart()
