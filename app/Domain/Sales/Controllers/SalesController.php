@@ -1098,42 +1098,35 @@ class SalesController extends Controller
             ->where('tenant_id', 1)
             ->groupBy('year', 'month', 'sales_channel_id')
             ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc') // Ensure data is ordered by year and month
+            ->orderBy('month', 'asc') 
             ->get();
-        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $salesChannelNames = SalesChannel::where('name', '!=', 'Others')
+            ->pluck('name', 'id');
         $chartData = [
             'labels' => [],
             'datasets' => []
         ];
         $salesChannelsData = [];
-        // Initialize the months in chronological order
         $monthsInOrder = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
-        // Add the months to the labels array in chronological order
         $chartData['labels'] = $monthsInOrder;
-        // Initialize sales channel data for each month
         foreach ($salesData as $data) {
-            // Get the month name from the year and month
             $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
-            $monthIndex = array_search($month, $monthsInOrder);  // Find the index of the month
-            // Initialize data for the sales channel if not already set
+            $monthIndex = array_search($month, $monthsInOrder);  
             if (!isset($salesChannelsData[$data->sales_channel_id])) {
                 $salesChannelsData[$data->sales_channel_id] = [
                     'label' => $salesChannelNames->get($data->sales_channel_id),
-                    'data' => array_fill(0, 12, 0),  // Ensure there are 12 months in data
+                    'data' => array_fill(0, 12, 0),  
                     'fill' => false,
                 ];
             }
-            // Assign the total amount to the corresponding month in the data array
             $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
         }
-        // Add the datasets to the chart data
         foreach ($salesChannelsData as $channelData) {
             $chartData['datasets'][] = $channelData;
         }
-        // Return the chart data as a JSON response
         return response()->json($chartData);
     }
     public function getWaterfallData()
