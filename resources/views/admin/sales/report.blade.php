@@ -305,7 +305,7 @@
                             borderColor: dataset.borderColor,
                             backgroundColor: dataset.backgroundColor,
                             borderWidth: 2,
-                            fill: dataset.fill,
+                            fill: true,
                             tension: dataset.tension
                         }))
                     };
