@@ -1105,6 +1105,7 @@ class SalesController extends Controller
             'Twitter' => '#1DA1F2',    // Twitter Blue
             'Google Ads' => '#4285F4',
             'Snack Video' => '#FFDA00',
+            'Meta' => '#4267B2',
 
         ];
 
