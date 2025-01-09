@@ -1102,11 +1102,10 @@ class SalesController extends Controller
         // Define custom colors for social media and marketplace ads
         $socialMediaColors = [
             'Facebook' => '#4267B2',   // Facebook Blue
-            'Instagram' => '#C13584',  // Instagram Purple
             'Twitter' => '#1DA1F2',    // Twitter Blue
-            'LinkedIn' => '#0077B5',   // LinkedIn Blue
-            'TikTok' => '#000000',     // TikTok Black
-            'YouTube' => '#FF0000'     // YouTube Red
+            'Google Ads' => '#4285F4',
+            'Snack Video' => '#FFDA00',
+
         ];
 
         $marketplaceColors = [
