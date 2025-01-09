@@ -123,8 +123,7 @@
             </div>
         </div>
 
-        <div class="row mt-4">
-                    <!-- KPI card 1 -->
+        <!-- <div class="row mt-4">
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body">
@@ -135,7 +134,6 @@
                         </div>
                     </div>
 
-                    <!-- KPI card 2 -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body">
@@ -146,7 +144,6 @@
                         </div>
                     </div>
 
-                    <!-- KPI card 3 -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body">
@@ -157,7 +154,6 @@
                         </div>
                     </div>
 
-                    <!-- KPI card 4 -->
                     <div class="col-md-3">
                         <div class="card">
                             <div class="card-body">
@@ -167,16 +163,15 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
-        <div class="row">
+        <!-- <div class="row">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
                         <h5>Heatmap Chart (ApexCharts)</h5>
                     </div>
                     <div class="card-body">
-                        <!-- ApexCharts Heatmap -->
                         <div id="heatmapApexChart" style="height: 350px;"></div>
                     </div>
                 </div>
@@ -191,7 +186,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 @stop
 
