@@ -1038,7 +1038,10 @@ class SalesController extends Controller
             'Others' => '#6C757D', // Default gray for others
         ];
 
-        $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors) {
+        // Initialize an array to store the colors corresponding to each sales channel
+        $colors = [];
+
+        $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors, &$colors) {
             // Get the channel name using the sales_channel_id
             $channelName = $salesChannelNames->get($item->sales_channel_id);
             
@@ -1047,7 +1050,7 @@ class SalesController extends Controller
             $data[] = $item->total_amount;
 
             // Assign the corresponding background color from the $backgroundColors map
-            $backgroundColor = $backgroundColors[$channelName] ?? '#6C757D'; // Fallback color for unknown channels
+            $colors[] = $backgroundColors[$channelName] ?? '#6C757D'; // Fallback color for unknown channels
         });
         
         return response()->json([
@@ -1055,11 +1058,14 @@ class SalesController extends Controller
             'datasets' => [
                 [
                     'data' => $data,
-                    'backgroundColor' => $backgroundColors,
+                    'backgroundColor' => $colors, // Use the dynamically created colors array
+                    'hoverBackgroundColor' => $colors, // Optional: hover effect with same colors
+                    'borderWidth' => 0, // Optional: remove borders between segments
                 ]
             ]
         ]);
     }
+
 
     public function getTotalAdSpentForDonutChart()
     {
