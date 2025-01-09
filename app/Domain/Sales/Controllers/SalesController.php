@@ -1342,6 +1342,10 @@ class SalesController extends Controller
             'Others' => '#6C757D'       // Default Gray
         ];
 
+        // Get the current year and month to ensure data is up to date
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+
         // Fetch social media ad spends
         $socialMediaAdSpends = AdSpentSocialMedia::selectRaw('
                 YEAR(date) as year,
@@ -1350,6 +1354,8 @@ class SalesController extends Controller
                 SUM(amount) as total_amount
             ')
             ->where('tenant_id', 1)
+            ->whereYear('date', '<=', $currentYear)  // Ensure we fetch up until this year
+            ->whereMonth('date', '<=', $currentMonth)  // Ensure we fetch data up until this month
             ->groupBy('year', 'month', 'social_media_id')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
@@ -1363,6 +1369,8 @@ class SalesController extends Controller
                 SUM(amount) as total_amount
             ')
             ->where('tenant_id', 1)
+            ->whereYear('date', '<=', $currentYear)  // Ensure we fetch up until this year
+            ->whereMonth('date', '<=', $currentMonth)  // Ensure we fetch data up until this month
             ->groupBy('year', 'month', 'sales_channel_id')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
@@ -1441,5 +1449,6 @@ class SalesController extends Controller
 
         return response()->json($chartData);
     }
+
 
 }
