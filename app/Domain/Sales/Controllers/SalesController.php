@@ -1100,7 +1100,8 @@ class SalesController extends Controller
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc') 
             ->get();
-        $salesChannelNames = SalesChannel::where('name', '!=', 'Others')
+        $salesChannelNames = SalesChannel::whereNotNull('name')
+            ->where('name', '!=', 'Others')
             ->pluck('name', 'id');
         $chartData = [
             'labels' => [],
