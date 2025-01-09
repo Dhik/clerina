@@ -16,59 +16,61 @@
                             <div class="card-body">
                                 <p>Completed</p>
                                 <h3 id="completed">Loading...</h3>
+                                <p id="completed_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 2 - Sent -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Sent</p>
                                 <h3 id="sent">Loading...</h3>
+                                <p id="sent_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 3 - Cancelled -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Cancelled</p>
                                 <h3 id="cancelled">Loading...</h3>
+                                <p id="cancelled_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 4 - Pending -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Pending</p>
                                 <h3 id="pending">Loading...</h3>
+                                <p id="pending_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 5 - Sent Booking -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Sent Booking</p>
                                 <h3 id="sent_booking">Loading...</h3>
+                                <p id="sent_booking_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 6 - Process -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Process</p>
                                 <h3 id="process">Loading...</h3>
+                                <p id="process_count" style="color: blue;">here</p>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
             <div class="col-md-4">
@@ -398,28 +400,40 @@
                 .then(data => {
                     // Initialize an object to hold the values for each status
                     const statusData = {
-                        'cancelled': 0,
-                        'completed': 0,
-                        'process': 0,
-                        'sent': 0,
-                        'sent_booking': 0,
-                        'pending': 0, // Assuming this status will not be present in the response but might be needed
+                        'cancelled': { amount: 0, count: 0 },
+                        'completed': { amount: 0, count: 0 },
+                        'process': { amount: 0, count: 0 },
+                        'sent': { amount: 0, count: 0 },
+                        'sent_booking': { amount: 0, count: 0 },
+                        'pending': { amount: 0, count: 0 }, // Assuming this status will not be present in the response but might be needed
                     };
 
-                    // Loop through the response data and assign total_amount to the respective status
+                    // Loop through the response data and assign total_amount and total_count to the respective status
                     data.forEach(item => {
                         if (statusData.hasOwnProperty(item.status)) {
-                            statusData[item.status] = item.total_amount;
+                            statusData[item.status].amount = item.total_amount;
+                            statusData[item.status].count = item.total_count;
                         }
                     });
 
-                    // Update the values in each card
-                    document.getElementById('completed').textContent = formatNumber(statusData.completed);
-                    document.getElementById('sent').textContent = formatNumber(statusData.sent);
-                    document.getElementById('cancelled').textContent = formatNumber(statusData.cancelled);
-                    document.getElementById('pending').textContent = formatNumber(statusData.pending);
-                    document.getElementById('sent_booking').textContent = formatNumber(statusData.sent_booking);
-                    document.getElementById('process').textContent = formatNumber(statusData.process);
+                    // Update the values in each card for both amount and count
+                    document.getElementById('completed').textContent = formatNumber(statusData.completed.amount);
+                    document.getElementById('completed_count').textContent = `Order Count: ${statusData.completed.count}`;
+                    
+                    document.getElementById('sent').textContent = formatNumber(statusData.sent.amount);
+                    document.getElementById('sent_count').textContent = `Order Count: ${statusData.sent.count}`;
+                    
+                    document.getElementById('cancelled').textContent = formatNumber(statusData.cancelled.amount);
+                    document.getElementById('cancelled_count').textContent = `Order Count: ${statusData.cancelled.count}`;
+                    
+                    document.getElementById('pending').textContent = formatNumber(statusData.pending.amount);
+                    document.getElementById('pending_count').textContent = `Order Count: ${statusData.pending.count}`;
+                    
+                    document.getElementById('sent_booking').textContent = formatNumber(statusData.sent_booking.amount);
+                    document.getElementById('sent_booking_count').textContent = `Order Count: ${statusData.sent_booking.count}`;
+                    
+                    document.getElementById('process').textContent = formatNumber(statusData.process.amount);
+                    document.getElementById('process_count').textContent = `Order Count: ${statusData.process.count}`;
                 })
                 .catch(error => console.error('Error fetching order data:', error));
         }
@@ -432,7 +446,7 @@
         // Call the function to load data
         updateKpiCardValues();
 
-        
+
         // Bar Chart
         const barChartData = {
             labels: ['January', 'February', 'March', 'April', 'May', 'June'],

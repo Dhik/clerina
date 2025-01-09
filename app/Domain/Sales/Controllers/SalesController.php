@@ -1471,21 +1471,34 @@ class SalesController extends Controller
     }
     public function getOrderStatusSummary()
     {
-        // Get the start and end of the current month
         $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
         $endOfMonth = Carbon::now()->endOfMonth()->toDateString();
 
-        // Define the valid statuses we care about
         $validStatuses = ['completed', 'sent', 'cancelled', 'pending', 'sent_booking', 'process'];
 
-        // Fetch the sum of amounts for the given statuses this month
-        $orderStatusSummary = Order::select('status', \DB::raw('SUM(amount) as total_amount'))
-            ->whereBetween('date', [$startOfMonth, $endOfMonth]) // Filter by the current month
-            ->whereIn('status', $validStatuses) // Filter by the valid statuses
-            ->groupBy('status') // Group by the status field
-            ->get();
+        // Get both the total amount and the count of orders for each status
+        $orderStatusSummary = Order::select('status', 
+            \DB::raw('SUM(amount) as total_amount'),
+            \DB::raw('COUNT(id_order) as total_count')
+        )
+        ->whereBetween('date', [$startOfMonth, $endOfMonth])
+        ->whereIn('status', $validStatuses)
+        ->groupBy('status')
+        ->get();
 
-        return response()->json($orderStatusSummary);
+        // Prepare the response format to include both status, total_amount, and total_count
+        $result = $orderStatusSummary->map(function ($item) {
+            return [
+                'status' => $item->status,
+                'total_amount' => $item->total_amount,
+                'total_count' => $item->total_count,
+            ];
+        });
+
+        return response()->json($result);
     }
+
+
+
 
 }
