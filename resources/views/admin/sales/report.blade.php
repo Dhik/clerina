@@ -303,8 +303,10 @@
                             label: dataset.label,
                             data: dataset.data,
                             borderColor: dataset.borderColor,
-                            borderWidth: dataset.borderWidth,
-                            fill: dataset.fill
+                            backgroundColor: dataset.backgroundColor,
+                            borderWidth: 2,
+                            fill: dataset.fill,
+                            tension: dataset.tension
                         }))
                     };
                     const lineChart = document.getElementById(chartElementId).getContext('2d');

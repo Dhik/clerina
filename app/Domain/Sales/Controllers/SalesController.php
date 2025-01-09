@@ -1088,7 +1088,16 @@ class SalesController extends Controller
     }
     public function getTotalAmountPerSalesChannelPerMonth()
     {
-        // Get the sales data grouped by year, month, and sales channel
+        // Define channel colors at the start
+        $channelColors = [
+            'Shopee' => '#EE4D2D',
+            'Lazada' => '#0F146D',
+            'Tokopedia' => '#42B549',
+            'Tiktok Shop' => '#000000',
+            'Reseller' => '#FF6B6B',
+            'Others' => '#6C757D',
+        ];
+
         $salesData = Order::selectRaw('
                 YEAR(date) as year,
                 MONTH(date) as month,
@@ -1101,7 +1110,6 @@ class SalesController extends Controller
             ->orderBy('month', 'asc') 
             ->get();
 
-        // Get sales channel names excluding "Others" and null values
         $salesChannelNames = SalesChannel::whereNotNull('name')
             ->where('name', '!=', 'Others')
             ->pluck('name', 'id');
@@ -1120,14 +1128,12 @@ class SalesController extends Controller
         $chartData['labels'] = $monthsInOrder;
 
         foreach ($salesData as $data) {
-            // Skip if the sales channel is not in our filtered list
             if (!$salesChannelNames->has($data->sales_channel_id)) {
                 continue;
             }
 
             $channelName = $salesChannelNames->get($data->sales_channel_id);
             
-            // Additional check to ensure we skip null labels
             if ($channelName === null) {
                 continue;
             }
@@ -1138,8 +1144,11 @@ class SalesController extends Controller
             if (!isset($salesChannelsData[$data->sales_channel_id])) {
                 $salesChannelsData[$data->sales_channel_id] = [
                     'label' => $channelName,
-                    'data' => array_fill(0, 12, 0),  
+                    'data' => array_fill(0, 12, 0),
                     'fill' => false,
+                    'borderColor' => $channelColors[$channelName] ?? '#6C757D',
+                    'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
+                    'tension' => 0.4
                 ];
             }
 
