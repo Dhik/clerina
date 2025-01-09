@@ -11,64 +11,62 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="row">
-                    <!-- KPI card 1 -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Completed</p>
-                                <h3>27,635</h3>
+                                <h3 id="completed">Loading...</h3>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 2 -->
+                    <!-- KPI card 2 - Sent -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Sent</p>
-                                <h3>27,635</h3>
+                                <h3 id="sent">Loading...</h3>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 3 -->
+                    <!-- KPI card 3 - Cancelled -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Cancelled</p>
-                                <h3>27,635</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <p>Pending</p>
-                                <h3>27,635</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <p>Sent Booking</p>
-                                <h3>27,635</h3>
+                                <h3 id="cancelled">Loading...</h3>
                             </div>
                         </div>
                     </div>
 
-                    <!-- KPI card 4 -->
+                    <!-- KPI card 4 - Pending -->
+                    <div class="col-md-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <p>Pending</p>
+                                <h3 id="pending">Loading...</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI card 5 - Sent Booking -->
+                    <div class="col-md-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <p>Sent Booking</p>
+                                <h3 id="sent_booking">Loading...</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI card 6 - Process -->
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
                                 <p>Process</p>
-                                <h3>27,635</h3>
+                                <h3 id="process">Loading...</h3>
                             </div>
-                            <!-- <div class="card-footer">
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -394,7 +392,47 @@
         renderAdSpentLineChart('lineChart2');
 
 
+        function updateKpiCardValues() {
+            fetch('{{ route('report.kpi-status') }}') // Replace with your actual route
+                .then(response => response.json())
+                .then(data => {
+                    // Initialize an object to hold the values for each status
+                    const statusData = {
+                        'cancelled': 0,
+                        'completed': 0,
+                        'process': 0,
+                        'sent': 0,
+                        'sent_booking': 0,
+                        'pending': 0, // Assuming this status will not be present in the response but might be needed
+                    };
 
+                    // Loop through the response data and assign total_amount to the respective status
+                    data.forEach(item => {
+                        if (statusData.hasOwnProperty(item.status)) {
+                            statusData[item.status] = item.total_amount;
+                        }
+                    });
+
+                    // Update the values in each card
+                    document.getElementById('completed').textContent = formatNumber(statusData.completed);
+                    document.getElementById('sent').textContent = formatNumber(statusData.sent);
+                    document.getElementById('cancelled').textContent = formatNumber(statusData.cancelled);
+                    document.getElementById('pending').textContent = formatNumber(statusData.pending);
+                    document.getElementById('sent_booking').textContent = formatNumber(statusData.sent_booking);
+                    document.getElementById('process').textContent = formatNumber(statusData.process);
+                })
+                .catch(error => console.error('Error fetching order data:', error));
+        }
+
+        // Format number with commas for better readability
+        function formatNumber(number) {
+            return Number(number).toLocaleString(); // Ensure the number is correctly formatted (e.g., 27,635)
+        }
+
+        // Call the function to load data
+        updateKpiCardValues();
+
+        
         // Bar Chart
         const barChartData = {
             labels: ['January', 'February', 'March', 'April', 'May', 'June'],
