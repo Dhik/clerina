@@ -374,7 +374,9 @@
                         datasets: [{
                             label: 'Sales Channel Revenue',
                             data: data.datasets[0].data,
-                            backgroundColor: data.datasets[0].backgroundColor,
+                            backgroundColor: data.datasets[0].backgroundColor,  // Using the passed color mapping
+                            hoverBackgroundColor: data.datasets[0].backgroundColor,  // Optional: color on hover
+                            borderWidth: 0  // Optional: remove border between segments
                         }]
                     };
 
@@ -395,7 +397,9 @@
                 })
                 .catch(error => console.error('Error fetching sales channel data:', error));
         }
+
         renderSalesChannelDonutChart('donutChart1');
+
 
         
         function renderTotalAdSpentDonutChart(chartElementId) {
