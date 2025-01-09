@@ -1023,20 +1023,33 @@ class SalesController extends Controller
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
+        
         $salesChannelNames = SalesChannel::pluck('name', 'id');
         $labels = [];
         $data = [];
+        
+        // Define the custom color mapping based on channel names
         $backgroundColors = [
-            'rgba(75, 192, 192, 1)', 
-            'rgba(255, 159, 64, 1)',  
-            'rgba(153, 102, 255, 1)',
-            'rgba(54, 162, 235, 1)',
+            'Shopee' => '#EE4D2D', // Shopee orange
+            'Lazada' => '#0F146D',  // Lazada blue
+            'Tokopedia' => '#42B549', // Tokopedia green
+            'Tiktok Shop' => '#000000', // Tiktok Shop black
+            'Reseller' => '#FF6B6B', // Reseller red
+            'Others' => '#6C757D', // Default gray for others
         ];
+
         $salesChannelData->each(function ($item, $index) use ($salesChannelNames, &$labels, &$data, &$backgroundColors) {
+            // Get the channel name using the sales_channel_id
             $channelName = $salesChannelNames->get($item->sales_channel_id);
+            
+            // Push the channel name and total amount data
             $labels[] = $channelName;
             $data[] = $item->total_amount;
+
+            // Assign the corresponding background color from the $backgroundColors map
+            $backgroundColor = $backgroundColors[$channelName] ?? '#6C757D'; // Fallback color for unknown channels
         });
+        
         return response()->json([
             'labels' => $labels,
             'datasets' => [
@@ -1047,6 +1060,7 @@ class SalesController extends Controller
             ]
         ]);
     }
+
     public function getTotalAdSpentForDonutChart()
     {
         $socialMediaSpends = AdSpentSocialMedia::where('tenant_id', 1)

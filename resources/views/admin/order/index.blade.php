@@ -541,8 +541,6 @@ td.text-center .channel-logo {
             });
         });
 
-        
-
         function updateRecapCount() {
             $.ajax({
                 url: '{{ route('sales.get-sales-recap') }}',
