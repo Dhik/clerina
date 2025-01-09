@@ -1160,85 +1160,105 @@ class SalesController extends Controller
     }
 
     public function getTotalAmountPerSalesChannelPerMonth()
-    {
-        // Define channel colors at the start
-        $channelColors = [
-            'Shopee' => '#EE4D2D',
-            'Lazada' => '#0F146D',
-            'Tokopedia' => '#42B549',
-            'Tiktok Shop' => '#000000',
-            'Reseller' => '#FF6B6B',
-            'Others' => '#6C757D',
-        ];
+{
+    // Define channel colors at the start
+    $channelColors = [
+        'Shopee' => '#EE4D2D',
+        'Lazada' => '#0F146D',
+        'Tokopedia' => '#42B549',
+        'Tiktok Shop' => '#000000',
+        'Reseller' => '#FF6B6B',
+        'Others' => '#6C757D',
+    ];
 
-        $salesData = Order::selectRaw('
-                YEAR(date) as year,
-                MONTH(date) as month,
-                sales_channel_id,
-                SUM(amount) as total_amount
-            ')
-            ->where('tenant_id', 1)
-            ->groupBy('year', 'month', 'sales_channel_id')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc') 
-            ->get();
+    // Fetch sales data without any filtering for current year/month
+    $salesData = Order::selectRaw('
+            YEAR(date) as year,
+            MONTH(date) as month,
+            sales_channel_id,
+            SUM(amount) as total_amount
+        ')
+        ->where('tenant_id', 1)
+        ->groupBy('year', 'month', 'sales_channel_id')
+        ->orderBy('year', 'asc')
+        ->orderBy('month', 'asc') 
+        ->get();
 
-        $salesChannelNames = SalesChannel::whereNotNull('name')
-            ->where('name', '!=', 'Others')
-            ->pluck('name', 'id');
+    // Fetch sales channel names
+    $salesChannelNames = SalesChannel::whereNotNull('name')
+        ->where('name', '!=', 'Others')
+        ->pluck('name', 'id');
 
-        $chartData = [
-            'labels' => [],
-            'datasets' => []
-        ];
+    // Prepare chart data
+    $chartData = [
+        'labels' => [],
+        'datasets' => []
+    ];
 
-        $salesChannelsData = [];
-        $monthsInOrder = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
+    $salesChannelsData = [];
+    $monthsInOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
 
-        $chartData['labels'] = $monthsInOrder;
+    // Generate labels with month and year (All available months)
+    foreach ($salesData as $data) {
+        $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
+        $monthLabel = "{$month} {$data->year}";
+        if (!in_array($monthLabel, $chartData['labels'])) {
+            $chartData['labels'][] = $monthLabel;
+        }
+    }
 
-        foreach ($salesData as $data) {
-            if (!$salesChannelNames->has($data->sales_channel_id)) {
-                continue;
-            }
+    foreach ($salesData as $data) {
+        if (!$salesChannelNames->has($data->sales_channel_id)) {
+            continue;
+        }
 
-            $channelName = $salesChannelNames->get($data->sales_channel_id);
-            
-            if ($channelName === null) {
-                continue;
-            }
+        $channelName = $salesChannelNames->get($data->sales_channel_id);
+        
+        if ($channelName === null) {
+            continue;
+        }
 
-            $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
-            $monthIndex = array_search($month, $monthsInOrder);  
+        // Get the correct month label (e.g., January 2025)
+        $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
+        $year = $data->year;
+        $monthLabel = "{$month} {$year}";
+        $monthIndex = array_search($monthLabel, $chartData['labels']);  // Find the index based on "Month Year"
 
-            if (!isset($salesChannelsData[$data->sales_channel_id])) {
-                $salesChannelsData[$data->sales_channel_id] = [
-                    'label' => $channelName,
-                    'data' => array_fill(0, 12, 0),
-                    'fill' => false,
-                    'borderColor' => $channelColors[$channelName] ?? '#6C757D',
-                    'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
-                    'tension' => 0.4
-                ];
-            }
+        // Initialize data for each sales channel
+        if (!isset($salesChannelsData[$data->sales_channel_id])) {
+            $salesChannelsData[$data->sales_channel_id] = [
+                'label' => $channelName,
+                'data' => array_fill(0, count($chartData['labels']), 0),
+                'fill' => false,
+                'borderColor' => $channelColors[$channelName] ?? '#6C757D',
+                'backgroundColor' => ($channelColors[$channelName] ?? '#6C757D') . '20',
+                'tension' => 0.4
+            ];
+        }
 
+        // Assign the total amount to the correct month index
+        if ($monthIndex !== false) {
             $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
         }
-
-        // Additional filter to ensure no null labels in final output
-        $salesChannelsData = array_filter($salesChannelsData, function($channelData) {
-            return $channelData['label'] !== null;
-        });
-
-        foreach ($salesChannelsData as $channelData) {
-            $chartData['datasets'][] = $channelData;
-        }
-
-        return response()->json($chartData);
     }
+
+    // Filter out any channels with no valid label
+    $salesChannelsData = array_filter($salesChannelsData, function($channelData) {
+        return $channelData['label'] !== null;
+    });
+
+    // Prepare the final datasets for the chart
+    foreach ($salesChannelsData as $channelData) {
+        $chartData['datasets'][] = $channelData;
+    }
+
+    return response()->json($chartData);
+}
+
+
     public function getWaterfallData()
     {
         $sales = Sales::selectRaw('
