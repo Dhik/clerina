@@ -1381,7 +1381,7 @@ class SalesController extends Controller
         $salesChannelNames = SalesChannel::pluck('name', 'id');
 
         $chartData = [
-            'labels' => [], // Will store the months
+            'labels' => [], // Will store the months and years
             'datasets' => [] // Will store datasets for both social media and marketplace ad spends
         ];
 
@@ -1392,19 +1392,30 @@ class SalesController extends Controller
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
 
-        $chartData['labels'] = $monthsInOrder;
+        // Create labels in the format "Month Year"
+        $chartData['labels'] = [];
+
+        // Create an array to track all the months and years
+        $allMonths = array_merge($marketplaceAdSpends->pluck('year', 'month')->toArray(), $socialMediaAdSpends->pluck('year', 'month')->toArray());
+        $uniqueMonths = array_unique($allMonths);
 
         // Process marketplace ad spends
         foreach ($marketplaceAdSpends as $data) {
             $channelName = $salesChannelNames->get($data->sales_channel_id);
             $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
-            $monthIndex = array_search($month, $monthsInOrder);
+            $monthYear = $month . ' ' . $data->year;
+            $monthIndex = array_search($monthYear, $chartData['labels']);
+            
+            if ($monthIndex === false) {
+                $chartData['labels'][] = $monthYear; // Add to labels if it's a new month-year combination
+                $monthIndex = count($chartData['labels']) - 1;
+            }
 
             // Initialize dataset for this sales channel if not already set
             if (!isset($salesChannelsData[$data->sales_channel_id])) {
                 $salesChannelsData[$data->sales_channel_id] = [
                     'label' => $channelName,
-                    'data' => array_fill(0, 12, 0),
+                    'data' => array_fill(0, count($chartData['labels']), 0),
                     'fill' => false,
                     'borderColor' => $marketplaceColors[$channelName] ?? '#6C757D',
                     'backgroundColor' => ($marketplaceColors[$channelName] ?? '#6C757D') . '20',
@@ -1420,13 +1431,19 @@ class SalesController extends Controller
         foreach ($socialMediaAdSpends as $data) {
             $platformName = $socialMediaNames->get($data->social_media_id);
             $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
-            $monthIndex = array_search($month, $monthsInOrder);
+            $monthYear = $month . ' ' . $data->year;
+            $monthIndex = array_search($monthYear, $chartData['labels']);
+            
+            if ($monthIndex === false) {
+                $chartData['labels'][] = $monthYear; // Add to labels if it's a new month-year combination
+                $monthIndex = count($chartData['labels']) - 1;
+            }
 
             // Initialize dataset for this social media platform if not already set
             if (!isset($socialMediaData[$data->social_media_id])) {
                 $socialMediaData[$data->social_media_id] = [
                     'label' => $platformName,
-                    'data' => array_fill(0, 12, 0),
+                    'data' => array_fill(0, count($chartData['labels']), 0),
                     'fill' => false,
                     'borderColor' => $socialMediaColors[$platformName] ?? '#6C757D',
                     'backgroundColor' => ($socialMediaColors[$platformName] ?? '#6C757D') . '20',
@@ -1449,6 +1466,7 @@ class SalesController extends Controller
 
         return response()->json($chartData);
     }
+
 
 
 }
