@@ -1085,39 +1085,79 @@ class SalesController extends Controller
             ->selectRaw('social_media_id, SUM(amount) as total_amount')
             ->groupBy('social_media_id')
             ->get();
+            
         $marketplaceSpends = AdSpentMarketPlace::where('tenant_id', 1)
             ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
             ->groupBy('sales_channel_id')
             ->get();
+
         $socialMediaNames = SocialMedia::pluck('name', 'id');
         $salesChannelNames = SalesChannel::pluck('name', 'id');
+        
         $labels = [];
         $data = [];
         $backgroundColor = [];
         $borderColor = [];
+
+        // Define custom colors for social media and marketplace ads
+        $socialMediaColors = [
+            'Facebook' => '#4267B2',   // Facebook Blue
+            'Instagram' => '#C13584',  // Instagram Purple
+            'Twitter' => '#1DA1F2',    // Twitter Blue
+            'LinkedIn' => '#0077B5',   // LinkedIn Blue
+            'TikTok' => '#000000',     // TikTok Black
+            'YouTube' => '#FF0000'     // YouTube Red
+        ];
+
+        $marketplaceColors = [
+            'Shopee' => '#EE4D2D',      // Shopee Red
+            'Lazada' => '#0F146D',      // Lazada Blue
+            'Tokopedia' => '#42B549',   // Tokopedia Green
+            'Tiktok Shop' => '#000000', // Tiktok Shop Black
+            'Reseller' => '#FF6B6B',    // Reseller Red
+            'Others' => '#6C757D'       // Default Gray
+        ];
+
+        // Assign colors for social media spends
         foreach ($socialMediaSpends as $spend) {
             $platformName = $socialMediaNames->get($spend->social_media_id);
+            
+            // Add to the chart data
             $labels[] = $platformName;
             $data[] = $spend->total_amount;
-            $backgroundColor[] = 'rgba(75, 192, 192, 0.2)';
+
+            // Set background color based on social media platform
+            $backgroundColor[] = $socialMediaColors[$platformName] ?? '#FF6B6B';  // Default red if platform is not found
         }
+
+        // Assign colors for marketplace spends
         foreach ($marketplaceSpends as $spend) {
             $channelName = $salesChannelNames->get($spend->sales_channel_id);
+            
+            // Add to the chart data
             $labels[] = $channelName;
             $data[] = $spend->total_amount;
-            $backgroundColor[] = 'rgba(153, 102, 255, 0.2)';
+
+            // Set background color based on marketplace
+            $backgroundColor[] = $marketplaceColors[$channelName] ?? '#6C757D';  // Default gray if channel is not found
         }
+
+        // Prepare the chart data
         $donutChartData = [
             'labels' => $labels,
             'datasets' => [
                 [
                     'data' => $data,
-                    'backgroundColor' => $backgroundColor,
+                    'backgroundColor' => $backgroundColor, // Use the dynamically assigned colors
+                    'hoverBackgroundColor' => $backgroundColor, // Optional: hover effect with same colors
+                    'borderWidth' => 0, // Optional: remove borders between segments
                 ]
             ]
         ];
+
         return response()->json($donutChartData);
     }
+
     public function getTotalAmountPerSalesChannelPerMonth()
     {
         // Define channel colors at the start
