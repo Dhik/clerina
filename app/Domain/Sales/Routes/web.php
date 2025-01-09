@@ -72,6 +72,7 @@ Route::prefix('admin')
                 // Report
                 Route::get('/sales-channel-donut-data', [SalesController::class, 'getSalesChannelDonutData'])->name('report.donut1');
                 Route::get('/ads-channel-donut-data', [SalesController::class, 'getTotalAdSpentForDonutChart'])->name('report.donut2');
+                Route::get('/ads-spent-monthly', [SalesController::class, 'getTotalAdSpentPerSalesChannelAndSocialMedia'])->name('report.ads-spent-monthly');
                 Route::get('/sales-channel-monthly', [SalesController::class, 'getTotalAmountPerSalesChannelPerMonth'])->name('report.sales-channel-monthly');
 
                 Route::get('/recap', [SalesController::class, 'getSalesRecap'])->name('sales.get-sales-recap');

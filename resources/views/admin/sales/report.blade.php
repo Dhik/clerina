@@ -9,80 +9,88 @@
 @section('content')
     <div class="mt-4">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="row">
                     <!-- KPI card 1 -->
-                    <div class="col-md-6">
+                    <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
-                                <p>INVOICE</p>
+                                <p>Completed</p>
                                 <h3>27,635</h3>
-                            </div>
-                            <div class="card-footer">
-                                <!-- Progress Bar -->
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: 70%" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- KPI card 2 -->
-                    <div class="col-md-6">
+                    <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
-                                <p>DITERIMA</p>
+                                <p>Sent</p>
                                 <h3>27,635</h3>
-                            </div>
-                            <div class="card-footer">
-                                <!-- Progress Bar -->
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- KPI card 3 -->
-                    <div class="col-md-6">
+                    <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
-                                <p>ON PROCESS</p>
+                                <p>Cancelled</p>
                                 <h3>27,635</h3>
                             </div>
-                            <div class="card-footer">
-                                <!-- Progress Bar -->
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <p>Pending</p>
+                                <h3>27,635</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <p>Sent Booking</p>
+                                <h3>27,635</h3>
                             </div>
                         </div>
                     </div>
 
                     <!-- KPI card 4 -->
-                    <div class="col-md-6">
+                    <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
-                                <p>RETURN</p>
+                                <p>Process</p>
                                 <h3>27,635</h3>
                             </div>
-                            <div class="card-footer">
-                                <!-- Progress Bar -->
+                            <!-- <div class="card-footer">
                                 <div class="progress">
                                     <div class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Revenue per Sales Channel</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="donutChart1"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
                         <h5>Revenue per Sales per Month</h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="lineChart" width="400" height="200"></canvas>
+                        <canvas id="lineChart" height="100"></canvas>
                     </div>
                 </div>
             </div>
@@ -90,25 +98,26 @@
 
         <div class="row mt-4">
             <!-- Donut Chart Card 1 -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Revenue per Sales Channel</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="donutChart1" width="400"></canvas>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- Donut Chart Card 2 -->
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Ads Spent per Channel</h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="donutChart2" width="400"></canvas>
+                        <canvas id="donutChart2"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Ads Spent per Month</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="lineChart2" height="100"></canvas>
                     </div>
                 </div>
             </div>
@@ -189,7 +198,7 @@
 @section('css')
     <style>
         #donutChart1, #donutChart2 {
-            height: 400px !important; /* Force the height to 150px */
+            height: 300px !important; /* Force the height to 150px */
         }
     </style>
 @stop
@@ -337,6 +346,54 @@
         }
         renderSalesChannelLineChart('lineChart');
 
+        function renderAdSpentLineChart(chartElementId) {
+            fetch('{{ route('report.ads-spent-monthly') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const lineChartData = {
+                        labels: data.labels,
+                        datasets: data.datasets.map(dataset => ({
+                            label: dataset.label,
+                            data: dataset.data,
+                            borderColor: dataset.borderColor,
+                            backgroundColor: dataset.backgroundColor,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: dataset.tension
+                        }))
+                    };
+
+                    const lineChart = document.getElementById(chartElementId).getContext('2d');
+
+                    new Chart(lineChart, {
+                        type: 'line',
+                        data: lineChartData,
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + value.toLocaleString();  // Formatting y-axis as currency
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching ad spend data:', error));
+        }
+
+        renderAdSpentLineChart('lineChart2');
+
+
 
         // Bar Chart
         const barChartData = {
@@ -387,6 +444,7 @@
                         data: donutChartData,
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
                                     position: 'right'
@@ -421,6 +479,7 @@
                         data: donutChartData,
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
                                     position: 'right'
