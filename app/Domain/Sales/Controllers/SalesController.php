@@ -1100,34 +1100,61 @@ class SalesController extends Controller
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc') 
             ->get();
+
+        // Get sales channel names excluding "Others" and null values
         $salesChannelNames = SalesChannel::whereNotNull('name')
             ->where('name', '!=', 'Others')
             ->pluck('name', 'id');
+
         $chartData = [
             'labels' => [],
             'datasets' => []
         ];
+
         $salesChannelsData = [];
         $monthsInOrder = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
+
         $chartData['labels'] = $monthsInOrder;
+
         foreach ($salesData as $data) {
+            // Skip if the sales channel is not in our filtered list
+            if (!$salesChannelNames->has($data->sales_channel_id)) {
+                continue;
+            }
+
+            $channelName = $salesChannelNames->get($data->sales_channel_id);
+            
+            // Additional check to ensure we skip null labels
+            if ($channelName === null) {
+                continue;
+            }
+
             $month = date('F', strtotime("{$data->year}-{$data->month}-01"));
             $monthIndex = array_search($month, $monthsInOrder);  
+
             if (!isset($salesChannelsData[$data->sales_channel_id])) {
                 $salesChannelsData[$data->sales_channel_id] = [
-                    'label' => $salesChannelNames->get($data->sales_channel_id),
+                    'label' => $channelName,
                     'data' => array_fill(0, 12, 0),  
                     'fill' => false,
                 ];
             }
+
             $salesChannelsData[$data->sales_channel_id]['data'][$monthIndex] = $data->total_amount;
         }
+
+        // Additional filter to ensure no null labels in final output
+        $salesChannelsData = array_filter($salesChannelsData, function($channelData) {
+            return $channelData['label'] !== null;
+        });
+
         foreach ($salesChannelsData as $channelData) {
             $chartData['datasets'][] = $channelData;
         }
+
         return response()->json($chartData);
     }
     public function getWaterfallData()
