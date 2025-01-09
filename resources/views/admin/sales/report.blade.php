@@ -14,6 +14,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="check-circle" class="card-icon"></i>
                                 <p>Completed</p>
                                 <h3 id="completed">Loading...</h3>
                                 <p id="completed_count" style="color: blue;">here</p>
@@ -24,6 +25,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="send" class="card-icon"></i>
                                 <p>Sent</p>
                                 <h3 id="sent">Loading...</h3>
                                 <p id="sent_count" style="color: blue;">here</p>
@@ -34,6 +36,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="x-circle" class="card-icon"></i>
                                 <p>Cancelled</p>
                                 <h3 id="cancelled">Loading...</h3>
                                 <p id="cancelled_count" style="color: blue;">here</p>
@@ -44,6 +47,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="clock" class="card-icon"></i>
                                 <p>Pending</p>
                                 <h3 id="pending">Loading...</h3>
                                 <p id="pending_count" style="color: blue;">here</p>
@@ -54,6 +58,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="book-open" class="card-icon"></i>
                                 <p>Sent Booking</p>
                                 <h3 id="sent_booking">Loading...</h3>
                                 <p id="sent_booking_count" style="color: blue;">here</p>
@@ -64,6 +69,7 @@
                     <div class="col-md-2">
                         <div class="card">
                             <div class="card-body">
+                                <i data-lucide="activity" class="card-icon"></i>
                                 <p>Process</p>
                                 <h3 id="process">Loading...</h3>
                                 <p id="process_count" style="color: blue;">here</p>
@@ -195,12 +201,25 @@
         #donutChart1, #donutChart2 {
             height: 300px !important; /* Force the height to 150px */
         }
+        .card-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: #3B82F6;
+        }
+        .card-body {
+            position: relative;
+        }
     </style>
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
     <script>
         // Data for the heatmap
         var options = {
