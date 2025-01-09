@@ -1024,7 +1024,9 @@ class SalesController extends Controller
             ->groupBy('sales_channel_id')
             ->get();
         
-        $salesChannelNames = SalesChannel::pluck('name', 'id');
+        $salesChannelNames = SalesChannel::whereNotNull('name')
+            ->where('name', '!=', 'Others')
+            ->pluck('name', 'id');
         $labels = [];
         $data = [];
         
