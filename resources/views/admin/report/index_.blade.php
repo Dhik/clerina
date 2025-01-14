@@ -24,23 +24,56 @@
                 <div class="card-body">
                     <div class="row">
                         @foreach($reports as $report)
-                        <div class="col-md-3 mb-4">
+                        <div class="col-md-4 mb-4">
                             <div class="card h-100">
-                                <img src="{{ $report->thumbnail ? asset('storage/' . $report->thumbnail) : 'https://via.placeholder.com/300x200' }}" 
-                                     class="card-img-top" alt="Report Thumbnail">
+                                <!-- Thumbnail -->
+                                <div class="position-relative">
+                                    <img src="{{ $report->thumbnail ? asset('storage/' . $report->thumbnail) : 'https://via.placeholder.com/400x200' }}"
+                                        class="card-img-top"
+                                        style="height: 300px; object-fit: cover;"
+                                        alt="{{ $report->title }}">
+                                </div>
+                                
                                 <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">{{ $report->title }}</h5>
-                                    <p class="card-text flex-grow-1">{{ $report->description }}</p>
-                                    <div class="mt-auto">
-                                        <a href="{{ route('reports.show', $report->id) }}" 
-                                           class="btn btn-primary">
-                                            View Dashboard
-                                        </a>
-                                        <button class="btn btn-danger delete-report" 
-                                                data-id="{{ $report->id }}"
-                                                data-title="{{ $report->title }}">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                    <!-- Title -->
+                                    <h5 class="card-title mb-3">{{ $report->title }}</h5>
+                                    
+                                    <!-- Type and Month info -->
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <div>
+                                            <small class="text-muted">Type:</small>
+                                            <span class="ml-1">{{ ucfirst($report->type) }}</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted">Month:</small>
+                                            <span class="ml-1">{{ \Carbon\Carbon::parse($report->month)->format('M Y') }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Stats row -->
+                                    <div class="d-flex justify-content-start mt-auto">
+                                        <!-- Action buttons -->
+                                        <div class="ml-auto">
+                                            <a href="{{ route('reports.show', $report->id) }}" 
+                                            class="btn btn-sm btn-primary">
+                                                View
+                                            </a>
+                                            <button class="btn btn-sm btn-success edit-report" 
+                                                    data-id="{{ $report->id }}"
+                                                    data-title="{{ $report->title }}"
+                                                    data-description="{{ $report->description }}"
+                                                    data-type="{{ $report->type }}"
+                                                    data-platform="{{ $report->platform }}"
+                                                    data-month="{{ $report->month }}"
+                                                    data-link="{{ $report->link }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger delete-report" 
+                                                    data-id="{{ $report->id }}"
+                                                    data-title="{{ $report->title }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -125,6 +158,78 @@
             </div>
         </div>
     </div>
+    <!-- Edit Report Modal -->
+<div class="modal fade" id="editReportModal" tabindex="-1" role="dialog" aria-labelledby="editReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editReportForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editReportModalLabel">Edit Report</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_title">Title</label>
+                        <input type="text" class="form-control" id="edit_title" name="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_description">Description</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_thumbnail">Thumbnail</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="edit_thumbnail" name="thumbnail" accept="image/*">
+                            <label class="custom-file-label" for="edit_thumbnail">Choose file</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_type">Type</label>
+                        <select class="form-control" id="edit_type" name="type" required>
+                            <option value="">Select Type</option>
+                            <option value="sales">Sales</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="inventory">Inventory</option>
+                            <option value="financial">Financial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_platform">Platform</label>
+                        <select class="form-control" id="edit_platform" name="platform" required>
+                            <option value="">Select Platform</option>
+                            <option value="shopee">Shopee</option>
+                            <option value="lazada">Lazada</option>
+                            <option value="tokopedia">Tokopedia</option>
+                            <option value="tiktok">Tiktok Shop</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_link">Tableau Embed Code</label>
+                        <textarea class="form-control" id="edit_link" name="link" rows="5" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_month">Month</label>
+                        <input type="month" class="form-control" id="edit_month" name="month" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('js')
@@ -258,6 +363,61 @@ $(document).ready(function() {
                             'error'
                         );
                     }
+                });
+            }
+        });
+    });
+    
+    $('.edit-report').click(function() {
+        const id = $(this).data('id');
+        const title = $(this).data('title');
+        const description = $(this).data('description');
+        const type = $(this).data('type');
+        const platform = $(this).data('platform');
+        const month = $(this).data('month');
+        const link = $(this).data('link');
+        
+        // Set form action
+        $('#editReportForm').attr('action', `/admin/report/${id}`);
+        
+        // Fill form fields
+        $('#edit_title').val(title);
+        $('#edit_description').val(description);
+        $('#edit_type').val(type);
+        $('#edit_platform').val(platform);
+        $('#edit_month').val(month);
+        $('#edit_link').val(link);
+        
+        // Show modal
+        $('#editReportModal').modal('show');
+    });
+    // Handle edit form submission
+    $('#editReportForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Report updated successfully',
+                        icon: 'success'
+                    }).then((result) => {
+                        window.location.reload();
+                    });
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'There was an error updating the report',
+                    icon: 'error'
                 });
             }
         });
