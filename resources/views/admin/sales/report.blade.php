@@ -322,6 +322,40 @@
         let donutChart = null;
         let lineChart = null;
 
+        // Initialize daterangepicker
+        filterDate.daterangepicker({
+            autoUpdateInput: false,
+            alwaysShowCalendars: true,
+            startDate: false,
+            endDate: false,
+            locale: {
+                cancelLabel: 'Clear',
+                format: 'DD/MM/YYYY'
+            },
+            ranges: {
+                'All Time': [moment('2000-01-01'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'This Year': [moment().startOf('year'), moment().endOf('year')],
+                'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')]
+            }
+        });
+
+        filterDate.on('apply.daterangepicker', function(ev, picker) {
+            if (picker.chosenLabel === 'All Time') {
+                $(this).val('');
+            } else {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            }
+            $(this).trigger('change');
+        });
+
+        filterDate.on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            $(this).trigger('change');
+        });
+
         $(document).ready(function() {
             // Initialize Select2
             socialMediaFilter.select2({
@@ -337,26 +371,8 @@
                 closeOnSelect: false,
                 width: '100%'
             });
-
-            // Initialize daterangepicker
-            filterDate.daterangepicker({
-                autoUpdateInput: false,
-                locale: {
-                    cancelLabel: 'Clear',
-                    format: 'DD/MM/YYYY'
-                }
-            });
-
-            filterDate.on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-                $(this).trigger('change');
-            });
-
-            filterDate.on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val('');
-                $(this).trigger('change');
-            });
-
+            filterDate.val('');
+            filterDate.trigger('change');
             // Filter change handlers
             filterDate.change(function() {
                 renderTotalAdSpentDonutChart('donutChart2');
