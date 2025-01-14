@@ -338,12 +338,6 @@ return [
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
-        // [
-        //     'text' => 'Monthly Analysis',
-        //     'url' => 'admin/report',
-        //     'icon' => 'nav-icon far fa-circle text-info',
-        //     'can' => [PermissionEnum::ViewCustomer],
-        // ],
         [
             'text' => 'Report',
             'can' => [
@@ -365,6 +359,12 @@ return [
                 //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
                 //     'icon' => 'nav-icon far fa-circle',
                 // ],
+                [
+                    'text' => 'Dashboard Analysis',
+                    'url' => 'admin/report',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewCustomer],
+                ],
                 [
                     'text' => 'Spent Target',
                     'url' => 'admin/spentTarget',

@@ -19,13 +19,13 @@ Route::prefix('admin')
         Route::prefix('report')
             ->group(function () {
 
-                Route::get('/', [ReportController::class, 'index'])->name('report.index');
-                Route::get('/create', [ReportController::class, 'create'])->name('report.create');
-                Route::get('/get', [ReportController::class, 'data'])->name('report.data');
-                Route::post('/', [ReportController::class, 'store'])->name('report.store');
-                Route::get('/{report}', [ReportController::class, 'show'])->name('report.show');
-                Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('report.edit');
-                Route::put('/{report}', [ReportController::class, 'update'])->name('report.update');
-                Route::delete('{report}', [ReportController::class, 'destroy'])->name('report.destroy');
+                Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+                Route::get('/create', [ReportController::class, 'create'])->name('reports.create');
+                Route::get('/get', [ReportController::class, 'data'])->name('reports.data');
+                Route::post('/', [ReportController::class, 'store'])->name('reports.store');
+                Route::get('/{report}', [ReportController::class, 'show'])->name('reports.show');
+                Route::get('/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
+                Route::put('/{report}', [ReportController::class, 'update'])->name('reports.update');
+                Route::delete('{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
             });
     });

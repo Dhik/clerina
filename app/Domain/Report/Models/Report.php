@@ -11,6 +11,9 @@ class Report extends Model
         'type', 
         'platform', 
         'link', 
-        'month'
+        'month',
+        'thumbnail',
+        'title',
+        'description'
     ];
 }
