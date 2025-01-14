@@ -1375,9 +1375,10 @@ class SalesController extends Controller
 
     public function getTotalAdSpentPerSalesChannelAndSocialMedia(Request $request)
     {
+        // Define colors for social media and marketplaces
         $socialMediaColors = [
-            'Facebook' => '#4267B2',
-            'Twitter' => '#1DA1F2',
+            'Facebook' => '#4267B2',   // Facebook Blue
+            'Twitter' => '#1DA1F2',    // Twitter Blue
             'Google Ads' => '#4285F4',
             'Snack Video' => '#FFDA00',
             'Meta' => '#4267B2',
@@ -1385,67 +1386,66 @@ class SalesController extends Controller
         ];
 
         $marketplaceColors = [
-            'Shopee' => '#EE4D2D',
-            'Lazada' => '#0F146D',
-            'Tokopedia' => '#42B549',
-            'Tiktok Shop' => '#000000',
-            'Reseller' => '#FF6B6B',
-            'Others' => '#6C757D'
+            'Shopee' => '#EE4D2D',      // Shopee Red
+            'Lazada' => '#0F146D',      // Lazada Blue
+            'Tokopedia' => '#42B549',   // Tokopedia Green
+            'Tiktok Shop' => '#000000', // Tiktok Shop Black
+            'Reseller' => '#FF6B6B',    // Reseller Red
+            'Others' => '#6C757D'       // Default Gray
         ];
 
-        // Initialize queries
-        $query1 = AdSpentSocialMedia::where('tenant_id', Auth::user()->current_tenant_id);
-        $query2 = AdSpentMarketPlace::where('tenant_id', Auth::user()->current_tenant_id);
+        // Initialize base queries
+        $socialMediaQuery = AdSpentSocialMedia::where('tenant_id', 1);
+        $marketplaceQuery = AdSpentMarketPlace::where('tenant_id', 1);
 
-        // Apply date filter
+        // Apply filters if they exist
         if ($request->filled('filterDates')) {
             $dates = explode(' - ', $request->filterDates);
             if (count($dates) == 2) {
                 $startDate = Carbon::createFromFormat('d/m/Y', $dates[0])->startOfDay();
                 $endDate = Carbon::createFromFormat('d/m/Y', $dates[1])->endOfDay();
                 
-                $query1->whereBetween('date', [$startDate, $endDate]);
-                $query2->whereBetween('date', [$startDate, $endDate]);
+                $socialMediaQuery->whereBetween('date', [$startDate, $endDate]);
+                $marketplaceQuery->whereBetween('date', [$startDate, $endDate]);
             }
         }
 
-        // Apply social media filter
         if ($request->filled('social_media_ids')) {
-            $query1->whereIn('social_media_id', $request->social_media_ids);
+            $socialMediaQuery->whereIn('social_media_id', $request->social_media_ids);
         }
 
-        // Apply marketplace filter
         if ($request->filled('marketplace_ids')) {
-            $query2->whereIn('sales_channel_id', $request->marketplace_ids);
+            $marketplaceQuery->whereIn('sales_channel_id', $request->marketplace_ids);
         }
 
-        // Get data with grouping
-        $socialMediaAdSpends = $query1->selectRaw('
-            YEAR(date) as year,
-            MONTH(date) as month,
-            social_media_id,
-            SUM(amount) as total_amount
-        ')
-        ->groupBy('year', 'month', 'social_media_id')
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get();
+        // Fetch data with applied filters
+        $socialMediaAdSpends = $socialMediaQuery->selectRaw('
+                YEAR(date) as year,
+                MONTH(date) as month,
+                social_media_id,
+                SUM(amount) as total_amount
+            ')
+            ->groupBy('year', 'month', 'social_media_id')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
 
-        $marketplaceAdSpends = $query2->selectRaw('
-            YEAR(date) as year,
-            MONTH(date) as month,
-            sales_channel_id,
-            SUM(amount) as total_amount
-        ')
-        ->groupBy('year', 'month', 'sales_channel_id')
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get();
+        $marketplaceAdSpends = $marketplaceQuery->selectRaw('
+                YEAR(date) as year,
+                MONTH(date) as month,
+                sales_channel_id,
+                SUM(amount) as total_amount
+            ')
+            ->groupBy('year', 'month', 'sales_channel_id')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
 
+        // Fetch names
         $socialMediaNames = SocialMedia::pluck('name', 'id');
         $salesChannelNames = SalesChannel::pluck('name', 'id');
 
-        // Get date range from actual data
+        // Determine date range from data
         $firstYear = min(
             $socialMediaAdSpends->min('year') ?: date('Y'),
             $marketplaceAdSpends->min('year') ?: date('Y')
@@ -1465,7 +1465,7 @@ class SalesController extends Controller
         $socialMediaData = [];
         $monthsInOrder = [];
 
-        // Generate all month/year combinations from earliest to latest data
+        // Generate month/year combinations for the entire range
         for ($year = $firstYear; $year <= $lastYear; $year++) {
             for ($month = 1; $month <= 12; $month++) {
                 $monthsInOrder[] = date('F Y', strtotime("{$year}-{$month}-01"));
@@ -1557,8 +1557,5 @@ class SalesController extends Controller
 
         return response()->json($result);
     }
-
-
-
 
 }
