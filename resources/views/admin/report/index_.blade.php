@@ -30,7 +30,7 @@
                                 <div class="position-relative">
                                     <img src="{{ $report->thumbnail ? asset('storage/' . $report->thumbnail) : 'https://via.placeholder.com/400x200' }}"
                                         class="card-img-top"
-                                        style="height: 300px; object-fit: cover;"
+                                        style="height: 200px; object-fit: cover;"
                                         alt="{{ $report->title }}">
                                 </div>
                                 
