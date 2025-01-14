@@ -371,18 +371,18 @@ return [
                     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
                     'icon' => 'nav-icon far fa-circle',
                 ],
-                [
-                    'text' => 'Ad Spent Market Place',
-                    'url' => 'admin/ad-spent-market-place',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
-                [
-                    'text' => 'Ad Spent Social Media',
-                    'url' => 'admin/ad-spent-social-media',
-                    'can' => [PermissionEnum::ViewAdSpentSocialMedia],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
+                // [
+                //     'text' => 'Ad Spent Market Place',
+                //     'url' => 'admin/ad-spent-market-place',
+                //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                //     'icon' => 'nav-icon far fa-circle',
+                // ],
+                // [
+                //     'text' => 'Ad Spent Social Media',
+                //     'url' => 'admin/ad-spent-social-media',
+                //     'can' => [PermissionEnum::ViewAdSpentSocialMedia],
+                //     'icon' => 'nav-icon far fa-circle',
+                // ],
                 [
                     'text' => 'Visit',
                     'url' => 'admin/visit',

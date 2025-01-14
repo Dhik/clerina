@@ -119,7 +119,16 @@ class SalesController extends Controller
     public function report(): View|\Illuminate\Foundation\Application|Factory|Application
     {
         $this->authorize('viewAnySales', Sales::class);
-        return view('admin.sales.report');
+        
+        $socialMedia = SocialMedia::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+            
+        $salesChannels = SalesChannel::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.sales.report', compact('socialMedia', 'salesChannels'));
     }
 
     /**
@@ -1079,17 +1088,40 @@ class SalesController extends Controller
 
 
 
-    public function getTotalAdSpentForDonutChart()
+    public function getTotalAdSpentForDonutChart(Request $request)
     {
-        $socialMediaSpends = AdSpentSocialMedia::where('tenant_id', 1)
-            ->selectRaw('social_media_id, SUM(amount) as total_amount')
-            ->groupBy('social_media_id')
-            ->get();
+            $query1 = AdSpentSocialMedia::where('tenant_id', Auth::user()->current_tenant_id);
+            $query2 = AdSpentMarketPlace::where('tenant_id', Auth::user()->current_tenant_id);
             
-        $marketplaceSpends = AdSpentMarketPlace::where('tenant_id', 1)
-            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
-            ->groupBy('sales_channel_id')
-            ->get();
+            // Apply date range filter
+            if ($request->filled('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                if (count($dates) == 2) {
+                    $startDate = Carbon::createFromFormat('d/m/Y', $dates[0])->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', $dates[1])->endOfDay();
+                    
+                    $query1->whereBetween('date', [$startDate, $endDate]);
+                    $query2->whereBetween('date', [$startDate, $endDate]);
+                }
+            }
+            
+            // Apply social media filter
+            if ($request->filled('social_media_ids')) {
+                $query1->whereIn('social_media_id', $request->social_media_ids);
+            }
+            
+            // Apply marketplace filter
+            if ($request->filled('marketplace_ids')) {
+                $query2->whereIn('sales_channel_id', $request->marketplace_ids);
+            }
+            
+            $socialMediaSpends = $query1->selectRaw('social_media_id, SUM(amount) as total_amount')
+                ->groupBy('social_media_id')
+                ->get();
+                
+            $marketplaceSpends = $query2->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+                ->groupBy('sales_channel_id')
+                ->get();
 
         $socialMediaNames = SocialMedia::pluck('name', 'id');
         $salesChannelNames = SalesChannel::pluck('name', 'id');
@@ -1341,76 +1373,91 @@ class SalesController extends Controller
         ]);
     }
 
-    public function getTotalAdSpentPerSalesChannelAndSocialMedia()
+    public function getTotalAdSpentPerSalesChannelAndSocialMedia(Request $request)
     {
-        // Define colors for social media and marketplaces
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+
         $socialMediaColors = [
-            'Facebook' => '#4267B2',   // Facebook Blue
-            'Twitter' => '#1DA1F2',    // Twitter Blue
+            'Facebook' => '#4267B2',
+            'Twitter' => '#1DA1F2',
             'Google Ads' => '#4285F4',
             'Snack Video' => '#FFDA00',
             'Meta' => '#4267B2',
             'Tiktok' => '#000000',
         ];
-
+    
         $marketplaceColors = [
-            'Shopee' => '#EE4D2D',      // Shopee Red
-            'Lazada' => '#0F146D',      // Lazada Blue
-            'Tokopedia' => '#42B549',   // Tokopedia Green
-            'Tiktok Shop' => '#000000', // Tiktok Shop Black
-            'Reseller' => '#FF6B6B',    // Reseller Red
-            'Others' => '#6C757D'       // Default Gray
+            'Shopee' => '#EE4D2D',
+            'Lazada' => '#0F146D',
+            'Tokopedia' => '#42B549',
+            'Tiktok Shop' => '#000000',
+            'Reseller' => '#FF6B6B',
+            'Others' => '#6C757D'
         ];
-
-        // Get the current year and month to ensure data is up to date
-        $currentYear = date('Y');
-        $currentMonth = date('m');
-
-        // Fetch social media ad spends without filtering year/month for testing
-        $socialMediaAdSpends = AdSpentSocialMedia::selectRaw('
-                YEAR(date) as year,
-                MONTH(date) as month,
-                social_media_id,
-                SUM(amount) as total_amount
-            ')
-            ->where('tenant_id', 1)
-            // Remove the filters for now to fetch all data
-            // ->whereYear('date', '<=', $currentYear)  
-            // ->whereMonth('date', '<=', $currentMonth)  
-            ->groupBy('year', 'month', 'social_media_id')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
-
-        // Fetch marketplace ad spends without filtering year/month for testing
-        $marketplaceAdSpends = AdSpentMarketPlace::selectRaw('
-                YEAR(date) as year,
-                MONTH(date) as month,
-                sales_channel_id,
-                SUM(amount) as total_amount
-            ')
-            ->where('tenant_id', 1)
-            // Remove the filters for now to fetch all data
-            // ->whereYear('date', '<=', $currentYear)
-            // ->whereMonth('date', '<=', $currentMonth)
-            ->groupBy('year', 'month', 'sales_channel_id')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
-
-        // Fetch names of social media and sales channels
+    
+        // Initialize queries
+        $query1 = AdSpentSocialMedia::where('tenant_id', 1);
+        $query2 = AdSpentMarketPlace::where('tenant_id', 1);
+    
+        // Apply date filter
+        if ($request->filled('filterDates')) {
+            $dates = explode(' - ', $request->filterDates);
+            if (count($dates) == 2) {
+                $startDate = Carbon::createFromFormat('d/m/Y', $dates[0])->startOfDay();
+                $endDate = Carbon::createFromFormat('d/m/Y', $dates[1])->endOfDay();
+                
+                $query1->whereBetween('date', [$startDate, $endDate]);
+                $query2->whereBetween('date', [$startDate, $endDate]);
+            }
+        }
+    
+        // Apply social media filter
+        if ($request->filled('social_media_ids')) {
+            $query1->whereIn('social_media_id', $request->social_media_ids);
+        }
+    
+        // Apply marketplace filter
+        if ($request->filled('marketplace_ids')) {
+            $query2->whereIn('sales_channel_id', $request->marketplace_ids);
+        }
+    
+        // Get data with grouping
+        $socialMediaAdSpends = $query1->selectRaw('
+            YEAR(date) as year,
+            MONTH(date) as month,
+            social_media_id,
+            SUM(amount) as total_amount
+        ')
+        ->groupBy('year', 'month', 'social_media_id')
+        ->orderBy('year', 'asc')
+        ->orderBy('month', 'asc')
+        ->get();
+    
+        $marketplaceAdSpends = $query2->selectRaw('
+            YEAR(date) as year,
+            MONTH(date) as month,
+            sales_channel_id,
+            SUM(amount) as total_amount
+        ')
+        ->groupBy('year', 'month', 'sales_channel_id')
+        ->orderBy('year', 'asc')
+        ->orderBy('month', 'asc')
+        ->get();
+    
+        // Rest of your existing code for preparing chart data...
         $socialMediaNames = SocialMedia::pluck('name', 'id');
         $salesChannelNames = SalesChannel::pluck('name', 'id');
-
-        // Determine the range of months for the x-axis (from the earliest data point to the current month)
+    
+        // Get date range for chart
         $firstYear = min(
-            $socialMediaAdSpends->min('year'),
-            $marketplaceAdSpends->min('year')
+            $socialMediaAdSpends->min('year') ?: date('Y'),
+            $marketplaceAdSpends->min('year') ?: date('Y')
         );
         
         $firstMonth = min(
-            $socialMediaAdSpends->min('month'),
-            $marketplaceAdSpends->min('month')
+            $socialMediaAdSpends->min('month') ?: 1,
+            $marketplaceAdSpends->min('month') ?: 1
         );
         
         $chartData = [

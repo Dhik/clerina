@@ -122,6 +122,49 @@
 
         <!-- Ad Spent Charts Row -->
         <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="row">
+                                    <!-- Date Range Filter -->
+                                    <div class="col-auto">
+                                        <input type="text" class="form-control rangeDate" id="filterDates" 
+                                            placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
+                                    </div>
+                                    
+                                    <!-- Multiple Select Filters -->
+                                    <div class="col-md-3">
+                                        <select class="form-select select2-multiple" id="socialMediaFilter" multiple="multiple">
+                                            <option value="">{{ trans('labels.all') }}</option>
+                                            @foreach($socialMedia as $platform)
+                                                <option value="{{ $platform->id }}">{{ $platform->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <select class="form-select select2-multiple" id="marketplaceFilter" multiple="multiple">
+                                            <option value="">{{ trans('labels.all') }}</option>
+                                            @foreach($salesChannels as $salesChannel)
+                                                <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Reset Button -->
+                                    <div class="col-auto">
+                                        <button class="btn btn-secondary" id="resetFilterBtn">
+                                            {{ trans('buttons.reset_filter') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Ad Spent per Channel -->
             <div class="col-md-4">
                 <div class="card shadow-sm">
@@ -214,6 +257,7 @@
 @stop
 
 @section('css')
+    
     <style>
         .card {
             border: none;
@@ -266,10 +310,210 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         lucide.createIcons();
     </script>
     <script>
+        const filterDate = $('#filterDates');
+        const socialMediaFilter = $('#socialMediaFilter');
+        const marketplaceFilter = $('#marketplaceFilter');
+        let donutChart = null;
+        let lineChart = null;
+
+        $(document).ready(function() {
+            // Initialize Select2
+            socialMediaFilter.select2({
+                placeholder: "Select Social Media",
+                allowClear: true,
+                closeOnSelect: false,
+                width: '100%'
+            });
+
+            marketplaceFilter.select2({
+                placeholder: "Select Marketplaces",
+                allowClear: true,
+                closeOnSelect: false,
+                width: '100%'
+            });
+
+            // Initialize daterangepicker
+            filterDate.daterangepicker({
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear',
+                    format: 'DD/MM/YYYY'
+                }
+            });
+
+            filterDate.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                $(this).trigger('change');
+            });
+
+            filterDate.on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                $(this).trigger('change');
+            });
+
+            // Filter change handlers
+            filterDate.change(function() {
+                renderTotalAdSpentDonutChart('donutChart2');
+                renderAdSpentLineChart('lineChart2');
+            });
+
+            socialMediaFilter.change(function() {
+                renderTotalAdSpentDonutChart('donutChart2');
+                renderAdSpentLineChart('lineChart2');
+            });
+
+            marketplaceFilter.change(function() {
+                renderTotalAdSpentDonutChart('donutChart2');
+                renderAdSpentLineChart('lineChart2');
+            });
+
+            // Reset filter handler
+            $('#resetFilterBtn').click(function() {
+                filterDate.val('');
+                socialMediaFilter.val(null).trigger('change');
+                marketplaceFilter.val(null).trigger('change');
+                renderTotalAdSpentDonutChart('donutChart2');
+                renderAdSpentLineChart('lineChart2');
+            });
+
+            function renderTotalAdSpentDonutChart(chartElementId) {
+                const params = new URLSearchParams();
+                
+                // Add date filter if exists
+                if (filterDate.val()) {
+                    params.append('filterDates', filterDate.val());
+                }
+                
+                // Add social media filter if exists
+                const socialMediaIds = socialMediaFilter.val();
+                if (socialMediaIds && socialMediaIds.length) {
+                    socialMediaIds.forEach(id => params.append('social_media_ids[]', id));
+                }
+
+                // Add marketplace filter if exists
+                const marketplaceIds = marketplaceFilter.val();
+                if (marketplaceIds && marketplaceIds.length) {
+                    marketplaceIds.forEach(id => params.append('marketplace_ids[]', id));
+                }
+
+                // Fetch filtered data
+                fetch(`{{ route('report.donut2') }}?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const donutChartData = {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Total Ad Spend',
+                                data: data.datasets[0].data,
+                                backgroundColor: data.datasets[0].backgroundColor,
+                            }]
+                        };
+
+                        // Destroy existing chart if it exists
+                        if (donutChart) {
+                            donutChart.destroy();
+                        }
+
+                        // Create new chart
+                        const ctx = document.getElementById(chartElementId).getContext('2d');
+                        donutChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: donutChartData,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'right'
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error fetching ad spend data:', error));
+            }
+
+            // Initial render
+            renderTotalAdSpentDonutChart('donutChart2');
+
+            function renderAdSpentLineChart(chartElementId) {
+                const params = new URLSearchParams();
+                
+                // Add date filter if exists
+                if (filterDate.val()) {
+                    params.append('filterDates', filterDate.val());
+                }
+                
+                // Add social media filter if exists
+                const socialMediaIds = socialMediaFilter.val();
+                if (socialMediaIds && socialMediaIds.length) {
+                    socialMediaIds.forEach(id => params.append('social_media_ids[]', id));
+                }
+
+                // Add marketplace filter if exists
+                const marketplaceIds = marketplaceFilter.val();
+                if (marketplaceIds && marketplaceIds.length) {
+                    marketplaceIds.forEach(id => params.append('marketplace_ids[]', id));
+                }
+
+                // Fetch filtered data
+                fetch(`{{ route('report.ads-spent-monthly') }}?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const lineChartData = {
+                            labels: data.labels,
+                            datasets: data.datasets.map(dataset => ({
+                                label: dataset.label,
+                                data: dataset.data,
+                                borderColor: dataset.borderColor,
+                                backgroundColor: dataset.backgroundColor,
+                                borderWidth: 2,
+                                fill: true,
+                                tension: dataset.tension
+                            }))
+                        };
+
+                        // Destroy existing chart if it exists
+                        if (lineChart) {
+                            lineChart.destroy();
+                        }
+
+                        // Create new chart
+                        const ctx = document.getElementById(chartElementId).getContext('2d');
+                        lineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: lineChartData,
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback: function(value) {
+                                                return 'Rp ' + value.toLocaleString();
+                                            }
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error fetching ad spend data:', error));
+            }
+
+            renderAdSpentLineChart('lineChart2');
+        });
         // Data for the heatmap
         var options = {
             chart: {
@@ -409,53 +653,6 @@
         }
         renderSalesChannelLineChart('lineChart');
 
-        function renderAdSpentLineChart(chartElementId) {
-            fetch('{{ route('report.ads-spent-monthly') }}')
-                .then(response => response.json())
-                .then(data => {
-                    const lineChartData = {
-                        labels: data.labels,
-                        datasets: data.datasets.map(dataset => ({
-                            label: dataset.label,
-                            data: dataset.data,
-                            borderColor: dataset.borderColor,
-                            backgroundColor: dataset.backgroundColor,
-                            borderWidth: 2,
-                            fill: true,
-                            tension: dataset.tension
-                        }))
-                    };
-
-                    const lineChart = document.getElementById(chartElementId).getContext('2d');
-
-                    new Chart(lineChart, {
-                        type: 'line',
-                        data: lineChartData,
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Rp ' + value.toLocaleString();  // Formatting y-axis as currency
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top'
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error fetching ad spend data:', error));
-        }
-
-        renderAdSpentLineChart('lineChart2');
-
 
         function updateKpiCardValues() {
             fetch('{{ route('report.kpi-status') }}') // Replace with your actual route
@@ -575,36 +772,5 @@
 
 
         
-        function renderTotalAdSpentDonutChart(chartElementId) {
-            fetch('{{ route('report.donut2') }}')
-                .then(response => response.json())
-                .then(data => {
-                    const donutChartData = {
-                        labels: data.labels, 
-                        datasets: [{
-                            label: 'Total Ad Spend', 
-                            data: data.datasets[0].data, 
-                            backgroundColor: data.datasets[0].backgroundColor,
-                        }]
-                    };
-
-                    const donutChart = document.getElementById(chartElementId).getContext('2d');
-                    new Chart(donutChart, {
-                        type: 'doughnut',
-                        data: donutChartData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right'
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error fetching ad spend data:', error));
-        }
-        renderTotalAdSpentDonutChart('donutChart2');
     </script>
 @stop
