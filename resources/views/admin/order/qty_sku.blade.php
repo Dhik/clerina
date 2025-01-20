@@ -15,7 +15,7 @@
                 <div class="col-md-3">
                     <input type="date" id="dateFilter" class="form-control" value="{{ date('Y-m-d') }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button id="filterButton" class="btn btn-primary">Filter</button>
                 </div>
                 <div class="col-md-2">
