@@ -165,7 +165,7 @@
                 });
 
                 let newDate = $('#dateFilter').val();
-                let exportUrl = "{{ route('order.sku_qty.export') }}?date=" + newDate;
+                let exportUrl = "{{ route('order.sku_qty_export') }}?date=" + newDate;
                 $('#exportButton').attr('href', exportUrl);
             });
         });
