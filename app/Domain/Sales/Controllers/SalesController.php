@@ -1418,7 +1418,6 @@ class SalesController extends Controller
             $dailyNet = $sale->turnover - $sale->ad_spent_total - $dailyHPP;
             $weeklyTotal += $dailyNet;
 
-            // Add daily data
             $response[] = [
                 'date' => date('Y-m-d', strtotime($sale->date)),
                 'turnover' => (int)$sale->turnover,
@@ -1427,7 +1426,6 @@ class SalesController extends Controller
                 'net' => $dailyNet
             ];
 
-            // Add weekly total after every 7 days or at the end
             if ($dayCounter % 7 === 0 || $index === count($sales) - 1) {
                 $response[] = [
                     'date' => "Week {$weekCounter} Total",

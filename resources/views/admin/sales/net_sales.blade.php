@@ -750,10 +750,10 @@
                 .then(salesData => {
                     const chartData = salesData.map(day => ({
                         x: day.date,
-                        y: day.is_weekly_total ? day.net : (day.turnover - day.ad_spent),
+                        y: day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp),
                         measure: day.is_weekly_total ? 'total' : 'relative',
-                        text: ((day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)) >= 0 ? '+' : '') + 
-                            (day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)).toLocaleString(),
+                        text: ((day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp)) >= 0 ? '+' : '') + 
+                            (day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp)).toLocaleString(),
                         textposition: 'outside'
                     }));
 
