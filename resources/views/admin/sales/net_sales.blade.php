@@ -745,7 +745,7 @@
             });
         });
         function renderWaterfallChart() {
-            fetch('{{ route('sales.waterfall-data') }}')
+            fetch('{{ route('sales.waterfall-data-2') }}')
                 .then(response => response.json())
                 .then(salesData => {
                     const chartData = salesData.map(day => ({
