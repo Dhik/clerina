@@ -18,6 +18,7 @@ class Product extends Model
         'harga_cogs',
         'harga_batas_bawah',
         'tenant_id',
+        'harga_satuan',
     ];
     public function orders() 
     {

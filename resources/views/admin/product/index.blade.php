@@ -337,6 +337,7 @@
                         $('#edit_sku').val(response.product.sku);
                         $('#edit_harga_jual').val(response.product.harga_jual);
                         $('#edit_harga_markup').val(response.product.harga_markup);
+                        $('#edit_harga_satuan').val(response.product.harga_satuan);
                         $('#edit_harga_cogs').val(response.product.harga_cogs);
                         $('#edit_harga_batas_bawah').val(response.product.harga_batas_bawah);
                         $('#editProductModal').modal('show');

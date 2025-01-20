@@ -115,6 +115,15 @@ class SalesController extends Controller
 
         return view('admin.sales.index', compact('salesChannels', 'socialMedia'));
     }
+    public function net_sales(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        $this->authorize('viewAnySales', Sales::class);
+
+        $salesChannels = $this->salesChannelBLL->getSalesChannel();
+        $socialMedia = $this->socialMediaBLL->getSocialMedia();
+
+        return view('admin.sales.net_sales', compact('salesChannels', 'socialMedia'));
+    }
 
     public function report(): View|\Illuminate\Foundation\Application|Factory|Application
     {

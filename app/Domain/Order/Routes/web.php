@@ -33,6 +33,7 @@ Route::prefix('admin')
                 Route::get('/daily-trend', [OrderController::class, 'getDailyStatusTrend'])->name('order.daily-trend');
                 Route::get('/sku_qty', [OrderController::class, 'getSkuQuantities'])->name('order.sku_qty');
                 Route::get('/sku_detail', [OrderController::class, 'getSkuDetail'])->name('order.sku_detail');
+                Route::get('/hpp', [OrderController::class, 'getHPP'])->name('order.hpp');
                 Route::get('/sku_qty/export', [OrderController::class, 'exportSkuQuantities'])->name('order.sku_qty_export');
                 Route::get('/sku_detail_qty', [OrderController::class, 'skuQuantities'])->name('order.sku_detail_qty');
                 Route::get('/by-channel', [OrderController::class, 'getOrdersBySalesChannel'])->name('orders.by-channel');

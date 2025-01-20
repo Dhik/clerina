@@ -1128,4 +1128,59 @@ class OrderController extends Controller
 
         return response()->json(['data' => $detailedOrders]);
     }
+
+    public function getHPP(Request $request)
+    {
+        $date = $request->input('date', today()->format('Y-m-d'));
+        $skuCounts = [];
+        
+        DB::table('orders')
+            ->select('sku')
+            ->whereDate('date', $date)
+            ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+            ->orderBy('id')
+            ->chunk(1000, function($orders) use (&$skuCounts) {
+                foreach ($orders as $order) {
+                    $skuItems = explode(',', $order->sku);
+                    
+                    foreach ($skuItems as $item) {
+                        $item = trim($item);
+                        
+                        if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
+                            $quantity = (int)$matches[1];
+                            $skuCode = trim($matches[2]);
+                        } else {
+                            $quantity = 1;
+                            $skuCode = trim($item);
+                        }
+                        
+                        if (!isset($skuCounts[$skuCode])) {
+                            $skuCounts[$skuCode] = 0;
+                        }
+                        $skuCounts[$skuCode] += $quantity;
+                    }
+                }
+            });
+
+        arsort($skuCounts);
+        
+        $data = [];
+        foreach ($skuCounts as $sku => $quantity) {
+            $product = DB::table('products')
+                ->select('harga_satuan')
+                ->where('sku', $sku)
+                ->first();
+                
+            $harga_satuan = $product ? $product->harga_satuan : null;
+            $hpp = $harga_satuan ? $harga_satuan * $quantity : 0;
+            
+            $data[] = [
+                "sku" => $sku,
+                "quantity" => $quantity,
+                "hpp" => $hpp
+            ];
+        }
+        
+        return response()->json(['data' => $data]);
+    }
 }

@@ -36,6 +36,10 @@
                             <input type="text" id="edit_harga_cogs" name="harga_cogs" class="form-control">
                         </div>
                         <div class="form-group">
+                            <label for="edit_harga_satuan">Harga Satuan</label>
+                            <input type="text" id="edit_harga_satuan" name="harga_satuan" class="form-control">
+                        </div>
+                        <div class="form-group">
                             <label for="edit_harga_batas_bawah">Harga Batas Bawah</label>
                             <input type="text" id="edit_harga_batas_bawah" name="harga_batas_bawah" class="form-control">
                         </div>
