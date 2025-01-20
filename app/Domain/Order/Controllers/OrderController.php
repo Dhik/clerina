@@ -1036,11 +1036,9 @@ class OrderController extends Controller
     {
         $skuCounts = [];
         
-        // Add where clause for today's date
         DB::table('orders')
             ->select('sku')
             ->whereDate('date', today())
-            ->where('tenant_id', Auth::user()->current_tenant_id)
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
@@ -1067,6 +1065,18 @@ class OrderController extends Controller
 
         arsort($skuCounts);
         
-        return response()->json($skuCounts);
+        // Format data for DataTables
+        $data = [];
+        foreach ($skuCounts as $sku => $quantity) {
+            $data[] = [
+                "sku" => $sku,
+                "quantity" => $quantity
+            ];
+        }
+        
+        return response()->json(['data' => $data]);
+    }
+    public function skuQuantities() {
+        return view('admin.order.qty_sku');
     }
 }

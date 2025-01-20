@@ -3,7 +3,12 @@
 @section('title', trans('labels.order'))
 
 @section('content_header')
-    <h1>{{ trans('labels.order') }}</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ trans('labels.order') }}</h1>
+        <div class="btn-group">
+            <a href="{{ route('order.sku_detail_qty') }}" class="btn btn-outline-primary">Count Quantity by SKU</a>
+        </div>
+    </div>
 @stop
 
 @section('content')
