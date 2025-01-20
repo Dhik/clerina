@@ -1033,13 +1033,14 @@ class OrderController extends Controller
         ]);
     }
 
-    public function getSkuQuantities()
+    public function getSkuQuantities(Request $request)
     {
+        $date = $request->input('date', today()->format('Y-m-d'));
         $skuCounts = [];
         
         DB::table('orders')
             ->select('sku')
-            ->whereDate('date', today())
+            ->whereDate('date', $date)
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
@@ -1066,7 +1067,6 @@ class OrderController extends Controller
 
         arsort($skuCounts);
         
-        // Format data for DataTables
         $data = [];
         foreach ($skuCounts as $sku => $quantity) {
             $data[] = [
@@ -1077,11 +1077,13 @@ class OrderController extends Controller
         
         return response()->json(['data' => $data]);
     }
+
+    public function exportSkuQuantities(Request $request)
+    {
+        $date = $request->input('date', today()->format('Y-m-d'));
+        return (new SkuQuantitiesExport($date))->download('sku-quantities-' . $date . '.xlsx');
+    }
     public function skuQuantities() {
         return view('admin.order.qty_sku');
-    }
-    public function exportSkuQuantities()
-    {
-        return (new SkuQuantitiesExport)->download('sku-quantities-' . today()->format('Y-m-d') . '.xlsx');
     }
 }

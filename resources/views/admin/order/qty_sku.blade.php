@@ -11,10 +11,18 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <div class="mb-3">
-                <a href="{{ route('order.sku_qty_export') }}" class="btn btn-success">
-                    <i class="fas fa-file-excel"></i> Export to Excel
-                </a>
+            <div class="mb-3 row">
+                <div class="col-md-3">
+                    <input type="date" id="dateFilter" class="form-control" value="{{ date('Y-m-d') }}">
+                </div>
+                <div class="col-md-2">
+                    <button id="filterButton" class="btn btn-primary">Filter</button>
+                </div>
+                <div class="col-md-2">
+                    <a id="exportButton" href="{{ route('order.sku_qty.export') }}?date={{ date('Y-m-d') }}" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </a>
+                </div>
             </div>
             <table id="skuTable" class="table table-bordered table-striped">
                 <thead>
@@ -37,17 +45,19 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#skuTable').DataTable({
+            let table = $('#skuTable').DataTable({
                 "processing": true,
                 "ajax": {
                     "url": "{{ route('order.sku_qty') }}",
-                    "type": "GET"
+                    "data": function(d) {
+                        d.date = $('#dateFilter').val();
+                    }
                 },
                 "columns": [
                     { "data": "sku" },
                     { "data": "quantity" }
                 ],
-                "order": [[1, "desc"]], // Sort by quantity column by default
+                "order": [[1, "desc"]], 
                 "pageLength": 25,
                 "language": {
                     "search": "Search:",
@@ -57,6 +67,14 @@
                     "infoEmpty": "Showing 0 to 0 of 0 entries",
                     "infoFiltered": "(filtered from _MAX_ total entries)"
                 }
+            });
+
+            $('#filterButton').click(function() {
+                table.ajax.reload();
+                // Update export button URL
+                let newDate = $('#dateFilter').val();
+                let exportUrl = "{{ route('order.sku_qty.export') }}?date=" + newDate;
+                $('#exportButton').attr('href', exportUrl);
             });
         });
     </script>

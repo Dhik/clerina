@@ -13,13 +13,20 @@ class SkuQuantitiesExport implements FromCollection, ShouldAutoSize, WithHeading
 {
     use Exportable;
 
+    private $date;
+
+    public function __construct($date)
+    {
+        $this->date = $date;
+    }
+
     public function collection()
     {
         $skuCounts = [];
         
         DB::table('orders')
             ->select('sku')
-            ->whereDate('date', today())
+            ->whereDate('date', $this->date)
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
