@@ -1031,4 +1031,41 @@ class OrderController extends Controller
             'dates' => $dates
         ]);
     }
+
+    public function getSkuQuantities()
+    {
+        $skuCounts = [];
+        
+        // Add where clause for today's date
+        DB::table('orders')
+            ->select('sku')
+            ->whereDate('date', today())
+            ->orderBy('id')
+            ->chunk(1000, function($orders) use (&$skuCounts) {
+                foreach ($orders as $order) {
+                    $skuItems = explode(',', $order->sku);
+                    
+                    foreach ($skuItems as $item) {
+                        $item = trim($item);
+                        
+                        if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
+                            $quantity = (int)$matches[1];
+                            $skuCode = trim($matches[2]);
+                        } else {
+                            $quantity = 1;
+                            $skuCode = trim($item);
+                        }
+                        
+                        if (!isset($skuCounts[$skuCode])) {
+                            $skuCounts[$skuCode] = 0;
+                        }
+                        $skuCounts[$skuCode] += $quantity;
+                    }
+                }
+            });
+
+        arsort($skuCounts);
+        
+        return response()->json($skuCounts);
+    }
 }
