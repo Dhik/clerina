@@ -55,6 +55,7 @@
                                 <th>Customer</th>
                                 <th>SKU</th>
                                 <th>Quantity</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                     </table>
@@ -120,7 +121,8 @@
                         { "data": "date" },
                         { "data": "customer_name" },
                         { "data": "sku" },
-                        { "data": "qty" }
+                        { "data": "qty" },
+                        { "data": "status" }
                     ],
                     "pageLength": 10
                 });
