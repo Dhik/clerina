@@ -1040,6 +1040,7 @@ class OrderController extends Controller
         DB::table('orders')
             ->select('sku')
             ->whereDate('date', today())
+            ->where('tenant_id', Auth::user()->current_tenant_id)
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
