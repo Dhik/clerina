@@ -33,6 +33,7 @@ class ProductRequest extends FormRequest
             'harga_markup' => 'nullable|numeric|min:0',    // Harga Markup is optional but if provided, it must be numeric and greater than or equal to 0.
             'harga_cogs' => 'nullable|numeric|min:0',      // Harga COGS is optional but if provided, it must be numeric and greater than or equal to 0.
             'harga_batas_bawah' => 'nullable|numeric|min:0', // Harga Batas Bawah is optional but if provided, it must be numeric and greater than or equal to 0.
+            'harga_satuan' => 'nullable|numeric|min:0',
             'tenant_id' => 'nullable|integer|exists:tenants,id', // Tenant ID is optional but if provided, it should be an integer and must exist in the `tenants` table.
         ];
     }
