@@ -151,9 +151,21 @@
             });
 
             $('#filterButton').click(function() {
-                table.ajax.reload();
+                Swal.fire({
+                    title: 'Loading...',
+                    html: 'Fetching data for the selected date',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                table.ajax.reload(function() {
+                    Swal.close();
+                });
+
                 let newDate = $('#dateFilter').val();
-                let exportUrl = "{{ route('order.sku_qty_export') }}?date=" + newDate;
+                let exportUrl = "{{ route('order.sku_qty.export') }}?date=" + newDate;
                 $('#exportButton').attr('href', exportUrl);
             });
         });
