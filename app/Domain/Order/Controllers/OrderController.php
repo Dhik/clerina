@@ -1118,9 +1118,9 @@ class OrderController extends Controller
                         'id_order' => $order->id_order,
                         'date' => $order->date,
                         'customer_name' => $order->customer_name,
+                        'status' => $order->status,
                         'sku' => $sku,
-                        'qty' => $qty,
-                        'status' => $order->status
+                        'qty' => $qty
                     ];
                 }
             }
