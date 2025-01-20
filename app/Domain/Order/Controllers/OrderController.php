@@ -5,6 +5,7 @@ namespace App\Domain\Order\Controllers;
 use App\Domain\Order\BLL\Order\OrderBLLInterface;
 use App\Domain\Order\DAL\Order\OrderDALInterface;
 use App\Domain\Order\Exports\OrdersExport;
+use App\Domain\Order\Exports\SkuQuantitiesExport;
 use App\Domain\Order\Exports\UniqueSkuExport;
 use App\Domain\Order\Exports\OrderTemplateExport;
 use App\Domain\Order\Models\Order;
@@ -1078,5 +1079,9 @@ class OrderController extends Controller
     }
     public function skuQuantities() {
         return view('admin.order.qty_sku');
+    }
+    public function exportSkuQuantities()
+    {
+        return (new SkuQuantitiesExport)->download('sku-quantities-' . today()->format('Y-m-d') . '.xlsx');
     }
 }

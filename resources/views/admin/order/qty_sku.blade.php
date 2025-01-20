@@ -11,6 +11,11 @@
 @section('content')
     <div class="card">
         <div class="card-body">
+            <div class="mb-3">
+                <a href="{{ route('order.sku_qty_export') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </a>
+            </div>
             <table id="skuTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
