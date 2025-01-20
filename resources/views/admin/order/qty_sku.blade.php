@@ -19,7 +19,7 @@
                     <button id="filterButton" class="btn btn-primary">Filter</button>
                 </div>
                 <div class="col-md-2">
-                    <a id="exportButton" href="{{ route('order.sku_qty.export') }}?date={{ date('Y-m-d') }}" class="btn btn-success">
+                    <a id="exportButton" href="{{ route('order.sku_qty_export') }}?date={{ date('Y-m-d') }}" class="btn btn-success">
                         <i class="fas fa-file-excel"></i> Export to Excel
                     </a>
                 </div>
