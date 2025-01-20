@@ -1086,4 +1086,45 @@ class OrderController extends Controller
     public function skuQuantities() {
         return view('admin.order.qty_sku');
     }
+    public function getSkuDetail(Request $request)
+    {
+        $sku = $request->input('sku');
+        $date = $request->input('date');
+
+        $orders = DB::table('orders')
+            ->select('id_order', 'date', 'customer_name', 'sku', 'qty')
+            ->whereDate('date', $date)
+            ->where(function($query) use ($sku) {
+                $query->where('sku', 'like', '%' . $sku . '%')
+                    ->orWhere('sku', 'like', '%' . $sku)
+                    ->orWhere('sku', 'like', $sku . '%');
+            })
+            ->get();
+
+        $detailedOrders = [];
+        foreach ($orders as $order) {
+            $skuItems = explode(',', $order->sku);
+            foreach ($skuItems as $item) {
+                $item = trim($item);
+                if (strpos($item, $sku) !== false) {
+                    // Extract quantity if it exists
+                    if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
+                        $qty = (int)$matches[1];
+                    } else {
+                        $qty = 1;
+                    }
+                    
+                    $detailedOrders[] = [
+                        'id_order' => $order->id_order,
+                        'date' => $order->date,
+                        'customer_name' => $order->customer_name,
+                        'sku' => $sku,
+                        'qty' => $qty
+                    ];
+                }
+            }
+        }
+
+        return response()->json(['data' => $detailedOrders]);
+    }
 }

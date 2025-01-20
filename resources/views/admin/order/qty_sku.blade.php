@@ -29,15 +29,39 @@
                     <tr>
                         <th>SKU</th>
                         <th>Quantity</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
             </table>
         </div>
     </div>
-@stop
 
-@section('css')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+    <!-- Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Order Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="detailTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>SKU</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -45,6 +69,8 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
+            let detailTable;
+            
             let table = $('#skuTable').DataTable({
                 "processing": true,
                 "ajax": {
@@ -55,7 +81,13 @@
                 },
                 "columns": [
                     { "data": "sku" },
-                    { "data": "quantity" }
+                    { "data": "quantity" },
+                    { 
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return '<button class="btn btn-info btn-sm detail-btn" data-sku="' + row.sku + '">Detail Data</button>';
+                        }
+                    }
                 ],
                 "order": [[1, "desc"]], 
                 "pageLength": 25,
@@ -63,15 +95,42 @@
                     "search": "Search:",
                     "lengthMenu": "Show _MENU_ entries",
                     "processing": "Loading...",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                    "infoEmpty": "Showing 0 to 0 of 0 entries",
-                    "infoFiltered": "(filtered from _MAX_ total entries)"
                 }
+            });
+
+            $('#skuTable').on('click', '.detail-btn', function() {
+                let sku = $(this).data('sku');
+                let date = $('#dateFilter').val();
+                
+                if (detailTable) {
+                    detailTable.destroy();
+                }
+
+                detailTable = $('#detailTable').DataTable({
+                    "processing": true,
+                    "ajax": {
+                        "url": "{{ route('order.sku_detail') }}",
+                        "data": {
+                            sku: sku,
+                            date: date
+                        }
+                    },
+                    "columns": [
+                        { "data": "id_order" },
+                        { "data": "date" },
+                        { "data": "customer_name" },
+                        { "data": "sku" },
+                        { "data": "qty" }
+                    ],
+                    "pageLength": 10
+                });
+
+                $('#detailModalLabel').text('Order Details - ' + sku);
+                $('#detailModal').modal('show');
             });
 
             $('#filterButton').click(function() {
                 table.ajax.reload();
-                // Update export button URL
                 let newDate = $('#dateFilter').val();
                 let exportUrl = "{{ route('order.sku_qty_export') }}?date=" + newDate;
                 $('#exportButton').attr('href', exportUrl);
