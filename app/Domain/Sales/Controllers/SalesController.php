@@ -26,6 +26,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
+use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\TelegramService;
 use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\Http;
@@ -1340,6 +1341,94 @@ class SalesController extends Controller
                     'ad_spent' => 0,
                     'net' => $weeklyTotal,
                     'is_weekly_total' => true
+                ];
+                $weeklyTotal = 0;
+                $weekCounter++;
+            }
+        }
+
+        return response()->json($response);
+    }
+    public function getWaterfallData2()
+    {
+        $sales = Sales::selectRaw('
+                date,
+                SUM(turnover) as turnover,
+                SUM(ad_spent_total) as ad_spent_total
+            ')
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        $response = [];
+        $weeklyTotal = 0;
+        $dayCounter = 0;
+        $weekCounter = 1;
+
+        foreach ($sales as $index => $sale) {
+            // Calculate HPP for this date
+            $skuCounts = [];
+            
+            DB::table('orders')
+                ->select('sku')
+                ->whereDate('date', $sale->date)
+                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->orderBy('id')
+                ->chunk(1000, function($orders) use (&$skuCounts) {
+                    foreach ($orders as $order) {
+                        $skuItems = explode(',', $order->sku);
+                        
+                        foreach ($skuItems as $item) {
+                            $item = trim($item);
+                            
+                            if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
+                                $quantity = (int)$matches[1];
+                                $skuCode = trim($matches[2]);
+                            } else {
+                                $quantity = 1;
+                                $skuCode = trim($item);
+                            }
+                            
+                            if (!isset($skuCounts[$skuCode])) {
+                                $skuCounts[$skuCode] = 0;
+                            }
+                            $skuCounts[$skuCode] += $quantity;
+                        }
+                    }
+                });
+
+            // Calculate total HPP for the day
+            $dailyHPP = 0;
+            foreach ($skuCounts as $sku => $quantity) {
+                $product = DB::table('products')
+                    ->select('harga_satuan')
+                    ->where('sku', $sku)
+                    ->first();
+                    
+                $harga_satuan = $product ? $product->harga_satuan : null;
+                $hpp = $harga_satuan ? $harga_satuan * $quantity : 0;
+                
+                $dailyHPP += $hpp;
+            }
+
+            $dayCounter++;
+            $dailyNet = $sale->turnover - $sale->ad_spent_total - $dailyHPP;
+            $weeklyTotal += $dailyNet;
+
+            // Add daily data
+            $response[] = [
+                'date' => date('Y-m-d', strtotime($sale->date)),
+                'net' => $dailyNet
+            ];
+
+            // Add weekly total after every 7 days or at the end
+            if ($dayCounter % 7 === 0 || $index === count($sales) - 1) {
+                $response[] = [
+                    'date' => "Week {$weekCounter} Total",
+                    'net' => $weeklyTotal
                 ];
                 $weeklyTotal = 0;
                 $weekCounter++;
