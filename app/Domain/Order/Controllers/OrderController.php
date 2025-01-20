@@ -1092,7 +1092,7 @@ class OrderController extends Controller
         $date = $request->input('date');
 
         $orders = DB::table('orders')
-            ->select('id_order', 'date', 'customer_name', 'sku', 'qty')
+            ->select('id_order', 'date', 'customer_name', 'sku', 'qty', 'status')  // Added status
             ->whereDate('date', $date)
             ->where(function($query) use ($sku) {
                 $query->where('sku', 'like', '%' . $sku . '%')
@@ -1107,7 +1107,6 @@ class OrderController extends Controller
             foreach ($skuItems as $item) {
                 $item = trim($item);
                 if (strpos($item, $sku) !== false) {
-                    // Extract quantity if it exists
                     if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
                         $qty = (int)$matches[1];
                     } else {
@@ -1119,7 +1118,8 @@ class OrderController extends Controller
                         'date' => $order->date,
                         'customer_name' => $order->customer_name,
                         'sku' => $sku,
-                        'qty' => $qty
+                        'qty' => $qty,
+                        'status' => $order->status  // Added status
                     ];
                 }
             }

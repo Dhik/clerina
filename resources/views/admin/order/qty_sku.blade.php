@@ -122,7 +122,26 @@
                         { "data": "customer_name" },
                         { "data": "sku" },
                         { "data": "qty" },
-                        { "data": "status" }
+                        { 
+                            "data": "status",
+                            "render": function(data, type, row) {
+                                let statusClass = '';
+                                switch(data?.toLowerCase()) {
+                                    case 'completed':
+                                        statusClass = 'badge badge-success';
+                                        break;
+                                    case 'pending':
+                                        statusClass = 'badge badge-warning';
+                                        break;
+                                    case 'cancelled':
+                                        statusClass = 'badge badge-danger';
+                                        break;
+                                    default:
+                                        statusClass = 'badge badge-secondary';
+                                }
+                                return `<span class="${statusClass}">${data || '-'}</span>`;
+                            }
+                        }
                     ],
                     "pageLength": 10
                 });
