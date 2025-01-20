@@ -1177,6 +1177,7 @@ class OrderController extends Controller
             $data[] = [
                 "sku" => $sku,
                 "quantity" => $quantity,
+                "harga_satuan" => $harga_satuan,
                 "hpp" => $hpp
             ];
         }
