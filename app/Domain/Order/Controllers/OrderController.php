@@ -1041,6 +1041,7 @@ class OrderController extends Controller
         DB::table('orders')
             ->select('sku')
             ->whereDate('date', $date)
+            ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
