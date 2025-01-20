@@ -1184,4 +1184,74 @@ class OrderController extends Controller
         
         return response()->json(['data' => $data]);
     }
+    public function getDailyHPP(Request $request)
+    {
+        $startDate = now()->startOfMonth();
+        $endDate = now();
+        $dailyHPP = [];
+        
+        for ($date = clone $startDate; $date <= $endDate; $date->addDay()) {
+            $dailyHPP[$date->format('Y-m-d')] = 0;
+        }
+
+        // Process each day
+        foreach ($dailyHPP as $date => $total) {
+            $skuCounts = [];
+            
+            DB::table('orders')
+                ->select('sku')
+                ->whereDate('date', $date)
+                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->orderBy('id')
+                ->chunk(1000, function($orders) use (&$skuCounts) {
+                    foreach ($orders as $order) {
+                        $skuItems = explode(',', $order->sku);
+                        
+                        foreach ($skuItems as $item) {
+                            $item = trim($item);
+                            
+                            if (preg_match('/^(\d+)\s+(.+)$/', $item, $matches)) {
+                                $quantity = (int)$matches[1];
+                                $skuCode = trim($matches[2]);
+                            } else {
+                                $quantity = 1;
+                                $skuCode = trim($item);
+                            }
+                            
+                            if (!isset($skuCounts[$skuCode])) {
+                                $skuCounts[$skuCode] = 0;
+                            }
+                            $skuCounts[$skuCode] += $quantity;
+                        }
+                    }
+                });
+
+            // Calculate total HPP for the day
+            $dailyTotal = 0;
+            foreach ($skuCounts as $sku => $quantity) {
+                $product = DB::table('products')
+                    ->select('harga_satuan')
+                    ->where('sku', $sku)
+                    ->first();
+                    
+                $harga_satuan = $product ? $product->harga_satuan : null;
+                $hpp = $harga_satuan ? $harga_satuan * $quantity : 0;
+                
+                $dailyTotal += $hpp;
+            }
+            
+            $dailyHPP[$date] = $dailyTotal;
+        }
+
+        // Format the response
+        $data = [];
+        foreach ($dailyHPP as $date => $total_hpp) {
+            $data[] = [
+                "date" => $date,
+                "total_hpp" => $total_hpp
+            ];
+        }
+        
+        return response()->json(['data' => $data]);
+    }
 }
