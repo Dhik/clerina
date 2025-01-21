@@ -756,9 +756,7 @@ class OrderController extends Controller
 
                 $processedRows++;
             }
-
-            // Optional: Add a small delay to prevent overwhelming the server
-            usleep(100000); // 0.1 seconds
+            usleep(100000);
         }
 
         return response()->json([
@@ -1041,7 +1039,6 @@ class OrderController extends Controller
         DB::table('orders')
             ->select('sku')
             ->whereDate('date', $date)
-            ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
             ->orderBy('id')
             ->chunk(1000, function($orders) use (&$skuCounts) {
                 foreach ($orders as $order) {
