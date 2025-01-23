@@ -183,32 +183,44 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        // Apply last month filter only if no filters are provided
         if (!$request->month && !$request->produk) {
             $lastMonth = now()->subMonth()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
 
         if ($request->has('month') && $request->month) {
-            $month = $request->month;
-            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$request->month]);
         }
 
         if ($request->has('produk') && $request->produk) {
-            $produk = $request->produk;
-            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
+            $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$request->produk]);
         }
 
         $uniqueCount = $query->select('nama_penerima', 'nomor_telepon')
                             ->distinct()
                             ->count();
-        
-        $joinedCount = $query->where('is_joined', 1)
-                        ->select('nama_penerima', 'nomor_telepon')
-                        ->distinct()
-                        ->count();
 
-        return response()->json(['unique_customer_count' => $uniqueCount, 'joined_count' => $joinedCount]);
+        $loyalisCount = (clone $query)->where('status_customer', 'Loyalis')
+                            ->select('nama_penerima', 'nomor_telepon')
+                            ->distinct()
+                            ->count();
+
+        $prioritasCount = (clone $query)->where('status_customer', 'Prioritas')
+                            ->select('nama_penerima', 'nomor_telepon')
+                            ->distinct()
+                            ->count();
+
+        $newCount = (clone $query)->where('status_customer', 'New Customer')
+                            ->select('nama_penerima', 'nomor_telepon')
+                            ->distinct()
+                            ->count();
+
+        return response()->json([
+            'unique_customer_count' => $uniqueCount,
+            'loyalis_count' => $loyalisCount,
+            'prioritas_count' => $prioritasCount,
+            'new_count' => $newCount
+        ]);
     }
 
     public function getProductCounts(Request $request)

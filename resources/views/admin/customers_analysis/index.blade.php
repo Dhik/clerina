@@ -54,21 +54,43 @@
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h4 id="totalOrder">0</h4>
-                                    <p>Total Order</p>
+                                    <p>Total Unique Customers</p>
                                 </div>
                                 <div class="icon">
-                                    <i class="fas fa-chart-line"></i>
+                                    <i class="fas fa-users"></i>
                                 </div>
                             </div>
                         </div>
                         <div class="col-3">
                             <div class="small-box bg-success">
                                 <div class="inner">
-                                    <h4 id="totalJoined">0</h4>
-                                    <p>Total Joined</p>
+                                    <h4 id="loyalisCount">0</h4>
+                                    <p>Loyalis Customers</p>
                                 </div>
                                 <div class="icon">
-                                    <i class="fas fa-redo"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h4 id="prioritasCount">0</h4>
+                                    <p>Prioritas Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-award"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small-box bg-primary">
+                                <div class="inner">
+                                    <h4 id="newCount">0</h4>
+                                    <p>New Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-user-plus"></i>
                                 </div>
                             </div>
                         </div>
@@ -191,15 +213,17 @@
 
             function fetchTotalUniqueOrders() {
                 const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+                const selectedProduk = $('#filterProduk').val();
 
                 fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}`)
                     .then(response => response.json())
                     .then(data => {
                         $('#totalOrder').text(data.unique_customer_count);
-                        $('#totalJoined').text(data.joined_count);
+                        $('#loyalisCount').text(data.loyalis_count);
+                        $('#prioritasCount').text(data.prioritas_count);
+                        $('#newCount').text(data.new_count);
                     })
-                    .catch(error => console.error('Error fetching total unique orders:', error));
+                    .catch(error => console.error('Error fetching customer counts:', error));
             }
 
             fetchTotalUniqueOrders();
