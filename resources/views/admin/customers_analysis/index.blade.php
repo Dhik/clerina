@@ -7,170 +7,154 @@
 @stop
 
 @section('content')
-<div class="container-fluid">
-    <!-- Filters Section -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-2">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">
-                            <i class="far fa-calendar-alt"></i>
-                        </span>
-                        <input type="month" class="form-control" id="filterMonth" placeholder="Select Month" autocomplete="off">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">
-                            <i class="fas fa-filter"></i>
-                        </span>
-                        <select id="filterStatus" class="form-select">
-                            <option value="">All Status</option>
-                            @foreach($customer as $status)
-                                <option value="{{ $status->status_customer }}">{{ $status->status_customer }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="col-auto ms-auto">
-                    <div class="btn-group">
-                        <button id="exportButton" class="btn btn-success">
-                            <i class="fas fa-file-excel me-1"></i> Export
-                        </button>
-                        <button id="importWhichHpButton" class="btn btn-primary">
-                            <i class="fas fa-mobile-alt me-1"></i> Assign HP
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-gradient-teal shadow-sm h-100">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="totalOrder" class="mb-1">0</h3>
-                            <p class="text-white mb-0">Total Customers</p>
+                    <div class="row mb-3">
+                        <div class="col-2">
+                            <input type="month" class="form-control mr-2" id="filterMonth" placeholder="Select Month" autocomplete="off">
                         </div>
-                        <div class="icon-box rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-users fa-2x text-white"></i>
+                        <div class="col-3" style="display: none;">
+                            <select id="filterProduk" class="form-control select2">
+                                <option value="">All Produk</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <select id="filterStatus" class="form-control select2">
+                                <option value="">All Status</option>
+                                @foreach($customer as $status)
+                                    <option value="{{ $status->status_customer }}">{{ $status->status_customer }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group">
+                            <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                            </div>
+                        </div>
+                        <!-- <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                            </div>
+                        </div> -->
+                        <!-- <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
+                            </div>
+                        </div> -->
+                        <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importWhichHpButton" class="btn bg-maroon"><i class="fas fa-upload"></i> Assign HP</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-gradient-success shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="prioritasCount" class="mb-1">0</h3>
-                            <p class="text-white mb-0">Priority Customers</p>
+                    <div class="row">
+                        <div class="col-3">
+                            <div class="small-box bg-gradient-teal">
+                                <div class="inner">
+                                    <h4 id="totalOrder">0</h4>
+                                    <p>Total Unique Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="icon-box rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-crown fa-2x text-white"></i>
+                        <div class="col-3">
+                            <div class="small-box bg-gradient-success">
+                                <div class="inner">
+                                    <h4 id="prioritasCount">0</h4>
+                                    <p>Prioritas Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-award"></i>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-gradient-primary shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="loyalisCount" class="mb-1">0</h3>
-                            <p class="text-white mb-0">Loyal Customers</p>
+                        <div class="col-3">
+                            <div class="small-box bg-gradient-primary">
+                                <div class="inner">
+                                    <h4 id="loyalisCount">0</h4>
+                                    <p>Loyalis Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="icon-box rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-heart fa-2x text-white"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-gradient-info shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 id="newCount" class="mb-1">0</h3>
-                            <p class="text-white mb-0">New Customers</p>
-                        </div>
-                        <div class="icon-box rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-user-plus fa-2x text-white"></i>
+                        <div class="col-3">
+                            <div class="small-box bg-gradient-info">
+                                <div class="inner">
+                                    <h4 id="newCount">0</h4>
+                                    <p>New Customers</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light py-3">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Product Distribution</h5>
-                </div>
+        <div class="col-4">
+            <div class="card">
                 <div class="card-body">
+                    <h5>Distribusi per Produk</h5>
                     <div style="height: 350px;">
-                        <canvas id="productPieChart"></canvas>
+                    <canvas id="productPieChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light py-3">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Daily Customer Trend</h5>
-                </div>
+        <div class="col-8">
+            <div class="card">
                 <div class="card-body">
+                    <h5>Jumlah Customer per Hari</h5>
                     <div style="height: 350px;">
+                        <!-- <canvas id="dailyCustomersChart"></canvas> -->
                         <canvas id="customerTrendChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Customer Table -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-light py-3">
-            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Customer Analysis</h5>
-        </div>
-        <div class="card-body">
-            <table id="customerAnalysisTable" class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th><i class="fas fa-user me-2"></i>Name</th>
-                        <th><i class="fas fa-phone me-2"></i>Phone</th>
-                        <th><i class="fas fa-shopping-cart me-2"></i>Orders</th>
-                        <th><i class="fas fa-info-circle me-2"></i>Status</th>
-                        <th><i class="fas fa-mobile-alt me-2"></i>HP</th>
-                        <th><i class="fas fa-list me-2"></i>Details</th>
-                        <th><i class="fas fa-calendar-check me-2"></i>Join Date</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <table id="customerAnalysisTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nama Penerima</th>
+                                <th>Nomor Telepon</th>
+                                <th>Total Orders</th>
+                                <th>Status</th>
+                                <th>HP</th>
+                                <th>Details</th>
+                                <th>Sudah Bergabung</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
-@include('admin.customers_analysis.modals.detail')
-@include('admin.customers_analysis.modals.edit')
-@include('admin.customers_analysis.modals.export')
+    @include('admin.customers_analysis.modals.detail')
+    @include('admin.customers_analysis.modals.edit')
+    @include('admin.customers_analysis.modals.export')
 @stop
 
+
 @section('css')
-<style>
-    .bg-gradient-teal {
+    <style>
+        .invalid-feedback {
+            display: none;
+            color: #dc3545;
+            font-size: 80%;
+        }
+        .bg-gradient-teal {
         background: linear-gradient(45deg, #20c997, #17a2b8);
         color: white;
     }
@@ -186,19 +170,7 @@
         background: linear-gradient(45deg, #17a2b8, #138496);
         color: white;
     }
-    .icon-box {
-        transition: transform 0.2s;
-    }
-    .card:hover .icon-box {
-        transform: scale(1.1);
-    }
-    .table th {
-        font-weight: 600;
-    }
-    .input-group-text {
-        border: none;
-    }
-</style>
+    </style>
 @endsection
 
 @section('js')
