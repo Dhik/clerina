@@ -8,9 +8,12 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Customer\Models\CustomersAnalysis;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use Illuminate\Http\Request;
 
-class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting 
+class CustomersAnalysisExport extends DefaultValueBinder implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithCustomValueBinder 
 {
    protected $month;
    protected $status;
@@ -22,6 +25,14 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
        $this->status = $status;
        $this->whichHp = $whichHp;
    }
+   public function bindValue($cell, $value, $column)
+    {
+        if ($column === 'B') {
+            $cell->setValueExplicit($value, DataType::TYPE_STRING);
+            return true;
+        }
+        return parent::bindValue($cell, $value, $column);
+    }
 
    public function collection() 
    {
@@ -41,7 +52,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
 
        return $query->select(
            'nama_penerima as nama',
-           DB::raw("CONCAT('\"', nomor_telepon, '\"') as kontak"),
+           'nomor_telepon as kontak',
            DB::raw('NULL as email'),
            'alamat',
            DB::raw('NULL as kecamatan'),
