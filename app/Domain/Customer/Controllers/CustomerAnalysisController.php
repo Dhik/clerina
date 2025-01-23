@@ -67,9 +67,7 @@ class CustomerAnalysisController extends Controller
             nama_penerima,
             nomor_telepon,
             COUNT(id) as total_orders,
-            MIN(is_joined) as is_joined,
-            MIN(status_customer) as status_customer,
-            MIN(which_hp) as which_hp
+            MIN(is_joined) as is_joined
         ')
         ->groupBy('nama_penerima', 'nomor_telepon');
 
