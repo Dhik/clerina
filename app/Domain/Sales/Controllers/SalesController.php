@@ -10,6 +10,7 @@ use App\Domain\Sales\BLL\SalesChannel\SalesChannelBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\AdSpentMarketPlace;
 use App\Domain\Sales\Models\Visit;
+use App\Domain\Sales\Models\NetProfit;
 use App\Domain\Marketing\Models\SocialMedia;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
@@ -1669,5 +1670,44 @@ class SalesController extends Controller
         });
 
         return response()->json($result);
+    }
+
+    public function getNetProfitMarginDaily()
+    {
+        $data = NetProfit::query()
+            ->select([
+                'date',
+                DB::raw('(sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp as net_profit_margin')
+            ])
+            ->whereBetween('date', ['2025-01-01', '2025-01-31'])
+            ->orderBy('date')
+            ->get();
+
+        $formattedData = [];
+        $weekTotal = 0;
+        $weekCount = 0;
+
+        foreach ($data as $row) {
+            $weekCount++;
+            $weekTotal += $row->net_profit_margin;
+
+            $formattedData[] = [
+                'date' => $row->date->format('Y-m-d'),
+                'net' => $row->net_profit_margin
+            ];
+
+            if ($weekCount == 7) {
+                $formattedData[] = [
+                    'date' => 'Week ' . ceil($weekCount/7) . ' Total',
+                    'net' => $weekTotal,
+                    'is_weekly_total' => true
+                ];
+                
+                $weekTotal = 0;
+                $weekCount = 0;
+            }
+        }
+
+        return response()->json($formattedData);
     }
 }

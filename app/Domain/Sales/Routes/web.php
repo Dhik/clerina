@@ -69,7 +69,7 @@ Route::prefix('admin')
                 Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet'])->name('sales.import_ads');
                 Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData'])->name('sales.update_ads');
                 Route::get('/waterfall-data', [SalesController::class, 'getWaterfallData'])->name('sales.waterfall-data');
-                Route::get('/waterfall-data-2', [SalesController::class, 'getWaterfallData2'])->name('sales.waterfall-data-2');
+                Route::get('/waterfall-data-2', [SalesController::class, 'getNetProfitMarginDaily'])->name('sales.waterfall-data-2');
 
                 // Report
                 Route::get('/sales-channel-donut-data', [SalesController::class, 'getSalesChannelDonutData'])->name('report.donut1');
