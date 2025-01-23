@@ -112,7 +112,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5>Jumlah Customer per Hari</h5>
-                    <div style="height: 350px; width: 100%;">
+                    <div style="height: 350px; width: 100% !important;">
                         <!-- <canvas id="dailyCustomersChart"></canvas> -->
                         <canvas id="customerTrendChart"></canvas>
                     </div>
