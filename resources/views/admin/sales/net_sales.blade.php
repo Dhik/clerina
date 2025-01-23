@@ -750,10 +750,9 @@
                 .then(salesData => {
                     const chartData = salesData.map(day => ({
                         x: day.date,
-                        y: day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp),
-                        measure: day.is_weekly_total ? 'total' : 'relative',
-                        text: ((day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp)) >= 0 ? '+' : '') + 
-                            (day.is_weekly_total ? day.net : (day.turnover - day.ad_spent - day.hpp)).toLocaleString(),
+                        y: day.net,
+                        measure: 'relative',
+                        text: (day.net >= 0 ? '+' : '') + day.net.toLocaleString(),
                         textposition: 'outside'
                     }));
 
@@ -769,18 +768,15 @@
                             line: { color: 'rgb(63, 63, 63)' } 
                         },
                         increasing: { 
-                            marker: { color: '#2ecc71' }  // Green for positive net
+                            marker: { color: '#2ecc71' }
                         },
                         decreasing: { 
-                            marker: { color: '#e74c3c' }  // Red for negative net
-                        },
-                        totals: { 
-                            marker: { color: '#3498db' }  // Blue for weekly totals
+                            marker: { color: '#e74c3c' }
                         }
                     }];
 
                     const layout = {
-                        title: 'Daily Net Revenue (Omset - Ads Spent)',
+                        title: 'Daily Net Profit Margin',
                         xaxis: {
                             title: 'Date',
                             tickangle: -45
@@ -802,17 +798,15 @@
                     Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
                 })
                 .catch(error => console.error('Error fetching waterfall data:', error));
-        }
+            }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            renderWaterfallChart();
-        });
+            document.addEventListener('DOMContentLoaded', renderWaterfallChart);
 
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
-        });
+            });
     </script>
 
     @include('admin.visit.script')
