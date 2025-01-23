@@ -116,6 +116,7 @@
     </div>
     @include('admin.customers_analysis.modals.detail')
     @include('admin.customers_analysis.modals.edit')
+    @include('admin.customers_analysis.modals.export')
 @stop
 
 
@@ -518,11 +519,15 @@
             });
 
             $('#exportButton').click(function() {
-                let month = $('#filterMonth').val();
-                let produk = $('#filterProduk').val();
-
-                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&produk=${produk}`;
+                $('#exportModal').modal('show');
             });
+            
+            // $('#exportButton').click(function() {
+            //     let month = $('#filterMonth').val();
+            //     let produk = $('#filterProduk').val();
+
+            //     window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&produk=${produk}`;
+            // });
 
             var ordersTable = $('#ordersTable').DataTable({
                 searching: false,
