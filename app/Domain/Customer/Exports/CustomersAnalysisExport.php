@@ -12,70 +12,71 @@ use Illuminate\Http\Request;
 
 class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting 
 {
-    protected $month;
-    protected $produk;
+   protected $month;
+   protected $status;
+   protected $whichHp;
 
-    public function __construct($month = null, $produk = null) 
-    {
-        $this->month = $month;
-        $this->produk = $produk;
-    }
+   public function __construct($month = null, $status = null, $whichHp = null) 
+   {
+       $this->month = $month;
+       $this->status = $status;
+       $this->whichHp = $whichHp;
+   }
 
-    public function collection() 
-    {
-        $query = CustomersAnalysis::query();
-        if ($this->month) {
-            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$this->month]);
-        }
+   public function collection() 
+   {
+       $query = CustomersAnalysis::query();
 
-        if ($this->produk) {
-            $query->where('produk', 'LIKE', $this->produk . '%');
-        }
+       if ($this->month) {
+           $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$this->month]);
+       }
+       
+       if ($this->status) {
+           $query->where('status_customer', $this->status);
+       }
 
-        // Perform grouping and aggregation
-        $groupedData = $query->select(
-            DB::raw('MIN(id) as id'),
-            'nama_penerima',
-            'nomor_telepon',
-            DB::raw('SUM(qty) as total_orders'),
-            DB::raw('MAX(is_joined) as is_joined'),
-            DB::raw('COUNT(DISTINCT produk) as unique_products')
-        )
-        ->groupBy('nama_penerima', 'nomor_telepon')
-        ->get();
+       if ($this->whichHp) {
+           $query->where('which_hp', $this->whichHp);
+       }
 
-        // Transform the collection for export
-        return $groupedData->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'nama_penerima' => $item->nama_penerima,
-                'nomor_telepon' => $item->nomor_telepon,
-                'total_orders' => $item->total_orders,
-                'unique_products' => $item->unique_products,
-                'is_joined' => $item->is_joined ? 'Joined' : 'Not Joined'
-            ];
-        });
-    }
+       return $query->select(
+           'nama_penerima as nama',
+           'nomor_telepon as kontak',
+           DB::raw('NULL as email'),
+           'alamat',
+           DB::raw('NULL as kecamatan'),
+           'kota_kabupaten as kota',
+           'provinsi',
+           DB::raw('NULL as kode_pos'),
+           'status_customer as group',
+           DB::raw('NULL as tag'),
+           DB::raw('NULL as note'),
+           DB::raw('NULL as user_terkait'),
+           DB::raw('NULL as birthday')
+       )->get();
+   }
 
-    // Define the headings for the Excel sheet
-    public function headings(): array 
-    {
-        return [
-            'ID', 
-            'Nama Penerima', 
-            'Nomor Telepon', 
-            'Total Quantity',
-            'Unique Products',
-            'Is Joined'
-        ];
-    }
+   public function headings(): array 
+   {
+       return [
+           'Nama',
+           'Kontak', 
+           'Email',
+           'Alamat',
+           'Kecamatan',
+           'Kota',
+           'Provinsi',
+           'Kode Pos',
+           'Group',
+           'Tag',
+           'Note',
+           'User Terkait',
+           'Birthday'
+       ];
+   }
 
-    // Optional column formatting
-    public function columnFormats(): array 
-    {
-        return [
-            'D' => '#,##0', // Formats 'Total Quantity' column
-            'E' => '#,##0'  // Formats 'Unique Products' column
-        ];
-    }
+   public function columnFormats(): array 
+   {
+       return [];
+   }
 }

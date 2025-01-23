@@ -521,13 +521,15 @@
             $('#exportButton').click(function() {
                 $('#exportModal').modal('show');
             });
-            
-            // $('#exportButton').click(function() {
-            //     let month = $('#filterMonth').val();
-            //     let produk = $('#filterProduk').val();
 
-            //     window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&produk=${produk}`;
-            // });
+            $('#doExport').click(function() {
+                let month = $('#exportMonth').val();
+                let status = $('#exportStatus').val(); 
+                let whichHp = $('#exportWhichHp').val();
+                
+                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
+                $('#exportModal').modal('hide');
+            });
 
             var ordersTable = $('#ordersTable').DataTable({
                 searching: false,

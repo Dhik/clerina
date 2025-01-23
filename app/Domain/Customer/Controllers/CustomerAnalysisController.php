@@ -385,12 +385,18 @@ class CustomerAnalysisController extends Controller
         return response()->json($products);
     }
 
+    // public function export(Request $request)
+    // {
+    //     $month = $request->input('month');
+    //     $status = $request->input('status');
+    //     $whichHp = $request->input('which_hp');
+    //     return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
+    // }
     public function export(Request $request)
     {
         $month = $request->input('month');
-        $produk = $request->input('produk');
-
-        return Excel::download(new CustomersAnalysisExport($month, $produk), 'customer_analysis.xlsx');
+        $status = $request->input('status');
+        return Excel::download(new CustomersAnalysisExport($month, $status), 'customer_analysis.xlsx');
     }
 
     
