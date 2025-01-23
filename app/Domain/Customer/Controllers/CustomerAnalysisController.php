@@ -462,8 +462,35 @@ class CustomerAnalysisController extends Controller
         $data = CustomerMonitor::select('date', 'status', 'count_customer')
             ->where('tenant_id', Auth::user()->current_tenant_id)
             ->orderBy('date')
-            ->get()
-            ->groupBy('status');
-        return response()->json($data);
+            ->get();
+
+        $labels = $data->pluck('date')
+            ->unique()
+            ->map(function($date) {
+                return Carbon::parse($date)->format('F Y');
+            })->values();
+
+        $datasets = [];
+        $colors = [
+            'Loyalis' => ['#EE4D2D', '#EE4D2D20'],
+            'Prioritas' => ['#0F146D', '#0F146D20'], 
+            'New Customer' => ['#42B549', '#42B54920']
+        ];
+
+        foreach($data->groupBy('status') as $status => $values) {
+            $datasets[] = [
+                'label' => $status,
+                'data' => $values->pluck('count_customer')->values(),
+                'fill' => false,
+                'borderColor' => $colors[$status][0],
+                'backgroundColor' => $colors[$status][1],
+                'tension' => 0.4
+            ];
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]);
     }
 }
