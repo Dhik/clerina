@@ -112,7 +112,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5>Jumlah Customer per Hari</h5>
-                    <div style="height: 350px; width: 100% !important;">
+                    <div style="height: 350px;">
                         <!-- <canvas id="dailyCustomersChart"></canvas> -->
                         <canvas id="customerTrendChart"></canvas>
                     </div>
@@ -809,6 +809,7 @@
                         data: lineChartData,
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             scales: {
                                 y: {
                                     beginAtZero: true,
