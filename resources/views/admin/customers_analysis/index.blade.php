@@ -113,7 +113,8 @@
                 <div class="card-body">
                     <h5>Jumlah Customer per Hari</h5>
                     <div style="height: 350px;">
-                        <canvas id="dailyCustomersChart"></canvas>
+                        <!-- <canvas id="dailyCustomersChart"></canvas> -->
+                        <canvas id="customerTrendChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -778,6 +779,58 @@
                     .catch(error => console.error('Error fetching product counts:', error));
             }
             fetchCityCounts();
+
+            let lineChart;
+
+            function fetchAndRenderCustomerTrend() {
+            fetch("{{ route('customer_analysis.daily_status') }}")
+                .then(response => response.json())
+                .then(data => {
+                    const lineChartData = {
+                        labels: data.labels,
+                        datasets: data.datasets.map(dataset => ({
+                            label: dataset.label,
+                            data: dataset.data,
+                            borderColor: dataset.borderColor,
+                            backgroundColor: dataset.backgroundColor,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: dataset.tension
+                        }))
+                    };
+
+                    if (lineChart) {
+                        lineChart.destroy();
+                    }
+
+                    const ctx = document.getElementById('customerTrendChart').getContext('2d');
+                    lineChart = new Chart(ctx, {
+                        type: 'line',
+                        data: lineChartData,
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value.toLocaleString();
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching customer trend data:', error));
+            }
+
+            fetchAndRenderCustomerTrend();
             
         });
     </script>
