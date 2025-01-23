@@ -1287,7 +1287,6 @@ class SalesController extends Controller
         }
     }
 
-    // Filter out any channels with no valid label
     $salesChannelsData = array_filter($salesChannelsData, function($channelData) {
         return $channelData['label'] !== null;
     });

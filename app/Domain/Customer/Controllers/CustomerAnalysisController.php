@@ -67,7 +67,9 @@ class CustomerAnalysisController extends Controller
             nama_penerima,
             nomor_telepon,
             COUNT(id) as total_orders,
-            MIN(is_joined) as is_joined
+            MIN(is_joined) as is_joined,
+            MIN(status_customer) as status_customer,
+            MIN(which_hp) as which_hp
         ')
         ->groupBy('nama_penerima', 'nomor_telepon');
 
@@ -76,38 +78,21 @@ class CustomerAnalysisController extends Controller
         $dataTable->filter(function ($query) use ($request) {
             if ($request->has('search') && $request->search['value']) {
                 $search = strtolower($request->search['value']);
-                $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_orders) LIKE ?', ["%$search%", "%$search%", "%$search%"]);
+                $query->havingRaw('LOWER(nama_penerima) LIKE ? OR LOWER(nomor_telepon) LIKE ? OR LOWER(total_orders) LIKE ? OR LOWER(status_customer) LIKE ? OR LOWER(which_hp) LIKE ?', 
+                    ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
             }
         });
                 
         $dataTable->addColumn('is_joined', function ($row) {
             if ($row->is_joined == 0) {
-                return '
-                    <button class="btn btn-sm bg-maroon joinButton" 
-                        data-id="' . $row->id . '">
-                        <i class="fas fa-redo"></i> Join
-                    </button>
-                    ';
-                } else {
-                    return '
-                        <button class="btn btn-sm bg-info unJoinButton" 
-                            data-id="' . $row->id . '">
-                            <i class="fas fa-undo"></i> Joined
-                        </button>
-                    ';
-                }
-            });
+                return '<button class="btn btn-sm bg-maroon joinButton" data-id="' . $row->id . '"><i class="fas fa-redo"></i> Join</button>';
+            } else {
+                return '<button class="btn btn-sm bg-info unJoinButton" data-id="' . $row->id . '"><i class="fas fa-undo"></i> Joined</button>';
+            }
+        });
             
         $dataTable->addColumn('details', function ($row) {
-            return '
-                <button class="btn btn-light viewButton" 
-                    data-id="' . $row->id . '" 
-                    data-toggle="modal" 
-                    data-target="#viewCustomerModal" 
-                    data-placement="top" title="View">
-                    <i class="fas fa-eye"></i>
-                </button>
-            ';
+            return '<button class="btn btn-light viewButton" data-id="' . $row->id . '" data-toggle="modal" data-target="#viewCustomerModal" data-placement="top" title="View"><i class="fas fa-eye"></i></button>';
         });
                 
         return $dataTable->rawColumns(['is_joined', 'details'])->make(true);
