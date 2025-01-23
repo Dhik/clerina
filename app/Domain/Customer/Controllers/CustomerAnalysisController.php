@@ -457,12 +457,15 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($data);
     }
-    public function getTrendData()
+    public function getTrendData(Request $request)
     {
-        $data = CustomerMonitor::select('date', 'status', 'count_customer')
-            ->where('tenant_id', Auth::user()->current_tenant_id)
-            ->orderBy('date')
-            ->get();
+        $query = CustomerMonitor::query()
+            ->where('tenant_id', Auth::user()->current_tenant_id);
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+        $data = $query->orderBy('date')->get();
 
         $labels = $data->pluck('date')
             ->unique()
@@ -472,9 +475,9 @@ class CustomerAnalysisController extends Controller
 
         $datasets = [];
         $colors = [
-            'Loyalis' => ['#EE4D2D', '#EE4D2D20'],
-            'Prioritas' => ['#0F146D', '#0F146D20'], 
-            'New Customer' => ['#42B549', '#42B54920']
+            'Loyalis' => ['#0D6EFD', '#0D6EFD20'],    // Blue from image 2
+            'Prioritas' => ['#198754', '#19875420'],   // Green from image 3
+            'New Customer' => ['#17A2B8', '#17A2B820'] // Cyan from image 1
         ];
 
         foreach($data->groupBy('status') as $status => $values) {

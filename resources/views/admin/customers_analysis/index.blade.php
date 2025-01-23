@@ -51,7 +51,7 @@
                     </div>
                     <div class="row">
                         <div class="col-3">
-                            <div class="small-box bg-info">
+                            <div class="small-box bg-teal">
                                 <div class="inner">
                                     <h4 id="totalOrder">0</h4>
                                     <p>Total Unique Customers</p>
@@ -62,7 +62,7 @@
                             </div>
                         </div>
                         <div class="col-3">
-                            <div class="small-box bg-success">
+                            <div class="small-box bg-primary">
                                 <div class="inner">
                                     <h4 id="loyalisCount">0</h4>
                                     <p>Loyalis Customers</p>
@@ -73,7 +73,7 @@
                             </div>
                         </div>
                         <div class="col-3">
-                            <div class="small-box bg-warning">
+                            <div class="small-box bg-success">
                                 <div class="inner">
                                     <h4 id="prioritasCount">0</h4>
                                     <p>Prioritas Customers</p>
@@ -84,7 +84,7 @@
                             </div>
                         </div>
                         <div class="col-3">
-                            <div class="small-box bg-primary">
+                            <div class="small-box bg-info">
                                 <div class="inner">
                                     <h4 id="newCount">0</h4>
                                     <p>New Customers</p>
@@ -233,7 +233,7 @@
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
                 fetchProductCounts();
-                fetchDailyUniqueCustomers();
+                fetchAndRenderCustomerTrend();
             });
 
             function populateProdukFilter() {
@@ -783,53 +783,55 @@
             let lineChart;
 
             function fetchAndRenderCustomerTrend() {
-            fetch("{{ route('customer_analysis.daily_status') }}")
-                .then(response => response.json())
-                .then(data => {
-                    const lineChartData = {
-                        labels: data.labels,
-                        datasets: data.datasets.map(dataset => ({
-                            label: dataset.label,
-                            data: dataset.data,
-                            borderColor: dataset.borderColor,
-                            backgroundColor: dataset.backgroundColor,
-                            borderWidth: 2,
-                            fill: true,
-                            tension: dataset.tension
-                        }))
-                    };
+                const selectedStatus = $('#filterStatus').val();
+                
+                fetch(`{{ route('customer_analysis.daily_status') }}?status=${selectedStatus}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const lineChartData = {
+                            labels: data.labels,
+                            datasets: data.datasets.map(dataset => ({
+                                label: dataset.label,
+                                data: dataset.data, 
+                                borderColor: dataset.borderColor,
+                                backgroundColor: dataset.backgroundColor,
+                                borderWidth: 2,
+                                fill: true,
+                                tension: dataset.tension
+                            }))
+                        };
 
-                    if (lineChart) {
-                        lineChart.destroy();
-                    }
+                        if (lineChart) {
+                            lineChart.destroy();
+                        }
 
-                    const ctx = document.getElementById('customerTrendChart').getContext('2d');
-                    lineChart = new Chart(ctx, {
-                        type: 'line',
-                        data: lineChartData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return value.toLocaleString();
+                        const ctx = document.getElementById('customerTrendChart').getContext('2d');
+                        lineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: lineChartData,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback: function(value) {
+                                                return value.toLocaleString();
+                                            }
                                         }
                                     }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top'
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
                                 }
                             }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error fetching customer trend data:', error));
-            }
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
 
             fetchAndRenderCustomerTrend();
             
