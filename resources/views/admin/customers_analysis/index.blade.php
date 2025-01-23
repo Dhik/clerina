@@ -113,6 +113,7 @@
                 <div class="card-body">
                     <h5>Jumlah Customer per Hari</h5>
                     <div style="height: 350px;">
+                        <!-- <canvas id="dailyCustomersChart"></canvas> -->
                         <canvas id="customerTrendChart"></canvas>
                     </div>
                 </div>
@@ -451,65 +452,65 @@
                     });
                 });
 
-            function fetchDailyUniqueCustomers() {
-                const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
-                const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
+            // function fetchDailyUniqueCustomers() {
+            //     const selectedMonth = $('#filterMonth').val();
+            //     const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+            //     const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
 
-                // Destroy existing chart if it exists
-                if (window.dailyChart) {
-                    window.dailyChart.destroy();
-                }
+            //     // Destroy existing chart if it exists
+            //     if (window.dailyChart) {
+            //         window.dailyChart.destroy();
+            //     }
 
-                fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}&produk=${selectedProduk}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const dates = data.map(item => item.date);
-                        const counts = data.map(item => item.unique_count);
+            //     fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+            //         .then(response => response.json())
+            //         .then(data => {
+            //             const dates = data.map(item => item.date);
+            //             const counts = data.map(item => item.unique_count);
 
-                        window.dailyChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: dates,
-                                datasets: [{
-                                    label: 'Unique Customers',
-                                    data: counts,
-                                    borderColor: 'rgb(75, 192, 192)',
-                                    tension: 0.1,
-                                    fill: false
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {
-                                            precision: 0
-                                        }
-                                    },
-                                    x: {
-                                        ticks: {
-                                            maxRotation: 45,
-                                            minRotation: 45
-                                        }
-                                    }
-                                },
-                                plugins: {
-                                    legend: {
-                                        display: false
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => console.error('Error fetching daily unique customers:', error));
-            }
+            //             window.dailyChart = new Chart(ctx, {
+            //                 type: 'line',
+            //                 data: {
+            //                     labels: dates,
+            //                     datasets: [{
+            //                         label: 'Unique Customers',
+            //                         data: counts,
+            //                         borderColor: 'rgb(75, 192, 192)',
+            //                         tension: 0.1,
+            //                         fill: false
+            //                     }]
+            //                 },
+            //                 options: {
+            //                     responsive: true,
+            //                     maintainAspectRatio: false,
+            //                     scales: {
+            //                         y: {
+            //                             beginAtZero: true,
+            //                             ticks: {
+            //                                 precision: 0
+            //                             }
+            //                         },
+            //                         x: {
+            //                             ticks: {
+            //                                 maxRotation: 45,
+            //                                 minRotation: 45
+            //                             }
+            //                         }
+            //                     },
+            //                     plugins: {
+            //                         legend: {
+            //                             display: false
+            //                         }
+            //                     }
+            //                 }
+            //             });
+            //         })
+            //         .catch(error => console.error('Error fetching daily unique customers:', error));
+            // }
 
 
-            // Add these lines to your existing document.ready function
-            fetchDailyUniqueCustomers();
+            // // Add these lines to your existing document.ready function
+            // fetchDailyUniqueCustomers();
 
             $('#customerAnalysisTable').on('click', '.joinButton', function() {
                 var id = $(this).data('id');
