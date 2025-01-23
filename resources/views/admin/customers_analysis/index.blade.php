@@ -719,66 +719,66 @@
                 fetchDailyUniqueCustomers();
             });
 
-            function fetchCityCounts() {
-                const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
-                const ctx = document.getElementById('cityPieChart').getContext('2d');
+            // function fetchCityCounts() {
+            //     const selectedMonth = $('#filterMonth').val();
+            //     const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+            //     const ctx = document.getElementById('cityPieChart').getContext('2d');
 
-                if (window.productChart) {
-                    window.productChart.destroy();
-                }
+            //     if (window.productChart) {
+            //         window.productChart.destroy();
+            //     }
 
-                fetch(`{{ route('customer_analysis.city_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const productLabels = data.map(item => item.kota_kabupaten);
-                        const productCounts = data.map(item => item.total_count);
-                        window.productChart = new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: productLabels,
-                                datasets: [{
-                                    label: 'Product Orders',
-                                    data: productCounts,
-                                    backgroundColor: [
-                                        'rgba(75, 192, 192, 0.2)',
-                                        'rgba(255, 99, 132, 0.2)',
-                                        'rgba(255, 206, 86, 0.2)',
-                                        'rgba(54, 162, 235, 0.2)',
-                                        'rgba(153, 102, 255, 0.2)',
-                                        'rgba(255, 159, 64, 0.2)',
-                                    ],
-                                    borderColor: [
-                                        'rgba(75, 192, 192, 1)',
-                                        'rgba(255, 99, 132, 1)',
-                                        'rgba(255, 206, 86, 1)',
-                                        'rgba(54, 162, 235, 1)',
-                                        'rgba(153, 102, 255, 1)',
-                                        'rgba(255, 159, 64, 1)',
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                plugins: {
-                                    legend: {
-                                        display: false,
-                                    },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: function(tooltipItem) {
-                                                return tooltipItem.label + ': ' + tooltipItem.raw;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => console.error('Error fetching product counts:', error));
-            }
-            fetchCityCounts();
+            //     fetch(`{{ route('customer_analysis.city_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+            //         .then(response => response.json())
+            //         .then(data => {
+            //             const productLabels = data.map(item => item.kota_kabupaten);
+            //             const productCounts = data.map(item => item.total_count);
+            //             window.productChart = new Chart(ctx, {
+            //                 type: 'pie',
+            //                 data: {
+            //                     labels: productLabels,
+            //                     datasets: [{
+            //                         label: 'Product Orders',
+            //                         data: productCounts,
+            //                         backgroundColor: [
+            //                             'rgba(75, 192, 192, 0.2)',
+            //                             'rgba(255, 99, 132, 0.2)',
+            //                             'rgba(255, 206, 86, 0.2)',
+            //                             'rgba(54, 162, 235, 0.2)',
+            //                             'rgba(153, 102, 255, 0.2)',
+            //                             'rgba(255, 159, 64, 0.2)',
+            //                         ],
+            //                         borderColor: [
+            //                             'rgba(75, 192, 192, 1)',
+            //                             'rgba(255, 99, 132, 1)',
+            //                             'rgba(255, 206, 86, 1)',
+            //                             'rgba(54, 162, 235, 1)',
+            //                             'rgba(153, 102, 255, 1)',
+            //                             'rgba(255, 159, 64, 1)',
+            //                         ],
+            //                         borderWidth: 1
+            //                     }]
+            //                 },
+            //                 options: {
+            //                     responsive: true,
+            //                     plugins: {
+            //                         legend: {
+            //                             display: false,
+            //                         },
+            //                         tooltip: {
+            //                             callbacks: {
+            //                                 label: function(tooltipItem) {
+            //                                     return tooltipItem.label + ': ' + tooltipItem.raw;
+            //                                 }
+            //                             }
+            //                         }
+            //                     }
+            //                 }
+            //             });
+            //         })
+            //         .catch(error => console.error('Error fetching product counts:', error));
+            // }
+            // fetchCityCounts();
 
             let lineChart;
 
