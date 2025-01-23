@@ -15,7 +15,7 @@
                         <div class="col-2">
                             <input type="month" class="form-control mr-2" id="filterMonth" placeholder="Select Month" autocomplete="off">
                         </div>
-                        <div class="col-3">
+                        <div class="col-3" style="display: none;">
                             <select id="filterProduk" class="form-control select2">
                                 <option value="">All Produk</option>
                             </select>
@@ -33,11 +33,11 @@
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
                             </div>
                         </div>
-                        <div class="col-auto">
+                        <!-- <div class="col-auto">
                             <div class="btn-group">
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                             </div>
-                        </div>
+                        </div> -->
                         <!-- <div class="col-auto">
                             <div class="btn-group">
                                 <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
