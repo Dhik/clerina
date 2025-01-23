@@ -45,6 +45,7 @@ Route::prefix('admin')
                 Route::get('/', [CustomerAnalysisController::class, 'index'])->name('customer_analysis.index');
                 Route::get('/get', [CustomerAnalysisController::class, 'data'])->name('customer_analysis.data');
                 Route::get('/import', [CustomerAnalysisController::class, 'importCustomers'])->name('customer_analysis.import');
+                Route::get('/import_which_hp', [CustomerAnalysisController::class, 'importWhichHP'])->name('customer_analysis.import_which_hp');
                 Route::get('/import_join', [CustomerAnalysisController::class, 'importJoin'])->name('customer_analysis.import_join');
                 Route::get('/total', [CustomerAnalysisController::class, 'countUniqueCustomers'])->name('customer_analysis.total');
                 Route::get('/product-pie', [CustomerAnalysisController::class, 'getProductCounts'])->name('customer_analysis.product_counts');
