@@ -7,6 +7,7 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Customer\Models\CustomerNote;
+use App\Domain\Customer\Models\CustomerMonitor;
 use App\Domain\Customer\Requests\CustomerRequest;
 use App\Domain\User\Enums\PermissionEnum;
 use App\Domain\User\Enums\RoleEnum;
@@ -456,6 +457,13 @@ class CustomerAnalysisController extends Controller
 
         return response()->json($data);
     }
-
-
+    public function getTrendData()
+    {
+        $data = CustomerMonitor::select('date', 'status', 'count_customer')
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->orderBy('date')
+            ->get()
+            ->groupBy('status');
+        return response()->json($data);
+    }
 }

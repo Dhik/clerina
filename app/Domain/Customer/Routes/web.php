@@ -52,6 +52,7 @@ Route::prefix('admin')
                 Route::get('/city-pie', [CustomerAnalysisController::class, 'getCityCounts'])->name('customer_analysis.city_counts');
 
                 Route::get('/daily-unique', [CustomerAnalysisController::class, 'getDailyUniqueCustomers'])->name('customer_analysis.daily_unique');
+                Route::get('/daily-status', [CustomerAnalysisController::class, 'getTrendData'])->name('customer_analysis.daily_status');
                 Route::get('/export', [CustomerAnalysisController::class, 'export'])->name('customer_analysis.export');
                 Route::get('/products', [CustomerAnalysisController::class, 'getProducts'])->name('customer_analysis.get_products');
 
