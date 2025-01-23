@@ -276,6 +276,32 @@ class CustomerAnalysisController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to unjoin customers.'], 500);
         }
     }
+    public function importWhichHp()
+    {
+        try {
+            $range = 'Import Which HP!A2:B';
+            $sheetData = $this->googleSheetService->getSheetData($range);
+
+            foreach ($sheetData as $row) {
+                if (!empty($row[0])) {
+                    CustomersAnalysis::where('nomor_telepon', $row[0])
+                        ->update(['which_hp' => $row[1] ?? null]);
+                }
+            }
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Which HP updated successfully.'
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to update which_hp: ' . $e->getMessage());
+            return response()->json([
+                'success' => false, 
+                'message' => 'Failed to update which_hp.'
+            ], 500);
+        }
+    }
     public function importJoin()
     {
         try {

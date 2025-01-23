@@ -38,12 +38,16 @@
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                             </div>
                         </div>
-                        <div class="col-auto">
+                        <!-- <div class="col-auto">
                             <div class="btn-group">
                                 <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
                             </div>
+                        </div> -->
+                        <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importWhichHpButton" class="btn bg-maroon"><i class="fas fa-upload"></i> Assign HP</button>
+                            </div>
                         </div>
-                        
                     </div>
                     <div class="row">
                         <div class="col-3">
@@ -284,7 +288,6 @@
                         }
                     });
 
-                    // fetch('{{ route('customer_analysis.import') }}')
                     fetch('{{ route('customer_analysis.import_join') }}')
                         .then(response => response.json())
                         .then(data => {
@@ -384,6 +387,45 @@
                     .catch(error => console.error('Error fetching product counts:', error));
             }
             fetchProductCounts();
+
+            $('#importWhichHpButton').click(function() {
+                Swal.fire({
+                    title: 'Importing Which HP Data',
+                    text: 'Importing data from Google Sheets. Please wait.',
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch('{{ route('customer_analysis.import_which_hp') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Import Complete',
+                                showConfirmButton: false,
+                                timer: 2000
+                            });
+                            table.ajax.reload(null, false);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Failed to import data',
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while importing data',
+                        });
+                    });
+                });
 
             function fetchDailyUniqueCustomers() {
                 const selectedMonth = $('#filterMonth').val();
