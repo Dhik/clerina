@@ -21,13 +21,14 @@
                        <input type="month" class="form-control" id="exportMonth">
                    </div>
                    <div class="form-group">
-                       <label>Which HP</label>
-                       <select class="form-control select2" id="exportWhichHp">
-                           <option value="">All HP</option>
-                           <option value="HP1">HP1</option>
-                           <option value="HP2">HP2</option>
-                       </select>
-                   </div>
+                    <label>Which HP</label>
+                        <select class="form-control select2" id="exportWhichHp">
+                            <option value="">All HP</option>
+                            @foreach($whichHp as $hp)
+                                <option value="{{ $hp->which_hp }}">{{ $hp->which_hp }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                </form>
            </div>
            <div class="modal-footer">

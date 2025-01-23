@@ -42,10 +42,16 @@ class CustomerAnalysisController extends Controller
     public function index()
     {
         $customer = CustomersAnalysis::select('status_customer')
-        ->distinct()
-        ->whereNotNull('status_customer')
-        ->get();
-        return view('admin.customers_analysis.index', compact('customer'));
+            ->distinct()
+            ->whereNotNull('status_customer')
+            ->get();
+            
+        $whichHp = CustomersAnalysis::select('which_hp')
+            ->distinct()
+            ->whereNotNull('which_hp')
+            ->get();
+            
+        return view('admin.customers_analysis.index', compact('customer', 'whichHp'));
     }
     public function data(Request $request)
     {
@@ -411,18 +417,12 @@ class CustomerAnalysisController extends Controller
         return response()->json($products);
     }
 
-    // public function export(Request $request)
-    // {
-    //     $month = $request->input('month');
-    //     $status = $request->input('status');
-    //     $whichHp = $request->input('which_hp');
-    //     return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
-    // }
     public function export(Request $request)
     {
         $month = $request->input('month');
         $status = $request->input('status');
-        return Excel::download(new CustomersAnalysisExport($month, $status), 'customer_analysis.xlsx');
+        $whichHp = $request->input('which_hp');
+        return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
     }
 
     

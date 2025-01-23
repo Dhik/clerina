@@ -15,11 +15,11 @@
                         <div class="col-2">
                             <input type="month" class="form-control mr-2" id="filterMonth" placeholder="Select Month" autocomplete="off">
                         </div>
-                        <div class="col-3">
+                        <!-- <div class="col-3">
                             <select id="filterProduk" class="form-control select2">
                                 <option value="">All Produk</option>
                             </select>
-                        </div>
+                        </div> -->
                         <div class="col-2">
                             <select id="filterStatus" class="form-control select2">
                                 <option value="">All Status</option>
