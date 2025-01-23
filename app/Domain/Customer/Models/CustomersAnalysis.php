@@ -24,6 +24,8 @@ class CustomersAnalysis extends Model
         'sku',
         'sales_channel_id',
         'is_joined',
+        'status_customer',
+        'which_hp',
     ];
     public function tenant()
     {
