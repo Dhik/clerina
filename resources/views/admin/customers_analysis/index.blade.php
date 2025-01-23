@@ -20,7 +20,7 @@
                                 <option value="">All Produk</option>
                             </select>
                         </div>
-                        <div class="col-3">
+                        <div class="col-2">
                             <select id="filterStatus" class="form-control select2">
                                 <option value="">All Status</option>
                                 @foreach($customer as $status)
@@ -150,6 +150,7 @@
                     data: function(d) {
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
+                        d.status = $('#filterStatus').val();
                     }
                 },
                 columns: [
@@ -198,7 +199,7 @@
 
             fetchTotalUniqueOrders();
 
-            $('#filterMonth, #filterProduk').change(function() {
+            $('#filterMonth, #filterProduk, #filterStatus').change(function() {
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
                 fetchProductCounts();

@@ -65,6 +65,9 @@ class CustomerAnalysisController extends Controller
             $produk = $request->produk;
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
         }
+        if ($request->has('status') && $request->status) {
+            $query->where('status_customer', $request->status);
+        }
 
         $query = $query->selectRaw('
             MIN(id) as id,
