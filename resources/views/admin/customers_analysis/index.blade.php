@@ -94,8 +94,6 @@
                                 <th>Nama Penerima</th>
                                 <th>Nomor Telepon</th>
                                 <th>Total Orders</th>
-                                <th>Status</th>
-                                <th>HP</th>
                                 <th>Details</th>
                                 <th>Sudah Bergabung</th>
                             </tr>
@@ -148,27 +146,6 @@
                     { data: 'nama_penerima', name: 'nama_penerima' },
                     { data: 'nomor_telepon', name: 'nomor_telepon' },
                     { data: 'total_orders', name: 'total_orders' },
-                    {
-                        data: 'status_customer',
-                        name: 'status_customer',
-                        className: 'text-center',
-                        render: function(data, type, row) {
-                            if (type === 'display') {
-                                if (!data) return '<span class="btn btn-sm btn-secondary">NULL</span>';
-                                
-                                const statusColors = {
-                                    'prioritas': 'bg-success',
-                                    'loyalis': 'bg-primary',
-                                    'new customer': 'bg-info'
-                                };
-
-                                const color = statusColors[data.toLowerCase()] || 'bg-secondary';
-                                return `<button class="btn btn-sm ${color}">${data}</button>`;
-                            }
-                            return data;
-                        }
-                        }
-                    { data: 'which_hp', name: 'which_hp' },
                     { data: 'details', name: 'details' },
                     { data: 'is_joined', name: 'is_joined' },
                 ],
