@@ -1673,41 +1673,22 @@ class SalesController extends Controller
     }
 
     public function getNetProfitMarginDaily()
-    {
-        $data = NetProfit::query()
-            ->select([
-                'date',
-                DB::raw('(sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp as net_profit_margin')
-            ])
-            ->whereBetween('date', ['2025-01-01', '2025-01-31'])
-            ->orderBy('date')
-            ->get();
+{
+   $data = NetProfit::query()
+       ->select([
+           'date',
+           DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
+       ])
+       ->whereBetween('date', ['2025-01-01', '2025-01-31'])
+       ->orderBy('date')
+       ->get()
+       ->map(function($row) {
+           return [
+               'date' => $row->date,
+               'net' => (float)$row->net_profit_margin
+           ];
+       });
 
-        $formattedData = [];
-        $weekTotal = 0;
-        $weekCount = 0;
-
-        foreach ($data as $row) {
-            $weekCount++;
-            $weekTotal += $row->net_profit_margin;
-
-            $formattedData[] = [
-                'date' => $row->date->format('Y-m-d'),
-                'net' => $row->net_profit_margin
-            ];
-
-            if ($weekCount == 7) {
-                $formattedData[] = [
-                    'date' => 'Week ' . ceil($weekCount/7) . ' Total',
-                    'net' => $weekTotal,
-                    'is_weekly_total' => true
-                ];
-                
-                $weekTotal = 0;
-                $weekCount = 0;
-            }
-        }
-
-        return response()->json($formattedData);
-    }
+   return response()->json($data);
+}
 }
