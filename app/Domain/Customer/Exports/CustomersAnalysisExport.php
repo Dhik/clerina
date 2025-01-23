@@ -25,13 +25,13 @@ class CustomersAnalysisExport extends DefaultValueBinder implements FromCollecti
        $this->status = $status;
        $this->whichHp = $whichHp;
    }
-   public function bindValue($cell, $value, $column)
+   public function bindValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell, $value)
     {
-        if ($column === 'B') {
+        if ($cell->getColumn() === 'B') {
             $cell->setValueExplicit($value, DataType::TYPE_STRING);
             return true;
         }
-        return parent::bindValue($cell, $value, $column);
+        return parent::bindValue($cell, $value);
     }
 
    public function collection() 
