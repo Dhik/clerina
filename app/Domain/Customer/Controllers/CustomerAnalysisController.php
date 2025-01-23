@@ -41,7 +41,11 @@ class CustomerAnalysisController extends Controller
      */
     public function index()
     {
-        return view('admin.customers_analysis.index');
+        $customer = CustomersAnalysis::select('status_customer')
+        ->distinct()
+        ->whereNotNull('status_customer')
+        ->get();
+        return view('admin.customers_analysis.index', compact('customer'));
     }
     public function data(Request $request)
     {

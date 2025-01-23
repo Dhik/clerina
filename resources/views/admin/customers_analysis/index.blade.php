@@ -20,6 +20,12 @@
                                 <option value="">All Produk</option>
                             </select>
                         </div>
+                        <select id="filterStatus" class="form-control select2">
+                            <option value="">All Status</option>
+                            @foreach($customer as $status)
+                                <option value="{{ $status->status_customer }}">{{ $status->status_customer }}</option>
+                            @endforeach
+                        </select>
                         <div class="col-auto">
                             <div class="btn-group">
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
