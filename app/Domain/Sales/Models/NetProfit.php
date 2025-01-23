@@ -18,4 +18,7 @@ class NetProfit extends Model
         'operasional',
         'hpp',
     ];
+    protected $casts = [
+        'date' => 'date'
+    ];
 }
