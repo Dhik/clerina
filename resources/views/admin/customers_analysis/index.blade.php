@@ -94,6 +94,8 @@
                                 <th>Nama Penerima</th>
                                 <th>Nomor Telepon</th>
                                 <th>Total Orders</th>
+                                <th>Status</th>
+                                <th>HP</th>
                                 <th>Details</th>
                                 <th>Sudah Bergabung</th>
                             </tr>
@@ -146,6 +148,8 @@
                     { data: 'nama_penerima', name: 'nama_penerima' },
                     { data: 'nomor_telepon', name: 'nomor_telepon' },
                     { data: 'total_orders', name: 'total_orders' },
+                    { data: 'status_customer', name: 'status_customer' },
+                    { data: 'which_hp', name: 'which_hp' },
                     { data: 'details', name: 'details' },
                     { data: 'is_joined', name: 'is_joined' },
                 ],
