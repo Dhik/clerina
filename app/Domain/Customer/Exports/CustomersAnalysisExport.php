@@ -41,7 +41,7 @@ class CustomersAnalysisExport implements FromCollection, WithHeadings, ShouldAut
 
        return $query->select(
            'nama_penerima as nama',
-           'nomor_telepon as kontak',
+           DB::raw('CAST(nomor_telepon AS CHAR) as kontak'),
            DB::raw('NULL as email'),
            'alamat',
            DB::raw('NULL as kecamatan'),
