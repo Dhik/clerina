@@ -1673,22 +1673,20 @@ class SalesController extends Controller
     }
 
     public function getNetProfitMarginDaily()
-{
-   $data = NetProfit::query()
-       ->select([
-           'date',
-           DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
-       ])
-       ->whereBetween('date', ['2025-01-01', '2025-01-31'])
-       ->orderBy('date')
-       ->get()
-       ->map(function($row) {
-           return [
-               'date' => $row->date,
-               'net' => (float)$row->net_profit_margin
-           ];
-       });
-
-   return response()->json($data);
-}
+    {
+       return response()->json(
+           NetProfit::query()
+               ->select([
+                   'date',
+                   DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
+               ])
+               ->whereBetween('date', ['2025-01-01', '2025-01-31'])
+               ->orderBy('date')
+               ->get()
+               ->map(fn($row) => [
+                   'date' => date('Y-m-d', strtotime($row->date)),
+                   'net' => (float)$row->net_profit_margin
+               ])
+       );
+    }
 }
