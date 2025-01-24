@@ -86,7 +86,8 @@
                 </div>
             </div>
 
-            @include('admin.sales.recap-card')
+            @include('admin.sales.net-recap-card')
+
             <div class="card">
                 <div class="card-body">
                     <table id="netProfitsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
@@ -383,7 +384,7 @@
             ],
             order: [[0, 'desc']]
         });
-        
+
         function fetchSummary() {
             fetch("{{ route('sales.get_net_sales_summary') }}")
                 .then(response => response.json())
