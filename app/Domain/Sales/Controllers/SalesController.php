@@ -14,6 +14,7 @@ use App\Domain\Sales\Models\NetProfit;
 use App\Domain\Marketing\Models\SocialMedia;
 use App\Domain\Sales\BLL\Visit\VisitBLLInterface;
 use App\Domain\Sales\Models\Sales;
+use App\Domain\Sales\Models\OperationalSpent;
 use App\Domain\Sales\Models\SalesChannel;
 use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;

@@ -4,6 +4,7 @@ use App\Domain\Sales\Controllers\AdSpentMarketPlaceController;
 use App\Domain\Sales\Controllers\AdSpentSocialMediaController;
 use App\Domain\Sales\Controllers\SalesChannelController;
 use App\Domain\Sales\Controllers\SalesController;
+use App\Domain\Sales\Controllers\OperationalSpentController;
 use App\Domain\Sales\Controllers\VisitController;
 use Illuminate\Support\Facades\Route;
 /*
@@ -57,6 +58,13 @@ Route::prefix('admin')
                 Route::post('/', [AdSpentMarketPlaceController::class, 'store'])
                     ->name('adSpentMarketPlace.store');
             });
+
+        Route::prefix('operational-spent')->group(function () {
+            Route::get('/', [OperationalSpentController::class, 'index'])->name('operational-spent.index');
+            Route::get('/get', [OperationalSpentController::class, 'get'])->name('operational-spent.get');
+            Route::get('/getByDate', [OperationalSpentController::class, 'getByDate'])->name('operational-spent.getByDate');
+            Route::post('/', [OperationalSpentController::class, 'store'])->name('operational-spent.store');
+        });
 
         // Sales
         Route::prefix('sales')
