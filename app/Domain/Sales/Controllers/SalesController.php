@@ -133,7 +133,7 @@ class SalesController extends Controller
         //     ->whereMonth('date', Carbon::now()->month)
         //     ->whereYear('date', Carbon::now()->year);
         $query = NetProfit::query()
-            ->whereMonth('date', 12)
+            ->whereMonth('date', 11)
             ->whereYear('date', 2024);
 
         return DataTables::of($query)
@@ -1757,7 +1757,7 @@ class SalesController extends Controller
             // $startDate = now()->startOfMonth();
             // $endDate = now()->endOfMonth();
             // $query->whereBetween('date', [$startDate, $endDate]);
-            $query->whereBetween('date', ['2024-12-01', '2024-12-31']);
+            $query->whereBetween('date', ['2024-11-01', '2024-11-31']);
         }
 
         return response()->json(
