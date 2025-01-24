@@ -48,6 +48,7 @@ Route::prefix('admin')
             Route::get('/export', [TalentContentController::class, 'export'])->name('talent_content.export');
             Route::get('/campaigns', [TalentContentController::class, 'getCampaigns'])->name('talent_content.getCampaigns');
             Route::post('/{id}/add-link', [TalentContentController::class, 'addLink'])->name('talent_content.addLink');
+            Route::get('/by-date', [TalentContentController::class, 'getTalentContentByDate'])->name('talent-content.getByDate');
 
             Route::post('/{id}/refund', [TalentContentController::class, 'refund'])->name('talent_content.refund');
             Route::post('/{id}/unrefund', [TalentContentController::class, 'unrefund'])->name('talent_content.unrefund');

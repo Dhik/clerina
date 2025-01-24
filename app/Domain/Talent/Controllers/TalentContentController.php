@@ -647,4 +647,32 @@ class TalentContentController extends Controller
         ];
         return $colors[array_rand($colors)];
     }
+    public function getTalentContentByDate(Request $request)
+    {
+        $date = $request->date;
+
+        $talentContents = TalentContent::query()
+            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+            ->where('posting_date', $date)
+            ->where('talents.tenant_id', 1)
+            ->whereNotNull('upload_link')
+            ->select([
+                'talent_content.id',
+                'talent_content.product',
+                'talent_content.upload_link',
+                'talents.username',
+                'talents.talent_name',
+                'talents.platform',
+                'talents.followers',
+                'talent_content.final_rate_card',
+                DB::raw('CASE 
+                    WHEN talent_content.final_rate_card IS NOT NULL 
+                    THEN talent_content.final_rate_card 
+                    ELSE talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)
+                END as rate')
+            ])
+            ->get();
+
+        return response()->json($talentContents);
+    }
 }

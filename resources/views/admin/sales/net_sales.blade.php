@@ -224,7 +224,20 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="kolDetailContent"></div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Talent</th>
+                            <th>Username</th>
+                            <th>Platform</th>
+                            <th>Followers</th>
+                            <th>Product</th>
+                            <th>Rate</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kolDetailContent"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -298,17 +311,22 @@
         filterDate.change(function () {
             netProfitsTable.draw()
         });
-        
+
         function showKolDetail(date) {
             $('#kolDetailModal').modal('show');
             $.get("{{ route('talent-content.getByDate') }}", { date: date }, function(data) {
-                let html = '<table class="table">' +
-                    '<thead><tr><th>Talent</th><th>Rate</th></tr></thead><tbody>';
+                let html = '';
                 data.forEach(function(item) {
-                    html += '<tr><td>' + item.talent_name + '</td><td>Rp ' + 
-                        Math.round(item.rate).toLocaleString('id-ID') + '</td></tr>';
+                    html += `<tr>
+                        <td>${item.talent_name || '-'}</td>
+                        <td>${item.username || '-'}</td>
+                        <td>${item.platform || '-'}</td>
+                        <td>${item.followers ? item.followers.toLocaleString('id-ID') : '-'}</td>
+                        <td>${item.product || '-'}</td>
+                        <td>Rp ${Math.round(item.rate).toLocaleString('id-ID')}</td>
+                        <td><a href="${item.upload_link}" target="_blank">View</a></td>
+                    </tr>`;
                 });
-                html += '</tbody></table>';
                 $('#kolDetailContent').html(html);
             });
         }
