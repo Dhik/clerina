@@ -539,69 +539,87 @@
             });
         }
 
+        // Render waterfall chart
         function renderWaterfallChart() {
-            const params = new URLSearchParams();
-            if (filterDate.val()) {
-                params.append('filterDates', filterDate.val());
+            $.ajax({
+                url: "{{ route('sales.waterfall-data-2') }}",
+                type: 'GET',
+                data: {
+                    filterDates: filterDate.val()
+                },
+                success: function(salesData) {
+                    if (salesData && salesData.length > 0) {
+                        const chartData = salesData.map(day => ({
+                            x: day.date,
+                            y: day.net,
+                            measure: 'relative',
+                            text: 'Rp ' + (day.net >= 0 ? '+' : '') + day.net.toLocaleString('id-ID'),
+                            textposition: 'outside'
+                        }));
+
+                        const data = [{
+                            type: 'waterfall',
+                            orientation: 'v',
+                            x: chartData.map(d => d.x),
+                            y: chartData.map(d => d.y),
+                            measure: chartData.map(d => d.measure),
+                            text: chartData.map(d => d.text),
+                            textposition: chartData.map(d => d.textposition),
+                            connector: { 
+                                line: { color: 'rgb(63, 63, 63)' } 
+                            },
+                            increasing: { 
+                                marker: { color: '#2ecc71' }
+                            },
+                            decreasing: { 
+                                marker: { color: '#e74c3c' }
+                            }
+                        }];
+
+                        const layout = {
+                            title: 'Daily Net Profit Margin',
+                            xaxis: {
+                                title: 'Date',
+                                tickangle: -45
+                            },
+                            yaxis: {
+                                title: 'Amount (Rp)',
+                                tickformat: ',d',
+                                gridcolor: '#eee'
+                            },
+                            showlegend: false,
+                            autosize: true,
+                            height: 600,
+                            margin: { 
+                                l: 80, 
+                                r: 20, 
+                                t: 40, 
+                                b: 120 
+                            },
+                            plot_bgcolor: '#fff',
+                            paper_bgcolor: '#fff'
+                        };
+
+                        Plotly.newPlot('waterfallChart', data, layout, { 
+                            responsive: true,
+                            displayModeBar: false
+                        });
+                    } else {
+                        $('#waterfallChart').html('<div class="text-center p-4">No data available for selected date range</div>');
+                    }
+                }, 
+                error: function(error) {
+                    console.error('Error fetching waterfall data:', error);
+                    $('#waterfallChart').html('<div class="text-center p-4 text-danger">Error loading chart data</div>');
+                }
+            });
             }
-            fetch(`{{ route('sales.waterfall-data-2') }}?${params.toString()}`)
-                .then(response => response.json())
-                .then(salesData => {
-                    const chartData = salesData.map(day => ({
-                        x: day.date,
-                        y: day.net,
-                        measure: 'relative',
-                        text: (day.net >= 0 ? '+' : '') + day.net.toLocaleString(),
-                        textposition: 'outside'
-                    }));
 
-                    const data = [{
-                        type: 'waterfall',
-                        orientation: 'v',
-                        x: chartData.map(d => d.x),
-                        y: chartData.map(d => d.y),
-                        measure: chartData.map(d => d.measure),
-                        text: chartData.map(d => d.text),
-                        textposition: chartData.map(d => d.textposition),
-                        connector: { 
-                            line: { color: 'rgb(63, 63, 63)' } 
-                        },
-                        increasing: { 
-                            marker: { color: '#2ecc71' }
-                        },
-                        decreasing: { 
-                            marker: { color: '#e74c3c' }
-                        }
-                    }];
-
-                    const layout = {
-                        title: 'Daily Net Profit Margin',
-                        xaxis: {
-                            title: 'Date',
-                            tickangle: -45
-                        },
-                        yaxis: {
-                            title: 'Amount (Rp)',
-                            tickformat: ',d'
-                        },
-                        autosize: true,
-                        height: 600,
-                        margin: { 
-                            l: 80, 
-                            r: 20, 
-                            t: 40, 
-                            b: 120 
-                        }
-                    };
-
-                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                })
-                .catch(error => console.error('Error fetching waterfall data:', error));
-            }
-
+            // Initial render
             document.addEventListener('DOMContentLoaded', renderWaterfallChart);
 
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            // Re-render on tab change
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
