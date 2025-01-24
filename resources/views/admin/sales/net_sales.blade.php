@@ -219,7 +219,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
-        
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
 
@@ -239,16 +238,16 @@
             filterDate.val('')
             filterChannel.val('')
             updateRecapCount()
-            salesTable.draw()
+            netProfitsTable.draw()
         })
 
         filterDate.change(function () {
-            salesTable.draw()
+            netProfitsTable.draw()
             updateRecapCount()
         });
 
         filterChannel.change(function () {
-            salesTable.draw()
+            netProfitsTable.draw()
             updateRecapCount()
         });
 
@@ -301,29 +300,6 @@
                 { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
             ],
             order: [[0, 'desc']]
-        });
-
-        // Handle row click event to open modal and fill form
-        salesTable.on('draw.dt', function() {
-            const tableBodySelector =  $('#salesTable tbody');
-
-            tableBodySelector.on('click', '.visitButtonDetail', function(event) {
-                event.preventDefault();
-                let rowData = salesTable.row($(this).closest('tr')).data();
-                showVisitorDetail(rowData);
-            });
-
-            tableBodySelector.on('click', '.omsetButtonDetail', function(event) {
-                event.preventDefault();
-                let rowData = salesTable.row($(this).closest('tr')).data();
-                showOmsetDetail(rowData);
-            });
-
-            tableBodySelector.on('click', '.omset-link', function(event) {
-                event.preventDefault();
-                let date = $(this).data('date');
-                showOmsetDetail(date);
-            });
         });
 
         function showVisitorDetail(data) {
@@ -604,12 +580,6 @@
             }
         });
 
-        $(function () {
-            salesTable.draw();
-            updateRecapCount();
-            $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
-        });
-
         function showLoadingSwal(message) {
             Swal.fire({
                 title: message,
@@ -620,116 +590,6 @@
             });
         }
 
-        $('#refreshDataBtn').click(function () {
-            showLoadingSwal('Refreshing data, please wait...');
-
-            $.ajax({
-                url: "{{ route('order.fetch-all') }}",
-                method: 'GET',
-                success: function(response) {
-                    console.log('Orders fetched and saved successfully');
-
-                    // Call the updateSalesTurnover route after orders are fetched
-                    $.ajax({
-                        url: "{{ route('order.update_turnover') }}", // Route for updateSalesTurnover
-                        method: 'GET',
-                        success: function(response) {
-                            console.log('Sales turnover updated successfully');
-
-                            // Proceed with the rest of the data import/update process
-                            $.ajax({
-                                url: "{{ route('sales.import_ads') }}",
-                                method: 'GET',
-                                success: function(response) {
-                                    $.ajax({
-                                        url: "{{ route('sales.update_ads') }}",
-                                        method: 'GET',
-                                        success: function(response) {
-                                            $.ajax({
-                                                url: "{{ route('visit.import_cleora') }}",
-                                                method: 'GET',
-                                                success: function(response) {
-                                                    $.ajax({
-                                                        url: "{{ route('visit.import_azrina') }}",
-                                                        method: 'GET',
-                                                        success: function(response) {
-                                                            $.ajax({
-                                                                url: "{{ route('visit.update') }}",
-                                                                method: 'GET',
-                                                                success: function(response) {
-                                                                    Swal.fire({
-                                                                        icon: 'success',
-                                                                        title: 'Data refreshed successfully!',
-                                                                        text: 'All data has been imported and updated.',
-                                                                        timer: 2000,
-                                                                        showConfirmButton: false
-                                                                    });
-                                                                    updateRecapCount();
-                                                                    salesTable.draw();
-                                                                },
-                                                                error: function(xhr, status, error) {
-                                                                    Swal.fire({
-                                                                        icon: 'error',
-                                                                        title: 'Error updating monthly visit data!',
-                                                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                                                    });
-                                                                }
-                                                            });
-                                                        },
-                                                        error: function(xhr, status, error) {
-                                                            Swal.fire({
-                                                                icon: 'error',
-                                                                title: 'Error importing Azrina data!',
-                                                                text: xhr.responseJSON?.message || 'An error occurred.',
-                                                            });
-                                                        }
-                                                    });
-                                                },
-                                                error: function(xhr, status, error) {
-                                                    Swal.fire({
-                                                        icon: 'error',
-                                                        title: 'Error importing Cleora data!',
-                                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                                    });
-                                                }
-                                            });
-                                        },
-                                        error: function(xhr, status, error) {
-                                            Swal.fire({
-                                                icon: 'error',
-                                                title: 'Error updating monthly ad spent data!',
-                                                text: xhr.responseJSON?.message || 'An error occurred.',
-                                            });
-                                        }
-                                    });
-                                },
-                                error: function(xhr, status, error) {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error importing data from Google Sheets!',
-                                        text: xhr.responseJSON?.message || 'An error occurred.',
-                                    });
-                                }
-                            });
-                        },
-                        error: function(xhr, status, error) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error updating sales turnover data!',
-                                text: xhr.responseJSON?.message || 'An error occurred.',
-                            });
-                        }
-                    });
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error fetching orders!',
-                        text: xhr.responseJSON?.message || 'An error occurred.',
-                    });
-                }
-            });
-        });
         function renderWaterfallChart() {
             fetch('{{ route('sales.waterfall-data-2') }}')
                 .then(response => response.json())
