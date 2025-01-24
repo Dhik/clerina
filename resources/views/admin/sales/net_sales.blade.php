@@ -398,37 +398,6 @@
         }
         fetchSummary();
 
-
-        function showVisitorDetail(data) {
-            $.ajax({
-                url: "{{ route('visit.getByDate') }}?date=" + data.date,
-                type: 'GET',
-                success: function(response) {
-                    let visitTableBody = $("#visit-table-body");
-                    visitTableBody.empty(); // Clear existing rows
-
-                    if (response.length > 0) {
-                        response.forEach(function(item) {
-                            let row = `<tr>
-                            <td>${item.sales_channel.name ?? ''}</td>
-                            <td>${item.visit_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
-                        </tr>`;
-                            visitTableBody.append(row);
-                        });
-                    } else {
-                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
-                        visitTableBody.append(row);
-                    }
-
-                    $('#showVisitorModal').modal('show');
-                },
-                error: function(error) {
-                    console.log(error);
-                    alert("An error occurred");
-                }
-            });
-        }
-
         function showOmsetDetail(data) {
             $.ajax({
                 url: "{{ route('order.getOrdersByDate') }}?date=" + data.date,
@@ -751,8 +720,6 @@
             }
             });
     </script>
-
-    @include('admin.visit.script')
     @include('admin.adSpentSocialMedia.script')
     @include('admin.adSpentMarketPlace.script')
     @include('admin.sales.script-chart')
