@@ -1747,7 +1747,9 @@ class SalesController extends Controller
 
         if ($request->filterDates) {
             $dates = explode(' - ', $request->filterDates);
-            $query->whereBetween('date', [$dates[0], $dates[1]]);
+            $startDate = Carbon::createFromFormat('m/d/Y', $dates[0])->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('m/d/Y', $dates[1])->format('Y-m-d');
+            $query->whereBetween('date', [$startDate, $endDate]);
         } else {
             $startDate = now()->startOfMonth();
             $endDate = now()->endOfMonth();
