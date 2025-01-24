@@ -6,6 +6,7 @@ use App\Domain\Sales\Models\OperationalSpent;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
+use App\Http\Controllers\Controller;
 
 class OperationalSpentController extends Controller
 {
