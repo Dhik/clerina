@@ -275,18 +275,15 @@
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
             filterChannel.val('')
-            updateRecapCount()
             netProfitsTable.draw()
         })
 
         filterDate.change(function () {
             netProfitsTable.draw()
-            updateRecapCount()
         });
 
         filterChannel.change(function () {
             netProfitsTable.draw()
-            updateRecapCount()
         });
 
         function refreshData() {
