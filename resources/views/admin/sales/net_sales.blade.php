@@ -216,7 +216,19 @@
     </div>
 </div>
 
-    
+<div class="modal fade" id="kolDetailModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">KOL Detail</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="kolDetailContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @stop
 
@@ -286,6 +298,20 @@
         filterDate.change(function () {
             netProfitsTable.draw()
         });
+        
+        function showKolDetail(date) {
+            $('#kolDetailModal').modal('show');
+            $.get("{{ route('talent-content.getByDate') }}", { date: date }, function(data) {
+                let html = '<table class="table">' +
+                    '<thead><tr><th>Talent</th><th>Rate</th></tr></thead><tbody>';
+                data.forEach(function(item) {
+                    html += '<tr><td>' + item.talent_name + '</td><td>Rp ' + 
+                        Math.round(item.rate).toLocaleString('id-ID') + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                $('#kolDetailContent').html(html);
+            });
+        }
 
         filterChannel.change(function () {
             netProfitsTable.draw()
@@ -351,8 +377,9 @@
                 },
                 {
                     data: 'spent_kol',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    render: function(data, type, row) {
+                        return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
+                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                     }
                 },
                 {
