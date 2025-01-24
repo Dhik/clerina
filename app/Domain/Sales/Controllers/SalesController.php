@@ -146,6 +146,28 @@ class SalesController extends Controller
             })
             ->make(true);
     }
+    public function getNetProfitSummary()
+    {
+        $currentMonth = Carbon::now();
+        
+        $data = NetProfit::query()
+            ->whereMonth('date', $currentMonth->month)
+            ->whereYear('date', $currentMonth->year)
+            ->selectRaw('
+                SUM(sales) as total_sales,
+                SUM(hpp) as total_hpp,
+                SUM(marketing + spent_kol + COALESCE(affiliate, 0) + operasional) as total_spent,
+                SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit
+            ')
+            ->first();
+
+        return response()->json([
+            'total_sales' => $data->total_sales ?? 0,
+            'total_hpp' => $data->total_hpp ?? 0,
+            'total_spent' => $data->total_spent ?? 0,
+            'total_net_profit' => $data->total_net_profit ?? 0
+        ]);
+    }
 
     public function report(): View|\Illuminate\Foundation\Application|Factory|Application
     {

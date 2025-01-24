@@ -39,6 +39,53 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-3">
+                    <div class="small-box bg-gradient-success">
+                        <div class="inner">
+                            <h4 id="totalSales">Rp 0</h4>
+                            <p>Total Sales</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-primary">
+                        <div class="inner">
+                            <h4 id="totalHpp">Rp 0</h4>
+                            <p>Total HPP</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-info">
+                        <div class="inner">
+                            <h4 id="totalSpent">Rp 0</h4>
+                            <p>Total Spent</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-money-bill"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-teal">
+                        <div class="inner">
+                            <h4 id="totalNetProfit">Rp 0</h4>
+                            <p>Total Net Profit</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @include('admin.sales.recap-card')
             <div class="card">
                 <div class="card-body">
@@ -336,6 +383,21 @@
             ],
             order: [[0, 'desc']]
         });
+        
+        function fetchSummary() {
+            fetch("{{ route('sales.get_net_sales_summary') }}")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
+                    document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+                    document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
+                    document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        fetchSummary();
+
+
         function showVisitorDetail(data) {
             $.ajax({
                 url: "{{ route('visit.getByDate') }}?date=" + data.date,
