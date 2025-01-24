@@ -315,12 +315,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
         filterDate = $('#filterDates');
-        filterDate.datepicker({
-            format: "mm/yyyy",
-            startView: "months", 
-            minViewMode: "months",
-            autoclose: true
-        });
         filterChannel = $('#filterChannel');
 
         $('#resetFilterBtn').click(function () {
@@ -331,7 +325,6 @@
 
         filterDate.change(function () {
             netProfitsTable.draw();
-            renderWaterfallChart();
         });
 
         function showKolDetail(date) {
