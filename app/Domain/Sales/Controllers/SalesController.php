@@ -129,9 +129,12 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
+        // $query = NetProfit::query()
+        //     ->whereMonth('date', Carbon::now()->month)
+        //     ->whereYear('date', Carbon::now()->year);
         $query = NetProfit::query()
-            ->whereMonth('date', Carbon::now()->month)
-            ->whereYear('date', Carbon::now()->year);
+            ->whereMonth('date', 12)
+            ->whereYear('date', 2024);
 
         return DataTables::of($query)
             ->addColumn('net_profit', function ($row) {
