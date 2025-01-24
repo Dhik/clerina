@@ -552,9 +552,6 @@
             $.ajax({
                 url: "{{ route('sales.waterfall-data-2') }}",
                 type: 'GET',
-                data: {
-                    filterDates: filterDate.val()
-                },
                 success: function(salesData) {
                     const chartData = salesData.map(day => ({
                         x: day.date,
