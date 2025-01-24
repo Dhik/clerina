@@ -129,12 +129,12 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
-        // $query = NetProfit::query()
-        //     ->whereMonth('date', Carbon::now()->month)
-        //     ->whereYear('date', Carbon::now()->year);
         $query = NetProfit::query()
-            ->whereMonth('date', 11)
-            ->whereYear('date', 2024);
+            ->whereMonth('date', Carbon::now()->month)
+            ->whereYear('date', Carbon::now()->year);
+        // $query = NetProfit::query()
+        //     ->whereMonth('date', 11)
+        //     ->whereYear('date', 2024);
 
         return DataTables::of($query)
             ->addColumn('net_profit', function ($row) {
@@ -1754,13 +1754,13 @@ class SalesController extends Controller
             $endDate = Carbon::createFromFormat('m/d/Y', $dates[1])->format('Y-m-d');
             $query->whereBetween('date', [$startDate, $endDate]);
         } else {
-            // $startDate = now()->startOfMonth();
-            // $endDate = now()->endOfMonth();
-            // $query->whereBetween('date', [$startDate, $endDate]);
-            $query->whereBetween('date', [
-                Carbon::now()->setYear(2024)->setMonth(11)->startOfMonth(),
-                Carbon::now()->setYear(2024)->setMonth(11)->endOfMonth()
-            ]);
+            $startDate = now()->startOfMonth();
+            $endDate = now()->endOfMonth();
+            $query->whereBetween('date', [$startDate, $endDate]);
+            // $query->whereBetween('date', [
+            //     Carbon::now()->setYear(2024)->setMonth(11)->startOfMonth(),
+            //     Carbon::now()->setYear(2024)->setMonth(11)->endOfMonth()
+            // ]);
         }
 
         return response()->json(
