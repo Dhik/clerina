@@ -217,7 +217,7 @@
 </div>
 
 <div class="modal fade" id="kolDetailModal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">KOL Detail</h5>
@@ -243,7 +243,7 @@
     </div>
 </div>
 <div class="modal fade" id="hppDetailModal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">HPP Detail</h5>

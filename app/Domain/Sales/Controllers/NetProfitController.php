@@ -53,7 +53,7 @@ class NetProfitController extends Controller
 
             $hppPerDate = Order::query()
                 ->whereBetween('orders.date', [$startDate, now()])
-                ->where('orders.tenant_id', 1)
+                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
                     $join->on(DB::raw("TRIM(
