@@ -314,18 +314,6 @@
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
 
-        $('#btnAddVisit').click(function() {
-            $('#dateVisit').val(moment().format("DD/MM/YYYY"));
-        });
-
-        $('#btnAddAdSpentSM').click(function() {
-            $('#dateAdSpentSocialMedia').val(moment().format("DD/MM/YYYY"));
-        });
-
-        $('#btnAddAdSpentMP').click(function() {
-            $('#dateAdSpentMarketPlace').val(moment().format("DD/MM/YYYY"));
-        });
-
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
             filterChannel.val('')
@@ -333,7 +321,8 @@
         })
 
         filterDate.change(function () {
-            netProfitsTable.draw()
+            netProfitsTable.draw();
+            renderWaterfallChart();
         });
 
         function showKolDetail(date) {
@@ -551,7 +540,12 @@
         }
 
         function renderWaterfallChart() {
-            fetch('{{ route('sales.waterfall-data-2') }}')
+            const dates = filterDate.val() || null;
+            const url = new URL("{{ route('sales.waterfall-data-2') }}");
+            if (dates) {
+                url.searchParams.append('filterDates', dates);
+            }
+            fetch(url)
                 .then(response => response.json())
                 .then(salesData => {
                     const chartData = salesData.map(day => ({
@@ -612,6 +606,6 @@
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
-            });
+        });
     </script>
 @stop
