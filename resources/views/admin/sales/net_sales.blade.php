@@ -540,11 +540,7 @@
         }
 
         function renderWaterfallChart() {
-            const dates = filterDate.val() || null;
             const url = new URL("{{ route('sales.waterfall-data-2') }}");
-            if (dates) {
-                url.searchParams.append('filterDates', dates);
-            }
             fetch(url)
                 .then(response => response.json())
                 .then(salesData => {
