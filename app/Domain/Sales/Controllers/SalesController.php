@@ -1739,33 +1739,30 @@ class SalesController extends Controller
 
     public function getNetProfitMarginDaily(Request $request)
     {
-        if ($request->filterDates) {
-            $dates = explode(' - ', $request->filterDates);
-            $startDate = Carbon::createFromFormat('m/d/Y', $dates[0])->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('m/d/Y', $dates[1])->format('Y-m-d');
-            
-            \Log::info('Date Filter:', [
-                'raw' => $request->filterDates,
-                'parsed' => [$startDate, $endDate]
-            ]);
-        }
-
         $query = NetProfit::query()
             ->select([
                 'date',
                 DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
-            ])
-            ->whereBetween('date', [$startDate, $endDate])
-            ->orderBy('date');
+            ]);
 
-        $results = $query->get();
-        \Log::info('Query Results:', ['count' => $results->count()]);
+        if ($request->filterDates) {
+            $dates = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('m/d/Y', $dates[0])->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('m/d/Y', $dates[1])->format('Y-m-d');
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } else {
+            $startDate = now()->startOfMonth();
+            $endDate = now()->endOfMonth();
+            $query->whereBetween('date', [$startDate, $endDate]);
+        }
 
         return response()->json(
-            $results->map(fn($row) => [
-                'date' => date('Y-m-d', strtotime($row->date)),
-                'net' => (float)$row->net_profit_margin
-            ])
+            $query->orderBy('date')
+                ->get()
+                ->map(fn($row) => [
+                    'date' => date('Y-m-d', strtotime($row->date)),
+                    'net' => (float)$row->net_profit_margin
+                ])
         );
     }
 }

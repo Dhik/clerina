@@ -312,6 +312,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
         filterDate = $('#filterDates');
+        filterDate.daterangepicker({
+            startDate: moment().startOf('month'),
+            endDate: moment().endOf('month'),
+            locale: {
+                format: 'YYYY-MM-DD'
+            }
+        });
+
         filterChannel = $('#filterChannel');
 
         $('#resetFilterBtn').click(function () {
