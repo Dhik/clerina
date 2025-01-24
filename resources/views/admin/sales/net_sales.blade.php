@@ -281,27 +281,61 @@
             serverSide: true,
             pageLength: 25,
             ajax: {
-                url: "{{ route('sales.get_net_sales') }}",
+                url: "{{ route('net-profits.data') }}",
                 data: function (d) {
                     d.filterDates = filterDate.val()
                 }
             },
             columns: [
                 {data: 'date', name: 'date'},
-                {data: 'sales', name: 'sales'},
-                {data: 'marketing', name: 'marketing'},
-                {data: 'spent_kol', name: 'spent_kol'},
-                {data: 'affiliate', name: 'affiliate'},
-                {data: 'operasional', name: 'operasional'},
-                {data: 'hpp', name: 'hpp'},
-                {data: 'net_profit', name: 'net_profit'}
+                {
+                    data: 'sales',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'marketing',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'spent_kol',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'affiliate',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'operasional',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'hpp',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                },
+                {
+                    data: 'net_profit',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
+                }
             ],
             columnDefs: [
                 { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
             ],
             order: [[0, 'desc']]
         });
-
         function showVisitorDetail(data) {
             $.ajax({
                 url: "{{ route('visit.getByDate') }}?date=" + data.date,
