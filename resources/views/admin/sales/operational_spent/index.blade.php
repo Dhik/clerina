@@ -113,7 +113,7 @@ let table = $('#operationalSpentTable').DataTable({
                 ];
                 return months[data - 1];
             }
-        }
+        },
         {data: 'year', name: 'year'},
         {data: 'spent', name: 'spent'},
         {data: 'actions', name: 'actions', orderable: false, searchable: false}
