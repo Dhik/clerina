@@ -104,4 +104,36 @@ class NetProfitController extends Controller
                 ->where('tenant_id', 1)
         );
     }
+    public function getHppByDate(Request $request)
+    {
+        $date = $request->date;
+
+        $hppDetails = Order::query()
+            ->join('products', function($join) {
+                $join->on(DB::raw("TRIM(
+                    CASE 
+                        WHEN orders.sku REGEXP '^[0-9]+\\s+' 
+                        THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
+                        ELSE orders.sku 
+                    END
+                )"), '=', 'products.sku');
+            })
+            ->whereDate('orders.date', $date)
+            ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+            ->select([
+                'products.sku',
+                'products.product',
+                'products.harga_satuan',
+                DB::raw('COUNT(*) as order_count'),
+                DB::raw('SUM(CASE 
+                    WHEN orders.sku REGEXP "^[0-9]+\\s+"
+                    THEN CAST(SUBSTRING_INDEX(orders.sku, " ", 1) AS UNSIGNED)
+                    ELSE 1 
+                END) as quantity')
+            ])
+            ->groupBy('products.sku', 'products.product', 'products.harga_satuan')
+            ->get();
+
+        return response()->json($hppDetails);
+    }
 }
