@@ -1748,7 +1748,7 @@ class SalesController extends Controller
                 DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
             ]);
 
-        $query->whereBetween('date', ['2024-12-01', '2024-12-31']);
+        $query->whereBetween('date', ['2024-11-01', '2024-11-31']);
 
         return response()->json(
             $query->orderBy('date')
