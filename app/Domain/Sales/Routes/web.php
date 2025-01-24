@@ -63,6 +63,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [SalesController::class, 'index'])->name('sales.index');
                 Route::get('/net_sales', [SalesController::class, 'net_sales'])->name('sales.net_sales');
+                Route::get('/get_net_sales', [SalesController::class, 'getNetProfit'])->name('sales.get_net_sales');
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
                 Route::get('/omset/{date}', [SalesController::class, 'getOmsetByDate'])->name('sales.getOmsetByDate');
                 Route::get('/send-message', [SalesController::class, 'sendMessageCleora']);
