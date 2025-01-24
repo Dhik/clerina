@@ -46,40 +46,50 @@ class NetProfitController extends Controller
         try {
             $startDate = now()->startOfMonth();
             $dates = collect();
-            for($date = $startDate; $date->lte(now()); $date->addDay()) {
+            for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
                 $dates->push($date->format('Y-m-d'));
             }
+
             $hppPerDate = Order::query()
-                ->rightJoin(DB::raw("(SELECT UNNEST(ARRAY[" . $dates->map(fn($d) => "'$d'")->join(',') . "]) as date) as dr"), 
-                    DB::raw('DATE(orders.date)'), '=', 'dr.date')
+                ->whereBetween('orders.date', [$startDate, now()])
+                ->where('orders.tenant_id', 1)
+                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
-                    $join->on(DB::raw('TRIM(
+                    $join->on(DB::raw("TRIM(
                         CASE 
-                            WHEN orders.sku REGEXP \'^[0-9]+\\s+\' 
-                            THEN SUBSTRING(orders.sku, LOCATE(\' \', orders.sku) + 1)
+                            WHEN orders.sku REGEXP '^[0-9]+\\s+' 
+                            THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
                             ELSE orders.sku 
                         END
-                    )'), '=', 'products.sku');
+                    )"), '=', 'products.sku');
                 })
-                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
-                ->select('dr.date')
+                ->select(DB::raw('DATE(orders.date) as date'))
                 ->selectRaw('COALESCE(SUM(
                     CASE 
-                        WHEN orders.sku REGEXP \'^[0-9]+\\s+\'
-                        THEN products.harga_satuan * CAST(SUBSTRING_INDEX(orders.sku, \' \', 1) AS UNSIGNED)
+                        WHEN orders.sku REGEXP "^[0-9]+\\s+"
+                        THEN products.harga_satuan * CAST(SUBSTRING_INDEX(orders.sku, " ", 1) AS UNSIGNED)
                         ELSE products.harga_satuan
                     END
                 ), 0) as total_hpp')
-                ->groupBy('dr.date');
+                ->groupBy('date');
+
+            NetProfit::query()
+                ->whereBetween('date', [$startDate, now()])
+                ->update(['hpp' => 0]);
 
             NetProfit::query()
                 ->joinSub($hppPerDate, 'hpp', function($join) {
                     $join->on('net_profits.date', '=', 'hpp.date');
                 })
                 ->update(['hpp' => DB::raw('hpp.total_hpp')]);
+
             return response()->json(['success' => true]);
         } catch(\Exception $e) {
-            return response()->json(['success' => false], 500);
+            \Log::error('Update HPP Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
     public function importSalesData()
