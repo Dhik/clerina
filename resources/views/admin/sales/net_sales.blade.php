@@ -18,6 +18,9 @@
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
                                 <div class="col-auto">
+                                    <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
+                                </div>
+                                <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
                                 <div class="col-auto">
@@ -312,14 +315,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
         filterDate = $('#filterDates');
-        filterDate.daterangepicker({
-            startDate: moment().startOf('month'),
-            endDate: moment().endOf('month'),
-            locale: {
-                format: 'YYYY-MM-DD'
-            }
+        filterDate.datepicker({
+            format: "mm/yyyy",
+            startView: "months", 
+            minViewMode: "months",
+            autoclose: true
         });
-
         filterChannel = $('#filterChannel');
 
         $('#resetFilterBtn').click(function () {
@@ -599,6 +600,6 @@
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
-            });
+        });
     </script>
 @stop
