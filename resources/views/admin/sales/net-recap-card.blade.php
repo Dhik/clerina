@@ -22,7 +22,7 @@
 </div>
 
 <script>
-function loadNetProfitsChart() {
+    function loadNetProfitsChart() {
     fetch("{{ route('sales.net_sales_line') }}")
         .then(response => response.json())
         .then(data => {
@@ -72,6 +72,10 @@ function loadNetProfitsChart() {
                     },
                     scales: {
                         y: {
+                            grid: {
+                                zeroLineColor: '#888',
+                                zeroLineWidth: 1
+                            },
                             ticks: {
                                 callback: function(value) {
                                     return 'Rp ' + Math.round(value).toLocaleString('id-ID');

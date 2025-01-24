@@ -17,15 +17,6 @@
                                 <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
-                                <div class="col-md-4">
-                                    <select class="form-control" id="filterChannel">
-                                        <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
-                                        <option value="">{{ trans('labels.all') }}</option>
-                                        @foreach($salesChannels as $salesChannel)
-                                            <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
                                 <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
@@ -108,12 +99,6 @@
             </div>
         </div>
     </div>
-
-    @include('admin.visit.modal')
-    @include('admin.adSpentSocialMedia.modal')
-    @include('admin.adSpentMarketPlace.modal')
-    @include('admin.sales.modal-visitor')
-    @include('admin.sales.modal-omset')
 
     <!-- Omset Modal -->
     <div class="modal fade" id="omsetModal" tabindex="-1" role="dialog" aria-labelledby="omsetModalLabel" aria-hidden="true">
