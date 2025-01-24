@@ -322,30 +322,6 @@
 
             $('#refreshDataBtn').click(refreshData);
 
-        function updateRecapCount() {
-            $.ajax({
-                url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),
-                method: 'GET',
-                success: function(response) {
-                    // Update the count with the retrieved value
-                    $('#newSalesCount').text(response.total_sales);
-                    $('#newVisitCount').text(response.total_visit);
-                    $('#newOrderCount').text(response.total_order);
-                    $('#newAdSpentCount').text(response.total_ad_spent);
-                    $('#newQtyCount').text(response.total_qty);
-                    $('#newRoasCount').text(response.total_roas);
-                    $('#newClosingRateCount').text(response.closing_rate);
-                    $('#newCPACount').text(response.cpa);
-                    $('#newCampaignExpense').text(response.campaign_expense);
-                    $('#newAdsSpentTotal').text(response.total_ads_spent);
-                    generateChart(response);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching new orders count:', error);
-                }
-            });
-        }
-
         let netProfitsTable = $('#netProfitsTable').DataTable({
             responsive: true,
             processing: true,
