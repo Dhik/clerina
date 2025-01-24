@@ -5,6 +5,7 @@ namespace App\Domain\Sales\Controllers;
 use App\Domain\Sales\Models\OperationalSpent;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use App\Domain\Sales\Models\NetProfit;
 use Carbon\Carbon;
 use App\Http\Controllers\Controller;
 
@@ -48,10 +49,19 @@ class OperationalSpentController extends Controller
             'spent' => 'required|numeric|min:0'
         ]);
 
+        $data['spent'] = (float) str_replace(['Rp ', '.', ','], ['', '', '.'], $data['spent']);
+
         OperationalSpent::updateOrCreate(
             ['id' => $data['id'] ?? null],
             $data
         );
+        $daysInMonth = Carbon::create($data['year'], $data['month'])->daysInMonth;
+        $dailyOperational = $data['spent'] / $daysInMonth;
+
+        NetProfit::query()
+        ->whereYear('date', $data['year'])
+        ->whereMonth('date', $data['month'])
+        ->update(['operasional' => $dailyOperational]);
 
         return response()->json(['success' => true]);
     }
