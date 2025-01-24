@@ -540,10 +540,13 @@
         }
 
         function renderWaterfallChart() {
-            const url = new URL("{{ route('sales.waterfall-data-2') }}");
-            fetch(url)
-                .then(response => response.json())
-                .then(salesData => {
+            $.ajax({
+                url: "{{ route('sales.waterfall-data-2') }}",
+                type: 'GET',
+                data: {
+                    filterDates: filterDate.val()
+                },
+                success: function(salesData) {
                     const chartData = salesData.map(day => ({
                         x: day.date,
                         y: day.net,
@@ -560,40 +563,26 @@
                         measure: chartData.map(d => d.measure),
                         text: chartData.map(d => d.text),
                         textposition: chartData.map(d => d.textposition),
-                        connector: { 
-                            line: { color: 'rgb(63, 63, 63)' } 
-                        },
-                        increasing: { 
-                            marker: { color: '#2ecc71' }
-                        },
-                        decreasing: { 
-                            marker: { color: '#e74c3c' }
-                        }
+                        connector: { line: { color: 'rgb(63, 63, 63)' } },
+                        increasing: { marker: { color: '#2ecc71' } },
+                        decreasing: { marker: { color: '#e74c3c' } }
                     }];
 
                     const layout = {
                         title: 'Daily Net Profit Margin',
-                        xaxis: {
-                            title: 'Date',
-                            tickangle: -45
-                        },
-                        yaxis: {
-                            title: 'Amount (Rp)',
-                            tickformat: ',d'
-                        },
+                        xaxis: { title: 'Date', tickangle: -45 },
+                        yaxis: { title: 'Amount (Rp)', tickformat: ',d' },
                         autosize: true,
                         height: 600,
-                        margin: { 
-                            l: 80, 
-                            r: 20, 
-                            t: 40, 
-                            b: 120 
-                        }
+                        margin: { l: 80, r: 20, t: 40, b: 120 }
                     };
 
                     Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                })
-                .catch(error => console.error('Error fetching waterfall data:', error));
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
             }
 
             document.addEventListener('DOMContentLoaded', renderWaterfallChart);
@@ -602,6 +591,6 @@
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
-        });
+            });
     </script>
 @stop
