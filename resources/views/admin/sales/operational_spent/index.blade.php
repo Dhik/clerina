@@ -33,7 +33,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <!-- Modal -->
 <div class="modal fade" id="formModal" tabindex="-1" role="dialog" aria-labelledby="formModalLabel" aria-hidden="true">
@@ -46,6 +45,7 @@
                 </button>
             </div>
             <form id="operationalSpentForm" onsubmit="saveData(event)">
+                @csrf
                 <div class="modal-body">
                     <input type="hidden" id="id" name="id">
                     <div class="form-group">
@@ -71,7 +71,7 @@
                     </div>
                     <div class="form-group">
                         <label>Spent</label>
-                        <input type="number" class="form-control" id="spent" name="spent" required min="0">
+                        <input type="text" name="spent" id="spent" class="form-control money" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -82,8 +82,6 @@
         </div>
     </div>
 </div>
-    
-
 @stop
 
 @section('css')
@@ -93,12 +91,29 @@
 
 @section('js')
 <script>
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
+
 let table = $('#operationalSpentTable').DataTable({
     processing: true,
     serverSide: true,
     ajax: "{{ route('operational-spent.get') }}",
     columns: [
-        {data: 'month', name: 'month'},
+        {
+            data: 'month',
+            name: 'month',
+            render: function(data) {
+                const months = [
+                    'January', 'February', 'March', 'April',
+                    'May', 'June', 'July', 'August',
+                    'September', 'October', 'November', 'December'
+                ];
+                return months[data - 1];
+            }
+        }
         {data: 'year', name: 'year'},
         {data: 'spent', name: 'spent'},
         {data: 'actions', name: 'actions', orderable: false, searchable: false}
@@ -125,23 +140,45 @@ function saveData(e) {
     e.preventDefault();
     let formData = new FormData(e.target);
     
-    $.ajax({
-        url: "{{ route('operational-spent.store') }}",
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                $('#formModal').modal('hide');
-                table.ajax.reload();
-                toastr.success('Data saved successfully');
-            }
-        },
-        error: function(xhr) {
-            let errors = xhr.responseJSON.errors;
-            Object.keys(errors).forEach(function(key) {
-                toastr.error(errors[key][0]);
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You want to save this operational spent data?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, save it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('operational-spent.store') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire(
+                            'Saved!',
+                            'Operational spent has been saved.',
+                            'success'
+                        );
+                        $('#formModal').modal('hide');
+                        table.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessage = '';
+                    Object.keys(errors).forEach(function(key) {
+                        errorMessage += errors[key][0] + '\n';
+                    });
+                    Swal.fire(
+                        'Error!',
+                        errorMessage,
+                        'error'
+                    );
+                }
             });
         }
     });
