@@ -46,7 +46,7 @@ class OperationalSpentController extends Controller
             'id' => 'nullable|exists:operational_spents,id',
             'month' => 'required|integer|min:1|max:12',
             'year' => 'required|integer|min:2000',
-            'spent' => 'required|numeric|min:0'
+            'spent' => 'required'
         ]);
 
         $data['spent'] = (float) str_replace(['Rp ', '.', ','], ['', '', '.'], $data['spent']);
