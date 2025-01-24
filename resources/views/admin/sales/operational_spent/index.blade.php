@@ -3,7 +3,18 @@
 @section('title', trans('labels.sales'))
 
 @section('content_header')
-    <h1>{{ trans('labels.sales') }}</h1>
+    <div class="row mb-2">
+        <div class="col-sm-6">
+            <h1>Operational Spent</h1>
+        </div>
+        <div class="col-sm-6">
+            <div class="float-sm-right">
+                <a href="{{ route('sales.net_sales') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('content')

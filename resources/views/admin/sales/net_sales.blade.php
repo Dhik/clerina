@@ -3,7 +3,7 @@
 @section('title', trans('labels.sales'))
 
 @section('content_header')
-    <h1>{{ trans('labels.sales') }}</h1>
+    <h1>Net Profit</h1>
 @stop
 
 @section('content')
