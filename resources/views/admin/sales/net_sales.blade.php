@@ -289,6 +289,39 @@
             updateRecapCount()
         });
 
+        function refreshData() {
+            Swal.fire({
+                title: 'Refreshing Data',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading()
+                }
+            });
+
+            Promise.all([
+                $.get("{{ route('net-profit.update-spent-kol') }}"),
+                $.get("{{ route('net-profit.update-hpp') }}")
+            ])
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Data Refreshed!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                table.ajax.reload();
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Refresh Failed',
+                    text: 'Please try again'
+                });
+            });
+            }
+
+            $('#refreshDataBtn').click(refreshData);
+
         function updateRecapCount() {
             $.ajax({
                 url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),

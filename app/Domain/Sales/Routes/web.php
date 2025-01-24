@@ -5,6 +5,7 @@ use App\Domain\Sales\Controllers\AdSpentSocialMediaController;
 use App\Domain\Sales\Controllers\SalesChannelController;
 use App\Domain\Sales\Controllers\SalesController;
 use App\Domain\Sales\Controllers\OperationalSpentController;
+use App\Domain\Sales\Controllers\NetProfitController;
 use App\Domain\Sales\Controllers\VisitController;
 use Illuminate\Support\Facades\Route;
 /*
@@ -64,6 +65,11 @@ Route::prefix('admin')
             Route::get('/get', [OperationalSpentController::class, 'get'])->name('operational-spent.get');
             Route::get('/getByDate', [OperationalSpentController::class, 'getByDate'])->name('operational-spent.getByDate');
             Route::post('/', [OperationalSpentController::class, 'store'])->name('operational-spent.store');
+        });
+
+        Route::prefix('net-profit')->group(function () {
+            Route::get('/update-spent-kol', [NetProfitController::class, 'updateSpentKol'])->name('net-profit.update-spent-kol');
+            Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');
         });
 
         // Sales
