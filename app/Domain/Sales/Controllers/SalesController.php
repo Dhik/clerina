@@ -134,32 +134,15 @@ class SalesController extends Controller
 
         return DataTables::of($query)
             ->addColumn('net_profit', function ($row) {
-                return number_format(
-                    ($row->sales * 0.78) - 
+                return ($row->sales * 0.78) - 
                     ($row->marketing * 1.05) - 
                     $row->spent_kol - 
                     ($row->affiliate ?? 0) - 
                     $row->operasional - 
-                    $row->hpp,
-                2);
+                    $row->hpp;
             })
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');
-            })
-            ->editColumn('sales', function ($row) {
-                return number_format($row->sales, 2);
-            })
-            ->editColumn('marketing', function ($row) {
-                return number_format($row->marketing, 2);
-            })
-            ->editColumn('spent_kol', function ($row) {
-                return number_format($row->spent_kol, 2);
-            })
-            ->editColumn('operasional', function ($row) {
-                return number_format($row->operasional, 2);
-            })
-            ->editColumn('hpp', function ($row) {
-                return number_format($row->hpp, 2);
             })
             ->make(true);
     }
