@@ -42,21 +42,18 @@
             @include('admin.sales.recap-card')
             <div class="card">
                 <div class="card-body">
-                    <table id="salesTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="order-info" width="100%">
+                    <table id="netProfitsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
                         <thead>
-                        <tr>
-                            <th>{{ trans('labels.date') }}</th>
-                            <th>{{ trans('labels.visit') }}</th>
-                            <th>{{ trans('labels.qty') }}</th>
-                            <th>{{ trans('labels.order') }}</th>
-                            <th>{{ trans('labels.closing_rate') }}</th>
-                            <th>{{ trans('labels.ad_spent_social_media') }}</th>
-                            <th>{{ trans('labels.ad_spent_market_place') }}</th>
-                            <th>{{ trans('labels.spend_total') }}</th>
-                            <th>{{ trans('labels.roas') }}</th>
-                            <th>{{ trans('labels.turnover') }} ({{ trans('labels.rp') }})</th>
-                            <th>{{ trans('labels.action') }}</th>
-                        </tr>
+                            <tr>
+                                <th>Date</th>
+                                <th>Sales</th>
+                                <th>Marketing</th>
+                                <th>KOL</th>
+                                <th>Affiliate</th>
+                                <th>Operational</th>
+                                <th>HPP</th>
+                                <th>Net Profit</th>
+                            </tr>
                         </thead>
                     </table>
                 </div>
@@ -222,7 +219,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
-        salesTableSelector = $('#salesTable');
+        
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
 
@@ -279,40 +276,29 @@
             });
         }
 
-        // datatable
-        let salesTable = salesTableSelector.DataTable({
+        let netProfitsTable = $('#netProfitsTable').DataTable({
             responsive: true,
             processing: true,
             serverSide: true,
             pageLength: 25,
             ajax: {
-                url: "{{ route('sales.get') }}",
+                url: "{{ route('net-profits.data') }}",
                 data: function (d) {
                     d.filterDates = filterDate.val()
                 }
             },
             columns: [
                 {data: 'date', name: 'date'},
-                {data: 'visitFormatted', name: 'visit', sortable: false},
-                {data: 'qtyFormatted', name: 'qty', sortable: false},
-                {data: 'orderFormatted', name: 'order', sortable: false},
-                {data: 'closingRateFormatted', name: 'closing_rate', sortable: false},
-                {data: 'adSpentSocialMediaFormatted', name: 'ad_spent_social_media', sortable: false},
-                {data: 'adSpentMarketPlaceFormatted', name: 'ad_spent_market_place', sortable: false},
-                {data: 'totalFormatted', name: 'total_spend', sortable: false},
-                {data: 'roasFormatted', name: 'roas', sortable: false},
-                {data: 'adSpentTotalFormatted', name: 'total_spend', sortable: false},
-                {data: 'actions', sortable: false}
+                {data: 'sales', name: 'sales'},
+                {data: 'marketing', name: 'marketing'},
+                {data: 'spent_kol', name: 'spent_kol'},
+                {data: 'affiliate', name: 'affiliate'},
+                {data: 'operasional', name: 'operasional'},
+                {data: 'hpp', name: 'hpp'},
+                {data: 'net_profit', name: 'net_profit'}
             ],
             columnDefs: [
-                { "targets": [1], "className": "text-right" },
-                { "targets": [2], "className": "text-right" },
-                { "targets": [3], "className": "text-right" },
-                { "targets": [4], "className": "text-right" },
-                { "targets": [5], "className": "text-right" },
-                { "targets": [6], "className": "text-right" },
-                { "targets": [7], "className": "text-right" },
-                { "targets": [8], "className": "text-center" }
+                { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
             ],
             order: [[0, 'desc']]
         });
