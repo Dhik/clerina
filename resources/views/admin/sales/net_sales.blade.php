@@ -30,6 +30,11 @@
                                         <i class="fas fa-cog"></i> Set Operational Spent
                                     </a>
                                 </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-info" id="importDataBtn">
+                                        <i class="fas fa-sync-alt"></i> Import Data
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
