@@ -168,6 +168,30 @@ class SalesController extends Controller
             'total_net_profit' => $data->total_net_profit ?? 0
         ]);
     }
+    public function getChartData()
+    {
+        $data = NetProfit::query()
+            ->whereMonth('date', Carbon::now()->month)
+            ->whereYear('date', Carbon::now()->year)
+            ->orderBy('date')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'date' => Carbon::parse($row->date)->format('Y-m-d'),
+                    'sales' => $row->sales,
+                    'marketing' => $row->marketing,
+                    'hpp' => $row->hpp,
+                    'netProfit' => ($row->sales * 0.78) - 
+                        ($row->marketing * 1.05) - 
+                        $row->spent_kol - 
+                        ($row->affiliate ?? 0) - 
+                        $row->operasional - 
+                        $row->hpp
+                ];
+            });
+
+        return response()->json($data);
+    }
 
     public function report(): View|\Illuminate\Foundation\Application|Factory|Application
     {
