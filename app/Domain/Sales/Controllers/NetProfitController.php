@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use App\Domain\Sales\Models\NetProfit;
 use Carbon\Carbon;
+use Auth;
 use App\Domain\Order\Models\Order;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
