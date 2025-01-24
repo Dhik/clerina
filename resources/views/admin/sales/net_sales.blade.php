@@ -282,7 +282,7 @@
             serverSide: true,
             pageLength: 25,
             ajax: {
-                url: "{{ route('net-profits.data') }}",
+                url: "{{ route('sales.get_net_sales') }}",
                 data: function (d) {
                     d.filterDates = filterDate.val()
                 }
