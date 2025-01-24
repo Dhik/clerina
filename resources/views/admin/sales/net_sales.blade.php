@@ -743,7 +743,4 @@
             }
             });
     </script>
-    @include('admin.adSpentSocialMedia.script')
-    @include('admin.adSpentMarketPlace.script')
-    @include('admin.sales.script-chart')
 @stop
