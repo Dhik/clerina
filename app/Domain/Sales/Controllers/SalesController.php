@@ -1754,7 +1754,7 @@ class SalesController extends Controller
             // $startDate = now()->startOfMonth();
             // $endDate = now()->endOfMonth();
             // $query->whereBetween('date', [$startDate, $endDate]);
-            $query->whereBetween('date', ['2024-12-01', '2025-12-31']);
+            $query->whereBetween('date', ['2024-12-01', '2024-12-31']);
         }
 
         return response()->json(
