@@ -119,10 +119,11 @@ class NetProfitController extends Controller
                 )"), '=', 'products.sku');
             })
             ->whereDate('orders.date', $date)
+            ->where('products.tenant_id', Auth::user()->current_tenant_id)
             ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
             ->select([
                 'products.sku',
-                'products.product',
+                'products.product', 
                 'products.harga_satuan',
                 DB::raw('COUNT(*) as order_count'),
                 DB::raw('SUM(CASE 
