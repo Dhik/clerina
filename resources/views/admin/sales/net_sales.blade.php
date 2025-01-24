@@ -26,7 +26,7 @@
                                     </button>
                                 </div>
                                 <div class="col-auto">
-                                    <a href="{{ route('operational-spents.index') }}" class="btn btn-success">
+                                    <a href="{{ route('operational-spent.index') }}" class="btn btn-success">
                                         <i class="fas fa-cog"></i> Set Operational Spent
                                     </a>
                                 </div>
