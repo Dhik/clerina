@@ -7,6 +7,7 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Domain\Sales\Models\NetProfit;
 use Carbon\Carbon;
 use App\Domain\Order\Models\Order;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\Models\TalentContent;
 
