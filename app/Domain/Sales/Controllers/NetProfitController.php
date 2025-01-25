@@ -144,45 +144,24 @@ class NetProfitController extends Controller
             $range = 'Import Sales!A2:C';
             $sheetData = $this->googleSheetService->getSheetData($range);
 
-            if (empty($sheetData)) {
-                return response()->json(['message' => 'No data found'], 404);
-            }
-
-            DB::beginTransaction();
-            $processed = 0;
-
             foreach ($sheetData as $row) {
-                try {
-                    if (empty($row[0])) continue;
+                if (empty($row[0])) continue;
 
-                    $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                    $sales = $this->parseCurrencyToDecimal($row[1] ?? null);
-                    $affiliate = $this->parseCurrencyToDecimal($row[2] ?? null);
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                $sales = $this->parseCurrencyToDecimal($row[1] ?? null);
+                $affiliate = $this->parseCurrencyToDecimal($row[2] ?? null);
 
-                    NetProfit::updateOrCreate(
-                        ['date' => $date],
-                        [
-                            'sales' => $sales,
-                            'affiliate' => $affiliate
-                        ]
-                    );
-
-                    $processed++;
-                } catch (Exception $e) {
-                    Log::error("Error processing row: " . json_encode($row) . " Error: " . $e->getMessage());
-                    continue;
-                }
+                NetProfit::updateOrCreate(
+                    ['date' => $date],
+                    [
+                        'sales' => $sales,
+                        'affiliate' => $affiliate
+                    ]
+                );
             }
 
-            DB::commit();
-            return response()->json([
-                'message' => 'Data imported successfully',
-                'processed_rows' => $processed
-            ]);
-
+            return response()->json(['message' => 'Data imported successfully']);
         } catch (Exception $e) {
-            DB::rollBack();
-            Log::error("Import failed: " . $e->getMessage());
             return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
         }
     }

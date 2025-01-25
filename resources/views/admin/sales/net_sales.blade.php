@@ -347,9 +347,7 @@
             netProfitsTable.draw()
         });
 
-        document.getElementById('importDataBtn').addEventListener('click', function() {
-            this.disabled = true;
-            
+        $('#importDataBtn').on('click', function() {
             Swal.fire({
                 title: 'Importing Data',
                 html: 'Please wait...',
@@ -359,35 +357,28 @@
                 }
             });
 
-            fetch("{{ route('net-profit.import-data') }}", {
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
+            $.ajax({
+                url: "{{ route('net-profit.import-data') }}",
+                method: 'GET',
+                success: function(response) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
-                        text: data.message
+                        text: 'All data has been imported and updated.',
+                        timer: 2000,
+                        showConfirmButton: false
                     });
-                })
-                .catch(error => {
+                    // Refresh table if needed
+                    netProfitsTable.draw();
+                },
+                error: function(xhr, status, error) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error!',
-                        text: 'Import failed: ' + error.message
+                        title: 'Import failed!',
+                        text: xhr.responseJSON?.message || 'Something went wrong'
                     });
-                })
-                .finally(() => {
-                    this.disabled = false;
-                });
+                }
+            });
         });
 
         function refreshData() {
