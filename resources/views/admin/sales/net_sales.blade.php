@@ -437,7 +437,12 @@
                 {
                     data: 'net_profit',
                     render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        const isPositive = data >= 0;
+                        const arrowIcon = isPositive ? '↑' : '↓';
+                        const colorClass = isPositive ? 'text-green-500' : 'text-red-500';
+                        return `<div class="${colorClass}">
+                            ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
+                        </div>`;
                     }
                 }
             ],
