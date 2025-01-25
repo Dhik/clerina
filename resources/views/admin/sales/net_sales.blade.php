@@ -439,7 +439,7 @@
                     render: function(data) {
                         const isPositive = data >= 0;
                         const arrowIcon = isPositive ? '↑' : '↓';
-                        const colorClass = isPositive ? 'text-green-500' : 'text-red-500';
+                        const colorClass = isPositive ? 'text-success' : 'text-danger';
                         return `<div class="${colorClass}">
                             ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
                         </div>`;
