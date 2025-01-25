@@ -359,8 +359,18 @@
                 }
             });
 
-            fetch("{{ route('net-profit.import-data') }}")
-                .then(response => response.json())
+            fetch("{{ route('net-profit.import-data') }}", {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     Swal.fire({
                         icon: 'success',
@@ -372,7 +382,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Error!',
-                        text: 'Import failed: ' + error
+                        text: 'Import failed: ' + error.message
                     });
                 })
                 .finally(() => {
