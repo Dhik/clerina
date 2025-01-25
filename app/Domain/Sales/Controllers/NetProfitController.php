@@ -156,8 +156,8 @@ class NetProfitController extends Controller
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                $sales = $this->parseCurrencyToDecimal($row[1] ?? null);
-                $affiliate = $this->parseCurrencyToDecimal($row[2] ?? null);
+                $sales = $row[1] ?? null;
+                $affiliate = $row[2] ?? null;
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
@@ -174,11 +174,4 @@ class NetProfitController extends Controller
         }
     }
 
-    private function parseCurrencyToDecimal($value)
-    {
-        if (empty($value)) return null;
-        
-        $value = preg_replace('/[^0-9.-]/', '', $value);
-        return number_format(floatval($value), 2, '.', '');
-    }
 }
