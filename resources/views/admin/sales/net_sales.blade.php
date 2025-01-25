@@ -359,7 +359,7 @@
                 }
             });
 
-            fetch(route('net-profit.import-data'))
+            fetch("{{ route('net-profit.import-data') }}")
                 .then(response => response.json())
                 .then(data => {
                     Swal.fire({
