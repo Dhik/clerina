@@ -156,8 +156,8 @@ class NetProfitController extends Controller
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                $sales = $row[1] ?? null;
-                $affiliate = $row[2] ?? null;
+                $sales = is_numeric($row[1]) ? $row[1] : null;
+                $affiliate = is_numeric($row[2]) ? $row[2] : null;
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
