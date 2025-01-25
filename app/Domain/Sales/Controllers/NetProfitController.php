@@ -11,9 +11,17 @@ use App\Domain\Order\Models\Order;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 class NetProfitController extends Controller
 {
+    protected $googleSheetService;
+
+    public function __construct(
+        GoogleSheetService $googleSheetService
+    ) {
+        $this->googleSheetService = $googleSheetService;
+    }
     public function updateSpentKol()
     {
         try {
