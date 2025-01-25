@@ -156,8 +156,8 @@ class NetProfitController extends Controller
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                $sales = is_numeric($row[1]) ? $row[1] : null;
-                $affiliate = is_numeric($row[2]) ? $row[2] : null;
+                $sales = $this->parseCurrencyToInt($row[1] ?? null);
+$affiliate = $this->parseCurrencyToInt($row[2] ?? null);
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
@@ -173,5 +173,9 @@ class NetProfitController extends Controller
             return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
         }
     }
-
+    private function parseCurrencyToInt($value)
+    {
+        if (empty($value)) return null;
+        return (int) preg_replace('/[^0-9]/', '', $value);
+    }
 }
