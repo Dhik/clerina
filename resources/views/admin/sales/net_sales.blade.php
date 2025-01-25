@@ -18,9 +18,6 @@
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
                                 <div class="col-auto">
-                                    <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
-                                </div>
-                                <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
                                 <div class="col-auto">
@@ -348,6 +345,39 @@
 
         filterChannel.change(function () {
             netProfitsTable.draw()
+        });
+
+        document.getElementById('importDataBtn').addEventListener('click', function() {
+            this.disabled = true;
+            
+            Swal.fire({
+                title: 'Importing Data',
+                html: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(route('net-profit.import-data'))
+                .then(response => response.json())
+                .then(data => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Import failed: ' + error
+                    });
+                })
+                .finally(() => {
+                    this.disabled = false;
+                });
         });
 
         function refreshData() {
