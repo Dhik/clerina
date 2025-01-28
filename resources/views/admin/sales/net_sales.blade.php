@@ -484,17 +484,23 @@
                 order: [[0, 'desc']]
             });
 
-        function fetchSummary() {
-            fetch("{{ route('sales.get_net_sales_summary') }}")
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-                    document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-                    document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
-                    document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
-                })
-                .catch(error => console.error('Error:', error));
-        }
+            function fetchSummary() {
+                const filterDates = document.getElementById('filterDates').value;
+                const url = new URL("{{ route('sales.get_net_sales_summary') }}");
+                if (filterDates) {
+                    url.searchParams.append('filterDates', filterDates);
+                }
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
+                        document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+                        document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
+                        document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
         fetchSummary();
 
         // Click event for the Total Spent card

@@ -149,7 +149,6 @@ class SalesController extends Controller
                 ->orWhere('sales.ad_spent_social_media', '>', 0);
         });
 
-        // Apply date filter if provided
         if (! is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
@@ -158,7 +157,6 @@ class SalesController extends Controller
             $query->where('net_profits.date', '>=', $startDate)
                 ->where('net_profits.date', '<=', $endDate);
         } else {
-            // Default to current month if no date range provided
             $query->whereMonth('net_profits.date', Carbon::now()->month)
                 ->whereYear('net_profits.date', Carbon::now()->year);
         }
@@ -198,20 +196,30 @@ class SalesController extends Controller
             })
             ->make(true);
     }
-    public function getNetProfitSummary()
+    public function getNetProfitSummary(Request $request)
     {
-        $currentMonth = Carbon::now();
-        
-        $data = NetProfit::query()
-            ->whereMonth('date', $currentMonth->month)
-            ->whereYear('date', $currentMonth->year)
-            ->selectRaw('
-                SUM(sales) as total_sales,
-                SUM(hpp) as total_hpp,
-                SUM(marketing + spent_kol + COALESCE(affiliate, 0) + operasional) as total_spent,
-                SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit
-            ')
-            ->first();
+        $query = NetProfit::query();
+
+        if (! is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
+            $query->where('date', '>=', $startDate)
+                ->where('date', '<=', $endDate);
+        } else {
+            $currentMonth = Carbon::now();
+            $query->whereMonth('date', $currentMonth->month)
+                ->whereYear('date', $currentMonth->year);
+        }
+
+        $data = $query->selectRaw('
+            SUM(sales) as total_sales,
+            SUM(hpp) as total_hpp,
+            SUM(marketing + spent_kol + COALESCE(affiliate, 0) + operasional) as total_spent,
+            SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit
+        ')
+        ->first();
 
         return response()->json([
             'total_sales' => $data->total_sales ?? 0,
