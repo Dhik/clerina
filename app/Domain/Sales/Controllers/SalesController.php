@@ -148,6 +148,7 @@ class SalesController extends Controller
                 $query->where('sales.ad_spent_social_media', '>', 0)
                     ->orWhere('sales.ad_spent_market_place', '>', 0);
             })
+            ->where('net_profits.date', '<=', Carbon::now()->endOfMonth()->format('Y-m-d'))
             ->whereMonth('net_profits.date', Carbon::now()->month)
             ->whereYear('net_profits.date', Carbon::now()->year)
             ->groupBy(
