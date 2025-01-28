@@ -96,6 +96,11 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
+                                    <th>Visit</th>
+                                    <th>Qty</th>
+                                    <th>Order</th>
+                                    <th>CR</th>
+                                    <th>ROAS</th>
                                     <th>Sales</th>
                                     <th>Marketing</th>
                                     <th>KOL</th>
@@ -342,6 +347,36 @@
                 columns: [
                     {data: 'date', name: 'date'},
                     {
+                        data: 'visit',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'qty',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'order_count',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'closing_rate',
+                        render: function(data) {
+                            return (data || 0).toFixed(2) + '%';
+                        }
+                    },
+                    {
+                        data: 'roas',
+                        render: function(data) {
+                            return (data || 0).toFixed(2);
+                        }
+                    },
+                    {
                         data: 'sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
@@ -404,7 +439,7 @@
                     }
                 ],
                 columnDefs: [
-                    { "targets": [1,2,3,4,5,6,7,8,9], "className": "text-right" }
+                    { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14], "className": "text-right" }
                 ],
                 order: [[0, 'desc']]
             });

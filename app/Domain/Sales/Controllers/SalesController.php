@@ -130,7 +130,16 @@ class SalesController extends Controller
     public function getNetProfit(Request $request)
     {
         $query = NetProfit::query()
-            ->select('net_profits.*', 'sales.ad_spent_social_media', 'sales.ad_spent_market_place')
+            ->select(
+                'net_profits.*', 
+                'sales.ad_spent_social_media',
+                'sales.ad_spent_market_place',
+                'sales.visit',
+                'sales.qty',
+                'sales.order as order_count', // Renamed since 'order' is reserved
+                'sales.closing_rate',
+                'sales.roas'
+            )
             ->leftJoin('sales', function($join) {
                 $join->on('net_profits.date', '=', 'sales.date');
             })
@@ -159,6 +168,21 @@ class SalesController extends Controller
             })
             ->editColumn('ad_spent_market_place', function ($row) {
                 return $row->ad_spent_market_place ?? 0;
+            })
+            ->editColumn('visit', function ($row) {
+                return $row->visit ?? 0;
+            })
+            ->editColumn('qty', function ($row) {
+                return $row->qty ?? 0;
+            })
+            ->editColumn('order_count', function ($row) {
+                return $row->order_count ?? 0;
+            })
+            ->editColumn('closing_rate', function ($row) {
+                return number_format($row->closing_rate ?? 0, 2) . '%';
+            })
+            ->editColumn('roas', function ($row) {
+                return number_format($row->roas ?? 0, 2);
             })
             ->make(true);
     }
