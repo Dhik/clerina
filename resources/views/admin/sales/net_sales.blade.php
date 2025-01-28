@@ -252,15 +252,6 @@
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
-
-        filterDate.daterangepicker({
-            autoUpdateInput: false,
-            locale: {
-                cancelLabel: 'Clear',
-                format: 'DD-MM-YYYY' // Change this to match your desired format
-            }
-        });
-
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
             netProfitsTable.draw()

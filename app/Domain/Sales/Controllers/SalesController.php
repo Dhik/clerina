@@ -149,20 +149,18 @@ class SalesController extends Controller
                 ->orWhere('sales.ad_spent_social_media', '>', 0);
         });
 
-        if ($request->filterDates) {
-            $dates = explode(' - ', $request->filterDates);
-            if (count($dates) == 2) {
-                $startDate = Carbon::createFromFormat('Y-m-d', trim($dates[0]));
-                $endDate = Carbon::createFromFormat('Y-m-d', trim($dates[1]));
-                
-                $query->whereBetween('net_profits.date', [
-                    $startDate->startOfDay(),
-                    $endDate->endOfDay()
-                ]);
-            }
+        // Apply date filter if provided
+        if (! is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
+            $query->where('net_profits.date', '>=', $startDate)
+                ->where('net_profits.date', '<=', $endDate);
         } else {
+            // Default to current month if no date range provided
             $query->whereMonth('net_profits.date', Carbon::now()->month)
-                  ->whereYear('net_profits.date', Carbon::now()->year);
+                ->whereYear('net_profits.date', Carbon::now()->year);
         }
 
         return DataTables::of($query)
