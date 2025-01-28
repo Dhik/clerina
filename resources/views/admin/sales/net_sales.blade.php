@@ -259,6 +259,7 @@
 
         filterDate.change(function () {
             netProfitsTable.draw();
+            fetchSummary();
         });
 
         function showKolDetail(date) {
