@@ -91,124 +91,21 @@
 
             <div class="card">
                 <div class="card-body">
-                    <table id="netProfitsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Sales</th>
-                                <th>Marketing</th>
-                                <th>KOL</th>
-                                <th>Affiliate</th>
-                                <th>Operational</th>
-                                <th>HPP</th>
-                                <th>Net Profit</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Omset Modal -->
-    <div class="modal fade" id="omsetModal" tabindex="-1" role="dialog" aria-labelledby="omsetModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document" style="max-width: 80%;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="omsetModalLabel">{{ trans('labels.turnover') }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ trans('buttons.close') }}">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <table id="orderTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="order-info" width="100%">
-                        <thead>
-                            <tr>
-                                <th>{{ trans('labels.order_id') }}</th>
-                                <th>{{ trans('labels.customer_name') }}</th>
-                                <th>{{ trans('labels.customer_phone_number') }}</th>
-                                <th>{{ trans('labels.product') }}</th>
-                                <th>{{ trans('labels.qty') }}</th>
-                                <th>{{ trans('labels.amount') }}</th>
-                                <th>{{ trans('labels.payment_method') }}</th>
-                                <th>{{ trans('labels.created_at') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Order data will be dynamically populated here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Detail Spent Modal -->
-    <div class="modal fade" id="detailSpentModal" tabindex="-1" role="dialog" aria-labelledby="detailSpentModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document" style="max-width: 40%;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="detailSpentModalLabel">Detail Spent</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p id="modalCampaignExpense">Campaign Expense: 0</p>
-                    <p id="modalAdsSpentTotal">Total Ads Spent: 0</p>
-                    <p id="modalTotalSpent">Total Spent: 0</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="detailSalesModal" tabindex="-1" role="dialog" aria-labelledby="detailSalesModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="max-width: 60%;">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title font-weight-bold">Sales Status Distribution</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4">
-                <!-- Pie Chart Section -->
-                <div class="row mb-4">
-                    <div class="col-lg-7">
-                        <div style="width: 100%; height: 400px;">
-                            <canvas id="salesPieChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr class="bg-light">
-                                        <th class="font-weight-bold">Status</th>
-                                        <th class="text-right font-weight-bold">Amount (Rp)</th>
-                                        <th class="text-right font-weight-bold">Percentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesDetailTable">
-                                </tbody>
-                                <tfoot>
-                                    <tr class="bg-light font-weight-bold">
-                                        <td>Total</td>
-                                        <td class="text-right" id="totalAmount">0</td>
-                                        <td class="text-right">100%</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Line Chart Section -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h6 class="font-weight-bold mb-3">Daily Status Trend</h6>
-                        <div style="width: 100%; height: 400px;">
-                            <canvas id="salesTrendChart"></canvas>
-                        </div>
+                    <div class="table-responsive">
+                        <table id="netProfitsTable" class="table table-bordered table-striped dataTable" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Sales</th>
+                                    <th>Marketing</th>
+                                    <th>KOL</th>
+                                    <th>Affiliate</th>
+                                    <th>Operational</th>
+                                    <th>HPP</th>
+                                    <th>Net Profit</th>
+                                </tr>
+                            </thead>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -302,6 +199,20 @@
     position: relative;
     height: 400px;
     width: 100%;
+}
+.dataTables_wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+#netProfitsTable {
+    width: 100% !important;
+    white-space: nowrap;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 </style>
 @stop
@@ -414,74 +325,75 @@
 
             $('#refreshDataBtn').click(refreshData);
 
-        let netProfitsTable = $('#netProfitsTable').DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            pageLength: 25,
-            ajax: {
-                url: "{{ route('sales.get_net_sales') }}",
-                data: function (d) {
-                    d.filterDates = filterDate.val()
-                }
-            },
-            columns: [
-                {data: 'date', name: 'date'},
-                {
-                    data: 'sales',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+            let netProfitsTable = $('#netProfitsTable').DataTable({
+                scrollX: true,
+                responsive: false,
+                processing: true,
+                serverSide: true,
+                pageLength: 25,
+                ajax: {
+                    url: "{{ route('sales.get_net_sales') }}",
+                    data: function (d) {
+                        d.filterDates = filterDate.val()
                     }
                 },
-                {
-                    data: 'marketing',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                columns: [
+                    {data: 'date', name: 'date'},
+                    {
+                        data: 'sales',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'marketing',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'spent_kol',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        }
+                    },
+                    {
+                        data: 'affiliate',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'operasional',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'hpp',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        }
+                    },
+                    {
+                        data: 'net_profit',
+                        render: function(data) {
+                            const isPositive = data >= 0;
+                            const arrowIcon = isPositive ? '↑' : '↓';
+                            const colorClass = isPositive ? 'text-success' : 'text-danger';
+                            return `<div class="${colorClass}">
+                                ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
+                            </div>`;
+                        }
                     }
-                },
-                {
-                    data: 'spent_kol',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    }
-                },
-                {
-                    data: 'affiliate',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    }
-                },
-                {
-                    data: 'operasional',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                    }
-                },
-                {
-                    data: 'hpp',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    }
-                },
-                {
-                    data: 'net_profit',
-                    render: function(data) {
-                        const isPositive = data >= 0;
-                        const arrowIcon = isPositive ? '↑' : '↓';
-                        const colorClass = isPositive ? 'text-success' : 'text-danger';
-                        return `<div class="${colorClass}">
-                            ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
-                        </div>`;
-                    }
-                }
-            ],
-            columnDefs: [
-                { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
-            ],
-            order: [[0, 'desc']]
-        });
+                ],
+                columnDefs: [
+                    { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
+                ],
+                order: [[0, 'desc']]
+            });
 
         function fetchSummary() {
             fetch("{{ route('sales.get_net_sales_summary') }}")
