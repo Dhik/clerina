@@ -260,6 +260,7 @@
         filterDate.change(function () {
             netProfitsTable.draw();
             fetchSummary();
+            renderWaterfallChart();
         });
 
         function showKolDetail(date) {
