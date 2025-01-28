@@ -100,6 +100,8 @@
                                     <th>Marketing</th>
                                     <th>KOL</th>
                                     <th>Affiliate</th>
+                                    <th>Social Media Ads</th>
+                                    <th>Marketplace Ads</th>
                                     <th>Operational</th>
                                     <th>HPP</th>
                                     <th>Net Profit</th>
@@ -342,7 +344,7 @@
                     {
                         data: 'sales',
                         render: function(data) {
-                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         }
                     },
                     {
@@ -360,6 +362,18 @@
                     },
                     {
                         data: 'affiliate',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'ad_spent_social_media',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        }
+                    },
+                    {
+                        data: 'ad_spent_market_place',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         }
@@ -390,7 +404,7 @@
                     }
                 ],
                 columnDefs: [
-                    { "targets": [1,2,3,4,5,6,7], "className": "text-right" }
+                    { "targets": [1,2,3,4,5,6,7,8,9], "className": "text-right" }
                 ],
                 order: [[0, 'desc']]
             });
