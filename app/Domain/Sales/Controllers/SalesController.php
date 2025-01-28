@@ -130,26 +130,40 @@ class SalesController extends Controller
     public function getNetProfit(Request $request)
     {
         $query = NetProfit::query()
-            ->select(
-                'net_profits.*', 
-                'sales.ad_spent_social_media',
-                'sales.ad_spent_market_place',
-                'sales.visit',
-                'sales.qty',
-                'sales.order as order_count', // Renamed since 'order' is reserved
-                'sales.closing_rate',
-                'sales.roas'
-            )
-            ->leftJoin('sales', function($join) {
-                $join->on('net_profits.date', '=', 'sales.date');
-            })
-            ->where(function($query) {
-                $query->whereNotNull('sales.ad_spent_social_media')
-                    ->where('sales.tenant_id', Auth::user()->current_tenant_id)
-                    ->orWhere('sales.ad_spent_social_media', '>', 0);
-            })
-            ->whereMonth('net_profits.date', Carbon::now()->month)
-            ->whereYear('net_profits.date', Carbon::now()->year);
+        ->select(
+            'net_profits.*', 
+            'sales.ad_spent_social_media',
+            'sales.ad_spent_market_place',
+            'sales.visit',
+            'sales.qty',
+            'sales.order as order_count',
+            'sales.closing_rate',
+            'sales.roas'
+        )
+        ->leftJoin('sales', function($join) {
+            $join->on('net_profits.date', '=', 'sales.date');
+        })
+        ->where(function($query) {
+            $query->whereNotNull('sales.ad_spent_social_media')
+                ->where('sales.tenant_id', Auth::user()->current_tenant_id)
+                ->orWhere('sales.ad_spent_social_media', '>', 0);
+        });
+
+        if ($request->filterDates) {
+            $dates = explode(' - ', $request->filterDates);
+            if (count($dates) == 2) {
+                $startDate = Carbon::createFromFormat('Y-m-d', trim($dates[0]));
+                $endDate = Carbon::createFromFormat('Y-m-d', trim($dates[1]));
+                
+                $query->whereBetween('net_profits.date', [
+                    $startDate->startOfDay(),
+                    $endDate->endOfDay()
+                ]);
+            }
+        } else {
+            $query->whereMonth('net_profits.date', Carbon::now()->month)
+                  ->whereYear('net_profits.date', Carbon::now()->year);
+        }
 
         return DataTables::of($query)
             ->addColumn('net_profit', function ($row) {

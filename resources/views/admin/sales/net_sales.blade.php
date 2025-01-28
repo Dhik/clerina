@@ -255,7 +255,6 @@
 
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
-            filterChannel.val('')
             netProfitsTable.draw()
         })
 
@@ -282,10 +281,6 @@
             });
         }
 
-        filterChannel.change(function () {
-            netProfitsTable.draw()
-        });
-
         $('#importDataBtn').on('click', function() {
             Swal.fire({
                 title: 'Importing Data',
@@ -307,7 +302,6 @@
                         timer: 2000,
                         showConfirmButton: false
                     });
-                    // Refresh table if needed
                     netProfitsTable.draw();
                 },
                 error: function(xhr, status, error) {
@@ -360,13 +354,13 @@
                 processing: true,
                 serverSide: true,
                 pageLength: 25,
-                dom: 'Bfrtip', // Add buttons to the DOM
+                dom: 'Bfrtip',
                 buttons: [
                     {
                         extend: 'colvis',
                         text: 'Show/Hide Columns',
                         className: 'btn btn-secondary',
-                        columns: ':not(.noVis)' // Exclude columns with noVis class
+                        columns: ':not(.noVis)' 
                     }
                 ],
                 ajax: {
@@ -376,7 +370,7 @@
                     }
                 },
                 columns: [
-                    {data: 'date', name: 'date', className: 'noVis'}, // Cannot be hidden
+                    {data: 'date', name: 'date', className: 'noVis'},
                     {
                         data: 'visit',
                         render: function(data) {
@@ -503,35 +497,6 @@
                 .catch(error => console.error('Error:', error));
         }
         fetchSummary();
-
-        function showOmsetDetail(data) {
-            $.ajax({
-                url: "{{ route('order.getOrdersByDate') }}?date=" + data.date,
-                type: 'GET',
-                success: function(response) {
-                    let omsetTableBody = $("#omset-table-body");
-                    omsetTableBody.empty(); // Clear existing rows
-
-                    if (response.length > 0) {
-                        response.forEach(function(item) {
-                            let row = `<tr>
-                            <td>${item.sales_channel ?? ''}</td>
-                            <td>${item.total_amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
-                        </tr>`;
-                            omsetTableBody.append(row);
-                        });
-                    } else {
-                        let row = `<tr><td colspan="2" class="text-center">{{ trans('messages.no_data') }}</td></tr>`;
-                        omsetTableBody.append(row);
-                    }
-                    $('#showOmsetModal').modal('show');
-                },
-                error: function(error) {
-                    console.log(error);
-                    alert("An error occurred");
-                }
-            });
-        }
 
         // Click event for the Total Spent card
         $('#totalSpentCard').click(function() {
