@@ -400,7 +400,8 @@
                     {
                         data: 'closing_rate',
                         render: function(data) {
-                            return (data || 0).toFixed(2) + '%';
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2) + '%';
                         },
                         visible: false
                     },
