@@ -174,6 +174,7 @@
 @stop
 
 @section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 <style>
     #salesPieChart {
         height: 400px !important;
@@ -221,6 +222,24 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+.dt-button-collection {
+        padding: 8px !important;
+    }
+    
+    .dt-button-collection .dt-button {
+        margin: 2px !important;
+    }
+    
+    .dt-button.buttons-columnVisibility {
+        display: block;
+        padding: 8px;
+        margin: 2px;
+        text-align: left;
+    }
+    
+    .dt-button.buttons-columnVisibility.active {
+        background: #e9ecef;
+    }
 </style>
 @stop
 
@@ -228,6 +247,8 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
@@ -338,6 +359,15 @@
                 processing: true,
                 serverSide: true,
                 pageLength: 25,
+                dom: 'Bfrtip', // Add buttons to the DOM
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'Show/Hide Columns',
+                        className: 'btn btn-secondary',
+                        columns: ':not(.noVis)' // Exclude columns with noVis class
+                    }
+                ],
                 ajax: {
                     url: "{{ route('sales.get_net_sales') }}",
                     data: function (d) {
@@ -345,86 +375,99 @@
                     }
                 },
                 columns: [
-                    {data: 'date', name: 'date'},
+                    {data: 'date', name: 'date', className: 'noVis'}, // Cannot be hidden
                     {
                         data: 'visit',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        visible: false // Hidden by default
                     },
                     {
                         data: 'qty',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'order_count',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'closing_rate',
                         render: function(data) {
                             return (data || 0).toFixed(2) + '%';
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'roas',
                         render: function(data) {
                             return (data || 0).toFixed(2);
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'marketing',
                         render: function(data) {
                             return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'spent_kol',
                         render: function(data, type, row) {
                             return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'affiliate',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'ad_spent_social_media',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'ad_spent_market_place',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        }
+                        },
+                        visible: false
                     },
                     {
                         data: 'operasional',
                         render: function(data) {
                             return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'hpp',
                         render: function(data, type, row) {
                             return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                        }
+                        },
+                        className: 'noVis'
                     },
                     {
                         data: 'net_profit',
@@ -435,7 +478,8 @@
                             return `<div class="${colorClass}">
                                 ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
                             </div>`;
-                        }
+                        },
+                        className: 'noVis'
                     }
                 ],
                 columnDefs: [
