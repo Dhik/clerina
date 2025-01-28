@@ -134,6 +134,10 @@ class SalesController extends Controller
             ->leftJoin('sales', function($join) {
                 $join->on('net_profits.date', '=', 'sales.date');
             })
+            ->where(function($query) {
+                $query->whereNotNull('sales.ad_spent_social_media')
+                    ->orWhere('sales.ad_spent_social_media', '>', 0);
+            })
             ->whereMonth('net_profits.date', Carbon::now()->month)
             ->whereYear('net_profits.date', Carbon::now()->year);
 
