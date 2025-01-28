@@ -381,7 +381,7 @@
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false // Hidden by default
+                        visible: false
                     },
                     {
                         data: 'qty',
@@ -408,7 +408,8 @@
                     {
                         data: 'roas',
                         render: function(data) {
-                            return (data || 0).toFixed(2);
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2);
                         },
                         visible: false
                     },
