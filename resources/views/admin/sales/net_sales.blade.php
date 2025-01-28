@@ -331,7 +331,8 @@
 
             Promise.all([
                 $.get("{{ route('net-profit.update-spent-kol') }}"),
-                $.get("{{ route('net-profit.update-hpp') }}")
+                $.get("{{ route('net-profit.update-hpp') }}"),
+                $.get("{{ route('net-profit.update-marketing') }}")
             ])
             .then(() => {
                 Swal.fire({

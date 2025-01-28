@@ -69,6 +69,7 @@ Route::prefix('admin')
 
         Route::prefix('net-profit')->group(function () {
             Route::get('/update-spent-kol', [NetProfitController::class, 'updateSpentKol'])->name('net-profit.update-spent-kol');
+            Route::get('/update-marketing', [NetProfitController::class, 'updateMarketing'])->name('net-profit.update-marketing');
             Route::get('/import-data', [NetProfitController::class, 'importNetProfits'])->name('net-profit.import-data');
             Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');
             Route::get('/hpp-by-date', [NetProfitController::class, 'getHppByDate'])->name('net-profit.getHppByDate');

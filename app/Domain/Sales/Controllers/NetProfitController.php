@@ -101,6 +101,28 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function updateMarketing()
+    {
+        try {
+            NetProfit::query()
+                ->join('sales', 'net_profits.date', '=', 'sales.date')
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
+                ->where('sales.tenant_id', Auth::user()->current_tenant_id)
+                ->update([
+                    'net_profits.marketing' => DB::raw('sales.ad_spent_total')
+                ]);
+
+            return response()->json([
+                'success' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+            ], 500);
+        }
+    }
     public function importSalesData()
     {
         $startDate = '2025-01-01';
