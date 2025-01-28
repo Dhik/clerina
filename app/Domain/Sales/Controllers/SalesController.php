@@ -1804,19 +1804,17 @@ class SalesController extends Controller
                 DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
             ]);
 
-        if ($request->filterDates) {
-            $dates = explode(' - ', $request->filterDates);
-            $startDate = Carbon::createFromFormat('m/d/Y', $dates[0])->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('m/d/Y', $dates[1])->format('Y-m-d');
-            $query->whereBetween('date', [$startDate, $endDate]);
+        if (! is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
+            $query->where('date', '>=', $startDate)
+                ->where('date', '<=', $endDate);
         } else {
             $startDate = now()->startOfMonth();
             $endDate = now()->endOfMonth();
             $query->whereBetween('date', [$startDate, $endDate]);
-            // $query->whereBetween('date', [
-            //     Carbon::now()->setYear(2024)->setMonth(11)->startOfMonth(),
-            //     Carbon::now()->setYear(2024)->setMonth(11)->endOfMonth()
-            // ]);
         }
 
         return response()->json(

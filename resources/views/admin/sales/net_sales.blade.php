@@ -17,9 +17,9 @@
                                 <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
-                                </div>
+                                </div> -->
                                 <div class="col-auto">
                                     <button class="btn btn-primary" id="refreshDataBtn">
                                         <i class="fas fa-sync-alt"></i> Refresh Data
@@ -557,9 +557,14 @@
         }
 
         function renderWaterfallChart() {
+            const filterDates = document.getElementById('filterDates').value;
+            
             $.ajax({
                 url: "{{ route('sales.waterfall-data-2') }}",
                 type: 'GET',
+                data: {
+                    filterDates: filterDates
+                },
                 success: function(salesData) {
                     const chartData = salesData.map(day => ({
                         x: day.date,
@@ -597,11 +602,11 @@
                     console.error('Error:', error);
                 }
             });
-            }
+        }
 
-            document.addEventListener('DOMContentLoaded', renderWaterfallChart);
+        renderWaterfallChart();
 
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
             }
