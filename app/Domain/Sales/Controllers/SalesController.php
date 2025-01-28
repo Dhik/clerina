@@ -134,16 +134,13 @@ class SalesController extends Controller
             ->leftJoin('sales', function($join) {
                 $join->on('net_profits.date', '=', 'sales.date');
             })
-            ->whereExists(function($query) {
-                $query->from('sales')
-                    ->whereColumn('sales.date', 'net_profits.date')
-                    ->where('sales.ad_spent_social_media', '>', 0)
+            ->where(function($query) {
+                $query->whereNotNull('sales.ad_spent_social_media')
                     ->where('sales.tenant_id', Auth::user()->current_tenant_id)
-                    ->orWhere('sales.ad_spent_market_place', '>', 0);
+                    ->orWhere('sales.ad_spent_social_media', '>', 0);
             })
             ->whereMonth('net_profits.date', Carbon::now()->month)
-            ->whereYear('net_profits.date', Carbon::now()->year)
-            ->groupBy('net_profits.date'); // Add grouping by date to ensure uniqueness
+            ->whereYear('net_profits.date', Carbon::now()->year);
 
         return DataTables::of($query)
             ->addColumn('net_profit', function ($row) {
