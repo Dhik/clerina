@@ -171,7 +171,7 @@ class NetProfitController extends Controller
     public function importNetProfits()
     {
         try {
-            $range = 'Import Sales!A2:C';
+            $range = 'Import Sales!A2:D';
             $sheetData = $this->googleSheetService->getSheetData($range);
 
             foreach ($sheetData as $row) {
@@ -179,16 +179,19 @@ class NetProfitController extends Controller
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
                 $sales = $this->parseCurrencyToInt($row[1] ?? null);
-$affiliate = $this->parseCurrencyToInt($row[2] ?? null);
+                $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
+                $visit = empty($row[3]) ? null : (int)$row[3];
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
                     [
                         'sales' => $sales,
-                        'affiliate' => $affiliate
+                        'affiliate' => $affiliate,
+                        'visit' => $visit
                     ]
                 );
             }
+            $this->updateClosingRate();
 
             return response()->json(['message' => 'Data imported successfully']);
         } catch (Exception $e) {
@@ -199,6 +202,43 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
     {
         if (empty($value)) return null;
         return (int) preg_replace('/[^0-9]/', '', $value);
+    }
+    public function updateClosingRate()
+    {
+        try {
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->whereNotNull('visit')
+                ->whereNotNull('order')
+                ->where('visit', '>', 0)
+                ->update([
+                    'closing_rate' => DB::raw('ROUND((visit / `order`) * 100, 2)')
+                ]);
+
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->where(function($query) {
+                    $query->whereNull('visit')
+                        ->orWhereNull('order')
+                        ->orWhere('visit', 0)
+                        ->orWhere('order', 0);
+                })
+                ->update(['closing_rate' => 0]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Closing rate updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Update Closing Rate Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update closing rate.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     public function updateRoas()
     {
