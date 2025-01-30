@@ -377,8 +377,7 @@
                     {
                         extend: 'colvis',
                         text: 'Show/Hide Columns',
-                        className: 'btn btn-secondary',
-                        columns: ':not(.noVis)' 
+                        className: 'btn btn-secondary'
                     }
                 ],
                 ajax: {
@@ -388,27 +387,31 @@
                     }
                 },
                 columns: [
-                    {data: 'date', name: 'date', className: 'noVis'},
+                    {
+                        data: 'date', 
+                        name: 'date',
+                        visible: true  // Always visible by default
+                    },
                     {
                         data: 'visit',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'qty',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'order',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'closing_rate',
@@ -416,7 +419,7 @@
                             const value = parseFloat(data) || 0;
                             return value.toFixed(2) + '%';
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'roas',
@@ -424,21 +427,21 @@
                             const value = parseFloat(data) || 0;
                             return value.toFixed(2);
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'marketing',
                         render: function(data) {
                             return 'Rp ' + Math.round(data).toLocaleString('id-ID');
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'spent_kol',
@@ -446,35 +449,35 @@
                             return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'affiliate',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'ad_spent_social_media',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'ad_spent_market_place',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'operasional',
                         render: function(data) {
                             return 'Rp ' + Math.round(data).toLocaleString('id-ID');
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'hpp',
@@ -482,7 +485,7 @@
                             return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     },
                     {
                         data: 'net_profit',
@@ -494,7 +497,7 @@
                                 ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
                             </div>`;
                         },
-                        className: 'noVis'
+                        visible: true  // Visible by default
                     }
                 ],
                 columnDefs: [
