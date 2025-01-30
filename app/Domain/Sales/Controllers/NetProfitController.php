@@ -204,11 +204,15 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
     {
         try {
             NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->where('marketing', '!=', 0)
                 ->update([
                     'roas' => DB::raw('sales / marketing')
                 ]);
             NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->where('marketing', 0)
                 ->update([
                     'roas' => null 
@@ -227,13 +231,13 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
             ], 500);
         }
     }
+
     public function updateQty()
     {
         try {
-            $startDate = now()->startOfMonth();
-            
             $dailyQty = Order::query()
-                ->whereBetween('orders.date', [$startDate, now()])
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->select('date')
@@ -241,7 +245,8 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereBetween('date', [$startDate, now()])
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->update(['qty' => 0]);
 
             NetProfit::query()
@@ -264,13 +269,13 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
             ], 500);
         }
     }
+
     public function updateOrderCount()
     {
         try {
-            $startDate = now()->startOfMonth();
-            
             $dailyOrders = Order::query()
-                ->whereBetween('orders.date', [$startDate, now()])
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->select('date')
@@ -278,8 +283,10 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereBetween('date', [$startDate, now()])
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->update(['order' => 0]);
+                
             NetProfit::query()
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
