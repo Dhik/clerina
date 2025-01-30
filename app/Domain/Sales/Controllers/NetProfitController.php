@@ -217,7 +217,7 @@ class NetProfitController extends Controller
                 ->whereNotNull('order')
                 ->where('visit', '>', 0)
                 ->update([
-                    'closing_rate' => DB::raw('ROUND((visit / `order`) * 100, 2)')
+                    'closing_rate' => DB::raw('ROUND((`order` / visit) * 100, 2)')
                 ]);
 
             NetProfit::query()
