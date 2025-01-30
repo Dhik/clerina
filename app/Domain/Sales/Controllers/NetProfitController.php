@@ -317,7 +317,6 @@ class NetProfitController extends Controller
                 ->whereMonth('orders.date', now()->month)
                 ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->select('date')
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');

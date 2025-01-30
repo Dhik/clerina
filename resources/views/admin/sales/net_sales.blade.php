@@ -444,7 +444,7 @@
                         visible: false
                     },
                     {
-                        data: 'order_count',
+                        data: 'order',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
