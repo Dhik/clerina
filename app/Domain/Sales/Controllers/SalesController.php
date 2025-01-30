@@ -130,24 +130,19 @@ class SalesController extends Controller
     public function getNetProfit(Request $request)
     {
         $query = NetProfit::query()
-        ->select(
-            'net_profits.*', 
-            'sales.ad_spent_social_media',
-            'sales.ad_spent_market_place',
-            'sales.visit',
-            'sales.qty',
-            'sales.order as order_count',
-            'sales.closing_rate',
-            'sales.roas'
-        )
-        ->leftJoin('sales', function($join) {
-            $join->on('net_profits.date', '=', 'sales.date');
-        })
-        ->where(function($query) {
-            $query->whereNotNull('sales.ad_spent_social_media')
-                ->where('sales.tenant_id', Auth::user()->current_tenant_id)
-                ->orWhere('sales.ad_spent_social_media', '>', 0);
-        });
+            ->select(
+                'net_profits.*', 
+                'sales.ad_spent_social_media',
+                'sales.ad_spent_market_place'
+            )
+            ->leftJoin('sales', function($join) {
+                $join->on('net_profits.date', '=', 'sales.date');
+            })
+            ->where(function($query) {
+                $query->whereNotNull('sales.ad_spent_social_media')
+                    ->where('sales.tenant_id', Auth::user()->current_tenant_id)
+                    ->orWhere('sales.ad_spent_social_media', '>', 0);
+            });
 
         if (! is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
@@ -185,8 +180,8 @@ class SalesController extends Controller
             ->editColumn('qty', function ($row) {
                 return $row->qty ?? 0;
             })
-            ->editColumn('order_count', function ($row) {
-                return $row->order_count ?? 0;
+            ->editColumn('order', function ($row) {
+                return $row->order ?? 0;
             })
             ->editColumn('closing_rate', function ($row) {
                 return number_format($row->closing_rate ?? 0, 2) . '%';
