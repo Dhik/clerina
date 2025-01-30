@@ -351,18 +351,17 @@
                 }
             ];
 
-            const requests = endpoints.map(endpoint => {
-                return $.get(endpoint.url)
-                    .then(() => ({
-                        name: endpoint.name,
-                        status: 'success'
-                    }))
-                    .catch(error => ({
-                        name: endpoint.name,
-                        status: 'failed',
-                        message: error.responseJSON?.message || error.statusText || 'Unknown error'
-                    }));
-            });
+            Promise.all(endpoints.map(endpoint => $.get(endpoint.url)))
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Data Refreshed!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    table.ajax.reload();
+                });
+        }
 
             Promise.all(requests)
                 .then(results => {
