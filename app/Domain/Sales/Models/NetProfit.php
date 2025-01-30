@@ -17,6 +17,11 @@ class NetProfit extends Model
         'affiliate',
         'operasional',
         'hpp',
+        'roas',
+        'visit',
+        'qty',
+        'order',
+        'closing_rate',
     ];
     protected $casts = [
         'date' => 'date'

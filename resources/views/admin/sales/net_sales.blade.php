@@ -324,27 +324,84 @@
                 }
             });
 
-            Promise.all([
-                $.get("{{ route('net-profit.update-spent-kol') }}"),
-                $.get("{{ route('net-profit.update-hpp') }}"),
-                $.get("{{ route('net-profit.update-marketing') }}")
-            ])
-            .then(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Data Refreshed!',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-                table.ajax.reload();
-            })
-            .catch(() => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Refresh Failed',
-                    text: 'Please try again'
-                });
+            const endpoints = [
+                { 
+                    name: 'KOL Spending', 
+                    url: "{{ route('net-profit.update-spent-kol') }}"
+                },
+                { 
+                    name: 'HPP', 
+                    url: "{{ route('net-profit.update-hpp') }}"
+                },
+                { 
+                    name: 'Marketing', 
+                    url: "{{ route('net-profit.update-marketing') }}"
+                },
+                { 
+                    name: 'ROAS', 
+                    url: "{{ route('net-profit.update-roas') }}"
+                },
+                { 
+                    name: 'Quantity', 
+                    url: "{{ route('net-profit.update-qty') }}"
+                },
+                { 
+                    name: 'Order Count', 
+                    url: "{{ route('net-profit.update-order-count') }}"
+                }
+            ];
+
+            const requests = endpoints.map(endpoint => {
+                return $.get(endpoint.url)
+                    .then(() => ({
+                        name: endpoint.name,
+                        status: 'success'
+                    }))
+                    .catch(error => ({
+                        name: endpoint.name,
+                        status: 'failed',
+                        message: error.responseJSON?.message || error.statusText || 'Unknown error'
+                    }));
             });
+
+            Promise.all(requests)
+                .then(results => {
+                    const failedUpdates = results.filter(result => result.status === 'failed');
+                    const successUpdates = results.filter(result => result.status === 'success');
+
+                    if (failedUpdates.length > 0) {
+                        const errorMessage = failedUpdates
+                            .map(update => `${update.name}: ${update.message}`)
+                            .join('<br>');
+
+                        const successMessage = successUpdates.length > 0 
+                            ? `<br><br>Successfully updated: ${successUpdates.map(update => update.name).join(', ')}` 
+                            : '';
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Partial Update',
+                            html: `Failed to update:<br>${errorMessage}${successMessage}`,
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data Refreshed!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                    
+                    table.ajax.reload();
+                })
+                .catch(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Refresh Failed',
+                        text: 'An unexpected error occurred while refreshing the data'
+                    });
+                });
         }
 
             $('#refreshDataBtn').click(refreshData);

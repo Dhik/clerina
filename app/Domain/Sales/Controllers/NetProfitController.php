@@ -200,4 +200,104 @@ $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
         if (empty($value)) return null;
         return (int) preg_replace('/[^0-9]/', '', $value);
     }
+    public function updateRoas()
+    {
+        try {
+            NetProfit::query()
+                ->where('marketing', '!=', 0)
+                ->update([
+                    'roas' => DB::raw('sales / marketing')
+                ]);
+            NetProfit::query()
+                ->where('marketing', 0)
+                ->update([
+                    'roas' => null 
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ROAS updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Update ROAS Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update ROAS.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateQty()
+    {
+        try {
+            $startDate = now()->startOfMonth();
+            
+            $dailyQty = Order::query()
+                ->whereBetween('orders.date', [$startDate, now()])
+                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->select('date')
+                ->selectRaw('SUM(qty) as total_qty')
+                ->groupBy('date');
+
+            NetProfit::query()
+                ->whereBetween('date', [$startDate, now()])
+                ->update(['qty' => 0]);
+
+            NetProfit::query()
+                ->joinSub($dailyQty, 'dq', function($join) {
+                    $join->on('net_profits.date', '=', 'dq.date');
+                })
+                ->update(['qty' => DB::raw('dq.total_qty')]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Quantity updated successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Update Qty Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update quantity.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateOrderCount()
+    {
+        try {
+            $startDate = now()->startOfMonth();
+            
+            $dailyOrders = Order::query()
+                ->whereBetween('orders.date', [$startDate, now()])
+                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->select('date')
+                ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
+                ->groupBy('date');
+
+            NetProfit::query()
+                ->whereBetween('date', [$startDate, now()])
+                ->update(['order' => 0]);
+            NetProfit::query()
+                ->joinSub($dailyOrders, 'do', function($join) {
+                    $join->on('net_profits.date', '=', 'do.date');
+                })
+                ->update(['order' => DB::raw('do.total_orders')]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order count updated successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Update Order Count Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update order count.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
