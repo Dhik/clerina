@@ -180,7 +180,7 @@ class NetProfitController extends Controller
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
                 $sales = $this->parseCurrencyToInt($row[1] ?? null);
                 $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
-                $visit = empty($row[3]) ? null : (int)$row[3];
+                $visit = $this->parseToInt($row[3] ?? null);
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
@@ -203,6 +203,11 @@ class NetProfitController extends Controller
         if (empty($value)) return null;
         return (int) preg_replace('/[^0-9]/', '', $value);
     }
+    private function parseToInt($currency)
+    {
+        return (int) str_replace(['Rp', '.', ','], '', $currency);
+    }
+
     public function updateClosingRate()
     {
         try {
