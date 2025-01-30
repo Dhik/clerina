@@ -361,15 +361,9 @@
                         timer: 1500
                     });
                     table.ajax.reload();
-                })
-                .catch(() => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Refresh Failed',
-                        text: 'Please try again'
-                    });
                 });
         }
+
             $('#refreshDataBtn').click(refreshData);
             
             let netProfitsTable = $('#netProfitsTable').DataTable({
