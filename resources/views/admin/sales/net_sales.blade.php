@@ -99,7 +99,7 @@
                                     <th>Visit</th>
                                     <th>Qty</th>
                                     <th>Order</th>
-                                    <th>CR</th>
+                                    <th>Closing Rate</th>
                                     <th>ROAS</th>
                                     <th>Sales</th>
                                     <th>Marketing</th>

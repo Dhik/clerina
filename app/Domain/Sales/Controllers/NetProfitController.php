@@ -191,7 +191,7 @@ class NetProfitController extends Controller
                     ]
                 );
             }
-
+            $this->updateClosingRate();
             return response()->json(['message' => 'Data imported successfully']);
         } catch (Exception $e) {
             return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
