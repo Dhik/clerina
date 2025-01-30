@@ -363,46 +363,6 @@
                 });
         }
 
-            Promise.all(requests)
-                .then(results => {
-                    const failedUpdates = results.filter(result => result.status === 'failed');
-                    const successUpdates = results.filter(result => result.status === 'success');
-
-                    if (failedUpdates.length > 0) {
-                        const errorMessage = failedUpdates
-                            .map(update => `${update.name}: ${update.message}`)
-                            .join('<br>');
-
-                        const successMessage = successUpdates.length > 0 
-                            ? `<br><br>Successfully updated: ${successUpdates.map(update => update.name).join(', ')}` 
-                            : '';
-
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Partial Update',
-                            html: `Failed to update:<br>${errorMessage}${successMessage}`,
-                            confirmButtonText: 'OK'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Data Refreshed!',
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                    }
-                    
-                    table.ajax.reload();
-                })
-                .catch(() => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Refresh Failed',
-                        text: 'An unexpected error occurred while refreshing the data'
-                    });
-                });
-        }
-
             $('#refreshDataBtn').click(refreshData);
 
             let netProfitsTable = $('#netProfitsTable').DataTable({
