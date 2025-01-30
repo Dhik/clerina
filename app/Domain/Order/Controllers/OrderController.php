@@ -442,8 +442,6 @@ class OrderController extends Controller
         
         $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
-        // $startDate = '2025-01-03';
-        // $endDate = '2025-01-04';
     
         try {
             $page = 1;
@@ -478,8 +476,6 @@ class OrderController extends Controller
                         'response' => $data
                     ], 500);
                 }
-    
-                // Filter out cancelled orders
                 $filteredOrders = array_filter($data['data'], function($orderData) {
                     return $orderData['status'] !== 'cancelled';
                 });
@@ -489,6 +485,7 @@ class OrderController extends Controller
     
                     $date = $this->convertToMySQLDateTime($orderData['order_at']);
                     $createdAt = $this->convertToMySQLDateTime($orderData['created_at']);
+                    $processAt = $this->convertToMySQLDateTime($orderData['process_at']);
     
                     $existingOrder = Order::where('id_order', $orderData['reference_no'])->first();
     
@@ -501,11 +498,13 @@ class OrderController extends Controller
                             'sku' => $orderData['product_summary'],
                             'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
                             'tenant_id' => $this->determineTenantId($orderData['channel_name'], $orderData['product_summary'], $orderData['integration_store']),
+                            'process_at' => $processAt,
                         ]);
                     } else {
                         Order::create([
                             'id_order' => $orderData['reference_no'],
                             'date' => $date,
+                            'process_at' => $processAt,
                             'sales_channel_id' => $this->getSalesChannelId($orderData['channel_name']),
                             'customer_name' => $orderData['customer_name'],
                             'customer_phone_number' => $orderData['customer_phone'],
@@ -537,6 +536,90 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Error processing orders',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProcessAtThisMonth(): JsonResponse
+    {
+        set_time_limit(0);
+
+        $client = new Client();
+        $baseUrl = 'https://wms-api.clerinagroup.com/v1/open/orders/page';
+        $headers = [
+            'x-api-key' => '29baec8f417f44c7ac981680fcaee5a070c7ad7320ea439fb5bf28150a1310ad'
+        ];
+        
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        try {
+            $page = 1;
+            $totalPages = 1;
+            $updatedCount = 0;
+
+            do {
+                $response = $client->get($baseUrl, [
+                    'headers' => $headers,
+                    'query' => [
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'page' => $page
+                    ]
+                ]);
+
+                if ($response->getStatusCode() !== 200) {
+                    return response()->json([
+                        'error' => 'Failed to fetch data from API', 
+                        'status_code' => $response->getStatusCode()
+                    ], 500);
+                }
+
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                if ($page === 1) {
+                    $totalPages = $data['metadata']['total_page'] ?? 1;
+                }
+
+                if (!isset($data['data'])) {
+                    return response()->json([
+                        'error' => 'Unexpected response format', 
+                        'response' => $data
+                    ], 500);
+                }
+
+                foreach ($data['data'] as $orderData) {
+                    $processAt = $this->convertToMySQLDateTime($orderData['process_at']);
+                    
+                    // Only update if process_at is not the default value
+                    if ($orderData['process_at'] !== '0001-01-01T00:00:00Z') {
+                        $updated = Order::where('id_order', $orderData['reference_no'])
+                            ->update([
+                                'process_at' => $processAt
+                            ]);
+                        
+                        if ($updated) {
+                            $updatedCount++;
+                        }
+                    }
+                }
+
+                $page++;
+            } while ($page <= $totalPages);
+
+            return response()->json([
+                'message' => 'Process dates updated successfully',
+                'updated_count' => $updatedCount,
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error updating process dates',
                 'message' => $e->getMessage()
             ], 500);
         }
