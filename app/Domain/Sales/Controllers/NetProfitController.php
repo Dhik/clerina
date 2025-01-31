@@ -388,6 +388,13 @@ class NetProfitController extends Controller
 
             // Calculate correlation coefficient
             $n = $data->count();
+            if ($n < 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Not enough data points for correlation analysis',
+                ], 400);
+            }
+
             $sumX = $data->sum($columnName);
             $sumY = $data->sum('sales');
             $sumXY = $data->sum(function($item) use ($columnName) {
@@ -400,8 +407,27 @@ class NetProfitController extends Controller
                 return $item->sales * $item->sales;
             });
 
+            // Check for division by zero conditions
+            $denominatorX = ($n * $sumX2 - $sumX * $sumX);
+            $denominatorY = ($n * $sumY2 - $sumY * $sumY);
+
+            if ($denominatorX <= 0 || $denominatorY <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot calculate correlation - insufficient variance in the data',
+                ], 400);
+            }
+
             $correlation = $n * $sumXY - $sumX * $sumY;
-            $correlation /= sqrt(($n * $sumX2 - $sumX * $sumX) * ($n * $sumY2 - $sumY * $sumY));
+            $correlation /= sqrt($denominatorX * $denominatorY);
+
+            // Additional validation for correlation result
+            if (is_nan($correlation) || is_infinite($correlation)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid correlation result - please check your data',
+                ], 400);
+            }
 
             // Calculate regression line
             $xMean = $sumX / $n;
