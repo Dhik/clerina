@@ -257,29 +257,37 @@
             netProfitsTable.draw()
         })
         $('#filterDates').daterangepicker({
-    autoUpdateInput: false,
-    locale: {
-        format: 'DD/MM/YYYY',
-        cancelLabel: 'Clear'
-    },
-    maxSpan: {
-        days: 60
-    },
-    minDate: '01/12/2024',  // Set minimum date to December 1st, 2024
-    maxDate: '31/01/2025',  // Set maximum date to January 31st, 2025
-    startDate: '01/01/2025',
-    endDate: '31/01/2025'
-}, function(start, end, label) {
-    var days = end.diff(start, 'days');
-    if (days > 60) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Date Range Too Long',
-            text: 'Please select a range of maximum 60 days'
-        });
-        return false;
-    }
-});
+            autoUpdateInput: false,
+            autoApply: true,
+            alwaysShowCalendars: true,
+            locale: {
+                cancelLabel: 'Clear',
+                format: 'DD/MM/YYYY'
+            },
+            maxSpan: {
+                days: 60
+            },
+            minDate: '01/12/2024',
+            maxDate: '31/01/2025', 
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
+            });
+
+            $('#filterDates').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            $(this).trigger('change');
+            });
+
+            $('#filterDates').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            $(this).trigger('change');
+            });
 
         filterDate.change(function () {
             netProfitsTable.draw();
