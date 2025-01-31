@@ -630,6 +630,10 @@
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
+            } else if (e.target.getAttribute('href') === '#netProfitsTab') {
+                loadNetProfitsChart();
+            } else if (e.target.getAttribute('href') === '#correlationTab') {
+                loadCorrelationChart();
             }
         });
     </script>
