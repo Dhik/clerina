@@ -353,18 +353,19 @@ class NetProfitController extends Controller
     public function getCurrentMonthCorrelation(Request $request)
     {
         try {
+            // Validate and get variable from request
             $variable = $request->input('variable', 'marketing');
             $columnName = in_array($variable, [
-                'marketing', 'spent_kol', 'affiliate', 
-                'operasional', 'hpp', 'net_profit'
+                'marketing', 'spent_kol', 'affiliate'
             ]) ? $variable : 'marketing';
-            
+
+            // Build query
             $query = NetProfit::query()
                 ->whereNotNull('sales')
                 ->whereNotNull($columnName)
                 ->where($columnName, '>', 0);
 
-            // Add date filter if provided
+            // Handle date filtering
             if ($request->filled('filterDates')) {
                 $dates = explode(' - ', $request->filterDates);
                 if (count($dates) == 2) {
@@ -373,11 +374,11 @@ class NetProfitController extends Controller
                     $query->whereBetween('date', [$startDate, $endDate]);
                 }
             } else {
-                // Default to current month if no date filter
                 $query->whereMonth('date', now()->month)
                     ->whereYear('date', now()->year);
             }
 
+            // Get data
             $data = $query->select([
                 'date',
                 'sales',
@@ -385,7 +386,7 @@ class NetProfitController extends Controller
                 DB::raw("ROUND(sales/$columnName, 2) as ratio")
             ])->get();
 
-            // Rest of your code remains the same...
+            // Calculate correlation coefficient
             $n = $data->count();
             $sumX = $data->sum($columnName);
             $sumY = $data->sum('sales');
@@ -399,15 +400,98 @@ class NetProfitController extends Controller
                 return $item->sales * $item->sales;
             });
 
-            // Rest of your correlation calculations and response formatting remain unchanged...
+            $correlation = $n * $sumXY - $sumX * $sumY;
+            $correlation /= sqrt(($n * $sumX2 - $sumX * $sumX) * ($n * $sumY2 - $sumY * $sumY));
 
-            // You might want to add the date range to the chart title
+            // Calculate regression line
+            $xMean = $sumX / $n;
+            $yMean = $sumY / $n;
+            $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+            $intercept = $yMean - $slope * $xMean;
+
+            // Define column labels
+            $columnLabels = [
+                'marketing' => 'Marketing Spend',
+                'spent_kol' => 'KOL Spending',
+                'affiliate' => 'Affiliate'
+            ];
+
+            // Prepare date range for title
             $titleDate = $request->filled('filterDates') 
                 ? " (" . $request->filterDates . ")"
                 : " (" . now()->format('F Y') . ")";
-                
-            $layout['title'] = 'Sales vs ' . $columnLabels[$columnName] . ' Correlation' . $titleDate;
 
+            // Prepare data for Plotly
+            $plotlyData = [
+                [
+                    'type' => 'scatter',
+                    'mode' => 'markers',
+                    'name' => 'Sales vs ' . $columnLabels[$columnName],
+                    'x' => $data->pluck($columnName)->values(),
+                    'y' => $data->pluck('sales')->values(),
+                    'text' => $data->map(function($item) use ($columnName, $columnLabels) {
+                        return 'Date: ' . $item->date . '<br>' .
+                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                            $columnLabels[$columnName] . ': Rp ' . number_format($item->$columnName, 0, ',', '.') . '<br>' .
+                            'Ratio: ' . $item->ratio;
+                    }),
+                    'hoverinfo' => 'text',
+                    'marker' => [
+                        'size' => 10,
+                        'color' => '#8884d8',
+                        'opacity' => 0.7
+                    ]
+                ],
+                [
+                    'type' => 'scatter',
+                    'mode' => 'lines',
+                    'name' => 'Trend Line',
+                    'x' => [$data->min($columnName), $data->max($columnName)],
+                    'y' => [
+                        $slope * $data->min($columnName) + $intercept,
+                        $slope * $data->max($columnName) + $intercept
+                    ],
+                    'line' => [
+                        'color' => '#ff7300',
+                        'width' => 2
+                    ]
+                ]
+            ];
+
+            // Define layout
+            $layout = [
+                'title' => 'Sales vs ' . $columnLabels[$columnName] . ' Correlation' . $titleDate,
+                'xaxis' => [
+                    'title' => $columnLabels[$columnName] . ' (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'yaxis' => [
+                    'title' => 'Sales (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'showlegend' => true,
+                'annotations' => [
+                    [
+                        'x' => 0.05,
+                        'y' => 0.95,
+                        'xref' => 'paper',
+                        'yref' => 'paper',
+                        'text' => sprintf(
+                            'Correlation (r): %.4f<br>R²: %.4f',
+                            $correlation,
+                            $correlation * $correlation
+                        ),
+                        'showarrow' => false,
+                        'bgcolor' => '#ffffff',
+                        'bordercolor' => '#000000',
+                        'borderwidth' => 1
+                    ]
+                ]
+            ];
+
+            // Return JSON response
             return response()->json([
                 'data' => $plotlyData,
                 'layout' => $layout,
