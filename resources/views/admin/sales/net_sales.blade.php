@@ -14,8 +14,8 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="row">
-                                <div class="col-auto">
-                                    <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
+                                <div class="col-md-3 mb-2">
+                                    <input type="text" id="filterDates" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                                 </div>
                                 <!-- <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
@@ -256,38 +256,33 @@
             filterDate.val('')
             netProfitsTable.draw()
         })
-        $('#filterDates').daterangepicker({
+        $('.daterange').daterangepicker({
             autoUpdateInput: false,
-            autoApply: true,
+            autoApply: true,  // Remove apply button from daterangepicker
             alwaysShowCalendars: true,
             locale: {
                 cancelLabel: 'Clear',
                 format: 'DD/MM/YYYY'
             },
-            maxSpan: {
-                days: 60
-            },
-            minDate: '01/12/2024',
-            maxDate: '31/01/2025', 
             ranges: {
-                'Today': [moment(), moment()],
-                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-                'This Month': [moment().startOf('month'), moment().endOf('month')],
-                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            'Today': [moment(), moment()],
+            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
             }
-            });
+        });
 
-            $('#filterDates').on('apply.daterangepicker', function(ev, picker) {
+        // Handle date selection
+        $('.daterange').on('apply.daterangepicker', function(ev, picker) {
             $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-            $(this).trigger('change');
-            });
+        });
 
-            $('#filterDates').on('cancel.daterangepicker', function(ev, picker) {
+        // Handle date clearing
+        $('.daterange').on('cancel.daterangepicker', function(ev, picker) {
             $(this).val('');
-            $(this).trigger('change');
-            });
+        });
 
         filterDate.change(function () {
             netProfitsTable.draw();
