@@ -257,25 +257,29 @@
             netProfitsTable.draw()
         })
         $('#filterDates').daterangepicker({
-            autoUpdateInput: false,
-            locale: {
-                format: 'DD/MM/YYYY',
-                cancelLabel: 'Clear'
-            },
-            maxSpan: {
-                days: 60 
-            }
-        }, function(start, end, label) {
-            var days = end.diff(start, 'days');
-            if (days > 60) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Date Range Too Long',
-                    text: 'Please select a range of maximum 60 days'
-                });
-                return false;
-            }
+    autoUpdateInput: false,
+    locale: {
+        format: 'DD/MM/YYYY',
+        cancelLabel: 'Clear'
+    },
+    maxSpan: {
+        days: 60
+    },
+    minDate: '01/12/2024',  // Set minimum date to December 1st, 2024
+    maxDate: '31/01/2025',  // Set maximum date to January 31st, 2025
+    startDate: '01/01/2025',
+    endDate: '31/01/2025'
+}, function(start, end, label) {
+    var days = end.diff(start, 'days');
+    if (days > 60) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Date Range Too Long',
+            text: 'Please select a range of maximum 60 days'
         });
+        return false;
+    }
+});
 
         filterDate.change(function () {
             netProfitsTable.draw();
