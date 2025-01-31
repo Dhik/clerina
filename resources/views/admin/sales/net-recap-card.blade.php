@@ -20,7 +20,7 @@
                     <div class="tab-pane" id="correlationTab">
                         <div class="row">
                             <div class="col-10">
-                                <div id="correlationChart" style="height: 400px;"></div>
+                                <div id="correlationChart" style="height: 600px;"></div>
                             </div>
                             <div class="col-2">
                                 <div class="small-box bg-info">
