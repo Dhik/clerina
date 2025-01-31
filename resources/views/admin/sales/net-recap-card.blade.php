@@ -13,13 +13,16 @@
                     <div class="tab-pane active" id="recapChartTab">
                         <div id="waterfallChart"></div>
                     </div>
+                    
                     <div class="tab-pane" id="netProfitsTab">
                         <canvas id="netProfitsChart" style="height: 400px;"></canvas>
                     </div>
                     <div class="tab-pane" id="correlationTab">
-                        <div id="correlationChart" style="height: 400px;"></div>
-                        <div class="row mt-4">
-                            <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-8">
+                                <div id="correlationChart" style="height: 400px;"></div>
+                            </div>
+                            <div class="col-4">
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h4 id="correlationCoefficient">0</h4>
@@ -29,8 +32,6 @@
                                         <i class="fas fa-chart-line"></i>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
                                 <div class="small-box bg-success">
                                     <div class="inner">
                                         <h4 id="rSquared">0</h4>
@@ -40,8 +41,6 @@
                                         <i class="fas fa-percentage"></i>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
                                 <div class="small-box bg-warning">
                                     <div class="inner">
                                         <h4 id="dataPoints">0</h4>
