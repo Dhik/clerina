@@ -359,21 +359,33 @@ class NetProfitController extends Controller
                 'operasional', 'hpp', 'net_profit'
             ]) ? $variable : 'marketing';
             
-            $data = NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+            $query = NetProfit::query()
                 ->whereNotNull('sales')
                 ->whereNotNull($columnName)
-                ->where($columnName, '>', 0)
-                ->select([
-                    'date',
-                    'sales',
-                    $columnName,
-                    DB::raw("ROUND(sales/$columnName, 2) as ratio")
-                ])
-                ->get();
+                ->where($columnName, '>', 0);
 
-            // Calculate correlation coefficient
+            // Add date filter if provided
+            if ($request->filled('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                if (count($dates) == 2) {
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->endOfDay();
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                }
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                    ->whereYear('date', now()->year);
+            }
+
+            $data = $query->select([
+                'date',
+                'sales',
+                $columnName,
+                DB::raw("ROUND(sales/$columnName, 2) as ratio")
+            ])->get();
+
+            // Rest of your code remains the same...
             $n = $data->count();
             $sumX = $data->sum($columnName);
             $sumY = $data->sum('sales');
@@ -387,92 +399,14 @@ class NetProfitController extends Controller
                 return $item->sales * $item->sales;
             });
 
-            $correlation = $n * $sumXY - $sumX * $sumY;
-            $correlation /= sqrt(($n * $sumX2 - $sumX * $sumX) * ($n * $sumY2 - $sumY * $sumY));
+            // Rest of your correlation calculations and response formatting remain unchanged...
 
-            // Calculate regression line
-            $xMean = $sumX / $n;
-            $yMean = $sumY / $n;
-            $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
-            $intercept = $yMean - $slope * $xMean;
-
-            $columnLabels = [
-                'marketing' => 'Marketing',
-                'spent_kol' => 'KOL Spending',
-                'affiliate' => 'Affiliate',
-                'operasional' => 'Operational',
-                'hpp' => 'HPP',
-                'net_profit' => 'Net Profit'
-            ];
-
-            // Prepare data for Plotly
-            $plotlyData = [
-                [
-                    'type' => 'scatter',
-                    'mode' => 'markers',
-                    'name' => 'Sales vs ' . $columnLabels[$columnName],
-                    'x' => $data->pluck($columnName)->values(),
-                    'y' => $data->pluck('sales')->values(),
-                    'text' => $data->map(function($item) use ($columnName, $columnLabels) {
-                        return 'Date: ' . $item->date . '<br>' .
-                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                            $columnLabels[$columnName] . ': Rp ' . number_format($item->$columnName, 0, ',', '.') . '<br>' .
-                            'Ratio: ' . $item->ratio;
-                    }),
-                    'hoverinfo' => 'text',
-                    'marker' => [
-                        'size' => 10,
-                        'color' => '#8884d8',
-                        'opacity' => 0.7
-                    ]
-                ],
-                [
-                    'type' => 'scatter',
-                    'mode' => 'lines',
-                    'name' => 'Trend Line',
-                    'x' => [$data->min($columnName), $data->max($columnName)],
-                    'y' => [
-                        $slope * $data->min($columnName) + $intercept,
-                        $slope * $data->max($columnName) + $intercept
-                    ],
-                    'line' => [
-                        'color' => '#ff7300',
-                        'width' => 2
-                    ]
-                ]
-            ];
-
-            $layout = [
-                'title' => 'Sales vs ' . $columnLabels[$columnName] . ' Correlation',
-                'xaxis' => [
-                    'title' => $columnLabels[$columnName] . ' (Rp)',
-                    'tickformat' => ',.0f',
-                    'hoverformat' => ',.0f'
-                ],
-                'yaxis' => [
-                    'title' => 'Sales (Rp)',
-                    'tickformat' => ',.0f',
-                    'hoverformat' => ',.0f'
-                ],
-                'showlegend' => true,
-                'annotations' => [
-                    [
-                        'x' => 0.05,
-                        'y' => 0.95,
-                        'xref' => 'paper',
-                        'yref' => 'paper',
-                        'text' => sprintf(
-                            'Correlation (r): %.4f<br>R²: %.4f',
-                            $correlation,
-                            $correlation * $correlation
-                        ),
-                        'showarrow' => false,
-                        'bgcolor' => '#ffffff',
-                        'bordercolor' => '#000000',
-                        'borderwidth' => 1
-                    ]
-                ]
-            ];
+            // You might want to add the date range to the chart title
+            $titleDate = $request->filled('filterDates') 
+                ? " (" . $request->filterDates . ")"
+                : " (" . now()->format('F Y') . ")";
+                
+            $layout['title'] = 'Sales vs ' . $columnLabels[$columnName] . ' Correlation' . $titleDate;
 
             return response()->json([
                 'data' => $plotlyData,

@@ -181,48 +181,48 @@
         width: 100% !important;
     }
     .modal-content {
-    border-radius: 8px;
-}
+        border-radius: 8px;
+    }
 
-.modal-header {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    border-bottom: 1px solid #dee2e6;
-}
+    .modal-header {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-bottom: 1px solid #dee2e6;
+    }
 
-.table th, .table td {
-    padding: 12px;
-    vertical-align: middle;
-}
+    .table th, .table td {
+        padding: 12px;
+        vertical-align: middle;
+    }
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
 
-#salesDetailTable td {
-    border-top: 1px solid #dee2e6;
-}
+    #salesDetailTable td {
+        border-top: 1px solid #dee2e6;
+    }
 
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-.dataTables_wrapper {
-    overflow-x: auto;
-    width: 100%;
-}
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+    .dataTables_wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
 
-#netProfitsTable {
-    width: 100% !important;
-    white-space: nowrap;
-}
+    #netProfitsTable {
+        width: 100% !important;
+        white-space: nowrap;
+    }
 
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-.dt-button-collection {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .dt-button-collection {
         padding: 8px !important;
     }
     
@@ -261,6 +261,7 @@
             netProfitsTable.draw();
             fetchSummary();
             renderWaterfallChart();
+            loadCorrelationChart();
         });
 
         function showKolDetail(date) {
@@ -364,7 +365,7 @@
                 });
         }
 
-            $('#refreshDataBtn').click(refreshData);
+        $('#refreshDataBtn').click(refreshData);
             
             let netProfitsTable = $('#netProfitsTable').DataTable({
                 scrollX: true,
@@ -525,7 +526,6 @@
             }
         fetchSummary();
 
-        // Click event for the Total Spent card
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
             const adsSpentTotal = $('#newAdsSpentTotal').text().trim();
@@ -627,6 +627,96 @@
 
         renderWaterfallChart();
 
+        function loadNetProfitsChart() {
+            fetch("{{ route('sales.net_sales_line') }}")
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('netProfitsChart').getContext('2d');
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(item => item.date),
+                            datasets: [{
+                                label: 'Sales',
+                                data: data.map(item => item.sales),
+                                borderColor: '#4CAF50',
+                                tension: 0.1,
+                                fill: false
+                            }, {
+                                label: 'Marketing',
+                                data: data.map(item => item.marketing),
+                                borderColor: '#2196F3',
+                                tension: 0.1,
+                                fill: false
+                            }, {
+                                label: 'HPP',
+                                data: data.map(item => item.hpp),
+                                borderColor: '#FFC107',
+                                tension: 0.1,
+                                fill: false
+                            }, {
+                                label: 'Net Profit',
+                                data: data.map(item => item.netProfit),
+                                borderColor: '#F44336',
+                                tension: 0.1,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': Rp ' + Math.round(context.raw).toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    grid: {
+                                        zeroLineColor: '#888',
+                                        zeroLineWidth: 1
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + Math.round(value).toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        function loadCorrelationChart() {
+            const filterDates = document.getElementById('filterDates').value;
+            const selectedVariable = document.getElementById('correlationVariable').value;
+            
+            fetch(`{{ route('net-profit.sales-vs-marketing') }}?variable=${selectedVariable}${filterDates ? `&filterDates=${filterDates}` : ''}`)
+                .then(response => response.json())
+                .then(result => {
+                    Plotly.newPlot('correlationChart', result.data, result.layout, {
+                        responsive: true,
+                        displayModeBar: true
+                    });
+
+                    document.getElementById('correlationCoefficient').textContent = 
+                        result.statistics.correlation.toFixed(4);
+                    document.getElementById('rSquared').textContent = 
+                        result.statistics.r_squared.toFixed(4);
+                    document.getElementById('dataPoints').textContent = 
+                        result.statistics.data_points;
+                })
+                .catch(error => console.error('Error fetching correlation data:', error));
+        }
+        loadNetProfitsChart();
+        loadCorrelationChart();
+
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
@@ -636,5 +726,7 @@
                 loadCorrelationChart();
             }
         });
+
+        document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
     </script>
 @stop
