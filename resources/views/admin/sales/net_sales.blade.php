@@ -277,13 +277,14 @@
         // Handle date selection
         $('.daterange').on('apply.daterangepicker', function(ev, picker) {
             $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            $(this).trigger('change'); // Add this line
         });
 
         // Handle date clearing
         $('.daterange').on('cancel.daterangepicker', function(ev, picker) {
             $(this).val('');
+            $(this).trigger('change'); // Add this line
         });
-
         filterDate.change(function () {
             netProfitsTable.draw();
             fetchSummary();
