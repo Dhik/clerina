@@ -350,32 +350,38 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-    public function getCurrentMonthCorrelation()
+    public function getCurrentMonthCorrelation(Request $request)
     {
         try {
+            $variable = $request->input('variable', 'marketing');
+            $columnName = in_array($variable, [
+                'marketing', 'spent_kol', 'affiliate', 
+                'operasional', 'hpp', 'net_profit'
+            ]) ? $variable : 'marketing';
+            
             $data = NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
                 ->whereNotNull('sales')
-                ->whereNotNull('marketing')
-                ->where('marketing', '>', 0)
+                ->whereNotNull($columnName)
+                ->where($columnName, '>', 0)
                 ->select([
                     'date',
                     'sales',
-                    'marketing',
-                    DB::raw('ROUND(sales/marketing, 2) as roas')
+                    $columnName,
+                    DB::raw("ROUND(sales/$columnName, 2) as ratio")
                 ])
                 ->get();
 
             // Calculate correlation coefficient
             $n = $data->count();
-            $sumX = $data->sum('marketing');
+            $sumX = $data->sum($columnName);
             $sumY = $data->sum('sales');
-            $sumXY = $data->sum(function($item) {
-                return $item->marketing * $item->sales;
+            $sumXY = $data->sum(function($item) use ($columnName) {
+                return $item->$columnName * $item->sales;
             });
-            $sumX2 = $data->sum(function($item) {
-                return $item->marketing * $item->marketing;
+            $sumX2 = $data->sum(function($item) use ($columnName) {
+                return $item->$columnName * $item->$columnName;
             });
             $sumY2 = $data->sum(function($item) {
                 return $item->sales * $item->sales;
@@ -390,19 +396,28 @@ class NetProfitController extends Controller
             $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
             $intercept = $yMean - $slope * $xMean;
 
+            $columnLabels = [
+                'marketing' => 'Marketing',
+                'spent_kol' => 'KOL Spending',
+                'affiliate' => 'Affiliate',
+                'operasional' => 'Operational',
+                'hpp' => 'HPP',
+                'net_profit' => 'Net Profit'
+            ];
+
             // Prepare data for Plotly
             $plotlyData = [
                 [
                     'type' => 'scatter',
                     'mode' => 'markers',
-                    'name' => 'Sales vs Marketing',
-                    'x' => $data->pluck('marketing')->values(),
+                    'name' => 'Sales vs ' . $columnLabels[$columnName],
+                    'x' => $data->pluck($columnName)->values(),
                     'y' => $data->pluck('sales')->values(),
-                    'text' => $data->map(function($item) {
+                    'text' => $data->map(function($item) use ($columnName, $columnLabels) {
                         return 'Date: ' . $item->date . '<br>' .
                             'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                            'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
-                            'ROAS: ' . $item->roas;
+                            $columnLabels[$columnName] . ': Rp ' . number_format($item->$columnName, 0, ',', '.') . '<br>' .
+                            'Ratio: ' . $item->ratio;
                     }),
                     'hoverinfo' => 'text',
                     'marker' => [
@@ -415,10 +430,10 @@ class NetProfitController extends Controller
                     'type' => 'scatter',
                     'mode' => 'lines',
                     'name' => 'Trend Line',
-                    'x' => [$data->min('marketing'), $data->max('marketing')],
+                    'x' => [$data->min($columnName), $data->max($columnName)],
                     'y' => [
-                        $slope * $data->min('marketing') + $intercept,
-                        $slope * $data->max('marketing') + $intercept
+                        $slope * $data->min($columnName) + $intercept,
+                        $slope * $data->max($columnName) + $intercept
                     ],
                     'line' => [
                         'color' => '#ff7300',
@@ -428,9 +443,9 @@ class NetProfitController extends Controller
             ];
 
             $layout = [
-                'title' => 'Sales vs Marketing Correlation',
+                'title' => 'Sales vs ' . $columnLabels[$columnName] . ' Correlation',
                 'xaxis' => [
-                    'title' => 'Marketing Spend (Rp)',
+                    'title' => $columnLabels[$columnName] . ' (Rp)',
                     'tickformat' => ',.0f',
                     'hoverformat' => ',.0f'
                 ],

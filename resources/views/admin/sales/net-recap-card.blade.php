@@ -20,6 +20,18 @@
                     <div class="tab-pane" id="correlationTab">
                         <div class="row">
                             <div class="col-10">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <select class="form-control" id="correlationVariable">
+                                            <option value="marketing">Marketing</option>
+                                            <option value="spent_kol">KOL Spending</option>
+                                            <option value="affiliate">Affiliate</option>
+                                            <option value="operasional">Operational</option>
+                                            <option value="hpp">HPP</option>
+                                            <option value="net_profit">Net Profit</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div id="correlationChart" style="height: 600px;"></div>
                             </div>
                             <div class="col-2">
@@ -128,8 +140,9 @@
     }
     function loadCorrelationChart() {
         const filterDates = document.getElementById('filterDates').value;
+        const selectedVariable = document.getElementById('correlationVariable').value;
         
-        fetch("{{ route('net-profit.sales-vs-marketing') }}" + (filterDates ? `?filterDates=${filterDates}` : ''))
+        fetch(`{{ route('net-profit.sales-vs-marketing') }}?variable=${selectedVariable}${filterDates ? `&filterDates=${filterDates}` : ''}`)
             .then(response => response.json())
             .then(result => {
                 // Create the Plotly chart
@@ -148,6 +161,8 @@
             })
             .catch(error => console.error('Error fetching correlation data:', error));
     }
+
+    document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
 
 
     document.addEventListener('DOMContentLoaded', function() {
