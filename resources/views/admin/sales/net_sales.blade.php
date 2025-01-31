@@ -256,6 +256,26 @@
             filterDate.val('')
             netProfitsTable.draw()
         })
+        $('#filterDates').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'DD/MM/YYYY',
+                cancelLabel: 'Clear'
+            },
+            maxSpan: {
+                months: 2
+            }
+        }, function(start, end, label) {
+            var months = end.diff(start, 'months', true);
+            if (months > 2) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Date Range Too Long',
+                    text: 'Please select a range of maximum 2 months'
+                });
+                return false;
+            }
+        });
 
         filterDate.change(function () {
             netProfitsTable.draw();

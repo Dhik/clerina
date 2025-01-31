@@ -378,7 +378,6 @@ class NetProfitController extends Controller
                     ->whereYear('date', now()->year);
             }
 
-            // Get data
             $data = $query->select([
                 'date',
                 'sales',
@@ -386,7 +385,6 @@ class NetProfitController extends Controller
                 DB::raw("ROUND(sales/$columnName, 2) as ratio")
             ])->get();
 
-            // Calculate correlation coefficient
             $n = $data->count();
             if ($n < 2) {
                 return response()->json([
