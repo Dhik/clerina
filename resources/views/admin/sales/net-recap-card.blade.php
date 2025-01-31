@@ -19,10 +19,10 @@
                     </div>
                     <div class="tab-pane" id="correlationTab">
                         <div class="row">
-                            <div class="col-8">
+                            <div class="col-10">
                                 <div id="correlationChart" style="height: 400px;"></div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-2">
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h4 id="correlationCoefficient">0</h4>
