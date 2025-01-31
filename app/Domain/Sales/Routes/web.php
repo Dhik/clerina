@@ -77,6 +77,7 @@ Route::prefix('admin')
             Route::get('/update-qty', [NetProfitController::class, 'updateQty'])->name('net-profit.update-qty');
             Route::get('/update-order-count', [NetProfitController::class, 'updateOrderCount'])->name('net-profit.update-order-count');
             Route::get('/update-closing-rate', [NetProfitController::class, 'updateClosingRate'])->name('net-profit.update-closing-rate');
+            Route::get('/sales-vs-marketing', [NetProfitController::class, 'getCurrentMonthCorrelation'])->name('net-profit.sales-vs-marketing');
         });
 
         // Sales

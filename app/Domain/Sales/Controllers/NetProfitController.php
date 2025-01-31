@@ -350,4 +350,134 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function getCurrentMonthCorrelation()
+    {
+        try {
+            $data = NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->whereNotNull('sales')
+                ->whereNotNull('marketing')
+                ->where('marketing', '>', 0)
+                ->select([
+                    'date',
+                    'sales',
+                    'marketing',
+                    DB::raw('ROUND(sales/marketing, 2) as roas')
+                ])
+                ->get();
+
+            // Calculate correlation coefficient
+            $n = $data->count();
+            $sumX = $data->sum('marketing');
+            $sumY = $data->sum('sales');
+            $sumXY = $data->sum(function($item) {
+                return $item->marketing * $item->sales;
+            });
+            $sumX2 = $data->sum(function($item) {
+                return $item->marketing * $item->marketing;
+            });
+            $sumY2 = $data->sum(function($item) {
+                return $item->sales * $item->sales;
+            });
+
+            $correlation = $n * $sumXY - $sumX * $sumY;
+            $correlation /= sqrt(($n * $sumX2 - $sumX * $sumX) * ($n * $sumY2 - $sumY * $sumY));
+
+            // Calculate regression line
+            $xMean = $sumX / $n;
+            $yMean = $sumY / $n;
+            $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+            $intercept = $yMean - $slope * $xMean;
+
+            // Prepare data for Plotly
+            $plotlyData = [
+                [
+                    'type' => 'scatter',
+                    'mode' => 'markers',
+                    'name' => 'Sales vs Marketing',
+                    'x' => $data->pluck('marketing')->values(),
+                    'y' => $data->pluck('sales')->values(),
+                    'text' => $data->map(function($item) {
+                        return 'Date: ' . $item->date . '<br>' .
+                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                            'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                            'ROAS: ' . $item->roas;
+                    }),
+                    'hoverinfo' => 'text',
+                    'marker' => [
+                        'size' => 10,
+                        'color' => '#8884d8',
+                        'opacity' => 0.7
+                    ]
+                ],
+                [
+                    'type' => 'scatter',
+                    'mode' => 'lines',
+                    'name' => 'Trend Line',
+                    'x' => [$data->min('marketing'), $data->max('marketing')],
+                    'y' => [
+                        $slope * $data->min('marketing') + $intercept,
+                        $slope * $data->max('marketing') + $intercept
+                    ],
+                    'line' => [
+                        'color' => '#ff7300',
+                        'width' => 2
+                    ]
+                ]
+            ];
+
+            $layout = [
+                'title' => 'Sales vs Marketing Correlation',
+                'xaxis' => [
+                    'title' => 'Marketing Spend (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'yaxis' => [
+                    'title' => 'Sales (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'showlegend' => true,
+                'annotations' => [
+                    [
+                        'x' => 0.05,
+                        'y' => 0.95,
+                        'xref' => 'paper',
+                        'yref' => 'paper',
+                        'text' => sprintf(
+                            'Correlation (r): %.4f<br>R²: %.4f',
+                            $correlation,
+                            $correlation * $correlation
+                        ),
+                        'showarrow' => false,
+                        'bgcolor' => '#ffffff',
+                        'bordercolor' => '#000000',
+                        'borderwidth' => 1
+                    ]
+                ]
+            ];
+
+            return response()->json([
+                'data' => $plotlyData,
+                'layout' => $layout,
+                'statistics' => [
+                    'correlation' => round($correlation, 4),
+                    'r_squared' => round($correlation * $correlation, 4),
+                    'slope' => round($slope, 4),
+                    'intercept' => round($intercept, 4),
+                    'data_points' => $n
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Correlation Analysis Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to analyze correlation.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
