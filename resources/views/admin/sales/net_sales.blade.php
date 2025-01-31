@@ -263,15 +263,15 @@
                 cancelLabel: 'Clear'
             },
             maxSpan: {
-                months: 2
+                days: 60 
             }
         }, function(start, end, label) {
-            var months = end.diff(start, 'months', true);
-            if (months > 2) {
+            var days = end.diff(start, 'days');
+            if (days > 60) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Date Range Too Long',
-                    text: 'Please select a range of maximum 2 months'
+                    text: 'Please select a range of maximum 60 days'
                 });
                 return false;
             }
