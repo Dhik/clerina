@@ -355,7 +355,8 @@ class NetProfitController extends Controller
         try {
             $variable = $request->input('variable', 'marketing');
             $columnName = in_array($variable, [
-                'marketing', 'spent_kol', 'affiliate'
+                'marketing', 'spent_kol', 'affiliate', 
+                'operasional', 'hpp', 'net_profit'
             ]) ? $variable : 'marketing';
             
             $data = NetProfit::query()
@@ -372,15 +373,106 @@ class NetProfitController extends Controller
                 ])
                 ->get();
 
-            // ... rest of the correlation calculation code ...
+            // Calculate correlation coefficient
+            $n = $data->count();
+            $sumX = $data->sum($columnName);
+            $sumY = $data->sum('sales');
+            $sumXY = $data->sum(function($item) use ($columnName) {
+                return $item->$columnName * $item->sales;
+            });
+            $sumX2 = $data->sum(function($item) use ($columnName) {
+                return $item->$columnName * $item->$columnName;
+            });
+            $sumY2 = $data->sum(function($item) {
+                return $item->sales * $item->sales;
+            });
+
+            $correlation = $n * $sumXY - $sumX * $sumY;
+            $correlation /= sqrt(($n * $sumX2 - $sumX * $sumX) * ($n * $sumY2 - $sumY * $sumY));
+
+            // Calculate regression line
+            $xMean = $sumX / $n;
+            $yMean = $sumY / $n;
+            $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+            $intercept = $yMean - $slope * $xMean;
 
             $columnLabels = [
-                'marketing' => 'Marketing Spend',
+                'marketing' => 'Marketing',
                 'spent_kol' => 'KOL Spending',
-                'affiliate' => 'Affiliate'
+                'affiliate' => 'Affiliate',
+                'operasional' => 'Operational',
+                'hpp' => 'HPP',
+                'net_profit' => 'Net Profit'
             ];
 
-            // ... rest of your code ...
+            // Prepare data for Plotly
+            $plotlyData = [
+                [
+                    'type' => 'scatter',
+                    'mode' => 'markers',
+                    'name' => 'Sales vs ' . $columnLabels[$columnName],
+                    'x' => $data->pluck($columnName)->values(),
+                    'y' => $data->pluck('sales')->values(),
+                    'text' => $data->map(function($item) use ($columnName, $columnLabels) {
+                        return 'Date: ' . $item->date . '<br>' .
+                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                            $columnLabels[$columnName] . ': Rp ' . number_format($item->$columnName, 0, ',', '.') . '<br>' .
+                            'Ratio: ' . $item->ratio;
+                    }),
+                    'hoverinfo' => 'text',
+                    'marker' => [
+                        'size' => 10,
+                        'color' => '#8884d8',
+                        'opacity' => 0.7
+                    ]
+                ],
+                [
+                    'type' => 'scatter',
+                    'mode' => 'lines',
+                    'name' => 'Trend Line',
+                    'x' => [$data->min($columnName), $data->max($columnName)],
+                    'y' => [
+                        $slope * $data->min($columnName) + $intercept,
+                        $slope * $data->max($columnName) + $intercept
+                    ],
+                    'line' => [
+                        'color' => '#ff7300',
+                        'width' => 2
+                    ]
+                ]
+            ];
+
+            $layout = [
+                'title' => 'Sales vs ' . $columnLabels[$columnName] . ' Correlation',
+                'xaxis' => [
+                    'title' => $columnLabels[$columnName] . ' (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'yaxis' => [
+                    'title' => 'Sales (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'showlegend' => true,
+                'annotations' => [
+                    [
+                        'x' => 0.05,
+                        'y' => 0.95,
+                        'xref' => 'paper',
+                        'yref' => 'paper',
+                        'text' => sprintf(
+                            'Correlation (r): %.4f<br>R²: %.4f',
+                            $correlation,
+                            $correlation * $correlation
+                        ),
+                        'showarrow' => false,
+                        'bgcolor' => '#ffffff',
+                        'bordercolor' => '#000000',
+                        'borderwidth' => 1
+                    ]
+                ]
+            ];
 
             return response()->json([
                 'data' => $plotlyData,
