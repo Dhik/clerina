@@ -26,9 +26,6 @@
                                             <option value="marketing">Marketing</option>
                                             <option value="spent_kol">KOL Spending</option>
                                             <option value="affiliate">Affiliate</option>
-                                            <option value="operasional">Operational</option>
-                                            <option value="hpp">HPP</option>
-                                            <option value="net_profit">Net Profit</option>
                                         </select>
                                     </div>
                                 </div>
