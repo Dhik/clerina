@@ -665,8 +665,8 @@
             if (netProfitChart) {
                 netProfitChart.destroy();
             }
-            
-            fetch("{{ route('sales.net_sales_line') }}")
+            const filterDates = document.getElementById('filterDates').value;
+            fetch(`{{ route('sales.net_sales_line') }}${filterDates ? `?filterDates=${filterDates}` : ''}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('netProfitsChart').getContext('2d');

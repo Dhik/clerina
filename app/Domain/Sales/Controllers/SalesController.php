@@ -223,12 +223,24 @@ class SalesController extends Controller
             'total_net_profit' => $data->total_net_profit ?? 0
         ]);
     }
-    public function getChartData()
+    public function getChartData(Request $request)
     {
-        $data = NetProfit::query()
-            ->whereMonth('date', Carbon::now()->month)
-            ->whereYear('date', Carbon::now()->year)
-            ->orderBy('date')
+        $query = NetProfit::query();
+
+        if (! is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
+            $query->where('date', '>=', $startDate)
+                ->where('date', '<=', $endDate);
+        } else {
+            $startDate = now()->startOfMonth();
+            $endDate = now()->endOfMonth();
+            $query->whereBetween('date', [$startDate, $endDate]);
+        }
+
+        $data = $query->orderBy('date')
             ->get()
             ->map(function ($row) {
                 return [
