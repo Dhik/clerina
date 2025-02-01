@@ -656,15 +656,21 @@
         let netProfitChart = null;
 
         function loadNetProfitsChart() {
+            const existingChart = Chart.getChart('netProfitsChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
             if (netProfitChart) {
                 netProfitChart.destroy();
             }
+            
             fetch("{{ route('sales.net_sales_line') }}")
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('netProfitsChart').getContext('2d');
                     
-                    new Chart(ctx, {
+                    netProfitChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: data.map(item => item.date),
@@ -731,19 +737,37 @@
             fetch(`{{ route('net-profit.sales-vs-marketing') }}?variable=${selectedVariable}${filterDates ? `&filterDates=${filterDates}` : ''}`)
                 .then(response => response.json())
                 .then(result => {
-                    Plotly.newPlot('correlationChart', result.data, result.layout, {
-                        responsive: true,
-                        displayModeBar: true
-                    });
+                    if (result.data && result.layout) {
+                        Plotly.newPlot('correlationChart', result.data, result.layout, {
+                            responsive: true,
+                            displayModeBar: true
+                        });
+                    }
 
-                    document.getElementById('correlationCoefficient').textContent = 
-                        result.statistics.correlation.toFixed(4);
-                    document.getElementById('rSquared').textContent = 
-                        result.statistics.r_squared.toFixed(4);
-                    document.getElementById('dataPoints').textContent = 
-                        result.statistics.data_points;
+                    if (result.statistics) {
+                        document.getElementById('correlationCoefficient').textContent = 
+                            (result.statistics.correlation || 0).toFixed(4);
+                        document.getElementById('rSquared').textContent = 
+                            (result.statistics.r_squared || 0).toFixed(4);
+                        document.getElementById('dataPoints').textContent = 
+                            result.statistics.data_points || 0;
+                    } else {
+                        document.getElementById('correlationCoefficient').textContent = '0.0000';
+                        document.getElementById('rSquared').textContent = '0.0000';
+                        document.getElementById('dataPoints').textContent = '0';
+                    }
                 })
-                .catch(error => console.error('Error fetching correlation data:', error));
+                .catch(error => {
+                    console.error('Error fetching correlation data:', error);
+
+                    document.getElementById('correlationCoefficient').textContent = '0.0000';
+                    document.getElementById('rSquared').textContent = '0.0000';
+                    document.getElementById('dataPoints').textContent = '0';
+                    
+                    if (document.getElementById('correlationChart')) {
+                        Plotly.purge('correlationChart');
+                    }
+                });
         }
         loadNetProfitsChart();
         loadCorrelationChart();
