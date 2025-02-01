@@ -258,7 +258,7 @@
         })
         $('.daterange').daterangepicker({
             autoUpdateInput: false,
-            autoApply: true,  // Remove apply button from daterangepicker
+            autoApply: true,
             alwaysShowCalendars: true,
             locale: {
                 cancelLabel: 'Clear',
@@ -274,16 +274,14 @@
             }
         });
 
-        // Handle date selection
         $('.daterange').on('apply.daterangepicker', function(ev, picker) {
             $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
-            $(this).trigger('change'); // Add this line
+            $(this).trigger('change'); 
         });
 
-        // Handle date clearing
         $('.daterange').on('cancel.daterangepicker', function(ev, picker) {
             $(this).val('');
-            $(this).trigger('change'); // Add this line
+            $(this).trigger('change'); 
         });
         filterDate.change(function () {
             netProfitsTable.draw();
@@ -655,7 +653,12 @@
 
         renderWaterfallChart();
 
+        let netProfitChart = null;
+
         function loadNetProfitsChart() {
+            if (netProfitChart) {
+                netProfitChart.destroy();
+            }
             fetch("{{ route('sales.net_sales_line') }}")
                 .then(response => response.json())
                 .then(data => {
