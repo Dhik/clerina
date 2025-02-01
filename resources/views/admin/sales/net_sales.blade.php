@@ -287,6 +287,7 @@
             netProfitsTable.draw();
             fetchSummary();
             renderWaterfallChart();
+            loadNetProfitsChart();
             loadCorrelationChart();
         });
 
