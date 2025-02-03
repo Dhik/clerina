@@ -42,13 +42,10 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
 
         $queryOrder->where('tenant_id', $tenantId);
 
-        // Filter by phone number
         $phoneNumber = $request->input('phone_number');
         $queryOrder->when(!is_null($phoneNumber), function ($q) use ($phoneNumber) {
             $q->where('customer_phone_number', $phoneNumber);
         });
-
-        // Filter by dates
         if (!is_null($request->input('filterDates')) && is_null($phoneNumber)) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
@@ -56,6 +53,14 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
 
             $queryOrder->where('date', '>=', $startDate)
                 ->where('date', '<=', $endDate);
+        }
+        if (!is_null($request->input('filterProcessDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterProcessDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+    
+            $queryOrder->where('process_at', '>=', $startDate)
+                ->where('process_at', '<=', $endDate);
         }
 
         // Filter by sales channel
