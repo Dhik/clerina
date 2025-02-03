@@ -147,7 +147,8 @@
                     <table id="orderTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="order-info" width="100%">
                         <thead>
                             <tr>
-                                <th>{{ trans('labels.date') }}</th>
+                                <th>Order At</th>
+                                <th>Process At</th>
                                 <th>{{ trans('labels.id_order') }}</th>
                                 <th>{{ trans('labels.channel') }}</th>
                                 <th>{{ trans('labels.customer_name') }}</th>
@@ -192,6 +193,20 @@ td.text-center .channel-logo {
     line-height: 1.5;
     border-radius: 0.2rem;
 }
+.dataTables_wrapper {
+        overflow-x: auto;
+        margin: 0 auto;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .dataTable {
+        width: 100% !important;
+        margin: 0 auto;
+    }
 </style>
 @stop
 
@@ -267,7 +282,7 @@ td.text-center .channel-logo {
 
         // datatable
         let orderTable = orderTableSelector.DataTable({
-            responsive: true,
+            responsive: false,
             processing: true,
             serverSide: true,
             pageLength: 25,
@@ -285,6 +300,13 @@ td.text-center .channel-logo {
             },
             columns: [
                 {data: 'date', name: 'date'},
+                {
+                    data: 'process_at', 
+                    name: 'process_at',
+                    render: function(data, type, row) {
+                        return data || null;
+                    }
+                },
                 {data: 'id_order', name: 'id_order', sortable: false},
                 {
                     data: 'salesChannel', 

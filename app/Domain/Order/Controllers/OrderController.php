@@ -64,63 +64,8 @@ class OrderController extends Controller
             ->addColumn('priceFormatted', function ($row) {
                 return number_format($row->amount, 0, ',', '.');
             })
-            ->addColumn(
-                'actions',
-                '<a href="{{ URL::route( \'order.show\', array( $id )) }}" class="btn btn-primary btn-sm" target="_blank">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <button class="btn btn-success btn-sm updateButton">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>'
-            )
-            ->addColumn(
-                'view_only',
-                '<a href="{{ URL::route( \'order.show\', array( $id )) }}" class="btn btn-primary btn-sm" target="_blank">
-                            <i class="fas fa-eye"></i>
-                        </a>'
-            )
-            ->rawColumns(['actions', 'view_only'])
-            ->toJson();
-    }
-    public function getByProcessAt(Request $request): JsonResponse
-    {
-        $this->authorize('viewAnyOrder', Order::class);
-
-        $query = Order::query()
-            ->with('salesChannel')
-            ->where('tenant_id', Auth::user()->current_tenant_id);
-
-        $phoneNumber = $request->input('phone_number');
-        $query->when(!is_null($phoneNumber), function ($q) use ($phoneNumber) {
-            $q->where('customer_phone_number', $phoneNumber);
-        });
-
-        if (!is_null($request->input('filterDates')) && is_null($phoneNumber)) {
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-
-            $query->where('process_at', '>=', $startDate)
-                ->where('process_at', '<=', $endDate);
-        }
-        if (!is_null($request->input('filterChannel'))) {
-            $query->where('sales_channel_id', $request->input('filterChannel'));
-        }
-        if (!is_null($request->input('filterBooking'))) {
-            $query->where('is_booking', '1');
-        }
-        if (!is_null($request->input('filterStatus'))) {
-            $query->where('status', $request->input('filterStatus'));
-        }
-        return DataTables::of($query)
-            ->addColumn('salesChannel', function ($row) {
-                return $row->salesChannel->name ?? '-';
-            })
-            ->addColumn('qtyFormatted', function ($row) {
-                return number_format($row->qty, 0, ',', '.');
-            })
-            ->addColumn('priceFormatted', function ($row) {
-                return number_format($row->amount, 0, ',', '.');
+            ->editColumn('process_at', function ($row) {
+                return $row->process_at ? Carbon::parse($row->process_at)->isoFormat('DD MMM YYYY') : null;
             })
             ->addColumn(
                 'actions',
