@@ -245,8 +245,6 @@ td.text-center .channel-logo {
         const filterProcessDates = $('#filterProcessDates');
         const filterBooking = $('#filterBooking');
         const filterStatus = $('#filterStatus');
-
-        let turnoverOrderChart;
         let orderPieChart;
 
         $('#resetFilterBtn').click(function () {
@@ -264,10 +262,14 @@ td.text-center .channel-logo {
         filterDate.change(function () {
             orderTable.draw()
             updateRecapCount()
+            loadDailyOrdersChart()
+            loadSalesChannelChart()
         });
         filterProcessDates.change(function () {
             orderTable.draw()
             updateRecapCount()
+            loadDailyOrdersChart()
+            loadSalesChannelChart()
         });
 
         $('#filterChannel').change(function () {
@@ -407,8 +409,10 @@ td.text-center .channel-logo {
         function loadDailyOrdersChart() {
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
+            const filterDates = $('#filterDates').val();
+            const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}`)
+            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}&filterProcessDates=${filterProcessDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
@@ -502,8 +506,10 @@ td.text-center .channel-logo {
         function loadSalesChannelChart() {
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
+            const filterDates = $('#filterDates').val();
+            const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}`)
+            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}&filterProcessDates=${filterProcessDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('salesChannelChart').getContext('2d');
@@ -613,115 +619,6 @@ td.text-center .channel-logo {
                     const orders = salesData.map(data => data.order);
                     const turnovers = salesData.map(data => data.turnover);
                     const qty = salesData.map(data => data.qty);
-
-                    // Clear existing chart if it exists
-                    if (turnoverOrderChart) {
-                        turnoverOrderChart.destroy();
-                    }
-
-                    // Create a bar chart
-                    const ctx = document.getElementById('turnoverOrderChart').getContext('2d');
-                    turnoverOrderChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: dates,
-                            datasets: [{
-                                label: 'Sales',
-                                data: turnovers,
-                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1
-                            }, {
-                                label: 'Orders',
-                                data: orders,
-                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
-                            }, {
-                                label: 'Qty',
-                                data: qty,
-                                backgroundColor: 'rgba(255, 206, 86, 0.5)',
-                                borderColor: 'rgba(255, 206, 86, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            tooltips: {
-                                enabled: true, // Always display tooltips
-                                callbacks: {
-                                    label: function(tooltipItem, data) {
-                                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                                        return label;
-                                    }
-                                }
-                            },
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true,
-                                        callback: function(value, index, values) {
-                                            if (parseInt(value) >= 1000) {
-                                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                                            } else {
-                                                return value;
-                                            }
-                                        }
-                                    }
-                                }]
-                            }
-                        }
-                    });
-
-                    // Clear existing chart if it exists
-                    if (orderPieChart) {
-                        orderPieChart.destroy();
-                    }
-
-                    const pieData = response.pie_chart;
-                    const labels = Object.keys(pieData);
-                    const values = Object.values(pieData);
-
-                    // Get the canvas element
-                    const ctxPie = document.getElementById('orderChannelPie').getContext('2d');
-
-                    // Create the pie chart
-                    orderPieChart = new Chart(ctxPie, {
-                        type: 'pie',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Total Sales By Sales Channel',
-                                data: values,
-                                backgroundColor: generatePredefinedColors(labels.length),
-                                borderColor: generatePredefinedColors(labels.length),
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            title: {
-                                display: true,
-                                text: 'Total Sales By Sales Channel'
-                            },
-                            legend: {
-                                position: 'right'
-                            },
-                            tooltips: {
-                                callbacks: {
-                                    label: function(tooltipItem, data) {
-                                        let dataset = data.datasets[tooltipItem.datasetIndex];
-                                        let value = dataset.data[tooltipItem.index];
-                                        return data.labels[tooltipItem.index] + ': ' + value + '%';
-                                    }
-                                }
-                            }
-                        }
-                    });
                 },
                 error: function(xhr, status, error) {
                     console.error('Error fetching new orders count:', error);

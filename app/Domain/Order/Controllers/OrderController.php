@@ -998,7 +998,31 @@ class OrderController extends Controller
             ->rightJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
             ->where('orders.tenant_id', Auth::user()->current_tenant_id);
 
-        // Apply filters
+        // Apply date filter
+        if ($request->filled('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString);
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString);
+            
+            $query->whereBetween('orders.date', [
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d')
+            ]);
+        }
+
+        // Apply process date filter
+        if ($request->filled('filterProcessDates')) {
+            [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
+            $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
+            $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
+            
+            $query->whereBetween('orders.process_at', [
+                $processStartDate->format('Y-m-d'),
+                $processEndDate->format('Y-m-d')
+            ]);
+        }
+
+        // Apply other filters
         if ($request->filterChannel) {
             $query->where('orders.sales_channel_id', $request->filterChannel);
         }
@@ -1045,6 +1069,13 @@ class OrderController extends Controller
         $startDate = Carbon::now()->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
 
+        // Override default dates if filterDates is provided
+        if ($request->filled('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString);
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString);
+        }
+
         $channelColors = [
             'Shopee' => '#EE4D2D',
             'Lazada' => '#0F146D',
@@ -1068,7 +1099,19 @@ class OrderController extends Controller
                         $endDate->format('Y-m-d')
                     ]);
 
-                // Apply filters in the join
+                // Apply process_at date filter if provided
+                if ($request->filled('filterProcessDates')) {
+                    [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
+                    $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
+                    $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
+                    
+                    $join->whereBetween('orders.process_at', [
+                        $processStartDate->format('Y-m-d'),
+                        $processEndDate->format('Y-m-d')
+                    ]);
+                }
+
+                // Apply other filters in the join
                 if ($request->filterChannel) {
                     $join->where('orders.sales_channel_id', $request->filterChannel);
                 }
