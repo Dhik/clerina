@@ -82,6 +82,15 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
         ->where('date', '>=', $startDateString)
         ->where('date', '<=', $endDateString);
 
+        if (! is_null($request->input('filterProcessDates'))) {
+            [$processStartDate, $processEndDate] = explode(' - ', $request->input('filterProcessDates'));
+            $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate)->format('Y-m-d');
+            $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate)->format('Y-m-d');
+            
+            $ordersQuery->where('process_at', '>=', $processStartDate)
+                       ->where('process_at', '<=', $processEndDate);
+        }
+
         if ($isBooking === '1') {
             $ordersQuery->where('is_booking', '1');
         }

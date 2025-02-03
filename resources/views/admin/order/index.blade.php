@@ -267,6 +267,7 @@ td.text-center .channel-logo {
         });
         filterProcessDates.change(function () {
             orderTable.draw()
+            updateRecapCount()
         });
 
         $('#filterChannel').change(function () {
@@ -596,6 +597,7 @@ td.text-center .channel-logo {
                 method: 'GET',
                 data: {
                     filterDates: filterDate.val(),
+                    filterProcessDates: $('#filterProcessDates').val(),
                     filterBooking: filterBooking.prop('checked') ? '1' : '0',  // Add this line
                     filterStatus: filterStatus.val()
                 },
