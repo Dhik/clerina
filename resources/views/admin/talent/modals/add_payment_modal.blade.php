@@ -25,7 +25,12 @@
                             <option value="Termin 3">Termin 3</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="tanggal_pengajuan">Tanggal Pengajuan</label>
+                        <input type="date" name="tanggal_pengajuan" id="tanggal_pengajuan" class="form-control" required>
+                    </div>
                 </div>
+                
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-success">Save</button>

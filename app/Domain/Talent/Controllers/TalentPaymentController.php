@@ -129,6 +129,7 @@ class TalentPaymentController extends Controller
             $validatedData = $request->validate([
                 'talent_id' => 'required|integer',
                 'status_payment' => 'nullable|string|max:255',
+                'tanggal_pengajuan' => 'required|date',
             ]);
             $talent = Talent::findOrFail($validatedData['talent_id']);
             $rate_card_per_slot = $talent->price_rate;
@@ -150,7 +151,6 @@ class TalentPaymentController extends Controller
             } else {
                 $amount_tf = $final_tf - $talent->dp_amount;
             }
-            $validatedData['tanggal_pengajuan'] = Carbon::today();
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
             $validatedData['amount_tf'] = $amount_tf;
             $payment = TalentPayment::create($validatedData);
