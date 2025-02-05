@@ -442,7 +442,7 @@ class OrderController extends Controller
             'x-api-key' => '29baec8f417f44c7ac981680fcaee5a070c7ad7320ea439fb5bf28150a1310ad'
         ];
         
-        $startDate = Carbon::now()->subDays(1)->format('Y-m-d');
+        $startDate = Carbon::now()->subDays(2)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
     
         try {
