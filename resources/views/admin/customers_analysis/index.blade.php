@@ -33,11 +33,11 @@
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
                             </div>
                         </div>
-                        <!-- <div class="col-auto">
+                        <div class="col-auto">
                             <div class="btn-group">
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                             </div>
-                        </div> -->
+                        </div>
                         <!-- <div class="col-auto">
                             <div class="btn-group">
                                 <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
