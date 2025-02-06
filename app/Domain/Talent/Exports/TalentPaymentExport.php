@@ -188,6 +188,11 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $sheet = $event->sheet;
                 $spreadsheet = $sheet->getDelegate();
                 
+                $lastRow = $sheet->getHighestRow();
+                $sheet->getStyle('T2:T'.$lastRow)
+                      ->getNumberFormat()
+                      ->setFormatCode('@');
+                
                 $this->applyValidations($spreadsheet);
                 $sheet->getStyle($sheet->calculateWorksheetDimension())->setQuotePrefix(false);
             },
