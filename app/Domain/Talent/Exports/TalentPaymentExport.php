@@ -159,7 +159,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $talent->no_rekening ?? '',
                 $talent->bank ?? '',
                 $talent->nama_rekening ?? '',
-                strval($talent->nik ?? ''),
+                (string)($talent->nik ?? ''),
             ];
 
         } catch (\Exception $e) {
@@ -187,6 +187,10 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
                 $spreadsheet = $sheet->getDelegate();
+                
+                $lastRow = $sheet->getHighestRow();
+                $sheet->getColumnDimension('T')->setFormatCode('@');
+                $sheet->getStyle('T2:T'.$lastRow)->getNumberFormat()->setFormatCode('@');
                 
                 $this->applyValidations($spreadsheet);
                 $sheet->getStyle($sheet->calculateWorksheetDimension())->setQuotePrefix(false);
