@@ -159,7 +159,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $talent->no_rekening ?? '',
                 $talent->bank ?? '',
                 $talent->nama_rekening ?? '',
-                (string)($talent->nik ?? ''),
+                strval($talent->nik ?? ''),
             ];
 
         } catch (\Exception $e) {
