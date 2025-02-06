@@ -188,10 +188,6 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $sheet = $event->sheet;
                 $spreadsheet = $sheet->getDelegate();
                 
-                $lastRow = $sheet->getHighestRow();
-                $sheet->getColumnDimension('T')->setFormatCode('@');
-                $sheet->getStyle('T2:T'.$lastRow)->getNumberFormat()->setFormatCode('@');
-                
                 $this->applyValidations($spreadsheet);
                 $sheet->getStyle($sheet->calculateWorksheetDimension())->setQuotePrefix(false);
             },
@@ -200,7 +196,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
 
     protected function applyValidations($spreadsheet)
     {
-        $numericColumns = ['K', 'F', 'T', 'U', 'V', 'W', 'X'];
+        $numericColumns = ['K', 'F', 'U', 'V', 'W', 'X'];
         $chunkSize = 50; // Smaller chunks for validation
         
         foreach ($numericColumns as $column) {
