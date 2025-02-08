@@ -138,9 +138,6 @@ class CustomerAnalysisController extends Controller
         }
         return response()->json(['customer' => $customer]);
     }
-
-
-
     public function importCustomers()
     {
         $range = 'Import Customers!A2:H'; 
