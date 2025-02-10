@@ -28,6 +28,7 @@ use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Customer\Exports\CustomersExport;
 use App\Domain\Customer\Exports\CustomersAnalysisExport;
+use App\Domain\Customer\Exports\CustomersAnalysisExportMonth;
 
 class CustomerAnalysisController extends Controller
 {
@@ -433,6 +434,22 @@ class CustomerAnalysisController extends Controller
         $status = $request->input('status');
         $whichHp = $request->input('which_hp');
         return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
+    }
+    public function exportCustomerAnalysis(Request $request)
+    {
+        $fileName = 'customer_analysis_' . now()->format('Y-m-d') . '.xlsx';
+        
+        try {
+            return Excel::download(
+                new CustomersAnalysisExportMonth(),
+                $fileName
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to generate export',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     public function getCityCounts(Request $request)
     {
