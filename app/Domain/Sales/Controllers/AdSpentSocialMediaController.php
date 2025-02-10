@@ -89,10 +89,7 @@ class AdSpentSocialMediaController extends Controller
             $file = $request->file('meta_ads_csv_file');
             $csvData = array_map('str_getcsv', file($file->getPathname()));
             
-            // Remove header row
             $headers = array_shift($csvData);
-            
-            // Group and aggregate data by date
             $groupedData = [];
             $adSpentData = [];
             
@@ -100,7 +97,6 @@ class AdSpentSocialMediaController extends Controller
                 $date = Carbon::parse($row[0])->format('Y-m-d');
                 $amount = (int)$row[3];
                 
-                // For AdsMeta table
                 if (!isset($groupedData[$date])) {
                     $groupedData[$date] = [
                         'amount_spent' => 0,
@@ -112,12 +108,9 @@ class AdSpentSocialMediaController extends Controller
                     ];
                 }
                 
-                // For AdSpentSocialMedia table
                 if (!isset($adSpentData[$date])) {
                     $adSpentData[$date] = 0;
                 }
-                
-                // Update both arrays
                 $groupedData[$date]['amount_spent'] += (int)$row[3];
                 $groupedData[$date]['impressions'] += (int)$row[4];
                 $groupedData[$date]['content_views_shared_items'] += (float)($row[5] ?? 0);
@@ -130,7 +123,6 @@ class AdSpentSocialMediaController extends Controller
 
             DB::beginTransaction();
             try {
-                // Update AdsMeta table
                 foreach ($groupedData as $date => $data) {
                     AdsMeta::updateOrCreate(
                         [
@@ -147,8 +139,6 @@ class AdSpentSocialMediaController extends Controller
                         ]
                     );
                 }
-                
-                // Update AdSpentSocialMedia table
                 foreach ($adSpentData as $date => $totalAmount) {
                     AdSpentSocialMedia::updateOrCreate(
                         [
@@ -181,9 +171,14 @@ class AdSpentSocialMediaController extends Controller
             ], 422);
         }
     }
-    public function getFunnelData()
+    
+    public function getFunnelData(Request $request)
     {
         try {
+            $dates = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+            $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+
             $data = AdsMeta::select(
                 DB::raw('SUM(impressions) as total_impressions'),
                 DB::raw('SUM(content_views_shared_items) as total_content_views'),
@@ -191,6 +186,7 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_shared_items) as total_purchases')
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
+            ->whereBetween('date', [$startDate, $endDate])
             ->first();
 
             return response()->json([
@@ -221,14 +217,19 @@ class AdSpentSocialMediaController extends Controller
             ], 422);
         }
     }
-    public function getImpressionChartData()
+    public function getImpressionChartData(Request $request)
     {
         try {
+            $dates = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+            $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+
             $data = AdsMeta::select(
                 'date',
                 'impressions'
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
+            ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date')
             ->get()
             ->map(function ($item) {

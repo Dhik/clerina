@@ -422,6 +422,8 @@
         filterDate.change(function () {
             salesTable.draw()
             updateRecapCount()
+            initFunnelChart()
+            fetchImpressionData()
         });
 
         filterChannel.change(function () {
@@ -594,7 +596,17 @@
             loadTrendChart();
         });
         function initFunnelChart() {
-            fetch('{{ route("adSpentSocialMedia.funnel-data") }}')
+            const filterValue = filterDate.val();
+            const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
+            if (filterValue) {
+                url.searchParams.append('filterDates', filterValue);
+            }
+            const existingChart = document.querySelector("#funnelChart");
+            if (existingChart && existingChart.__chartist__) {
+                existingChart.__chartist__.destroy();
+            }
+
+            fetch(url)
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === 'success') {
@@ -665,12 +677,14 @@
                             name: 'Total',
                             data: data.map(item => item.value)
                         }];
-
-                        const chart = new ApexCharts(document.querySelector("#funnelChart"), {
+                        if (window.funnelChart) {
+                            window.funnelChart.destroy();
+                        }
+                        window.funnelChart = new ApexCharts(document.querySelector("#funnelChart"), {
                             ...options,
                             series: series
                         });
-                        chart.render();
+                        window.funnelChart.render();
 
                         const metricsHtml = data.map((item, index) => `
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -693,7 +707,6 @@
                     console.error('Error fetching data:', error);
                 });
         }
-
         function loadTrendChart() {
             fetch('{{ route("order.daily-trend") }}')
                 .then(response => response.json())
@@ -797,6 +810,33 @@
                     console.error('Error loading trend chart data:', error);
                 });
         }
+        function fetchImpressionData() {
+            const filterValue = filterDate.val();
+            const url = new URL('{{ route("adSpentSocialMedia.line-data") }}');
+            if (filterValue) {
+                url.searchParams.append('filterDates', filterValue);
+            }
+            if (impressionChart) {
+                impressionChart.destroy();
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const impressionData = result.impressions;
+                        const impressionDates = impressionData.map(data => data.date);
+                        const impressions = impressionData.map(data => data.impressions);
+
+                        const ctxImpression = document.getElementById('impressionChart').getContext('2d');
+                        impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching impression data:', error);
+                });
+        }
+
         function loadPieChart() {
             fetch('{{ route("order.pie-status") }}')
                 .then(response => response.json())

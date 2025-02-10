@@ -7,9 +7,9 @@
     let adSpentChart;
     let roasChart;
     let qtyChart;
-    let impressionChart;
 
     function generateChart(response) {
+        // Extracting data
         const salesData = response.sales;
         const dates = salesData.map(data => data.date);
         const visits = salesData.map(data => data.visit);
@@ -20,6 +20,7 @@
         const roas = salesData.map(data => data.roas);
         const qty = salesData.map(data => data.qty);
 
+        // Clear existing chart if it exists
         if (visitChart) {
             visitChart.destroy();
         }
@@ -46,9 +47,6 @@
 
         if (qtyChart) {
             qtyChart.destroy();
-        }
-        if (impressionChart) {
-            impressionChart.destroy();
         }
 
         function createLineChart(ctx, label, data) {
@@ -116,21 +114,5 @@
 
         const ctxQty = document.getElementById('qtyChart').getContext('2d');
         qtyChart = createLineChart(ctxQty, 'QTY', qty);
-
-        fetch('{{ route("adSpentSocialMedia.line-data") }}')
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    const impressionData = result.impressions;
-                    const impressionDates = impressionData.map(data => data.date);
-                    const impressions = impressionData.map(data => data.impressions);
-
-                    const ctxImpression = document.getElementById('impressionChart').getContext('2d');
-                    impressionChart = createLineChart(ctxImpression, 'Impressions', impressions);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching impression data:', error);
-        });
     }
 </script>
