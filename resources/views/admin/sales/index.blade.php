@@ -810,14 +810,17 @@
                     console.error('Error loading trend chart data:', error);
                 });
         }
+        let impressionChart = null;
+
         function fetchImpressionData() {
             const filterValue = filterDate.val();
             const url = new URL('{{ route("adSpentSocialMedia.line-data") }}');
             if (filterValue) {
                 url.searchParams.append('filterDates', filterValue);
             }
-            if (impressionChart) {
-                impressionChart.destroy();
+
+            if (window.impressionChart instanceof Chart) {
+                window.impressionChart.destroy();
             }
 
             fetch(url)
@@ -829,7 +832,7 @@
                         const impressions = impressionData.map(data => data.impressions);
 
                         const ctxImpression = document.getElementById('impressionChart').getContext('2d');
-                        impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
+                        window.impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
                     }
                 })
                 .catch(error => {
