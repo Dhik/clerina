@@ -40,6 +40,7 @@ Route::prefix('admin')
                 Route::get('/get', [AdSpentSocialMediaController::class, 'get'])->name('adSpentSocialMedia.get');
                 Route::post('/import', [AdSpentSocialMediaController::class, 'import_ads'])->name('adSpentSocialMedia.import');
                 Route::get('/funnel-data', [AdSpentSocialMediaController::class, 'getFunnelData'])->name('adSpentSocialMedia.funnel-data');
+                Route::get('/line-data', [AdSpentSocialMediaController::class, 'getImpressionChartData'])->name('adSpentSocialMedia.line-data');
                 Route::get('/recap', [AdSpentSocialMediaController::class, 'getAdSpentRecap'])
                     ->name('adSpentSocialMedia.getAdSpentRecap');
 

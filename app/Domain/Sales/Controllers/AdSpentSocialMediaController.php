@@ -221,4 +221,32 @@ class AdSpentSocialMediaController extends Controller
             ], 422);
         }
     }
+    public function getImpressionChartData()
+    {
+        try {
+            $data = AdsMeta::select(
+                'date',
+                'impressions'
+            )
+            ->where('tenant_id', auth()->user()->current_tenant_id)
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date->format('Y-m-d'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching impression data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
 }

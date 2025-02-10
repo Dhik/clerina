@@ -41,8 +41,29 @@
                         <canvas id="qtyChart" width="800" height="200"></canvas>
                     </div>
                     <div class="tab-pane" id="funnelChartTab">
-                        <div id="funnelChart"></div>
-                        <div id="funnelMetrics" class="mt-4"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Impressions Over Time</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="impressionChart" width="400" height="300"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Funnel Analysis</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="funnelChart"></div>
+                                        <div id="funnelMetrics" class="mt-4"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
