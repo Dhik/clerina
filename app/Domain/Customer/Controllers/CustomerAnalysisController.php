@@ -435,14 +435,18 @@ class CustomerAnalysisController extends Controller
         $whichHp = $request->input('which_hp');
         return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
     }
-    public function exportCustomerAnalysis(Request $request)
+    public function exportCustomerAnalysis()
     {
-        $fileName = 'customer_analysis_' . now()->format('Y-m-d') . '.xlsx';
+        $fileName = 'customer_analysis_jan1_5_2025.csv';
         
         try {
             return Excel::download(
                 new CustomersAnalysisExportMonth(),
-                $fileName
+                $fileName,
+                \Maatwebsite\Excel\Excel::CSV,
+                [
+                    'Content-Type' => 'text/csv',
+                ]
             );
         } catch (\Exception $e) {
             return response()->json([
