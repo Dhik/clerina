@@ -11,7 +11,7 @@ class CustomersAnalysisExportMonth implements FromCollection, WithHeadings
     public function collection() 
     {
         return CustomersAnalysis::query()
-            ->whereBetween('tanggal_pesanan_dibuat', ['2025-01-16', '2025-01-20'])
+            ->whereBetween('tanggal_pesanan_dibuat', ['2025-01-21', '2025-01-25'])
             ->select([
                 'nama_penerima',
                 'nomor_telepon',
