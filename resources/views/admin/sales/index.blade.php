@@ -355,6 +355,8 @@
         salesTableSelector = $('#salesTable');
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
+        let funnelChart = null;
+let impressionChart = null;
 
         $('#btnAddVisit').click(function() {
             $('#dateVisit').val(moment().format("DD/MM/YYYY"));
@@ -595,15 +597,61 @@
             loadPieChart();
             loadTrendChart();
         });
+        function createLineChart(ctx, label, dates, data) {
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: label,
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            tooltips: {
+                enabled: true,
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                        return label;
+                    }
+                }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value, index, values) {
+                            if (parseInt(value) >= 1000) {
+                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            } else {
+                                return value;
+                            }
+                        }
+                    }
+                }]
+            }
+        }
+    });
+}
         function initFunnelChart() {
             const filterValue = filterDate.val();
             const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
             if (filterValue) {
                 url.searchParams.append('filterDates', filterValue);
             }
-            const existingChart = document.querySelector("#funnelChart");
-            if (existingChart && existingChart.__chartist__) {
-                existingChart.__chartist__.destroy();
+
+            // Destroy existing ApexCharts instance if it exists
+            if (funnelChart) {
+                funnelChart.destroy();
+                funnelChart = null;
             }
 
             fetch(url)
@@ -677,14 +725,13 @@
                             name: 'Total',
                             data: data.map(item => item.value)
                         }];
-                        if (window.funnelChart) {
-                            window.funnelChart.destroy();
-                        }
-                        window.funnelChart = new ApexCharts(document.querySelector("#funnelChart"), {
+
+                        // Create new ApexCharts instance
+                        funnelChart = new ApexCharts(document.querySelector("#funnelChart"), {
                             ...options,
                             series: series
                         });
-                        window.funnelChart.render();
+                        funnelChart.render();
 
                         const metricsHtml = data.map((item, index) => `
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -810,7 +857,6 @@
                     console.error('Error loading trend chart data:', error);
                 });
         }
-        let impressionChart = null;
 
         function fetchImpressionData() {
             const filterValue = filterDate.val();
@@ -819,8 +865,10 @@
                 url.searchParams.append('filterDates', filterValue);
             }
 
-            if (window.impressionChart instanceof Chart) {
-                window.impressionChart.destroy();
+            // Destroy existing Chart.js instance if it exists
+            if (impressionChart) {
+                impressionChart.destroy();
+                impressionChart = null;
             }
 
             fetch(url)
@@ -832,7 +880,7 @@
                         const impressions = impressionData.map(data => data.impressions);
 
                         const ctxImpression = document.getElementById('impressionChart').getContext('2d');
-                        window.impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
+                        impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
                     }
                 })
                 .catch(error => {
