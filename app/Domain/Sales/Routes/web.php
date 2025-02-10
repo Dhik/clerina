@@ -34,11 +34,11 @@ Route::prefix('admin')
     ->middleware('auth')
     ->group(function () {
 
-        // Ad spent social media
         Route::prefix('ad-spent-social-media')
             ->group(function () {
                 Route::get('/', [AdSpentSocialMediaController::class, 'index'])->name('adSpentSocialMedia.index');
                 Route::get('/get', [AdSpentSocialMediaController::class, 'get'])->name('adSpentSocialMedia.get');
+                Route::post('/import', [AdSpentSocialMediaController::class, 'import_ads'])->name('adSpentSocialMedia.import');
                 Route::get('/recap', [AdSpentSocialMediaController::class, 'getAdSpentRecap'])
                     ->name('adSpentSocialMedia.getAdSpentRecap');
 

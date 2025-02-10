@@ -96,4 +96,5 @@ class AdSpentMarketPlaceController extends Controller
 
         return response()->json($this->adSpentMarketPlaceBLL->getAdSpentMarketPlaceRecap($request, Auth::user()->current_tenant_id));
     }
+    
 }

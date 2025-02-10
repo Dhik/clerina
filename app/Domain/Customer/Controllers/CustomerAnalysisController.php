@@ -434,8 +434,6 @@ class CustomerAnalysisController extends Controller
         $whichHp = $request->input('which_hp');
         return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
     }
-
-    
     public function getCityCounts(Request $request)
     {
         $query = CustomersAnalysis::query();

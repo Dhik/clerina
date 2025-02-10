@@ -137,7 +137,7 @@
                     <div class="row">
                         <div class="col-auto">
                             <div class="btn-group">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#visitModal" id="btnAddVisit">
+                                <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#visitModal" id="btnAddVisit">
                                     <i class="fas fa-plus"></i> {{ trans('labels.visit') }}
                                 </button>
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#adSpentSocialMediaModal" id="btnAddAdSpentSM">
@@ -145,6 +145,9 @@
                                 </button>
                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#adSpentMarketPlaceModal" id="btnAddAdSpentMP">
                                     <i class="fas fa-plus"></i> {{ trans('labels.ad_spent_market_place') }}
+                                </button> -->
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importMetaAdsSpentModal" id="btnImportMetaAdsSpent">
+                                    <i class="fas fa-file-upload"></i> Import Meta Ads Spent (.csv)
                                 </button>
                             </div>
                         </div>
@@ -176,6 +179,7 @@
     @include('admin.visit.modal')
     @include('admin.adSpentSocialMedia.modal')
     @include('admin.adSpentMarketPlace.modal')
+    @include('admin.adSpentMarketPlace.adds_meta')
     @include('admin.sales.modal-visitor')
     @include('admin.sales.modal-omset')
 
@@ -240,7 +244,6 @@
                 </button>
             </div>
             <div class="modal-body p-4">
-                <!-- Pie Chart Section -->
                 <div class="row mb-4">
                     <div class="col-lg-7">
                         <div style="width: 100%; height: 400px;">
@@ -352,7 +355,51 @@
             filterChannel.val('')
             updateRecapCount()
             salesTable.draw()
-        })
+        });
+
+        $('#metaAdsCsvFile').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').html(fileName);
+        });
+
+        $('#importMetaAdsSpentForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            let formData = new FormData(this);
+            $.ajax({
+                url: "{{ route('adSpentSocialMedia.import') }}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        $('#importMetaAdsSpentModal').modal('hide');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    $('#errorImportMetaAdsSpent').addClass('d-none');
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON.message,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
 
         filterDate.change(function () {
             salesTable.draw()
@@ -369,7 +416,6 @@
                 url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),
                 method: 'GET',
                 success: function(response) {
-                    // Update the count with the retrieved value
                     $('#newSalesCount').text(response.total_sales);
                     $('#newVisitCount').text(response.total_visit);
                     $('#newOrderCount').text(response.total_order);
@@ -388,7 +434,6 @@
             });
         }
 
-        // datatable
         let salesTable = salesTableSelector.DataTable({
             responsive: true,
             processing: true,
@@ -426,7 +471,6 @@
             order: [[0, 'desc']]
         });
 
-        // Handle row click event to open modal and fill form
         salesTable.on('draw.dt', function() {
             const tableBodySelector =  $('#salesTable tbody');
 
@@ -455,7 +499,7 @@
                 type: 'GET',
                 success: function(response) {
                     let visitTableBody = $("#visit-table-body");
-                    visitTableBody.empty(); // Clear existing rows
+                    visitTableBody.empty();
 
                     if (response.length > 0) {
                         response.forEach(function(item) {
@@ -485,7 +529,7 @@
                 type: 'GET',
                 success: function(response) {
                     let omsetTableBody = $("#omset-table-body");
-                    omsetTableBody.empty(); // Clear existing rows
+                    omsetTableBody.empty();
 
                     if (response.length > 0) {
                         response.forEach(function(item) {
@@ -508,7 +552,6 @@
             });
         }
 
-        // Click event for the Total Spent card
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
             const adsSpentTotal = $('#newAdsSpentTotal').text().trim();
@@ -517,12 +560,10 @@
             console.log(adsSpentTotal);
             console.log(totalSpent);
 
-            // Update modal content
             $('#modalCampaignExpense').text('Campaign Expense: ' + campaignExpense);
             $('#modalAdsSpentTotal').text('Total Ads Spent: ' + adsSpentTotal);
             $('#modalTotalSpent').text('Total Spent: ' + totalSpent);
 
-            // Show the modal
             $('#detailSpentModal').modal('show');
         });
 
@@ -531,7 +572,6 @@
         $('#totalSalesCard').click(function() {
             $('#detailSalesModal').modal('show');
             
-            // Load both charts
             loadPieChart();
             loadTrendChart();
         });
@@ -546,7 +586,6 @@
                         salesTrendChart.destroy();
                     }
 
-                    // Process datasets
                     const processedDatasets = chartData.datasets.map(dataset => ({
                         ...dataset,
                         data: dataset.data.map(point => ({
@@ -687,7 +726,6 @@
                         }
                     });
 
-                    // Update table...
                     updateTable(chartData);
                 })
                 .catch(error => {
@@ -730,7 +768,7 @@
         $(function () {
             salesTable.draw();
             updateRecapCount();
-            $('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
+            $('[data-toggle="tooltip"]').tooltip();
         });
 
         function showLoadingSwal(message) {
@@ -752,14 +790,12 @@
                 success: function(response) {
                     console.log('Orders fetched and saved successfully');
 
-                    // Call the updateSalesTurnover route after orders are fetched
                     $.ajax({
-                        url: "{{ route('order.update_turnover') }}", // Route for updateSalesTurnover
+                        url: "{{ route('order.update_turnover') }}", 
                         method: 'GET',
                         success: function(response) {
                             console.log('Sales turnover updated successfully');
 
-                            // Proceed with the rest of the data import/update process
                             $.ajax({
                                 url: "{{ route('sales.import_ads') }}",
                                 method: 'GET',

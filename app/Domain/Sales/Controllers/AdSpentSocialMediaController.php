@@ -6,15 +6,18 @@ use App\Domain\Marketing\BLL\SocialMedia\SocialMediaBLLInterface;
 use App\Domain\Sales\BLL\AdSpentSocialMedia\AdSpentSocialMediaBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\Sales;
+use App\Domain\Sales\Models\AdsMeta;
 use App\Domain\Sales\Requests\AdSpentSocialMediaRequest;
 use App\Http\Controllers\Controller;
 use Auth;
 use Exception;
+use Carbon\Carbon; 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class AdSpentSocialMediaController extends Controller
@@ -75,5 +78,107 @@ class AdSpentSocialMediaController extends Controller
         $this->authorize('viewAdSpentSocialMedia', AdSpentSocialMedia::class);
 
         return response()->json($this->adSpentSocialMediaBLL->getAdSpentSocialMediaRecap($request, Auth::user()->current_tenant_id));
+    }
+    public function import_ads(Request $request)
+    {
+        try {
+            $request->validate([
+                'meta_ads_csv_file' => 'required|file|mimes:csv,txt|max:2048'
+            ]);
+
+            $file = $request->file('meta_ads_csv_file');
+            $csvData = array_map('str_getcsv', file($file->getPathname()));
+            
+            // Remove header row
+            $headers = array_shift($csvData);
+            
+            // Group and aggregate data by date
+            $groupedData = [];
+            $adSpentData = [];
+            
+            foreach ($csvData as $row) {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                
+                // For AdsMeta table
+                if (!isset($groupedData[$date])) {
+                    $groupedData[$date] = [
+                        'amount_spent' => 0,
+                        'impressions' => 0,
+                        'content_views_shared_items' => 0,
+                        'adds_to_cart_shared_items' => 0,
+                        'purchases_shared_items' => 0,
+                        'purchases_conversion_value_shared_items' => 0,
+                    ];
+                }
+                
+                // For AdSpentSocialMedia table
+                if (!isset($adSpentData[$date])) {
+                    $adSpentData[$date] = 0;
+                }
+                
+                // Update both arrays
+                $groupedData[$date]['amount_spent'] += (int)$row[3];
+                $groupedData[$date]['impressions'] += (int)$row[4];
+                $groupedData[$date]['content_views_shared_items'] += (float)($row[5] ?? 0);
+                $groupedData[$date]['adds_to_cart_shared_items'] += (float)($row[6] ?? 0);
+                $groupedData[$date]['purchases_shared_items'] += (float)($row[7] ?? 0);
+                $groupedData[$date]['purchases_conversion_value_shared_items'] += (float)($row[8] ?? 0);
+                
+                $adSpentData[$date] += $amount;
+            }
+
+            DB::beginTransaction();
+            try {
+                // Update AdsMeta table
+                foreach ($groupedData as $date => $data) {
+                    AdsMeta::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount_spent' => $data['amount_spent'],
+                            'impressions' => $data['impressions'],
+                            'content_views_shared_items' => $data['content_views_shared_items'],
+                            'adds_to_cart_shared_items' => $data['adds_to_cart_shared_items'],
+                            'purchases_shared_items' => $data['purchases_shared_items'],
+                            'purchases_conversion_value_shared_items' => $data['purchases_conversion_value_shared_items']
+                        ]
+                    );
+                }
+                
+                // Update AdSpentSocialMedia table
+                foreach ($adSpentData as $date => $totalAmount) {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 1, // Meta's ID
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Meta ads data imported successfully'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
     }
 }
