@@ -181,4 +181,44 @@ class AdSpentSocialMediaController extends Controller
             ], 422);
         }
     }
+    public function getFunnelData()
+    {
+        try {
+            $data = AdsMeta::select(
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases')
+            )
+            ->where('tenant_id', auth()->user()->current_tenant_id)
+            ->first();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    [
+                        'name' => 'Impressions',
+                        'value' => (int)$data->total_impressions
+                    ],
+                    [
+                        'name' => 'Content Views',
+                        'value' => (int)$data->total_content_views
+                    ],
+                    [
+                        'name' => 'Adds to Cart',
+                        'value' => (int)$data->total_adds_to_cart
+                    ],
+                    [
+                        'name' => 'Purchases',
+                        'value' => (int)$data->total_purchases
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching funnel data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
 }

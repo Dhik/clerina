@@ -326,6 +326,23 @@
     height: 400px;
     width: 100%;
 }
+#funnelMetrics {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+.text-muted {
+    color: #6c757d;
+}
+.font-weight-bold {
+    font-weight: 600;
+}
+.ml-2 {
+    margin-left: 0.5rem;
+}
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
 </style>
 @stop
 
@@ -333,6 +350,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
         salesTableSelector = $('#salesTable');
         filterDate = $('#filterDates');
@@ -575,6 +593,106 @@
             loadPieChart();
             loadTrendChart();
         });
+        function initFunnelChart() {
+            fetch('{{ route("adSpentSocialMedia.funnel-data") }}')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const data = result.data;
+                        
+                        const options = {
+                            chart: {
+                                type: 'bar',
+                                height: 350,
+                                toolbar: {
+                                    show: false
+                                }
+                            },
+                            plotOptions: {
+                                bar: {
+                                    borderRadius: 4,
+                                    horizontal: true,
+                                    distributed: true,
+                                    dataLabels: {
+                                        position: 'bottom'
+                                    },
+                                }
+                            },
+                            colors: ['#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8'],
+                            dataLabels: {
+                                enabled: true,
+                                formatter: function(val) {
+                                    return val.toLocaleString();
+                                },
+                                style: {
+                                    fontSize: '12px',
+                                }
+                            },
+                            xaxis: {
+                                categories: data.map(item => item.name),
+                                labels: {
+                                    show: true,
+                                    style: {
+                                        fontSize: '12px'
+                                    }
+                                }
+                            },
+                            yaxis: {
+                                labels: {
+                                    show: true,
+                                    style: {
+                                        fontSize: '12px'
+                                    }
+                                }
+                            },
+                            grid: {
+                                yaxis: {
+                                    lines: {
+                                        show: false
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                y: {
+                                    formatter: function(val) {
+                                        return val.toLocaleString();
+                                    }
+                                }
+                            }
+                        };
+
+                        const series = [{
+                            name: 'Total',
+                            data: data.map(item => item.value)
+                        }];
+
+                        const chart = new ApexCharts(document.querySelector("#funnelChart"), {
+                            ...options,
+                            series: series
+                        });
+                        chart.render();
+
+                        const metricsHtml = data.map((item, index) => `
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>${item.name}</span>
+                                <span class="font-weight-bold">
+                                    ${item.value.toLocaleString()}
+                                    ${index > 0 ? `
+                                        <span class="text-muted ml-2">
+                                            (${((item.value / data[0].value) * 100).toFixed(2)}%)
+                                        </span>
+                                    ` : ''}
+                                </span>
+                            </div>
+                        `).join('');
+
+                        document.querySelector('#funnelMetrics').innerHTML = metricsHtml;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        }
 
         function loadTrendChart() {
             fetch('{{ route("order.daily-trend") }}')
@@ -956,6 +1074,9 @@
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
+            }
+            if (e.target.getAttribute('href') === '#funnelChartTab') {
+                initFunnelChart();
             }
         });
     </script>

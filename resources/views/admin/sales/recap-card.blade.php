@@ -3,7 +3,7 @@
         <div class="card">
             <div class="card-header p-2">
                 <ul class="nav nav-pills">
-                <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li>
                     <li class="nav-item"><a class="nav-link" href="#visitChartTab" data-toggle="tab">{{ trans('labels.visit') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#closingRateChartTab" data-toggle="tab">{{ trans('labels.closing_rate') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#orderChartTab" data-toggle="tab">{{ trans('labels.order') }}</a></li>
@@ -11,6 +11,7 @@
                     <li class="nav-item"><a class="nav-link" href="#adSpentChartTab" data-toggle="tab">{{ trans('labels.ad_spent_total') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#roasChartTab" data-toggle="tab">{{ trans('labels.roas') }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="#qtyChartTab" data-toggle="tab">{{ trans('labels.qty') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#funnelChartTab" data-toggle="tab">Funnel Analysis</a></li>
                 </ul>
             </div>
             <div class="card-body">
@@ -38,6 +39,10 @@
                     </div>
                     <div class="tab-pane" id="qtyChartTab">
                         <canvas id="qtyChart" width="800" height="200"></canvas>
+                    </div>
+                    <div class="tab-pane" id="funnelChartTab">
+                        <div id="funnelChart"></div>
+                        <div id="funnelMetrics" class="mt-4"></div>
                     </div>
                 </div>
             </div>
