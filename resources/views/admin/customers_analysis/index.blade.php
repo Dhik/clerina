@@ -238,7 +238,7 @@
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
                         d.status = $('#filterStatus').val();
-                        d.filterDormant = $('#filterDormant').prop('checked') ? '1' : '0';
+                        // d.filterDormant = $('#filterDormant').prop('checked') ? '1' : '0';
                     }
                 },
                 columns: [
