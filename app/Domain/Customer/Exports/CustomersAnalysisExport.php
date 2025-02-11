@@ -60,7 +60,7 @@ class CustomersAnalysisExport extends DefaultValueBinder implements FromCollecti
                 DB::raw('MIN(kota_kabupaten) as kota'),
                 DB::raw('MIN(provinsi) as provinsi'),
                 DB::raw('NULL as kode_pos'),
-                DB::raw('MIN(status_customer) as group'),
+                DB::raw('MIN(status_customer) as `group_customer`'),
                 DB::raw('MIN(which_hp) as hp_mana'),
                 DB::raw('NULL as note'),
                 DB::raw('NULL as user_terkait'),
