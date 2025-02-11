@@ -206,9 +206,10 @@
             });
 
             // Initialize Charts
-            let productChart = null;
+            let mainProductChart = null;
             let trendChart = null;
             let distributionChart = null;
+            let modalProductChart = null;
 
             // Event handler for tab changes
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -287,8 +288,8 @@
                 const selectedProduk = $('#filterProduk').val();
                 const ctx = document.getElementById('productPieChart').getContext('2d');
 
-                if (productChart) {
-                    productChart.destroy();
+                if (mainProductChart) {
+                    mainProductChart.destroy();
                 }
 
                 fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
@@ -297,7 +298,7 @@
                         const productLabels = data.map(item => item.short_name);
                         const productCounts = data.map(item => item.total_count);
                         
-                        productChart = new Chart(ctx, {
+                        mainProductChart = new Chart(ctx, {
                             type: 'pie',
                             data: {
                                 labels: productLabels,
@@ -607,8 +608,7 @@
                 pageLength: 5
             });
 
-            // Variable to store the product chart instance for the modal
-            let productChart;
+            // The modal chart instance is already declared at the top
 
             // Handle View Button Click
             $('#customerAnalysisTable').on('click', '.viewButton', function() {
@@ -644,13 +644,13 @@
                                 var productCounts = data.map(item => item.count);
 
                                 // Destroy previous chart instance if it exists
-                                if (productChart) {
-                                    productChart.destroy();
+                                if (modalProductChart) {
+                                    modalProductChart.destroy();
                                 }
 
                                 // Create the pie chart
                                 var ctx = document.getElementById('productPieChartDetail').getContext('2d');
-                                productChart = new Chart(ctx, {
+                                modalProductChart = new Chart(ctx, {
                                     type: 'pie',
                                     data: {
                                         labels: productLabels,
@@ -701,8 +701,8 @@
 
             // Clean up when detail modal is hidden
             $('#viewCustomerModal').on('hidden.bs.modal', function () {
-                if (productChart) {
-                    productChart.destroy();
+                if (modalProductChart) {
+                    modalProductChart.destroy();
                 }
                 ordersTable.clear().draw();
             });
