@@ -104,7 +104,6 @@
                     <ul class="nav nav-pills">
                         <li class="nav-item"><a class="nav-link active" href="#customerDistributionTab" data-toggle="tab">Customer Distribution</a></li>
                         <li class="nav-item"><a class="nav-link" href="#customerTrendTab" data-toggle="tab">Customer Trend</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#productDistributionTab" data-toggle="tab">Product Distribution</a></li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -127,12 +126,6 @@
                         <div class="tab-pane" id="customerTrendTab">
                             <div style="height: 350px;">
                                 <canvas id="dailyCustomersChart"></canvas>
-                            </div>
-                        </div>
-
-                        <div class="tab-pane" id="productDistributionTab">
-                            <div style="height: 350px;">
-                                <canvas id="productPieChart"></canvas>
                             </div>
                         </div>
                     </div>
