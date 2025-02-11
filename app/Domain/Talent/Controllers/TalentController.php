@@ -267,6 +267,7 @@ class TalentController extends Controller
         $approval_name = $approval->name;
 
         $data = [
+            'no_document' => $talent->no_document,
             'nik' => $talent->nik,
             'nama_talent' => $talent->talent_name,
             'tanggal_hari_ini' => now()->format('d/m/Y'),
