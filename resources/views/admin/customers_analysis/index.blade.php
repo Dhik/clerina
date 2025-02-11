@@ -597,6 +597,116 @@
 
             // Initialize product filter
             populateProdukFilter();
+
+            // Initialize Orders Table for Modal
+            var ordersTable = $('#ordersTable').DataTable({
+                searching: false,
+                paging: true,
+                info: false,
+                lengthChange: false,
+                pageLength: 5
+            });
+
+            // Variable to store the product chart instance for the modal
+            let productChart;
+
+            // Handle View Button Click
+            $('#customerAnalysisTable').on('click', '.viewButton', function() {
+                var customerId = $(this).data('id');
+
+                $.ajax({
+                    url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerId),
+                    method: 'GET',
+                    success: function(response) {
+                        // Populate customer details
+                        $('#view_customer_name').val(response.nama_penerima);
+                        $('#view_phone_number').val(response.nomor_telepon);
+                        $('#view_alamat').val(response.alamat);
+                        $('#view_kota_kabupaten').val(response.kota_kabupaten);
+                        $('#view_provinsi').val(response.provinsi);
+                        $('#view_quantity').val(response.quantity);
+
+                        // Clear and update orders table
+                        ordersTable.clear();
+                        response.orders.forEach(function(order) {
+                            ordersTable.row.add([
+                                order.produk,
+                                order.tanggal_pesanan_dibuat,
+                                order.qty
+                            ]).draw();
+                        });
+
+                        // Fetch and display product distribution
+                        fetch(`{{ route('customer_analysis.product_distribution', ':id') }}`.replace(':id', customerId))
+                            .then(response => response.json())
+                            .then(data => {
+                                var productLabels = data.map(item => item.produk);
+                                var productCounts = data.map(item => item.count);
+
+                                // Destroy previous chart instance if it exists
+                                if (productChart) {
+                                    productChart.destroy();
+                                }
+
+                                // Create the pie chart
+                                var ctx = document.getElementById('productPieChartDetail').getContext('2d');
+                                productChart = new Chart(ctx, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: productLabels,
+                                        datasets: [{
+                                            label: 'Product Count',
+                                            data: productCounts,
+                                            backgroundColor: [
+                                                'rgba(75, 192, 192, 0.2)',
+                                                'rgba(255, 99, 132, 0.2)',
+                                                'rgba(255, 206, 86, 0.2)',
+                                                'rgba(54, 162, 235, 0.2)',
+                                                'rgba(153, 102, 255, 0.2)',
+                                                'rgba(255, 159, 64, 0.2)',
+                                            ],
+                                            borderColor: [
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(255, 99, 132, 1)',
+                                                'rgba(255, 206, 86, 1)',
+                                                'rgba(54, 162, 235, 1)',
+                                                'rgba(153, 102, 255, 1)',
+                                                'rgba(255, 159, 64, 1)',
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: false,
+                                            }
+                                        }
+                                    }
+                                });
+                            })
+                            .catch(error => console.error('Error fetching product distribution data:', error));
+
+                        // Show the modal
+                        $('#viewCustomerModal').modal('show');
+                    },
+                    error: function(xhr) {
+                        console.error('Error fetching customer data:', xhr);
+                        Swal.fire('Error', 'Could not fetch customer data. Please try again later.', 'error');
+                    }
+                });
+            });
+
+            // Clean up when detail modal is hidden
+            $('#viewCustomerModal').on('hidden.bs.modal', function () {
+                if (productChart) {
+                    productChart.destroy();
+                }
+                ordersTable.clear().draw();
+            });
+
         });
     </script>
 @endsection
