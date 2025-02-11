@@ -225,8 +225,8 @@
                     fetchCustomerDistribution();
                 }
             });
-            $('#filterDormant').change(function () {
-                table.draw()
+            $('#filterDormant').change(function() {
+                table.draw();
             });
 
             var table = $('#customerAnalysisTable').DataTable({
@@ -238,7 +238,7 @@
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
                         d.status = $('#filterStatus').val();
-                        d.filterDormant = $('#filterDormant').prop('checked') ? '1' : null
+                        d.filterDormant = $('#filterDormant').prop('checked') ? '1' : '0';
                     }
                 },
                 columns: [

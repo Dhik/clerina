@@ -68,8 +68,14 @@ class CustomerAnalysisController extends Controller
             $month = $request->month;
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
         }
-        if (!is_null($request->input('filterDormant'))) {
-            $query->where('is_dormant', '1');
+        if ($request->has('filterDormant')) {
+            $filterDormant = $request->filterDormant;
+            if ($filterDormant === '1') {
+                $query->where('is_dormant', 1);
+            } else if ($filterDormant === '0') {
+                $query->where('is_dormant', 0);
+            }
+            // If filterDormant is null, don't apply any filter
         }
 
         if ($request->has('produk') && $request->produk) {
