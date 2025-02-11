@@ -223,24 +223,20 @@ class CustomerAnalysisController extends Controller
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$request->produk]);
         }
 
-        $uniqueCount = $query->select('nomor_telepon')
-                            ->distinct()
-                            ->count();
+        $uniqueCount = $query->distinct('nomor_telepon')
+                        ->count('nomor_telepon');
 
         $loyalisCount = (clone $query)->where('status_customer', 'Loyalis')
-                            ->select('nomor_telepon')
-                            ->distinct()
-                            ->count();
+                            ->distinct('nomor_telepon')
+                            ->count('nomor_telepon');
 
         $prioritasCount = (clone $query)->where('status_customer', 'Prioritas')
-                            ->select('nomor_telepon')
-                            ->distinct()
-                            ->count();
+                            ->distinct('nomor_telepon')
+                            ->count('nomor_telepon');
 
         $newCount = (clone $query)->where('status_customer', 'New Customer')
-                            ->select('nomor_telepon')
-                            ->distinct()
-                            ->count();
+                            ->distinct('nomor_telepon')
+                            ->count('nomor_telepon');
 
         return response()->json([
             'unique_customer_count' => $uniqueCount,
