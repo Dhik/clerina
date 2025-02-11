@@ -11,19 +11,27 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
-                        <i class="fas fa-plus"></i> Add Talent
-                    </button>
-                    <button id="exportButton" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> Export to excel
-                    </button>
-                    <button id="exportXMLButton" class="btn bg-maroon">
-                        <i class="fas fa-file-excel"></i> Export to XML
-                    </button>
-                            
-                    <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
-                        <i class="fas fa-file-download"></i> Import Talent
-                    </button> -->
+                    <div class="btn-group" role="group" aria-label="Talent Management Actions">
+                        <!-- Add Button -->
+                        <button type="button" class="btn btn-primary mr-3" data-toggle="modal" data-target="#addTalentModal">
+                            <i class="fas fa-plus"></i> Add Talent
+                        </button>
+
+                        <!-- Export Buttons -->
+                        <div class="btn-group" role="group">
+                            <button id="exportButton" class="btn btn-success">
+                                <i class="fas fa-file-excel"></i> Export to Excel
+                            </button>
+                            <button id="exportXMLButton" class="btn bg-maroon">
+                                <i class="fas fa-file-excel"></i> Export to XML
+                            </button>
+                        </div>
+
+                        <!-- Commented out import button -->
+                        <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
+                            <i class="fas fa-file-download"></i> Import Talent
+                        </button> -->
+                    </div>
                 </div>
                 <div class="card-body">
                     <table id="talentTable" class="table table-bordered table-striped">
