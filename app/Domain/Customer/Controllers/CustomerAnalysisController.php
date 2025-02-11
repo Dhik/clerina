@@ -83,6 +83,7 @@ class CustomerAnalysisController extends Controller
             nomor_telepon,
             COUNT(id) as total_orders,
             MIN(is_joined) as is_joined,
+            MIN(is_dormant) as is_dormant,
             MIN(status_customer) as status_customer,
             MIN(which_hp) as which_hp
         ')
@@ -105,15 +106,23 @@ class CustomerAnalysisController extends Controller
                         <i class="fas fa-redo"></i> Join
                     </button>
                     ';
-                } else {
-                    return '
-                        <button class="btn btn-sm bg-info unJoinButton" 
-                            data-id="' . $row->id . '">
-                            <i class="fas fa-undo"></i> Joined
-                        </button>
+            } else {
+                return '
+                    <button class="btn btn-sm bg-info unJoinButton" 
+                        data-id="' . $row->id . '">
+                        <i class="fas fa-undo"></i> Joined
+                    </button>
                     ';
-                }
-            });
+            }
+        });
+
+        $dataTable->addColumn('is_dormant', function ($row) {
+            if ($row->is_dormant == 1) {
+                return '<span class="badge badge-danger">Dormant</span>';
+            } else {
+                return '<span class="badge badge-success">Active</span>';
+            }
+        });
             
         $dataTable->addColumn('details', function ($row) {
             return '
@@ -127,7 +136,7 @@ class CustomerAnalysisController extends Controller
             ';
         });
                 
-        return $dataTable->rawColumns(['is_joined', 'details'])->make(true);
+        return $dataTable->rawColumns(['is_joined', 'is_dormant', 'details'])->make(true);
     }
 
     public function edit($id)

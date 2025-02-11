@@ -223,7 +223,7 @@
                     },
                     { data: 'which_hp', name: 'which_hp' },
                     { data: 'details', name: 'details' },
-                    { data: 'is_joined', name: 'is_joined' },
+                    { data: 'is_dormant', name: 'is_dormant' },
                 ],
                 order: [[1, 'asc']]
             });
