@@ -28,7 +28,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <!-- <div class="col-md-2">
                             <div class="form-group">
                                 <label>&nbsp;</label>
                                 <div class="icheck-primary mt-2">
@@ -36,7 +36,7 @@
                                     <label for="filterDormant">Is Dormant</label>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         <div class="col-auto">
                             <div class="btn-group">
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
