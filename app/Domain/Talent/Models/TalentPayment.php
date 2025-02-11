@@ -21,6 +21,7 @@ class TalentPayment extends Model
         'campaign_id',
         'created_at',
         'updated_at',
+        'no_document',
     ];
 
     protected $casts = [
