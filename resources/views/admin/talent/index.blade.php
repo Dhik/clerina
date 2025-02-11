@@ -18,14 +18,14 @@
                         </button>
 
                         <!-- Export Buttons -->
-                        <div class="btn-group" role="group">
+                        <!-- <div class="btn-group" role="group">
                             <button id="exportButton" class="btn btn-success">
                                 <i class="fas fa-file-excel"></i> Export to Excel
                             </button>
                             <button id="exportXMLButton" class="btn bg-maroon">
                                 <i class="fas fa-file-excel"></i> Export to XML
                             </button>
-                        </div>
+                        </div> -->
 
                         <!-- Commented out import button -->
                         <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
