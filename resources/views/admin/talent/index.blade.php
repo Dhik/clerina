@@ -15,7 +15,7 @@
                         <i class="fas fa-plus"></i> Add Talent
                     </button>
                     <button id="exportButton" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> Export to Excel
+                        <i class="fas fa-file-excel"></i> Export to XML
                     </button>
                             
                     <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
