@@ -118,9 +118,19 @@ class CustomerAnalysisController extends Controller
 
         $dataTable->addColumn('is_dormant', function ($row) {
             if ($row->is_dormant == 1) {
-                return '<span class="badge badge-danger">Dormant</span>';
+                return '
+                    <button class="btn btn-sm bg-danger" 
+                        data-id="' . $row->id . '">
+                        <i class="fas fa-user-clock"></i> Dormant
+                    </button>
+                ';
             } else {
-                return '<span class="badge badge-success">Active</span>';
+                return '
+                    <button class="btn btn-sm bg-success" 
+                        data-id="' . $row->id . '">
+                        <i class="fas fa-user-check"></i> Active
+                    </button>
+                ';
             }
         });
             
