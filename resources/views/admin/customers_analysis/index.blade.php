@@ -208,13 +208,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@^2"></script>
     <script>
         $(document).ready(function() {
-            const filterDormant = $('#filterDormant');
-            $('#filterProduk').select2({
-                placeholder: "All Product",
-                allowClear: true,
-                width: '100%',
-                theme: 'bootstrap4'
-            });
+            // const filterDormant = $('#filterDormant');
+            // $('#filterProduk').select2({
+            //     placeholder: "All Product",
+            //     allowClear: true,
+            //     width: '100%',
+            //     theme: 'bootstrap4'
+            // });
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 const targetId = $(e.target).attr("href");
                 if (targetId === "#productDistributionTab") {
@@ -225,9 +225,9 @@
                     fetchCustomerDistribution();
                 }
             });
-            $('#filterDormant').change(function() {
-                table.draw();
-            });
+            // $('#filterDormant').change(function() {
+            //     table.draw();
+            // });
 
             var table = $('#customerAnalysisTable').DataTable({
                 processing: true,
