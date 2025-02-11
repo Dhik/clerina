@@ -44,6 +44,7 @@ class Talent extends Model implements HasMedia
         'dp_amount',
         'rate_per_slot',
         'tax_percentage',
+        'no_document',
     ];
     public function talentContents()
     {
