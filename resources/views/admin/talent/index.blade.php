@@ -24,6 +24,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Username</th>
+                                <th>No Document</th>
                                 <th>Talent Name</th>
                                 <th>Paid DP</th>
                                 <th>Slot Final</th>
@@ -67,6 +68,7 @@
             columns: [
                 { data: 'id', name: 'id', visible: false },
                 { data: 'username', name: 'username' },
+                { data: 'no_document', name: 'no_document' },
                 { data: 'talent_name', name: 'talent_name' },
                 {
                     data: 'dp_amount',

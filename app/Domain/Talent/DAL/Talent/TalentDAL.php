@@ -26,7 +26,8 @@ class TalentDAL extends BaseDAL implements TalentDALInterface
                 'talents.pengajuan_transfer_date',
                 'talents.rate_final',
                 'talents.slot_final',
-                'talents.dp_amount'
+                'talents.dp_amount',
+                'talents.no_document',
             ])
             ->leftJoin('talent_content', 'talents.id', '=', 'talent_content.talent_id')
             // ->whereNotNull('talents.price_rate') 
@@ -37,7 +38,8 @@ class TalentDAL extends BaseDAL implements TalentDALInterface
                 'talents.pengajuan_transfer_date',
                 'talents.rate_final',
                 'talents.slot_final',
-                'talents.dp_amount'
+                'talents.dp_amount',
+                'talents.no_document',
             )
             ->selectRaw('COUNT(talent_content.id) as content_count')
             ->selectRaw('CONCAT(COUNT(talent_content.id), " / ", IFNULL(talents.slot_final, 0)) AS remaining')

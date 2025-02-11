@@ -77,7 +77,6 @@ class TalentController extends Controller
     {
         $tenant_id = Auth::user()->current_tenant_id;
 
-        // Modify the validation rule to check both username and tenant_id
         $validatedData = $request->validate([
             'username' => "required|string|max:255|unique:talents,username,NULL,id,tenant_id,$tenant_id", // Custom validation rule
             'talent_name' => 'required|string|max:255',
@@ -103,28 +102,42 @@ class TalentController extends Controller
             'masa_kerjasama' => 'nullable|string|max:255',
             'platform' => 'nullable|string|max:255',
         ]);
-
-        // Automatically add tenant_id based on Auth::user()->current_tenant_id
         $validatedData['tenant_id'] = $tenant_id;
         $validatedData['tax_percentage'] = 0;
 
-        // Check if username already exists for this tenant
+        $tenantPrefix = match($tenant_id) {
+            1 => 'CLE',
+            2 => 'AZ',
+            default => 'UNKNOWN'
+        };
+        $validatedData['no_document'] = $this->generateNoDocument($tenant_id, $tenantPrefix);
+
         $existingTalent = Talent::where('tenant_id', $tenant_id)
             ->where('username', $validatedData['username'])
             ->first();
 
-        // If the username already exists, return an error
         if ($existingTalent) {
             return back()->withErrors(['username' => 'This username is already taken by another talent in your tenant.'])->withInput();
         }
 
-        // Proceed to create the talent if validation passes
         $this->talentBLL->createTalent($validatedData);
 
         return redirect()->route('talent.index')->with('success', 'Talent created successfully.');
     }
+    private function generateNoDocument(int $tenantId, string $tenantPrefix): string
+    {
+        $monthYear = now()->format('my');
+        $nextSequence = Talent::where('tenant_id', $tenantId)
+            ->whereNotNull('no_document')
+            ->count() + 1;
 
-
+        return sprintf(
+            '%s/INV/%s/%05d', 
+            $monthYear, 
+            $tenantPrefix, 
+            $nextSequence
+        );
+    }
 
     /**
      * Display the specified resource.
