@@ -46,7 +46,6 @@ class TalentPaymentController extends Controller
         $currentTenantId = Auth::user()->current_tenant_id;
         $payments = TalentPayment::select([
             'talent_payments.id',
-            'talent_payments.no_document',
             'talent_payments.done_payment',
             'talent_payments.amount_tf',
             'talent_payments.tanggal_pengajuan',
@@ -152,15 +151,8 @@ class TalentPaymentController extends Controller
             } else {
                 $amount_tf = $final_tf - $talent->dp_amount;
             }
-
-            $currentDate = now()->format('my');
-            $rowCount = TalentPayment::count() + 1;
-            $no_document = sprintf("%s/INV/CLE/%04d", $currentDate, $rowCount);
-
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
             $validatedData['amount_tf'] = $amount_tf;
-            $validatedData['no_document'] = $no_document;
-
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
         } catch (\Exception $e) {
