@@ -223,22 +223,22 @@ class CustomerAnalysisController extends Controller
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$request->produk]);
         }
 
-        $uniqueCount = $query->select('nama_penerima', 'nomor_telepon')
+        $uniqueCount = $query->select('nomor_telepon')
                             ->distinct()
                             ->count();
 
         $loyalisCount = (clone $query)->where('status_customer', 'Loyalis')
-                            ->select('nama_penerima', 'nomor_telepon')
+                            ->select('nomor_telepon')
                             ->distinct()
                             ->count();
 
         $prioritasCount = (clone $query)->where('status_customer', 'Prioritas')
-                            ->select('nama_penerima', 'nomor_telepon')
+                            ->select('nomor_telepon')
                             ->distinct()
                             ->count();
 
         $newCount = (clone $query)->where('status_customer', 'New Customer')
-                            ->select('nama_penerima', 'nomor_telepon')
+                            ->select('nomor_telepon')
                             ->distinct()
                             ->count();
 
