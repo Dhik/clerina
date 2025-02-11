@@ -30,7 +30,7 @@
                         </div>
                         <div class="col-auto">
                             <div class="btn-group">
-                                <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
+                            <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
                             </div>
                         </div>
                         <div class="col-auto">
@@ -38,6 +38,11 @@
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
                             </div>
                         </div>
+                        <!-- <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importButton" class="btn btn-info"><i class="fas fa-upload"></i> Import Status</button>
+                            </div>
+                        </div> -->
                         <div class="col-auto">
                             <div class="btn-group">
                                 <button id="importWhichHpButton" class="btn bg-maroon"><i class="fas fa-upload"></i> Assign HP</button>
@@ -93,40 +98,23 @@
                 </div>
             </div>
         </div>
-
-        <!-- Charts in Tabs -->
-        <div class="col-12">
+        <div class="col-4">
             <div class="card">
-                <div class="card-header p-2">
-                    <ul class="nav nav-pills">
-                        <li class="nav-item"><a class="nav-link active" href="#customerDistributionTab" data-toggle="tab">Customer Distribution</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#customerTrendTab" data-toggle="tab">Customer Trend</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#productDistributionTab" data-toggle="tab">Product Distribution</a></li>
-                    </ul>
-                </div>
                 <div class="card-body">
-                    <div class="tab-content">
-                        <div class="tab-pane active" id="customerDistributionTab">
-                            <div class="row">
-                                <div class="col-12">
-                                    <div style="height: 350px;">
-                                        <canvas id="customerDistributionChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="tab-pane" id="customerTrendTab">
-                            <div style="height: 350px;">
-                                <canvas id="customerTrendChart"></canvas>
-                            </div>
-                        </div>
-
-                        <div class="tab-pane" id="productDistributionTab">
-                            <div style="height: 350px;">
-                                <canvas id="productPieChart"></canvas>
-                            </div>
-                        </div>
+                    <h5>Distribusi per Produk</h5>
+                    <div style="height: 350px;">
+                    <canvas id="productPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Jumlah Customer per Bulan per</h5>
+                    <div style="height: 350px;">
+                        <!-- <canvas id="dailyCustomersChart"></canvas> -->
+                        <canvas id="customerTrendChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -158,6 +146,7 @@
     @include('admin.customers_analysis.modals.export')
 @stop
 
+
 @section('css')
     <style>
         .invalid-feedback {
@@ -166,28 +155,21 @@
             font-size: 80%;
         }
         .bg-gradient-teal {
-            background: linear-gradient(45deg, #20c997, #17a2b8);
-            color: white;
-        }
-        .bg-gradient-success {
-            background: linear-gradient(45deg, #28a745, #34ce57);
-            color: white;
-        }
-        .bg-gradient-primary {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            color: white;
-        }
-        .bg-gradient-info {
-            background: linear-gradient(45deg, #17a2b8, #138496);
-            color: white;
-        }
-        .nav-pills .nav-link.active {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .tab-content {
-            padding-top: 20px;
-        }
+        background: linear-gradient(45deg, #20c997, #17a2b8);
+        color: white;
+    }
+    .bg-gradient-success {
+        background: linear-gradient(45deg, #28a745, #34ce57);
+        color: white;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+    }
+    .bg-gradient-info {
+        background: linear-gradient(45deg, #17a2b8, #138496);
+        color: white;
+    }
     </style>
 @endsection
 
@@ -197,33 +179,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@^2"></script>
     <script>
         $(document).ready(function() {
-            // Initialize Select2
-            $('#filterProduk, #filterStatus').select2({
+            $('#filterProduk').select2({
                 placeholder: "All Product",
                 allowClear: true,
                 width: '100%',
                 theme: 'bootstrap4'
             });
 
-            // Initialize Charts
-            let mainProductChart = null;
-            let trendChart = null;
-            let distributionChart = null;
-            let modalProductChart = null;
-
-            // Event handler for tab changes
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-                const targetId = $(e.target).attr("href");
-                if (targetId === "#productDistributionTab") {
-                    fetchProductCounts();
-                } else if (targetId === "#customerTrendTab") {
-                    fetchAndRenderCustomerTrend();
-                } else if (targetId === "#customerDistributionTab") {
-                    fetchCustomerDistribution();
-                }
-            });
-
-            // Existing DataTable initialization
             var table = $('#customerAnalysisTable').DataTable({
                 processing: true,
                 serverSide: true,
@@ -266,187 +228,49 @@
                 order: [[1, 'asc']]
             });
 
-            // Filter change handlers
+            function fetchTotalUniqueOrders() {
+                const selectedMonth = $('#filterMonth').val();
+                const selectedProduk = $('#filterProduk').val();
+
+                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#totalOrder').text(data.unique_customer_count);
+                        $('#loyalisCount').text(data.loyalis_count);
+                        $('#prioritasCount').text(data.prioritas_count);
+                        $('#newCount').text(data.new_count);
+                    })
+                    .catch(error => console.error('Error fetching customer counts:', error));
+            }
+
+            fetchTotalUniqueOrders();
+
             $('#filterMonth, #filterProduk, #filterStatus').change(function() {
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
-                
-                // Update active chart based on current tab
-                const activeTab = $('.nav-pills .nav-link.active').attr('href');
-                if (activeTab === "#productDistributionTab") {
-                    fetchProductCounts();
-                } else if (activeTab === "#customerTrendTab") {
-                    fetchAndRenderCustomerTrend();
-                } else if (activeTab === "#customerDistributionTab") {
-                    fetchCustomerDistribution();
-                }
+                fetchProductCounts();
+                fetchAndRenderCustomerTrend();
             });
 
-            // Product Distribution Chart
-            function fetchProductCounts() {
-                const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val();
-                const ctx = document.getElementById('productPieChart').getContext('2d');
-
-                if (mainProductChart) {
-                    mainProductChart.destroy();
-                }
-
-                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+            function populateProdukFilter() {
+                fetch('{{ route('customer_analysis.get_products') }}')
                     .then(response => response.json())
                     .then(data => {
-                        const productLabels = data.map(item => item.short_name);
-                        const productCounts = data.map(item => item.total_count);
-                        
-                        mainProductChart = new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: productLabels,
-                                datasets: [{
-                                    data: productCounts,
-                                    backgroundColor: [
-                                        'rgba(75, 192, 192, 0.2)',
-                                        'rgba(255, 99, 132, 0.2)',
-                                        'rgba(255, 206, 86, 0.2)',
-                                        'rgba(54, 162, 235, 0.2)',
-                                        'rgba(153, 102, 255, 0.2)',
-                                        'rgba(255, 159, 64, 0.2)',
-                                    ],
-                                    borderColor: [
-                                        'rgba(75, 192, 192, 1)',
-                                        'rgba(255, 99, 132, 1)',
-                                        'rgba(255, 206, 86, 1)',
-                                        'rgba(54, 162, 235, 1)',
-                                        'rgba(153, 102, 255, 1)',
-                                        'rgba(255, 159, 64, 1)',
-                                    ],
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: 'right'
-                                    }
-                                }
-                            }
+                        const produkSelect = $('#filterProduk');
+                        produkSelect.empty();
+                        produkSelect.append('<option value="">All Produk</option>');
+                        data.forEach(produk => {
+                            produkSelect.append(`<option value="${produk.short_name}">${produk.short_name}</option>`);
                         });
                     })
-                    .catch(error => console.error('Error fetching product counts:', error));
+                    .catch(error => console.error('Error fetching produk list:', error));
             }
 
-            // Customer Trend Chart
-            function fetchAndRenderCustomerTrend() {
-                const selectedStatus = $('#filterStatus').val();
-                
-                fetch(`{{ route('customer_analysis.daily_status') }}?status=${selectedStatus}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (trendChart) {
-                            trendChart.destroy();
-                        }
+            // Fetch produk list initially
+            populateProdukFilter();
 
-                        const ctx = document.getElementById('customerTrendChart').getContext('2d');
-                        trendChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.labels,
-                                datasets: data.datasets.map(dataset => ({
-                                    label: dataset.label,
-                                    data: dataset.data,
-                                    borderColor: dataset.borderColor,
-                                    backgroundColor: dataset.backgroundColor,
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.4
-                                }))
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true,
-                                        ticks: {
-                                            callback: function(value) {
-                                                return value.toLocaleString();
-                                            }
-                                        }
-                                    }
-                                },
-                                plugins: {
-                                    legend: {
-                                        position: 'top'
-                                    }
-                                }
-                            }
-                        });
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-
-            // Customer Distribution Chart (New)
-            function fetchCustomerDistribution() {
-                const selectedMonth = $('#filterMonth').val();
-                
-                if (distributionChart) {
-                    distributionChart.destroy();
-                }
-
-                const ctx = document.getElementById('customerDistributionChart').getContext('2d');
-                distributionChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['New', 'Loyalis', 'Prioritas'],
-                        datasets: [{
-                            label: 'Customer Distribution',
-                            data: [
-                                parseInt($('#newCount').text()),
-                                parseInt($('#loyalisCount').text()),
-                                parseInt($('#prioritasCount').text())
-                            ],
-                            backgroundColor: [
-                                'rgba(23, 162, 184, 0.5)',
-                                'rgba(0, 123, 255, 0.5)',
-                                'rgba(40, 167, 69, 0.5)'
-                            ],
-                            borderColor: [
-                                'rgba(23, 162, 184, 1)',
-                                'rgba(0, 123, 255, 1)',
-                                'rgba(40, 167, 69, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value.toLocaleString();
-                                    }
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Initialize the first tab's chart
-            fetchCustomerDistribution();
-
-            // Refresh button handler
             $('#refreshButton').click(function() {
+
                 Swal.fire({
                     title: 'Refreshing Data',
                     text: 'Importing customer data from Google Sheets. Please wait.',
@@ -455,9 +279,11 @@
                     }
                 });
 
+                // fetch('{{ route('customer_analysis.import') }}')
                 fetch('{{ route('order.import_customer') }}')
                     .then(response => response.json())
                     .then(data => {
+
                         if (data.error) {
                             Swal.fire({
                                 icon: 'error',
@@ -480,20 +306,13 @@
                             // Reload tables and update widgets
                             table.ajax.reload(null, false);
                             fetchTotalUniqueOrders();
-                            
-                            // Update active chart
-                            const activeTab = $('.nav-pills .nav-link.active').attr('href');
-                            if (activeTab === "#productDistributionTab") {
-                                fetchProductCounts();
-                            } else if (activeTab === "#customerTrendTab") {
-                                fetchAndRenderCustomerTrend();
-                            } else if (activeTab === "#customerDistributionTab") {
-                                fetchCustomerDistribution();
-                            }
+                            fetchProductCounts();
+                            fetchDailyUniqueCustomers();
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
+
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
@@ -501,22 +320,115 @@
                         });
                     });
             });
+            $('#importButton').click(function() {
+                    Swal.fire({
+                        title: 'Refreshing Data',
+                        text: 'Importing customer data from Google Sheets. Please wait.',
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
 
-            // Export button handler
-            $('#exportButton').click(function() {
-                $('#exportModal').modal('show');
-            });
+                    fetch('{{ route('customer_analysis.import_join') }}')
+                        .then(response => response.json())
+                        .then(data => {
 
-            $('#doExport').click(function() {
-                let month = $('#exportMonth').val();
-                let status = $('#exportStatus').val(); 
-                let whichHp = $('#exportWhichHp').val();
-                
-                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
-                $('#exportModal').modal('hide');
-            });
+                            if (data.error) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: data.error,
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    html: `
+                                        Import Complete
+                                    `,
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                });
 
-            // Import Which HP button handler
+                                // Reload tables and update widgets
+                                table.ajax.reload(null, false);
+                                fetchTotalUniqueOrders();
+                                fetchProductCounts();
+                                fetchDailyUniqueCustomers();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while refreshing data. Please try again later.',
+                            });
+                        });
+                    });
+
+            function fetchProductCounts() {
+                const selectedMonth = $('#filterMonth').val();
+                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+                const ctx = document.getElementById('productPieChart').getContext('2d');
+
+                if (window.productChart) {
+                    window.productChart.destroy();
+                }
+
+                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const productLabels = data.map(item => item.short_name);
+                        const productCounts = data.map(item => item.total_count);
+                        window.productChart = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: productLabels,
+                                datasets: [{
+                                    label: 'Product Orders',
+                                    data: productCounts,
+                                    backgroundColor: [
+                                        'rgba(75, 192, 192, 0.2)',
+                                        'rgba(255, 99, 132, 0.2)',
+                                        'rgba(255, 206, 86, 0.2)',
+                                        'rgba(54, 162, 235, 0.2)',
+                                        'rgba(153, 102, 255, 0.2)',
+                                        'rgba(255, 159, 64, 0.2)',
+                                    ],
+                                    borderColor: [
+                                        'rgba(75, 192, 192, 1)',
+                                        'rgba(255, 99, 132, 1)',
+                                        'rgba(255, 206, 86, 1)',
+                                        'rgba(54, 162, 235, 1)',
+                                        'rgba(153, 102, 255, 1)',
+                                        'rgba(255, 159, 64, 1)',
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(tooltipItem) {
+                                                return tooltipItem.label + ': ' + tooltipItem.raw;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error fetching product counts:', error));
+            }
+            fetchProductCounts();
+
             $('#importWhichHpButton').click(function() {
                 Swal.fire({
                     title: 'Importing Which HP Data',
@@ -554,52 +466,154 @@
                             text: 'An error occurred while importing data',
                         });
                     });
+                });
+
+            // function fetchDailyUniqueCustomers() {
+            //     const selectedMonth = $('#filterMonth').val();
+            //     const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+            //     const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
+
+            //     // Destroy existing chart if it exists
+            //     if (window.dailyChart) {
+            //         window.dailyChart.destroy();
+            //     }
+
+            //     fetch(`{{ route('customer_analysis.daily_unique') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+            //         .then(response => response.json())
+            //         .then(data => {
+            //             const dates = data.map(item => item.date);
+            //             const counts = data.map(item => item.unique_count);
+
+            //             window.dailyChart = new Chart(ctx, {
+            //                 type: 'line',
+            //                 data: {
+            //                     labels: dates,
+            //                     datasets: [{
+            //                         label: 'Unique Customers',
+            //                         data: counts,
+            //                         borderColor: 'rgb(75, 192, 192)',
+            //                         tension: 0.1,
+            //                         fill: false
+            //                     }]
+            //                 },
+            //                 options: {
+            //                     responsive: true,
+            //                     maintainAspectRatio: false,
+            //                     scales: {
+            //                         y: {
+            //                             beginAtZero: true,
+            //                             ticks: {
+            //                                 precision: 0
+            //                             }
+            //                         },
+            //                         x: {
+            //                             ticks: {
+            //                                 maxRotation: 45,
+            //                                 minRotation: 45
+            //                             }
+            //                         }
+            //                     },
+            //                     plugins: {
+            //                         legend: {
+            //                             display: false
+            //                         }
+            //                     }
+            //                 }
+            //             });
+            //         })
+            //         .catch(error => console.error('Error fetching daily unique customers:', error));
+            // }
+
+
+            // // Add these lines to your existing document.ready function
+            // fetchDailyUniqueCustomers();
+
+            $('#customerAnalysisTable').on('click', '.joinButton', function() {
+                var id = $(this).data('id');
+                var url = '{{ route('customer_analysis.join', ':id') }}'.replace(':id', id);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This will mark the customer as joined.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, join them!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Joined!', 'Customer has been marked as joined.', 'success');
+                                    table.ajax.reload();
+                                } else {
+                                    Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
+                                }
+                            },
+                            error: function(xhr) {
+                                Swal.fire('Error!', 'There was an issue marking the customer as joined.', 'error');
+                            }
+                        });
+                    }
+                });
             });
 
-            // Fetch total unique orders
-            function fetchTotalUniqueOrders() {
-                const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val();
+            // Handle unjoin button click
+            $('#customerAnalysisTable').on('click', '.unJoinButton', function() {
+                var id = $(this).data('id');
+                var url = '{{ route('customer_analysis.unjoin', ':id') }}'.replace(':id', id);
 
-                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        $('#totalOrder').text(data.unique_customer_count);
-                        $('#loyalisCount').text(data.loyalis_count);
-                        $('#prioritasCount').text(data.prioritas_count);
-                        $('#newCount').text(data.new_count);
-                        
-                        // Update customer distribution chart if it's active
-                        const activeTab = $('.nav-pills .nav-link.active').attr('href');
-                        if (activeTab === "#customerDistributionTab") {
-                            fetchCustomerDistribution();
-                        }
-                    })
-                    .catch(error => console.error('Error fetching customer counts:', error));
-            }
-
-            // Initial fetch of unique orders
-            fetchTotalUniqueOrders();
-
-            // Populate product filter
-            function populateProdukFilter() {
-                fetch('{{ route('customer_analysis.get_products') }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        const produkSelect = $('#filterProduk');
-                        produkSelect.empty();
-                        produkSelect.append('<option value="">All Produk</option>');
-                        data.forEach(produk => {
-                            produkSelect.append(`<option value="${produk.short_name}">${produk.short_name}</option>`);
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This will unmark the customer as joined.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, unjoin them!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Unjoined!', 'Customer has been unmarked as joined.', 'success');
+                                    table.ajax.reload();
+                                } else {
+                                    Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
+                                }
+                            },
+                            error: function(xhr) {
+                                Swal.fire('Error!', 'There was an issue unmarking the customer as joined.', 'error');
+                            }
                         });
-                    })
-                    .catch(error => console.error('Error fetching produk list:', error));
-            }
+                    }
+                });
+            });
 
-            // Initialize product filter
-            populateProdukFilter();
+            $('#exportButton').click(function() {
+                $('#exportModal').modal('show');
+            });
 
-            // Initialize Orders Table for Modal
+            $('#doExport').click(function() {
+                let month = $('#exportMonth').val();
+                let status = $('#exportStatus').val(); 
+                let whichHp = $('#exportWhichHp').val();
+                
+                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
+                $('#exportModal').modal('hide');
+            });
+
             var ordersTable = $('#ordersTable').DataTable({
                 searching: false,
                 paging: true,
@@ -608,9 +622,26 @@
                 pageLength: 5
             });
 
-            // The modal chart instance is already declared at the top
+            $('#customerAnalysisTable').on('click', '.editButton', function() {
+                var id = $(this).data('id');
 
-            // Handle View Button Click
+                $.ajax({
+                    url: '{{ route('customer_analysis.edit', ':id') }}'.replace(':id', id),
+                    method: 'GET',
+                    success: function(response) {
+                        $('#editCustomerForm').attr('action', '{{ route('talent.update', ':id') }}'.replace(':id', id));
+                        
+                        $('#edit_nama_penerima').val(response.customer.nama_penerima);
+                        $('#edit_produk').val(response.customer.produk);
+                        $('#edit_qty').val(response.customer.qty);
+                        $('#editTalentModal').modal('show');
+                    },
+                    error: function(response) {
+                        console.error('Error fetching talent data:', response);
+                    }
+                });
+            });
+
             $('#customerAnalysisTable').on('click', '.viewButton', function() {
                 var customerId = $(this).data('id');
 
@@ -618,7 +649,7 @@
                     url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerId),
                     method: 'GET',
                     success: function(response) {
-                        // Populate customer details
+                        // Populate the customer name and phone number
                         $('#view_customer_name').val(response.nama_penerima);
                         $('#view_phone_number').val(response.nomor_telepon);
                         $('#view_alamat').val(response.alamat);
@@ -626,8 +657,10 @@
                         $('#view_provinsi').val(response.provinsi);
                         $('#view_quantity').val(response.quantity);
 
-                        // Clear and update orders table
+                        // Clear the existing orders from DataTable
                         ordersTable.clear();
+
+                        // Add new orders to the DataTable
                         response.orders.forEach(function(order) {
                             ordersTable.row.add([
                                 order.produk,
@@ -636,7 +669,6 @@
                             ]).draw();
                         });
 
-                        // Fetch and display product distribution
                         fetch(`{{ route('customer_analysis.product_distribution', ':id') }}`.replace(':id', customerId))
                             .then(response => response.json())
                             .then(data => {
@@ -644,13 +676,13 @@
                                 var productCounts = data.map(item => item.count);
 
                                 // Destroy previous chart instance if it exists
-                                if (modalProductChart) {
-                                    modalProductChart.destroy();
+                                if (productChart) {
+                                    productChart.destroy();
                                 }
 
-                                // Create the pie chart
+                                // Create the pie chart with new data
                                 var ctx = document.getElementById('productPieChartDetail').getContext('2d');
-                                modalProductChart = new Chart(ctx, {
+                                productChart = new Chart(ctx, {
                                     type: 'pie',
                                     data: {
                                         labels: productLabels,
@@ -689,7 +721,7 @@
                             })
                             .catch(error => console.error('Error fetching product distribution data:', error));
 
-                        // Show the modal
+                        // Open the modal
                         $('#viewCustomerModal').modal('show');
                     },
                     error: function(xhr) {
@@ -698,15 +730,127 @@
                     }
                 });
             });
-
-            // Clean up when detail modal is hidden
             $('#viewCustomerModal').on('hidden.bs.modal', function () {
-                if (modalProductChart) {
-                    modalProductChart.destroy();
-                }
-                ordersTable.clear().draw();
+                fetchProductCounts();
+                fetchDailyUniqueCustomers();
             });
 
+            // function fetchCityCounts() {
+            //     const selectedMonth = $('#filterMonth').val();
+            //     const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+            //     const ctx = document.getElementById('cityPieChart').getContext('2d');
+
+            //     if (window.productChart) {
+            //         window.productChart.destroy();
+            //     }
+
+            //     fetch(`{{ route('customer_analysis.city_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+            //         .then(response => response.json())
+            //         .then(data => {
+            //             const productLabels = data.map(item => item.kota_kabupaten);
+            //             const productCounts = data.map(item => item.total_count);
+            //             window.productChart = new Chart(ctx, {
+            //                 type: 'pie',
+            //                 data: {
+            //                     labels: productLabels,
+            //                     datasets: [{
+            //                         label: 'Product Orders',
+            //                         data: productCounts,
+            //                         backgroundColor: [
+            //                             'rgba(75, 192, 192, 0.2)',
+            //                             'rgba(255, 99, 132, 0.2)',
+            //                             'rgba(255, 206, 86, 0.2)',
+            //                             'rgba(54, 162, 235, 0.2)',
+            //                             'rgba(153, 102, 255, 0.2)',
+            //                             'rgba(255, 159, 64, 0.2)',
+            //                         ],
+            //                         borderColor: [
+            //                             'rgba(75, 192, 192, 1)',
+            //                             'rgba(255, 99, 132, 1)',
+            //                             'rgba(255, 206, 86, 1)',
+            //                             'rgba(54, 162, 235, 1)',
+            //                             'rgba(153, 102, 255, 1)',
+            //                             'rgba(255, 159, 64, 1)',
+            //                         ],
+            //                         borderWidth: 1
+            //                     }]
+            //                 },
+            //                 options: {
+            //                     responsive: true,
+            //                     plugins: {
+            //                         legend: {
+            //                             display: false,
+            //                         },
+            //                         tooltip: {
+            //                             callbacks: {
+            //                                 label: function(tooltipItem) {
+            //                                     return tooltipItem.label + ': ' + tooltipItem.raw;
+            //                                 }
+            //                             }
+            //                         }
+            //                     }
+            //                 }
+            //             });
+            //         })
+            //         .catch(error => console.error('Error fetching product counts:', error));
+            // }
+            // fetchCityCounts();
+
+            let lineChart;
+
+            function fetchAndRenderCustomerTrend() {
+                const selectedStatus = $('#filterStatus').val();
+                
+                fetch(`{{ route('customer_analysis.daily_status') }}?status=${selectedStatus}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const lineChartData = {
+                            labels: data.labels,
+                            datasets: data.datasets.map(dataset => ({
+                                label: dataset.label,
+                                data: dataset.data, 
+                                borderColor: dataset.borderColor,
+                                backgroundColor: dataset.backgroundColor,
+                                borderWidth: 2,
+                                fill: true,
+                                tension: dataset.tension
+                            }))
+                        };
+
+                        if (lineChart) {
+                            lineChart.destroy();
+                        }
+
+                        const ctx = document.getElementById('customerTrendChart').getContext('2d');
+                        lineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: lineChartData,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            callback: function(value) {
+                                                return value.toLocaleString();
+                                            }
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+
+            fetchAndRenderCustomerTrend();
+            
         });
     </script>
 @endsection
