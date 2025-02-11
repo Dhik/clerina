@@ -71,6 +71,7 @@
                     <table id="talentPaymentsTable" class="table table-bordered table-striped">
                         <thead>
                             <tr>
+                                <th>No Document</th>
                                 <th>Username</th>
                                 <th>Talent Name</th>
                                 <th>Nama Rekening</th>
@@ -217,6 +218,7 @@
                 }
             },
             columns: [
+                { data: 'no_document', name: 'talent_payments.no_document' },
                 { data: 'username', name: 'talents.username' },
                 { data: 'talent_name', name: 'talents.talent_name' },
                 { data: 'nama_rekening', name: 'talents.nama_rekening' },
@@ -265,8 +267,8 @@
         });
 
         $('#filterButton').on('click', function() {
-    table.ajax.reload();
-});
+            table.ajax.reload();
+        });
 
 
 $('#resetFilterButton').on('click', function() {
