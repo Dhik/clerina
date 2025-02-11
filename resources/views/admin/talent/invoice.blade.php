@@ -103,6 +103,7 @@
                             @endif
                             <td class="title">
                                 INVOICE<br>
+                                <span style="font-size: 16px; color: #555;">{{ $no_document }}</span><br>
                             </td>
                         </tr>
                     </table>

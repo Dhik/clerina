@@ -11,7 +11,6 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <!-- Filter Dropdowns -->
                     <div class="row mb-3">
                         <div class="col-md-3 mb-2">
                             <label>PIC</label>

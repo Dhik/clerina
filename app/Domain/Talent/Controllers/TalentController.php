@@ -262,11 +262,13 @@ class TalentController extends Controller
             ->first();
 
         $statusPayment = $latestPayment ? $latestPayment->status_payment : null;
+        $no_document = $latestPayment ? $latestPayment->no_document : null;
 
         $ttd = $approval->photo;
         $approval_name = $approval->name;
 
         $data = [
+            'no_document' => $no_document,
             'nik' => $talent->nik,
             'nama_talent' => $talent->talent_name,
             'tanggal_hari_ini' => now()->format('d/m/Y'),

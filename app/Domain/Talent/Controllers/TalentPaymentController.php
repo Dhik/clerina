@@ -153,14 +153,13 @@ class TalentPaymentController extends Controller
                 $amount_tf = $final_tf - $talent->dp_amount;
             }
 
-            // Generate no_document
-            $currentDate = now()->format('my'); // Gets date in format 'mmyy'
-            $rowCount = TalentPayment::count() + 1; // Get total count of rows plus 1
+            $currentDate = now()->format('my');
+            $rowCount = TalentPayment::count() + 1;
             $no_document = sprintf("%s/INV/CLE/%04d", $currentDate, $rowCount);
 
             $validatedData['tenant_id'] = Auth::user()->current_tenant_id;
             $validatedData['amount_tf'] = $amount_tf;
-            $validatedData['no_document'] = $no_document; // Add no_document to validatedData
+            $validatedData['no_document'] = $no_document;
 
             $payment = TalentPayment::create($validatedData);
             return redirect()->route('talent.index')->with('success', 'Talent payment created successfully.');
