@@ -15,6 +15,9 @@
                         <i class="fas fa-plus"></i> Add Talent
                     </button>
                     <button id="exportButton" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export to excel
+                    </button>
+                    <button id="exportXMLButton" class="btn bg-maroon">
                         <i class="fas fa-file-excel"></i> Export to XML
                     </button>
                             
