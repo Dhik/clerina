@@ -28,6 +28,15 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div class="icheck-primary mt-2">
+                                    <input type="checkbox" id="filterDormant">
+                                    <label for="filterDormant">Is Dormant</label>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-auto">
                             <div class="btn-group">
                             <button id="exportButton" class="btn btn-success"><i class="fas fa-file-excel"></i> Export to Excel</button>
@@ -199,6 +208,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@^2"></script>
     <script>
         $(document).ready(function() {
+            const filterDormant = $('#filterDormant');
             $('#filterProduk').select2({
                 placeholder: "All Product",
                 allowClear: true,
@@ -215,6 +225,9 @@
                     fetchCustomerDistribution();
                 }
             });
+            $('#filterDormant').change(function () {
+                table.draw()
+            });
 
             var table = $('#customerAnalysisTable').DataTable({
                 processing: true,
@@ -225,6 +238,7 @@
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
                         d.status = $('#filterStatus').val();
+                        d.filterBooking = $('#filterBooking').prop('checked') ? '1' : null
                     }
                 },
                 columns: [
@@ -295,8 +309,6 @@
                     })
                     .catch(error => console.error('Error fetching produk list:', error));
             }
-
-            // Fetch produk list initially
             populateProdukFilter();
 
             $('#refreshButton').click(function() {
@@ -500,10 +512,9 @@
 
             function fetchDailyUniqueCustomers() {
                 const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+                const selectedProduk = $('#filterProduk').val();
                 const ctx = document.getElementById('dailyCustomersChart').getContext('2d');
 
-                // Destroy existing chart if it exists
                 if (window.dailyChart) {
                     window.dailyChart.destroy();
                 }

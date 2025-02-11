@@ -297,6 +297,7 @@ td.text-center .channel-logo {
             orderTable.draw()
             updateRecapCount()
         });
+        
         $('#filterStatus').change(function () {
             orderTable.draw()
             updateRecapCount()
