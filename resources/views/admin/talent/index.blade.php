@@ -14,6 +14,10 @@
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTalentModal">
                         <i class="fas fa-plus"></i> Add Talent
                     </button>
+                    <button id="exportButton" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </button>
+                            
                     <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
                         <i class="fas fa-file-download"></i> Import Talent
                     </button> -->
@@ -41,6 +45,7 @@
     </div>
 
     @include('admin.talent.modals.add_talent_modal')
+    @include('admin.talent.modals.export')
     @include('admin.talent.modals.edit_talent_modal')
     @include('admin.talent.modals.view_talent_modal')
     @include('admin.talent.modals.import_talent_modal')
@@ -61,6 +66,19 @@
 @section('js')
 <script>
     $(document).ready(function() {
+        $('#exportButton').click(function() {
+            $('#exportModal').modal('show');
+        });
+
+        $('#doExport').click(function() {
+            let month = $('#exportMonth').val();
+            let status = $('#exportStatus').val(); 
+            let whichHp = $('#exportWhichHp').val();
+                
+            window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
+            $('#exportModal').modal('hide');
+        });
+            
         var table = $('#talentTable').DataTable({
             processing: true,
             serverSide: true,
