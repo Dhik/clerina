@@ -34,38 +34,41 @@ class CustomersAnalysisExport extends DefaultValueBinder implements FromCollecti
         return parent::bindValue($cell, $value);
     }
 
-   public function collection() 
-   {
-       $query = CustomersAnalysis::query();
-
-       if ($this->month) {
-           $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$this->month]);
-       }
-       
-       if ($this->status) {
-           $query->where('status_customer', $this->status);
-       }
-
-       if ($this->whichHp) {
-           $query->where('which_hp', $this->whichHp);
-       }
-
-       return $query->select(
-           'nama_penerima as nama',
-           'nomor_telepon as kontak',
-           DB::raw('NULL as email'),
-           'alamat',
-           DB::raw('NULL as kecamatan'),
-           'kota_kabupaten as kota',
-           'provinsi',
-           DB::raw('NULL as kode_pos'),
-           'status_customer as group',
-           'which_hp as hp_mana',
-           DB::raw('NULL as note'),
-           DB::raw('NULL as user_terkait'),
-           DB::raw('NULL as birthday')
-       )->get();
-   }
+    public function collection() 
+    {
+        $query = CustomersAnalysis::query();
+    
+        if ($this->month) {
+            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$this->month]);
+        }
+        
+        if ($this->status) {
+            $query->where('status_customer', $this->status);
+        }
+    
+        if ($this->whichHp) {
+            $query->where('which_hp', $this->whichHp);
+        }
+    
+        return $query
+            ->select(
+                DB::raw('MIN(nama_penerima) as nama'),
+                'nomor_telepon as kontak',
+                DB::raw('NULL as email'),
+                DB::raw('MIN(alamat) as alamat'),
+                DB::raw('NULL as kecamatan'),
+                DB::raw('MIN(kota_kabupaten) as kota'),
+                DB::raw('MIN(provinsi) as provinsi'),
+                DB::raw('NULL as kode_pos'),
+                DB::raw('MIN(status_customer) as group'),
+                DB::raw('MIN(which_hp) as hp_mana'),
+                DB::raw('NULL as note'),
+                DB::raw('NULL as user_terkait'),
+                DB::raw('NULL as birthday')
+            )
+            ->groupBy('nomor_telepon')
+            ->get();
+    }
 
    public function headings(): array 
    {
