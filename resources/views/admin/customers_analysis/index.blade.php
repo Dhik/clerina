@@ -238,7 +238,7 @@
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
                         d.status = $('#filterStatus').val();
-                        d.filterBooking = $('#filterBooking').prop('checked') ? '1' : null
+                        d.filterDormant = $('#filterDormant').prop('checked') ? '1' : null
                     }
                 },
                 columns: [
