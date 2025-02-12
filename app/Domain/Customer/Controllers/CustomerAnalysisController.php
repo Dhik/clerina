@@ -421,6 +421,7 @@ class CustomerAnalysisController extends Controller
                     'produk' => $order->produk,
                     'tanggal_pesanan_dibuat' => $order->tanggal_pesanan_dibuat,
                     'qty' => $order->qty,
+                    'status_customer' => $order->status_customer,
                 ];
             })
         ]);

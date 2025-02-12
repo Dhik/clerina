@@ -154,7 +154,7 @@
                                 <th>Status</th>
                                 <th>HP</th>
                                 <th>Details</th>
-                                <th>Sudah Bergabung</th>
+                                <th>Aktivitas</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -704,7 +704,8 @@
                             ordersTable.row.add([
                                 order.produk,
                                 order.tanggal_pesanan_dibuat,
-                                order.qty
+                                order.qty,
+                                order.status_customer,
                             ]).draw();
                         });
 
