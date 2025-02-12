@@ -409,19 +409,53 @@ class TalentController extends Controller
         $total = $harga - $pph;
         return view('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
     }
-    public function exportNikAsXml()
+    public function exportBp21AsXml()
     {
-        $talents = Talent::select('nik')->take(10)->get();
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><talents></talents>');
-
-        foreach ($talents as $talent) {
-            $talentNode = $xml->addChild('talent');
-            $talentNode->addChild('nik', htmlspecialchars($talent->nik ?? ''));
-        }
-        $xmlString = $xml->asXML();
+        // Get first 10 talents
+        $talents = Talent::select(['nik', 'no_document'])->take(10)->get();
         
-        return response($xmlString, 200)
+        // Create XML with namespace
+        $xml = new \SimpleXMLElement(
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
+            '<Bp21Bulk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></Bp21Bulk>'
+        );
+        
+        // Add TIN element
+        $xml->addChild('TIN', '0029482015507000');
+        
+        // Create ListOfBp21 element
+        $listOfBp21 = $xml->addChild('ListOfBp21');
+        
+        // Add each talent's data to the XML
+        foreach ($talents as $talent) {
+            $bp21 = $listOfBp21->addChild('Bp21');
+            
+            // Add all required elements
+            $bp21->addChild('TaxPeriodMonth', '');
+            $bp21->addChild('TaxPeriodYear', '');
+            $bp21->addChild('CounterpartTin', htmlspecialchars($talent->nik ?? ''));
+            $bp21->addChild('IDPlaceOfBusinessActivityOfIncomeRecipient', '');
+            $bp21->addChild('StatusTaxExemption', 'K/');
+            $bp21->addChild('TaxCertificate', '');
+            $bp21->addChild('TaxObjectCode', '');
+            $bp21->addChild('Gross', '');
+            $bp21->addChild('Deemed', '');
+            $bp21->addChild('Rate', '');
+            $bp21->addChild('Document', 'CommercialInvoice');
+            $bp21->addChild('DocumentNumber', htmlspecialchars($talent->no_document ?? ''));
+            $bp21->addChild('DocumentDate', '');
+            $bp21->addChild('IDPlaceOfBusinessActivity', '');
+            $bp21->addChild('WithholdingDate', '');
+        }
+        
+        // Format XML output
+        $dom = new \DOMDocument('1.0');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        $dom->loadXML($xml->asXML());
+        
+        return response($dom->saveXML(), 200)
             ->header('Content-Type', 'application/xml')
-            ->header('Content-Disposition', 'attachment; filename="talent_niks.xml"');
+            ->header('Content-Disposition', 'attachment; filename="bp21_export.xml"');
     }
 }
