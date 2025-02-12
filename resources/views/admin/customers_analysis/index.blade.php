@@ -287,6 +287,18 @@
             }
 
             fetchTotalUniqueOrders();
+            function formatStatusCustomer(status) {
+                if (!status) return '<span class="btn btn-sm btn-secondary">NULL</span>';
+                
+                const statusColors = {
+                    'prioritas': 'bg-success',
+                    'loyalis': 'bg-primary',
+                    'new customer': 'bg-info'
+                };
+
+                const color = statusColors[status.toLowerCase()] || 'bg-secondary';
+                return `<button class="btn btn-sm ${color}">${status}</button>`;
+            }
 
             $('#filterMonth, #filterProduk, #filterStatus').change(function() {
                 table.ajax.reload();
@@ -701,11 +713,12 @@
 
                         // Add new orders to the DataTable
                         response.orders.forEach(function(order) {
+                            const statusHtml = formatStatusCustomer(order.status_customer);
                             ordersTable.row.add([
                                 order.produk,
                                 order.tanggal_pesanan_dibuat,
                                 order.qty,
-                                order.status_customer,
+                                statusHtml,
                             ]).draw();
                         });
 
