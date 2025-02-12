@@ -21,6 +21,7 @@
         "phpoffice/phpword": "^1.3",
         "spatie/laravel-medialibrary": "^11.4",
         "spatie/laravel-permission": "^6.4",
+        "twilio/sdk": "*",
         "yajra/laravel-datatables-oracle": "^10.3.1"
     },
     "require-dev": {

@@ -782,12 +782,11 @@ class OrderController extends Controller
         $range = 'Orders Shopee Data!A2:I'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 1;
+        $tenant_id = 2;
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
 
-        // Process data in chunks
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
                 $orderData = [
