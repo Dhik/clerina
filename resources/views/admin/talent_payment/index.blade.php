@@ -168,7 +168,6 @@
         $(this).val('');
     });
     $(document).ready(function() {
-        // Initialize Select2
         
         $('#filterUsername').select2({
             placeholder: "All Usernames",

@@ -84,6 +84,12 @@
         $('#exportXMLButton').click(function() {
             $('#exportModalXML').modal('show');
         });
+        $('#filterNIK').select2({
+            placeholder: "All NIK",
+            allowClear: true,
+            multiple: true,
+            width: '100%',
+        });
 
         $('#doExport').click(function() {
             let month = $('#exportMonth').val();
