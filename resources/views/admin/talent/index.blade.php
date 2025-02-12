@@ -12,12 +12,10 @@
             <div class="card">
                 <div class="card-header">
                     <div class="btn-group" role="group" aria-label="Talent Management Actions">
-                        <!-- Add Button -->
                         <button type="button" class="btn btn-primary mr-3" data-toggle="modal" data-target="#addTalentModal">
                             <i class="fas fa-plus"></i> Add Talent
                         </button>
 
-                        <!-- Export Buttons -->
                         <div class="btn-group" role="group">
                             <button id="exportButton" class="btn btn-success">
                                 <i class="fas fa-file-excel"></i> Export to Excel
@@ -104,6 +102,71 @@
                 
             window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
             $('#exportModal').modal('hide');
+        });
+
+        $('#doExportXML').click(function() {
+            // Get selected NIKs
+            const selectedNiks = $('#filterNIKXML').val();
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Exporting...',
+                text: 'Please wait while we generate your XML file',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: route('talent.tax_xml'),
+                method: 'GET',
+                data: {
+                    niks: selectedNiks
+                },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(response) {
+                    // Create blob link to download
+                    const blob = new Blob([response], { type: 'application/xml' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'bp21_export.xml';
+                    
+                    // Append to document and trigger download
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Clean up
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    $('#exportModalXML').modal('hide');
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'XML file has been generated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Export error:', error);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Export Failed',
+                        text: 'There was an error generating the XML file. Please try again.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
         });
             
         var table = $('#talentTable').DataTable({

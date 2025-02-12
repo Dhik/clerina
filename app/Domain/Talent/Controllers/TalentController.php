@@ -410,10 +410,13 @@ class TalentController extends Controller
         $total = $harga - $pph;
         return view('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
     }
-    public function exportBp21AsXml()
+    public function exportBp21AsXml(Request $request)
     {
-        // Get first 10 talents
-        $talents = Talent::select(['nik', 'no_document'])->take(10)->get();
+        $query = Talent::select(['nik', 'no_document']);
+        if ($request->has('niks') && !empty($request->niks)) {
+            $query->whereIn('nik', $request->niks);
+        }
+        $talents = $query->get();
         
         // Create XML with namespace
         $xml = new \SimpleXMLElement(
