@@ -29,6 +29,7 @@ Route::prefix('admin')
             Route::get('/{talent}/inv_data', [TalentController::class, 'exportInvData'])->name('talent.exportInvData');
             Route::get('/{talent}/spk', [TalentController::class, 'exportSPK'])->name('talent.spk');
             Route::get('/spk', [TalentController::class, 'showSPK'])->name('talent.spk_view');
+            Route::get('/tax_xml', [TalentController::class, 'exportNikAsXml'])->name('talent.tax_xml');
             Route::get('/invoice', [TalentController::class, 'showInvoice'])->name('talent.showInvoice');
 
             Route::get('/data', [TalentController::class, 'data'])->name('talent.data');

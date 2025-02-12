@@ -409,4 +409,19 @@ class TalentController extends Controller
         $total = $harga - $pph;
         return view('admin.talent.mou_azrina', compact('talent', 'tanggal_hari_ini', 'total'));
     }
+    public function exportNikAsXml()
+    {
+        $talents = Talent::select('nik')->take(10)->get();
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><talents></talents>');
+
+        foreach ($talents as $talent) {
+            $talentNode = $xml->addChild('talent');
+            $talentNode->addChild('nik', htmlspecialchars($talent->nik ?? ''));
+        }
+        $xmlString = $xml->asXML();
+        
+        return response($xmlString, 200)
+            ->header('Content-Type', 'application/xml')
+            ->header('Content-Disposition', 'attachment; filename="talent_niks.xml"');
+    }
 }
