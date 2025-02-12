@@ -413,8 +413,9 @@ class TalentController extends Controller
     public function exportBp21AsXml(Request $request)
     {
         $query = Talent::select(['nik', 'no_document']);
-        if ($request->has('niks') && !empty($request->niks)) {
-            $query->whereIn('nik', $request->niks);
+        if ($request->has('niks')) {
+            $niks = explode(',', $request->niks);
+            $query->whereIn('nik', $niks);
         }
         $talents = $query->get();
         

@@ -108,64 +108,40 @@
             // Get selected NIKs
             const selectedNiks = $('#filterNIKXML').val();
             
+            if (!selectedNiks || selectedNiks.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No NIK Selected',
+                    text: 'Please select at least one NIK to export',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
             // Show loading state
             Swal.fire({
-                title: 'Exporting...',
-                text: 'Please wait while we generate your XML file',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false,
+                title: 'Processing Export',
+                text: 'Please wait...',
+                timer: 2000,
+                timerProgressBar: true,
                 didOpen: () => {
                     Swal.showLoading();
                 }
-            });
-
-            $.ajax({
-                url: route('talent.tax_xml'),
-                method: 'GET',
-                data: {
-                    niks: selectedNiks
-                },
-                xhrFields: {
-                    responseType: 'blob'
-                },
-                success: function(response) {
-                    // Create blob link to download
-                    const blob = new Blob([response], { type: 'application/xml' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'bp21_export.xml';
-                    
-                    // Append to document and trigger download
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    // Clean up
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-
-                    $('#exportModalXML').modal('hide');
-
+            }).then(() => {
+                // Navigate to export URL with NIK parameters
+                window.location.href = `{{ route('talent.tax_xml') }}?niks=${selectedNiks.join(',')}`;
+                $('#exportModalXML').modal('hide');
+                
+                // Show success message after a short delay
+                setTimeout(() => {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Success!',
-                        text: 'XML file has been generated successfully',
+                        title: 'Export Started',
+                        text: 'Your XML file will download shortly',
                         timer: 2000,
                         showConfirmButton: false
                     });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Export error:', error);
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Export Failed',
-                        text: 'There was an error generating the XML file. Please try again.',
-                        confirmButtonText: 'OK'
-                    });
-                }
+                }, 1000);
             });
         });
             
