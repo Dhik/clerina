@@ -782,7 +782,7 @@ class OrderController extends Controller
         $range = 'Orders Shopee Data!A2:I'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 2;
+        $tenant_id = 1;
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
