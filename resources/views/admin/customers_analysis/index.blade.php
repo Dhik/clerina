@@ -217,12 +217,11 @@
             // });
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 const targetId = $(e.target).attr("href");
-                if (targetId === "#productDistributionTab") {
+                if (targetId === "#customerDistributionTab") {
+                    fetchAndRenderCustomerTrend();
                     fetchProductCounts();
                 } else if (targetId === "#customerTrendTab") {
-                    fetchAndRenderCustomerTrend();
-                } else if (targetId === "#customerDistributionTab") {
-                    fetchCustomerDistribution();
+                    fetchDailyUniqueCustomers();
                 }
             });
             // $('#filterDormant').change(function() {
@@ -294,6 +293,7 @@
                 fetchTotalUniqueOrders();
                 fetchProductCounts();
                 fetchAndRenderCustomerTrend();
+                fetchDailyUniqueCustomers();
             });
 
             function populateProdukFilter() {
