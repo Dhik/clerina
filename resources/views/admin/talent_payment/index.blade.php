@@ -97,24 +97,17 @@
 @section('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /* Base Select2 styling */
         .select2-container .select2-selection--multiple {
             min-height: 38px;
         }
-        /* Ensure the text is visible */
         .select2-container--default .select2-selection--multiple .select2-search__field {
-            color: #495057; /* Text color */
-            background-color: #ffffff; /* Background color */
-            height: auto; /* Auto-adjust height */
+            color: #495057; 
+            background-color: #ffffff; 
+            height: auto; 
         }
-
-
-        /* Input text color */
         .select2-container--default .select2-search--inline .select2-search__field {
             color: #495057;
         }
-
-        /* Selected option styling */
         .select2-container--default .select2-selection--multiple .select2-selection__choice {
             background-color: #007bff;
             border: 1px solid #006fe6;
@@ -122,8 +115,6 @@
             padding: 2px 8px;
             margin: 4px 4px 0 0;
         }
-
-        /* Remove button styling */
         .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
             color: #fff;
             margin-right: 5px;
@@ -133,18 +124,12 @@
             color: #fff;
             opacity: 0.8;
         }
-
-        /* Dropdown styling */
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #007bff;
         }
-
-        /* Input container */
         .select2-container--default .select2-selection--multiple {
             border: 1px solid #ced4da;
         }
-
-        /* Focus state */
         .select2-container--default.select2-container--focus .select2-selection--multiple {
             border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);

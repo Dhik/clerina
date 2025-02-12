@@ -34,7 +34,6 @@ class TalentPaymentController extends Controller
      */
     public function index()
     {
-        // Fetch unique PIC and Username values
         $uniquePics = Talent::select('pic')->distinct()->pluck('pic');
         $uniqueUsernames = Talent::select('username')->distinct()->pluck('username');
 

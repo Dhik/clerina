@@ -1,4 +1,4 @@
-<div class="modal fade" id="exportModal" tabindex="-1" role="dialog">
+<div class="modal fade" id="exportModalXML" tabindex="-1" role="dialog">
    <div class="modal-dialog" role="document">
        <div class="modal-content">
            <div class="modal-header">
@@ -15,6 +15,7 @@
                             @endforeach
                         </select>
                    </div>
+                   
                </form>
            </div>
            <div class="modal-footer">

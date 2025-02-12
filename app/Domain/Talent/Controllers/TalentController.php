@@ -33,7 +33,8 @@ class TalentController extends Controller
      */
     public function index()
     {
-        return view('admin.talent.index');
+        $uniqueNIK = Talent::select('nik')->distinct()->pluck('nik');
+        return view('admin.talent.index', compact('uniqueNIK'));
     }
 
     public function data(Request $request)

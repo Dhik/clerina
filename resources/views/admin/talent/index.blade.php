@@ -18,14 +18,14 @@
                         </button>
 
                         <!-- Export Buttons -->
-                        <!-- <div class="btn-group" role="group">
+                        <div class="btn-group" role="group">
                             <button id="exportButton" class="btn btn-success">
                                 <i class="fas fa-file-excel"></i> Export to Excel
                             </button>
                             <button id="exportXMLButton" class="btn bg-maroon">
                                 <i class="fas fa-file-excel"></i> Export to XML
                             </button>
-                        </div> -->
+                        </div>
 
                         <!-- Commented out import button -->
                         <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTalentModal">
@@ -57,6 +57,7 @@
 
     @include('admin.talent.modals.add_talent_modal')
     @include('admin.talent.modals.export')
+    @include('admin.talent.modals.export_xml')
     @include('admin.talent.modals.edit_talent_modal')
     @include('admin.talent.modals.view_talent_modal')
     @include('admin.talent.modals.import_talent_modal')
@@ -79,6 +80,9 @@
     $(document).ready(function() {
         $('#exportButton').click(function() {
             $('#exportModal').modal('show');
+        });
+        $('#exportXMLButton').click(function() {
+            $('#exportModalXML').modal('show');
         });
 
         $('#doExport').click(function() {
