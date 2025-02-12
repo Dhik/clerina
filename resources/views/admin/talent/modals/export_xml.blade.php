@@ -9,7 +9,7 @@
                <form id="exportForm">
                    <div class="form-group">
                         <label>NIK</label>
-                        <select id="filterNIK" class="form-select select2" style="width: 100%;" multiple="multiple">
+                        <select id="filterNIKXML" class="form-select select2" style="width: 100%;" multiple="multiple">
                             @foreach($uniqueNIK as $nik)
                                 <option value="{{ $nik }}">{{ $nik }}</option>
                             @endforeach
