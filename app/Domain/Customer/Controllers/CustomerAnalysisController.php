@@ -403,7 +403,7 @@ class CustomerAnalysisController extends Controller
         $customerOrders = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
             ->where('nomor_telepon', $customer->nomor_telepon)
             ->orderBy('tanggal_pesanan_dibuat', 'asc') // Sort by date
-            ->get(['produk', 'tanggal_pesanan_dibuat', 'qty']);
+            ->get(['produk', 'tanggal_pesanan_dibuat', 'qty', 'status_customer']);
 
         $totalQty = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
             ->where('nomor_telepon', $customer->nomor_telepon)
