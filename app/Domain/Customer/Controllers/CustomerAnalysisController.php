@@ -507,23 +507,39 @@ class CustomerAnalysisController extends Controller
         }
         $data = $query->orderBy('date')->get();
 
-        $labels = $data->pluck('date')
+        $labels = CustomerMonitor::where('tenant_id', Auth::user()->current_tenant_id)
+            ->orderBy('date')
+            ->pluck('date')
             ->unique()
             ->map(function($date) {
                 return Carbon::parse($date)->format('F Y');
             })->values();
 
+        $allDates = CustomerMonitor::where('tenant_id', Auth::user()->current_tenant_id)
+            ->orderBy('date')
+            ->pluck('date')
+            ->unique()
+            ->values();
+
         $datasets = [];
         $colors = [
-            'Loyalis' => ['#0D6EFD', '#0D6EFD20'],    // Blue from image 2
-            'Prioritas' => ['#198754', '#19875420'],   // Green from image 3
-            'New Customer' => ['#17A2B8', '#17A2B820'] // Cyan from image 1
+            'Loyalis' => ['#0D6EFD', '#0D6EFD20'],
+            'Prioritas' => ['#198754', '#19875420'],
+            'New Customer' => ['#17A2B8', '#17A2B820']
         ];
 
         foreach($data->groupBy('status') as $status => $values) {
+            $countsByDate = collect($allDates)->mapWithKeys(function($date) {
+                return [$date => 0];
+            });
+
+            foreach($values as $value) {
+                $countsByDate[$value->date] = $value->count_customer;
+            }
+
             $datasets[] = [
                 'label' => $status,
-                'data' => $values->pluck('count_customer')->values(),
+                'data' => $countsByDate->values(),
                 'fill' => false,
                 'borderColor' => $colors[$status][0],
                 'backgroundColor' => $colors[$status][1],
