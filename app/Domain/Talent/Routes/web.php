@@ -30,6 +30,7 @@ Route::prefix('admin')
             Route::get('/{talent}/spk', [TalentController::class, 'exportSPK'])->name('talent.spk');
             Route::get('/spk', [TalentController::class, 'showSPK'])->name('talent.spk_view');
             Route::get('/tax_xml', [TalentController::class, 'exportBp21AsXml'])->name('talent.tax_xml');
+            Route::get('/tax_excel', [TalentController::class, 'exportBp21AsExcel'])->name('talent.tax_excel');
             Route::get('/invoice', [TalentController::class, 'showInvoice'])->name('talent.showInvoice');
 
             Route::get('/data', [TalentController::class, 'data'])->name('talent.data');

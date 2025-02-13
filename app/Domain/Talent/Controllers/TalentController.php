@@ -12,6 +12,7 @@ use Yajra\DataTables\Utilities\Request;
 use Yajra\DataTables\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Talent\Exports\TalentTemplateExport;
+use App\Domain\Talent\Exports\TalentTaxExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Auth;
@@ -419,23 +420,15 @@ class TalentController extends Controller
         }
         $talents = $query->get();
         
-        // Create XML with namespace
         $xml = new \SimpleXMLElement(
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
             '<Bp21Bulk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></Bp21Bulk>'
         );
-        
-        // Add TIN element
         $xml->addChild('TIN', '0029482015507000');
-        
-        // Create ListOfBp21 element
         $listOfBp21 = $xml->addChild('ListOfBp21');
-        
-        // Add each talent's data to the XML
         foreach ($talents as $talent) {
             $bp21 = $listOfBp21->addChild('Bp21');
             
-            // Add all required elements
             $bp21->addChild('TaxPeriodMonth', '');
             $bp21->addChild('TaxPeriodYear', '');
             $bp21->addChild('CounterpartTin', htmlspecialchars($talent->nik ?? ''));
@@ -453,7 +446,6 @@ class TalentController extends Controller
             $bp21->addChild('WithholdingDate', '');
         }
         
-        // Format XML output
         $dom = new \DOMDocument('1.0');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
@@ -462,5 +454,19 @@ class TalentController extends Controller
         return response($dom->saveXML(), 200)
             ->header('Content-Type', 'application/xml')
             ->header('Content-Disposition', 'attachment; filename="bp21_export.xml"');
+    }
+
+    public function exportBp21AsExcel(Request $request)
+    {
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
+        $companyNpwp = '3172022407981234';
+        
+        $niks = $request->has('niks') ? explode(',', $request->niks) : null;
+
+        return Excel::download(
+            new TalentTaxExport($month, $year, $companyNpwp, $niks),
+            'talent_tax_report.xlsx'
+        );
     }
 }

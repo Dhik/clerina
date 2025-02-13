@@ -104,8 +104,17 @@
             $('#exportModal').modal('hide');
         });
 
+        $('#doExportExcel').click(function() {
+            const selectedNiks = $('#filterNIK').val();
+            
+            let url = "{{ route('talent.tax_excel') }}";
+            if (selectedNiks && selectedNiks.length > 0) {
+                url += '?niks=' + selectedNiks.join(',');
+            }
+            window.location.href = url;
+        });
+
         $('#doExportXML').click(function() {
-            // Get selected NIKs
             const selectedNiks = $('#filterNIKXML').val();
             
             if (!selectedNiks || selectedNiks.length === 0) {
@@ -118,7 +127,6 @@
                 return;
             }
 
-            // Show loading state
             Swal.fire({
                 title: 'Processing Export',
                 text: 'Please wait...',

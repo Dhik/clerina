@@ -932,6 +932,7 @@ class OrderController extends Controller
 
         return response()->json($response);
     }
+    
     public function getDailyStatusTrend(): JsonResponse
     {
         $startDate = Carbon::now()->startOfMonth();
