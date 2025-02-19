@@ -509,7 +509,7 @@ class CustomerAnalysisController extends Controller
         // Check if export exists yet
         $exists = Storage::exists("exports/{$id}.zip");
         
-        return view('admin.customers-analysis.export-status', [
+        return view('admin.customers_analysis.export-status', [
             'exportId' => $id,
             'completed' => $exists,
             'downloadUrl' => route('customer_analysis.export_download', ['id' => $id])
