@@ -465,6 +465,9 @@ class CustomerAnalysisController extends Controller
     //     $whichHp = $request->input('which_hp');
     //     return Excel::download(new CustomersAnalysisExport($month, $status, $whichHp), 'customer_analysis.xlsx');
     // }
+    /**
+     * Export customer data - smart handling for both small and large exports
+     */
     public function export(Request $request)
     {
         $month = $request->input('month');
@@ -482,182 +485,51 @@ class CustomerAnalysisController extends Controller
             );
         }
         
-        // For large dataset, create chunked files and zip them
-        return $this->createZippedExport($month, $status, $whichHp, $count);
-    }
-    
-    /**
-     * Create chunked Excel files and return a ZIP file
-     */
-    private function createZippedExport($month, $status, $whichHp, $totalCount)
-    {
-        // Settings
-        $recordsPerFile = 1500;
-        $fileCount = ceil($totalCount / $recordsPerFile);
+        // For large dataset, queue the export and return a status page
+        $exportId = md5(time() . rand(1000, 9999));
         
-        // Create temporary directory
-        $exportId = uniqid();
-        $tempDir = storage_path('app/temp_exports/' . $exportId);
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-        
-        // Create multiple Excel files
-        for ($i = 0; $i < $fileCount; $i++) {
-            $offset = $i * $recordsPerFile;
-            $filename = "customer_data_part_" . ($i + 1) . "_of_{$fileCount}.xlsx";
-            $filePath = "{$tempDir}/{$filename}";
-            
-            // Get data for this chunk
-            $data = $this->getChunkData($month, $status, $whichHp, $offset, $recordsPerFile);
-            
-            // Create Excel file
-            $this->createExcelFile($data, $filePath);
-        }
-        
-        // Create ZIP archive
-        $zipFilename = "customer_export_" . date('YmdHis') . ".zip";
-        $zipPath = storage_path('app/exports/' . $zipFilename);
-        $this->createZipArchive($tempDir, $zipPath);
-        
-        // Clean up temp files
-        $this->cleanupTempFiles($tempDir);
-        
-        // Return the ZIP file for download
-        return response()->download($zipPath)->deleteFileAfterSend(true);
-    }
-    
-    /**
-     * Get data for a specific chunk
-     */
-    private function getChunkData($month, $status, $whichHp, $offset, $limit)
-    {
-        $query = CustomersAnalysis::query();
-        
-        if ($month) {
-            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$month]);
-        }
-        
-        if ($status) {
-            $query->where('status_customer', $status);
-        }
-        
-        if ($whichHp) {
-            $query->where('which_hp', $whichHp);
-        }
-        
-        return $query->select(
-                \DB::raw('MIN(nama_penerima) as nama'),
-                'nomor_telepon as kontak',
-                \DB::raw('NULL as email'),
-                \DB::raw('MIN(alamat) as alamat'),
-                \DB::raw('NULL as kecamatan'),
-                \DB::raw('MIN(kota_kabupaten) as kota'),
-                \DB::raw('MIN(provinsi) as provinsi'),
-                \DB::raw('NULL as kode_pos'),
-                \DB::raw('MIN(status_customer) as group_customer'),
-                \DB::raw('MIN(which_hp) as hp_mana'),
-                \DB::raw('NULL as note'),
-                \DB::raw('NULL as user_terkait'),
-                \DB::raw('NULL as birthday')
-            )
-            ->groupBy('nomor_telepon')
-            ->skip($offset)
-            ->take($limit)
-            ->get();
-    }
-    
-    /**
-     * Create an Excel file from data
-     */
-    private function createExcelFile($data, $filePath)
-    {
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        
-        // Add headers
-        $headers = [
-            'Nama', 'Kontak', 'Email', 'Alamat', 'Kecamatan', 'Kota', 
-            'Provinsi', 'Kode Pos', 'Group', 'Tag', 'Note', 'User Terkait', 'Birthday'
-        ];
-        
-        foreach ($headers as $index => $header) {
-            $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
-        }
-        
-        // Add data
-        $row = 2;
-        foreach ($data as $item) {
-            $col = 1;
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->nama);
-            $sheet->setCellValueExplicitByColumnAndRow($col++, $row, $item->kontak, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->email);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->alamat);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->kecamatan);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->kota);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->provinsi);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->kode_pos);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->group_customer);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->hp_mana);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->note);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->user_terkait);
-            $sheet->setCellValueByColumnAndRow($col++, $row, $item->birthday);
-            $row++;
-        }
-        
-        // Save file
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($filePath);
-    }
-    
-    /**
-     * Create ZIP archive from files in temp directory
-     */
-    private function createZipArchive($sourceDir, $zipPath)
-    {
-        $zip = new ZipArchive();
-        
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
-            $files = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($sourceDir),
-                \RecursiveIteratorIterator::LEAVES_ONLY
-            );
-            
-            foreach ($files as $file) {
-                if (!$file->isDir()) {
-                    $relativePath = basename($file->getRealPath());
-                    $zip->addFile($file->getRealPath(), $relativePath);
-                }
-            }
-            
-            $zip->close();
-            return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Clean up temporary files
-     */
-    private function cleanupTempFiles($tempDir)
-    {
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($tempDir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
+        ProcessLargeExport::dispatch(
+            $month,
+            $status, 
+            $whichHp,
+            $exportId,
+            auth()->id()
         );
         
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getRealPath());
-            } else {
-                unlink($file->getRealPath());
-            }
+        // Redirect to a status page
+        return redirect()->route('customer_analysis.export_status', ['id' => $exportId]);
+    }
+
+    /**
+     * Show export status page
+     */
+    public function showStatus($id)
+    {
+        // Check if export exists yet
+        $exists = Storage::exists("exports/{$id}.zip");
+        
+        return view('admin.customer-analysis.export-status', [
+            'exportId' => $id,
+            'completed' => $exists,
+            'downloadUrl' => route('customer_analysis.export_download', ['id' => $id])
+        ]);
+    }
+
+    /**
+     * Download a completed export
+     */
+    public function download($id)
+    {
+        $path = storage_path("app/exports/{$id}.zip");
+        
+        if (file_exists($path)) {
+            return response()->download($path);
         }
         
-        rmdir($tempDir);
+        return redirect()->route('customer_analysis.export_status', ['id' => $id])
+                        ->with('error', 'Export is still processing.');
     }
-    
+
     /**
      * Get approximate count of records to be exported
      */

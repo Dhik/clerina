@@ -40,7 +40,7 @@ Route::prefix('admin')
                 Route::delete('/delete/{customerNote}', [CustomerNoteController::class, 'delete'])->name('customerNote.destroy');
             });
 
-        Route::prefix('cstmr_analysis')
+            Route::prefix('cstmr_analysis')
             ->group(function () {
                 Route::get('/', [CustomerAnalysisController::class, 'index'])->name('customer_analysis.index');
                 Route::get('/get', [CustomerAnalysisController::class, 'data'])->name('customer_analysis.data');
@@ -50,21 +50,23 @@ Route::prefix('admin')
                 Route::get('/total', [CustomerAnalysisController::class, 'countUniqueCustomers'])->name('customer_analysis.total');
                 Route::get('/product-pie', [CustomerAnalysisController::class, 'getProductCounts'])->name('customer_analysis.product_counts');
                 Route::get('/city-pie', [CustomerAnalysisController::class, 'getCityCounts'])->name('customer_analysis.city_counts');
-
                 Route::get('/daily-unique', [CustomerAnalysisController::class, 'getDailyUniqueCustomers'])->name('customer_analysis.daily_unique');
                 Route::get('/daily-status', [CustomerAnalysisController::class, 'getTrendData'])->name('customer_analysis.daily_status');
+                
                 Route::get('/export', [CustomerAnalysisController::class, 'export'])->name('customer_analysis.export');
+                Route::get('/export/status/{id}', [CustomerAnalysisController::class, 'showStatus'])->name('customer_analysis.export_status');
+                Route::get('/export/download/{id}', [CustomerAnalysisController::class, 'download'])->name('customer_analysis.export_download');
+                
                 Route::get('/check-count', [CustomerAnalysisController::class, 'checkExportCount'])->name('customer_analysis.check_count');
                 Route::post('/queue-export', [CustomerAnalysisController::class, 'queueExport'])->name('customer_analysis.queue_export');
                 Route::get('/download/{filename}', [CustomerAnalysisController::class, 'downloadExport'])->name('customer_analysis.download');
                 Route::get('/export_month', [CustomerAnalysisController::class, 'exportCustomerAnalysis'])->name('customer_analysis.export_month');
                 Route::get('/products', [CustomerAnalysisController::class, 'getProducts'])->name('customer_analysis.get_products');
-
                 
                 Route::get('/{id}', [CustomerAnalysisController::class, 'show'])->name('customer_analysis.show');
                 Route::get('/{id}/product-distribution', [CustomerAnalysisController::class, 'productDistribution'])->name('customer_analysis.product_distribution');
                 Route::get('/{id}/edit', [CustomerAnalysisController::class, 'edit'])->name('customer_analysis.edit');
-
+        
                 Route::post('/{id}/join', [CustomerAnalysisController::class, 'join'])->name('customer_analysis.join');
                 Route::post('/{id}/unjoin', [CustomerAnalysisController::class, 'unjoin'])->name('customer_analysis.unjoin');
             });
