@@ -475,19 +475,37 @@ class CustomerAnalysisController extends Controller
         $status = $request->input('status');
         $whichHp = $request->input('which_hp');
         
+        // Store export parameters
+        $params = compact('month', 'status', 'whichHp');
+        
         // Count the records
         $count = $this->getApproximateExportCount($month, $status, $whichHp);
         
-        // If small dataset, do regular export
+        // If small dataset, do regular export with formatted filename
         if ($count <= 1500) {
+            $filename = 'customer_analysis';
+            
+            $formatParams = [];
+            if (!empty($month)) $formatParams[] = date('M_Y', strtotime($month . '-01'));
+            if (!empty($status)) $formatParams[] = str_replace(' ', '_', $status);
+            if (!empty($whichHp)) $formatParams[] = str_replace(' ', '_', $whichHp);
+            
+            if (!empty($formatParams)) {
+                $filename .= '_' . implode('_', $formatParams);
+            }
+            $filename .= '_' . date('Y-m-d') . '.xlsx';
+            
             return Excel::download(
                 new CustomersAnalysisExport($month, $status, $whichHp), 
-                'customer_analysis.xlsx'
+                $filename
             );
         }
         
         // For large dataset, queue the export and return a status page
         $exportId = md5(time() . rand(1000, 9999));
+        
+        // Store the export parameters for later use
+        session(['export_params_' . $exportId => $params]);
         
         ProcessLargeExport::dispatch(
             $month,
@@ -524,7 +542,26 @@ class CustomerAnalysisController extends Controller
         $path = storage_path("app/exports/{$id}.zip");
         
         if (file_exists($path)) {
-            return response()->download($path);
+            // Format export filename based on parameters
+            $formatParams = [];
+            
+            // Get export parameters from session if available
+            if (session()->has('export_params_' . $id)) {
+                $params = session('export_params_' . $id);
+                if (!empty($params['month'])) $formatParams[] = date('M_Y', strtotime($params['month'] . '-01'));
+                if (!empty($params['status'])) $formatParams[] = str_replace(' ', '_', $params['status']);
+                if (!empty($params['which_hp'])) $formatParams[] = str_replace(' ', '_', $params['which_hp']);
+            }
+            
+            // Create formatted filename
+            $filename = 'customer_analysis';
+            if (!empty($formatParams)) {
+                $filename .= '_' . implode('_', $formatParams);
+            }
+            $filename .= '_' . date('Y-m-d') . '.zip';
+            
+            // Return file and delete after sending
+            return response()->download($path, $filename)->deleteFileAfterSend(true);
         }
         
         return redirect()->route('customer_analysis.export_status', ['id' => $id])

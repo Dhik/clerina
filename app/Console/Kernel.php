@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Storage;
 
 class Kernel extends ConsoleKernel
 {
@@ -33,6 +34,26 @@ class Kernel extends ConsoleKernel
         $schedule->command('report:send-telegram')->dailyAt('15:30');
         $schedule->command('google-sheet:import')->dailyAt('14:30');
         $schedule->command('import:visit')->dailyAt('14:00');
+
+        // Clean up old export files - run at 1 AM daily
+        $schedule->call(function () {
+            // Delete exports older than 2 days
+            $files = Storage::files('exports');
+            $count = 0;
+            
+            foreach ($files as $file) {
+                if (Storage::lastModified($file) < now()->subDays(2)->getTimestamp()) {
+                    Storage::delete($file);
+                    $count++;
+                    
+                    // Also clean up any related session data
+                    $fileId = pathinfo($file, PATHINFO_FILENAME);
+                    session()->forget('export_params_' . $fileId);
+                }
+            }
+            
+            \Log::info("Cleaned up {$count} old export files");
+        })->dailyAt('01:00');
 
         // $schedule->command('postings:update daily')->daily();
         // $schedule->command('postings:update 3days')->cron('0 0 */3 * *'); // Every 3 days
