@@ -8,6 +8,7 @@ use App\Domain\Customer\Models\CustomersAnalysis;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Customer\Models\CustomerNote;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use App\Domain\Customer\Jobs\ProcessLargeExport;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use App\Domain\Customer\Models\CustomerMonitor;
