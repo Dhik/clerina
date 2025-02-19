@@ -1,5 +1,9 @@
-<!-- resources/views/customer/export-status.blade.php -->
-@extends('layouts.app')
+@extends('adminlte::page')
+
+@section('title', 'Customers Analysis')
+@section('content_header')
+    <h1>Customers Analysis</h1>
+@stop
 
 @section('content')
 <div class="content-wrapper">
