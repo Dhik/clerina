@@ -58,8 +58,13 @@ class CustomerAnalysisController extends Controller
             ->distinct()
             ->whereNotNull('which_hp')
             ->get();
+
+        $cities = CustomersAnalysis::select('kota_kabupaten')
+            ->distinct()
+            ->whereNotNull('kota_kabupaten')
+            ->get();
             
-        return view('admin.customers_analysis.index', compact('customer', 'whichHp'));
+        return view('admin.customers_analysis.index', compact('customer', 'whichHp', 'cities'));
     }
     public function data(Request $request)
     {
@@ -474,12 +479,13 @@ class CustomerAnalysisController extends Controller
         $month = $request->input('month');
         $status = $request->input('status');
         $whichHp = $request->input('which_hp');
+        $cities = $request->input('cities') ? explode(',', $request->input('cities')) : [];
         
         // Store export parameters
-        $params = compact('month', 'status', 'whichHp');
+        $params = compact('month', 'status', 'whichHp', 'cities');
         
         // Count the records
-        $count = $this->getApproximateExportCount($month, $status, $whichHp);
+        $count = $this->getApproximateExportCount($month, $status, $whichHp, $cities);
         
         // If small dataset, do regular export with formatted filename
         if ($count <= 1500) {
@@ -489,6 +495,7 @@ class CustomerAnalysisController extends Controller
             if (!empty($month)) $formatParams[] = date('M_Y', strtotime($month . '-01'));
             if (!empty($status)) $formatParams[] = str_replace(' ', '_', $status);
             if (!empty($whichHp)) $formatParams[] = str_replace(' ', '_', $whichHp);
+            if (!empty($cities)) $formatParams[] = 'Cities_' . count($cities); // Add number of selected cities
             
             if (!empty($formatParams)) {
                 $filename .= '_' . implode('_', $formatParams);
@@ -496,12 +503,12 @@ class CustomerAnalysisController extends Controller
             $filename .= '_' . date('Y-m-d') . '.xlsx';
             
             return Excel::download(
-                new CustomersAnalysisExport($month, $status, $whichHp), 
+                new CustomersAnalysisExport($month, $status, $whichHp, $cities), 
                 $filename
             );
         }
         
-        // For large dataset, queue the export and return a status page
+        // For large dataset, queue the export
         $exportId = md5(time() . rand(1000, 9999));
         
         // Store the export parameters for later use
@@ -511,11 +518,11 @@ class CustomerAnalysisController extends Controller
             $month,
             $status, 
             $whichHp,
+            $cities, // Now passing array of cities
             $exportId,
             auth()->id()
         );
         
-        // Redirect to a status page
         return redirect()->route('customer_analysis.export_status', ['id' => $exportId]);
     }
 
@@ -571,7 +578,7 @@ class CustomerAnalysisController extends Controller
     /**
      * Get approximate count of records to be exported
      */
-    private function getApproximateExportCount($month, $status, $whichHp)
+    private function getApproximateExportCount($month, $status, $whichHp, $cities)
     {
         $query = CustomersAnalysis::query();
         
@@ -585,6 +592,10 @@ class CustomerAnalysisController extends Controller
         
         if ($whichHp) {
             $query->where('which_hp', $whichHp);
+        }
+        
+        if (!empty($cities)) {
+            $query->whereIn('kota_kabupaten', $cities);
         }
         
         return $query->distinct('nomor_telepon')->count('nomor_telepon');

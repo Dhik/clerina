@@ -656,14 +656,24 @@
                 $('#exportModal').modal('show');
             });
 
+            $('#exportCity').select2({
+                placeholder: "All Cities",
+                allowClear: true,
+                multiple: true,
+                width: '100%'
+            });
+
+            // Update the export click handler to handle multiple cities:
             $('#doExport').click(function() {
                 let month = $('#exportMonth').val();
                 let status = $('#exportStatus').val(); 
                 let whichHp = $('#exportWhichHp').val();
+                let cities = $('#exportCity').val(); // This will now be an array
                 
-                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}`;
+                window.location.href = `{{ route('customer_analysis.export') }}?month=${month}&status=${status}&which_hp=${whichHp}&cities=${cities.join(',')}`;
                 $('#exportModal').modal('hide');
             });
+
 
             var ordersTable = $('#ordersTable').DataTable({
                 searching: false,

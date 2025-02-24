@@ -29,6 +29,14 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Kota/Kabupaten</label>
+                        <select class="form-select select2" id="exportCity" multiple="multiple" style="width: 100%;">
+                            @foreach($cities as $city)
+                                <option value="{{ $city->kota_kabupaten }}">{{ $city->kota_kabupaten }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                </form>
            </div>
            <div class="modal-footer">
