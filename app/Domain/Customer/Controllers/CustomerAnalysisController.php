@@ -289,7 +289,7 @@ class CustomerAnalysisController extends Controller
         $query = CustomersAnalysis::query();
 
         if (!$request->month && !$request->produk) {
-            $lastMonth = now()->subMonth()->format('Y-m');
+            $lastMonth = now()->format('Y-m');
             $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
         }
         
