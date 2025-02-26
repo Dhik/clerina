@@ -70,10 +70,10 @@ class CustomerAnalysisController extends Controller
     {
         $query = CustomersAnalysis::query();
 
-        if (!$request->month && !$request->produk) {
-            $lastMonth = now()->subMonth()->format('Y-m');
-            $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
-        }
+        // if (!$request->month && !$request->produk) {
+        //     $lastMonth = now()->subMonth()->format('Y-m');
+        //     $query->whereRaw('DATE_FORMAT(tanggal_pesanan_dibuat, "%Y-%m") = ?', [$lastMonth]);
+        // }
 
         if ($request->has('month') && $request->month) {
             $month = $request->month;
