@@ -29,8 +29,8 @@ class NetProfitController extends Controller
                 ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
                 ->where('talents.tenant_id', 1)
                 ->whereNotNull('talent_content.upload_link')
-                ->whereMonth('talent_content.posting_date', 2) // February
-                ->whereYear('talent_content.posting_date', 2025)
+                ->whereMonth('talent_content.posting_date', date('m'))
+                ->whereYear('talent_content.posting_date', date('Y'))
                 ->select('posting_date')
                 ->selectRaw('SUM(CASE 
                     WHEN final_rate_card IS NOT NULL 
@@ -40,8 +40,6 @@ class NetProfitController extends Controller
                 ->groupBy('posting_date');
 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
                 ->joinSub($talentPayments, 'tp', function($join) {
                     $join->on('net_profits.date', '=', 'tp.posting_date');
                 })
@@ -55,17 +53,14 @@ class NetProfitController extends Controller
     public function updateHpp()
     {
         try {
-            // Set date range to February 2025
-            $startDate = now()->setYear(2025)->setMonth(2)->startOfMonth();
-            $endDate = now()->setYear(2025)->setMonth(2)->endOfMonth();
-            
+            $startDate = now()->startOfMonth();
             $dates = collect();
-            for($date = clone $startDate; $date->lte($endDate); $date->addDay()) {
+            for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
                 $dates->push($date->format('Y-m-d'));
             }
 
             $hppPerDate = Order::query()
-                ->whereBetween('orders.date', [$startDate, $endDate])
+                ->whereBetween('orders.date', [$startDate, now()])
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
@@ -88,11 +83,10 @@ class NetProfitController extends Controller
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereBetween('date', [$startDate, $endDate])
+                ->whereBetween('date', [$startDate, now()])
                 ->update(['hpp' => 0]);
 
             NetProfit::query()
-                ->whereBetween('net_profits.date', [$startDate, $endDate])
                 ->joinSub($hppPerDate, 'hpp', function($join) {
                     $join->on('net_profits.date', '=', 'hpp.date');
                 })
@@ -112,8 +106,8 @@ class NetProfitController extends Controller
         try {
             NetProfit::query()
                 ->join('sales', 'net_profits.date', '=', 'sales.date')
-                ->whereMonth('net_profits.date', 2) // February
-                ->whereYear('net_profits.date', 2025)
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
                 ->where('sales.tenant_id', Auth::user()->current_tenant_id)
                 ->update([
                     'net_profits.marketing' => DB::raw('sales.ad_spent_total')
@@ -217,8 +211,8 @@ class NetProfitController extends Controller
     {
         try {
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->whereNotNull('visit')
                 ->whereNotNull('order')
                 ->where('visit', '>', 0)
@@ -227,8 +221,8 @@ class NetProfitController extends Controller
                 ]);
 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->where(function($query) {
                     $query->whereNull('visit')
                         ->orWhereNull('order')
@@ -250,20 +244,19 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-
     public function updateRoas()
     {
         try {
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->where('marketing', '!=', 0)
                 ->update([
                     'roas' => DB::raw('sales / marketing')
                 ]);
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->where('marketing', 0)
                 ->update([
                     'roas' => null 
@@ -287,8 +280,8 @@ class NetProfitController extends Controller
     {
         try {
             $dailyQty = Order::query()
-                ->whereMonth('orders.date', 2) // February
-                ->whereYear('orders.date', 2025)
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->select('date')
@@ -296,13 +289,11 @@ class NetProfitController extends Controller
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
-                ->whereYear('net_profits.date', 2025) // fixed ambiguity
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->update(['qty' => 0]);
 
             NetProfit::query()
-                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
-                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
@@ -327,21 +318,19 @@ class NetProfitController extends Controller
     {
         try {
             $dailyOrders = Order::query()
-                ->whereMonth('orders.date', 2) // February
-                ->whereYear('orders.date', 2025)
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
                 ->select('date')
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
-                ->whereYear('net_profits.date', 2025) // fixed ambiguity
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
                 ->update(['order' => 0]);
                 
             NetProfit::query()
-                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
-                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })
