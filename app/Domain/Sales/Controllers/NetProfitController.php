@@ -29,8 +29,8 @@ class NetProfitController extends Controller
                 ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
                 ->where('talents.tenant_id', 1)
                 ->whereNotNull('talent_content.upload_link')
-                ->whereMonth('talent_content.posting_date', date('m'))
-                ->whereYear('talent_content.posting_date', date('Y'))
+                // ->whereMonth('talent_content.posting_date', date('m'))
+                // ->whereYear('talent_content.posting_date', date('Y'))
                 ->select('posting_date')
                 ->selectRaw('SUM(CASE 
                     WHEN final_rate_card IS NOT NULL 
@@ -53,7 +53,7 @@ class NetProfitController extends Controller
     public function updateHpp()
     {
         try {
-            $startDate = now()->startOfMonth();
+            // $startDate = now()->startOfMonth();
             $dates = collect();
             for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
                 $dates->push($date->format('Y-m-d'));
@@ -83,7 +83,7 @@ class NetProfitController extends Controller
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereBetween('date', [$startDate, now()])
+                // ->whereBetween('date', [$startDate, now()])
                 ->update(['hpp' => 0]);
 
             NetProfit::query()
@@ -106,8 +106,8 @@ class NetProfitController extends Controller
         try {
             NetProfit::query()
                 ->join('sales', 'net_profits.date', '=', 'sales.date')
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
+                // ->whereMonth('net_profits.date', now()->month)
+                // ->whereYear('net_profits.date', now()->year)
                 ->where('sales.tenant_id', Auth::user()->current_tenant_id)
                 ->update([
                     'net_profits.marketing' => DB::raw('sales.ad_spent_total')

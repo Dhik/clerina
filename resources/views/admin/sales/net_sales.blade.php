@@ -393,7 +393,6 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
-            
             let netProfitsTable = $('#netProfitsTable').DataTable({
                 scrollX: true,
                 responsive: false,
@@ -418,14 +417,14 @@
                     {
                         data: 'date', 
                         name: 'date',
-                        visible: true  // Always visible by default
+                        visible: true
                     },
                     {
                         data: 'visit',
                         render: function(data) {
                             return Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false  // Hidden by default
+                        visible: false 
                     },
                     {
                         data: 'qty',
