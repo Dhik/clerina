@@ -296,13 +296,13 @@ class NetProfitController extends Controller
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
+                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->update(['qty' => 0]);
 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
+                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
@@ -335,13 +335,13 @@ class NetProfitController extends Controller
                 ->groupBy('date');
 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
+                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->update(['order' => 0]);
                 
             NetProfit::query()
-                ->whereMonth('date', 2) // February
-                ->whereYear('date', 2025)
+                ->whereMonth('net_profits.date', 2) // February - fixed ambiguity
+                ->whereYear('net_profits.date', 2025) // fixed ambiguity
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })
