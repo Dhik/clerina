@@ -59,12 +59,12 @@ class CustomerAnalysisController extends Controller
             ->whereNotNull('which_hp')
             ->get();
 
-        // $cities = CustomersAnalysis::select('kota_kabupaten')
-        //     ->distinct()
-        //     ->whereNotNull('kota_kabupaten')
-        //     ->get();
+        $cities = CustomersAnalysis::select('kota_kabupaten')
+            ->distinct()
+            ->whereNotNull('kota_kabupaten')
+            ->get();
             
-        return view('admin.customers_analysis.index', compact('customer', 'whichHp'));
+        return view('admin.customers_analysis.index', compact('customer', 'whichHp', 'cities'));
     }
     public function data(Request $request)
     {
