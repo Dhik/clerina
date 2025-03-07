@@ -59,12 +59,12 @@ class CustomerAnalysisController extends Controller
             ->whereNotNull('which_hp')
             ->get();
 
-        $cities = CustomersAnalysis::select('kota_kabupaten')
-            ->distinct()
-            ->whereNotNull('kota_kabupaten')
-            ->get();
+        // $cities = CustomersAnalysis::select('kota_kabupaten')
+        //     ->distinct()
+        //     ->whereNotNull('kota_kabupaten')
+        //     ->get();
             
-        return view('admin.customers_analysis.index', compact('customer', 'whichHp', 'cities'));
+        return view('admin.customers_analysis.index', compact('customer', 'whichHp'));
     }
     public function data(Request $request)
     {
@@ -479,15 +479,10 @@ class CustomerAnalysisController extends Controller
         $month = $request->input('month');
         $status = $request->input('status');
         $whichHp = $request->input('which_hp');
-        $cities = $request->input('cities') ? explode(',', $request->input('cities')) : [];
+        // $cities = $request->input('cities') ? explode(',', $request->input('cities')) : [];
         
-        // Store export parameters
-        $params = compact('month', 'status', 'whichHp', 'cities');
-        
-        // Count the records
-        $count = $this->getApproximateExportCount($month, $status, $whichHp, $cities);
-        
-        // If small dataset, do regular export with formatted filename
+        $params = compact('month', 'status', 'whichHp');
+        $count = $this->getApproximateExportCount($month, $status, $whichHp);
         if ($count <= 1500) {
             $filename = 'customer_analysis';
             
@@ -495,7 +490,7 @@ class CustomerAnalysisController extends Controller
             if (!empty($month)) $formatParams[] = date('M_Y', strtotime($month . '-01'));
             if (!empty($status)) $formatParams[] = str_replace(' ', '_', $status);
             if (!empty($whichHp)) $formatParams[] = str_replace(' ', '_', $whichHp);
-            if (!empty($cities)) $formatParams[] = 'Cities_' . count($cities); // Add number of selected cities
+            // if (!empty($cities)) $formatParams[] = 'Cities_' . count($cities);
             
             if (!empty($formatParams)) {
                 $filename .= '_' . implode('_', $formatParams);
@@ -503,7 +498,7 @@ class CustomerAnalysisController extends Controller
             $filename .= '_' . date('Y-m-d') . '.xlsx';
             
             return Excel::download(
-                new CustomersAnalysisExport($month, $status, $whichHp, $cities), 
+                new CustomersAnalysisExport($month, $status, $whichHp), 
                 $filename
             );
         }
@@ -518,7 +513,6 @@ class CustomerAnalysisController extends Controller
             $month,
             $status, 
             $whichHp,
-            $cities, // Now passing array of cities
             $exportId,
             auth()->id()
         );
@@ -549,10 +543,8 @@ class CustomerAnalysisController extends Controller
         $path = storage_path("app/exports/{$id}.zip");
         
         if (file_exists($path)) {
-            // Format export filename based on parameters
             $formatParams = [];
             
-            // Get export parameters from session if available
             if (session()->has('export_params_' . $id)) {
                 $params = session('export_params_' . $id);
                 if (!empty($params['month'])) $formatParams[] = date('M_Y', strtotime($params['month'] . '-01'));
@@ -578,7 +570,7 @@ class CustomerAnalysisController extends Controller
     /**
      * Get approximate count of records to be exported
      */
-    private function getApproximateExportCount($month, $status, $whichHp, $cities)
+    private function getApproximateExportCount($month, $status, $whichHp)
     {
         $query = CustomersAnalysis::query();
         
@@ -594,9 +586,9 @@ class CustomerAnalysisController extends Controller
             $query->where('which_hp', $whichHp);
         }
         
-        if (!empty($cities)) {
-            $query->whereIn('kota_kabupaten', $cities);
-        }
+        // if (!empty($cities)) {
+        //     $query->whereIn('kota_kabupaten', $cities);
+        // }
         
         return $query->distinct('nomor_telepon')->count('nomor_telepon');
     }
