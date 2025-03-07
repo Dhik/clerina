@@ -20,13 +20,13 @@ class ProcessLargeExport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // Increase timeout for large exports
-    public $timeout = 3600; // 1 hour
-    public $tries = 1; // Set to 1 for debugging
+    public $timeout = 3600; 
+    public $tries = 1;
 
     protected $month;
     protected $status;
     protected $whichHp;
+    protected $cities;
     protected $exportId;
     protected $userId;
     protected $recordsPerFile = 1500;
@@ -34,11 +34,12 @@ class ProcessLargeExport implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($month, $status, $whichHp, $exportId, $userId)
+    public function __construct($month, $status, $whichHp, $cities, $exportId, $userId)
     {
         $this->month = $month;
         $this->status = $status;
         $this->whichHp = $whichHp;
+        $this->cities = $cities;
         $this->exportId = $exportId;
         $this->userId = $userId;
         $this->onQueue('exports');
@@ -181,6 +182,9 @@ class ProcessLargeExport implements ShouldQueue
             if ($this->whichHp) {
                 $query->where('which_hp', $this->whichHp);
             }
+            if (!empty($this->cities)) {
+                $query->whereIn('kota_kabupaten', $this->cities);
+            }
             
             return $query->distinct('nomor_telepon')->count('nomor_telepon');
         } catch (\Exception $e) {
@@ -207,6 +211,9 @@ class ProcessLargeExport implements ShouldQueue
             
             if ($this->whichHp) {
                 $query->where('which_hp', $this->whichHp);
+            }
+            if (!empty($this->cities)) {
+                $query->whereIn('kota_kabupaten', $this->cities);
             }
             
             return $query->select(

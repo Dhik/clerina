@@ -18,12 +18,14 @@ class CustomersAnalysisExport extends DefaultValueBinder implements FromCollecti
    protected $month;
    protected $status;
    protected $whichHp;
+   protected $cities;
 
-   public function __construct($month = null, $status = null, $whichHp = null) 
+   public function __construct($month = null, $status = null, $whichHp = null, $cities = []) 
    {
        $this->month = $month;
        $this->status = $status;
        $this->whichHp = $whichHp;
+       $this->cities = $cities;
    }
    public function bindValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell, $value)
     {
@@ -48,6 +50,9 @@ class CustomersAnalysisExport extends DefaultValueBinder implements FromCollecti
     
         if ($this->whichHp) {
             $query->where('which_hp', $this->whichHp);
+        }
+        if (!empty($this->cities)) {
+            $query->whereIn('kota_kabupaten', $this->cities);
         }
     
         return $query
