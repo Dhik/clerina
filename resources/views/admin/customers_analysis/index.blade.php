@@ -268,7 +268,7 @@
                     { data: 'details', name: 'details' },
                     { data: 'is_dormant', name: 'is_dormant' },
                 ],
-                order: [[2, 'asc']]
+                order: [[2, 'desc']]
             });
 
             function fetchTotalUniqueOrders() {
