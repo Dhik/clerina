@@ -833,6 +833,7 @@ class OrderController extends Controller
                             'sales_channel_id'       => 1,
                             'social_media_id'        => null,
                             'is_joined'              => 0,
+                            'channel'              => "Shopee",
                             'created_at'             => now(),
                             'updated_at'             => now(), 
                         ];
@@ -850,6 +851,107 @@ class OrderController extends Controller
             'message' => 'Data imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows
+        ]);
+    }
+    public function importCRMCustomer()
+    {
+        set_time_limit(0);
+        $range = 'Closing Full!A2:I';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $duplicateRows = 0;
+        $skippedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if phone number is empty or null
+                if (empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+
+                // Format phone number - add a leading zero if it doesn't already have one
+                $phoneNumber = $row[3];
+                if (strlen($phoneNumber) > 0 && substr($phoneNumber, 0, 1) !== '0') {
+                    $phoneNumber = '0' . $phoneNumber;
+                }
+
+                // Parse date from "dd/mm/yyyy" format to Y-m-d H:i:s
+                if (!empty($row[0])) {
+                    try {
+                        $tanggal_pesanan_dibuat = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d H:i:s');
+                    } catch (\Exception $e) {
+                        $tanggal_pesanan_dibuat = now()->format('Y-m-d H:i:s');
+                    }
+                } else {
+                    $tanggal_pesanan_dibuat = now()->format('Y-m-d H:i:s');
+                }
+
+                // Check for duplicate before creating
+                $existingRecord = CustomersAnalysis::where('tanggal_pesanan_dibuat', $tanggal_pesanan_dibuat)
+                                                ->where('nama_penerima', $row[1] ?? null)
+                                                ->where('nomor_telepon', $phoneNumber)
+                                                ->where('produk', $row[4] ?? null)
+                                                ->where('qty', $row[5] ?? null)
+                                                ->where('admin_crm', $row[8] ?? null)
+                                                ->first();
+                
+                if (!$existingRecord) {
+                    // Extract city and province from address if possible
+                    $alamat = $row[2] ?? '';
+                    $kota = null;
+                    $provinsi = null;
+                    
+                    // Try to extract province and city from address
+                    if (preg_match('/KAB\.\s*([^,]+)|KOTA\s*([^,]+)/i', $alamat, $matches)) {
+                        $kota = trim(isset($matches[1]) ? $matches[1] : $matches[2]);
+                    }
+                    
+                    if (preg_match('/([A-Z\s]+),\s*ID/i', $alamat, $matches)) {
+                        $provinsi = trim($matches[1]);
+                    }
+
+                    $customersAnalysisData = [
+                        'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
+                        'nama_penerima'          => $row[1] ?? null, // Nama
+                        'produk'                 => $row[4] ?? null, // Produk
+                        'qty'                    => $row[5] ?? null, // Quantity
+                        'alamat'                 => $alamat,         // Alamat
+                        'kota_kabupaten'         => $kota,           // Extracted from address
+                        'provinsi'               => $provinsi,       // Extracted from address
+                        'nomor_telepon'          => $phoneNumber,    // Formatted phone number
+                        'tenant_id'              => $tenant_id,
+                        'sales_channel_id'       => null,
+                        'social_media_id'        => null,
+                        'is_joined'              => 0,
+                        'is_dormant'             => 0,
+                        'status_customer'        => null,
+                        'which_hp'               => null,
+                        'channel'                => 'CRM Sales',
+                        'admin_crm'              => $row[8] ?? null, 
+                        'created_at'             => now(),
+                        'updated_at'             => now(),
+                    ];
+
+                    CustomersAnalysis::create($customersAnalysisData);
+                    $processedRows++;
+                } else {
+                    $duplicateRows++;
+                }
+            }
+            usleep(100000);
+        }
+
+        return response()->json([
+            'message' => 'Customers analysis data created successfully',
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'duplicate_rows' => $duplicateRows,
+            'skipped_rows' => $skippedRows
         ]);
     }
 

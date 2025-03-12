@@ -63,8 +63,13 @@ class CustomerAnalysisController extends Controller
             ->distinct()
             ->whereNotNull('kota_kabupaten')
             ->get();
+        
+        $channels = CustomersAnalysis::select('channel')
+            ->distinct()
+            ->whereNotNull('channel')
+            ->get();
             
-        return view('admin.customers_analysis.index', compact('customer', 'whichHp', 'cities'));
+        return view('admin.customers_analysis.index', compact('customer', 'whichHp', 'cities', 'channels'));
     }
     public function data(Request $request)
     {

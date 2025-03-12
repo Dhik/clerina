@@ -28,6 +28,14 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-2">
+                            <select id="filterChannel" class="form-control select2">
+                                <option value="">All Channels</option>
+                                @foreach($channels as $channel)
+                                    <option value="{{ $channel->channel }}">{{ $channel->channel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <!-- <div class="col-md-2">
                             <div class="form-group">
                                 <label>&nbsp;</label>
@@ -45,6 +53,11 @@
                         <div class="col-auto">
                             <div class="btn-group">
                                 <button id="refreshButton" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group">
+                                <button id="importCRMButton" class="btn bg-info"><i class="fas fa-sync-alt"></i> Import Customer CRM</button>
                             </div>
                         </div>
                         <!-- <div class="col-auto">
@@ -371,6 +384,55 @@
                             icon: 'error',
                             title: 'Error',
                             text: 'An error occurred while refreshing data. Please try again later.',
+                        });
+                    });
+            });
+            $('#importCRMButton').click(function() {
+                Swal.fire({
+                    title: 'Importing CRM Data',
+                    text: 'Importing customer data from CRM Google Sheets. Please wait.',
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch('{{ route('order.import_crm_customer') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: data.error,
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                html: `
+                                    CRM Import Complete<br>
+                                    Total Rows: ${data.total_rows}<br>
+                                    Processed Rows: ${data.processed_rows}<br>
+                                    Duplicate Rows: ${data.duplicate_rows}
+                                `,
+                                showConfirmButton: false,
+                                timer: 2500
+                            });
+
+                            // Reload tables and update widgets
+                            table.ajax.reload(null, false);
+                            fetchTotalUniqueOrders();
+                            fetchProductCounts();
+                            fetchDailyUniqueCustomers();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while importing CRM data. Please try again later.',
                         });
                     });
             });

@@ -26,6 +26,8 @@ class CustomersAnalysis extends Model
         'is_joined',
         'status_customer',
         'which_hp',
+        'channel',
+        'admin_crm',
         'is_dormant',
     ];
     public function tenant()
