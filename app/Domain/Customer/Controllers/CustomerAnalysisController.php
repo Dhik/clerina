@@ -418,13 +418,12 @@ class CustomerAnalysisController extends Controller
 
     public function show($id)
     {
-        $customer = CustomersAnalysis::find($id);
+        // $customer = CustomersAnalysis::find($id);
+        $customer = CustomersAnalysis::where('nomor_telepon', $id)->first();
 
         if (!$customer) {
             return response()->json(['error' => 'Customer not found'], 404);
         }
-
-        // Retrieve and sort orders by date
         $customerOrders = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
             ->where('nomor_telepon', $customer->nomor_telepon)
             ->orderBy('tanggal_pesanan_dibuat', 'asc') // Sort by date

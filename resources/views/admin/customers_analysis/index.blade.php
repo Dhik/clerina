@@ -769,7 +769,7 @@
             });
 
             $('#customerAnalysisTable').on('click', '.viewButton', function() {
-                var customerId = $(this).data('id');
+                var customerId = $(this).data('nomor_telepon');
 
                 $.ajax({
                     url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerId),
