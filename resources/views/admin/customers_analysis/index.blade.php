@@ -250,6 +250,7 @@
                         d.month = $('#filterMonth').val();
                         d.produk = $('#filterProduk').val();
                         d.status = $('#filterStatus').val();
+                        d.channel = $('#filterChannel').val();
                         // d.filterDormant = $('#filterDormant').prop('checked') ? '1' : '0';
                     }
                 },
@@ -287,8 +288,9 @@
             function fetchTotalUniqueOrders() {
                 const selectedMonth = $('#filterMonth').val();
                 const selectedProduk = $('#filterProduk').val();
+                const selectedChannel = $('#filterChannel').val(); 
 
-                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+                fetch(`{{ route('customer_analysis.total') }}?month=${selectedMonth}&produk=${selectedProduk}&channel=${selectedChannel}`)
                     .then(response => response.json())
                     .then(data => {
                         $('#totalOrder').text(data.unique_customer_count);
@@ -313,7 +315,7 @@
                 return `<button class="btn btn-sm ${color}">${status}</button>`;
             }
 
-            $('#filterMonth, #filterProduk, #filterStatus').change(function() {
+            $('#filterMonth, #filterProduk, #filterStatus, #filterChannel').change(function() {
                 table.ajax.reload();
                 fetchTotalUniqueOrders();
                 fetchProductCounts();
@@ -486,14 +488,15 @@
 
             function fetchProductCounts() {
                 const selectedMonth = $('#filterMonth').val();
-                const selectedProduk = $('#filterProduk').val(); // Get the selected produk
+                const selectedProduk = $('#filterProduk').val();
+                const selectedChannel = $('#filterChannel').val();
                 const ctx = document.getElementById('productPieChart').getContext('2d');
 
                 if (window.productChart) {
                     window.productChart.destroy();
                 }
 
-                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}`)
+                fetch(`{{ route('customer_analysis.product_counts') }}?month=${selectedMonth}&produk=${selectedProduk}&channel=${selectedChannel}`)
                     .then(response => response.json())
                     .then(data => {
                         const productLabels = data.map(item => item.short_name);

@@ -101,6 +101,9 @@ class CustomerAnalysisController extends Controller
         if ($request->has('status') && $request->status) {
             $query->where('status_customer', $request->status);
         }
+        if ($request->has('channel') && $request->channel) {
+            $query->where('channel', $request->channel);
+        }
 
         $query = $query->selectRaw('
             MIN(id) as id,
@@ -238,6 +241,9 @@ class CustomerAnalysisController extends Controller
         if ($request->has('produk') && $request->produk) {
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$request->produk]);
         }
+        if ($request->has('channel') && $request->channel) {
+            $query->where('channel', $request->channel);
+        }
 
         $uniqueCount = $query->distinct('nomor_telepon')
                         ->count('nomor_telepon');
@@ -279,6 +285,9 @@ class CustomerAnalysisController extends Controller
         if ($request->has('produk') && $request->produk) {
             $produk = $request->produk;
             $query->whereRaw('SUBSTRING_INDEX(produk, " -", 1) = ?', [$produk]);
+        }
+        if ($request->has('channel') && $request->channel) {
+            $query->where('channel', $request->channel);
         }
 
         $data = $query->selectRaw('sku as short_name, COUNT(*) as total_count')
