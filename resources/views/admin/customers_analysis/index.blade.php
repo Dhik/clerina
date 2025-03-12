@@ -769,10 +769,11 @@
             });
 
             $('#customerAnalysisTable').on('click', '.viewButton', function() {
-                var customerId = $(this).data('nomor_telepon');
+                var customerId = $(this).data('id');
+                var customerNoHP = $(this).data('nomor_telepon');
 
                 $.ajax({
-                    url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerId),
+                    url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerNoHP),
                     method: 'GET',
                     success: function(response) {
                         // Populate the customer name and phone number
