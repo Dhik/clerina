@@ -166,6 +166,7 @@ class CustomerAnalysisController extends Controller
             return '
                 <button class="btn btn-light viewButton" 
                     data-id="' . $row->id . '" 
+                    data-nomor_telepon="' . $row->nomor_telepon . '" 
                     data-toggle="modal" 
                     data-target="#viewCustomerModal" 
                     data-placement="top" title="View">
