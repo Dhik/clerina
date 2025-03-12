@@ -868,16 +868,25 @@ class OrderController extends Controller
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                // Skip if phone number is empty or null
-                if (empty($row[3])) {
+                // Clean and validate phone number
+                $phoneNumber = '';
+                if (!empty($row[3])) {
+                    // Remove any non-numeric characters from the phone number
+                    $phoneNumber = preg_replace('/[^0-9]/', '', $row[3]);
+                    
+                    // Skip if phone number is empty after cleaning
+                    if (empty($phoneNumber)) {
+                        $skippedRows++;
+                        continue;
+                    }
+                    
+                    // Add a leading zero if it doesn't already have one
+                    if (substr($phoneNumber, 0, 1) !== '0') {
+                        $phoneNumber = '0' . $phoneNumber;
+                    }
+                } else {
                     $skippedRows++;
                     continue;
-                }
-
-                // Format phone number - add a leading zero if it doesn't already have one
-                $phoneNumber = $row[3];
-                if (strlen($phoneNumber) > 0 && substr($phoneNumber, 0, 1) !== '0') {
-                    $phoneNumber = '0' . $phoneNumber;
                 }
 
                 // Parse date from "dd/mm/yyyy" format to Y-m-d H:i:s
@@ -923,7 +932,7 @@ class OrderController extends Controller
                         'alamat'                 => $alamat,         // Alamat
                         'kota_kabupaten'         => $kota,           // Extracted from address
                         'provinsi'               => $provinsi,       // Extracted from address
-                        'nomor_telepon'          => $phoneNumber,    // Formatted phone number
+                        'nomor_telepon'          => $phoneNumber,    // Cleaned and formatted phone number
                         'tenant_id'              => $tenant_id,
                         'sales_channel_id'       => null,
                         'social_media_id'        => null,
@@ -954,7 +963,6 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
-
     public function getMonthlyOrderStatusDistribution(): JsonResponse
     {
         $startDate = Carbon::now()->startOfMonth();
