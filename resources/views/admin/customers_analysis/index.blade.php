@@ -776,7 +776,6 @@
                     url: `{{ route('customer_analysis.show', ':id') }}`.replace(':id', customerNoHP),
                     method: 'GET',
                     success: function(response) {
-                        // Populate the customer name and phone number
                         $('#view_customer_name').val(response.nama_penerima);
                         $('#view_phone_number').val(response.nomor_telepon);
                         $('#view_alamat').val(response.alamat);

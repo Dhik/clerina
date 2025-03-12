@@ -927,7 +927,8 @@ class OrderController extends Controller
                     $customersAnalysisData = [
                         'tanggal_pesanan_dibuat' => $tanggal_pesanan_dibuat,
                         'nama_penerima'          => $row[1] ?? null, // Nama
-                        'produk'                 => $row[4] ?? null, // Produk
+                        'produk'                 => $row[4] ?? null,
+                        'sku'                    => $row[4] ?? null,
                         'qty'                    => $row[5] ?? null, // Quantity
                         'alamat'                 => $alamat,         // Alamat
                         'kota_kabupaten'         => $kota,           // Extracted from address
