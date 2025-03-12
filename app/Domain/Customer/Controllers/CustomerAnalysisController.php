@@ -424,13 +424,11 @@ class CustomerAnalysisController extends Controller
         if (!$customer) {
             return response()->json(['error' => 'Customer not found'], 404);
         }
-        $customerOrders = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
-            ->where('nomor_telepon', $customer->nomor_telepon)
-            ->orderBy('tanggal_pesanan_dibuat', 'asc') // Sort by date
+        $customerOrders = CustomersAnalysis::where('nomor_telepon', $id)
+            ->orderBy('tanggal_pesanan_dibuat', 'asc')
             ->get(['produk', 'tanggal_pesanan_dibuat', 'qty', 'status_customer']);
 
-        $totalQty = CustomersAnalysis::where('nama_penerima', $customer->nama_penerima)
-            ->where('nomor_telepon', $customer->nomor_telepon)
+        $totalQty = CustomersAnalysis::where('nomor_telepon', $id)
             ->sum('qty');
 
         return response()->json([
