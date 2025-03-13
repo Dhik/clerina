@@ -17,7 +17,10 @@ class AdsMeta extends Model
         'adds_to_cart_shared_items',
         'purchases_shared_items',
         'purchases_conversion_value_shared_items',
-        'tenant_id'
+        'tenant_id',
+        'link_clicks',
+        'kategori_produk',
+        'campaign_name',
     ];
 
     protected $casts = [

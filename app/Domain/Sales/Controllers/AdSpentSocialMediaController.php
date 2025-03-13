@@ -58,6 +58,256 @@ class AdSpentSocialMediaController extends Controller
         return view('admin.adSpentSocialMedia.index', compact('socialMedia'));
     }
 
+    public function ads_cpas_index(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        $this->authorize('viewAdSpentSocialMedia', AdSpentSocialMedia::class);
+        return view('admin.adSpentMarketPlace.ads_cpas_index');
+    }
+    public function get_ads_cpas(Request $request) {
+        $query = AdsMeta::query()
+            ->select([
+                DB::raw('date'),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+            ])
+            ->groupBy('date');
+    
+        // Apply tenant filter if using multi-tenancy
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        // Apply date filter for current month if not provided
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                  ->whereYear('date', now()->year);
+        }
+        
+        // Apply product category filter if provided
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
+                       Carbon::parse($row->date)->format('d M Y').'</a>';
+            })
+            ->editColumn('total_amount_spent', function ($row) {
+                return $row->total_amount_spent ? 'Rp ' . number_format($row->total_amount_spent, 0, ',', '.') : '-';
+            })
+            ->editColumn('total_impressions', function ($row) {
+                return $row->total_impressions ? number_format($row->total_impressions, 0, ',', '.') : '-';
+            })
+            ->editColumn('total_link_clicks', function ($row) {
+                return $row->total_link_clicks ? number_format($row->total_link_clicks, 2, ',', '.') : '-';
+            })
+            ->editColumn('total_content_views', function ($row) {
+                return $row->total_content_views ? number_format($row->total_content_views, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->total_content_views > 0 && $row->total_amount_spent > 0) {
+                    $costPerView = $row->total_amount_spent / $row->total_content_views;
+                    return 'Rp ' . number_format($costPerView, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('total_adds_to_cart', function ($row) {
+                return $row->total_adds_to_cart ? number_format($row->total_adds_to_cart, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->total_adds_to_cart > 0 && $row->total_amount_spent > 0) {
+                    $costPerATC = $row->total_amount_spent / $row->total_adds_to_cart;
+                    return 'Rp ' . number_format($costPerATC, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('total_purchases', function ($row) {
+                return $row->total_purchases ? number_format($row->total_purchases, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
+                    $costPerPurchase = $row->total_amount_spent / $row->total_purchases;
+                    return 'Rp ' . number_format($costPerPurchase, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('total_conversion_value', function ($row) {
+                return $row->total_conversion_value ? 'Rp ' . number_format($row->total_conversion_value, 2, ',', '.') : '-';
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    return number_format($roas, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
+                    // CPM = (Cost / Impressions) * 1000
+                    $cpm = ($row->total_amount_spent / $row->total_impressions) * 1000;
+                    return 'Rp ' . number_format($cpm, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
+                    // CTR = (Clicks / Impressions) * 100
+                    $ctr = ($row->total_link_clicks / $row->total_impressions) * 100;
+                    return number_format($ctr, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->rawColumns(['date', 'performance'])
+            ->make(true);
+    }
+
+    public function get_ads_details_by_date(Request $request) {
+        $date = $request->input('date');
+        
+        $query = AdsMeta::query()
+            ->select([
+                'id', 
+                'date',
+                'amount_spent',
+                'impressions',
+                'link_clicks',
+                'content_views_shared_items',
+                'adds_to_cart_shared_items',
+                'purchases_shared_items',
+                'purchases_conversion_value_shared_items',
+                'kategori_produk',
+                'campaign_name'
+            ])
+            ->where('date', $date);
+        
+        // Apply tenant filter if using multi-tenancy
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        // Apply product category filter if provided
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('campaign_name', function ($row) {
+                return $row->campaign_name ?: '-';
+            })
+            ->editColumn('amount_spent', function ($row) {
+                return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
+            })
+            ->editColumn('impressions', function ($row) {
+                return $row->impressions ? number_format($row->impressions, 0, ',', '.') : '-';
+            })
+            ->editColumn('link_clicks', function ($row) {
+                return $row->link_clicks ? number_format($row->link_clicks, 2, ',', '.') : '-';
+            })
+            ->editColumn('content_views_shared_items', function ($row) {
+                return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerView = $row->amount_spent / $row->content_views_shared_items;
+                    return 'Rp ' . number_format($costPerView, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('adds_to_cart_shared_items', function ($row) {
+                return $row->adds_to_cart_shared_items ? number_format($row->adds_to_cart_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
+                    return 'Rp ' . number_format($costPerATC, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('purchases_shared_items', function ($row) {
+                return $row->purchases_shared_items ? number_format($row->purchases_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
+                    return 'Rp ' . number_format($costPerPurchase, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('purchases_conversion_value_shared_items', function ($row) {
+                return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                    $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                    return number_format($roas, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->impressions > 0 && $row->amount_spent > 0) {
+                    $cpm = ($row->amount_spent / $row->impressions) * 1000;
+                    return 'Rp ' . number_format($cpm, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->impressions > 0 && $row->link_clicks > 0) {
+                    $ctr = ($row->link_clicks / $row->impressions) * 100;
+                    return number_format($ctr, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                    $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->addColumn('action', function ($row) {
+                $editBtn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="edit btn btn-primary btn-sm">Edit</a>';
+                $deleteBtn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="delete btn btn-danger btn-sm ml-1">Delete</a>';
+                return $editBtn . $deleteBtn;
+            })
+            ->rawColumns(['action', 'performance'])
+            ->make(true);
+    }
+
     /**
      * Create or update data Ad SpentSocial Media
      */
@@ -79,71 +329,149 @@ class AdSpentSocialMediaController extends Controller
 
         return response()->json($this->adSpentSocialMediaBLL->getAdSpentSocialMediaRecap($request, Auth::user()->current_tenant_id));
     }
+    // public function import_ads(Request $request)
+    // {
+    //     try {
+    //         $request->validate([
+    //             'meta_ads_csv_file' => 'required|file|mimes:csv,txt|max:2048',
+    //             'kategori_produk' => 'required|string'
+    //         ]);
+
+    //         $file = $request->file('meta_ads_csv_file');
+    //         $kategoriProduk = $request->input('kategori_produk');
+    //         $csvData = array_map('str_getcsv', file($file->getPathname()));
+            
+    //         $headers = array_shift($csvData);
+    //         $groupedData = [];
+    //         $adSpentData = [];
+            
+    //         foreach ($csvData as $row) {
+    //             $date = Carbon::parse($row[0])->format('Y-m-d');
+    //             $amount = (int)$row[3];
+                
+    //             if (!isset($groupedData[$date])) {
+    //                 $groupedData[$date] = [
+    //                     'amount_spent' => 0,
+    //                     'impressions' => 0,
+    //                     'content_views_shared_items' => 0,
+    //                     'adds_to_cart_shared_items' => 0,
+    //                     'purchases_shared_items' => 0,
+    //                     'purchases_conversion_value_shared_items' => 0,
+    //                     'link_clicks' => 0,
+    //                     'kategori_produk' => $kategoriProduk
+    //                 ];
+    //             }
+                
+    //             if (!isset($adSpentData[$date])) {
+    //                 $adSpentData[$date] = 0;
+    //             }
+    //             $groupedData[$date]['amount_spent'] += (int)$row[3];
+    //             $groupedData[$date]['impressions'] += (int)$row[4];
+    //             $groupedData[$date]['content_views_shared_items'] += (float)($row[5] ?? 0);
+    //             $groupedData[$date]['adds_to_cart_shared_items'] += (float)($row[6] ?? 0);
+    //             $groupedData[$date]['purchases_shared_items'] += (float)($row[7] ?? 0);
+    //             $groupedData[$date]['purchases_conversion_value_shared_items'] += (float)($row[8] ?? 0);
+    //             $groupedData[$date]['link_clicks'] += (float)($row[9] ?? 0);
+                
+    //             $adSpentData[$date] += $amount;
+    //         }
+
+    //         DB::beginTransaction();
+    //         try {
+    //             foreach ($groupedData as $date => $data) {
+    //                 AdsMeta::updateOrCreate(
+    //                     [
+    //                         'date' => $date,
+    //                         'tenant_id' => auth()->user()->current_tenant_id
+    //                     ],
+    //                     [
+    //                         'amount_spent' => $data['amount_spent'],
+    //                         'impressions' => $data['impressions'],
+    //                         'content_views_shared_items' => $data['content_views_shared_items'],
+    //                         'adds_to_cart_shared_items' => $data['adds_to_cart_shared_items'],
+    //                         'purchases_shared_items' => $data['purchases_shared_items'],
+    //                         'purchases_conversion_value_shared_items' => $data['purchases_conversion_value_shared_items'],
+    //                         'link_clicks' => $data['link_clicks'],
+    //                         'kategori_produk' => $data['kategori_produk']
+    //                     ]
+    //                 );
+    //             }
+    //             foreach ($adSpentData as $date => $totalAmount) {
+    //                 AdSpentSocialMedia::updateOrCreate(
+    //                     [
+    //                         'date' => $date,
+    //                         'social_media_id' => 1,
+    //                         'tenant_id' => auth()->user()->current_tenant_id
+    //                     ],
+    //                     [
+    //                         'amount' => $totalAmount
+    //                     ]
+    //                 );
+    //             }
+                
+    //             DB::commit();
+                
+    //             return response()->json([
+    //                 'status' => 'success',
+    //                 'message' => 'Meta ads data imported successfully'
+    //             ]);
+                
+    //         } catch (\Exception $e) {
+    //             DB::rollBack();
+    //             throw $e;
+    //         }
+            
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Error importing data: ' . $e->getMessage()
+    //         ], 422);
+    //     }
+    // }
     public function import_ads(Request $request)
     {
         try {
             $request->validate([
-                'meta_ads_csv_file' => 'required|file|mimes:csv,txt|max:2048'
+                'meta_ads_csv_file' => 'required|file|mimes:csv,txt|max:2048',
+                'kategori_produk' => 'required|string'
             ]);
 
             $file = $request->file('meta_ads_csv_file');
+            $kategoriProduk = $request->input('kategori_produk');
             $csvData = array_map('str_getcsv', file($file->getPathname()));
             
             $headers = array_shift($csvData);
-            $groupedData = [];
-            $adSpentData = [];
+            $dateAmountMap = [];
             
-            foreach ($csvData as $row) {
-                $date = Carbon::parse($row[0])->format('Y-m-d');
-                $amount = (int)$row[3];
-                
-                if (!isset($groupedData[$date])) {
-                    $groupedData[$date] = [
-                        'amount_spent' => 0,
-                        'impressions' => 0,
-                        'content_views_shared_items' => 0,
-                        'adds_to_cart_shared_items' => 0,
-                        'purchases_shared_items' => 0,
-                        'purchases_conversion_value_shared_items' => 0,
-                    ];
-                }
-                
-                if (!isset($adSpentData[$date])) {
-                    $adSpentData[$date] = 0;
-                }
-                $groupedData[$date]['amount_spent'] += (int)$row[3];
-                $groupedData[$date]['impressions'] += (int)$row[4];
-                $groupedData[$date]['content_views_shared_items'] += (float)($row[5] ?? 0);
-                $groupedData[$date]['adds_to_cart_shared_items'] += (float)($row[6] ?? 0);
-                $groupedData[$date]['purchases_shared_items'] += (float)($row[7] ?? 0);
-                $groupedData[$date]['purchases_conversion_value_shared_items'] += (float)($row[8] ?? 0);
-                
-                $adSpentData[$date] += $amount;
-            }
-
             DB::beginTransaction();
             try {
-                foreach ($groupedData as $date => $data) {
-                    AdsMeta::updateOrCreate(
-                        [
-                            'date' => $date,
-                            'tenant_id' => auth()->user()->current_tenant_id
-                        ],
-                        [
-                            'amount_spent' => $data['amount_spent'],
-                            'impressions' => $data['impressions'],
-                            'content_views_shared_items' => $data['content_views_shared_items'],
-                            'adds_to_cart_shared_items' => $data['adds_to_cart_shared_items'],
-                            'purchases_shared_items' => $data['purchases_shared_items'],
-                            'purchases_conversion_value_shared_items' => $data['purchases_conversion_value_shared_items']
-                        ]
-                    );
+                foreach ($csvData as $row) {
+                    $date = Carbon::parse($row[0])->format('Y-m-d');
+                    $amount = (int)$row[3];
+                    
+                    AdsMeta::create([
+                        'date' => $date,
+                        'tenant_id' => auth()->user()->current_tenant_id,
+                        'amount_spent' => (int)$row[3],
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'kategori_produk' => $kategoriProduk,
+                        'campaign_name' => $row[2] ?? null 
+                    ]);
+                    if (!isset($dateAmountMap[$date])) {
+                        $dateAmountMap[$date] = 0;
+                    }
+                    $dateAmountMap[$date] += $amount;
                 }
-                foreach ($adSpentData as $date => $totalAmount) {
+                foreach ($dateAmountMap as $date => $totalAmount) {
                     AdSpentSocialMedia::updateOrCreate(
                         [
                             'date' => $date,
-                            'social_media_id' => 1, // Meta's ID
+                            'social_media_id' => 1,
                             'tenant_id' => auth()->user()->current_tenant_id
                         ],
                         [
@@ -175,9 +503,29 @@ class AdSpentSocialMediaController extends Controller
     public function getFunnelData(Request $request)
     {
         try {
-            $dates = explode(' - ', $request->filterDates);
-            $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
-            $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+            // Check if filterDates is set and has the expected format
+            if (!$request->has('filterDates') || !$request->filterDates) {
+                // Use default date range (e.g., this month)
+                $startDate = Carbon::now()->startOfMonth();
+                $endDate = Carbon::now()->endOfMonth();
+            } else {
+                // Try to parse the date range
+                try {
+                    $dates = explode(' - ', $request->filterDates);
+                    
+                    // Make sure we have two date parts
+                    if (count($dates) != 2) {
+                        throw new \Exception("Invalid date range format");
+                    }
+                    
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+                } catch (\Exception $e) {
+                    // Log the actual input for debugging
+                    \Log::error("Date parse error with input: " . $request->filterDates);
+                    throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
+                }
+            }
 
             $data = AdsMeta::select(
                 DB::raw('SUM(impressions) as total_impressions'),
@@ -186,7 +534,7 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_shared_items) as total_purchases')
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
             ->first();
 
             return response()->json([
@@ -194,19 +542,19 @@ class AdSpentSocialMediaController extends Controller
                 'data' => [
                     [
                         'name' => 'Impressions',
-                        'value' => (int)$data->total_impressions
+                        'value' => (int)($data->total_impressions ?? 0)
                     ],
                     [
                         'name' => 'Content Views',
-                        'value' => (int)$data->total_content_views
+                        'value' => (int)($data->total_content_views ?? 0)
                     ],
                     [
                         'name' => 'Adds to Cart',
-                        'value' => (int)$data->total_adds_to_cart
+                        'value' => (int)($data->total_adds_to_cart ?? 0)
                     ],
                     [
                         'name' => 'Purchases',
-                        'value' => (int)$data->total_purchases
+                        'value' => (int)($data->total_purchases ?? 0)
                     ]
                 ]
             ]);
@@ -220,21 +568,42 @@ class AdSpentSocialMediaController extends Controller
     public function getImpressionChartData(Request $request)
     {
         try {
-            $dates = explode(' - ', $request->filterDates);
-            $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
-            $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+            // Check if filterDates is set and has the expected format
+            if (!$request->has('filterDates') || !$request->filterDates) {
+                // Use default date range (e.g., this month)
+                $startDate = Carbon::now()->startOfMonth();
+                $endDate = Carbon::now()->endOfMonth();
+            } else {
+                // Try to parse the date range
+                try {
+                    $dates = explode(' - ', $request->filterDates);
+                    
+                    // Make sure we have two date parts
+                    if (count($dates) != 2) {
+                        throw new \Exception("Invalid date range format");
+                    }
+                    
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+                } catch (\Exception $e) {
+                    // Log the actual input for debugging
+                    \Log::error("Date parse error with input: " . $request->filterDates);
+                    throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
+                }
+            }
 
             $data = AdsMeta::select(
                 'date',
-                'impressions'
+                DB::raw('SUM(impressions) as impressions')
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->groupBy('date')
             ->orderBy('date')
             ->get()
             ->map(function ($item) {
                 return [
-                    'date' => $item->date->format('Y-m-d'),
+                    'date' => Carbon::parse($item->date)->format('Y-m-d'),
                     'impressions' => (int)$item->impressions
                 ];
             });

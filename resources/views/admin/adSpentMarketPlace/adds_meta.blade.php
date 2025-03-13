@@ -18,6 +18,17 @@
                         </div>
                         <small class="form-text text-muted">Please upload a CSV file containing your Meta ads spent data</small>
                     </div>
+                    <div class="form-group">
+                        <label for="kategoriProduk">Kategori Produk</label>
+                        <select class="form-control" id="kategoriProduk" name="kategori_produk" required>
+                            <option value="" selected disabled>Choose product category</option>
+                            <option value="Jelly Booster">Jelly Booster</option>
+                            <option value="Glowsmooth">Glowsmooth</option>
+                            <option value="Red Saviour">Red Saviour</option>
+                            <option value="3 Minutes">3 Minutes</option>
+                            <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
                     <div class="form-group d-none" id="errorImportMetaAdsSpent"></div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload"></i> Import

@@ -61,6 +61,13 @@ Route::prefix('admin')
                 Route::post('/', [AdSpentMarketPlaceController::class, 'store'])
                     ->name('adSpentMarketPlace.store');
             });
+        
+        Route::prefix('ads_cpas')
+            ->group(function () {
+                Route::get('/', [AdSpentSocialMediaController::class, 'ads_cpas_index'])->name('adSpentSocialMedia.ads_cpas_index');
+                Route::get('/get', [AdSpentSocialMediaController::class, 'get_ads_cpas'])->name('adSpentSocialMedia.get_ads_cpas');
+                Route::get('/show', [AdSpentSocialMediaController::class, 'get_ads_details_by_date'])->name('adSpentSocialMedia.get_details_by_date');
+            });
 
         Route::prefix('operational-spent')->group(function () {
             Route::get('/', [OperationalSpentController::class, 'index'])->name('operational-spent.index');
