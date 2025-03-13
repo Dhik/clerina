@@ -20,7 +20,7 @@
                                 <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importMetaAdsSpentModal" id="btnImportMetaAdsSpent">
-                                            <i class="fas fa-file-upload"></i> Import Meta Ads Spent (.csv)
+                                            <i class="fas fa-file-upload"></i> Import Meta Ads Spent (csv or zip)
                                         </button>
                                     </div>
                                 </div>
@@ -206,9 +206,16 @@
             adsMetaTable.draw()
         });
 
+        // Update file label when a file is selected
         $('#metaAdsCsvFile').on('change', function() {
-            var fileName = $(this).val().split('\\').pop();
-            $(this).next('.custom-file-label').html(fileName);
+            let fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').html(fileName || 'Choose file');
+            
+            // Optional: Show a message if a ZIP file is selected
+            if (fileName.toLowerCase().endsWith('.zip')) {
+                $('<div class="alert alert-info mt-2">ZIP file detected. All CSV files in the archive will be processed.</div>')
+                    .insertAfter($(this).closest('.custom-file'));
+            }
         });
 
         $('#importMetaAdsSpentForm').on('submit', function(e) {

@@ -11,12 +11,12 @@
                 <form id="importMetaAdsSpentForm" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
-                        <label for="metaAdsCsvFile">Import CSV File</label>
+                        <label for="metaAdsCsvFile">Import CSV or ZIP File</label>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="metaAdsCsvFile" name="meta_ads_csv_file" accept=".csv" required>
+                            <input type="file" class="custom-file-input" id="metaAdsCsvFile" name="meta_ads_csv_file" accept=".csv,.zip" required>
                             <label class="custom-file-label" for="metaAdsCsvFile">Choose file</label>
                         </div>
-                        <small class="form-text text-muted">Please upload a CSV file containing your Meta ads spent data</small>
+                        <small class="form-text text-muted">Please upload a CSV file or a ZIP file containing multiple CSV files with Meta ads data</small>
                     </div>
                     <div class="form-group">
                         <label for="kategoriProduk">Kategori Produk</label>

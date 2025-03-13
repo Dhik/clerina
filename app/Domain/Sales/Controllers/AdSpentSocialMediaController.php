@@ -432,41 +432,49 @@ class AdSpentSocialMediaController extends Controller
     {
         try {
             $request->validate([
-                'meta_ads_csv_file' => 'required|file|mimes:csv,txt|max:2048',
+                'meta_ads_csv_file' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
                 'kategori_produk' => 'required|string'
             ]);
 
             $file = $request->file('meta_ads_csv_file');
             $kategoriProduk = $request->input('kategori_produk');
-            $csvData = array_map('str_getcsv', file($file->getPathname()));
-            
-            $headers = array_shift($csvData);
             $dateAmountMap = [];
-            
+            $importCount = 0;
+
             DB::beginTransaction();
             try {
-                foreach ($csvData as $row) {
-                    $date = Carbon::parse($row[0])->format('Y-m-d');
-                    $amount = (int)$row[3];
-                    
-                    AdsMeta::create([
-                        'date' => $date,
-                        'tenant_id' => auth()->user()->current_tenant_id,
-                        'amount_spent' => (int)$row[3],
-                        'impressions' => (int)$row[4],
-                        'content_views_shared_items' => (float)($row[5] ?? 0),
-                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
-                        'purchases_shared_items' => (float)($row[7] ?? 0),
-                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
-                        'link_clicks' => (float)($row[9] ?? 0),
-                        'kategori_produk' => $kategoriProduk,
-                        'campaign_name' => $row[2] ?? null 
-                    ]);
-                    if (!isset($dateAmountMap[$date])) {
-                        $dateAmountMap[$date] = 0;
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    // Create a temporary directory to extract files
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
                     }
-                    $dateAmountMap[$date] += $amount;
+                    
+                    // Extract the ZIP file
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        // Process each CSV file in the ZIP
+                        $csvFiles = glob($tempDir . '/*.csv');
+                        foreach ($csvFiles as $csvFile) {
+                            $importCount += $this->processCsvFile($csvFile, $kategoriProduk, $dateAmountMap);
+                        }
+                        
+                        // Clean up the temporary directory
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single CSV file
+                    $importCount = $this->processCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap);
                 }
+
+                // Update AdSpentSocialMedia with aggregated totals
                 foreach ($dateAmountMap as $date => $totalAmount) {
                     AdSpentSocialMedia::updateOrCreate(
                         [
@@ -484,7 +492,7 @@ class AdSpentSocialMediaController extends Controller
                 
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'Meta ads data imported successfully'
+                    'message' => 'Meta ads data imported successfully. ' . $importCount . ' records imported.'
                 ]);
                 
             } catch (\Exception $e) {
@@ -498,6 +506,65 @@ class AdSpentSocialMediaController extends Controller
                 'message' => 'Error importing data: ' . $e->getMessage()
             ], 422);
         }
+    }
+
+    /**
+     * Process a single CSV file and import its data
+     * 
+     * @param string $filePath Path to the CSV file
+     * @param string $kategoriProduk Product category
+     * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
+     * @return int Number of records imported
+     */
+    private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap)
+    {
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        foreach ($csvData as $row) {
+            // Skip empty rows
+            if (empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                // Check for existing record and update if found, create if not
+                AdsMeta::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => auth()->user()->current_tenant_id
+                    ],
+                    [
+                        'amount_spent' => (int)$row[3],
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0)
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                // Log the error but continue processing other rows
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
+        }
+        
+        return $count;
     }
     
     public function getFunnelData(Request $request)
