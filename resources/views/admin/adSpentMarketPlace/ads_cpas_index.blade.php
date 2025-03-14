@@ -298,9 +298,9 @@
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
-                    if (filterCategory && filterCategory.length > 0) {
-                        d.kategori_produk = filterCategory.val();
-                    }
+                    // if (filterCategory && filterCategory.length > 0) {
+                    //     d.kategori_produk = filterCategory.val();
+                    // }
                 }
             },
             columns: [
