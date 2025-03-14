@@ -681,11 +681,14 @@
                 url.searchParams.append('kategori_produk', kategoriProduk);
             }
             
-            // Destroy existing Chart.js instance if it exists
-            if (window.impressionChart) {
-                window.impressionChart.destroy();
-                window.impressionChart = null;
+            try {
+                if (window.impressionChart && typeof window.impressionChart.destroy === 'function') {
+                    window.impressionChart.destroy();
+                }
+            } catch (e) {
+                console.error('Error destroying previous chart:', e);
             }
+            window.impressionChart = null;
             
             fetch(url)
                 .then(response => response.json())
