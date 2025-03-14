@@ -17,14 +17,14 @@
                                 <div class="col-auto">
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <select class="form-control" id="kategoriProdukFilter">
                                         <option value="">All Categories</option>
                                         @foreach($kategoriProdukList as $kategori)
                                             <option value="{{ $kategori }}">{{ $kategori }}</option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> -->
                                 <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importMetaAdsSpentModal" id="btnImportMetaAdsSpent">
@@ -321,7 +321,7 @@
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
-                    d.kategori_produk = $('#kategoriProdukFilter').val();
+                    // d.kategori_produk = $('#kategoriProdukFilter').val();
                 }
             },
             columns: [
