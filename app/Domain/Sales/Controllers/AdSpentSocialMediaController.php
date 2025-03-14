@@ -320,8 +320,10 @@ class AdSpentSocialMediaController extends Controller
         try {
             $request->validate([
                 'account_name' => 'required|string',
-                'date' => 'required|date_format:Y-m-d',
+                'date' => 'required|date',
             ]);
+
+            $date = Carbon::parse($request->date)->format('Y-m-d');
             
             $deleted = AdsMeta::where('account_name', $request->account_name)
                 ->where('date', $request->date)

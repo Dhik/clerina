@@ -363,6 +363,9 @@
             const accountName = $(this).data('account');
             const date = $(this).data('date');
             
+            // Format date to ensure it's in Y-m-d format
+            const formattedDate = moment(date).format('YYYY-MM-DD');
+            
             Swal.fire({
                 title: 'Are you sure?',
                 text: `This will delete all data for "${accountName}" on ${moment(date).format('D MMM YYYY')}!`,
@@ -383,13 +386,13 @@
                         }
                     });
                     
-                    // Send delete request
+                    // Send delete request with properly formatted date
                     $.ajax({
                         url: "{{ route('adSpentSocialMedia.delete_by_account') }}",
                         type: 'DELETE',
                         data: {
                             account_name: accountName,
-                            date: date,
+                            date: formattedDate, // Use the formatted date
                             _token: "{{ csrf_token() }}"
                         },
                         success: function(response) {
