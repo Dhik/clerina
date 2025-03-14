@@ -335,11 +335,13 @@
                 {data: 'amount_spent', name: 'amount_spent'},
                 {data: 'purchases_conversion_value_shared_items', name: 'purchases_conversion_value_shared_items'},
                 {data: 'roas', name: 'roas', searchable: false},
-                {data: 'performance', name: 'performance', searchable: false}
+                {data: 'performance', name: 'performance', searchable: false},
+                {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
             columnDefs: [
                 { "targets": [2, 3, 4], "className": "text-right" },
-                { "targets": [1, 5], "className": "text-center" }
+                { "targets": [1, 5], "className": "text-center" },
+                { "targets": [6], "className": "text-center" }
             ],
             order: [[0, 'asc']]
         });
