@@ -26,6 +26,9 @@
                                     </select>
                                 </div>
                                 <div class="col-auto">
+                                    <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                </div>
+                                <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importMetaAdsSpentModal" id="btnImportMetaAdsSpent">
                                             <i class="fas fa-file-upload"></i> Import Meta Ads Spent (csv or zip)
@@ -193,6 +196,7 @@
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
+        filterCategory = $('#kategoriProdukFilter');
         let funnelChart = null;
         let impressionChart = null;
 
@@ -210,10 +214,11 @@
 
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
-            filterChannel.val('')
+            filterCategory.val('')
             adsMetaTable.draw()
         });
-        $('#kategoriProdukFilter').change(function() {
+        
+        filterCategory.change(function() {
             adsMetaTable.draw();
             campaignDetailsTable.draw();
             initFunnelChart();
