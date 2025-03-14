@@ -381,7 +381,7 @@
                             maximumFractionDigits: 2
                         });
                     }
-                }
+                },
                 {
                     data: 'total_impressions', 
                     name: 'total_impressions',
