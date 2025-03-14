@@ -102,7 +102,6 @@
                 <table id="campaignDetailsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
                     <thead>
                         <tr>
-                            <th width="25%">Campaign</th>
                             <th>Nama Akun</th>
                             <th>Product Category</th>
                             <th>Total Spent</th>
@@ -344,7 +343,6 @@
                 }
             },
             columns: [
-                {data: 'campaign_name', name: 'campaign_name', width: '25%'},
                 {data: 'account_name', name: 'account_name', width: '25%'},
                 {data: 'kategori_produk', name: 'kategori_produk'},
                 {data: 'amount_spent', name: 'amount_spent'},

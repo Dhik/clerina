@@ -191,20 +191,20 @@ class AdSpentSocialMediaController extends Controller
         
         $query = AdsMeta::query()
             ->select([
-                'id', 
+                DB::raw('MAX(id) as id'), 
                 'date',
-                'amount_spent',
-                'impressions',
-                'link_clicks',
-                'content_views_shared_items',
-                'adds_to_cart_shared_items',
-                'purchases_shared_items',
-                'purchases_conversion_value_shared_items',
+                DB::raw('SUM(amount_spent) as amount_spent'),
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views_shared_items'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
+                DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
                 'kategori_produk',
-                'campaign_name',
                 'account_name'
             ])
-            ->where('date', $date);
+            ->where('date', $date)
+            ->groupBy('account_name', 'date', 'kategori_produk');
         
         // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
@@ -218,9 +218,6 @@ class AdSpentSocialMediaController extends Controller
     
         return DataTables::of($query)
             ->addIndexColumn()
-            ->editColumn('campaign_name', function ($row) {
-                return $row->campaign_name ?: '-';
-            })
             ->editColumn('account_name', function ($row) {
                 return $row->account_name ?: '-';
             })
