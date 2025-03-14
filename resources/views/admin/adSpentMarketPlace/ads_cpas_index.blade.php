@@ -681,12 +681,7 @@
                 url.searchParams.append('kategori_produk', kategoriProduk);
             }
             
-            // Destroy existing Chart.js instance if it exists
-            if (impressionChart) {
-                impressionChart.destroy();
-                impressionChart = null;
-            }
-            
+            // Fetch data and update chart
             fetch(url)
                 .then(response => response.json())
                 .then(result => {
@@ -695,8 +690,14 @@
                         const impressionDates = impressionData.map(data => data.date);
                         const impressions = impressionData.map(data => data.impressions);
                         
+                        // Destroy existing Chart.js instance if it exists
+                        if (window.impressionChart) {
+                            window.impressionChart.destroy();
+                            window.impressionChart = null;
+                        }
+                        
                         const ctxImpression = document.getElementById('impressionChart').getContext('2d');
-                        impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
+                        window.impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
                     }
                 })
                 .catch(error => {
