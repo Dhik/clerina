@@ -189,7 +189,7 @@ class AdSpentSocialMediaController extends Controller
         $query = AdsMeta::query()
             ->select([
                 DB::raw('ANY_VALUE(id) as id'),
-                'date', // No need for MAX(date) since we're filtering by a specific date
+                DB::raw('ANY_VALUE(date) as date'), // Use ANY_VALUE for date since it's not in GROUP BY
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
                 DB::raw('SUM(link_clicks) as link_clicks'),
