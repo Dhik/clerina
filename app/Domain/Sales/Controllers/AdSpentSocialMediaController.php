@@ -201,7 +201,8 @@ class AdSpentSocialMediaController extends Controller
                 'purchases_shared_items',
                 'purchases_conversion_value_shared_items',
                 'kategori_produk',
-                'campaign_name'
+                'campaign_name',
+                'account_name'
             ])
             ->where('date', $date);
         
@@ -219,6 +220,9 @@ class AdSpentSocialMediaController extends Controller
             ->addIndexColumn()
             ->editColumn('campaign_name', function ($row) {
                 return $row->campaign_name ?: '-';
+            })
+            ->editColumn('account_name', function ($row) {
+                return $row->account_name ?: '-';
             })
             ->editColumn('amount_spent', function ($row) {
                 return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
@@ -290,9 +294,9 @@ class AdSpentSocialMediaController extends Controller
                     if ($roas >= 2.5) {
                         return '<span class="badge badge-success">Winning</span>';
                     } elseif ($roas >= 2.01) {
-                        return '<span class="badge badge-info">Potensi</span>';
-                    } elseif ($roas >= 1.75) {
                         return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
                     } else {
                         return '<span class="badge badge-danger">Buruk</span>';
                     }

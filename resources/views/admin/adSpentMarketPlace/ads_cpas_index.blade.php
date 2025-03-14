@@ -103,6 +103,7 @@
                     <thead>
                         <tr>
                             <th width="25%">Campaign</th>
+                            <th>Nama Akun</th>
                             <th>Product Category</th>
                             <th>Total Spent</th>
                             <th>Conversion Value</th>
@@ -344,6 +345,7 @@
             },
             columns: [
                 {data: 'campaign_name', name: 'campaign_name', width: '25%'},
+                {data: 'account_name', name: 'account_name', width: '25%'},
                 {data: 'kategori_produk', name: 'kategori_produk'},
                 {data: 'amount_spent', name: 'amount_spent'},
                 {data: 'purchases_conversion_value_shared_items', name: 'purchases_conversion_value_shared_items'},
