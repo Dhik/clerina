@@ -369,13 +369,19 @@
                     data: 'roas', 
                     name: 'roas', 
                     searchable: false,
-                    render: function(data) {
+                    render: function(data, type, row) {
+                        // For ordering, searching and type detection, return the numeric value
+                        if (type === 'sort' || type === 'type') {
+                            return Number(data);
+                        }
+                        
+                        // For display, return the formatted string
                         return Number(data).toLocaleString('id-ID', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
                         });
                     }
-                },
+                }
                 {
                     data: 'total_impressions', 
                     name: 'total_impressions',
