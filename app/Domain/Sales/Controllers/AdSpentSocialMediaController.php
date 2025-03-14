@@ -518,65 +518,71 @@ class AdSpentSocialMediaController extends Controller
      * @return int Number of records imported
      */
     private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap)
-    {
-        $csvData = array_map('str_getcsv', file($filePath));
-        $headers = array_shift($csvData);
-        $count = 0;
-        
-        // Extract account name from filename
-        $filename = basename($filePath);
-        $accountName = null;
-        
-        // Parse the filename to extract account name (format: IPO2024---AGUS-HKU---1-Campaigns-1-Mar-2025-1-Mar-2025)
-        if (preg_match('/^(.*?---.*?---\d+)/', $filename, $matches)) {
-            $accountName = $matches[1]; // This will capture "IPO2024---AGUS-HKU---1"
-        }
-        
-        foreach ($csvData as $row) {
-            // Skip empty rows
-            if (empty($row[0])) {
-                continue;
-            }
-            
-            try {
-                $date = Carbon::parse($row[0])->format('Y-m-d');
-                $amount = (int)$row[3];
-                $campaignName = $row[2] ?? null;
-                
-                // Check for existing record and update if found, create if not
-                AdsMeta::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'campaign_name' => $campaignName,
-                        'kategori_produk' => $kategoriProduk,
-                        'tenant_id' => auth()->user()->current_tenant_id
-                    ],
-                    [
-                        'amount_spent' => (int)$row[3],
-                        'impressions' => (int)$row[4],
-                        'content_views_shared_items' => (float)($row[5] ?? 0),
-                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
-                        'purchases_shared_items' => (float)($row[7] ?? 0),
-                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
-                        'link_clicks' => (float)($row[9] ?? 0),
-                        'account_name' => $accountName // Added account_name field
-                    ]
-                );
-                
-                if (!isset($dateAmountMap[$date])) {
-                    $dateAmountMap[$date] = 0;
-                }
-                $dateAmountMap[$date] += $amount;
-                
-                $count++;
-            } catch (\Exception $e) {
-                // Log the error but continue processing other rows
-                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
-            }
-        }
-        
-        return $count;
+{
+    $csvData = array_map('str_getcsv', file($filePath));
+    $headers = array_shift($csvData);
+    $count = 0;
+    
+    // Extract account name from filename
+    $filename = basename($filePath);
+    $accountName = null;
+    
+    // Remove file extension first if it exists
+    $filename = pathinfo($filename, PATHINFO_FILENAME);
+    
+    // Remove everything from "-Campaigns" onwards
+    if (strpos($filename, '-Campaigns') !== false) {
+        $accountName = substr($filename, 0, strpos($filename, '-Campaigns'));
+    } else {
+        // Fallback - use the whole filename as account name
+        $accountName = $filename;
     }
+    
+    foreach ($csvData as $row) {
+        // Skip empty rows
+        if (empty($row[0])) {
+            continue;
+        }
+        
+        try {
+            $date = Carbon::parse($row[0])->format('Y-m-d');
+            $amount = (int)$row[3];
+            $campaignName = $row[2] ?? null;
+            
+            // Check for existing record and update if found, create if not
+            AdsMeta::updateOrCreate(
+                [
+                    'date' => $date,
+                    'campaign_name' => $campaignName,
+                    'kategori_produk' => $kategoriProduk,
+                    'tenant_id' => auth()->user()->current_tenant_id
+                ],
+                [
+                    'amount_spent' => (int)$row[3],
+                    'impressions' => (int)$row[4],
+                    'content_views_shared_items' => (float)($row[5] ?? 0),
+                    'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                    'purchases_shared_items' => (float)($row[7] ?? 0),
+                    'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                    'link_clicks' => (float)($row[9] ?? 0),
+                    'account_name' => $accountName // Added account_name field
+                ]
+            );
+            
+            if (!isset($dateAmountMap[$date])) {
+                $dateAmountMap[$date] = 0;
+            }
+            $dateAmountMap[$date] += $amount;
+            
+            $count++;
+        } catch (\Exception $e) {
+            // Log the error but continue processing other rows
+            \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+        }
+    }
+    
+    return $count;
+}
     
     public function getFunnelData(Request $request)
     {
