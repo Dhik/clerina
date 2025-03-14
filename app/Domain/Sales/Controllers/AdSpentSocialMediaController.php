@@ -317,10 +317,11 @@ class AdSpentSocialMediaController extends Controller
                 'date' => 'required|date',
             ]);
 
+            // Parse and format the date correctly
             $date = Carbon::parse($request->date)->format('Y-m-d');
             
             $deleted = AdsMeta::where('account_name', $request->account_name)
-                ->where('date', $request->date)
+                ->where('date', $date) // Use the formatted date here, not $request->date
                 ->where('tenant_id', auth()->user()->current_tenant_id)
                 ->delete();
             
