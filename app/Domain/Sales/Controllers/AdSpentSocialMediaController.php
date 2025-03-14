@@ -315,6 +315,38 @@ class AdSpentSocialMediaController extends Controller
             ->rawColumns(['action', 'performance'])
             ->make(true);
     }
+    public function deleteByAccountAndDate(Request $request)
+    {
+        try {
+            $request->validate([
+                'account_name' => 'required|string',
+                'date' => 'required|date_format:Y-m-d',
+            ]);
+            
+            $deleted = AdsMeta::where('account_name', $request->account_name)
+                ->where('date', $request->date)
+                ->where('tenant_id', auth()->user()->current_tenant_id)
+                ->delete();
+            
+            if ($deleted) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Account data deleted successfully for the specified date.'
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No records found to delete.'
+                ], 404);
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
 
     /**
      * Create or update data Ad SpentSocial Media

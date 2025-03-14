@@ -358,6 +358,69 @@
             $('#dailyDetailsModal').modal('show');
         });
 
+        // Add this to your JS section
+        $('#campaignDetailsTable').on('click', '.delete-account', function() {
+            const accountName = $(this).data('account');
+            const date = $(this).data('date');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `This will delete all data for "${accountName}" on ${moment(date).format('D MMM YYYY')}!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Deleting...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Send delete request
+                    $.ajax({
+                        url: "{{ route('adSpentSocialMedia.delete_by_account') }}",
+                        type: 'DELETE',
+                        data: {
+                            account_name: accountName,
+                            date: date,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: response.message,
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                // Refresh the tables and charts
+                                campaignDetailsTable.draw();
+                                adsMetaTable.draw();
+                                updateRecapCount();
+                                initFunnelChart();
+                                fetchImpressionData();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
 
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
