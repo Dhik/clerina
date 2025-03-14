@@ -300,8 +300,9 @@
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_ads_cpas') }}",
                 data: function (d) {
-                    if ($('#dateRangeAds').val()) {
-                        let dates = $('#dateRangeAds').val().split(' - ');
+                    // Use the filterDates value instead of dateRangeAds
+                    if (filterDate.val()) {
+                        let dates = filterDate.val().split(' - ');
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
@@ -309,6 +310,7 @@
                 }
             },
             columns: [
+                // Your columns remain the same
                 {data: 'date', name: 'date'},
                 {data: 'total_amount_spent', name: 'total_amount_spent'},
                 {data: 'total_content_views', name: 'total_content_views'},
@@ -329,7 +331,6 @@
             ],
             order: [[0, 'desc']]
         });
-
         let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
             responsive: true,
             processing: true,

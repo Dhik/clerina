@@ -76,7 +76,7 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
             ])
             ->groupBy('date');
-    
+
         // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
@@ -87,7 +87,7 @@ class AdSpentSocialMediaController extends Controller
             $query->whereBetween('date', [$request->date_start, $request->date_end]);
         } else {
             $query->whereMonth('date', now()->month)
-                  ->whereYear('date', now()->year);
+                ->whereYear('date', now()->year);
         }
         
         // Apply product category filter if provided
