@@ -298,6 +298,7 @@
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
+                    console.log("Filter category value:", $('#kategoriProdukFilter').val());
                     // if (filterCategory && filterCategory.length > 0) {
                     //     d.kategori_produk = filterCategory.val();
                     // }
@@ -725,14 +726,14 @@
                 url.searchParams.append('kategori_produk', kategoriProduk);
             }
             
-            try {
-                if (window.impressionChart && typeof window.impressionChart.destroy === 'function') {
-                    window.impressionChart.destroy();
-                }
-            } catch (e) {
-                console.error('Error destroying previous chart:', e);
+            if (window.impressionChart) {
+                window.impressionChart.destroy();
+                window.impressionChart = null;
             }
-            window.impressionChart = null;
+
+            const canvas = document.getElementById('impressionChart');
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            const ctxImpression = canvas.getContext('2d');
             
             fetch(url)
                 .then(response => response.json())
