@@ -192,8 +192,6 @@ class AdSpentSocialMediaController extends Controller
     }
 
     public function get_ads_details_by_date(Request $request) {
-        $date = $request->input('date');
-        
         $query = AdsMeta::query()
             ->select([
                 DB::raw('MAX(id) as id'), 
@@ -208,7 +206,6 @@ class AdSpentSocialMediaController extends Controller
                 'kategori_produk',
                 'account_name'
             ])
-            ->where('date', $date)
             ->groupBy('account_name', 'date', 'kategori_produk');
         
         // Apply tenant filter if using multi-tenancy

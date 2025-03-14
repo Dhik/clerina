@@ -325,10 +325,6 @@
             pageLength: 10,
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_details_by_date') }}",
-                data: function (d) {
-                    d.date = $('#dailyDetailsModal').data('date');
-                    d.kategori_produk = $('#kategoriProdukFilter').val();
-                }
             },
             columns: [
                 {data: 'account_name', name: 'account_name', width: '25%'},
