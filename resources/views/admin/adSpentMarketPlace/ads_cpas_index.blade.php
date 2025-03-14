@@ -826,6 +826,7 @@
         $(function () {
             adsMetaTable.draw();
             updateRecapCount();
+            fetchImpressionData();
             $('[data-toggle="tooltip"]').tooltip();
         });
 
