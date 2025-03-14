@@ -189,7 +189,7 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '<span class="badge badge-secondary">N/A</span>';
             })
-            ->rawColumns(['date', 'performance'])
+            ->rawColumns(['date', 'performance', 'action'])
             ->make(true);
     }
 
