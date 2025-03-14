@@ -185,7 +185,8 @@ class AdSpentSocialMediaController extends Controller
     public function get_ads_details_by_date(Request $request) {
         $query = AdsMeta::query()
             ->select([
-                DB::raw('MAX(id) as id'), 
+                // Using ANY_VALUE or first value for non-aggregated fields
+                DB::raw('ANY_VALUE(id) as id'), // Changed from MAX(id)
                 'date',
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
