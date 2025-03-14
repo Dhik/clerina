@@ -183,11 +183,13 @@ class AdSpentSocialMediaController extends Controller
     }
 
     public function get_ads_details_by_date(Request $request) {
+        // Validate and ensure we have a date to filter by
+        $date = $request->date ?? date('Y-m-d'); // Default to today if no date provided
+        
         $query = AdsMeta::query()
             ->select([
                 DB::raw('ANY_VALUE(id) as id'),
-                // We don't include date in the GROUP BY, so we need to handle it with an aggregate
-                DB::raw('MAX(date) as date'), // Or another approach based on your needs
+                'date', // No need for MAX(date) since we're filtering by a specific date
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
                 DB::raw('SUM(link_clicks) as link_clicks'),
@@ -198,7 +200,8 @@ class AdSpentSocialMediaController extends Controller
                 'kategori_produk',
                 'account_name'
             ])
-            ->groupBy('account_name', 'kategori_produk'); // Removed 'date' from the GROUP BY
+            ->where('date', $date) // Filter by the specific date
+            ->groupBy('account_name', 'kategori_produk');
         
         // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
@@ -208,15 +211,6 @@ class AdSpentSocialMediaController extends Controller
         // Apply product category filter if provided
         if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
             $query->where('kategori_produk', $request->kategori_produk);
-        }
-    
-        // Date filter if needed
-        if ($request->has('date_from') && $request->date_from) {
-            $query->where('date', '>=', $request->date_from);
-        }
-        
-        if ($request->has('date_to') && $request->date_to) {
-            $query->where('date', '<=', $request->date_to);
         }
     
         return DataTables::of($query)
