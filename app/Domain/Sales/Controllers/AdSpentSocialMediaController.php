@@ -531,8 +531,8 @@ class AdSpentSocialMediaController extends Controller
     $filename = pathinfo($filename, PATHINFO_FILENAME);
     
     // Remove everything from "-Campaigns" onwards
-    if (strpos($filename, '-Campaigns') !== false) {
-        $accountName = substr($filename, 0, strpos($filename, '-Campaigns'));
+    if (strpos($filename, '-Campaign') !== false) {
+        $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
     } else {
         // Fallback - use the whole filename as account name
         $accountName = $filename;
