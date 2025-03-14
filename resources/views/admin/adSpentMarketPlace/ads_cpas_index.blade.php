@@ -268,6 +268,69 @@
             });
         });
 
+        // Add this to your JS section
+        $('#campaignDetailsTable').on('click', '.delete-account', function() {
+            const accountName = $(this).data('account');
+            const date = $(this).data('date');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `This will delete all data for "${accountName}" on ${moment(date).format('D MMM YYYY')}!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Deleting...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Send delete request
+                    $.ajax({
+                        url: "{{ route('adSpentSocialMedia.delete_by_account') }}",
+                        type: 'DELETE',
+                        data: {
+                            account_name: accountName,
+                            date: date,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: response.message,
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                // Refresh the tables and charts
+                                campaignDetailsTable.draw();
+                                adsMetaTable.draw();
+                                updateRecapCount();
+                                initFunnelChart();
+                                fetchImpressionData();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
         filterDate.change(function () {
             adsMetaTable.draw()
             initFunnelChart()
@@ -335,11 +398,13 @@
                 {data: 'amount_spent', name: 'amount_spent'},
                 {data: 'purchases_conversion_value_shared_items', name: 'purchases_conversion_value_shared_items'},
                 {data: 'roas', name: 'roas', searchable: false},
-                {data: 'performance', name: 'performance', searchable: false}
+                {data: 'performance', name: 'performance', searchable: false},
+                {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
             columnDefs: [
                 { "targets": [2, 3, 4], "className": "text-right" },
-                { "targets": [1, 5], "className": "text-center" }
+                { "targets": [1, 5], "className": "text-center" },
+                { "targets": [6], "className": "text-center" }
             ],
             order: [[0, 'asc']]
         });
