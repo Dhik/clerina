@@ -369,13 +369,7 @@
                     data: 'roas', 
                     name: 'roas', 
                     searchable: false,
-                    render: function(data, type, row) {
-                        // For ordering, searching and type detection, return the numeric value
-                        if (type === 'sort' || type === 'type') {
-                            return Number(data);
-                        }
-                        
-                        // For display, return the formatted string
+                    render: function(data) {
                         return Number(data).toLocaleString('id-ID', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
