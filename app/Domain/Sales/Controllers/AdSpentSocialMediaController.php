@@ -94,9 +94,8 @@ class AdSpentSocialMediaController extends Controller
             $query->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year);
         }
-        
         // Apply product category filter if provided
-        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+        if ($request->has('kategori_produk') && $request->kategori_produk) {
             $query->where('kategori_produk', $request->kategori_produk);
         }
     
