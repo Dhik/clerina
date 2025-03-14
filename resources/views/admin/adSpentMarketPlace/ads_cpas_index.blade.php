@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', trans('labels.sales'))
+@section('title', Ads CPAS Monitor)
 
 @section('content_header')
     <h1>Ads CPAS Monitor</h1>
