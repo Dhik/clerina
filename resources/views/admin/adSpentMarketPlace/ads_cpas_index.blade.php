@@ -433,6 +433,10 @@
             pageLength: 10,
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_details_by_date') }}",
+                data: function(d) {
+                    // Add the date from the modal to the request
+                    d.date = $('#dailyDetailsModal').data('date');
+                }
             },
             columns: [
                 {data: 'account_name', name: 'account_name', width: '25%'},

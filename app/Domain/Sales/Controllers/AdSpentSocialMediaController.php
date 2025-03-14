@@ -183,13 +183,13 @@ class AdSpentSocialMediaController extends Controller
     }
 
     public function get_ads_details_by_date(Request $request) {
-        // Validate and ensure we have a date to filter by
-        $date = $request->date ?? date('Y-m-d'); // Default to today if no date provided
+        // Get the date parameter from the request
+        $date = $request->input('date');
         
         $query = AdsMeta::query()
             ->select([
-                DB::raw('ANY_VALUE(id) as id'),
-                DB::raw('ANY_VALUE(date) as date'), // Use ANY_VALUE for date since it's not in GROUP BY
+                DB::raw('ANY_VALUE(id) as id'), // Changed from MAX(id) to ANY_VALUE for ONLY_FULL_GROUP_BY mode
+                'date',
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
                 DB::raw('SUM(link_clicks) as link_clicks'),
@@ -199,9 +199,22 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
                 'kategori_produk',
                 'account_name'
-            ])
-            ->where('date', $date) // Filter by the specific date
-            ->groupBy('account_name', 'kategori_produk');
+            ]);
+        
+        // Apply date filter if provided
+        if ($date) {
+            // Try to parse the date in case it comes in a different format
+            try {
+                $parsedDate = Carbon::parse($date)->format('Y-m-d');
+                $query->where('date', $parsedDate);
+            } catch (\Exception $e) {
+                // If date parsing fails, try to use it as is
+                $query->where('date', $date);
+            }
+        }
+        
+        // Continue with grouping
+        $query->groupBy('account_name', 'date', 'kategori_produk');
         
         // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
