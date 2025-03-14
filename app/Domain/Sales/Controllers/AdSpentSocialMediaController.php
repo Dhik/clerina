@@ -429,108 +429,114 @@ class AdSpentSocialMediaController extends Controller
     //         ], 422);
     //     }
     // }
+    
+
     public function import_ads(Request $request)
-    {
+{
+    try {
+        $request->validate([
+            'meta_ads_csv_file' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
+            'kategori_produk' => 'required|string'
+        ]);
+
+        $file = $request->file('meta_ads_csv_file');
+        $kategoriProduk = $request->input('kategori_produk');
+        $dateAmountMap = [];
+        $importCount = 0;
+
+        DB::beginTransaction();
         try {
-            $request->validate([
-                'meta_ads_csv_file' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
-                'kategori_produk' => 'required|string'
-            ]);
-
-            $file = $request->file('meta_ads_csv_file');
-            $kategoriProduk = $request->input('kategori_produk');
-            $dateAmountMap = [];
-            $importCount = 0;
-
-            DB::beginTransaction();
-            try {
-                // Check if the file is a ZIP file
-                if ($file->getClientOriginalExtension() == 'zip') {
-                    // Create a temporary directory to extract files
-                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
-                    if (!file_exists($tempDir)) {
-                        mkdir($tempDir, 0755, true);
+            // Check if the file is a ZIP file
+            if ($file->getClientOriginalExtension() == 'zip') {
+                // Create a temporary directory to extract files
+                $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                if (!file_exists($tempDir)) {
+                    mkdir($tempDir, 0755, true);
+                }
+                
+                // Extract the ZIP file
+                $zip = new \ZipArchive;
+                if ($zip->open($file->getPathname()) === TRUE) {
+                    $zip->extractTo($tempDir);
+                    $zip->close();
+                    
+                    // Process each CSV file in the ZIP
+                    $csvFiles = glob($tempDir . '/*.csv');
+                    foreach ($csvFiles as $csvFile) {
+                        // Pass the actual CSV filename (not the temp path)
+                        $csvFilename = basename($csvFile);
+                        $importCount += $this->processCsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
                     }
                     
-                    // Extract the ZIP file
-                    $zip = new \ZipArchive;
-                    if ($zip->open($file->getPathname()) === TRUE) {
-                        $zip->extractTo($tempDir);
-                        $zip->close();
-                        
-                        // Process each CSV file in the ZIP
-                        $csvFiles = glob($tempDir . '/*.csv');
-                        foreach ($csvFiles as $csvFile) {
-                            $importCount += $this->processCsvFile($csvFile, $kategoriProduk, $dateAmountMap);
-                        }
-                        
-                        // Clean up the temporary directory
-                        array_map('unlink', glob($tempDir . '/*'));
-                        rmdir($tempDir);
-                    } else {
-                        throw new \Exception("Could not open ZIP file");
-                    }
+                    // Clean up the temporary directory
+                    array_map('unlink', glob($tempDir . '/*'));
+                    rmdir($tempDir);
                 } else {
-                    // Process a single CSV file
-                    $importCount = $this->processCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap);
+                    throw new \Exception("Could not open ZIP file");
                 }
+            } else {
+                // Process a single CSV file
+                // Pass the original CSV filename
+                $originalFilename = $file->getClientOriginalName();
+                $importCount = $this->processCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
+            }
 
-                // Update AdSpentSocialMedia with aggregated totals
-                foreach ($dateAmountMap as $date => $totalAmount) {
-                    AdSpentSocialMedia::updateOrCreate(
-                        [
-                            'date' => $date,
-                            'social_media_id' => 1,
-                            'tenant_id' => auth()->user()->current_tenant_id
-                        ],
-                        [
-                            'amount' => $totalAmount
-                        ]
-                    );
-                }
-                
-                DB::commit();
-                
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Meta ads data imported successfully. ' . $importCount . ' records imported.'
-                ]);
-                
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
+            // Update AdSpentSocialMedia with aggregated totals
+            foreach ($dateAmountMap as $date => $totalAmount) {
+                AdSpentSocialMedia::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'social_media_id' => 1,
+                        'tenant_id' => auth()->user()->current_tenant_id
+                    ],
+                    [
+                        'amount' => $totalAmount
+                    ]
+                );
             }
             
-        } catch (\Exception $e) {
+            DB::commit();
+            
             return response()->json([
-                'status' => 'error',
-                'message' => 'Error importing data: ' . $e->getMessage()
-            ], 422);
+                'status' => 'success',
+                'message' => 'Meta ads data imported successfully. ' . $importCount . ' records imported.'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error importing data: ' . $e->getMessage()
+        ], 422);
     }
+}
 
-    /**
-     * Process a single CSV file and import its data
-     * 
-     * @param string $filePath Path to the CSV file
-     * @param string $kategoriProduk Product category
-     * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
-     * @return int Number of records imported
-     */
-    private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap)
+/**
+ * Process a single CSV file and import its data
+ * 
+ * @param string $filePath Path to the CSV file
+ * @param string $kategoriProduk Product category
+ * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
+ * @param string|null $originalFilename Original filename of the CSV
+ * @return int Number of records imported
+ */
+private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
 {
     $csvData = array_map('str_getcsv', file($filePath));
     $headers = array_shift($csvData);
     $count = 0;
     
-    // Extract account name from filename
-    $filename = basename($filePath);
-    $accountName = null;
+    // Use the provided original filename instead of the temporary path
+    $filename = $originalFilename ?? basename($filePath);
     
     // Remove file extension first if it exists
     $filename = pathinfo($filename, PATHINFO_FILENAME);
     
-    // Remove everything from "-Campaigns" onwards
+    // Remove everything from "-Campaign" onwards
     if (strpos($filename, '-Campaign') !== false) {
         $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
     } else {
