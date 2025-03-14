@@ -63,9 +63,7 @@ class AdSpentSocialMediaController extends Controller
         $this->authorize('viewAdSpentSocialMedia', AdSpentSocialMedia::class);
         $kategoriProdukList = AdsMeta::select('kategori_produk')
             ->distinct()
-            ->whereNotNull('kategori_produk')
             ->where('kategori_produk', '!=', '')
-            ->orderBy('kategori_produk')
             ->pluck('kategori_produk');
             
         return view('admin.adSpentMarketPlace.ads_cpas_index', compact('kategoriProdukList'));
