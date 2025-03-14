@@ -18,6 +18,14 @@
                                     <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
                                 </div>
                                 <div class="col-auto">
+                                    <select class="form-control" id="kategoriProdukFilter">
+                                        <option value="">All Categories</option>
+                                        @foreach($kategoriProdukList as $kategori)
+                                            <option value="{{ $kategori }}">{{ $kategori }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importMetaAdsSpentModal" id="btnImportMetaAdsSpent">
                                             <i class="fas fa-file-upload"></i> Import Meta Ads Spent (csv or zip)
@@ -204,6 +212,13 @@
             filterChannel.val('')
             updateRecapCount()
             adsMetaTable.draw()
+        });
+        $('#kategoriProdukFilter').change(function() {
+            adsMetaTable.draw();
+            campaignDetailsTable.draw();
+            updateRecapCount();
+            initFunnelChart();
+            fetchImpressionData();
         });
 
         // Update file label when a file is selected

@@ -61,7 +61,14 @@ class AdSpentSocialMediaController extends Controller
     public function ads_cpas_index(): View|\Illuminate\Foundation\Application|Factory|Application
     {
         $this->authorize('viewAdSpentSocialMedia', AdSpentSocialMedia::class);
-        return view('admin.adSpentMarketPlace.ads_cpas_index');
+        $kategoriProdukList = AdsMeta::select('kategori_produk')
+            ->distinct()
+            ->whereNotNull('kategori_produk')
+            ->where('kategori_produk', '!=', '')
+            ->orderBy('kategori_produk')
+            ->pluck('kategori_produk');
+            
+        return view('admin.adSpentMarketPlace.ads_cpas_index', compact('kategoriProdukList'));
     }
     public function get_ads_cpas(Request $request) {
         $query = AdsMeta::query()
