@@ -409,9 +409,9 @@
             order: [[0, 'asc']]
         });
 
-        $('#adsMetaTable').on('click', '.date-details', function(){
+        $(document).on('click', '#adsMetaTable .date-details-btn', function(){
             let date = $(this).data('date');
-            let formattedDate = $(this).text();
+            let formattedDate = $(this).data('formatted');
             
             $('#dailyDetailsModalLabel').text('Campaign Details for ' + formattedDate);
             $('#dailyDetailsModal').data('date', date);

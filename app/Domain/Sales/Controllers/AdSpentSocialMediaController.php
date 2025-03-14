@@ -105,8 +105,10 @@ class AdSpentSocialMediaController extends Controller
         return DataTables::of($query)
             ->addIndexColumn()
             ->editColumn('date', function ($row) {
-                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
-                       Carbon::parse($row->date)->format('d M Y').'</a>';
+                $formattedDate = Carbon::parse($row->date)->format('d M Y');
+                return $formattedDate . ' <button type="button" class="btn btn-sm btn-info date-details-btn" data-date="'.$row->date.'" data-formatted="'.$formattedDate.'">
+                    <i class="fas fa-eye"></i> Details
+                </button>';
             })
             ->editColumn('total_amount_spent', function ($row) {
                 return $row->total_amount_spent ? 'Rp ' . number_format($row->total_amount_spent, 0, ',', '.') : '-';
