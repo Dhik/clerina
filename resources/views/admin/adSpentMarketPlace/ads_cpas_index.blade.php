@@ -210,13 +210,11 @@
         $('#resetFilterBtn').click(function () {
             filterDate.val('')
             filterChannel.val('')
-            updateRecapCount()
             adsMetaTable.draw()
         });
         $('#kategoriProdukFilter').change(function() {
             adsMetaTable.draw();
             campaignDetailsTable.draw();
-            updateRecapCount();
             initFunnelChart();
             fetchImpressionData();
         });
@@ -272,38 +270,13 @@
 
         filterDate.change(function () {
             adsMetaTable.draw()
-            updateRecapCount()
             initFunnelChart()
             fetchImpressionData()
         });
 
         filterChannel.change(function () {
             adsMetaTable.draw()
-            updateRecapCount()
         });
-
-        function updateRecapCount() {
-            $.ajax({
-                url: '{{ route('sales.get-sales-recap') }}?filterDates=' + filterDate.val() + '&filterChannel=' + filterChannel.val(),
-                method: 'GET',
-                success: function(response) {
-                    $('#newSalesCount').text(response.total_sales);
-                    $('#newVisitCount').text(response.total_visit);
-                    $('#newOrderCount').text(response.total_order);
-                    $('#newAdSpentCount').text(response.total_ad_spent);
-                    $('#newQtyCount').text(response.total_qty);
-                    $('#newRoasCount').text(response.total_roas);
-                    $('#newClosingRateCount').text(response.closing_rate);
-                    $('#newCPACount').text(response.cpa);
-                    $('#newCampaignExpense').text(response.campaign_expense);
-                    $('#newAdsSpentTotal').text(response.total_ads_spent);
-                    generateChart(response);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching new orders count:', error);
-                }
-            });
-        }
 
         let adsMetaTable = $('#adsMetaTable').DataTable({
             responsive: true,
@@ -452,12 +425,11 @@
         }
         function initFunnelChart() {
             const filterValue = filterDate.val();
-            const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}', window.location.origin);
+            const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
             if (filterValue) {
                 url.searchParams.append('filterDates', filterValue);
             }
 
-            // Destroy existing ApexCharts instance if it exists
             if (funnelChart) {
                 funnelChart.destroy();
                 funnelChart = null;
@@ -828,7 +800,6 @@
 
         $(function () {
             adsMetaTable.draw();
-            updateRecapCount();
             fetchImpressionData();
             $('[data-toggle="tooltip"]').tooltip();
         });
