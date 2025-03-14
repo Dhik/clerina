@@ -221,12 +221,10 @@
             fetchImpressionData();
         });
 
-        // Update file label when a file is selected
         $('#metaAdsCsvFile').on('change', function() {
             let fileName = $(this).val().split('\\').pop();
             $(this).next('.custom-file-label').html(fileName || 'Choose file');
             
-            // Optional: Show a message if a ZIP file is selected
             if (fileName.toLowerCase().endsWith('.zip')) {
                 $('<div class="alert alert-info mt-2">ZIP file detected. All CSV files in the archive will be processed.</div>')
                     .insertAfter($(this).closest('.custom-file'));
@@ -671,17 +669,24 @@
 
         function fetchImpressionData() {
             const filterValue = filterDate.val();
-            const url = new URL('{{ route("adSpentSocialMedia.line-data") }}');
+            const kategoriProduk = $('#kategoriProdukFilter').val();
+            
+            const url = new URL('{{ route("adSpentSocialMedia.line-data") }}', window.location.origin);
+            
             if (filterValue) {
                 url.searchParams.append('filterDates', filterValue);
             }
-
+            
+            if (kategoriProduk) {
+                url.searchParams.append('kategori_produk', kategoriProduk);
+            }
+            
             // Destroy existing Chart.js instance if it exists
             if (impressionChart) {
                 impressionChart.destroy();
                 impressionChart = null;
             }
-
+            
             fetch(url)
                 .then(response => response.json())
                 .then(result => {
@@ -689,7 +694,7 @@
                         const impressionData = result.impressions;
                         const impressionDates = impressionData.map(data => data.date);
                         const impressions = impressionData.map(data => data.impressions);
-
+                        
                         const ctxImpression = document.getElementById('impressionChart').getContext('2d');
                         impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
                     }

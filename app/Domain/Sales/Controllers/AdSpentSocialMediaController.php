@@ -689,21 +689,31 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
                 }
             }
 
-            $data = AdsMeta::select(
+            // Log the date range for debugging
+            \Log::info("Impression data filter dates: " . $startDate->format('Y-m-d') . " to " . $endDate->format('Y-m-d'));
+
+            // Apply kategori_produk filter if provided
+            $query = AdsMeta::select(
                 'date',
                 DB::raw('SUM(impressions) as impressions')
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'date' => Carbon::parse($item->date)->format('Y-m-d'),
-                    'impressions' => (int)$item->impressions
-                ];
-            });
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+            
+            // Apply product category filter if provided
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            $data = $query->groupBy('date')
+                ->orderBy('date')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'date' => Carbon::parse($item->date)->format('Y-m-d'),
+                        'impressions' => (int)$item->impressions
+                    ];
+                });
 
             return response()->json([
                 'status' => 'success',
