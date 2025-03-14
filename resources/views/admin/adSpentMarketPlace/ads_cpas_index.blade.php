@@ -292,7 +292,6 @@
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_ads_cpas') }}",
                 data: function (d) {
-                    // Use the filterDates value instead of dateRangeAds
                     if (filterDate.val()) {
                         let dates = filterDate.val().split(' - ');
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
@@ -304,19 +303,121 @@
                 }
             },
             columns: [
-                // Your columns remain the same
                 {data: 'date', name: 'date'},
-                {data: 'total_amount_spent', name: 'total_amount_spent'},
-                {data: 'total_content_views', name: 'total_content_views'},
-                {data: 'total_adds_to_cart', name: 'total_adds_to_cart'},
-                {data: 'total_purchases', name: 'total_purchases'},
-                {data: 'cost_per_purchase', name: 'cost_per_purchase', searchable: false},
-                {data: 'total_conversion_value', name: 'total_conversion_value'},
-                {data: 'roas', name: 'roas', searchable: false},
-                {data: 'total_impressions', name: 'total_impressions'},
-                {data: 'cpm', name: 'cpm', searchable: false},
-                {data: 'total_link_clicks', name: 'total_link_clicks'},
-                {data: 'ctr', name: 'ctr', searchable: false},
+                {
+                    data: 'total_amount_spent', 
+                    name: 'total_amount_spent',
+                    render: function(data) {
+                        return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
+                {
+                    data: 'total_content_views', 
+                    name: 'total_content_views',
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'total_adds_to_cart', 
+                    name: 'total_adds_to_cart',
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'total_purchases', 
+                    name: 'total_purchases',
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'cost_per_purchase', 
+                    name: 'cost_per_purchase',
+                    searchable: false,
+                    render: function(data) {
+                        return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'total_conversion_value', 
+                    name: 'total_conversion_value',
+                    render: function(data) {
+                        return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'roas', 
+                    name: 'roas', 
+                    searchable: false,
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'total_impressions', 
+                    name: 'total_impressions',
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                },
+                {
+                    data: 'cpm', 
+                    name: 'cpm', 
+                    searchable: false,
+                    render: function(data) {
+                        return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'total_link_clicks', 
+                    name: 'total_link_clicks',
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                },
+                {
+                    data: 'ctr', 
+                    name: 'ctr', 
+                    searchable: false,
+                    render: function(data) {
+                        return Number(data).toLocaleString('id-ID', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }) + '%';
+                    }
+                },
                 {data: 'performance', name: 'performance', searchable: false}
             ],
             columnDefs: [

@@ -81,20 +81,19 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
             ])
             ->groupBy('date');
-
-        // Apply tenant filter if using multi-tenancy
+    
+        // Apply filters
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
         
-        // Apply date filter for current month if not provided
         if ($request->has('date_start') && $request->has('date_end')) {
             $query->whereBetween('date', [$request->date_start, $request->date_end]);
         } else {
             $query->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year);
         }
-        // Apply product category filter if provided
+        
         if ($request->has('kategori_produk') && $request->kategori_produk) {
             $query->where('kategori_produk', $request->kategori_produk);
         }
@@ -105,70 +104,63 @@ class AdSpentSocialMediaController extends Controller
                 return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
                        Carbon::parse($row->date)->format('d M Y').'</a>';
             })
+            // Return raw values instead of formatted strings
             ->editColumn('total_amount_spent', function ($row) {
-                return $row->total_amount_spent ? 'Rp ' . number_format($row->total_amount_spent, 0, ',', '.') : '-';
+                return $row->total_amount_spent ?? 0;
             })
             ->editColumn('total_impressions', function ($row) {
-                return $row->total_impressions ? number_format($row->total_impressions, 0, ',', '.') : '-';
+                return $row->total_impressions ?? 0;
             })
             ->editColumn('total_link_clicks', function ($row) {
-                return $row->total_link_clicks ? number_format($row->total_link_clicks, 2, ',', '.') : '-';
+                return $row->total_link_clicks ?? 0;
             })
             ->editColumn('total_content_views', function ($row) {
-                return $row->total_content_views ? number_format($row->total_content_views, 2, ',', '.') : '-';
+                return $row->total_content_views ?? 0;
             })
             ->addColumn('cost_per_view', function ($row) {
                 if ($row->total_content_views > 0 && $row->total_amount_spent > 0) {
-                    $costPerView = $row->total_amount_spent / $row->total_content_views;
-                    return 'Rp ' . number_format($costPerView, 2, ',', '.');
+                    return $row->total_amount_spent / $row->total_content_views;
                 }
-                return '-';
+                return 0;
             })
             ->editColumn('total_adds_to_cart', function ($row) {
-                return $row->total_adds_to_cart ? number_format($row->total_adds_to_cart, 2, ',', '.') : '-';
+                return $row->total_adds_to_cart ?? 0;
             })
             ->addColumn('cost_per_atc', function ($row) {
                 if ($row->total_adds_to_cart > 0 && $row->total_amount_spent > 0) {
-                    $costPerATC = $row->total_amount_spent / $row->total_adds_to_cart;
-                    return 'Rp ' . number_format($costPerATC, 2, ',', '.');
+                    return $row->total_amount_spent / $row->total_adds_to_cart;
                 }
-                return '-';
+                return 0;
             })
             ->editColumn('total_purchases', function ($row) {
-                return $row->total_purchases ? number_format($row->total_purchases, 2, ',', '.') : '-';
+                return $row->total_purchases ?? 0;
             })
             ->addColumn('cost_per_purchase', function ($row) {
                 if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
-                    $costPerPurchase = $row->total_amount_spent / $row->total_purchases;
-                    return 'Rp ' . number_format($costPerPurchase, 2, ',', '.');
+                    return $row->total_amount_spent / $row->total_purchases;
                 }
-                return '-';
+                return 0;
             })
             ->editColumn('total_conversion_value', function ($row) {
-                return $row->total_conversion_value ? 'Rp ' . number_format($row->total_conversion_value, 2, ',', '.') : '-';
+                return $row->total_conversion_value ?? 0;
             })
             ->addColumn('roas', function ($row) {
                 if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
-                    $roas = $row->total_conversion_value / $row->total_amount_spent;
-                    return number_format($roas, 2, ',', '.');
+                    return $row->total_conversion_value / $row->total_amount_spent;
                 }
-                return '-';
+                return 0;
             })
             ->addColumn('cpm', function ($row) {
                 if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
-                    // CPM = (Cost / Impressions) * 1000
-                    $cpm = ($row->total_amount_spent / $row->total_impressions) * 1000;
-                    return 'Rp ' . number_format($cpm, 2, ',', '.');
+                    return ($row->total_amount_spent / $row->total_impressions) * 1000;
                 }
-                return '-';
+                return 0;
             })
             ->addColumn('ctr', function ($row) {
                 if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
-                    // CTR = (Clicks / Impressions) * 100
-                    $ctr = ($row->total_link_clicks / $row->total_impressions) * 100;
-                    return number_format($ctr, 2, ',', '.') . '%';
+                    return ($row->total_link_clicks / $row->total_impressions) * 100;
                 }
-                return '-';
+                return 0;
             })
             ->addColumn('performance', function ($row) {
                 if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
