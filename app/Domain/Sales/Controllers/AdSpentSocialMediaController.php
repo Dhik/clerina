@@ -96,9 +96,9 @@ class AdSpentSocialMediaController extends Controller
         }
         
         // Apply product category filter if provided
-        // if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-        //     $query->where('kategori_produk', $request->kategori_produk);
-        // }
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
     
         return DataTables::of($query)
             ->addIndexColumn()

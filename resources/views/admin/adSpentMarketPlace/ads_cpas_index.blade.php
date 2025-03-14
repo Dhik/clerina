@@ -217,7 +217,7 @@
             filterCategory.val('')
             adsMetaTable.draw()
         });
-        
+
         filterCategory.change(function() {
             adsMetaTable.draw();
             campaignDetailsTable.draw();
@@ -298,7 +298,7 @@
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
-                    // d.kategori_produk = $('#kategoriProdukFilter').val();
+                    d.kategori_produk = $('#kategoriProdukFilter').val();
                 }
             },
             columns: [
