@@ -308,9 +308,9 @@ class AdSpentSocialMediaController extends Controller
                 return '<span class="badge badge-secondary">N/A</span>';
             })
             ->addColumn('action', function ($row) {
-                $editBtn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="edit btn btn-primary btn-sm">Edit</a>';
-                $deleteBtn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="delete btn btn-danger btn-sm ml-1">Delete</a>';
-                return $editBtn . $deleteBtn;
+                return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-date="'.$row->date.'">
+                    <i class="fas fa-trash"></i> Delete
+                </button>';
             })
             ->rawColumns(['action', 'performance'])
             ->make(true);
