@@ -681,7 +681,12 @@
                 url.searchParams.append('kategori_produk', kategoriProduk);
             }
             
-            // Fetch data and update chart
+            // Destroy existing Chart.js instance if it exists
+            if (window.impressionChart) {
+                window.impressionChart.destroy();
+                window.impressionChart = null;
+            }
+            
             fetch(url)
                 .then(response => response.json())
                 .then(result => {
@@ -690,14 +695,51 @@
                         const impressionDates = impressionData.map(data => data.date);
                         const impressions = impressionData.map(data => data.impressions);
                         
-                        // Destroy existing Chart.js instance if it exists
-                        if (window.impressionChart) {
-                            window.impressionChart.destroy();
-                            window.impressionChart = null;
-                        }
-                        
                         const ctxImpression = document.getElementById('impressionChart').getContext('2d');
-                        window.impressionChart = createLineChart(ctxImpression, 'Impressions', impressionDates, impressions);
+                        
+                        // Create the chart directly here
+                        window.impressionChart = new Chart(ctxImpression, {
+                            type: 'line',
+                            data: {
+                                labels: impressionDates,
+                                datasets: [{
+                                    label: 'Impressions',
+                                    data: impressions,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                tooltips: {
+                                    enabled: true,
+                                    callbacks: {
+                                        label: function(tooltipItem, data) {
+                                            let label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                            return label;
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true,
+                                            callback: function(value, index, values) {
+                                                if (parseInt(value) >= 1000) {
+                                                    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                                } else {
+                                                    return value;
+                                                }
+                                            }
+                                        }
+                                    }]
+                                }
+                            }
+                        });
                     }
                 })
                 .catch(error => {
