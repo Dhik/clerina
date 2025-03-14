@@ -624,15 +624,22 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
                 }
             }
 
-            $data = AdsMeta::select(
+            // Build the query
+            $query = AdsMeta::select(
                 DB::raw('SUM(impressions) as total_impressions'),
                 DB::raw('SUM(content_views_shared_items) as total_content_views'),
                 DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
                 DB::raw('SUM(purchases_shared_items) as total_purchases')
             )
             ->where('tenant_id', auth()->user()->current_tenant_id)
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-            ->first();
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+            
+            // Apply product category filter if provided
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            $data = $query->first();
 
             return response()->json([
                 'status' => 'success',

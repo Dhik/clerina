@@ -452,7 +452,7 @@
         }
         function initFunnelChart() {
             const filterValue = filterDate.val();
-            const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
+            const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}', window.location.origin);
             if (filterValue) {
                 url.searchParams.append('filterDates', filterValue);
             }
