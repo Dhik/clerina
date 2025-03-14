@@ -802,5 +802,5 @@
             }
         });
     </script>
-    @include('admin.sales.script-chart')
+    @include('admin.adSpentMarketPlace.script-line-chart')
 @stop
