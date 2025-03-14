@@ -522,6 +522,15 @@ class AdSpentSocialMediaController extends Controller
         $headers = array_shift($csvData);
         $count = 0;
         
+        // Extract account name from filename
+        $filename = basename($filePath);
+        $accountName = null;
+        
+        // Parse the filename to extract account name (format: IPO2024---AGUS-HKU---1-Campaigns-1-Mar-2025-1-Mar-2025)
+        if (preg_match('/^(.*?---.*?---\d+)/', $filename, $matches)) {
+            $accountName = $matches[1]; // This will capture "IPO2024---AGUS-HKU---1"
+        }
+        
         foreach ($csvData as $row) {
             // Skip empty rows
             if (empty($row[0])) {
@@ -548,7 +557,8 @@ class AdSpentSocialMediaController extends Controller
                         'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
                         'purchases_shared_items' => (float)($row[7] ?? 0),
                         'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
-                        'link_clicks' => (float)($row[9] ?? 0)
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName // Added account_name field
                     ]
                 );
                 

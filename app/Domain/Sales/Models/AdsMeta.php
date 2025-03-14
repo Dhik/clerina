@@ -21,6 +21,7 @@ class AdsMeta extends Model
         'link_clicks',
         'kategori_produk',
         'campaign_name',
+        'account_name',
     ];
 
     protected $casts = [
