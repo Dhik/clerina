@@ -726,14 +726,14 @@
                 url.searchParams.append('kategori_produk', kategoriProduk);
             }
             
-            if (window.impressionChart) {
-                window.impressionChart.destroy();
-                window.impressionChart = null;
+            try {
+                if (window.impressionChart && typeof window.impressionChart.destroy === 'function') {
+                    window.impressionChart.destroy();
+                }
+            } catch (e) {
+                console.error('Error destroying previous chart:', e);
             }
-
-            const canvas = document.getElementById('impressionChart');
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            const ctxImpression = canvas.getContext('2d');
+            window.impressionChart = null;
             
             fetch(url)
                 .then(response => response.json())
