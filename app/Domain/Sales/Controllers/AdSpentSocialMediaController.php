@@ -600,16 +600,15 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
             $amount = (int)$row[3];
             $campaignName = $row[2] ?? null;
             
-            // Check for existing record and update if found, create if not
             AdsMeta::updateOrCreate(
                 [
                     'date' => $date,
                     'campaign_name' => $campaignName,
+                    'amount_spent' => $amount,
                     'kategori_produk' => $kategoriProduk,
                     'tenant_id' => Auth::user()->current_tenant_id
                 ],
                 [
-                    'amount_spent' => (int)$row[3],
                     'impressions' => (int)$row[4],
                     'content_views_shared_items' => (float)($row[5] ?? 0),
                     'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
