@@ -1394,16 +1394,16 @@ class OrderController extends Controller
         }
 
         // Apply process date filter
-        if ($request->filled('filterProcessDates')) {
-            [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
-            $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
-            $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
+        // if ($request->filled('filterProcessDates')) {
+        //     [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
+        //     $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
+        //     $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
             
-            $query->whereBetween('orders.process_at', [
-                $processStartDate->format('Y-m-d'),
-                $processEndDate->format('Y-m-d')
-            ]);
-        }
+        //     $query->whereBetween('orders.process_at', [
+        //         $processStartDate->format('Y-m-d'),
+        //         $processEndDate->format('Y-m-d')
+        //     ]);
+        // }
 
         // Apply other filters
         if ($request->filterChannel) {
@@ -1483,16 +1483,16 @@ class OrderController extends Controller
                     ]);
 
                 // Apply process_at date filter if provided
-                if ($request->filled('filterProcessDates')) {
-                    [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
-                    $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
-                    $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
+                // if ($request->filled('filterProcessDates')) {
+                //     [$processStartDate, $processEndDate] = explode(' - ', $request->filterProcessDates);
+                //     $processStartDate = Carbon::createFromFormat('d/m/Y', $processStartDate);
+                //     $processEndDate = Carbon::createFromFormat('d/m/Y', $processEndDate);
                     
-                    $join->whereBetween('orders.process_at', [
-                        $processStartDate->format('Y-m-d'),
-                        $processEndDate->format('Y-m-d')
-                    ]);
-                }
+                //     $join->whereBetween('orders.process_at', [
+                //         $processStartDate->format('Y-m-d'),
+                //         $processEndDate->format('Y-m-d')
+                //     ]);
+                // }
 
                 // Apply other filters in the join
                 if ($request->filterChannel) {

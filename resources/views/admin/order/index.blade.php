@@ -413,7 +413,7 @@ td.text-center .channel-logo {
             const filterDates = $('#filterDates').val();
             // const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}&filterProcessDates=${filterProcessDates}`)
+            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
@@ -508,9 +508,9 @@ td.text-center .channel-logo {
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
             const filterDates = $('#filterDates').val();
-            const filterProcessDates = $('#filterProcessDates').val();
+            // const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}&filterProcessDates=${filterProcessDates}`)
+            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('salesChannelChart').getContext('2d');
