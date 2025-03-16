@@ -273,8 +273,8 @@ td.text-center .channel-logo {
         // });
 
         $('#filterChannel').change(function () {
-            orderTable.draw()
-            updateRecapCount()
+            orderTable.draw();
+            updateRecapCount();
             loadDailyOrdersChart();
             loadSalesChannelChart();
         });
@@ -604,8 +604,9 @@ td.text-center .channel-logo {
                 method: 'GET',
                 data: {
                     filterDates: filterDate.val(),
-                    filterProcessDates: $('#filterProcessDates').val(),
-                    filterBooking: filterBooking.prop('checked') ? '1' : '0',  // Add this line
+                    filterChannel: $('#filterChannel').val(),
+                    // filterProcessDates: $('#filterProcessDates').val(),
+                    filterBooking: filterBooking.prop('checked') ? '1' : '0',
                     filterStatus: filterStatus.val()
                 },
                 success: function(response) {
