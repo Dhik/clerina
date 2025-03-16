@@ -28,12 +28,12 @@
             </div>
 
             <!-- Process Date Filter -->
-            <div class="col-md-2">
+            <!-- <div class="col-md-2">
                 <div class="form-group">
                     <label for="filterProcessDates">Process Date</label>
                     <input type="text" class="form-control rangeDate" id="filterProcessDates" placeholder="Select Process Date" autocomplete="off">
                 </div>
-            </div>
+            </div> -->
 
             <!-- Sales Channel Filter -->
             <div class="col-md-2">
@@ -242,7 +242,7 @@ td.text-center .channel-logo {
         const errorSubmitOrder = $('#errorSubmitOrder');
         const errorUpdateSubmitOrder = $('#errorUpdateSubmitOrder');
         const filterDate = $('#filterDates');
-        const filterProcessDates = $('#filterProcessDates');
+        // const filterProcessDates = $('#filterProcessDates');
         const filterBooking = $('#filterBooking');
         const filterStatus = $('#filterStatus');
         let orderPieChart;
@@ -265,12 +265,12 @@ td.text-center .channel-logo {
             loadDailyOrdersChart()
             loadSalesChannelChart()
         });
-        filterProcessDates.change(function () {
-            orderTable.draw()
-            updateRecapCount()
-            loadDailyOrdersChart()
-            loadSalesChannelChart()
-        });
+        // filterProcessDates.change(function () {
+        //     orderTable.draw()
+        //     updateRecapCount()
+        //     loadDailyOrdersChart()
+        //     loadSalesChannelChart()
+        // });
 
         $('#filterChannel').change(function () {
             orderTable.draw()
@@ -315,7 +315,7 @@ td.text-center .channel-logo {
                 url: "{{ route('order.get') }}",
                 data: function (d) {
                     d.filterDates = $('#filterDates').val()
-                    d.filterProcessDates = $('#filterProcessDates').val()
+                    // d.filterProcessDates = $('#filterProcessDates').val()
                     d.filterChannel = $('#filterChannel').val()
                     d.filterQty = $('#filterQty').val()
                     d.filterSku = $('#filterSku').val()
@@ -411,7 +411,7 @@ td.text-center .channel-logo {
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
             const filterDates = $('#filterDates').val();
-            const filterProcessDates = $('#filterProcessDates').val();
+            // const filterProcessDates = $('#filterProcessDates').val();
 
             fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}&filterProcessDates=${filterProcessDates}`)
                 .then(response => response.json())

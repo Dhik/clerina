@@ -54,14 +54,14 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
             $queryOrder->where('date', '>=', $startDate)
                 ->where('date', '<=', $endDate);
         }
-        if (!is_null($request->input('filterProcessDates'))) {
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterProcessDates'));
-            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+        // if (!is_null($request->input('filterProcessDates'))) {
+        //     [$startDateString, $endDateString] = explode(' - ', $request->input('filterProcessDates'));
+        //     $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+        //     $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
     
-            $queryOrder->where('process_at', '>=', $startDate)
-                ->where('process_at', '<=', $endDate);
-        }
+        //     $queryOrder->where('process_at', '>=', $startDate)
+        //         ->where('process_at', '<=', $endDate);
+        // }
 
         // Filter by sales channel
         if (!is_null($request->input('filterChannel'))) {
