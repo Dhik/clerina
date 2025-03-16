@@ -42,6 +42,7 @@ Route::prefix('admin')
                 Route::get('/daily-by-channel', [OrderController::class, 'getDailyOrdersByChannel'])->name('orders.daily-by-channel');
                 Route::get('/import_customer', [OrderController::class, 'importOrdersCleora'])->name('order.import_customer');
                 Route::get('/import_crm_customer', [OrderController::class, 'importCRMCustomer'])->name('order.import_crm_customer');
+                Route::get('/import_tokped', [OrderController::class, 'importOrdersTokopedia'])->name('order.import_tokped');
                 Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
                 Route::get('/export-unique-skus', [OrderController::class, 'exportUniqueSku']);
 
