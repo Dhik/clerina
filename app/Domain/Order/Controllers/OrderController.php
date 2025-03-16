@@ -1035,11 +1035,18 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
+        $skippedRows = 0;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
+                // Skip rows where date column is empty
+                if (empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
                 $orderData = [
-                    'date'                 => !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null,
+                    'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
                     'sales_channel_id'     => 1, // Shopee
@@ -1083,7 +1090,8 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Shopee orders imported successfully', 
             'total_rows' => $totalRows,
-            'processed_rows' => $processedRows
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows
         ]);
     }
     public function importOrdersTiktok()
