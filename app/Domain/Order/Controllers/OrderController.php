@@ -1381,11 +1381,20 @@ class OrderController extends Controller
             ->rightJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
             ->where('orders.tenant_id', Auth::user()->current_tenant_id);
 
-        // Apply date filter
+        // Apply date filter if provided in request
         if ($request->filled('filterDates')) {
             [$startDateString, $endDateString] = explode(' - ', $request->filterDates);
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString);
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString);
+            
+            $query->whereBetween('orders.date', [
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d')
+            ]);
+        } else {
+            // Default to current month when no date filter is provided
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfMonth();
             
             $query->whereBetween('orders.date', [
                 $startDate->format('Y-m-d'),
