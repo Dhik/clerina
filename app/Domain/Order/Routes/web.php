@@ -45,6 +45,7 @@ Route::prefix('admin')
                 Route::get('/import_tokped', [OrderController::class, 'importOrdersTokopedia'])->name('order.import_tokped');
                 Route::get('/import_shopee', [OrderController::class, 'importOrdersShopee'])->name('order.import_shopee');
                 Route::get('/import_tiktok', [OrderController::class, 'importOrdersTiktok'])->name('order.import_tiktok');
+                Route::get('/import_lazada', [OrderController::class, 'importOrdersLazada'])->name('order.import_lazada');
                 Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
                 Route::get('/export-unique-skus', [OrderController::class, 'exportUniqueSku']);
 

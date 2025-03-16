@@ -1152,6 +1152,75 @@ class OrderController extends Controller
             'processed_rows' => $processedRows
         ]);
     }
+    public function importOrdersLazada()
+    {
+        set_time_limit(0);
+        $range = 'Lazada Processed!A2:Q'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                try {
+                    // Handle price formatting (remove decimal part for bigint)
+                    $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
+                    
+                    $orderData = [
+                        'date'                 => !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null,
+                        'process_at'           => null,
+                        'id_order'             => $row[0] ?? null,
+                        'sales_channel_id'     => 2, // Lazada
+                        'customer_name'        => $row[9] ?? null,
+                        'customer_phone_number' => $row[16] ?? null, // Column Q
+                        'product'              => $row[5] ?? null,
+                        'qty'                  => $row[10] ?? null,
+                        'receipt_number'       => $row[1] ?? null,
+                        'shipment'             => $row[15] ?? null, // Column P
+                        'payment_method'       => $row[4] ?? null,
+                        'sku'                  => $row[6] ?? null,
+                        'variant'              => $row[7] ?? null,
+                        'price'                => $price,
+                        'username'             => $row[9] ?? null,
+                        'shipping_address'     => $row[11] ?? null,
+                        'city'                 => $row[12] ?? null,
+                        'province'             => $row[13] ?? null,
+                        'amount'               => $price,
+                        'tenant_id'            => $tenant_id,
+                        'is_booking'           => 0,
+                        'status'               => $row[14] ?? null, // Column O
+                        'created_at'           => now(),
+                        'updated_at'           => now(),
+                    ];
+
+                    // Check if order with the same id_order, product, sku exists
+                    $order = Order::where('id_order', $orderData['id_order'])
+                                ->where('product', $orderData['product'])
+                                ->where('sku', $orderData['sku'])
+                                ->first();
+
+                    // If order doesn't exist, create it
+                    if (!$order) {
+                        Order::create($orderData);
+                        $processedRows++;
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
+                    continue; // Skip this row and continue with the next
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Lazada orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows
+        ]);
+    }
 
 
 
