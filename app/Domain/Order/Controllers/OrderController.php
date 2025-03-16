@@ -1162,14 +1162,10 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $skippedRows = [];
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $index => $row) {
+            foreach ($chunk as $row) {
                 try {
-                    // Get the original row index in the sheet (A2 + current index)
-                    $rowIndex = $index + 2;
-                    
                     // Handle price formatting (remove decimal part for bigint)
                     $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
                     
@@ -1219,59 +1215,20 @@ class OrderController extends Controller
                         
                         Order::create($orderData);
                         $processedRows++;
-                    } else {
-                        // Track skipped row
-                        $skippedRows[] = [
-                            'row' => $rowIndex,
-                            'id_order' => $row[0] ?? null,
-                            'product' => $row[5] ?? null,
-                            'sku' => $row[6] ?? null,
-                            'date' => $orderDate,
-                            'reason' => 'Duplicate record exists'
-                        ];
                     }
                 } catch (\Exception $e) {
-                    // Track error rows
-                    $skippedRows[] = [
-                        'row' => $index + 2,
-                        'id_order' => $row[0] ?? null,
-                        'reason' => 'Error: ' . $e->getMessage()
-                    ];
+                    \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
                     continue; // Skip this row and continue with the next
                 }
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
 
-        // Get the first 10 skipped rows for the response (to avoid huge responses)
-        $skippedRowsSample = array_slice($skippedRows, 0, 10);
-        
         return response()->json([
             'message' => 'Lazada orders imported successfully', 
             'total_rows' => $totalRows,
-            'processed_rows' => $processedRows,
-            'skipped_rows_count' => count($skippedRows),
-            'skipped_rows_sample' => $skippedRowsSample,
-            // Optionally log all skipped rows to a file
-            'skipped_rows_log' => $this->logSkippedRows($skippedRows)
+            'processed_rows' => $processedRows
         ]);
-    }
-
-    /**
-     * Log skipped rows to a file and return the file path
-     */
-    private function logSkippedRows($skippedRows)
-    {
-        if (empty($skippedRows)) {
-            return null;
-        }
-        
-        $logFile = 'lazada_import_skipped_' . date('Y-m-d_H-i-s') . '.json';
-        $path = storage_path('logs/' . $logFile);
-        
-        file_put_contents($path, json_encode($skippedRows, JSON_PRETTY_PRINT));
-        
-        return $logFile;
     }
 
 
