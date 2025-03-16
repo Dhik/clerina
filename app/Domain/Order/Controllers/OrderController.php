@@ -1097,7 +1097,7 @@ class OrderController extends Controller
     public function importOrdersTiktok()
     {
         set_time_limit(0);
-        $range = 'Tiktok Processed!A2:Q'; 
+        $range = 'Tiktok Processed!A2:S'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -1127,7 +1127,7 @@ class OrderController extends Controller
                         'shipping_address'     => $row[12] ?? null, // Column M
                         'city'                 => $row[11] ?? null, // Column L
                         'province'             => $row[10] ?? null, // Column K
-                        'amount'               => $row[5] ?? null,
+                        'amount'               => $row[18] ?? null,
                         'tenant_id'            => $tenant_id,
                         'is_booking'           => 0,
                         'status'               => $row[13] ?? null, // Column N
