@@ -978,7 +978,7 @@ class OrderController extends Controller
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
                 $orderData = [
-                    'date' => !empty($row[1]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[1])->format('Y-m-d') : null,
+                    'date' => !empty($row[1]) ? Carbon::createFromFormat('d-m-Y H:i:s', $row[1])->format('Y-m-d') : null,
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
                     'sales_channel_id'     => 3, // Tokopedia
