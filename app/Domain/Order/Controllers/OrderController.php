@@ -1169,7 +1169,7 @@ class OrderController extends Controller
                     // Handle price formatting (remove decimal part for bigint)
                     $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
                     
-                    // Parse date first to use in both the check and the data
+                    // Parse date
                     $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
                     
                     $orderData = [
@@ -1195,21 +1195,24 @@ class OrderController extends Controller
                         'tenant_id'            => $tenant_id,
                         'is_booking'           => 0,
                         'status'               => $row[14] ?? null, // Column O
-                        'created_at'           => now(),
-                        'updated_at'           => now(),
                     ];
 
-                    // Check if order with the same criteria exists
-                    $order = Order::where('id_order', $orderData['id_order'])
-                                ->where('product', $orderData['product'])
-                                ->where('sku', $orderData['sku'])
-                                ->where('date', $orderDate)
-                                ->where('username', $orderData['username'])
-                                ->where('status', $orderData['status'])
-                                ->first();
+                    // Check for identical record
+                    $query = Order::query();
+                    foreach ($orderData as $field => $value) {
+                        if ($value !== null) {
+                            $query->where($field, $value);
+                        }
+                    }
+                    
+                    $existingOrder = $query->first();
 
-                    // If order doesn't exist, create it
-                    if (!$order) {
+                    // If no identical order exists, create it
+                    if (!$existingOrder) {
+                        // Add timestamps for creation
+                        $orderData['created_at'] = now();
+                        $orderData['updated_at'] = now();
+                        
                         Order::create($orderData);
                         $processedRows++;
                     }
