@@ -1169,8 +1169,11 @@ class OrderController extends Controller
                     // Handle price formatting (remove decimal part for bigint)
                     $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
                     
+                    // Parse date first to use in both the check and the data
+                    $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
+                    
                     $orderData = [
-                        'date'                 => !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null,
+                        'date'                 => $orderDate,
                         'process_at'           => null,
                         'id_order'             => $row[0] ?? null,
                         'sales_channel_id'     => 2, // Lazada
@@ -1196,10 +1199,13 @@ class OrderController extends Controller
                         'updated_at'           => now(),
                     ];
 
-                    // Check if order with the same id_order, product, sku exists
+                    // Check if order with the same criteria exists
                     $order = Order::where('id_order', $orderData['id_order'])
                                 ->where('product', $orderData['product'])
                                 ->where('sku', $orderData['sku'])
+                                ->where('date', $orderDate)
+                                ->where('username', $orderData['username'])
+                                ->where('status', $orderData['status'])
                                 ->first();
 
                     // If order doesn't exist, create it
