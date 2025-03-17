@@ -621,4 +621,47 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function getAdSpentDetail(Request $request)
+    {
+        $date = $request->input('date');
+        $results = [];
+        
+        // Get social media ad spending
+        $socialMediaData = AdSpentSocialMedia::where('date', $date)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where(function($query) {
+                $query->where('amount', '>', 0)
+                    ->orWhereNotNull('amount');
+            })
+            ->with('socialMedia') // Assuming you have a relationship defined
+            ->get();
+        
+        foreach ($socialMediaData as $item) {
+            $results[] = [
+                'type' => 'Social Media',
+                'name' => $item->socialMedia->name ?? 'Unknown',
+                'amount' => $item->amount
+            ];
+        }
+        
+        // Get marketplace ad spending
+        $marketplaceData = AdSpentMarketPlace::where('date', $date)
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->where(function($query) {
+                $query->where('amount', '>', 0)
+                    ->orWhereNotNull('amount');
+            })
+            ->with('salesChannel') // Assuming you have a relationship defined
+            ->get();
+        
+        foreach ($marketplaceData as $item) {
+            $results[] = [
+                'type' => 'Marketplace',
+                'name' => $item->salesChannel->name ?? 'Unknown',
+                'amount' => $item->amount
+            ];
+        }
+        
+        return response()->json(['data' => $results]);
+    }
 }

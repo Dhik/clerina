@@ -102,7 +102,7 @@
                                     <th>Closing Rate</th>
                                     <th>ROAS</th>
                                     <th>Sales</th>
-                                    <th>Marketing</th>
+                                    <th>Ads Spent</th>
                                     <th>KOL</th>
                                     <th>Affiliate</th>
                                     <th>Social Media Ads</th>
@@ -120,6 +120,26 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adSpentDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adSpentDetailModalTitle">Ads Spent Detail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table id="adSpentDetailTable" class="table table-bordered table-striped" width="100%">
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -295,6 +315,40 @@
             loadNetProfitsChart();
             loadCorrelationChart();
         });
+        function showAdSpentDetail(date) {
+            // Open modal
+            $('#adSpentDetailModal').modal('show');
+            $('#adSpentDetailModalTitle').text('Ads Spent Detail - ' + date);
+            
+            // Clear existing data
+            if ($.fn.DataTable.isDataTable('#adSpentDetailTable')) {
+                $('#adSpentDetailTable').DataTable().destroy();
+            }
+            
+            // Initialize datatable
+            $('#adSpentDetailTable').DataTable({
+                processing: true,
+                serverSide: false, // We'll load all data at once for simplicity
+                ajax: {
+                    url: "{{ route('net-profit.get_ad_spent_detail') }}",
+                    data: { date: date }
+                },
+                columns: [
+                    { data: 'type', title: 'Type' },
+                    { data: 'name', title: 'Channel/Platform' },
+                    { 
+                        data: 'amount', 
+                        title: 'Amount',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { "targets": [2], "className": "text-right" }
+                ]
+            });
+        }
 
         function showKolDetail(date) {
             $('#kolDetailModal').modal('show');
@@ -474,11 +528,13 @@
                     },
                     {
                         data: 'marketing',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        name: 'marketing',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showAdSpentDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
                         visible: true
-                    },
+                    }
                     {
                         data: 'spent_kol',
                         render: function(data, type, row) {
