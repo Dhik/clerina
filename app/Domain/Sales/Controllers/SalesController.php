@@ -900,7 +900,7 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
-        $range = 'Ads Summary!A2:H';
+        $range = 'Import Sales!A2:M';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -913,10 +913,10 @@ class SalesController extends Controller
                 continue;
             }
             $salesChannelData = [
-                4 => $row[1] ?? null, // Tiktok Shop (sales_channel_id == 4)
-                1 => $row[3] ?? null, // Shopee (sales_channel_id == 1)
-                3 => $row[4] ?? null, // Tokopedia (sales_channel_id == 3)
-                2 => $row[5] ?? null, // Lazada (sales_channel_id == 2)
+                4 => $row[8] ?? null, // Tiktok Shop (sales_channel_id == 4)
+                1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
+                3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
+                2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
             ];
 
             foreach ($salesChannelData as $salesChannelId => $amountValue) {
@@ -939,9 +939,9 @@ class SalesController extends Controller
 
             // Social Media data
             $socialMediaData = [
-                1 => $row[2] ?? null, // Facebook (social_media_id == 1)
-                2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
-                5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
+                1 => $row[9] ?? null, // Facebook (social_media_id == 1)
+                // 2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
+                // 5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
             ];
 
             foreach ($socialMediaData as $socialMediaId => $amountValue) {
@@ -968,7 +968,7 @@ class SalesController extends Controller
 
     public function importVisitCleora()
     {
-        $range = '[Cleora] Visit, Sales, Transaction!A3:E'; 
+        $range = 'Import Sales!A3:H'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -980,10 +980,10 @@ class SalesController extends Controller
                 continue;
             }
             $salesChannelData = [
-                1 => $row[1] ?? null,
-                4 => $row[2] ?? null,
-                2 => $row[3] ?? null, 
-                3 => $row[4] ?? null, 
+                1 => $row[4] ?? null,
+                4 => $row[5] ?? null,
+                2 => $row[6] ?? null, 
+                3 => $row[7] ?? null, 
             ];
 
             foreach ($salesChannelData as $salesChannelId => $amountValue) {

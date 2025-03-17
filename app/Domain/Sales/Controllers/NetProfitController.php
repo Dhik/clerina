@@ -283,7 +283,18 @@ class NetProfitController extends Controller
                 ->whereMonth('orders.date', now()->month)
                 ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'cancelled', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
                 ->select('date')
                 ->selectRaw('SUM(qty) as total_qty')
                 ->groupBy('date');
@@ -291,17 +302,20 @@ class NetProfitController extends Controller
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
-                ->update(['qty' => 0]);
+                ->update(['qty' => 0, 'fee_packing' => 0]);
 
             NetProfit::query()
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
-                ->update(['qty' => DB::raw('dq.total_qty')]);
+                ->update([
+                    'qty' => DB::raw('dq.total_qty'),
+                    'fee_packing' => DB::raw('dq.total_qty * 1000')
+                ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Quantity updated successfully.'
+                'message' => 'Quantity and fee updated successfully.'
             ]);
 
         } catch (\Exception $e) {
