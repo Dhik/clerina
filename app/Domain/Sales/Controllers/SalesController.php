@@ -127,6 +127,15 @@ class SalesController extends Controller
 
         return view('admin.sales.net_sales', compact('salesChannels', 'socialMedia'));
     }
+    public function net_per_channel(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        $this->authorize('viewAnySales', Sales::class);
+
+        $salesChannels = $this->salesChannelBLL->getSalesChannel();
+        $socialMedia = $this->socialMediaBLL->getSocialMedia();
+
+        return view('admin.sales.net_per_channel', compact('salesChannels', 'socialMedia'));
+    }
     public function getNetProfit(Request $request)
     {
         $query = NetProfit::query()
@@ -222,6 +231,45 @@ class SalesController extends Controller
             })
             ->editColumn('roas', function ($row) {
                 return number_format($row->roas ?? 0, 2);
+            })
+            ->make(true);
+    }
+    public function getHPPChannel(Request $request)
+    {
+        $query = DB::table('orders')
+            ->select(
+                'date',
+                DB::raw('COUNT(DISTINCT id_order) as order_count')
+            )
+            ->where('tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
+            ->groupBy('date');
+        
+        // Apply date filter if provided
+        if (!is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } else {
+            // Default to current month
+            $query->whereMonth('date', Carbon::now()->month)
+                ->whereYear('date', Carbon::now()->year);
+        }
+
+        return DataTables::of($query)
+            ->editColumn('date', function ($row) {
+                return Carbon::parse($row->date)->format('Y-m-d');
             })
             ->make(true);
     }

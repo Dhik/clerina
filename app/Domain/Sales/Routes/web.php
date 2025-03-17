@@ -97,7 +97,9 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [SalesController::class, 'index'])->name('sales.index');
                 Route::get('/net_sales', [SalesController::class, 'net_sales'])->name('sales.net_sales');
+                Route::get('/net_per_channel', [SalesController::class, 'net_per_channel'])->name('sales.net_per_channel');
                 Route::get('/get_net_sales', [SalesController::class, 'getNetProfit'])->name('sales.get_net_sales');
+                Route::get('/get_hpp', [SalesController::class, 'getHPPChannel'])->name('sales.get_hpp');
                 Route::get('/get_net_sales_summary', [SalesController::class, 'getNetProfitSummary'])->name('sales.get_net_sales_summary');
                 Route::get('/net_sales_line', [SalesController::class, 'getChartData'])->name('sales.net_sales_line');
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
