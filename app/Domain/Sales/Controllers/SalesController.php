@@ -130,14 +130,20 @@ class SalesController extends Controller
     public function getNetProfit(Request $request)
     {
         $query = NetProfit::query()
-            ->select('net_profits.*')
+            ->select(
+                'net_profits.*', 
+                'sales.ad_spent_social_media',
+                'sales.ad_spent_market_place'
+            )
             ->leftJoin('sales', function($join) {
                 $join->on('net_profits.date', '=', 'sales.date')
-                    ->where('sales.tenant_id', Auth::user()->current_tenant_id);
+                     ->where('sales.tenant_id', Auth::user()->current_tenant_id);
             })
             ->where(function($query) {
-                $query->whereNotNull('sales.ad_spent_social_media')
-                    ->orWhere('sales.ad_spent_social_media', '>', 0);
+                $query->where(function($subQuery) {
+                    $subQuery->whereNotNull('sales.ad_spent_social_media')
+                        ->where('sales.tenant_id', Auth::user()->current_tenant_id);
+                })->orWhere('sales.ad_spent_social_media', '>', 0);
             });
 
         if (! is_null($request->input('filterDates'))) {
@@ -183,6 +189,12 @@ class SalesController extends Controller
             })
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');
+            })
+            ->editColumn('ad_spent_social_media', function ($row) {
+                return $row->ad_spent_social_media ?? 0;
+            })
+            ->editColumn('ad_spent_market_place', function ($row) {
+                return $row->ad_spent_market_place ?? 0;
             })
             ->editColumn('visit', function ($row) {
                 return $row->visit ?? 0;
