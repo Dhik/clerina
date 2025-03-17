@@ -462,25 +462,34 @@
         // Reload table when filter changes
         $('#filterChannel').on('change', function() {
             orderCountTable.ajax.reload();
+            fetchSummary();
         });
 
-            function fetchSummary() {
-                const filterDates = document.getElementById('filterDates').value;
-                const url = new URL("{{ route('sales.get_net_sales_summary') }}");
-                if (filterDates) {
-                    url.searchParams.append('filterDates', filterDates);
-                }
-
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-                        document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-                        document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
-                        document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
-                    })
-                    .catch(error => console.error('Error:', error));
+        function fetchSummary() {
+            const filterDates = document.getElementById('filterDates').value;
+            const filterChannel = document.getElementById('filterChannel').value;
+            const url = new URL("{{ route('sales.get_hpp_summary') }}");
+            
+            if (filterDates) {
+                url.searchParams.append('filterDates', filterDates);
             }
+            
+            if (filterChannel) {
+                url.searchParams.append('filterChannel', filterChannel);
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
+                    document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+                    document.getElementById('totalQty').textContent = Math.round(data.total_qty).toLocaleString('id-ID');
+                    document.getElementById('orderCount').textContent = Math.round(data.order_count).toLocaleString('id-ID');
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Call the fetchSummary function initially
         fetchSummary();
 
         $('#totalSpentCard').click(function() {

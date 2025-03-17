@@ -315,6 +315,54 @@ class SalesController extends Controller
             'total_net_profit' => $data->total_net_profit ?? 0
         ]);
     }
+    public function getHPPChannelSummary(Request $request)
+    {
+        $query = DB::table('orders')
+            ->leftJoin('products', 'orders.sku', '=', 'products.sku')
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ]);
+
+        // Apply date filter if provided
+        if (!is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+            $query->whereBetween('orders.date', [$startDate, $endDate]);
+        } else {
+            // Default to current month
+            $query->whereMonth('orders.date', Carbon::now()->month)
+                ->whereYear('orders.date', Carbon::now()->year);
+        }
+
+        // Apply sales channel filter if provided
+        if ($request->filterChannel) {
+            $query->where('orders.sales_channel_id', $request->filterChannel);
+        }
+
+        $data = $query->selectRaw('
+            SUM(orders.amount) as total_sales,
+            SUM(products.harga_satuan * orders.qty) as total_hpp,
+            SUM(orders.qty) as total_qty,
+            COUNT(DISTINCT orders.id_order) as order_count
+        ')
+        ->first();
+
+        return response()->json([
+            'total_sales' => $data->total_sales ?? 0,
+            'total_hpp' => $data->total_hpp ?? 0,
+            'total_qty' => $data->total_qty ?? 0,
+            'order_count' => $data->order_count ?? 0
+        ]);
+    }
     public function getChartData(Request $request)
     {
         $query = NetProfit::query();
