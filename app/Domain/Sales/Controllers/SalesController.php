@@ -140,9 +140,10 @@ class SalesController extends Controller
             })
             ->where(function($query) {
                 $query->whereNotNull('sales.ad_spent_social_media')
-                    ->where('sales.tenant_id', 1)
+                    ->where('sales.tenant_id', Auth::user()->current_tenant_id)
                     ->orWhere('sales.ad_spent_social_media', '>', 0);
-            });
+            })
+            ->groupBy('net_profits.id');
 
         if (! is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
