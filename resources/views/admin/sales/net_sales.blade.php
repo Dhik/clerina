@@ -461,14 +461,14 @@
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
-                        visible: true  // Visible by default
+                        visible: true
                     },
                     {
                         data: 'marketing',
                         render: function(data) {
                             return 'Rp ' + Math.round(data).toLocaleString('id-ID');
                         },
-                        visible: true  // Visible by default
+                        visible: true
                     },
                     {
                         data: 'spent_kol',

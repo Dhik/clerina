@@ -178,14 +178,14 @@ class NetProfitController extends Controller
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                $sales = $this->parseCurrencyToInt($row[1] ?? null);
+                // $sales = $this->parseCurrencyToInt($row[1] ?? null);
                 $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
                 $visit = $this->parseToInt($row[3] ?? null);
 
                 NetProfit::updateOrCreate(
                     ['date' => $date],
                     [
-                        'sales' => $sales,
+                        // 'sales' => $sales,
                         'affiliate' => $affiliate,
                         'visit' => $visit
                     ]
