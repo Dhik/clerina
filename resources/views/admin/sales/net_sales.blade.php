@@ -109,6 +109,11 @@
                                     <th>Marketplace Ads</th>
                                     <th>Operational</th>
                                     <th>HPP</th>
+                                    <th>Fee Packing</th>
+                                    <th>Fee Admin (16%)</th>
+                                    <th>PPN (3%)</th>
+                                    <th>Fee Ads (2%)</th>
+                                    <th>Total Marketing</th>
                                     <th>Net Profit</th>
                                 </tr>
                             </thead>
