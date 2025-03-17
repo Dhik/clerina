@@ -132,13 +132,12 @@ class SalesController extends Controller
         $query = NetProfit::query()
             ->select('net_profits.*')
             ->leftJoin('sales', function($join) {
-                $join->on('net_profits.date', '=', 'sales.date');
+                $join->on('net_profits.date', '=', 'sales.date')
+                    ->where('sales.tenant_id', Auth::user()->current_tenant_id);
             })
             ->where(function($query) {
-                $query->where(function($subQuery) {
-                    $subQuery->whereNotNull('sales.ad_spent_social_media')
-                        ->where('sales.tenant_id', Auth::user()->current_tenant_id);
-                })->orWhere('sales.ad_spent_social_media', '>', 0);
+                $query->whereNotNull('sales.ad_spent_social_media')
+                    ->orWhere('sales.ad_spent_social_media', '>', 0);
             });
 
         if (! is_null($request->input('filterDates'))) {
