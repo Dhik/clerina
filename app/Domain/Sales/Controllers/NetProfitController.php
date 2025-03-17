@@ -631,16 +631,12 @@ class NetProfitController extends Controller
         // Get social media ad spending
         $socialMediaData = AdSpentSocialMedia::where('date', $date)
             ->where('tenant_id', Auth::user()->current_tenant_id)
-            ->where(function($query) {
-                $query->where('amount', '>', 0)
-                    ->orWhereNotNull('amount');
-            })
-            ->with('socialMedia') // Assuming you have a relationship defined
+            ->where('amount', '>', 0) // Only get amounts greater than 0
+            ->with('socialMedia')
             ->get();
         
         foreach ($socialMediaData as $item) {
             $results[] = [
-                'type' => 'Social Media',
                 'name' => $item->socialMedia->name ?? 'Unknown',
                 'amount' => $item->amount
             ];
@@ -649,16 +645,12 @@ class NetProfitController extends Controller
         // Get marketplace ad spending
         $marketplaceData = AdSpentMarketPlace::where('date', $date)
             ->where('tenant_id', Auth::user()->current_tenant_id)
-            ->where(function($query) {
-                $query->where('amount', '>', 0)
-                    ->orWhereNotNull('amount');
-            })
-            ->with('salesChannel') // Assuming you have a relationship defined
+            ->where('amount', '>', 0) // Only get amounts greater than 0
+            ->with('salesChannel')
             ->get();
         
         foreach ($marketplaceData as $item) {
             $results[] = [
-                'type' => 'Marketplace',
                 'name' => $item->salesChannel->name ?? 'Unknown',
                 'amount' => $item->amount
             ];

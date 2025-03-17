@@ -334,7 +334,6 @@
                     data: { date: date }
                 },
                 columns: [
-                    { data: 'type', title: 'Type' },
                     { data: 'name', title: 'Channel/Platform' },
                     { 
                         data: 'amount', 
@@ -345,7 +344,7 @@
                     }
                 ],
                 columnDefs: [
-                    { "targets": [2], "className": "text-right" }
+                    { "targets": [1], "className": "text-right" }
                 ]
             });
         }
