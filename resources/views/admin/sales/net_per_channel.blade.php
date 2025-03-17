@@ -36,17 +36,6 @@
             </div>
             <div class="row">
                 <div class="col-3">
-                    <div class="small-box bg-gradient-success">
-                        <div class="inner">
-                            <h4 id="totalSales">Rp 0</h4>
-                            <p>Total Sales</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-3">
                     <div class="small-box bg-gradient-primary">
                         <div class="inner">
                             <h4 id="totalHpp">Rp 0</h4>
