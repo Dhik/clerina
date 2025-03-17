@@ -96,7 +96,7 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <!-- <th>Visit</th> -->
+                                    <th>Visit</th>
                                     <th>Qty</th>
                                     <th>Order</th>
                                     <th>Closing Rate</th>
@@ -428,13 +428,13 @@
                         name: 'date',
                         visible: true
                     },
-                    // {
-                    //     data: 'visit',
-                    //     render: function(data) {
-                    //         return Math.round(data || 0).toLocaleString('id-ID');
-                    //     },
-                    //     visible: false 
-                    // },
+                    {
+                        data: 'visit',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false 
+                    },
                     {
                         data: 'qty',
                         render: function(data) {
