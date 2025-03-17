@@ -105,6 +105,8 @@
                                     <th>Marketing</th>
                                     <th>KOL</th>
                                     <th>Affiliate</th>
+                                    <th>Social Media Ads</th>
+                                    <th>Marketplace Ads</th>
                                     <th>Operational</th>
                                     <th>HPP</th>
                                     <th>Fee Packing</th>
@@ -487,6 +489,20 @@
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
                         visible: true  // Visible by default
+                    },
+                    {
+                        data: 'ad_spent_social_media',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'ad_spent_market_place',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
                     },
                     {
                         data: 'operasional',
