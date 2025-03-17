@@ -315,40 +315,6 @@
             loadNetProfitsChart();
             loadCorrelationChart();
         });
-        function showAdSpentDetail(date) {
-            // Open modal
-            $('#adSpentDetailModal').modal('show');
-            $('#adSpentDetailModalTitle').text('Ads Spent Detail - ' + date);
-            
-            // Clear existing data
-            if ($.fn.DataTable.isDataTable('#adSpentDetailTable')) {
-                $('#adSpentDetailTable').DataTable().destroy();
-            }
-            
-            // Initialize datatable
-            $('#adSpentDetailTable').DataTable({
-                processing: true,
-                serverSide: false, // We'll load all data at once for simplicity
-                ajax: {
-                    url: "{{ route('net-profit.get_ad_spent_detail') }}",
-                    data: { date: date }
-                },
-                columns: [
-                    { data: 'type', title: 'Type' },
-                    { data: 'name', title: 'Channel/Platform' },
-                    { 
-                        data: 'amount', 
-                        title: 'Amount',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                        }
-                    }
-                ],
-                columnDefs: [
-                    { "targets": [2], "className": "text-right" }
-                ]
-            });
-        }
 
         function showKolDetail(date) {
             $('#kolDetailModal').modal('show');
