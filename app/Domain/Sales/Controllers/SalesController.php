@@ -907,7 +907,9 @@ class SalesController extends Controller
         $currentMonth = Carbon::now()->format('Y-m');
 
         foreach ($sheetData as $row) {
-            // Parse the date from row[0] and filter to process only current month data
+            if (empty($row) || empty($row[0])) {
+                continue;
+            }
             $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
             if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                 continue;
