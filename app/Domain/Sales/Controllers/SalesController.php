@@ -399,6 +399,39 @@ class SalesController extends Controller
         
         return response()->json(['data' => $results]);
     }
+    public function getHppDetailTotal(Request $request)
+    {
+        $date = $request->input('date');
+        
+        $query = DB::table('orders')
+            ->select(
+                DB::raw('SUM(products.harga_satuan * orders.qty) as total_hpp')
+            )
+            ->leftJoin('products', 'orders.sku', '=', 'products.sku')
+            ->where('orders.date', $date)
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ]);
+        
+        // Apply sales channel filter if provided
+        if ($request->filterChannel) {
+            $query->where('orders.sales_channel_id', $request->filterChannel);
+        }
+        
+        $result = $query->first();
+        
+        return response()->json([
+            'total_hpp' => $result->total_hpp ?? 0
+        ]);
+    }
     public function getChartData(Request $request)
     {
         $query = NetProfit::query();

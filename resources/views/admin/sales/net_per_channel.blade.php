@@ -118,6 +118,14 @@
                 </button>
             </div>
             <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h4 id="hppDetailTotal" class="text-primary">Total HPP: Rp 0</h4>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <h5 id="hppDetailChannel">All Channels</h5>
+                    </div>
+                </div>
                 <table id="hppDetailTable" class="table table-bordered table-striped" width="100%">
                     <thead>
                         <tr>
@@ -514,10 +522,27 @@
             $('#hppDetailModal').modal('show');
             $('#hppDetailModalTitle').text('HPP Details - ' + date);
             
+            // Get selected channel
+            const filterChannel = $('#filterChannel').val();
+            const channelName = filterChannel ? $('#filterChannel option:selected').text() : 'All Channels';
+            
             // Clear existing data if the table was already initialized
             if ($.fn.DataTable.isDataTable('#hppDetailTable')) {
                 $('#hppDetailTable').DataTable().destroy();
             }
+            
+            // Fetch and display total HPP
+            $.ajax({
+                url: "{{ route('sales.get_hpp_detail_total') }}",
+                data: { 
+                    date: date,
+                    filterChannel: filterChannel
+                },
+                success: function(response) {
+                    $('#hppDetailTotal').text('Total HPP: Rp ' + Math.round(response.total_hpp).toLocaleString('id-ID'));
+                    $('#hppDetailChannel').text(channelName);
+                }
+            });
             
             // Initialize datatable with HPP details
             $('#hppDetailTable').DataTable({
@@ -527,7 +552,7 @@
                     url: "{{ route('sales.get_hpp_detail') }}",
                     data: { 
                         date: date,
-                        filterChannel: $('#filterChannel').val()
+                        filterChannel: filterChannel
                     }
                 },
                 columns: [

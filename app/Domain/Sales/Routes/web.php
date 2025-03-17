@@ -102,6 +102,7 @@ Route::prefix('admin')
                 Route::get('/get_hpp', [SalesController::class, 'getHPPChannel'])->name('sales.get_hpp');
                 Route::get('/get_hpp_summary', [SalesController::class, 'getHPPChannelSummary'])->name('sales.get_hpp_summary');
                 Route::get('/get_hpp_detail', [SalesController::class, 'getHppDetail'])->name('sales.get_hpp_detail');
+                Route::get('/get_hpp_detail_total', [SalesController::class, 'getHppDetailTotal'])->name('sales.get_hpp_detail_total');
                 Route::get('/get_net_sales_summary', [SalesController::class, 'getNetProfitSummary'])->name('sales.get_net_sales_summary');
                 Route::get('/net_sales_line', [SalesController::class, 'getChartData'])->name('sales.net_sales_line');
                 Route::get('/get', [SalesController::class, 'get'])->name('sales.get');
