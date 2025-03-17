@@ -275,7 +275,6 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-
     public function updateQty()
     {
         try {
@@ -302,20 +301,19 @@ class NetProfitController extends Controller
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
-                ->update(['qty' => 0, 'fee_packing' => 0]);
+                ->update(['qty' => 0]);
 
             NetProfit::query()
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
                 ->update([
-                    'qty' => DB::raw('dq.total_qty'),
-                    'fee_packing' => DB::raw('dq.total_qty * 1000')
+                    'qty' => DB::raw('dq.total_qty')
                 ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Quantity and fee updated successfully.'
+                'message' => 'Quantity updated successfully.'
             ]);
 
         } catch (\Exception $e) {
@@ -327,7 +325,6 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-
     public function updateOrderCount()
     {
         try {
@@ -335,6 +332,18 @@ class NetProfitController extends Controller
                 ->whereMonth('orders.date', now()->month)
                 ->whereYear('orders.date', now()->year)
                 ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'cancelled', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
                 ->select('date')
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');
@@ -342,24 +351,27 @@ class NetProfitController extends Controller
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
-                ->update(['order' => 0]);
+                ->update(['order' => 0, 'fee_packing' => 0]);
                 
             NetProfit::query()
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })
-                ->update(['order' => DB::raw('do.total_orders')]);
+                ->update([
+                    'order' => DB::raw('do.total_orders'),
+                    'fee_packing' => DB::raw('do.total_orders * 1000')
+                ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order count updated successfully.'
+                'message' => 'Order count and packing fee updated successfully.'
             ]);
 
         } catch (\Exception $e) {
             \Log::error('Update Order Count Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update order count.',
+                'message' => 'Failed to update order count and packing fee.',
                 'error' => $e->getMessage()
             ], 500);
         }
