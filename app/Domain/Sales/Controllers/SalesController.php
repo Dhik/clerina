@@ -140,7 +140,7 @@ class SalesController extends Controller
             })
             ->where(function($query) {
                 $query->whereNotNull('sales.ad_spent_social_media')
-                    ->where('sales.tenant_id', Auth::user()->current_tenant_id)
+                    ->where('sales.tenant_id', 1)
                     ->orWhere('sales.ad_spent_social_media', '>', 0);
             });
 
