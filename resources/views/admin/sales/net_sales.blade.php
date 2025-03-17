@@ -102,6 +102,7 @@
                                     <th>Closing Rate</th>
                                     <th>ROAS</th>
                                     <th>Sales</th>
+                                    <th>Penjualan Bersih (85%)</th>
                                     <th>Ads Spent</th>
                                     <th>KOL</th>
                                     <th>Affiliate</th>
@@ -524,6 +525,13 @@
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
                         visible: true
+                    },
+                    {
+                        data: 'penjualan_bersih',
+                        render: function(data) {
+                            return '<span class="text-info">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: true // Set to true to show by default
                     },
                     {
                         data: 'marketing',

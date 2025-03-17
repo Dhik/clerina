@@ -159,6 +159,10 @@ class SalesController extends Controller
         }
 
         return DataTables::of($query)
+            ->addColumn('penjualan_bersih', function ($row) {
+                // 85% of sales
+                return $row->sales * 0.85;
+            })
             ->addColumn('net_profit', function ($row) {
                 return ($row->sales * 0.78) - 
                     ($row->marketing * 1.05) - 
