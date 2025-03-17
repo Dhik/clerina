@@ -994,12 +994,6 @@ let impressionChart = null;
             showLoadingSwal('Refreshing data, please wait...');
 
             $.ajax({
-                url: "{{ route('order.fetch-all') }}",
-                method: 'GET',
-                success: function(response) {
-                    console.log('Orders fetched and saved successfully');
-
-                    $.ajax({
                         url: "{{ route('order.update_turnover') }}", 
                         method: 'GET',
                         success: function(response) {
@@ -1088,15 +1082,6 @@ let impressionChart = null;
                             });
                         }
                     });
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error fetching orders!',
-                        text: xhr.responseJSON?.message || 'An error occurred.',
-                    });
-                }
-            });
         });
         function renderWaterfallChart() {
             fetch('{{ route('sales.waterfall-data') }}')

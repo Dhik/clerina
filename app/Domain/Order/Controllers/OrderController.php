@@ -290,20 +290,29 @@ class OrderController extends Controller
 
     public function updateSalesTurnover()
     {
-        $startDate = Carbon::now()->subDays(3)->format('Y-m-d');
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
-
+        
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
                         ->where('tenant_id', Auth::user()->current_tenant_id)
                         ->whereBetween('date', [$startDate, $endDate])
+                        ->whereNotIn('status', [
+                            'Batal', 
+                            'cancelled', 
+                            'Canceled', 
+                            'Pembatalan diajukan', 
+                            'Dibatalkan Sistem'
+                        ])
                         ->groupBy('date')
                         ->get();
+        
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
             Sales::where('tenant_id', Auth::user()->current_tenant_id)
                 ->where('date', $formattedDate)
                 ->update(['turnover' => $total->total_amount]);
         }
+        
         return response()->json(['message' => 'Sales turnover updated successfully']);
     }
 
