@@ -363,6 +363,42 @@ class SalesController extends Controller
             'order_count' => $data->order_count ?? 0
         ]);
     }
+    public function getHppDetail(Request $request)
+    {
+        $date = $request->input('date');
+        
+        $query = DB::table('orders')
+            ->select(
+                'orders.sku',
+                'products.product',
+                DB::raw('SUM(orders.qty) as qty'),
+                'products.harga_satuan',
+                DB::raw('SUM(products.harga_satuan * orders.qty) as total_hpp')
+            )
+            ->leftJoin('products', 'orders.sku', '=', 'products.sku')
+            ->where('orders.date', $date)
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ]);
+        
+        // Apply sales channel filter if provided
+        if ($request->filterChannel) {
+            $query->where('orders.sales_channel_id', $request->filterChannel);
+        }
+        
+        $results = $query->groupBy('orders.sku', 'products.product', 'products.harga_satuan')
+            ->get();
+        
+        return response()->json(['data' => $results]);
+    }
     public function getChartData(Request $request)
     {
         $query = NetProfit::query();

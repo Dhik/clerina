@@ -108,53 +108,30 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="kolDetailModal">
-    <div class="modal-dialog modal-xl">
+<div class="modal fade" id="hppDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">KOL Detail</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title" id="hppDetailModalTitle">HPP Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Talent</th>
-                            <th>Username</th>
-                            <th>Platform</th>
-                            <th>Followers</th>
-                            <th>Product</th>
-                            <th>Rate</th>
-                            <th>Link</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kolDetailContent"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="hppDetailModal">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">HPP Detail</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-bordered">
+                <table id="hppDetailTable" class="table table-bordered table-striped" width="100%">
                     <thead>
                         <tr>
                             <th>SKU</th>
-                            <th>Product</th>
+                            <th>Product Name</th>
                             <th>Quantity</th>
-                            <th>HPP/Unit</th>
+                            <th>HPP Satuan</th>
                             <th>Total HPP</th>
                         </tr>
                     </thead>
-                    <tbody id="hppDetailContent"></tbody>
                 </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -437,10 +414,11 @@
                         return Math.round(data).toLocaleString('id-ID');
                     }
                 },
-                { 
+                {
                     data: 'hpp_amount',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    render: function(data, type, row) {
+                        return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
+                            'Rp ' + Math.round(data || 0).toLocaleString('id-ID') + '</a>';
                     }
                 }
             ],
@@ -529,6 +507,54 @@
                 didOpen: () => {
                     Swal.showLoading();
                 }
+            });
+        }
+        function showHppDetail(date) {
+            // Open modal
+            $('#hppDetailModal').modal('show');
+            $('#hppDetailModalTitle').text('HPP Details - ' + date);
+            
+            // Clear existing data if the table was already initialized
+            if ($.fn.DataTable.isDataTable('#hppDetailTable')) {
+                $('#hppDetailTable').DataTable().destroy();
+            }
+            
+            // Initialize datatable with HPP details
+            $('#hppDetailTable').DataTable({
+                processing: true,
+                serverSide: false, // Load all data at once for simplicity
+                ajax: {
+                    url: "{{ route('sales.get_hpp_detail') }}",
+                    data: { 
+                        date: date,
+                        filterChannel: $('#filterChannel').val()
+                    }
+                },
+                columns: [
+                    { data: 'sku', name: 'sku' },
+                    { data: 'product', name: 'product' },
+                    { 
+                        data: 'qty', 
+                        render: function(data) {
+                            return Math.round(data).toLocaleString('id-ID');
+                        }
+                    },
+                    { 
+                        data: 'harga_satuan', 
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    },
+                    { 
+                        data: 'total_hpp', 
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { "targets": [2, 3, 4], "className": "text-right" }
+                ]
             });
         }
 
