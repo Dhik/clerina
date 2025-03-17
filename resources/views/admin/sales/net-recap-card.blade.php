@@ -3,18 +3,18 @@
         <div class="card">
             <div class="card-header p-2">
                 <ul class="nav nav-pills">
-                    <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#netProfitsTab" data-toggle="tab">Net Profits</a></li>
+                    <!-- <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li> -->
+                    <li class="nav-item"><a class="nav-link active" href="#netProfitsTab" data-toggle="tab">Net Profits</a></li>
                     <li class="nav-item"><a class="nav-link" href="#correlationTab" data-toggle="tab">Sales vs Marketing</a></li>
                 </ul>
             </div>
             <div class="card-body">
                 <div class="tab-content">
-                    <div class="tab-pane active" id="recapChartTab">
+                    <!-- <div class="tab-pane active" id="recapChartTab">
                         <div id="waterfallChart"></div>
-                    </div>
+                    </div> -->
                     
-                    <div class="tab-pane" id="netProfitsTab">
+                    <div class="tab-pane active" id="netProfitsTab">
                         <canvas id="netProfitsChart" style="height: 400px;"></canvas>
                     </div>
                     <div class="tab-pane" id="correlationTab">
