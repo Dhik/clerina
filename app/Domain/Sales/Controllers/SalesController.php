@@ -139,11 +139,11 @@ class SalesController extends Controller
                 $join->on('net_profits.date', '=', 'sales.date');
             })
             ->where(function($query) {
-                $query->whereNotNull('sales.ad_spent_social_media')
-                    ->where('sales.tenant_id', Auth::user()->current_tenant_id)
-                    ->orWhere('sales.ad_spent_social_media', '>', 0);
-            })
-            ->groupBy('net_profits.id');
+                $query->where(function($subQuery) {
+                    $subQuery->whereNotNull('sales.ad_spent_social_media')
+                        ->where('sales.tenant_id', Auth::user()->current_tenant_id);
+                })->orWhere('sales.ad_spent_social_media', '>', 0);
+            });
 
         if (! is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
