@@ -84,6 +84,7 @@ Route::prefix('admin')
             Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');
             Route::get('/hpp-by-date', [NetProfitController::class, 'getHppByDate'])->name('net-profit.getHppByDate');
             Route::get('/update-roas', [NetProfitController::class, 'updateRoas'])->name('net-profit.update-roas');
+            Route::get('/update-sales', [NetProfitController::class, 'updateSales'])->name('net-profit.update-sales');
             Route::get('/update-qty', [NetProfitController::class, 'updateQty'])->name('net-profit.update-qty');
             Route::get('/update-order-count', [NetProfitController::class, 'updateOrderCount'])->name('net-profit.update-order-count');
             Route::get('/update-closing-rate', [NetProfitController::class, 'updateClosingRate'])->name('net-profit.update-closing-rate');

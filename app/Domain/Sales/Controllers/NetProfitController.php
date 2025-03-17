@@ -275,6 +275,64 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function updateSales()
+    {
+        try {
+            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+
+            // Get all dates in the range that have net_profit records
+            $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
+                ->pluck('date');
+            
+            // Statuses to exclude from the sales calculation
+            $excludedStatuses = [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ];
+            
+            // Counter for updated records
+            $updatedCount = 0;
+
+            // Process each net_profit record by date
+            foreach ($netProfitDates as $date) {
+                // Calculate total sales amount for this date
+                $totalSales = DB::table('orders')
+                    ->where('date', $date)
+                    ->where('tenant_id', 1)
+                    ->whereNotIn('status', $excludedStatuses)
+                    ->sum('amount');
+
+                // Update the net_profit record for this date
+                $updated = NetProfit::where('date', $date)
+                    ->update(['sales' => $totalSales]);
+                
+                if ($updated) {
+                    $updatedCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully updated $updatedCount net profit records with sales data",
+                'date_range' => "$startDate to $endDate"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating net profit sales data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function updateQty()
     {
         try {

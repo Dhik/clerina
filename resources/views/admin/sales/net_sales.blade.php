@@ -381,6 +381,10 @@
                 { 
                     name: 'Order Count', 
                     url: "{{ route('net-profit.update-order-count') }}"
+                },
+                { 
+                    name: 'Sales', 
+                    url: "{{ route('net-profit.update-sales') }}"
                 }
             ];
 
