@@ -251,22 +251,27 @@ class SalesController extends Controller
                 'Canceled', 
                 'Pembatalan diajukan', 
                 'Dibatalkan Sistem'
-            ])
-            ->groupBy('date');
+            ]);
+        
+        // Apply sales channel filter if provided
+        if ($request->filterChannel) {
+            $query->where('orders.sales_channel_id', $request->filterChannel);
+        }
+        
+        $query->groupBy('date');
         
         // Apply date filter if provided
         if (!is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-
             $query->whereBetween('date', [$startDate, $endDate]);
         } else {
             // Default to current month
             $query->whereMonth('date', Carbon::now()->month)
                 ->whereYear('date', Carbon::now()->year);
         }
-
+        
         return DataTables::of($query)
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');

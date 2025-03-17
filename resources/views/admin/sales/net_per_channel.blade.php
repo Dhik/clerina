@@ -81,8 +81,6 @@
                 </div>
             </div>
 
-            @include('admin.sales.net-recap-card')
-
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -432,43 +430,31 @@
 
         $('#refreshDataBtn').click(refreshData);
         let orderCountTable = $('#orderCountTable').DataTable({
-            scrollX: true,
-            responsive: false,
             processing: true,
             serverSide: true,
-            pageLength: 25,
-            dom: 'Bfrtip',
-            buttons: [
-                {
-                    extend: 'colvis',
-                    text: 'Show/Hide Columns',
-                    className: 'btn btn-secondary'
-                }
-            ],
             ajax: {
                 url: "{{ route('sales.get_hpp') }}",
                 data: function (d) {
-                    d.filterDates = filterDate.val()
+                    d.filterDates = filterDate.val();
+                    d.filterChannel = $('#filterChannel').val();
                 }
             },
             columns: [
-                {
-                    data: 'date', 
-                    name: 'date',
-                    visible: true
-                },
-                {
+                { data: 'date', name: 'date' },
+                { 
                     data: 'order_count',
                     render: function(data) {
-                        return Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: true
+                        return Math.round(data).toLocaleString('id-ID');
+                    }
                 }
             ],
-            columnDefs: [
-                { "targets": [1], "className": "text-right" }
-            ],
+            columnDefs: [{ "targets": [1], "className": "text-right" }],
             order: [[0, 'desc']]
+        });
+
+        // Reload table when filter changes
+        $('#filterChannel').on('change', function() {
+            orderCountTable.ajax.reload();
         });
 
             function fetchSummary() {
