@@ -165,6 +165,26 @@ class SalesController extends Controller
                     $row->operasional - 
                     $row->hpp;
             })
+            ->addColumn('estimasi_fee_admin', function ($row) {
+                // 16% from sales
+                return $row->sales * 0.16;
+            })
+            ->addColumn('ppn', function ($row) {
+                // 3% from sales
+                return $row->sales * 0.03;
+            })
+            ->addColumn('fee_ads', function ($row) {
+                // 2% from marketing
+                return $row->marketing * 0.02;
+            })
+            ->addColumn('total_marketing_spend', function ($row) {
+                // Sum of marketing + spent_kol + affiliate
+                return $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
+            })
+            ->editColumn('fee_packing', function ($row) {
+                // Return fee_packing from database
+                return $row->fee_packing ?? 0;
+            })
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');
             })

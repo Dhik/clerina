@@ -515,6 +515,41 @@
                         visible: true  // Visible by default
                     },
                     {
+                        data: 'fee_packing',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_fee_admin',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'ppn',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'fee_ads',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'total_marketing_spend',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
                         data: 'net_profit',
                         render: function(data) {
                             const isPositive = data >= 0;
@@ -528,7 +563,7 @@
                     }
                 ],
                 columnDefs: [
-                    { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14], "className": "text-right" }
+                    { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], "className": "text-right" }
                 ],
                 order: [[0, 'desc']]
             });
