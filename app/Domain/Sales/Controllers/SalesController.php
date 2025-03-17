@@ -238,11 +238,13 @@ class SalesController extends Controller
     {
         $query = DB::table('orders')
             ->select(
-                'date',
-                DB::raw('COUNT(DISTINCT id_order) as order_count')
+                'orders.date',
+                DB::raw('COUNT(DISTINCT orders.id_order) as order_count'),
+                DB::raw('SUM(products.harga_satuan * orders.qty) as hpp_amount')
             )
-            ->where('tenant_id', Auth::user()->current_tenant_id)
-            ->whereNotIn('status', [
+            ->leftJoin('products', 'orders.sku', '=', 'products.sku')
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('orders.status', [
                 'pending', 
                 'cancelled', 
                 'request_cancel', 
@@ -258,23 +260,26 @@ class SalesController extends Controller
             $query->where('orders.sales_channel_id', $request->filterChannel);
         }
         
-        $query->groupBy('date');
+        $query->groupBy('orders.date');
         
         // Apply date filter if provided
         if (!is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-            $query->whereBetween('date', [$startDate, $endDate]);
+            $query->whereBetween('orders.date', [$startDate, $endDate]);
         } else {
             // Default to current month
-            $query->whereMonth('date', Carbon::now()->month)
-                ->whereYear('date', Carbon::now()->year);
+            $query->whereMonth('orders.date', Carbon::now()->month)
+                ->whereYear('orders.date', Carbon::now()->year);
         }
         
         return DataTables::of($query)
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');
+            })
+            ->editColumn('hpp_amount', function ($row) {
+                return $row->hpp_amount ?? 0;
             })
             ->make(true);
     }

@@ -84,14 +84,15 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="orderCountTable" class="table table-bordered table-striped dataTable" width="100%">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Order Count</th>
-                                </tr>
-                            </thead>
-                        </table>
+                    <table id="orderCountTable" class="table table-bordered table-striped dataTable" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Order Count</th>
+                                <th>HPP Amount</th>
+                            </tr>
+                        </thead>
+                    </table>
                     </div>
                 </div>
             </div>
@@ -446,9 +447,15 @@
                     render: function(data) {
                         return Math.round(data).toLocaleString('id-ID');
                     }
+                },
+                { 
+                    data: 'hpp_amount',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                    }
                 }
             ],
-            columnDefs: [{ "targets": [1], "className": "text-right" }],
+            columnDefs: [{ "targets": [1, 2], "className": "text-right" }],
             order: [[0, 'desc']]
         });
 
