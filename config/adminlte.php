@@ -398,6 +398,23 @@ return [
             ]
         ],
         [
+            'text' => 'Daily Count',
+            'can' => [
+                PermissionEnum::ViewAdSpentMarketPlace,
+                PermissionEnum::ViewAdSpentSocialMedia,
+                PermissionEnum::ViewVisit,
+            ],
+            'icon'    => 'fas fa-fw fa-book',
+            'submenu' => [
+                [
+                    'text' => 'HPP',
+                    'url' => 'admin/report',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewCustomer],
+                ]
+            ]
+        ],
+        [
             'text' => 'Campaign',
             'can' => [
                 PermissionEnum::ViewCampaign,
