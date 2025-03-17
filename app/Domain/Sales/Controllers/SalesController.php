@@ -163,6 +163,14 @@ class SalesController extends Controller
                 // 85% of sales
                 return $row->sales * 0.85;
             })
+            ->addColumn('romi', function ($row) {
+                $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
+                
+                if ($totalMarketingSpend == 0) {
+                    return 0;
+                }
+                return $row->sales / $totalMarketingSpend;
+            })
             ->addColumn('net_profit', function ($row) {
                 return ($row->sales * 0.78) - 
                     ($row->marketing * 1.05) - 

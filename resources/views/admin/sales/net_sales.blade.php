@@ -105,6 +105,7 @@
                                     <th>Penjualan Bersih (85%)</th>
                                     <th>Ads Spent</th>
                                     <th>KOL</th>
+                                    <th>ROMI</th>
                                     <th>Affiliate</th>
                                     <th>Social Media Ads</th>
                                     <th>Marketplace Ads</th>
@@ -549,6 +550,14 @@
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
                         visible: true  // Visible by default
+                    },
+                    {
+                        data: 'romi',
+                        render: function(data) {
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2);
+                        },
+                        visible: false  // Hidden by default, or set to true if you want it visible
                     },
                     {
                         data: 'affiliate',
