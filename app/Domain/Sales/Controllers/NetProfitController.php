@@ -11,6 +11,8 @@ use App\Domain\Order\Models\Order;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Domain\Talent\Models\TalentContent;
+use App\Domain\Sales\Models\AdSpentSocialMedia;
+use App\Domain\Sales\Models\AdSpentMarketPlace;
 use App\Domain\Sales\Services\GoogleSheetService;
 
 class NetProfitController extends Controller
