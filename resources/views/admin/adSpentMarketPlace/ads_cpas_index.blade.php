@@ -101,7 +101,7 @@
 </div>
 
 <div class="modal fade" id="dailyDetailsModal" tabindex="-1" role="dialog" aria-labelledby="dailyDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog" style="max-width: 95%; width: 95%;" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="dailyDetailsModalLabel">Campaign Details</h5>
