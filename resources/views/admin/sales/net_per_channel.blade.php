@@ -424,7 +424,7 @@
         });
 
         $('#filterChannel').on('change', function() {
-            orderCountTable.ajax.reload();
+            hppDetailTable.ajax.reload();
             fetchSummary();
         });
 
