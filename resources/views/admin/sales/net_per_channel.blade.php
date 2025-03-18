@@ -73,16 +73,18 @@
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
-                    <table id="orderCountTable" class="table table-bordered table-striped dataTable" width="100%">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Order Count</th>
-                                <th>Sales</th>
-                                <th>HPP Amount</th>
-                            </tr>
-                        </thead>
-                    </table>
+                        <table id="hppDetailTable" class="table table-bordered table-striped dataTable" width="100%">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Channel</th>
+                                    <th>SKU</th>
+                                    <th>Quantity</th>
+                                    <th>HPP</th>
+                                    <th>Total HPP</th>
+                                </tr>
+                            </thead>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -386,6 +388,40 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
+
+
+        let hppDetailTable = $('#hppDetailTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('order.get_hpp') }}",
+                data: function (d) {
+                    d.filterDates = filterDate.val();
+                    d.filterChannel = $('#filterChannel').val();
+                }
+            },
+            columns: [
+                { data: 'date', name: 'date' },
+                { data: 'channel_name', name: 'sales_channels.name' },
+                { data: 'sku', name: 'daily_hpp.sku' },
+                { 
+                    data: 'quantity',
+                    name: 'daily_hpp.quantity',
+                    className: 'text-right'
+                },
+                { 
+                    data: 'HPP', 
+                    name: 'daily_hpp.HPP',
+                    className: 'text-right'
+                },
+                { 
+                    data: 'total_hpp',
+                    name: 'total_hpp',
+                    className: 'text-right'
+                }
+            ],
+            order: [[0, 'desc'], [1, 'asc'], [2, 'asc']]
+        });
 
 
         let orderCountTable = $('#orderCountTable').DataTable({

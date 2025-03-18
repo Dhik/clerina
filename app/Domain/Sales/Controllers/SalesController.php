@@ -234,59 +234,6 @@ class SalesController extends Controller
             })
             ->make(true);
     }
-    public function getHPPChannel(Request $request)
-    {
-        $query = DB::table('orders')
-            ->select(
-                'orders.date',
-                DB::raw('COUNT(DISTINCT orders.id_order) as order_count'),
-                DB::raw('SUM(orders.amount) as sales_amount'),
-                DB::raw('SUM(products.harga_satuan * orders.qty) as hpp_amount')
-            )
-            ->leftJoin('products', 'orders.sku', '=', 'products.sku')
-            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-            ->whereNotIn('orders.status', [
-                'pending', 
-                'cancelled', 
-                'request_cancel', 
-                'request_return',
-                'Batal', 
-                'Canceled', 
-                'Pembatalan diajukan', 
-                'Dibatalkan Sistem'
-            ]);
-        
-        // Apply sales channel filter if provided
-        if ($request->filterChannel) {
-            $query->where('orders.sales_channel_id', $request->filterChannel);
-        }
-        
-        $query->groupBy('orders.date');
-        
-        // Apply date filter if provided
-        if (!is_null($request->input('filterDates'))) {
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-            $query->whereBetween('orders.date', [$startDate, $endDate]);
-        } else {
-            // Default to current month
-            $query->whereMonth('orders.date', Carbon::now()->month)
-                ->whereYear('orders.date', Carbon::now()->year);
-        }
-        
-        return DataTables::of($query)
-            ->editColumn('date', function ($row) {
-                return Carbon::parse($row->date)->format('Y-m-d');
-            })
-            ->editColumn('sales_amount', function ($row) {
-                return $row->sales_amount ?? 0;
-            })
-            ->editColumn('hpp_amount', function ($row) {
-                return $row->hpp_amount ?? 0;
-            })
-            ->make(true);
-    }
     public function getNetProfitSummary(Request $request)
     {
         $query = NetProfit::query();

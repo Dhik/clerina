@@ -9,6 +9,7 @@ use App\Domain\Order\Exports\SkuQuantitiesExport;
 use App\Domain\Order\Exports\UniqueSkuExport;
 use App\Domain\Order\Exports\OrderTemplateExport;
 use App\Domain\Order\Models\Order;
+use App\Domain\Order\Models\DailyHpp;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\SalesChannel;
 use App\Domain\Order\Requests\OrderStoreRequest;
@@ -308,15 +309,15 @@ class OrderController extends Controller
         
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
-            Sales::where('tenant_id', Auth::user()->current_tenant_id)
+            
+            // Update net_profits table instead of sales table
+            DB::table('net_profits')
                 ->where('date', $formattedDate)
-                ->update(['turnover' => $total->total_amount]);
+                ->update(['sales' => $total->total_amount]);
         }
         
-        return response()->json(['message' => 'Sales turnover updated successfully']);
+        return response()->json(['message' => 'Net profits sales updated successfully']);
     }
-
-
     private function processSku($sku)
     {
         if (strpos($sku, '1 ') === 0) {
@@ -1787,5 +1788,48 @@ class OrderController extends Controller
         }
         
         return response()->json(['data' => $data]);
+    }
+    public function getHPPChannel(Request $request)
+    {
+        $query = DailyHpp::query()
+            ->select(
+                'daily_hpp.date',
+                'sales_channels.name as channel_name',
+                'daily_hpp.sku',
+                'daily_hpp.quantity',
+                'daily_hpp.HPP',
+                DB::raw('daily_hpp.quantity * daily_hpp.HPP as total_hpp')
+            )
+            ->leftJoin('sales_channels', 'daily_hpp.sales_channel_id', '=', 'sales_channels.id')
+            ->where('daily_hpp.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotNull('daily_hpp.HPP');
+        
+        if ($request->filterChannel) {
+            $query->where('daily_hpp.sales_channel_id', $request->filterChannel);
+        }
+        if (!is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+            $query->whereBetween('daily_hpp.date', [$startDate, $endDate]);
+        } else {
+            $query->whereMonth('daily_hpp.date', Carbon::now()->month)
+                ->whereYear('daily_hpp.date', Carbon::now()->year);
+        }
+        
+        return DataTables::of($query)
+            ->editColumn('date', function ($row) {
+                return Carbon::parse($row->date)->format('Y-m-d');
+            })
+            ->editColumn('HPP', function ($row) {
+                return 'Rp ' . number_format($row->HPP, 0, ',', '.');
+            })
+            ->editColumn('total_hpp', function ($row) {
+                return 'Rp ' . number_format($row->total_hpp, 0, ',', '.');
+            })
+            ->editColumn('quantity', function ($row) {
+                return number_format($row->quantity, 0, ',', '.');
+            })
+            ->make(true);
     }
 }
