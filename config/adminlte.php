@@ -315,12 +315,6 @@ return [
             'can' => [PermissionEnum::ViewSales],
         ],
         [
-            'text' => 'Ads CPAS Monitor',
-            'url' => 'admin/ads_cpas',
-            'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewSales],
-        ],
-        [
             'text' => 'Order',
             'url' => 'admin/order',
             'icon' => 'nav-icon far fa-circle text-info',
@@ -343,6 +337,24 @@ return [
             'url' => 'admin/product',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
+        ],
+        [
+            'text' => 'Ads CPAS Monitor',
+            'url' => 'admin/ads_cpas',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewSales],
+        ],
+        [
+            'text' => 'Ads CPAS Monitor',
+            'url' => 'admin/ads_cpas',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewSales],
+        ],
+        [
+            'text' => 'Ads CPAS Monitor',
+            'url' => 'admin/ads_cpas',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewSales],
         ],
         [
             'text' => 'Report',
@@ -397,23 +409,23 @@ return [
                 // ],
             ]
         ],
-        [
-            'text' => 'Daily Count',
-            'can' => [
-                PermissionEnum::ViewAdSpentMarketPlace,
-                PermissionEnum::ViewAdSpentSocialMedia,
-                PermissionEnum::ViewVisit,
-            ],
-            'icon'    => 'fas fa-fw fa-book',
-            'submenu' => [
-                [
-                    'text' => 'HPP',
-                    'url' => 'admin/report',
-                    'icon' => 'nav-icon far fa-circle text-info',
-                    'can' => [PermissionEnum::ViewCustomer],
-                ]
-            ]
-        ],
+        // [
+        //     'text' => 'Daily Count',
+        //     'can' => [
+        //         PermissionEnum::ViewAdSpentMarketPlace,
+        //         PermissionEnum::ViewAdSpentSocialMedia,
+        //         PermissionEnum::ViewVisit,
+        //     ],
+        //     'icon'    => 'fas fa-fw fa-book',
+        //     'submenu' => [
+        //         [
+        //             'text' => 'HPP',
+        //             'url' => 'admin/report',
+        //             'icon' => 'nav-icon far fa-circle text-info',
+        //             'can' => [PermissionEnum::ViewCustomer],
+        //         ]
+        //     ]
+        // ],
         [
             'text' => 'Campaign',
             'can' => [
