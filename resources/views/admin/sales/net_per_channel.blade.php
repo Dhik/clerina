@@ -423,43 +423,6 @@
             order: [[0, 'desc'], [1, 'asc'], [2, 'asc']]
         });
 
-
-        let orderCountTable = $('#orderCountTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('sales.get_hpp') }}",
-                data: function (d) {
-                    d.filterDates = filterDate.val();
-                    d.filterChannel = $('#filterChannel').val();
-                }
-            },
-            columns: [
-                { data: 'date', name: 'date' },
-                { 
-                    data: 'order_count',
-                    render: function(data) {
-                        return Math.round(data).toLocaleString('id-ID');
-                    }
-                },
-                {
-                    data: 'sales_amount',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    }
-                },
-                {
-                    data: 'hpp_amount',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data || 0).toLocaleString('id-ID') + '</a>';
-                    }
-                }
-            ],
-            columnDefs: [{ "targets": [1, 2, 3], "className": "text-right" }],
-            order: [[0, 'desc']]
-        });
-
         $('#filterChannel').on('change', function() {
             orderCountTable.ajax.reload();
             fetchSummary();
