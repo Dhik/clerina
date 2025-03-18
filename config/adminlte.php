@@ -315,6 +315,18 @@ return [
             'can' => [PermissionEnum::ViewSales],
         ],
         [
+            'text' => 'Daily Count',
+            'url' => 'admin/sales/net_sales',
+            'icon' => 'nav-icon far fa-circle text-warning',
+            'can' => [PermissionEnum::ViewTenant],
+        ],
+        [
+            'text' => 'Daily HPP',
+            'url' => 'admin/sales/net_per_channel',
+            'icon' => 'nav-icon far fa-circle text-warning',
+            'can' => [PermissionEnum::ViewTenant],
+        ],
+        [
             'text' => 'Order',
             'url' => 'admin/order',
             'icon' => 'nav-icon far fa-circle text-info',
