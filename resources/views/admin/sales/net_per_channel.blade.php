@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', trans('labels.sales'))
+@section('title', 'Daily HPP')
 
 @section('content_header')
-    <h1>Net Profit</h1>
+    <h1>HPP Daily per Channel</h1>
 @stop
 
 @section('content')
