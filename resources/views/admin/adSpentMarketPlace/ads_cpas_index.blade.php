@@ -110,19 +110,32 @@
                 </button>
             </div>
             <div class="modal-body">
-                <table id="campaignDetailsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
-                    <thead>
-                        <tr>
-                            <th>Nama Akun</th>
-                            <th>Product Category</th>
-                            <th>Total Spent</th>
-                            <th>Conversion Value</th>
-                            <th>ROAS</th>
-                            <th>Performance</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                </table>
+                <div class="table-responsive">
+                    <table id="campaignDetailsTable" class="table table-bordered table-striped dataTable" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Nama Akun</th>
+                                <th>Product Category</th>
+                                <th>Date</th>
+                                <th>Total Spent</th>
+                                <th>Impressions</th>
+                                <th>Link Clicks</th>
+                                <th>Content Views</th>
+                                <th>Adds to Cart</th>
+                                <th>Purchases</th>
+                                <th>Conversion Value</th>
+                                <th>Cost per View</th>
+                                <th>Cost per ATC</th>
+                                <th>Cost per Purchase</th>
+                                <th>ROAS</th>
+                                <th>CPM</th>
+                                <th>CTR</th>
+                                <th>Performance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -427,7 +440,8 @@
             order: [[0, 'desc']]
         });
         let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
-            responsive: true,
+            responsive: false, // Set to false for horizontal scrolling
+            scrollX: true,     // Enable horizontal scrolling
             processing: true,
             serverSide: true,
             pageLength: 10,
@@ -439,20 +453,36 @@
                 }
             },
             columns: [
-                {data: 'account_name', name: 'account_name', width: '25%'},
+                {data: 'account_name', name: 'account_name'},
                 {data: 'kategori_produk', name: 'kategori_produk'},
+                {data: 'date', name: 'date'},
                 {data: 'amount_spent', name: 'amount_spent'},
+                {data: 'impressions', name: 'impressions'},
+                {data: 'link_clicks', name: 'link_clicks'},
+                {data: 'content_views_shared_items', name: 'content_views_shared_items'},
+                {data: 'adds_to_cart_shared_items', name: 'adds_to_cart_shared_items'},
+                {data: 'purchases_shared_items', name: 'purchases_shared_items'},
                 {data: 'purchases_conversion_value_shared_items', name: 'purchases_conversion_value_shared_items'},
-                {data: 'roas', name: 'roas', searchable: false},
+                {data: 'cost_per_view', name: 'cost_per_view'},
+                {data: 'cost_per_atc', name: 'cost_per_atc'},
+                {data: 'cost_per_purchase', name: 'cost_per_purchase'},
+                {data: 'roas', name: 'roas'},
+                {data: 'cpm', name: 'cpm'},
+                {data: 'ctr', name: 'ctr'},
                 {data: 'performance', name: 'performance', searchable: false},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
             columnDefs: [
-                { "targets": [2, 3, 4], "className": "text-right" },
-                { "targets": [1, 5], "className": "text-center" },
-                { "targets": [6], "className": "text-center" }
+                { "targets": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], "className": "text-right" },
+                { "targets": [1, 2, 16], "className": "text-center" },
+                { "targets": [17], "className": "text-center" }
             ],
-            order: [[0, 'asc']]
+            order: [[0, 'asc']],
+            // Initialize with fixed column headers
+            fixedHeader: true
+        });
+        $('#dailyDetailsModal').on('shown.bs.modal', function () {
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
         });
 
         $('#adsMetaTable').on('click', '.date-details', function(){
