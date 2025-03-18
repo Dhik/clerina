@@ -456,10 +456,33 @@
                 {data: 'kategori_produk', name: 'kategori_produk'},
                 {data: 'amount_spent', name: 'amount_spent'},
                 {data: 'impressions', name: 'impressions'},
+                let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
+            responsive: false, // Set to false for horizontal scrolling
+            scrollX: true,     // Enable horizontal scrolling
+            processing: true,
+            serverSide: true,
+            pageLength: 10,
+            ajax: {
+                url: "{{ route('adSpentSocialMedia.get_details_by_date') }}",
+                data: function(d) {
+                    // Add the date from the modal to the request
+                    d.date = $('#dailyDetailsModal').data('date');
+                }
+            },
+            columns: [
+                {data: 'account_name', name: 'account_name'},
+                {data: 'kategori_produk', name: 'kategori_produk'},
+                {data: 'amount_spent', name: 'amount_spent'},
+                {data: 'impressions', name: 'impressions'},
                 {
                     data: 'link_clicks', 
                     name: 'link_clicks',
                     render: function(data) {
+                        // Handle string formatted numbers with comma as decimal separator
+                        if (typeof data === 'string') {
+                            // Extract the whole number part before the comma
+                            return data.split(',')[0];
+                        }
                         return Math.floor(data);
                     }
                 },
@@ -467,6 +490,11 @@
                     data: 'content_views_shared_items', 
                     name: 'content_views_shared_items',
                     render: function(data) {
+                        // Handle string formatted numbers with comma as decimal separator
+                        if (typeof data === 'string') {
+                            // Extract the whole number part before the comma
+                            return data.split(',')[0];
+                        }
                         return Math.floor(data);
                     }
                 },
@@ -474,6 +502,11 @@
                     data: 'adds_to_cart_shared_items', 
                     name: 'adds_to_cart_shared_items',
                     render: function(data) {
+                        // Handle string formatted numbers with comma as decimal separator
+                        if (typeof data === 'string') {
+                            // Extract the whole number part before the comma
+                            return data.split(',')[0];
+                        }
                         return Math.floor(data);
                     }
                 },
@@ -481,6 +514,11 @@
                     data: 'purchases_shared_items', 
                     name: 'purchases_shared_items',
                     render: function(data) {
+                        // Handle string formatted numbers with comma as decimal separator
+                        if (typeof data === 'string') {
+                            // Extract the whole number part before the comma
+                            return data.split(',')[0];
+                        }
                         return Math.floor(data);
                     }
                 },

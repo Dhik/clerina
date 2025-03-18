@@ -345,18 +345,6 @@ return [
             'can' => [PermissionEnum::ViewSales],
         ],
         [
-            'text' => 'Ads CPAS Monitor',
-            'url' => 'admin/ads_cpas',
-            'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewSales],
-        ],
-        [
-            'text' => 'Ads CPAS Monitor',
-            'url' => 'admin/ads_cpas',
-            'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewSales],
-        ],
-        [
             'text' => 'Report',
             'can' => [
                 PermissionEnum::ViewAdSpentMarketPlace,
