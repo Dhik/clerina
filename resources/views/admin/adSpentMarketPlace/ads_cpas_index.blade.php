@@ -116,7 +116,6 @@
                             <tr>
                                 <th>Nama Akun</th>
                                 <th>Product Category</th>
-                                <th>Date</th>
                                 <th>Total Spent</th>
                                 <th>Impressions</th>
                                 <th>Link Clicks</th>
@@ -455,7 +454,6 @@
             columns: [
                 {data: 'account_name', name: 'account_name'},
                 {data: 'kategori_produk', name: 'kategori_produk'},
-                {data: 'date', name: 'date'},
                 {data: 'amount_spent', name: 'amount_spent'},
                 {data: 'impressions', name: 'impressions'},
                 {data: 'link_clicks', name: 'link_clicks'},
