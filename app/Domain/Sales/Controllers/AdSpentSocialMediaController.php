@@ -246,17 +246,17 @@ class AdSpentSocialMediaController extends Controller
             ->addColumn('cost_per_view', function ($row) {
                 if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerView = $row->amount_spent / $row->content_views_shared_items;
-                    return 'Rp ' . number_format($costPerView, 2, ',', '.');
+                    return 'Rp ' . number_format(floor($costPerView), 0, ',', '.');
                 }
                 return '-';
             })
             ->editColumn('adds_to_cart_shared_items', function ($row) {
-                return $row->adds_to_cart_shared_items ? number_format($row->adds_to_cart_shared_items, 2, ',', '.') : '-';
+                return $row->adds_to_cart_shared_items ? number_format(floor($row->adds_to_cart_shared_items), 0, ',', '.') : '-';
             })
             ->addColumn('cost_per_atc', function ($row) {
                 if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
-                    return 'Rp ' . number_format($costPerATC, 2, ',', '.');
+                    return 'Rp ' . number_format(floor($costPerATC), 0, ',', '.');
                 }
                 return '-';
             })
@@ -266,7 +266,7 @@ class AdSpentSocialMediaController extends Controller
             ->addColumn('cost_per_purchase', function ($row) {
                 if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
-                    return 'Rp ' . number_format($costPerPurchase, 2, ',', '.');
+                    return 'Rp ' . number_format(floor($costPerPurchase), 0, ',', '.');
                 }
                 return '-';
             })
@@ -283,7 +283,7 @@ class AdSpentSocialMediaController extends Controller
             ->addColumn('cpm', function ($row) {
                 if ($row->impressions > 0 && $row->amount_spent > 0) {
                     $cpm = ($row->amount_spent / $row->impressions) * 1000;
-                    return 'Rp ' . number_format($cpm, 2, ',', '.');
+                    return 'Rp ' . number_format(floor($cpm), 0, ',', '.');
                 }
                 return '-';
             })
