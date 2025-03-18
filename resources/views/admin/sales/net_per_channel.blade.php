@@ -78,6 +78,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Order Count</th>
+                                <th>Sales</th>
                                 <th>HPP Amount</th>
                             </tr>
                         </thead>
@@ -298,25 +299,6 @@
             });
         }
 
-        function showKolDetail(date) {
-            $('#kolDetailModal').modal('show');
-            $.get("{{ route('talent-content.getByDate') }}", { date: date }, function(data) {
-                let html = '';
-                data.forEach(function(item) {
-                    html += `<tr>
-                        <td>${item.talent_name || '-'}</td>
-                        <td>${item.username || '-'}</td>
-                        <td>${item.platform || '-'}</td>
-                        <td>${item.followers ? item.followers.toLocaleString('id-ID') : '-'}</td>
-                        <td>${item.product || '-'}</td>
-                        <td>Rp ${Math.round(item.rate).toLocaleString('id-ID')}</td>
-                        <td><a href="${item.upload_link}" target="_blank">View</a></td>
-                    </tr>`;
-                });
-                $('#kolDetailContent').html(html);
-            });
-        }
-
         $('#importDataBtn').on('click', function() {
             Swal.fire({
                 title: 'Importing Data',
@@ -404,6 +386,8 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
+
+
         let orderCountTable = $('#orderCountTable').DataTable({
             processing: true,
             serverSide: true,
@@ -423,6 +407,12 @@
                     }
                 },
                 {
+                    data: 'sales_amount',
+                    render: function(data) {
+                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                    }
+                },
+                {
                     data: 'hpp_amount',
                     render: function(data, type, row) {
                         return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
@@ -430,11 +420,10 @@
                     }
                 }
             ],
-            columnDefs: [{ "targets": [1, 2], "className": "text-right" }],
+            columnDefs: [{ "targets": [1, 2, 3], "className": "text-right" }],
             order: [[0, 'desc']]
         });
 
-        // Reload table when filter changes
         $('#filterChannel').on('change', function() {
             orderCountTable.ajax.reload();
             fetchSummary();
@@ -464,7 +453,6 @@
                 .catch(error => console.error('Error:', error));
         }
 
-        // Call the fetchSummary function initially
         fetchSummary();
 
         $('#totalSpentCard').click(function() {

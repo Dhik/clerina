@@ -240,6 +240,7 @@ class SalesController extends Controller
             ->select(
                 'orders.date',
                 DB::raw('COUNT(DISTINCT orders.id_order) as order_count'),
+                DB::raw('SUM(orders.amount) as sales_amount'),
                 DB::raw('SUM(products.harga_satuan * orders.qty) as hpp_amount')
             )
             ->leftJoin('products', 'orders.sku', '=', 'products.sku')
@@ -277,6 +278,9 @@ class SalesController extends Controller
         return DataTables::of($query)
             ->editColumn('date', function ($row) {
                 return Carbon::parse($row->date)->format('Y-m-d');
+            })
+            ->editColumn('sales_amount', function ($row) {
+                return $row->sales_amount ?? 0;
             })
             ->editColumn('hpp_amount', function ($row) {
                 return $row->hpp_amount ?? 0;
