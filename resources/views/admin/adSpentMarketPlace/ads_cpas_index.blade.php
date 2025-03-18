@@ -471,9 +471,9 @@
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
             columnDefs: [
-                { "targets": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], "className": "text-right" },
-                { "targets": [1, 2, 16], "className": "text-center" },
-                { "targets": [17], "className": "text-center" }
+                { "targets": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "className": "text-right" },
+                { "targets": [1, 15], "className": "text-center" },
+                { "targets": [16], "className": "text-center" }
             ],
             order: [[0, 'asc']],
             // Initialize with fixed column headers
