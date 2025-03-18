@@ -271,7 +271,7 @@ class AdSpentSocialMediaController extends Controller
                 return '-';
             })
             ->editColumn('purchases_conversion_value_shared_items', function ($row) {
-                return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 2, ',', '.') : '-';
+                return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 0, ',', '.') : '-';
             })
             ->addColumn('roas', function ($row) {
                 if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
