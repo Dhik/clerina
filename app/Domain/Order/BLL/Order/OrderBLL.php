@@ -43,7 +43,7 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
         $queryOrder->where('tenant_id', $tenantId);
         $queryOrder->whereNotIn('status', [
             'Batal', 
-            'cancelled', 
+            'canceled', 
             'Canceled', 
             'Pembatalan diajukan', 
             'Dibatalkan Sistem'
