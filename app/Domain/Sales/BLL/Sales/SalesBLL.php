@@ -81,7 +81,7 @@ class SalesBLL extends BaseBLL implements SalesBLLInterface
         $ordersQuery = Order::where('tenant_id', $tenantId)
         ->where('date', '>=', $startDateString)
         ->where('date', '<=', $endDateString)
-        ->whereNotIn('status', ['Batal', 'cancelled', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem']);
+        ->whereNotIn('status', ['Batal', 'canceled', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem']);
 
         // if (! is_null($request->input('filterProcessDates'))) {
         //     [$processStartDate, $processEndDate] = explode(' - ', $request->input('filterProcessDates'));
