@@ -35,6 +35,26 @@
                                         <i class="fas fa-sync-alt"></i> Import Data
                                     </button>
                                 </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-info" id="importShopeeBtn">
+                                        <i class="fas fa-sync-alt"></i> Import Shopee
+                                    </button>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-info" id="importTiktokBtn">
+                                        <i class="fas fa-sync-alt"></i> Import Tiktok
+                                    </button>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-info" id="importLazadaBtn">
+                                        <i class="fas fa-sync-alt"></i> Import Lazada
+                                    </button>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-info" id="importTokopediaBtn">
+                                        <i class="fas fa-sync-alt"></i> Import Tokopedia
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

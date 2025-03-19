@@ -618,145 +618,342 @@ class SalesController extends Controller
         return response()->json($response);
     }
 
+    // public function sendMessageCleora()
+    // {
+    //     $yesterday = now()->subDay();
+    //     $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
+
+    //     $yesterdayData = Order::whereDate('date', $yesterday)
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('SUM(amount) as turnover')
+    //         ->first(); 
+
+    //     $orderData = Order::whereDate('date', $yesterday)
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
+    //         ->first();
+
+    //     $avgTurnoverPerTransaction = $orderData->transactions > 0 
+    //         ? round($yesterdayData->turnover / $orderData->transactions, 2) 
+    //         : 0;
+
+    //     $avgTurnoverPerCustomer = $orderData->customers > 0 
+    //         ? round($yesterdayData->turnover / $orderData->customers, 2) 
+    //         : 0;
+
+    //     // Format daily turnover
+    //     $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
+    //     $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
+    //     $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
+
+    //     $startOfMonth = now()->startOfMonth();
+    //     $thisMonthData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('SUM(amount) as total_turnover')
+    //         ->first();
+
+    //     $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
+    //         ->first();
+
+    //     $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
+    //     $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
+    //     $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
+
+    //     $daysPassed = now()->day - 1;
+    //     $remainingDays = now()->daysInMonth - $daysPassed;
+
+    //     $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
+    //     $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
+    //     $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
+
+    //     $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
+    //     $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
+    //     $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
+
+    //     // Format projections
+    //     $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
+    //     $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
+    //     $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
+
+    //     // Calculate turnover per sales channel
+    //     $salesChannelData = Order::whereDate('date', $yesterday)
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+    //         ->groupBy('sales_channel_id')
+    //         ->get();
+
+    //     // Monthly data per sales channel for projection
+    //     $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
+    //         ->groupBy('sales_channel_id')
+    //         ->get();
+
+    //     // Map sales channel data to names and calculate projections
+    //     $salesChannelNames = SalesChannel::pluck('name', 'id');
+    //     $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
+    //         $channelName = $salesChannelNames->get($item->sales_channel_id);
+    //         $formattedAmount = number_format($item->total_amount, 0, ',', '.');
+    //         return "{$channelName}: Rp {$formattedAmount}";
+    //     })->implode("\n");
+
+    //     $totalProjectedTurnover = $thisMonthSalesChannelData->reduce(function ($carry, $item) use ($daysPassed, $remainingDays) {
+    //         $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+    //         return $carry + $item->total_amount + ($dailyAverage * $remainingDays);
+    //     }, 0);
+        
+    //     $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays, $totalProjectedTurnover) {
+    //         $channelName = $salesChannelNames->get($item->sales_channel_id);
+    //         $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
+    //         $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
+    //         $percentage = $totalProjectedTurnover > 0 ? round(($projectedAmount / $totalProjectedTurnover) * 100, 2) : 0;
+    //         $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
+    //         return "{$channelName}: Rp {$formattedProjectedAmount} ({$percentage}%)";
+    //     })->implode("\n");
+
+    //     $startOfLastMonth = now()->subMonth()->startOfMonth();
+    //     $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
+
+    //     $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+    //         ->where('tenant_id', 1)
+    //         ->selectRaw('SUM(turnover) as total_turnover')
+    //         ->first();
+
+    //     $growthMTDLM = $lastMonthData->total_turnover > 0
+    //         ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
+    //         : 0;
+        
+    //     $dayBeforeYesterday = now()->subDays(2);
+
+    //     $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
+    //         ->where('tenant_id', 1)
+    //         ->select('turnover')
+    //         ->first();
+
+    //     $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
+    //         ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
+    //         : 0;
+
+    //     $message = <<<EOD
+    //     🔥Laporan Transaksi CLEORA🔥
+    //     Periode: $yesterdayDateFormatted
+
+    //     📅 Kemarin
+    //     Total Omzet: Rp {$formattedTurnover}
+    //     Total Transaksi: {$orderData->transactions}
+    //     Total Customer: {$orderData->customers}
+    //     Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
+    //     Growth(Yesterday/Past 2 Days): {$growthYesterdayPast2Days}%
+
+    //     📅 Bulan Ini
+    //     Total Omzet: Rp {$formattedMonthTurnover}
+    //     Total Transaksi: {$formattedMonthTransactions}
+    //     Total Customer: {$formattedMonthCustomers}
+    //     Growth(MTD/LM) : {$growthMTDLM}%
+
+    //     📈 Proyeksi Bulan Ini
+    //     Proyeksi Omzet: Rp {$formattedProjectedTurnover}
+    //     Proyeksi Total Transaksi: {$formattedProjectedTransactions}
+    //     Proyeksi Total Customer: {$formattedProjectedCustomers}
+
+    //     📈 Omset Sales Channel Kemarin
+    //     {$salesChannelTurnover}
+
+    //     📈 Proyeksi Sales Channel
+    //     {$salesChannelProjection}
+    //     EOD;
+
+    //     $response = $this->telegramService->sendMessage($message);
+    //     return response()->json($response);
+    // }
     public function sendMessageCleora()
     {
         $yesterday = now()->subDay();
         $yesterdayDateFormatted = $yesterday->translatedFormat('l, d F Y');
 
-        $yesterdayData = Order::whereDate('date', $yesterday)
-            ->where('tenant_id', 1)
-            ->selectRaw('SUM(amount) as turnover')
-            ->first(); 
-
-        $orderData = Order::whereDate('date', $yesterday)
-            ->where('tenant_id', 1)
-            ->selectRaw('COUNT(id) as transactions, COUNT(DISTINCT customer_phone_number) as customers')
+        // Get NetProfit data for yesterday
+        $yesterdayNetProfit = NetProfit::whereDate('date', $yesterday)
             ->first();
+        
+        // Get Sales data for yesterday
+        $yesterdaySales = Sales::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
+            ->first();
+        
+        // Calculate metrics from NetProfit
+        $sales = $yesterdayNetProfit ? $yesterdayNetProfit->sales : 0;
+        $formattedSales = number_format($sales, 0, ',', '.');
+        
+        $penjualanBersih = $yesterdayNetProfit ? $yesterdayNetProfit->sales * 0.85 : 0;
+        $formattedPenjualanBersih = number_format($penjualanBersih, 0, ',', '.');
+        
+        $totalMarketingSpend = $yesterdayNetProfit ? ($yesterdayNetProfit->marketing + $yesterdayNetProfit->spent_kol + ($yesterdayNetProfit->affiliate ?? 0)) : 0;
+        $formattedTotalMarketingSpend = number_format($totalMarketingSpend, 0, ',', '.');
+        
+        $romi = $totalMarketingSpend > 0 && $yesterdayNetProfit ? ($yesterdayNetProfit->sales / $totalMarketingSpend) : 0;
+        $formattedRomi = number_format($romi, 2);
+        
+        $netProfit = $yesterdayNetProfit ? 
+            (($yesterdayNetProfit->sales * 0.78) - 
+            ($yesterdayNetProfit->marketing * 1.05) - 
+            $yesterdayNetProfit->spent_kol - 
+            ($yesterdayNetProfit->affiliate ?? 0) - 
+            $yesterdayNetProfit->operasional - 
+            $yesterdayNetProfit->hpp) : 0;
+        $formattedNetProfit = number_format($netProfit, 0, ',', '.');
+        
+        $estimasiFeeAdmin = $yesterdayNetProfit ? ($yesterdayNetProfit->sales * 0.16) : 0;
+        $formattedFeeAdmin = number_format($estimasiFeeAdmin, 0, ',', '.');
+        
+        $ppn = $yesterdayNetProfit ? ($yesterdayNetProfit->sales * 0.03) : 0;
+        $formattedPpn = number_format($ppn, 0, ',', '.');
+        
+        $feeAds = $yesterdayNetProfit ? ($yesterdayNetProfit->marketing * 0.02) : 0;
+        $formattedFeeAds = number_format($feeAds, 0, ',', '.');
+        
+        $feePacking = $yesterdayNetProfit ? ($yesterdayNetProfit->fee_packing ?? 0) : 0;
+        $formattedFeePacking = number_format($feePacking, 0, ',', '.');
+        
+        $adSpentSocialMedia = $yesterdaySales ? ($yesterdaySales->ad_spent_social_media ?? 0) : 0;
+        $formattedAdSpentSocialMedia = number_format($adSpentSocialMedia, 0, ',', '.');
+        
+        $adSpentMarketPlace = $yesterdaySales ? ($yesterdaySales->ad_spent_market_place ?? 0) : 0;
+        $formattedAdSpentMarketPlace = number_format($adSpentMarketPlace, 0, ',', '.');
+        
+        $visit = $yesterdayNetProfit ? ($yesterdayNetProfit->visit ?? 0) : 0;
+        $formattedVisit = number_format($visit, 0);
+        
+        $qty = $yesterdayNetProfit ? ($yesterdayNetProfit->qty ?? 0) : 0;
+        $formattedQty = number_format($qty, 0);
+        
+        $order = $yesterdayNetProfit ? ($yesterdayNetProfit->order ?? 0) : 0;
+        $formattedOrder = number_format($order, 0);
+        
+        $closingRate = $yesterdayNetProfit ? ($yesterdayNetProfit->closing_rate ?? 0) : 0;
+        $formattedClosingRate = number_format($closingRate, 2) . '%';
+        
+        $roas = $yesterdayNetProfit ? ($yesterdayNetProfit->roas ?? 0) : 0;
+        $formattedRoas = number_format($roas, 2);
 
-        $avgTurnoverPerTransaction = $orderData->transactions > 0 
-            ? round($yesterdayData->turnover / $orderData->transactions, 2) 
-            : 0;
-
-        $avgTurnoverPerCustomer = $orderData->customers > 0 
-            ? round($yesterdayData->turnover / $orderData->customers, 2) 
-            : 0;
-
-        // Format daily turnover
-        $formattedTurnover = number_format($yesterdayData->turnover, 0, ',', '.');
-        $formattedAvgPerTransaction = number_format($avgTurnoverPerTransaction, 0, ',', '.');
-        $formattedAvgPerCustomer = number_format($avgTurnoverPerCustomer, 0, ',', '.');
-
+        // Monthly data
         $startOfMonth = now()->startOfMonth();
-        $thisMonthData = Order::whereBetween('date', [$startOfMonth, $yesterday])
-            ->where('tenant_id', 1)
-            ->selectRaw('SUM(amount) as total_turnover')
+        $thisMonthData = NetProfit::whereBetween('date', [$startOfMonth, $yesterday])
+            ->selectRaw('SUM(sales) as total_sales, SUM(marketing) as total_marketing, 
+                        SUM(spent_kol) as total_spent_kol, SUM(affiliate) as total_affiliate,
+                        SUM(operasional) as total_operasional, SUM(hpp) as total_hpp')
             ->first();
 
-        $thisMonthOrderData = Order::whereBetween('date', [$startOfMonth, $yesterday])
-            ->where('tenant_id', 1)
-            ->selectRaw('COUNT(id) as total_transactions, COUNT(DISTINCT customer_phone_number) as total_customers')
+        $thisMonthSales = $thisMonthData->total_sales ?? 0;
+        $formattedMonthSales = number_format($thisMonthSales, 0, ',', '.');
+        
+        $thisMonthNetProfit = ($thisMonthSales * 0.78) - 
+                            (($thisMonthData->total_marketing ?? 0) * 1.05) - 
+                            ($thisMonthData->total_spent_kol ?? 0) - 
+                            ($thisMonthData->total_affiliate ?? 0) - 
+                            ($thisMonthData->total_operasional ?? 0) - 
+                            ($thisMonthData->total_hpp ?? 0);
+        $formattedMonthNetProfit = number_format($thisMonthNetProfit, 0, ',', '.');
+
+        // Last month comparison data
+        $startOfLastMonth = now()->subMonth()->startOfMonth();
+        $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
+
+        $lastMonthData = NetProfit::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->selectRaw('SUM(sales) as total_sales')
             ->first();
 
-        $formattedMonthTurnover = number_format($thisMonthData->total_turnover, 0, ',', '.');
-        $formattedMonthTransactions = number_format($thisMonthOrderData->total_transactions, 0, ',', '.');
-        $formattedMonthCustomers = number_format($thisMonthOrderData->total_customers, 0, ',', '.');
+        $lastMonthSales = $lastMonthData->total_sales ?? 0;
+        $growthMTDLM = $lastMonthSales > 0
+            ? round((($thisMonthSales - $lastMonthSales) / $lastMonthSales) * 100, 2)
+            : 0;
+        
+        $dayBeforeYesterday = now()->subDays(2);
+        $dayBeforeYesterdayData = NetProfit::whereDate('date', $dayBeforeYesterday)
+            ->first();
 
+        $dayBeforeYesterdaySales = $dayBeforeYesterdayData ? $dayBeforeYesterdayData->sales : 0;
+        $growthYesterdayPast2Days = $dayBeforeYesterdaySales > 0
+            ? round((($sales - $dayBeforeYesterdaySales) / $dayBeforeYesterdaySales) * 100, 2)
+            : 0;
+
+        // Projections
         $daysPassed = now()->day - 1;
         $remainingDays = now()->daysInMonth - $daysPassed;
 
-        $avgDailyTurnover = $daysPassed > 0 ? $thisMonthData->total_turnover / $daysPassed : 0;
-        $avgDailyTransactions = $daysPassed > 0 ? $thisMonthOrderData->total_transactions / $daysPassed : 0;
-        $avgDailyCustomers = $daysPassed > 0 ? $thisMonthOrderData->total_customers / $daysPassed : 0;
+        $avgDailySales = $daysPassed > 0 ? $thisMonthSales / $daysPassed : 0;
+        $projectedSales = $thisMonthSales + ($avgDailySales * $remainingDays);
+        $formattedProjectedSales = number_format($projectedSales, 0, ',', '.');
 
-        $projectedTurnover = $thisMonthData->total_turnover + ($avgDailyTurnover * $remainingDays);
-        $projectedTransactions = $thisMonthOrderData->total_transactions + ($avgDailyTransactions * $remainingDays);
-        $projectedCustomers = $thisMonthOrderData->total_customers + ($avgDailyCustomers * $remainingDays);
-
-        // Format projections
-        $formattedProjectedTurnover = number_format($projectedTurnover, 0, ',', '.');
-        $formattedProjectedTransactions = number_format($projectedTransactions, 0, ',', '.');
-        $formattedProjectedCustomers = number_format($projectedCustomers, 0, ',', '.');
-
-        // Calculate turnover per sales channel
-        $salesChannelData = Order::whereDate('date', $yesterday)
-            ->where('tenant_id', 1)
-            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
-            ->groupBy('sales_channel_id')
+        // Get sales channel data
+        $salesChannelData = SalesChannel::join('orders', 'sales_channels.id', '=', 'orders.sales_channel_id')
+            ->whereDate('orders.date', $yesterday)
+            ->where('orders.tenant_id', 1)
+            ->selectRaw('sales_channels.name, SUM(orders.amount) as total_amount')
+            ->groupBy('sales_channels.id', 'sales_channels.name')
             ->get();
+
+        $salesChannelTurnover = $salesChannelData->map(function ($item) {
+            $formattedAmount = number_format($item->total_amount, 0, ',', '.');
+            return "{$item->name}: Rp {$formattedAmount}";
+        })->implode("\n");
 
         // Monthly data per sales channel for projection
-        $thisMonthSalesChannelData = Order::whereBetween('date', [$startOfMonth, $yesterday])
-            ->where('tenant_id', 1)
-            ->selectRaw('sales_channel_id, SUM(amount) as total_amount')
-            ->groupBy('sales_channel_id')
+        $thisMonthSalesChannelData = SalesChannel::join('orders', 'sales_channels.id', '=', 'orders.sales_channel_id')
+            ->whereBetween('orders.date', [$startOfMonth, $yesterday])
+            ->where('orders.tenant_id', 1)
+            ->selectRaw('sales_channels.id, sales_channels.name, SUM(orders.amount) as total_amount')
+            ->groupBy('sales_channels.id', 'sales_channels.name')
             ->get();
-
-        // Map sales channel data to names and calculate projections
-        $salesChannelNames = SalesChannel::pluck('name', 'id');
-        $salesChannelTurnover = $salesChannelData->map(function ($item) use ($salesChannelNames) {
-            $channelName = $salesChannelNames->get($item->sales_channel_id);
-            $formattedAmount = number_format($item->total_amount, 0, ',', '.');
-            return "{$channelName}: Rp {$formattedAmount}";
-        })->implode("\n");
 
         $totalProjectedTurnover = $thisMonthSalesChannelData->reduce(function ($carry, $item) use ($daysPassed, $remainingDays) {
             $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
             return $carry + $item->total_amount + ($dailyAverage * $remainingDays);
         }, 0);
         
-        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($salesChannelNames, $daysPassed, $remainingDays, $totalProjectedTurnover) {
-            $channelName = $salesChannelNames->get($item->sales_channel_id);
+        $salesChannelProjection = $thisMonthSalesChannelData->map(function ($item) use ($daysPassed, $remainingDays, $totalProjectedTurnover) {
             $dailyAverage = $daysPassed > 0 ? $item->total_amount / $daysPassed : 0;
             $projectedAmount = $item->total_amount + ($dailyAverage * $remainingDays);
             $percentage = $totalProjectedTurnover > 0 ? round(($projectedAmount / $totalProjectedTurnover) * 100, 2) : 0;
             $formattedProjectedAmount = number_format($projectedAmount, 0, ',', '.');
-            return "{$channelName}: Rp {$formattedProjectedAmount} ({$percentage}%)";
+            return "{$item->name}: Rp {$formattedProjectedAmount} ({$percentage}%)";
         })->implode("\n");
-
-        $startOfLastMonth = now()->subMonth()->startOfMonth();
-        $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
-
-        $lastMonthData = Sales::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
-            ->where('tenant_id', 1)
-            ->selectRaw('SUM(turnover) as total_turnover')
-            ->first();
-
-        $growthMTDLM = $lastMonthData->total_turnover > 0
-            ? round((($thisMonthData->total_turnover - $lastMonthData->total_turnover) / $lastMonthData->total_turnover) * 100, 2)
-            : 0;
-        
-        $dayBeforeYesterday = now()->subDays(2);
-
-        $dayBeforeYesterdayData = Sales::whereDate('date', $dayBeforeYesterday)
-            ->where('tenant_id', 1)
-            ->select('turnover')
-            ->first();
-
-        $growthYesterdayPast2Days = $dayBeforeYesterdayData && $dayBeforeYesterdayData->turnover > 0
-            ? round((($yesterdayData->turnover - $dayBeforeYesterdayData->turnover) / $dayBeforeYesterdayData->turnover) * 100, 2)
-            : 0;
 
         $message = <<<EOD
         🔥Laporan Transaksi CLEORA🔥
         Periode: $yesterdayDateFormatted
 
         📅 Kemarin
-        Total Omzet: Rp {$formattedTurnover}
-        Total Transaksi: {$orderData->transactions}
-        Total Customer: {$orderData->customers}
-        Avg Rp/Trx: Rp {$formattedAvgPerTransaction}
+        Total Omzet: Rp {$formattedSales}
+        Penjualan Bersih: Rp {$formattedPenjualanBersih}
+        Net Profit: Rp {$formattedNetProfit}
+        Marketing Spend: Rp {$formattedTotalMarketingSpend}
+        ROMI: {$formattedRomi}
         Growth(Yesterday/Past 2 Days): {$growthYesterdayPast2Days}%
 
+        💰 Biaya & Fee
+        Fee Admin: Rp {$formattedFeeAdmin}
+        PPN: Rp {$formattedPpn}
+        Fee Ads: Rp {$formattedFeeAds}
+        Fee Packing: Rp {$formattedFeePacking}
+
+        📱 Ad Performance
+        Ad Spent Social Media: Rp {$formattedAdSpentSocialMedia}
+        Ad Spent Marketplace: Rp {$formattedAdSpentMarketPlace}
+        Visitors: {$formattedVisit}
+        Orders: {$formattedOrder}
+        Quantity: {$formattedQty}
+        Closing Rate: {$formattedClosingRate}
+        ROAS: {$formattedRoas}
+
         📅 Bulan Ini
-        Total Omzet: Rp {$formattedMonthTurnover}
-        Total Transaksi: {$formattedMonthTransactions}
-        Total Customer: {$formattedMonthCustomers}
-        Growth(MTD/LM) : {$growthMTDLM}%
+        Total Omzet: Rp {$formattedMonthSales}
+        Net Profit: Rp {$formattedMonthNetProfit}
+        Growth(MTD/LM): {$growthMTDLM}%
 
         📈 Proyeksi Bulan Ini
-        Proyeksi Omzet: Rp {$formattedProjectedTurnover}
-        Proyeksi Total Transaksi: {$formattedProjectedTransactions}
-        Proyeksi Total Customer: {$formattedProjectedCustomers}
+        Proyeksi Omzet: Rp {$formattedProjectedSales}
 
         📈 Omset Sales Channel Kemarin
         {$salesChannelTurnover}

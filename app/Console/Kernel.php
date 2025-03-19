@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('orders:fetch-external')->cron('0 9,12,17,19,21,3,6 * * *')->timezone('Asia/Jakarta');
         $schedule->command('attendance:populate')->dailyAt('00:05');
         $schedule->command('campaign:refresh-contents')->dailyAt('03:00');
-        $schedule->command('report:send-telegram')->dailyAt('15:30');
+        $schedule->command('report:send-telegram')->dailyAt('09:30');
         $schedule->command('google-sheet:import')->dailyAt('14:30');
         $schedule->command('import:visit')->dailyAt('14:00');
 
