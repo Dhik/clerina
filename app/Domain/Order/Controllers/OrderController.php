@@ -1036,29 +1036,22 @@ class OrderController extends Controller
         ]);
     }
     public function importOrdersShopee()
-{
-    set_time_limit(0);
-    $range = 'Shopee Processed!A2:R'; 
-    $sheetData = $this->googleSheetService->getSheetData($range);
+    {
+        set_time_limit(0);
+        $range = 'Shopee Processed!A2:R'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
 
-    $tenant_id = 1;
-    $chunkSize = 50;
-    $totalRows = count($sheetData);
-    $processedRows = 0;
-    $skippedRows = [];
-    $rowIndex = 2; // Starting from A2 in the sheet
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
 
-    foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-        foreach ($chunk as $row) {
-            try {
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
                 // Skip the entire row if date column is empty
                 if (empty($row[3])) {
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Empty date',
-                        'order_id' => $row[0] ?? 'Unknown'
-                    ];
-                    $rowIndex++;
+                    $skippedRows++;
                     continue;
                 }
                 
@@ -1099,38 +1092,18 @@ class OrderController extends Controller
                 if (!$order) {
                     Order::create($orderData);
                     $processedRows++;
-                } else {
-                    // Track duplicates
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Duplicate order',
-                        'order_id' => $row[0] ?? 'Unknown',
-                        'product' => $row[5] ?? 'Unknown',
-                        'sku' => $row[4] ?? 'Unknown'
-                    ];
                 }
-            } catch (\Exception $e) {
-                \Log::error("Error processing Shopee order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                // Track errors
-                $skippedRows[] = [
-                    'row' => $rowIndex,
-                    'reason' => 'Error: ' . $e->getMessage(),
-                    'order_id' => $row[0] ?? 'Unknown'
-                ];
             }
-            $rowIndex++;
+            usleep(100000); // Small delay to prevent overwhelming the server
         }
-        usleep(100000); // Small delay to prevent overwhelming the server
-    }
 
-    return response()->json([
-        'message' => 'Shopee orders imported successfully', 
-        'total_rows' => $totalRows,
-        'processed_rows' => $processedRows,
-        'skipped_rows' => $skippedRows,
-        'skipped_count' => count($skippedRows)
-    ]);
-}
+        return response()->json([
+            'message' => 'Shopee orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
     public function importOrdersTiktok()
 {
     set_time_limit(0);
