@@ -201,7 +201,6 @@ class SalesController extends Controller
                 return $row->marketing * 0.02;
             })
             ->addColumn('total_marketing_spend', function ($row) {
-                // Sum of marketing + spent_kol + affiliate
                 return $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
             })
             ->editColumn('fee_packing', function ($row) {

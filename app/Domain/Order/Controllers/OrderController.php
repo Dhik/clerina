@@ -1104,6 +1104,144 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
+    public function importOrdersShopee2()
+    {
+        set_time_limit(0);
+        $range = 'Shopee Processed!A2:R'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                if (empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                $orderData = [
+                    'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
+                    'process_at'           => null,
+                    'id_order'             => $row[0] ?? null,
+                    'sales_channel_id'     => 8, // Shopee
+                    'customer_name'        => $row[7] ?? null,
+                    'customer_phone_number' => $row[8] ?? null,
+                    'product'              => $row[5] ?? null,
+                    'qty'                  => $row[12] ?? null,
+                    'receipt_number'       => $row[1] ?? null,
+                    'shipment'             => $row[2] ?? null,
+                    'payment_method'       => $row[13] ?? null,
+                    'sku'                  => $row[4] ?? null,
+                    'variant'              => null,
+                    'price'                => $row[14] ?? null,
+                    'username'             => $row[6] ?? null,
+                    'shipping_address'     => $row[9] ?? null,
+                    'city'                 => $row[10] ?? null,
+                    'province'             => $row[11] ?? null,
+                    'amount'               => $row[16] ?? null, // Column Q
+                    'tenant_id'            => $tenant_id,
+                    'is_booking'           => 0,
+                    'status'               => $row[17] ?? null, // Column R
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
+                ];
+
+                // Check if order with the same id_order, product, sku exists
+                $order = Order::where('id_order', $orderData['id_order'])
+                            ->where('product', $orderData['product'])
+                            ->where('sku', $orderData['sku'])
+                            ->where('amount', $orderData['amount'])
+                            ->first();
+
+                // If order doesn't exist, create it
+                if (!$order) {
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Shopee orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
+    public function importOrdersShopee3()
+    {
+        set_time_limit(0);
+        $range = 'Shopee Processed!A2:R'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                if (empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                $orderData = [
+                    'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
+                    'process_at'           => null,
+                    'id_order'             => $row[0] ?? null,
+                    'sales_channel_id'     => 9, // Shopee
+                    'customer_name'        => $row[7] ?? null,
+                    'customer_phone_number' => $row[8] ?? null,
+                    'product'              => $row[5] ?? null,
+                    'qty'                  => $row[12] ?? null,
+                    'receipt_number'       => $row[1] ?? null,
+                    'shipment'             => $row[2] ?? null,
+                    'payment_method'       => $row[13] ?? null,
+                    'sku'                  => $row[4] ?? null,
+                    'variant'              => null,
+                    'price'                => $row[14] ?? null,
+                    'username'             => $row[6] ?? null,
+                    'shipping_address'     => $row[9] ?? null,
+                    'city'                 => $row[10] ?? null,
+                    'province'             => $row[11] ?? null,
+                    'amount'               => $row[16] ?? null, // Column Q
+                    'tenant_id'            => $tenant_id,
+                    'is_booking'           => 0,
+                    'status'               => $row[17] ?? null, // Column R
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
+                ];
+
+                // Check if order with the same id_order, product, sku exists
+                $order = Order::where('id_order', $orderData['id_order'])
+                            ->where('product', $orderData['product'])
+                            ->where('sku', $orderData['sku'])
+                            ->where('amount', $orderData['amount'])
+                            ->first();
+
+                // If order doesn't exist, create it
+                if (!$order) {
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Shopee orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
     public function importOrdersTiktok()
 {
     set_time_limit(0);
