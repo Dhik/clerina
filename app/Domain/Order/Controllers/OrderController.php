@@ -1085,6 +1085,7 @@ class OrderController extends Controller
                 $order = Order::where('id_order', $orderData['id_order'])
                             ->where('product', $orderData['product'])
                             ->where('sku', $orderData['sku'])
+                            ->where('amount', $orderData['amount'])
                             ->first();
 
                 // If order doesn't exist, create it
