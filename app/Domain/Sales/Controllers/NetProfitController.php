@@ -122,7 +122,7 @@ class NetProfitController extends Controller
             $range = 'Import Sales!A2:T';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
-            $tenant_id = 1;
+            $tenant_id = Auth::user()->current_tenant_id;
             $currentMonth = Carbon::now()->format('Y-m');
             
             // Create an array to store date => sales data mapping
@@ -160,10 +160,10 @@ class NetProfitController extends Controller
             foreach ($salesData as $date => $data) {
                 NetProfit::updateOrCreate(
                     [
-                        'date' => $date,
-                        'tenant_id' => $tenant_id
+                        'date' => $date
                     ],
                     [
+                        'tenant_id' => $tenant_id,
                         'b2b_sales' => $data['b2b_sales'],
                         'crm_sales' => $data['crm_sales'],
                         'updated_at' => now()
