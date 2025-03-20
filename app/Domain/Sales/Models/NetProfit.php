@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NetProfit extends Model
 {
-    use FilterByTenant;
     protected $table = 'net_profits';
     protected $fillable = [
         'date',
