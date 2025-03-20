@@ -1189,6 +1189,7 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
+        $updatedRows = 0;
         $skippedRows = 0;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -1232,8 +1233,12 @@ class OrderController extends Controller
                             ->where('amount', $orderData['amount'])
                             ->first();
 
-                // If order doesn't exist, create it
-                if (!$order) {
+                // If order exists, update its sales_channel_id to 8
+                if ($order) {
+                    $order->update(['sales_channel_id' => 8, 'updated_at' => now()]);
+                    $updatedRows++;
+                } else {
+                    // If order doesn't exist, create it
                     Order::create($orderData);
                     $processedRows++;
                 }
@@ -1245,6 +1250,7 @@ class OrderController extends Controller
             'message' => 'Shopee orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
             'skipped_rows' => $skippedRows
         ]);
     }
