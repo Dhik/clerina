@@ -1433,13 +1433,13 @@ class SalesController extends Controller
                 // Sum social media ad spent excluding social_media_id = 9
                 $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
                     ->where('date', $formattedDate)
-                    ->where('social_media_id', '!=', 9)
+                    ->where('social_media_id', '!=', 10)
                     ->sum('amount');
 
                 // Sum marketplace ad spent excluding sales_channel_id = 8
                 $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
                     ->where('date', $formattedDate)
-                    ->where('sales_channel_id', '!=', 8)
+                    ->where('sales_channel_id', '!=', 9)
                     ->sum('amount');
 
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
