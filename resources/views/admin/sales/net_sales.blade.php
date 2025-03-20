@@ -122,6 +122,8 @@
                                     <th>Closing Rate</th>
                                     <th>ROAS</th>
                                     <th>Sales</th>
+                                    <th>B2B Sales</th>
+                                    <th>CRM Sales</th>
                                     <th>Penjualan Bersih (85%)</th>
                                     <th>Ads Spent</th>
                                     <th>KOL</th>
@@ -550,6 +552,20 @@
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
                         visible: true
+                    },
+                    {
+                        data: 'b2b_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'crm_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
                     },
                     {
                         data: 'penjualan_bersih',
