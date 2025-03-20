@@ -24,52 +24,103 @@ class NetProfitController extends Controller
     ) {
         $this->googleSheetService = $googleSheetService;
     }
+    // public function updateSpentKol()
+    // {
+    //     try {
+    //         $talentPayments = TalentContent::query()
+    //             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+    //             ->where('talents.tenant_id', 1)
+    //             ->whereNotNull('talent_content.upload_link')
+    //             ->whereMonth('talent_content.posting_date', date('m'))
+    //             ->whereYear('talent_content.posting_date', date('Y'))
+    //             ->select('posting_date')
+    //             ->selectRaw('SUM(
+    //                 CASE 
+    //                     WHEN talent_content.final_rate_card IS NOT NULL 
+    //                     THEN talent_content.final_rate_card - (
+    //                         CASE 
+    //                             WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
+    //                             THEN talent_content.final_rate_card * (talents.tax_percentage / 100)
+    //                             WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
+    //                             THEN talent_content.final_rate_card * 0.02
+    //                             ELSE talent_content.final_rate_card * 0.025
+    //                         END
+    //                     )
+    //                     ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) - (
+    //                         CASE 
+    //                             WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
+    //                             THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * (talents.tax_percentage / 100)
+    //                             WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
+    //                             THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.02
+    //                             ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.025
+    //                         END
+    //                     )
+    //                 END
+    //             ) as talent_payment')
+    //             ->groupBy('posting_date');
+                
+    //         NetProfit::query()
+    //             ->joinSub($talentPayments, 'tp', function($join) {
+    //                 $join->on('net_profits.date', '=', 'tp.posting_date');
+    //             })
+    //             ->update(['spent_kol' => DB::raw('tp.talent_payment')]);
+                
+    //         return response()->json(['success' => true]);
+    //     } catch(\Exception $e) {
+    //         return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    //     }
+    // }
     public function updateSpentKol()
-{
-    try {
-        $talentPayments = TalentContent::query()
-            ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
-            ->where('talents.tenant_id', 1)
-            ->whereNotNull('talent_content.upload_link')
-            ->whereMonth('talent_content.posting_date', date('m'))
-            ->whereYear('talent_content.posting_date', date('Y'))
-            ->select('posting_date')
-            ->selectRaw('SUM(
-                CASE 
-                    WHEN talent_content.final_rate_card IS NOT NULL 
-                    THEN talent_content.final_rate_card - (
-                        CASE 
-                            WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
-                            THEN talent_content.final_rate_card * (talents.tax_percentage / 100)
-                            WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
-                            THEN talent_content.final_rate_card * 0.02
-                            ELSE talent_content.final_rate_card * 0.025
-                        END
-                    )
-                    ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) - (
-                        CASE 
-                            WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
-                            THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * (talents.tax_percentage / 100)
-                            WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
-                            THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.02
-                            ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.025
-                        END
-                    )
-                END
-            ) as talent_payment')
-            ->groupBy('posting_date');
+    {
+        try {
+            // Define the range to get KOL spent data from column R
+            $range = 'Import Sales!A2:R';
+            $sheetData = $this->googleSheetService->getSheetData($range);
             
-        NetProfit::query()
-            ->joinSub($talentPayments, 'tp', function($join) {
-                $join->on('net_profits.date', '=', 'tp.posting_date');
-            })
-            ->update(['spent_kol' => DB::raw('tp.talent_payment')]);
+            $tenant_id = 1;
+            $currentMonth = Carbon::now()->format('Y-m');
             
-        return response()->json(['success' => true]);
-    } catch(\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            // Create an array to store date => KOL spent mapping
+            $kolSpentData = [];
+            
+            foreach ($sheetData as $row) {
+                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
+                    continue;
+                }
+                
+                // Parse the date
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip if not in current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                
+                // Parse KOL spent amount from column R
+                $kolSpent = $this->parseCurrencyToInt($row[17]);
+                
+                // Store in our mapping array
+                $kolSpentData[$date] = $kolSpent;
+            }
+            
+            // Update the NetProfit table with KOL spent values
+            foreach ($kolSpentData as $date => $amount) {
+                NetProfit::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'tenant_id' => $tenant_id
+                    ],
+                    [
+                        'spent_kol' => $amount
+                    ]
+                );
+            }
+            
+            return response()->json(['success' => true, 'message' => 'KOL spent data updated successfully']);
+        } catch(\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
-}
     public function updateHpp()
     {
         try {
