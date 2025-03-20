@@ -1040,21 +1040,31 @@ class OrderController extends Controller
         set_time_limit(0);
         $range = 'Shopee Processed!A2:R'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
-
+    
         $tenant_id = 1;
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
         $skippedRows = 0;
-
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
-                // Skip the entire row if date column is empty
+        $skippedRowDetails = []; // Array to store details of skipped rows
+    
+        foreach (array_chunk($sheetData, $chunkSize) as $chunkIndex => $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                $originalRowNumber = ($chunkIndex * $chunkSize) + $rowIndex + 2; // +2 because we start from A2
+                
                 if (empty($row[3])) {
                     $skippedRows++;
+                    // Store the row number and available data for reporting
+                    $skippedRowDetails[] = [
+                        'row_number' => $originalRowNumber,
+                        'order_id' => $row[0] ?? 'N/A',
+                        'receipt' => $row[1] ?? 'N/A',
+                        'reason' => 'Missing date value (column D)'
+                    ];
                     continue;
                 }
                 
+                // Rest of your existing code remains the same
                 $orderData = [
                     'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
                     'process_at'           => null,
@@ -1081,13 +1091,13 @@ class OrderController extends Controller
                     'created_at'           => now(),
                     'updated_at'           => now(),
                 ];
-
+    
                 // Check if order with the same id_order, product, sku exists
                 $order = Order::where('id_order', $orderData['id_order'])
                             ->where('product', $orderData['product'])
                             ->where('sku', $orderData['sku'])
                             ->first();
-
+    
                 // If order doesn't exist, create it
                 if (!$order) {
                     Order::create($orderData);
@@ -1096,12 +1106,13 @@ class OrderController extends Controller
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
-
+    
         return response()->json([
             'message' => 'Shopee orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'skipped_rows' => $skippedRows
+            'skipped_rows' => $skippedRows,
+            'skipped_row_details' => $skippedRowDetails // Return the detailed information about skipped rows
         ]);
     }
     public function importOrdersTiktok()
