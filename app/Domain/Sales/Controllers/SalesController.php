@@ -1276,6 +1276,8 @@ class SalesController extends Controller
                 1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
                 3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
                 2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
+                8 => $row[13] ?? null, // Lazada (sales_channel_id == 2)
+                9 => $row[14] ?? null, // Lazada (sales_channel_id == 2)
             ];
 
             foreach ($salesChannelData as $salesChannelId => $amountValue) {
@@ -1299,6 +1301,8 @@ class SalesController extends Controller
             // Social Media data
             $socialMediaData = [
                 1 => $row[9] ?? null, // Facebook (social_media_id == 1)
+                9 => $row[15] ?? null, // Facebook (social_media_id == 1)
+                10 => $row[16] ?? null, // Facebook (social_media_id == 1)
                 // 2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
                 // 5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
             ];
