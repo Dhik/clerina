@@ -205,6 +205,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.1/dist/sweetalert2.all.min.js"></script>
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
@@ -248,43 +249,68 @@
         });
 
         $('#importMetaAdsSpentForm').on('submit', function(e) {
-            e.preventDefault();
-            
-            let formData = new FormData(this);
-            $.ajax({
-                url: "{{ route('adSpentSocialMedia.import') }}",
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    if (response.status === 'success') {
-                        $('#importMetaAdsSpentModal').modal('hide');
+                e.preventDefault();
+                
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait while we import your data.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                let formData = new FormData(this);
+                $.ajax({
+                    url: "{{ route('adSpentSocialMedia.import') }}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $('#importMetaAdsSpentModal').modal('hide');
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: response.message,
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            // Handle unexpected success response without success status
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Warning',
+                                text: response.message || 'Unknown error occurred',
+                                confirmButtonColor: '#3085d6',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Ajax error:", xhr, status, error);
+                        
+                        let errorMessage = 'An error occurred during import';
+                        
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
                         
                         Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: response.message,
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            window.location.reload();
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMessage,
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
                         });
                     }
-                },
-                error: function(xhr) {
-                    $('#errorImportMetaAdsSpent').addClass('d-none');
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: xhr.responseJSON.message,
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'OK'
-                    });
-                }
+                });
             });
-        });
 
         filterDate.change(function () {
             adsMetaTable.draw()
