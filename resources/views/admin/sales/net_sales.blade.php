@@ -105,6 +105,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-teal">
+                        <div class="inner">
+                            <h4 id="totalMarketingSpent">Rp 0</h4>
+                            <p>Total Marketing Spent</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @include('admin.sales.net-recap-card')
@@ -572,7 +583,7 @@
                         render: function(data) {
                             return '<span class="text-info">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
-                        visible: true // Set to true to show by default
+                        visible: false // Set to true to show by default
                     },
                     {
                         data: 'marketing',
@@ -668,7 +679,7 @@
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
-                        visible: false  // Hidden by default
+                        visible: true  // Hidden by default
                     },
                     {
                         data: 'net_profit',
@@ -703,6 +714,7 @@
                         document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
                         document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
                         document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
+                        document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
                     })
                     .catch(error => console.error('Error:', error));
             }
