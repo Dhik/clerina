@@ -23,6 +23,8 @@ class NetProfit extends Model
         'order',
         'closing_rate',
         'tenant_id',
+        'crm_sales',
+        'b2b_sales',
     ];
     protected $casts = [
         'date' => 'date'
