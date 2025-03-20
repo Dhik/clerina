@@ -22,6 +22,7 @@ class NetProfit extends Model
         'qty',
         'order',
         'closing_rate',
+        'tenant_id',
     ];
     protected $casts = [
         'date' => 'date'
