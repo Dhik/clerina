@@ -1257,7 +1257,7 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
-        $range = 'Import Sales!A2:M';
+        $range = 'Import Sales!A2:Q';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
