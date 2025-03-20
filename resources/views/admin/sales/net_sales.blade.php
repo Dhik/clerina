@@ -35,7 +35,7 @@
                                         <i class="fas fa-sync-alt"></i> Import Data
                                     </button>
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <button class="btn bg-info" id="importShopeeBtn">
                                         <i class="fas fa-sync-alt"></i> Import Shopee
                                     </button>
@@ -54,7 +54,7 @@
                                     <button class="btn bg-info" id="importTokopediaBtn">
                                         <i class="fas fa-sync-alt"></i> Import Tokopedia
                                     </button>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>

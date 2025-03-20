@@ -95,15 +95,9 @@ class NetProfitController extends Controller
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                
-                // Parse KOL spent amount from column R
                 $kolSpent = $this->parseCurrencyToInt($row[17]);
-                
-                // Store in our mapping array
                 $kolSpentData[$date] = $kolSpent;
             }
-            
-            // Update the NetProfit table with KOL spent values
             foreach ($kolSpentData as $date => $amount) {
                 NetProfit::updateOrCreate(
                     [
@@ -119,6 +113,74 @@ class NetProfitController extends Controller
             return response()->json(['success' => true, 'message' => 'KOL spent data updated successfully']);
         } catch(\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    public function updateB2bAndCrmSales()
+    {
+        try {
+            // Define the range to get data from columns A, S, and T
+            $range = 'Import Sales!A2:T';
+            $sheetData = $this->googleSheetService->getSheetData($range);
+            
+            $tenant_id = 1;
+            $currentMonth = Carbon::now()->format('Y-m');
+            
+            // Create an array to store date => sales data mapping
+            $salesData = [];
+            
+            foreach ($sheetData as $row) {
+                if (empty($row) || empty($row[0])) {
+                    continue;
+                }
+                
+                // Skip if columns S or T don't exist
+                if (!isset($row[18]) && !isset($row[19])) {
+                    continue;
+                }
+                
+                // Parse the date
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip if not in current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                
+                // Parse B2B sales (column S) and CRM sales (column T)
+                $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
+                $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
+                
+                $salesData[$date] = [
+                    'b2b_sales' => $b2bSales,
+                    'crm_sales' => $crmSales
+                ];
+            }
+            
+            // Update net_profits table with the sales data
+            foreach ($salesData as $date => $data) {
+                NetProfit::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'tenant_id' => $tenant_id
+                    ],
+                    [
+                        'b2b_sales' => $data['b2b_sales'],
+                        'crm_sales' => $data['crm_sales'],
+                        'updated_at' => now()
+                    ]
+                );
+            }
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'B2B and CRM sales data updated successfully',
+                'records_processed' => count($salesData)
+            ]);
+        } catch(\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
     public function updateHpp()
