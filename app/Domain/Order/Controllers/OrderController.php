@@ -1946,9 +1946,10 @@ class OrderController extends Controller
                 
             // Insert the records into daily_hpp table
             foreach ($orders as $order) {
+                $formattedDate = Carbon::parse($order->date)->format('Y-m-d');
                 DailyHpp::updateOrCreate(
                     [
-                        'date' => $order->date,
+                        'date' => $formattedDate,
                         'sku' => $order->sku,
                         'sales_channel_id' => $order->sales_channel_id,
                         'tenant_id' => $tenantId
