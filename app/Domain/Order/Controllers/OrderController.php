@@ -1900,6 +1900,81 @@ class OrderController extends Controller
         
         return response()->json(['data' => $data]);
     }
+    /**
+     * Generate daily HPP (Cost of Goods Sold) report
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function generateDailyHpp()
+    {
+        try {
+            $tenantId = Auth::user()->current_tenant_id;
+            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            
+            // Get orders with their products grouped by date, sku, and sales channel
+            $orders = Order::select(
+                    'orders.date',
+                    'orders.sku',
+                    DB::raw('COUNT(DISTINCT orders.id_order) as quantity'),
+                    'products.harga_satuan as hpp',
+                    DB::raw("$tenantId as tenant_id"),
+                    'orders.sales_channel_id',
+                    DB::raw('NOW() as created_at'),
+                    DB::raw('NOW() as updated_at')
+                )
+                ->leftJoin('products', 'orders.sku', '=', 'products.sku')
+                ->where('orders.tenant_id', $tenantId)
+                ->whereBetween('orders.date', [$startDate, $endDate])
+                ->whereNotIn('orders.status', [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
+                ->groupBy(
+                    'orders.date',
+                    'orders.sku',
+                    'products.harga_satuan',
+                    'orders.sales_channel_id'
+                )
+                ->get();
+                
+            // Insert the records into daily_hpp table
+            foreach ($orders as $order) {
+                DailyHpp::updateOrCreate(
+                    [
+                        'date' => $order->date,
+                        'sku' => $order->sku,
+                        'sales_channel_id' => $order->sales_channel_id,
+                        'tenant_id' => $tenantId
+                    ],
+                    [
+                        'quantity' => $order->quantity,
+                        'HPP' => $order->hpp,
+                        'updated_at' => now()
+                    ]
+                );
+            }
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Daily HPP data has been generated successfully',
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'records_processed' => $orders->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to generate Daily HPP data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function getDailyHPP(Request $request)
     {
         $startDate = now()->startOfMonth();
@@ -1917,7 +1992,7 @@ class OrderController extends Controller
             DB::table('orders')
                 ->select('sku')
                 ->whereDate('date', $date)
-                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return', 'Batal', 'Canceled', 'canceled'])
                 ->orderBy('id')
                 ->chunk(1000, function($orders) use (&$skuCounts) {
                     foreach ($orders as $order) {

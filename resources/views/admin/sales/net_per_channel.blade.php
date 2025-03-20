@@ -26,6 +26,11 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <button id="generateHppBtn" class="btn btn-primary">
+                                        <i class="fas fa-sync-alt mr-1"></i> Generate HPP Data
+                                    </button>
+                                </div>
                                 <!-- <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div> -->
@@ -256,6 +261,53 @@
             $(this).trigger('change'); 
         });
 
+        $('#generateHppBtn').on('click', function() {
+            // Show loading state
+            Swal.fire({
+                title: 'Processing',
+                text: 'Generating HPP data...',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Call the API endpoint
+            $.ajax({
+                url: "{{ route('order.generate_hpp') }}",
+                type: "GET",
+                dataType: "json",
+                success: function(response) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        // Optional: Reload the page or refresh the data
+                        // window.location.reload();
+                    });
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'An error occurred while generating HPP data';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
         $('.daterange').on('cancel.daterangepicker', function(ev, picker) {
             $(this).val('');
             $(this).trigger('change'); 
@@ -263,7 +315,6 @@
         filterDate.change(function () {
             netProfitsTable.draw();
             fetchSummary();
-            renderWaterfallChart();
             loadNetProfitsChart();
             loadCorrelationChart();
         });
@@ -570,184 +621,6 @@
             });
         }
 
-        function renderWaterfallChart() {
-            const filterDates = document.getElementById('filterDates').value;
-            
-            $.ajax({
-                url: "{{ route('sales.waterfall-data-2') }}",
-                type: 'GET',
-                data: {
-                    filterDates: filterDates
-                },
-                success: function(salesData) {
-                    const chartData = salesData.map(day => ({
-                        x: day.date,
-                        y: day.net,
-                        measure: 'relative',
-                        text: (day.net >= 0 ? '+' : '') + day.net.toLocaleString(),
-                        textposition: 'outside'
-                    }));
-
-                    const data = [{
-                        type: 'waterfall',
-                        orientation: 'v',
-                        x: chartData.map(d => d.x),
-                        y: chartData.map(d => d.y),
-                        measure: chartData.map(d => d.measure),
-                        text: chartData.map(d => d.text),
-                        textposition: chartData.map(d => d.textposition),
-                        connector: { line: { color: 'rgb(63, 63, 63)' } },
-                        increasing: { marker: { color: '#2ecc71' } },
-                        decreasing: { marker: { color: '#e74c3c' } }
-                    }];
-
-                    const layout = {
-                        title: 'Daily Net Profit Margin',
-                        xaxis: { title: 'Date', tickangle: -45 },
-                        yaxis: { title: 'Amount (Rp)', tickformat: ',d' },
-                        autosize: true,
-                        height: 600,
-                        margin: { l: 80, r: 20, t: 40, b: 120 }
-                    };
-
-                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-
-        renderWaterfallChart();
-
-        let netProfitChart = null;
-
-        function loadNetProfitsChart() {
-            const existingChart = Chart.getChart('netProfitsChart');
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            if (netProfitChart) {
-                netProfitChart.destroy();
-            }
-            const filterDates = document.getElementById('filterDates').value;
-            fetch(`{{ route('sales.net_sales_line') }}${filterDates ? `?filterDates=${filterDates}` : ''}`)
-                .then(response => response.json())
-                .then(data => {
-                    const ctx = document.getElementById('netProfitsChart').getContext('2d');
-                    
-                    netProfitChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.map(item => item.date),
-                            datasets: [{
-                                label: 'Sales',
-                                data: data.map(item => item.sales),
-                                borderColor: '#4CAF50',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'Marketing',
-                                data: data.map(item => item.marketing),
-                                borderColor: '#2196F3',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'HPP',
-                                data: data.map(item => item.hpp),
-                                borderColor: '#FFC107',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'Net Profit',
-                                data: data.map(item => item.netProfit),
-                                borderColor: '#F44336',
-                                tension: 0.1,
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.dataset.label + ': Rp ' + Math.round(context.raw).toLocaleString('id-ID');
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    grid: {
-                                        zeroLineColor: '#888',
-                                        zeroLineWidth: 1
-                                    },
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Rp ' + Math.round(value).toLocaleString('id-ID');
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error:', error));
-        }
-        function loadCorrelationChart() {
-            const filterDates = document.getElementById('filterDates').value;
-            const selectedVariable = document.getElementById('correlationVariable').value;
-            
-            fetch(`{{ route('net-profit.sales-vs-marketing') }}?variable=${selectedVariable}${filterDates ? `&filterDates=${filterDates}` : ''}`)
-                .then(response => response.json())
-                .then(result => {
-                    if (result.data && result.layout) {
-                        Plotly.newPlot('correlationChart', result.data, result.layout, {
-                            responsive: true,
-                            displayModeBar: true
-                        });
-                    }
-
-                    if (result.statistics) {
-                        document.getElementById('correlationCoefficient').textContent = 
-                            (result.statistics.correlation || 0).toFixed(4);
-                        document.getElementById('rSquared').textContent = 
-                            (result.statistics.r_squared || 0).toFixed(4);
-                        document.getElementById('dataPoints').textContent = 
-                            result.statistics.data_points || 0;
-                    } else {
-                        document.getElementById('correlationCoefficient').textContent = '0.0000';
-                        document.getElementById('rSquared').textContent = '0.0000';
-                        document.getElementById('dataPoints').textContent = '0';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching correlation data:', error);
-
-                    document.getElementById('correlationCoefficient').textContent = '0.0000';
-                    document.getElementById('rSquared').textContent = '0.0000';
-                    document.getElementById('dataPoints').textContent = '0';
-                    
-                    if (document.getElementById('correlationChart')) {
-                        Plotly.purge('correlationChart');
-                    }
-                });
-        }
-        loadNetProfitsChart();
-        loadCorrelationChart();
-
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            if (e.target.getAttribute('href') === '#recapChartTab') {
-                renderWaterfallChart();
-            } else if (e.target.getAttribute('href') === '#netProfitsTab') {
-                loadNetProfitsChart();
-            } else if (e.target.getAttribute('href') === '#correlationTab') {
-                loadCorrelationChart();
-            }
-        });
 
         document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
     </script>
