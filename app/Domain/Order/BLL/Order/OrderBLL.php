@@ -41,13 +41,13 @@ class OrderBLL extends BaseBLL implements OrderBLLInterface
         $queryOrder = $this->orderDAL->getOrderDataTable();
 
         $queryOrder->where('tenant_id', $tenantId);
-        $queryOrder->whereNotIn('status', [
-            'Batal', 
-            'canceled', 
-            'Canceled', 
-            'Pembatalan diajukan', 
-            'Dibatalkan Sistem'
-        ]);
+        // $queryOrder->whereNotIn('status', [
+        //     'Batal', 
+        //     'canceled', 
+        //     'Canceled',     
+        //     'Pembatalan diajukan', 
+        //     'Dibatalkan Sistem'
+        // ]);
 
         $phoneNumber = $request->input('phone_number');
         $queryOrder->when(!is_null($phoneNumber), function ($q) use ($phoneNumber) {
