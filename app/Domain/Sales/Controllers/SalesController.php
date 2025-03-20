@@ -1430,19 +1430,23 @@ class SalesController extends Controller
             for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
+                // Sum social media ad spent excluding social_media_id = 9
                 $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
                     ->where('date', $formattedDate)
+                    ->where('social_media_id', '!=', 9)
                     ->sum('amount');
 
+                // Sum marketplace ad spent excluding sales_channel_id = 8
                 $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
                     ->where('date', $formattedDate)
+                    ->where('sales_channel_id', '!=', 8)
                     ->sum('amount');
 
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
 
                 $turnover = Sales::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->value('turnover');
+                    ->where('date', $formattedDate)
+                    ->value('turnover');
 
                 $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
                 
@@ -1452,6 +1456,7 @@ class SalesController extends Controller
                     'ad_spent_total' => $totalAdSpent,
                     'roas' => $roas,
                 ];
+                
                 Sales::where('tenant_id', 1)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
