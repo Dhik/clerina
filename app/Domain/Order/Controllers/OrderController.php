@@ -1235,7 +1235,7 @@ class OrderController extends Controller
 
                 // If order exists, update its sales_channel_id to 8
                 if ($order) {
-                    $order->update(['sales_channel_id' => 8, 'updated_at' => now()]);
+                    $order->update(['sales_channel_id' => 9, 'updated_at' => now()]);
                     $updatedRows++;
                 } else {
                     // If order doesn't exist, create it
