@@ -460,6 +460,10 @@
                 { 
                     name: 'Sales', 
                     url: "{{ route('net-profit.update-sales') }}"
+                },
+                { 
+                    name: 'B2B and CRM Sales', 
+                    url: "{{ route('net-profit.update-b2b-crm') }}"
                 }
             ];
 
@@ -541,7 +545,7 @@
                         visible: false  // Hidden by default
                     },
                     {
-                        data: 'sales',
+                        data: 'total_sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },

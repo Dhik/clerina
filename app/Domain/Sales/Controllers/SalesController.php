@@ -168,9 +168,12 @@ class SalesController extends Controller
         }
 
         return DataTables::of($query)
+            ->addColumn('total_sales', function ($row) {
+                return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
+            })
             ->addColumn('penjualan_bersih', function ($row) {
-                // 85% of sales
-                return $row->sales * 0.85;
+                $totalSales = ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
+                return $totalSales * 0.85;
             })
             ->addColumn('romi', function ($row) {
                 $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
@@ -227,6 +230,12 @@ class SalesController extends Controller
             })
             ->editColumn('closing_rate', function ($row) {
                 return number_format($row->closing_rate ?? 0, 2) . '%';
+            })
+            ->editColumn('b2b_sales', function ($row) {
+                return $row->b2b_sales ?? 0;
+            })
+            ->editColumn('crm_sales', function ($row) {
+                return $row->crm_sales ?? 0;
             })
             ->editColumn('roas', function ($row) {
                 return number_format($row->roas ?? 0, 2);
