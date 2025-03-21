@@ -138,7 +138,9 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
+        // Get and verify the tenant ID
         $currentTenantId = Auth::user()->current_tenant_id;
+        \Log::info('Current tenant ID: ' . $currentTenantId); // Add logging to verify the ID
         
         // Initialize date variables
         $startDate = null;
@@ -175,8 +177,15 @@ class SalesController extends Controller
         // Order by date
         $baseQuery->orderBy('np.date');
         
-        // Convert the query to a collection to avoid further SQL issues
+        // Debug the SQL query
+        \Log::info('SQL Query: ' . $baseQuery->toSql());
+        \Log::info('SQL Bindings: ' . json_encode($baseQuery->getBindings()));
+        
+        // Convert the query to a collection
         $data = $baseQuery->get();
+        
+        // Log the count of records to verify filtering
+        \Log::info('Record count: ' . $data->count());
         
         // Now use a collection-based DataTable
         return DataTables::of($data)
