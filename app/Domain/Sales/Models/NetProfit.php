@@ -10,8 +10,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class NetProfit extends Model
 {
-    use FilterByTenant, InteractsWithMedia;
-    
+    // use FilterByTenant, InteractsWithMedia;
+
     protected $table = 'net_profits';
     protected $fillable = [
         'date',
