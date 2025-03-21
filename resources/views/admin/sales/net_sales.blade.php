@@ -454,10 +454,10 @@
                     name: 'HPP', 
                     url: "{{ route('net-profit.update-hpp') }}"
                 },
-                { 
-                    name: 'Marketing', 
-                    url: "{{ route('net-profit.update-marketing') }}"
-                },
+                // { 
+                //     name: 'Marketing', 
+                //     url: "{{ route('net-profit.update-marketing') }}"
+                // },
                 { 
                     name: 'ROAS', 
                     url: "{{ route('net-profit.update-roas') }}"
