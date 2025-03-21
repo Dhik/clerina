@@ -106,10 +106,21 @@
                     </div>
                 </div>
                 <div class="col-3">
-                    <div class="small-box bg-gradient-teal">
+                    <div class="small-box bg-gradient-info">
                         <div class="inner">
                             <h4 id="totalMarketingSpent">Rp 0</h4>
                             <p>Total Marketing Spent</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-teal">
+                        <div class="inner">
+                            <h4 id="avgROMI">0</h4>
+                            <p>ROMI (Return on Marketing Investment)</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-chart-line"></i>
@@ -715,6 +726,7 @@
                         document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
                         document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
                         document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
+                        document.getElementById('avgROMI').textContent = Math.round(data.avg_romi).toLocaleString('id-ID');
                     })
                     .catch(error => console.error('Error:', error));
             }

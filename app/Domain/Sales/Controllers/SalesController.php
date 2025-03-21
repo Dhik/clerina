@@ -275,7 +275,8 @@ class SalesController extends Controller
             SUM(hpp) as total_hpp,
             SUM(marketing + spent_kol + COALESCE(affiliate, 0) + operasional) as total_spent,
             SUM(marketing + spent_kol + COALESCE(affiliate, 0)) as total_marketing_spent,
-            SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit
+            SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit,
+            SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + spent_kol + COALESCE(affiliate, 0)), 0) as avg_romi
         ')
         ->first();
 
@@ -284,7 +285,8 @@ class SalesController extends Controller
             'total_hpp' => $data->total_hpp ?? 0,
             'total_spent' => $data->total_spent ?? 0,
             'total_marketing_spent' => $data->total_marketing_spent ?? 0,
-            'total_net_profit' => $data->total_net_profit ?? 0
+            'total_net_profit' => $data->total_net_profit ?? 0,
+            'avg_romi' => $data->avg_romi ?? 0
         ]);
     }
     public function getHPPChannelSummary(Request $request)
