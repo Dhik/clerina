@@ -2451,4 +2451,39 @@ class OrderController extends Controller
             })
             ->make(true);
     }
+    public function getHPPSummary(Request $request)
+    {
+        $query = DailyHpp::query()
+            ->where('tenant_id', Auth::user()->current_tenant_id);
+        
+        // Apply date filter if provided
+        if (!is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } else {
+            // Default to current month
+            $query->whereMonth('date', Carbon::now()->month)
+                ->whereYear('date', Carbon::now()->year);
+        }
+
+        // Apply sales channel filter if provided
+        if ($request->filterChannel) {
+            $query->where('sales_channel_id', $request->filterChannel);
+        }
+
+        $data = $query->selectRaw('
+            SUM(quantity * HPP) as total_hpp,
+            SUM(quantity) as total_qty,
+            COUNT(DISTINCT CONCAT(date, sales_channel_id, sku)) as sku_count
+        ')
+        ->first();
+
+        return response()->json([
+            'total_hpp' => $data->total_hpp ?? 0,
+            'total_qty' => $data->total_qty ?? 0,
+            'sku_count' => $data->sku_count ?? 0
+        ]);
+    }
 }

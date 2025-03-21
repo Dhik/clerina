@@ -79,7 +79,7 @@
                 <div class="col-3">
                     <div class="small-box bg-gradient-primary">
                         <div class="inner">
-                            <h4 id="totalHpp">Rp 0</h4>
+                            <h4 id="dailyHppTotal">Rp 0</h4>
                             <p>Total HPP</p>
                         </div>
                         <div class="icon">
@@ -90,33 +90,11 @@
                 <div class="col-3">
                     <div class="small-box bg-gradient-success">
                         <div class="inner">
-                            <h4 id="totalSales">Rp 0</h4>
+                            <h4 id="dailyQtyTotal">Rp 0</h4>
                             <p>Total Quantity</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-shopping-cart"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="small-box bg-gradient-info">
-                        <div class="inner">
-                            <h4 id="totalSpent">Rp 0</h4>
-                            <p>Total Spent</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-money-bill"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="small-box bg-gradient-teal">
-                        <div class="inner">
-                            <h4 id="totalNetProfit">Rp 0</h4>
-                            <p>Total Net Profit</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-chart-line"></i>
                         </div>
                     </div>
                 </div>
@@ -705,27 +683,28 @@
         function fetchSummary() {
             const filterDates = document.getElementById('filterDates').value;
             const filterChannel = document.getElementById('filterChannel').value;
-            const url = new URL("{{ route('sales.get_hpp_summary') }}");
             
+            // Fetch daily_hpp-based summary
+            const dailyHppUrl = new URL("{{ route('sales.get_daily_hpp_summary') }}");
             if (filterDates) {
-                url.searchParams.append('filterDates', filterDates);
+                dailyHppUrl.searchParams.append('filterDates', filterDates);
             }
-            
             if (filterChannel) {
-                url.searchParams.append('filterChannel', filterChannel);
+                dailyHppUrl.searchParams.append('filterChannel', filterChannel);
             }
             
-            fetch(url)
+            fetch(dailyHppUrl)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-                    document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-                    document.getElementById('totalQty').textContent = Math.round(data.total_qty).toLocaleString('id-ID');
-                    document.getElementById('orderCount').textContent = Math.round(data.order_count).toLocaleString('id-ID');
+                    // Daily HPP-based summary
+                    document.getElementById('dailyHppTotal').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+                    document.getElementById('dailyQtyTotal').textContent = Math.round(data.total_qty).toLocaleString('id-ID');
+                    document.getElementById('skuCount').textContent = Math.round(data.sku_count).toLocaleString('id-ID');
                 })
                 .catch(error => console.error('Error:', error));
         }
 
+        // Call the function initially and set up event listeners
         fetchSummary();
 
         $('#totalSpentCard').click(function() {
