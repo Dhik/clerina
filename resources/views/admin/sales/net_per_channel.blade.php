@@ -75,6 +75,76 @@
                 </div>
             </div> -->
 
+            <div class="row">
+                <div class="col-3">
+                    <div class="small-box bg-gradient-primary">
+                        <div class="inner">
+                            <h4 id="totalHpp">Rp 0</h4>
+                            <p>Total HPP</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-success">
+                        <div class="inner">
+                            <h4 id="totalSales">Rp 0</h4>
+                            <p>Total Quantity</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-info">
+                        <div class="inner">
+                            <h4 id="totalSpent">Rp 0</h4>
+                            <p>Total Spent</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-money-bill"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-teal">
+                        <div class="inner">
+                            <h4 id="totalNetProfit">Rp 0</h4>
+                            <p>Total Net Profit</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Trend Count Order per Channel</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="dailyOrdersChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Count Order per Channel</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChannelChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -274,8 +344,6 @@
                     Swal.showLoading();
                 }
             });
-
-            // Call the API endpoint
             $.ajax({
                 url: "{{ route('order.generate_hpp') }}",
                 type: "GET",
@@ -385,6 +453,162 @@
             });
         });
 
+        function loadDailyOrdersChart() {
+            const filterChannel = $('#filterChannel').val();
+            const filterStatus = $('#filterStatus').val();
+            const filterDates = $('#filterDates').val();
+            // const filterProcessDates = $('#filterProcessDates').val();
+
+            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
+                    
+                    if (window.dailyOrdersChart instanceof Chart) {
+                        window.dailyOrdersChart.destroy();
+                    }
+                    
+                    window.dailyOrdersChart = new Chart(ctx, {
+                        type: 'line',
+                        data: data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'nearest',
+                                axis: 'x',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    align: 'center',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12
+                                        },
+                                        boxWidth: 8
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Daily Orders by Channel',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return new Date(context[0].raw.x).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            });
+                                        },
+                                        label: function(context) {
+                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day',
+                                        displayFormats: {
+                                            day: 'd MMM'
+                                        }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        drawBorder: true,
+                                        drawOnChartArea: true,
+                                    },
+                                    ticks: {
+                                        stepSize: 1000,  // Changed from 1 to 1000
+                                        callback: function(value) {
+                                            return value.toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading daily orders chart:', error));
+        }
+        loadDailyOrdersChart();
+        function loadSalesChannelChart() {
+            const filterChannel = $('#filterChannel').val();
+            const filterStatus = $('#filterStatus').val();
+            const filterDates = $('#filterDates').val();
+            // const filterProcessDates = $('#filterProcessDates').val();
+
+            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('salesChannelChart').getContext('2d');
+                    
+                    if (window.salesChannelChart instanceof Chart) {
+                        window.salesChannelChart.destroy();
+                    }
+                    
+                    window.salesChannelChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    align: 'center',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true,
+                                        font: {
+                                            size: 12
+                                        },
+                                        boxWidth: 15
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Orders by Sales Channel',
+                                    font: {
+                                        size: 14
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((value * 100) / total).toFixed(1);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading chart data:', error));
+        }
+        loadSalesChannelChart();
+
         function refreshData() {
             Swal.fire({
                 title: 'Refreshing Data',
@@ -439,7 +663,6 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
-
 
         let hppDetailTable = $('#hppDetailTable').DataTable({
             processing: true,

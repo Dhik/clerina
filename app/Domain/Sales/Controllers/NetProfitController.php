@@ -124,35 +124,25 @@ class NetProfitController extends Controller
     public function updateB2bAndCrmSales()
     {
         try {
-            // Define the range to get data from columns A, S, and T
             $range = 'Import Sales!A2:T';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 1;
             $currentMonth = Carbon::now()->format('Y-m');
             
-            // Create an array to store date => sales data mapping
             $salesData = [];
             
             foreach ($sheetData as $row) {
                 if (empty($row) || empty($row[0])) {
                     continue;
                 }
-                
-                // Skip if columns S or T don't exist
                 if (!isset($row[18]) && !isset($row[19])) {
                     continue;
                 }
-                
-                // Parse the date
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                
-                // Skip if not in current month
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                
-                // Parse B2B sales (column S) and CRM sales (column T)
                 $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
                 $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
                 
@@ -193,6 +183,8 @@ class NetProfitController extends Controller
     {
         try {
             $startDate = now()->startOfMonth();
+            $tenant_id = Auth::user()->current_tenant_id;
+            
             $dates = collect();
             for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
                 $dates->push($date->format('Y-m-d'));
@@ -200,7 +192,7 @@ class NetProfitController extends Controller
 
             $hppPerDate = Order::query()
                 ->whereBetween('orders.date', [$startDate, now()])
-                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
                     $join->on(DB::raw("TRIM(
@@ -223,13 +215,31 @@ class NetProfitController extends Controller
 
             NetProfit::query()
                 ->whereBetween('date', [$startDate, now()])
+                ->where('tenant_id', $tenant_id)
                 ->update(['hpp' => 0]);
 
             NetProfit::query()
+                ->where('net_profits.tenant_id', $tenant_id)
+                ->whereBetween('net_profits.date', [$startDate, now()])
                 ->joinSub($hppPerDate, 'hpp', function($join) {
                     $join->on('net_profits.date', '=', 'hpp.date');
                 })
                 ->update(['hpp' => DB::raw('hpp.total_hpp')]);
+
+            foreach($dates as $date) {
+                $exists = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->exists();
+                    
+                if (!$exists) {
+                    $hppValue = $hppPerDate->where('date', $date)->first();
+                    NetProfit::create([
+                        'date' => $date,
+                        'tenant_id' => $tenant_id,
+                        'hpp' => $hppValue ? $hppValue->total_hpp : 0
+                    ]);
+                }
+            }
 
             return response()->json(['success' => true]);
         } catch(\Exception $e) {
@@ -322,11 +332,15 @@ class NetProfitController extends Controller
                 $visit = $this->parseToInt($row[3] ?? null);
 
                 NetProfit::updateOrCreate(
-                    ['date' => $date],
+                    [
+                        'date' => $date,
+                        'tenant_id' => 1
+                    ],
                     [
                         // 'sales' => $sales,
                         'affiliate' => $affiliate,
-                        'visit' => $visit
+                        'visit' => $visit,
+                        'tenant_id' => 1  // Ensure tenant_id is set to 1 for new records
                     ]
                 );
             }
@@ -386,16 +400,23 @@ class NetProfitController extends Controller
     public function updateRoas()
     {
         try {
+            $tenant_id = Auth::user()->current_tenant_id;
+
+            // Update ROAS for records with non-zero marketing spend
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
                 ->where('marketing', '!=', 0)
                 ->update([
                     'roas' => DB::raw('sales / marketing')
                 ]);
+
+            // Set ROAS to null for records with zero marketing spend
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
                 ->where('marketing', 0)
                 ->update([
                     'roas' => null 
@@ -417,14 +438,14 @@ class NetProfitController extends Controller
     public function updateSales()
     {
         try {
+            $tenant_id = Auth::user()->current_tenant_id;
             $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
             $endDate = Carbon::now()->format('Y-m-d');
 
-            // Get all dates in the range that have net_profit records
             $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
+                ->where('tenant_id', $tenant_id)
                 ->pluck('date');
             
-            // Statuses to exclude from the sales calculation
             $excludedStatuses = [
                 'pending', 
                 'cancelled', 
@@ -442,15 +463,16 @@ class NetProfitController extends Controller
 
             // Process each net_profit record by date
             foreach ($netProfitDates as $date) {
-                // Calculate total sales amount for this date
+                // Calculate total sales amount for this date and tenant
                 $totalSales = DB::table('orders')
                     ->where('date', $date)
-                    ->where('tenant_id', 1)
+                    ->where('tenant_id', $tenant_id)
                     ->whereNotIn('status', $excludedStatuses)
                     ->sum('amount');
 
-                // Update the net_profit record for this date
+                // Update the net_profit record for this date and tenant
                 $updated = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
                     ->update(['sales' => $totalSales]);
                 
                 if ($updated) {
@@ -475,10 +497,12 @@ class NetProfitController extends Controller
     public function updateQty()
     {
         try {
+            $tenant_id = Auth::user()->current_tenant_id;
+
             $dailyQty = Order::query()
                 ->whereMonth('orders.date', now()->month)
                 ->whereYear('orders.date', now()->year)
-                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
                     'pending', 
@@ -495,12 +519,18 @@ class NetProfitController extends Controller
                 ->selectRaw('SUM(qty) as total_qty')
                 ->groupBy('date');
 
+            // Reset the quantity only for the current tenant
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
                 ->update(['qty' => 0]);
 
+            // Update quantities only for the current tenant
             NetProfit::query()
+                ->where('net_profits.tenant_id', $tenant_id)
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
@@ -525,10 +555,12 @@ class NetProfitController extends Controller
     public function updateOrderCount()
     {
         try {
+            $tenant_id = Auth::user()->current_tenant_id;
+
             $dailyOrders = Order::query()
                 ->whereMonth('orders.date', now()->month)
                 ->whereYear('orders.date', now()->year)
-                ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+                ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
                     'pending', 
@@ -545,12 +577,18 @@ class NetProfitController extends Controller
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');
 
+            // Reset order count and packing fee only for the current tenant
             NetProfit::query()
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
                 ->update(['order' => 0, 'fee_packing' => 0]);
                 
+            // Update order count and packing fee only for the current tenant
             NetProfit::query()
+                ->where('net_profits.tenant_id', $tenant_id)
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })

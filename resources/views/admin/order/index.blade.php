@@ -16,73 +16,73 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                <div class="row">
-    <div class="col-md-12">
-        <div class="row mb-3">
-            <!-- Order Date Filter -->
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label for="filterDates">Order Date</label>
-                    <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
-                </div>
-            </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="row mb-3">
+                                <!-- Order Date Filter -->
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="filterDates">Order Date</label>
+                                        <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
+                                    </div>
+                                </div>
 
-            <!-- Process Date Filter -->
-            <!-- <div class="col-md-2">
-                <div class="form-group">
-                    <label for="filterProcessDates">Process Date</label>
-                    <input type="text" class="form-control rangeDate" id="filterProcessDates" placeholder="Select Process Date" autocomplete="off">
-                </div>
-            </div> -->
+                                <!-- Process Date Filter -->
+                                <!-- <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="filterProcessDates">Process Date</label>
+                                        <input type="text" class="form-control rangeDate" id="filterProcessDates" placeholder="Select Process Date" autocomplete="off">
+                                    </div>
+                                </div> -->
 
-            <!-- Sales Channel Filter -->
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label for="filterChannel">Sales Channel</label>
-                    <select class="form-control" id="filterChannel">
-                        <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
-                        <option value="">{{ trans('labels.all') }}</option>
-                        @foreach($salesChannels as $salesChannel)
-                            <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+                                <!-- Sales Channel Filter -->
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="filterChannel">Sales Channel</label>
+                                        <select class="form-control" id="filterChannel">
+                                            <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
+                                            <option value="">{{ trans('labels.all') }}</option>
+                                            @foreach($salesChannels as $salesChannel)
+                                                <option value={{ $salesChannel->id }}>{{ $salesChannel->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
 
-            <!-- Status Filter -->
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label for="filterStatus">Status</label>
-                    <select class="form-control" id="filterStatus">
-                        <option value="" selected>Pilih status</option>
-                        @foreach($status as $stat)
-                            <option value="{{ $stat->status }}">{{ $stat->status }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+                                <!-- Status Filter -->
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="filterStatus">Status</label>
+                                        <select class="form-control" id="filterStatus">
+                                            <option value="" selected>Pilih status</option>
+                                            @foreach($status as $stat)
+                                                <option value="{{ $stat->status }}">{{ $stat->status }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
 
-            <!-- Booking Filter -->
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <div class="icheck-primary mt-2">
-                        <input type="checkbox" id="filterBooking">
-                        <label for="filterBooking">Is Booking</label>
+                                <!-- Booking Filter -->
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <div class="icheck-primary mt-2">
+                                            <input type="checkbox" id="filterBooking">
+                                            <label for="filterBooking">Is Booking</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reset Button -->
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button class="btn btn-default w-100" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Reset Button -->
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button class="btn btn-default w-100" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
                 </div>
             </div>
             <div class="row">

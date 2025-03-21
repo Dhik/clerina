@@ -206,12 +206,43 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.1/dist/sweetalert2.all.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
         filterCategory = $('#kategoriProdukFilter');
         let funnelChart = null;
         let impressionChart = null;
+
+        $('.rangeDate').daterangepicker({
+            autoUpdateInput: false,
+            autoApply: true,
+            alwaysShowCalendars: true,
+            locale: {
+                cancelLabel: 'Clear',
+                format: 'DD/MM/YYYY'
+            },
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            }
+        });
+
+        $('.rangeDate').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            $(this).trigger('change');
+        });
+
+        $('.rangeDate').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            $(this).trigger('change');
+        });
 
         $('#btnAddVisit').click(function() {
             $('#dateVisit').val(moment().format("DD/MM/YYYY"));
@@ -630,30 +661,6 @@
             });
         });
 
-
-        $('#totalSpentCard').click(function() {
-            const campaignExpense = $('#newCampaignExpense').text().trim();
-            const adsSpentTotal = $('#newAdsSpentTotal').text().trim();
-            const totalSpent = $('#newAdSpentCount').text().trim();
-            console.log(campaignExpense);
-            console.log(adsSpentTotal);
-            console.log(totalSpent);
-
-            $('#modalCampaignExpense').text('Campaign Expense: ' + campaignExpense);
-            $('#modalAdsSpentTotal').text('Total Ads Spent: ' + adsSpentTotal);
-            $('#modalTotalSpent').text('Total Spent: ' + totalSpent);
-
-            $('#detailSpentModal').modal('show');
-        });
-
-        let salesPieChart = null;
-
-        $('#totalSalesCard').click(function() {
-            $('#detailSalesModal').modal('show');
-            
-            loadPieChart();
-            loadTrendChart();
-        });
         function createLineChart(ctx, label, dates, data) {
             return new Chart(ctx, {
                 type: 'line',
@@ -810,109 +817,6 @@
                     console.error('Error fetching data:', error);
                 });
         }
-        function loadTrendChart() {
-            fetch('{{ route("order.daily-trend") }}')
-                .then(response => response.json())
-                .then(chartData => {
-                    const ctx = document.getElementById('salesTrendChart').getContext('2d');
-                    
-                    if (salesTrendChart instanceof Chart) {
-                        salesTrendChart.destroy();
-                    }
-
-                    const processedDatasets = chartData.datasets.map(dataset => ({
-                        ...dataset,
-                        data: dataset.data.map(point => ({
-                            x: new Date(point.x.split(' ').join(' ')),
-                            y: parseInt(point.y)
-                        })),
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        borderWidth: 2,
-                        fill: true
-                    }));
-                    
-                    salesTrendChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            datasets: processedDatasets
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {
-                                mode: 'nearest',
-                                axis: 'x',
-                                intersect: false
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top',
-                                    align: 'start',
-                                    labels: {
-                                        usePointStyle: true,
-                                        padding: 20,
-                                        font: {
-                                            size: 11
-                                        },
-                                        boxWidth: 8
-                                    }
-                                },
-                                tooltip: {
-                                    mode: 'index',
-                                    intersect: false,
-                                    callbacks: {
-                                        title: function(context) {
-                                            return new Date(context[0].parsed.x).toLocaleDateString('id-ID', {
-                                                day: 'numeric',
-                                                month: 'short',
-                                                year: 'numeric'
-                                            });
-                                        },
-                                        label: function(context) {
-                                            const value = context.parsed.y;
-                                            return ` ${context.dataset.label}: Rp ${value.toLocaleString('id-ID')}`;
-                                        }
-                                    },
-                                    padding: 10
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    type: 'time',
-                                    time: {
-                                        unit: 'day',
-                                        displayFormats: {
-                                            day: 'dd MMM'
-                                        }
-                                    },
-                                    ticks: {
-                                        source: 'auto',
-                                        autoSkip: true,
-                                        maxRotation: 0
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true,
-                                    grid: {
-                                        drawBorder: true,
-                                        drawOnChartArea: true,
-                                    },
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Rp ' + value.toLocaleString('id-ID');
-                                        },
-                                        padding: 10
-                                    }
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading trend chart data:', error);
-                });
-        }
 
         function fetchImpressionData() {
             const filterValue = filterDate.val();
@@ -996,82 +900,6 @@
                     console.error('Error fetching impression data:', error);
                 });
         }
-
-        function loadPieChart() {
-            fetch('{{ route("order.pie-status") }}')
-                .then(response => response.json())
-                .then(chartData => {
-                    const ctx = document.getElementById('salesPieChart').getContext('2d');
-                    
-                    if (salesPieChart instanceof Chart) {
-                        salesPieChart.destroy();
-                    }
-                    
-                    salesPieChart = new Chart(ctx, {
-                        type: 'pie',
-                        data: {
-                            labels: chartData.data.labels,
-                            datasets: [{
-                                data: chartData.data.datasets[0].data,
-                                backgroundColor: chartData.data.datasets[0].backgroundColor,
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'top',
-                                    align: 'center',
-                                    labels: {
-                                        padding: 15,
-                                        usePointStyle: true,
-                                        font: {
-                                            size: 11
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const value = parseInt(context.raw);
-                                            return ` ${context.label}: Rp ${value.toLocaleString('id-ID')}`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                    updateTable(chartData);
-                })
-                .catch(error => {
-                    console.error('Error loading pie chart data:', error);
-                });
-        }
-        function updateTable(chartData) {
-            const tableBody = $('#salesDetailTable');
-            tableBody.empty();
-
-            const { labels, values, percentages } = chartData.rawData;
-            
-            labels.forEach((label, index) => {
-                const amount = parseInt(values[index]);
-                const percentage = percentages[index];
-                const row = `
-                    <tr>
-                        <td>${label}</td>
-                        <td class="text-right">${amount ? amount.toLocaleString('id-ID') : '0'}</td>
-                        <td class="text-right">${percentage.toFixed(2)}%</td>
-                    </tr>
-                `;
-                tableBody.append(row);
-            });
-
-            $('#totalAmount').text(parseInt(chartData.rawData.totalAmount).toLocaleString('id-ID'));
-        }        
-        
 
         $(function () {
             adsMetaTable.draw();
