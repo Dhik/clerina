@@ -1336,7 +1336,6 @@ class OrderController extends Controller
             'message' => 'Tiktok orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'skipped_rows' => $skippedRows,
             'skipped_count' => count($skippedRows)
         ]);
     }
@@ -1518,7 +1517,6 @@ class OrderController extends Controller
             'message' => 'Tiktok orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'skipped_rows' => $skippedRows,
             'skipped_count' => count($skippedRows)
         ]);
     }
