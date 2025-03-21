@@ -843,8 +843,5 @@
                 ]
             });
         }
-
-
-        document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
     </script>
 @stop
