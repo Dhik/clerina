@@ -438,7 +438,7 @@
             fetch(`{{ route("orders.daily-by-sku") }}?filterChannel=${filterChannel}&filterDates=${filterDates}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Chart data received:", data); // Debug log
+                    console.log("Chart data received:", data);
                     
                     const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
                     
@@ -446,27 +446,8 @@
                         window.dailyOrdersChart.destroy();
                     }
                     
-                    // Process data to ensure dates are properly formatted
-                    if (data.datasets && data.datasets.length > 0) {
-                        data.datasets.forEach(dataset => {
-                            if (dataset.data) {
-                                dataset.data.forEach(point => {
-                                    // Convert string dates to proper format for Chart.js time scale
-                                    if (typeof point.x === 'string') {
-                                        // Parse date in format "DD MMM YYYY"
-                                        const parts = point.x.split(' ');
-                                        const day = parseInt(parts[0], 10);
-                                        const months = {'Jan':0, 'Feb':1, 'Mar':2, 'Apr':3, 'May':4, 'Jun':5, 
-                                                    'Jul':6, 'Aug':7, 'Sep':8, 'Oct':9, 'Nov':10, 'Dec':11};
-                                        const month = months[parts[1]];
-                                        const year = parseInt(parts[2], 10);
-                                        
-                                        point.x = new Date(year, month, day).toISOString();
-                                    }
-                                });
-                            }
-                        });
-                    }
+                    // You don't need to process the dates anymore since they're already in ISO format
+                    // in your response: "2025-03-01T00:00:00.000Z"
                     
                     window.dailyOrdersChart = new Chart(ctx, {
                         type: 'line',
@@ -523,8 +504,7 @@
                                         unit: 'day',
                                         displayFormats: {
                                             day: 'd MMM'
-                                        },
-                                        parser: 'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'' // ISO format parser
+                                        }
                                     },
                                     grid: {
                                         display: false
@@ -537,7 +517,7 @@
                                         drawOnChartArea: true,
                                     },
                                     ticks: {
-                                        stepSize: 500, // Adjusted step size to better match your data
+                                        stepSize: 500,
                                         callback: function(value) {
                                             return value.toLocaleString('id-ID');
                                         }
@@ -547,7 +527,7 @@
                         }
                     });
                     
-                    console.log("Chart created:", window.dailyOrdersChart); // Debug log
+                    console.log("Chart created:", window.dailyOrdersChart);
                 })
                 .catch(error => {
                     console.error('Error loading daily orders chart:', error);
