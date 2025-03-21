@@ -41,6 +41,8 @@ Route::prefix('admin')
                 Route::get('/sku_qty/export', [OrderController::class, 'exportSkuQuantities'])->name('order.sku_qty_export');
                 Route::get('/sku_detail_qty', [OrderController::class, 'skuQuantities'])->name('order.sku_detail_qty');
                 Route::get('/by-channel', [OrderController::class, 'getOrdersBySalesChannel'])->name('orders.by-channel');
+                Route::get('/daily-by-sku', [OrderController::class, 'getDailyQuantityBySku'])->name('orders.daily-by-sku');
+                Route::get('/qty-by-sku', [OrderController::class, 'getQuantityBySku'])->name('orders.qty-by-sku');
                 Route::get('/daily-by-channel', [OrderController::class, 'getDailyOrdersByChannel'])->name('orders.daily-by-channel');
                 Route::get('/import_customer', [OrderController::class, 'importOrdersCleora'])->name('order.import_customer');
                 Route::get('/import_crm_customer', [OrderController::class, 'importCRMCustomer'])->name('order.import_crm_customer');

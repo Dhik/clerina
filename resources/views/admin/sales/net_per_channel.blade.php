@@ -126,7 +126,7 @@
                 <div class="col-md-8 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5>Trend Count Order per Channel</h5>
+                            <h5>Trend Quantity SKU</h5>
                         </div>
                         <div class="card-body">
                             <canvas id="dailyOrdersChart" width="800" height="300"></canvas>
@@ -136,7 +136,7 @@
                 <div class="col-md-4 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5>Count Order per Channel</h5>
+                            <h5>Quantity per SKU</h5>
                         </div>
                         <div class="card-body">
                             <canvas id="salesChannelChart" height="300"></canvas>
@@ -457,9 +457,8 @@
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
             const filterDates = $('#filterDates').val();
-            // const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.daily-by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
+            fetch(`{{ route("orders.daily-by-sku") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('dailyOrdersChart').getContext('2d');
@@ -494,7 +493,7 @@
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Daily Orders by Channel',
+                                    text: 'Daily Quantity Trend',
                                     font: {
                                         size: 14
                                     }
@@ -511,7 +510,7 @@
                                             });
                                         },
                                         label: function(context) {
-                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} orders`;
+                                            return `${context.dataset.label}: ${context.raw.y.toLocaleString('id-ID')} items`;
                                         }
                                     }
                                 }
@@ -536,7 +535,7 @@
                                         drawOnChartArea: true,
                                     },
                                     ticks: {
-                                        stepSize: 1000,  // Changed from 1 to 1000
+                                        stepSize: 5,
                                         callback: function(value) {
                                             return value.toLocaleString('id-ID');
                                         }
@@ -548,14 +547,13 @@
                 })
                 .catch(error => console.error('Error loading daily orders chart:', error));
         }
-        loadDailyOrdersChart();
+
         function loadSalesChannelChart() {
             const filterChannel = $('#filterChannel').val();
             const filterStatus = $('#filterStatus').val();
             const filterDates = $('#filterDates').val();
-            // const filterProcessDates = $('#filterProcessDates').val();
 
-            fetch(`{{ route("orders.by-channel") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
+            fetch(`{{ route("orders.qty-by-sku") }}?filterChannel=${filterChannel}&filterStatus=${filterStatus}&filterDates=${filterDates}`)
                 .then(response => response.json())
                 .then(data => {
                     const ctx = document.getElementById('salesChannelChart').getContext('2d');
@@ -585,7 +583,7 @@
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Orders by Sales Channel',
+                                    text: 'Quantity by SKU (Top 10)',
                                     font: {
                                         size: 14
                                     }
@@ -607,6 +605,8 @@
                 })
                 .catch(error => console.error('Error loading chart data:', error));
         }
+
+        loadDailyOrdersChart();
         loadSalesChannelChart();
 
         function refreshData() {

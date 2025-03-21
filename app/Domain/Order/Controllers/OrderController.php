@@ -2004,6 +2004,114 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getDailyQuantityBySku(Request $request)
+    {
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
+
+        if ($request->filled('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString);
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString);
+        }
+
+        $tenant_id = Auth::user()->current_tenant_id;
+
+        $dailyHppData = DailyHpp::select(
+                'daily_hpp.date',
+                DB::raw('SUM(daily_hpp.quantity) as total_quantity')
+            )
+            ->where('daily_hpp.tenant_id', $tenant_id)
+            ->whereBetween('daily_hpp.date', [
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d')
+            ]);
+
+        if ($request->filterChannel) {
+            $dailyHppData->where('daily_hpp.sales_channel_id', $request->filterChannel);
+        }
+        
+        $dailyHppData = $dailyHppData->groupBy('daily_hpp.date')
+            ->orderBy('daily_hpp.date')
+            ->get();
+
+        $dataset = [
+            'label' => 'Total Quantity',
+            'data' => [],
+            'borderColor' => '#4361EE',
+            'backgroundColor' => '#4361EE20',
+            'tension' => 0.4,
+            'fill' => true
+        ];
+
+        foreach ($dailyHppData as $data) {
+            $dataset['data'][] = [
+                'x' => $data->date,
+                'y' => (int)$data->total_quantity
+            ];
+        }
+
+        $dates = $dailyHppData->pluck('date')->unique()->sort()->values()->toArray();
+
+        return response()->json([
+            'datasets' => [$dataset],
+            'dates' => $dates
+        ]);
+    }
+
+    public function getQuantityBySku(Request $request)
+    {
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
+
+        if ($request->filled('filterDates')) {
+            [$startDateString, $endDateString] = explode(' - ', $request->filterDates);
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString);
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString);
+        }
+
+        $tenant_id = Auth::user()->current_tenant_id;
+
+        $skuCounts = DailyHpp::select(
+                'daily_hpp.sku',
+                DB::raw('SUM(daily_hpp.quantity) as total_quantity')
+            )
+            ->where('daily_hpp.tenant_id', $tenant_id)
+            ->whereBetween('daily_hpp.date', [
+                $startDate->format('Y-m-d'),
+                $endDate->format('Y-m-d')
+            ]);
+
+        if ($request->filterChannel) {
+            $skuCounts->where('daily_hpp.sales_channel_id', $request->filterChannel);
+        }
+        
+        $skuCounts = $skuCounts->groupBy('daily_hpp.sku')
+            ->orderBy('total_quantity', 'desc')
+            ->limit(10)
+            ->get();
+
+        $colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#C9CBCF', '#7BC8A4', '#E7E9ED', '#1B9E77'
+        ];
+
+        $labels = $skuCounts->pluck('sku')->toArray();
+        $data = $skuCounts->pluck('total_quantity')->toArray();
+        
+        return response()->json([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $data,
+                    'backgroundColor' => array_slice($colors, 0, count($labels)),
+                    'hoverBackgroundColor' => array_slice($colors, 0, count($labels)),
+                    'borderWidth' => 0
+                ]
+            ]
+        ]);
+    }
+
     public function getSkuQuantities(Request $request)
     {
         $date = $request->input('date', today()->format('Y-m-d'));

@@ -727,9 +727,9 @@
                         document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
                         document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
                         document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
                     })
                     .catch(error => console.error('Error:', error));
             }
