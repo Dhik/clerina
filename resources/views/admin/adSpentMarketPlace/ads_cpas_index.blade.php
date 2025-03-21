@@ -221,7 +221,7 @@
                 autoUpdateInput: false,
                 autoApply: true,
                 alwaysShowCalendars: true,
-                opens: 'left',
+                opens: 'right',
                 locale: {
                     cancelLabel: 'Clear',
                     format: 'DD/MM/YYYY'
