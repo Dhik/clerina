@@ -726,10 +726,10 @@
                         document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
                         document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
                         document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
-                        document.getElementById('avgROMI').textContent = data.avg_romi.toLocaleString('id-ID', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
+                        document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
                     })
                     .catch(error => console.error('Error:', error));
             }
