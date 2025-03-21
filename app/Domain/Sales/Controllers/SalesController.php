@@ -138,11 +138,8 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
-        // Get and verify the tenant ID
         $currentTenantId = Auth::user()->current_tenant_id;
-        \Log::info('Current tenant ID: ' . $currentTenantId); // Add logging to verify the ID
         
-        // Initialize date variables
         $startDate = null;
         $endDate = null;
         
@@ -152,7 +149,6 @@ class SalesController extends Controller
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
         }
         
-        // Create a subquery to get the data we need
         $baseQuery = DB::table('net_profits as np')
             ->select(
                 'np.*', 
@@ -174,20 +170,9 @@ class SalesController extends Controller
                     ->whereYear('np.date', Carbon::now()->year);
         }
         
-        // Order by date
         $baseQuery->orderBy('np.date');
-        
-        // Debug the SQL query
-        \Log::info('SQL Query: ' . $baseQuery->toSql());
-        \Log::info('SQL Bindings: ' . json_encode($baseQuery->getBindings()));
-        
-        // Convert the query to a collection
         $data = $baseQuery->get();
         
-        // Log the count of records to verify filtering
-        \Log::info('Record count: ' . $data->count());
-        
-        // Now use a collection-based DataTable
         return DataTables::of($data)
             ->addColumn('total_sales', function ($row) {
                 return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);

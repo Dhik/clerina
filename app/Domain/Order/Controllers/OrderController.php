@@ -1255,44 +1255,411 @@ class OrderController extends Controller
         ]);
     }
     public function importOrdersTiktok()
-{
-    set_time_limit(0);
-    $range = 'Tiktok Processed!A2:S'; 
-    $sheetData = $this->googleSheetService->getSheetData($range);
+    {
+        set_time_limit(0);
+        $range = 'Tiktok Processed!A2:S'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
 
-    $tenant_id = 1;
-    $chunkSize = 50;
-    $totalRows = count($sheetData);
-    $processedRows = 0;
-    $skippedRows = []; // Array to track skipped rows
-    $rowIndex = 2; // Starting from A2 in the sheet
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = []; // Array to track skipped rows
+        $rowIndex = 2; // Starting from A2 in the sheet
 
-    foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-        foreach ($chunk as $row) {
-            try {
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                try {
+                    $orderData = [
+                        'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
+                        'process_at'           => null,
+                        'id_order'             => $row[0] ?? null,
+                        'sales_channel_id'     => 4, // Tiktok
+                        'customer_name'        => $row[8] ?? null,
+                        'customer_phone_number' => $row[9] ?? null,
+                        'product'              => $row[2] ?? null,
+                        'qty'                  => $row[4] ?? null,
+                        'receipt_number'       => $row[15] ?? null, // Column P
+                        'shipment'             => $row[14] ?? null, // Column O
+                        'payment_method'       => $row[16] ?? null, // Column Q
+                        'sku'                  => $row[1] ?? null,
+                        'variant'              => $row[3] ?? null,
+                        'price'                => $row[5] ?? null,
+                        'username'             => $row[7] ?? null,
+                        'shipping_address'     => $row[12] ?? null, // Column M
+                        'city'                 => $row[11] ?? null, // Column L
+                        'province'             => $row[10] ?? null, // Column K
+                        'amount'               => $row[18] ?? null,
+                        'tenant_id'            => $tenant_id,
+                        'is_booking'           => 0,
+                        'status'               => $row[13] ?? null, // Column N
+                        'created_at'           => now(),
+                        'updated_at'           => now(),
+                    ];
+
+                    // Check if order with the same id_order, product, sku exists
+                    $order = Order::where('id_order', $orderData['id_order'])
+                                ->where('product', $orderData['product'])
+                                ->where('sku', $orderData['sku'])
+                                ->first();
+
+                    // If order doesn't exist, create it
+                    if (!$order) {
+                        Order::create($orderData);
+                        $processedRows++;
+                    } else {
+                        // Track duplicates
+                        $skippedRows[] = [
+                            'row' => $rowIndex,
+                            'reason' => 'Duplicate order',
+                            'order_id' => $row[0] ?? 'Unknown',
+                            'product' => $row[2] ?? 'Unknown',
+                            'sku' => $row[1] ?? 'Unknown'
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error processing Tiktok order row: " . json_encode($row) . " Error: " . $e->getMessage());
+                    // Track errors
+                    $skippedRows[] = [
+                        'row' => $rowIndex,
+                        'reason' => 'Error: ' . $e->getMessage(),
+                        'order_id' => $row[0] ?? 'Unknown'
+                    ];
+                    continue; // Skip this row and continue with the next
+                }
+                $rowIndex++;
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Tiktok orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'skipped_count' => count($skippedRows)
+        ]);
+    }
+    public function importOrdersLazada()
+    {
+        set_time_limit(0);
+        $range = 'Lazada Processed!A2:Q'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = []; // Array to track skipped rows
+        $rowIndex = 2; // Starting from A2 in the sheet
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                try {
+                    // Handle price formatting (remove decimal part for bigint)
+                    $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
+                    
+                    // Parse date
+                    $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
+                    
+                    $orderData = [
+                        'date'                 => $orderDate,
+                        'process_at'           => null,
+                        'id_order'             => $row[0] ?? null,
+                        'sales_channel_id'     => 2, // Lazada
+                        'customer_name'        => $row[9] ?? null,
+                        'customer_phone_number' => $row[16] ?? null, // Column Q
+                        'product'              => $row[5] ?? null,
+                        'qty'                  => $row[10] ?? null,
+                        'receipt_number'       => $row[1] ?? null,
+                        'shipment'             => $row[15] ?? null, // Column P
+                        'payment_method'       => $row[4] ?? null,
+                        'sku'                  => $row[6] ?? null,
+                        'variant'              => $row[7] ?? null,
+                        'price'                => $price,
+                        'username'             => $row[9] ?? null,
+                        'shipping_address'     => $row[11] ?? null,
+                        'city'                 => $row[12] ?? null,
+                        'province'             => $row[13] ?? null,
+                        'amount'               => $price,
+                        'tenant_id'            => $tenant_id,
+                        'is_booking'           => 0,
+                        'status'               => $row[14] ?? null, // Column O
+                    ];
+
+                    // Check for identical record
+                    $query = Order::query();
+                    foreach ($orderData as $field => $value) {
+                        if ($value !== null) {
+                            $query->where($field, $value);
+                        }
+                    }
+                    
+                    $existingOrder = $query->first();
+
+                    // If no identical order exists, create it
+                    if (!$existingOrder) {
+                        // Add timestamps for creation
+                        $orderData['created_at'] = now();
+                        $orderData['updated_at'] = now();
+                        
+                        Order::create($orderData);
+                        $processedRows++;
+                    } else {
+                        // Track duplicates
+                        $skippedRows[] = [
+                            'row' => $rowIndex,
+                            'reason' => 'Duplicate order',
+                            'order_id' => $row[0] ?? 'Unknown'
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
+                    // Track errors
+                    $skippedRows[] = [
+                        'row' => $rowIndex,
+                        'reason' => 'Error: ' . $e->getMessage(),
+                        'order_id' => $row[0] ?? 'Unknown'
+                    ];
+                    continue; // Skip this row and continue with the next
+                }
+                $rowIndex++;
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Lazada orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'skipped_count' => count($skippedRows)
+        ]);
+    }
+    public function importAzrinaTiktok()
+    {
+        set_time_limit(0);
+        $range = 'Tiktok Processed!A2:S'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = []; // Array to track skipped rows
+        $rowIndex = 2; // Starting from A2 in the sheet
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                try {
+                    $orderData = [
+                        'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
+                        'process_at'           => null,
+                        'id_order'             => $row[0] ?? null,
+                        'sales_channel_id'     => 4, // Tiktok
+                        'customer_name'        => $row[8] ?? null,
+                        'customer_phone_number' => $row[9] ?? null,
+                        'product'              => $row[2] ?? null,
+                        'qty'                  => $row[4] ?? null,
+                        'receipt_number'       => $row[15] ?? null, // Column P
+                        'shipment'             => $row[14] ?? null, // Column O
+                        'payment_method'       => $row[16] ?? null, // Column Q
+                        'sku'                  => $row[1] ?? null,
+                        'variant'              => $row[3] ?? null,
+                        'price'                => $row[5] ?? null,
+                        'username'             => $row[7] ?? null,
+                        'shipping_address'     => $row[12] ?? null, // Column M
+                        'city'                 => $row[11] ?? null, // Column L
+                        'province'             => $row[10] ?? null, // Column K
+                        'amount'               => $row[18] ?? null,
+                        'tenant_id'            => $tenant_id,
+                        'is_booking'           => 0,
+                        'status'               => $row[13] ?? null, // Column N
+                        'created_at'           => now(),
+                        'updated_at'           => now(),
+                    ];
+
+                    // Check if order with the same id_order, product, sku exists
+                    $order = Order::where('id_order', $orderData['id_order'])
+                                ->where('product', $orderData['product'])
+                                ->where('sku', $orderData['sku'])
+                                ->first();
+
+                    // If order doesn't exist, create it
+                    if (!$order) {
+                        Order::create($orderData);
+                        $processedRows++;
+                    } else {
+                        // Track duplicates
+                        $skippedRows[] = [
+                            'row' => $rowIndex,
+                            'reason' => 'Duplicate order',
+                            'order_id' => $row[0] ?? 'Unknown',
+                            'product' => $row[2] ?? 'Unknown',
+                            'sku' => $row[1] ?? 'Unknown'
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error processing Tiktok order row: " . json_encode($row) . " Error: " . $e->getMessage());
+                    // Track errors
+                    $skippedRows[] = [
+                        'row' => $rowIndex,
+                        'reason' => 'Error: ' . $e->getMessage(),
+                        'order_id' => $row[0] ?? 'Unknown'
+                    ];
+                    continue; // Skip this row and continue with the next
+                }
+                $rowIndex++;
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Tiktok orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'skipped_count' => count($skippedRows)
+        ]);
+    }
+    public function importAzrinaLazada()
+    {
+        set_time_limit(0);
+        $range = 'Lazada Processed!A2:Q'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = []; // Array to track skipped rows
+        $rowIndex = 2; // Starting from A2 in the sheet
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                try {
+                    // Handle price formatting (remove decimal part for bigint)
+                    $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
+                    
+                    // Parse date
+                    $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
+                    
+                    $orderData = [
+                        'date'                 => $orderDate,
+                        'process_at'           => null,
+                        'id_order'             => $row[0] ?? null,
+                        'sales_channel_id'     => 2, // Lazada
+                        'customer_name'        => $row[9] ?? null,
+                        'customer_phone_number' => $row[16] ?? null, // Column Q
+                        'product'              => $row[5] ?? null,
+                        'qty'                  => $row[10] ?? null,
+                        'receipt_number'       => $row[1] ?? null,
+                        'shipment'             => $row[15] ?? null, // Column P
+                        'payment_method'       => $row[4] ?? null,
+                        'sku'                  => $row[6] ?? null,
+                        'variant'              => $row[7] ?? null,
+                        'price'                => $price,
+                        'username'             => $row[9] ?? null,
+                        'shipping_address'     => $row[11] ?? null,
+                        'city'                 => $row[12] ?? null,
+                        'province'             => $row[13] ?? null,
+                        'amount'               => $price,
+                        'tenant_id'            => $tenant_id,
+                        'is_booking'           => 0,
+                        'status'               => $row[14] ?? null, // Column O
+                    ];
+
+                    // Check for identical record
+                    $query = Order::query();
+                    foreach ($orderData as $field => $value) {
+                        if ($value !== null) {
+                            $query->where($field, $value);
+                        }
+                    }
+                    
+                    $existingOrder = $query->first();
+
+                    // If no identical order exists, create it
+                    if (!$existingOrder) {
+                        // Add timestamps for creation
+                        $orderData['created_at'] = now();
+                        $orderData['updated_at'] = now();
+                        
+                        Order::create($orderData);
+                        $processedRows++;
+                    } else {
+                        // Track duplicates
+                        $skippedRows[] = [
+                            'row' => $rowIndex,
+                            'reason' => 'Duplicate order',
+                            'order_id' => $row[0] ?? 'Unknown'
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
+                    // Track errors
+                    $skippedRows[] = [
+                        'row' => $rowIndex,
+                        'reason' => 'Error: ' . $e->getMessage(),
+                        'order_id' => $row[0] ?? 'Unknown'
+                    ];
+                    continue; // Skip this row and continue with the next
+                }
+                $rowIndex++;
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Lazada orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'skipped_count' => count($skippedRows)
+        ]);
+    }
+    public function importAzrinaShopee()
+    {
+        set_time_limit(0);
+        $range = 'Shopee Processed!A2:R'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                if (empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
                 $orderData = [
-                    'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
+                    'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
-                    'sales_channel_id'     => 4, // Tiktok
-                    'customer_name'        => $row[8] ?? null,
-                    'customer_phone_number' => $row[9] ?? null,
-                    'product'              => $row[2] ?? null,
-                    'qty'                  => $row[4] ?? null,
-                    'receipt_number'       => $row[15] ?? null, // Column P
-                    'shipment'             => $row[14] ?? null, // Column O
-                    'payment_method'       => $row[16] ?? null, // Column Q
-                    'sku'                  => $row[1] ?? null,
-                    'variant'              => $row[3] ?? null,
-                    'price'                => $row[5] ?? null,
-                    'username'             => $row[7] ?? null,
-                    'shipping_address'     => $row[12] ?? null, // Column M
-                    'city'                 => $row[11] ?? null, // Column L
-                    'province'             => $row[10] ?? null, // Column K
-                    'amount'               => $row[18] ?? null,
+                    'sales_channel_id'     => 1, // Shopee
+                    'customer_name'        => $row[7] ?? null,
+                    'customer_phone_number' => $row[8] ?? null,
+                    'product'              => $row[5] ?? null,
+                    'qty'                  => $row[12] ?? null,
+                    'receipt_number'       => $row[1] ?? null,
+                    'shipment'             => $row[2] ?? null,
+                    'payment_method'       => $row[13] ?? null,
+                    'sku'                  => $row[4] ?? null,
+                    'variant'              => null,
+                    'price'                => $row[14] ?? null,
+                    'username'             => $row[6] ?? null,
+                    'shipping_address'     => $row[9] ?? null,
+                    'city'                 => $row[10] ?? null,
+                    'province'             => $row[11] ?? null,
+                    'amount'               => $row[16] ?? null, // Column Q
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
-                    'status'               => $row[13] ?? null, // Column N
+                    'status'               => $row[17] ?? null, // Column R
                     'created_at'           => now(),
                     'updated_at'           => now(),
                 ];
@@ -1301,142 +1668,25 @@ class OrderController extends Controller
                 $order = Order::where('id_order', $orderData['id_order'])
                             ->where('product', $orderData['product'])
                             ->where('sku', $orderData['sku'])
+                            ->where('amount', $orderData['amount'])
                             ->first();
 
                 // If order doesn't exist, create it
                 if (!$order) {
                     Order::create($orderData);
                     $processedRows++;
-                } else {
-                    // Track duplicates
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Duplicate order',
-                        'order_id' => $row[0] ?? 'Unknown',
-                        'product' => $row[2] ?? 'Unknown',
-                        'sku' => $row[1] ?? 'Unknown'
-                    ];
                 }
-            } catch (\Exception $e) {
-                \Log::error("Error processing Tiktok order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                // Track errors
-                $skippedRows[] = [
-                    'row' => $rowIndex,
-                    'reason' => 'Error: ' . $e->getMessage(),
-                    'order_id' => $row[0] ?? 'Unknown'
-                ];
-                continue; // Skip this row and continue with the next
             }
-            $rowIndex++;
+            usleep(100000); // Small delay to prevent overwhelming the server
         }
-        usleep(100000); // Small delay to prevent overwhelming the server
+
+        return response()->json([
+            'message' => 'Shopee orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows
+        ]);
     }
-
-    return response()->json([
-        'message' => 'Tiktok orders imported successfully', 
-        'total_rows' => $totalRows,
-        'processed_rows' => $processedRows,
-        'skipped_rows' => $skippedRows,
-        'skipped_count' => count($skippedRows)
-    ]);
-}
-    public function importOrdersLazada()
-{
-    set_time_limit(0);
-    $range = 'Lazada Processed!A2:Q'; 
-    $sheetData = $this->googleSheetService->getSheetData($range);
-
-    $tenant_id = 1;
-    $chunkSize = 50;
-    $totalRows = count($sheetData);
-    $processedRows = 0;
-    $skippedRows = []; // Array to track skipped rows
-    $rowIndex = 2; // Starting from A2 in the sheet
-
-    foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-        foreach ($chunk as $row) {
-            try {
-                // Handle price formatting (remove decimal part for bigint)
-                $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
-                
-                // Parse date
-                $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
-                
-                $orderData = [
-                    'date'                 => $orderDate,
-                    'process_at'           => null,
-                    'id_order'             => $row[0] ?? null,
-                    'sales_channel_id'     => 2, // Lazada
-                    'customer_name'        => $row[9] ?? null,
-                    'customer_phone_number' => $row[16] ?? null, // Column Q
-                    'product'              => $row[5] ?? null,
-                    'qty'                  => $row[10] ?? null,
-                    'receipt_number'       => $row[1] ?? null,
-                    'shipment'             => $row[15] ?? null, // Column P
-                    'payment_method'       => $row[4] ?? null,
-                    'sku'                  => $row[6] ?? null,
-                    'variant'              => $row[7] ?? null,
-                    'price'                => $price,
-                    'username'             => $row[9] ?? null,
-                    'shipping_address'     => $row[11] ?? null,
-                    'city'                 => $row[12] ?? null,
-                    'province'             => $row[13] ?? null,
-                    'amount'               => $price,
-                    'tenant_id'            => $tenant_id,
-                    'is_booking'           => 0,
-                    'status'               => $row[14] ?? null, // Column O
-                ];
-
-                // Check for identical record
-                $query = Order::query();
-                foreach ($orderData as $field => $value) {
-                    if ($value !== null) {
-                        $query->where($field, $value);
-                    }
-                }
-                
-                $existingOrder = $query->first();
-
-                // If no identical order exists, create it
-                if (!$existingOrder) {
-                    // Add timestamps for creation
-                    $orderData['created_at'] = now();
-                    $orderData['updated_at'] = now();
-                    
-                    Order::create($orderData);
-                    $processedRows++;
-                } else {
-                    // Track duplicates
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Duplicate order',
-                        'order_id' => $row[0] ?? 'Unknown'
-                    ];
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                // Track errors
-                $skippedRows[] = [
-                    'row' => $rowIndex,
-                    'reason' => 'Error: ' . $e->getMessage(),
-                    'order_id' => $row[0] ?? 'Unknown'
-                ];
-                continue; // Skip this row and continue with the next
-            }
-            $rowIndex++;
-        }
-        usleep(100000); // Small delay to prevent overwhelming the server
-    }
-
-    return response()->json([
-        'message' => 'Lazada orders imported successfully', 
-        'total_rows' => $totalRows,
-        'processed_rows' => $processedRows,
-        'skipped_rows' => $skippedRows,
-        'skipped_count' => count($skippedRows)
-    ]);
-}
-
 
     public function getMonthlyOrderStatusDistribution(): JsonResponse
     {

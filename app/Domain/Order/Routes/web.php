@@ -45,11 +45,16 @@ Route::prefix('admin')
                 Route::get('/import_customer', [OrderController::class, 'importOrdersCleora'])->name('order.import_customer');
                 Route::get('/import_crm_customer', [OrderController::class, 'importCRMCustomer'])->name('order.import_crm_customer');
                 Route::get('/import_tokped', [OrderController::class, 'importOrdersTokopedia'])->name('order.import_tokped');
-                Route::get('/import_shopee', [OrderController::class, 'importOrdersShopee'])->name('order.import_shopee');
+                Route::get('/cleora_shopee', [OrderController::class, 'importOrdersShopee'])->name('order.cleora_shopee');
+                Route::get('/cleora_tiktok', [OrderController::class, 'importOrdersTiktok'])->name('order.cleora_tiktok');
+                Route::get('/cleora_lazada', [OrderController::class, 'importOrdersLazada'])->name('order.cleora_lazada');
+
+                Route::get('/azrina_shopee', [OrderController::class, 'importAzrinaShopee'])->name('order.azrina_shopee');
+                Route::get('/azrina_tiktok', [OrderController::class, 'importAzrinaTiktok'])->name('order.azrina_tiktok');
+                Route::get('/azrina_lazada', [OrderController::class, 'importAzrinaLazada'])->name('order.azrina_lazada');
+
                 Route::get('/import_shopee2', [OrderController::class, 'importOrdersShopee2'])->name('order.import_shopee2');
                 Route::get('/import_shopee3', [OrderController::class, 'importOrdersShopee3'])->name('order.import_shopee3');
-                Route::get('/import_tiktok', [OrderController::class, 'importOrdersTiktok'])->name('order.import_tiktok');
-                Route::get('/import_lazada', [OrderController::class, 'importOrdersLazada'])->name('order.import_lazada');
                 Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
                 Route::get('/export-unique-skus', [OrderController::class, 'exportUniqueSku']);
 
