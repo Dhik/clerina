@@ -477,6 +477,10 @@
                 { 
                     name: 'B2B and CRM Sales', 
                     url: "{{ route('net-profit.update-b2b-crm') }}"
+                },
+                {
+                    name: 'Spent KOL Azrina',
+                    url: "{{ route('net-profit.update-spent-kol-azrina') }}"
                 }
             ];
 
