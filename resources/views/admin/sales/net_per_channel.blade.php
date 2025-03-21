@@ -685,7 +685,7 @@
             const filterChannel = document.getElementById('filterChannel').value;
             
             // Fetch daily_hpp-based summary
-            const dailyHppUrl = new URL("{{ route('sales.get_daily_hpp_summary') }}");
+            const dailyHppUrl = new URL("{{ route('order.get_daily_hpp_summary') }}");
             if (filterDates) {
                 dailyHppUrl.searchParams.append('filterDates', filterDates);
             }
