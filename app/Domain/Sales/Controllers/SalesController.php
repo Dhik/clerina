@@ -138,36 +138,48 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
-        $query = NetProfit::query()
-            ->select(
-                'net_profits.*', 
-                'sales.ad_spent_social_media',
-                'sales.ad_spent_market_place'
-            )
-            ->leftJoin('sales', function($join) {
-                $join->on('net_profits.date', '=', 'sales.date')
-                     ->where('sales.tenant_id', Auth::user()->current_tenant_id);
-            })
-            ->where(function($query) {
-                $query->where(function($subQuery) {
-                    $subQuery->whereNotNull('sales.ad_spent_social_media')
-                        ->where('sales.tenant_id', Auth::user()->current_tenant_id);
-                })->orWhere('sales.ad_spent_social_media', '>', 0);
-            });
-
-        if (! is_null($request->input('filterDates'))) {
+        $currentTenantId = Auth::user()->current_tenant_id;
+        
+        // Initialize date variables
+        $startDate = null;
+        $endDate = null;
+        
+        if (!is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
             $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-
-            $query->where('net_profits.date', '>=', $startDate)
-                ->where('net_profits.date', '<=', $endDate);
-        } else {
-            $query->whereMonth('net_profits.date', Carbon::now()->month)
-                ->whereYear('net_profits.date', Carbon::now()->year);
         }
-
-        return DataTables::of($query)
+        
+        // Create a subquery to get the data we need
+        $baseQuery = DB::table('net_profits as np')
+            ->select(
+                'np.*', 
+                's.ad_spent_social_media',
+                's.ad_spent_market_place'
+            )
+            ->leftJoin('sales as s', function($join) use ($currentTenantId) {
+                $join->on('np.date', '=', 's.date')
+                    ->where('s.tenant_id', '=', $currentTenantId);
+            })
+            ->where('np.tenant_id', '=', $currentTenantId);
+        
+        // Apply date filtering
+        if (!is_null($request->input('filterDates'))) {
+            $baseQuery->where('np.date', '>=', $startDate)
+                    ->where('np.date', '<=', $endDate);
+        } else {
+            $baseQuery->whereMonth('np.date', Carbon::now()->month)
+                    ->whereYear('np.date', Carbon::now()->year);
+        }
+        
+        // Order by date
+        $baseQuery->orderBy('np.date');
+        
+        // Convert the query to a collection to avoid further SQL issues
+        $data = $baseQuery->get();
+        
+        // Now use a collection-based DataTable
+        return DataTables::of($data)
             ->addColumn('total_sales', function ($row) {
                 return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
             })
