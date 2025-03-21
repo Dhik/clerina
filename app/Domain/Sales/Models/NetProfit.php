@@ -6,9 +6,12 @@ use App\Domain\Tenant\Traits\FilterByTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class NetProfit extends Model
 {
+    use FilterByTenant, InteractsWithMedia;
+    
     protected $table = 'net_profits';
     protected $fillable = [
         'date',
