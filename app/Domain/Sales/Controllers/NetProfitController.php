@@ -24,58 +24,58 @@ class NetProfitController extends Controller
     ) {
         $this->googleSheetService = $googleSheetService;
     }
-    public function updateSpentKolAzrina()
-    {
-        try {
-            // Define date range: First day of current month to today
-            $startDate = Carbon::now()->startOfMonth();
-            $endDate = Carbon::now()->endOfDay();
+    // public function updateSpentKolAzrina()
+    // {
+    //     try {
+    //         // Define date range: First day of current month to today
+    //         $startDate = Carbon::now()->startOfMonth();
+    //         $endDate = Carbon::now()->endOfDay();
             
-            $talentPayments = TalentContent::query()
-                ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
-                ->where('talents.tenant_id', 2)
-                ->whereNotNull('talent_content.upload_link')
-                ->whereBetween('talent_content.posting_date', [$startDate, $endDate])
-                ->select('posting_date')
-                ->selectRaw('SUM(
-                    CASE 
-                        WHEN talent_content.final_rate_card IS NOT NULL 
-                        THEN talent_content.final_rate_card - (
-                            CASE 
-                                WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
-                                THEN talent_content.final_rate_card * (talents.tax_percentage / 100)
-                                WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
-                                THEN talent_content.final_rate_card * 0.02
-                                ELSE talent_content.final_rate_card * 0.025
-                            END
-                        )
-                        ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) - (
-                            CASE 
-                                WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
-                                THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * (talents.tax_percentage / 100)
-                                WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
-                                THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.02
-                                ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.025
-                            END
-                        )
-                    END
-                ) as talent_payment')
-                ->groupBy('posting_date');
+    //         $talentPayments = TalentContent::query()
+    //             ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
+    //             ->where('talents.tenant_id', 2)
+    //             ->whereNotNull('talent_content.upload_link')
+    //             ->whereBetween('talent_content.posting_date', [$startDate, $endDate])
+    //             ->select('posting_date')
+    //             ->selectRaw('SUM(
+    //                 CASE 
+    //                     WHEN talent_content.final_rate_card IS NOT NULL 
+    //                     THEN talent_content.final_rate_card - (
+    //                         CASE 
+    //                             WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
+    //                             THEN talent_content.final_rate_card * (talents.tax_percentage / 100)
+    //                             WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
+    //                             THEN talent_content.final_rate_card * 0.02
+    //                             ELSE talent_content.final_rate_card * 0.025
+    //                         END
+    //                     )
+    //                     ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) - (
+    //                         CASE 
+    //                             WHEN talents.tax_percentage IS NOT NULL AND talents.tax_percentage > 0 
+    //                             THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * (talents.tax_percentage / 100)
+    //                             WHEN UPPER(LEFT(talents.nama_rekening, 2)) = "PT" OR UPPER(LEFT(talents.nama_rekening, 2)) = "CV"
+    //                             THEN (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.02
+    //                             ELSE (talents.rate_final / GREATEST(COALESCE(talents.slot_final, 1), 1)) * 0.025
+    //                         END
+    //                     )
+    //                 END
+    //             ) as talent_payment')
+    //             ->groupBy('posting_date');
                 
-            // Apply same date range to NetProfit query
-            NetProfit::query()
-                ->where('tenant_id', 2)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->joinSub($talentPayments, 'tp', function($join) {
-                    $join->on('net_profits.date', '=', 'tp.posting_date');
-                })
-                ->update(['spent_kol' => DB::raw('tp.talent_payment')]);
+    //         // Apply same date range to NetProfit query
+    //         NetProfit::query()
+    //             ->where('tenant_id', 2)
+    //             ->whereBetween('date', [$startDate, $endDate])
+    //             ->joinSub($talentPayments, 'tp', function($join) {
+    //                 $join->on('net_profits.date', '=', 'tp.posting_date');
+    //             })
+    //             ->update(['spent_kol' => DB::raw('tp.talent_payment')]);
                 
-            return response()->json(['success' => true]);
-        } catch(\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
+    //         return response()->json(['success' => true]);
+    //     } catch(\Exception $e) {
+    //         return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    //     }
+    // }
     public function updateSpentKol()
     {
         try {
