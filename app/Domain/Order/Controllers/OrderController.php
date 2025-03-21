@@ -2045,8 +2045,9 @@ class OrderController extends Controller
         ];
 
         foreach ($dailyHppData as $data) {
+            $formattedDate = Carbon::parse($data->date)->format('Y-m-d\TH:i:s.000\Z');
             $dataset['data'][] = [
-                'x' => $data->date,
+                'x' => $formattedDate, // Use ISO format for consistency
                 'y' => (int)$data->total_quantity
             ];
         }
