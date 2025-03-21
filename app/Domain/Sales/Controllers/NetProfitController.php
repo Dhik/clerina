@@ -27,12 +27,15 @@ class NetProfitController extends Controller
     public function updateSpentKolAzrina()
     {
         try {
+            // Define date range: First day of current month to today
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfDay();
+            
             $talentPayments = TalentContent::query()
                 ->join('talents', 'talent_content.talent_id', '=', 'talents.id')
                 ->where('talents.tenant_id', 2)
                 ->whereNotNull('talent_content.upload_link')
-                ->whereMonth('talent_content.posting_date', date('m'))
-                ->whereYear('talent_content.posting_date', date('Y'))
+                ->whereBetween('talent_content.posting_date', [$startDate, $endDate])
                 ->select('posting_date')
                 ->selectRaw('SUM(
                     CASE 
@@ -59,9 +62,10 @@ class NetProfitController extends Controller
                 ) as talent_payment')
                 ->groupBy('posting_date');
                 
-            // Add the tenant_id filter to only update records for tenant_id = 2
+            // Apply same date range to NetProfit query
             NetProfit::query()
                 ->where('tenant_id', 2)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->joinSub($talentPayments, 'tp', function($join) {
                     $join->on('net_profits.date', '=', 'tp.posting_date');
                 })
