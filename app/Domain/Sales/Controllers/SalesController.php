@@ -138,32 +138,28 @@ class SalesController extends Controller
     }
     public function getNetProfit(Request $request)
     {
-        $currentTenantId = Auth::user()->current_tenant_id;
-        
-        // Initialize date variables
-        $startDate = null;
-        $endDate = null;
-        
-        if (!is_null($request->input('filterDates'))) {
-            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
-            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
-            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
-        }
-        
         $query = NetProfit::query()
-            ->select([
+            ->select(
                 'net_profits.*', 
                 'sales.ad_spent_social_media',
                 'sales.ad_spent_market_place'
-            ])
-            ->leftJoin('sales', function($join) use ($currentTenantId) {
+            )
+            ->leftJoin('sales', function($join) {
                 $join->on('net_profits.date', '=', 'sales.date')
-                    ->where('sales.tenant_id', '=', $currentTenantId);
+                     ->where('sales.tenant_id', Auth::user()->current_tenant_id);
             })
-            ->where('net_profits.tenant_id', '=', $currentTenantId);
+            ->where(function($query) {
+                $query->where(function($subQuery) {
+                    $subQuery->whereNotNull('sales.ad_spent_social_media')
+                        ->where('sales.tenant_id', Auth::user()->current_tenant_id);
+                })->orWhere('sales.ad_spent_social_media', '>', 0);
+            });
 
-        // Apply date filtering
-        if (!is_null($request->input('filterDates'))) {
+        if (! is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+
             $query->where('net_profits.date', '>=', $startDate)
                 ->where('net_profits.date', '<=', $endDate);
         } else {
@@ -171,30 +167,7 @@ class SalesController extends Controller
                 ->whereYear('net_profits.date', Carbon::now()->year);
         }
 
-        // For DataTables, we need to modify how the count query works
         return DataTables::of($query)
-            ->setTotalRecords(
-                NetProfit::where('tenant_id', $currentTenantId)
-                    ->when(!is_null($request->input('filterDates')), function($q) use ($startDate, $endDate) {
-                        return $q->where('date', '>=', $startDate)
-                                ->where('date', '<=', $endDate);
-                    }, function($q) {
-                        return $q->whereMonth('date', Carbon::now()->month)
-                                ->whereYear('date', Carbon::now()->year);
-                    })
-                    ->count()
-            )
-            ->setFilteredRecords(
-                NetProfit::where('tenant_id', $currentTenantId)
-                    ->when(!is_null($request->input('filterDates')), function($q) use ($startDate, $endDate) {
-                        return $q->where('date', '>=', $startDate)
-                                ->where('date', '<=', $endDate);
-                    }, function($q) {
-                        return $q->whereMonth('date', Carbon::now()->month)
-                                ->whereYear('date', Carbon::now()->year);
-                    })
-                    ->count()
-            )
             ->addColumn('total_sales', function ($row) {
                 return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
             })
