@@ -14,8 +14,8 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="row">
-                                <div class="col-auto">
-                                    <input type="text" class="form-control rangeDate" id="filterDates" placeholder="{{ trans('placeholder.select_date') }}" autocomplete="off">
+                                <div class="col-md-3 mb-2">
+                                    <input type="text" id="filterDates" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                                 </div>
                                 <div class="col-auto">
                                     <select class="form-control" id="kategoriProdukFilter">
