@@ -253,19 +253,15 @@ class NetProfitController extends Controller
     public function updateMarketing()
     {
         try {
-            NetProfit::query()
-                ->join('sales', function($join) {
-                    $join->on('net_profits.date', '=', 'sales.date')
-                        ->on('net_profits.tenant_id', '=', 'sales.tenant_id');
-                })
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
-                ->where('sales.tenant_id', Auth::user()->current_tenant_id)
-                // Remove the ambiguous where clause that's causing the issue
-                // This line appears to be added by Laravel automatically: and `tenant_id` = 1
-                ->update([
-                    'net_profits.marketing' => DB::raw('sales.ad_spent_total')
-                ]);
+            DB::statement("
+                UPDATE net_profits
+                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+                SET net_profits.marketing = sales.ad_spent_total, 
+                    net_profits.updated_at = ?
+                WHERE MONTH(net_profits.date) = ?
+                AND YEAR(net_profits.date) = ?
+                AND sales.tenant_id = ?
+            ", [now(), now()->month, now()->year, Auth::user()->current_tenant_id]);
 
             return response()->json([
                 'success' => true,
