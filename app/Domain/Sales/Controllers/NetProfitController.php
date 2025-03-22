@@ -272,6 +272,7 @@ class NetProfitController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
+                'error' => $e->getMessage()
             ], 500);
         }
     }
