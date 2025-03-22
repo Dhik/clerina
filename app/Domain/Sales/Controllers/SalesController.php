@@ -798,6 +798,7 @@ class SalesController extends Controller
 
         // Get NetProfit data for yesterday
         $yesterdayNetProfit = NetProfit::whereDate('date', $yesterday)
+            ->where('tenant_id', 1)
             ->first();
         
         // Get Sales data for yesterday
@@ -863,6 +864,7 @@ class SalesController extends Controller
         // Monthly data
         $startOfMonth = now()->startOfMonth();
         $thisMonthData = NetProfit::whereBetween('date', [$startOfMonth, $yesterday])
+            ->where('tenant_id', 1)
             ->selectRaw('SUM(sales) as total_sales, SUM(marketing) as total_marketing, 
                         SUM(spent_kol) as total_spent_kol, SUM(affiliate) as total_affiliate,
                         SUM(operasional) as total_operasional, SUM(hpp) as total_hpp')
@@ -884,6 +886,7 @@ class SalesController extends Controller
         $endOfLastMonth = now()->subMonth()->startOfMonth()->addDays(now()->day - 1);
 
         $lastMonthData = NetProfit::whereBetween('date', [$startOfLastMonth, $endOfLastMonth])
+            ->where('tenant_id', 1)
             ->selectRaw('SUM(sales) as total_sales')
             ->first();
 
@@ -894,6 +897,7 @@ class SalesController extends Controller
         
         $dayBeforeYesterday = now()->subDays(2);
         $dayBeforeYesterdayData = NetProfit::whereDate('date', $dayBeforeYesterday)
+            ->where('tenant_id', 1)
             ->first();
 
         $dayBeforeYesterdaySales = $dayBeforeYesterdayData ? $dayBeforeYesterdayData->sales : 0;
