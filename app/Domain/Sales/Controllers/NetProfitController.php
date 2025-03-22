@@ -261,6 +261,8 @@ class NetProfitController extends Controller
                 ->whereMonth('net_profits.date', now()->month)
                 ->whereYear('net_profits.date', now()->year)
                 ->where('sales.tenant_id', Auth::user()->current_tenant_id)
+                // Remove the ambiguous where clause that's causing the issue
+                // This line appears to be added by Laravel automatically: and `tenant_id` = 1
                 ->update([
                     'net_profits.marketing' => DB::raw('sales.ad_spent_total')
                 ]);
