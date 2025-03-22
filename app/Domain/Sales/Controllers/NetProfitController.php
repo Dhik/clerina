@@ -254,7 +254,10 @@ class NetProfitController extends Controller
     {
         try {
             NetProfit::query()
-                ->join('sales', 'net_profits.date', '=', 'sales.date')
+                ->join('sales', function($join) {
+                    $join->on('net_profits.date', '=', 'sales.date')
+                        ->on('net_profits.tenant_id', '=', 'sales.tenant_id');
+                })
                 ->whereMonth('net_profits.date', now()->month)
                 ->whereYear('net_profits.date', now()->year)
                 ->where('sales.tenant_id', Auth::user()->current_tenant_id)
