@@ -1045,6 +1045,7 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
+        $updatedRows = 0;
         $skippedRows = 0;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -1077,7 +1078,6 @@ class OrderController extends Controller
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
-                    'created_at'           => now(),
                     'updated_at'           => now(),
                 ];
 
@@ -1088,8 +1088,18 @@ class OrderController extends Controller
                             ->where('amount', $orderData['amount'])
                             ->first();
 
-                // If order doesn't exist, create it
-                if (!$order) {
+                // If order exists, update the status
+                if ($order) {
+                    // Only update if the status has changed
+                    if ($order->status != $orderData['status']) {
+                        $order->status = $orderData['status'];
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    }
+                } else {
+                    // If order doesn't exist, create it with created_at timestamp
+                    $orderData['created_at'] = now();
                     Order::create($orderData);
                     $processedRows++;
                 }
@@ -1101,6 +1111,7 @@ class OrderController extends Controller
             'message' => 'Shopee orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
             'skipped_rows' => $skippedRows
         ]);
     }
