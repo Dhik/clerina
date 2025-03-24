@@ -837,7 +837,7 @@ class NetProfitController extends Controller
     public function exportCurrentMonthData()
     {
         $newSpreadsheetId = '1Ukssd8FRbGA6Pa_Rsn3FJ2SP_W2CS4rkIhh3o5yw1gQ';
-    
+
         // If a new spreadsheet ID is provided, set it in the service
         if ($newSpreadsheetId) {
             $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
@@ -871,39 +871,34 @@ class NetProfitController extends Controller
         // Prepare data for Google Sheets
         $data = [];
         
-        // Add headers with all the columns
+        // Add headers with all the columns (removed currency indicators)
         $data[] = [
             'Date', 
-            'Net Profit (IDR)',
-            'Sales (IDR)', 
-            'B2B Sales (IDR)', 
-            'CRM Sales (IDR)', 
-            'Total Sales (IDR)',
-            'Net Sales (IDR)',
-            'Marketing (IDR)', 
-            'KOL Spending (IDR)', 
-            'Affiliate (IDR)',
-            'Total Marketing (IDR)',
-            'Fee Ads (IDR)',
-            'Operasional (IDR)', 
-            'HPP (IDR)', 
-            'Fee Packing (IDR)',
-            'Admin Fee (IDR)',
-            'PPN (IDR)',
+            'Net Profit',
+            'Sales', 
+            'B2B Sales', 
+            'CRM Sales', 
+            'Total Sales',
+            'Net Sales',
+            'Marketing', 
+            'KOL Spending', 
+            'Affiliate',
+            'Total Marketing',
+            'Fee Ads',
+            'Operasional', 
+            'HPP', 
+            'Fee Packing',
+            'Admin Fee',
+            'PPN',
             'ROAS',
             'ROMI',
             'Visits',
             'Quantity',
             'Orders',
             'Closing Rate',
-            'Ad Spent (Social) (IDR)',
-            'Ad Spent (Marketplace) (IDR)'
+            'Ad Spent (Social)',
+            'Ad Spent (Marketplace)'
         ];
-        
-        // Format currency function
-        $formatCurrency = function($value) {
-            return number_format($value, 2, '.', ',');
-        };
         
         // Add rows
         foreach ($records as $row) {
@@ -924,35 +919,33 @@ class NetProfitController extends Controller
             
             $data[] = [
                 Carbon::parse($row->date)->format('Y-m-d'),
-                $formatCurrency($netProfit),
-                $formatCurrency($row->sales ?? 0),
-                $formatCurrency($row->b2b_sales ?? 0),
-                $formatCurrency($row->crm_sales ?? 0),
-                $formatCurrency($totalSales),
-                $formatCurrency($netSales),
-                $formatCurrency($row->marketing ?? 0),
-                $formatCurrency($row->spent_kol ?? 0),
-                $formatCurrency($row->affiliate ?? 0),
-                $formatCurrency($totalMarketingSpend),
-                $formatCurrency($feeAds),
-                $formatCurrency($row->operasional ?? 0),
-                $formatCurrency($row->hpp ?? 0),
-                $formatCurrency($row->fee_packing ?? 0),
-                $formatCurrency($estimasiFeeAdmin),
-                $formatCurrency($ppn),
-                number_format($row->roas ?? 0, 2),
-                number_format($romi, 2),
+                $netProfit, // Raw number
+                $row->sales ?? 0,
+                $row->b2b_sales ?? 0,
+                $row->crm_sales ?? 0,
+                $totalSales,
+                $netSales,
+                $row->marketing ?? 0,
+                $row->spent_kol ?? 0,
+                $row->affiliate ?? 0,
+                $totalMarketingSpend,
+                $feeAds,
+                $row->operasional ?? 0,
+                $row->hpp ?? 0,
+                $row->fee_packing ?? 0,
+                $estimasiFeeAdmin,
+                $ppn,
+                $row->roas ?? 0,
+                $romi,
                 $row->visit ?? 0,
                 $row->qty ?? 0,
                 $row->order ?? 0,
-                number_format($row->closing_rate ?? 0, 2) . '%',
-                $formatCurrency($row->ad_spent_social_media ?? 0),
-                $formatCurrency($row->ad_spent_market_place ?? 0)
+                ($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
+                $row->ad_spent_social_media ?? 0,
+                $row->ad_spent_market_place ?? 0
             ];
         }
         
-        // Create a sheet name with the current month and year
-        // $sheetName = $now->format('F_Y') . 'Report';
         $sheetName = 'SalesReport';
         
         // Export to Google Sheets - using a wider range to accommodate all columns
