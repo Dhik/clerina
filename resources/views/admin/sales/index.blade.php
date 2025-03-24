@@ -35,7 +35,7 @@
                                     </button>
                                 </div>
                                 <div class="col-auto">
-                                    <button class="btn bg-primary text-white" id="importAllOrdersBtn">
+                                    <button class="btn btn-success text-white" id="importAllOrdersBtn">
                                         <i class="fas fa-download"></i> Import All Marketplace Orders
                                     </button>
                                 </div>
