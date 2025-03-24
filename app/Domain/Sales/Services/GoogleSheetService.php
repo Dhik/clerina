@@ -22,6 +22,11 @@ class GoogleSheetService
         $this->service = new Google_Service_Sheets($this->client);
         $this->spreadsheetId = '1ksZm0fLUTdZbf8ITNQXxOizbhpOfjHj32nWAthDFyWI';
     }
+    public function setSpreadsheetId($newSpreadsheetId)
+    {
+        $this->spreadsheetId = $newSpreadsheetId;
+        return $this;
+    }
 
     public function getSheetData($range)
     {

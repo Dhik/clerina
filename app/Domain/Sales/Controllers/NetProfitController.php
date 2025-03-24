@@ -836,6 +836,12 @@ class NetProfitController extends Controller
     }
     public function exportCurrentMonthData()
     {
+        $newSpreadsheetId = '1Ukssd8FRbGA6Pa_Rsn3FJ2SP_W2CS4rkIhh3o5yw1gQ';
+    
+        // If a new spreadsheet ID is provided, set it in the service
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
         // Get the authenticated user's current tenant ID
         $currentTenantId = Auth::user()->current_tenant_id;
         
