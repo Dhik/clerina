@@ -868,6 +868,7 @@ class NetProfitController extends Controller
         // Add headers with all the columns
         $data[] = [
             'Date', 
+            'Net Profit (IDR)',
             'Sales (IDR)', 
             'B2B Sales (IDR)', 
             'CRM Sales (IDR)', 
@@ -883,7 +884,6 @@ class NetProfitController extends Controller
             'Fee Packing (IDR)',
             'Admin Fee (IDR)',
             'PPN (IDR)',
-            'Net Profit (IDR)',
             'ROAS',
             'ROMI',
             'Visits',
@@ -918,6 +918,7 @@ class NetProfitController extends Controller
             
             $data[] = [
                 Carbon::parse($row->date)->format('Y-m-d'),
+                $formatCurrency($netProfit),
                 $formatCurrency($row->sales ?? 0),
                 $formatCurrency($row->b2b_sales ?? 0),
                 $formatCurrency($row->crm_sales ?? 0),
@@ -933,7 +934,6 @@ class NetProfitController extends Controller
                 $formatCurrency($row->fee_packing ?? 0),
                 $formatCurrency($estimasiFeeAdmin),
                 $formatCurrency($ppn),
-                $formatCurrency($netProfit),
                 number_format($row->roas ?? 0, 2),
                 number_format($romi, 2),
                 $row->visit ?? 0,
