@@ -1685,6 +1685,67 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
+    public function importAzrinaTokopedia()
+    {
+        set_time_limit(0);
+        $range = 'Azrina Tokopedia Processed!A2:P'; 
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                $orderData = [
+                    'date' => !empty($row[1]) ? Carbon::createFromFormat('d-m-Y H:i:s', $row[1])->format('Y-m-d') : null,
+                    'process_at'           => null,
+                    'id_order'             => $row[0] ?? null,
+                    'sales_channel_id'     => 3, // Tokopedia
+                    'customer_name'        => $row[7] ?? null,
+                    'customer_phone_number' => $row[8] ?? null,
+                    'product'              => $row[2] ?? null,
+                    'qty'                  => $row[5] ?? null,
+                    'receipt_number'       => $row[14] ?? null,
+                    'shipment'             => $row[15] ?? null,
+                    'payment_method'       => null,
+                    'sku'                  => $row[4] ?? null,
+                    'variant'              => $row[3] ?? null,
+                    'price'                => $row[6] ?? null,
+                    'username'             => $row[7] ?? null,
+                    'shipping_address'     => $row[9] ?? null,
+                    'city'                 => $row[10] ?? null,
+                    'province'             => $row[11] ?? null,
+                    'amount'               => $row[6] ?? null,
+                    'tenant_id'            => $tenant_id,
+                    'is_booking'           => 0,
+                    'status'               => $row[13] ?? null,
+                    'created_at'           => now(),
+                    'updated_at'           => now(),
+                ];
+
+                // Check if order with the same id_order, product, sku exists
+                $order = Order::where('id_order', $orderData['id_order'])
+                            ->where('product', $orderData['product'])
+                            ->where('sku', $orderData['sku'])
+                            ->first();
+
+                // If order doesn't exist, create it
+                if (!$order) {
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Tokopedia orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows
+        ]);
+    }
 
     public function getMonthlyOrderStatusDistribution(): JsonResponse
     {

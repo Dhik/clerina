@@ -412,6 +412,10 @@
                 { 
                     name: 'Lazada (Azrina)', 
                     url: "{{ route('order.azrina_lazada') }}"
+                },
+                { 
+                    name: 'Tokopedia (Azrina)', 
+                    url: "{{ route('order.azrina_tokped') }}"
                 }
             ];
 
