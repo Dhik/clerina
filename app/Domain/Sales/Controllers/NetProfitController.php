@@ -871,7 +871,7 @@ class NetProfitController extends Controller
         // Prepare data for Google Sheets
         $data = [];
         
-        // Add headers with all the columns (removed currency indicators)
+        // Add headers with all the columns
         $data[] = [
             'Date', 
             'Net Profit',
@@ -900,49 +900,56 @@ class NetProfitController extends Controller
             'Ad Spent (Marketplace)'
         ];
         
+        // Helper function to ensure number format
+        $ensureNumber = function($value) {
+            // Cast to float to ensure it's a number
+            // This will handle both string and numeric inputs
+            return (float)$value;
+        };
+        
         // Add rows
         foreach ($records as $row) {
             // Calculate all the derived fields (similar to your DataTables method)
-            $totalSales = ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
+            $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
             $netSales = $totalSales * 0.85;
-            $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
-            $romi = ($totalMarketingSpend == 0) ? 0 : ($row->sales / $totalMarketingSpend);
-            $feeAds = $row->marketing * 0.02;
-            $estimasiFeeAdmin = $row->sales * 0.16;
-            $ppn = $row->sales * 0.03;
-            $netProfit = ($row->sales * 0.78) - 
-                        ($row->marketing * 1.05) - 
-                        $row->spent_kol - 
-                        ($row->affiliate ?? 0) - 
-                        $row->operasional - 
-                        $row->hpp;
+            $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
+            $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
+            $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
+            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
+            $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.78) - 
+                        ($ensureNumber($row->marketing ?? 0) * 1.05) - 
+                        $ensureNumber($row->spent_kol ?? 0) - 
+                        $ensureNumber($row->affiliate ?? 0) - 
+                        $ensureNumber($row->operasional ?? 0) - 
+                        $ensureNumber($row->hpp ?? 0);
             
             $data[] = [
                 Carbon::parse($row->date)->format('Y-m-d'),
-                $netProfit, // Raw number
-                $row->sales ?? 0,
-                $row->b2b_sales ?? 0,
-                $row->crm_sales ?? 0,
+                $netProfit,
+                $ensureNumber($row->sales ?? 0),
+                $ensureNumber($row->b2b_sales ?? 0),
+                $ensureNumber($row->crm_sales ?? 0),
                 $totalSales,
                 $netSales,
-                $row->marketing ?? 0,
-                $row->spent_kol ?? 0,
-                $row->affiliate ?? 0,
+                $ensureNumber($row->marketing ?? 0),
+                $ensureNumber($row->spent_kol ?? 0),
+                $ensureNumber($row->affiliate ?? 0),
                 $totalMarketingSpend,
                 $feeAds,
-                $row->operasional ?? 0,
-                $row->hpp ?? 0,
-                $row->fee_packing ?? 0,
+                $ensureNumber($row->operasional ?? 0),
+                $ensureNumber($row->hpp ?? 0),
+                $ensureNumber($row->fee_packing ?? 0),
                 $estimasiFeeAdmin,
                 $ppn,
-                $row->roas ?? 0,
+                $ensureNumber($row->roas ?? 0),
                 $romi,
-                $row->visit ?? 0,
-                $row->qty ?? 0,
-                $row->order ?? 0,
-                ($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
-                $row->ad_spent_social_media ?? 0,
-                $row->ad_spent_market_place ?? 0
+                (int)($row->visit ?? 0),
+                (int)($row->qty ?? 0),
+                (int)($row->order ?? 0),
+                $ensureNumber($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
+                $ensureNumber($row->ad_spent_social_media ?? 0),
+                $ensureNumber($row->ad_spent_market_place ?? 0)
             ];
         }
         
