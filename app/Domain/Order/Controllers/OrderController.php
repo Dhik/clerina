@@ -1438,7 +1438,7 @@ class OrderController extends Controller
     public function importAzrinaTiktok()
     {
         set_time_limit(0);
-        $range = 'Tiktok Processed!A2:S'; 
+        $range = 'Azrina Tiktok Processed!A2:S'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
@@ -1523,7 +1523,7 @@ class OrderController extends Controller
     public function importAzrinaLazada()
     {
         set_time_limit(0);
-        $range = 'Lazada Processed!A2:Q'; 
+        $range = 'Azrina Lazada Processed!A2:Q'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
@@ -1619,7 +1619,7 @@ class OrderController extends Controller
     public function importAzrinaShopee()
     {
         set_time_limit(0);
-        $range = 'Shopee Processed!A2:R'; 
+        $range = 'Azrina Shopee Processed!A2:R'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;

@@ -400,6 +400,18 @@
                 { 
                     name: 'Shopee (3)', 
                     url: "{{ route('order.import_shopee3') }}"
+                },
+                { 
+                    name: 'Shopee (Azrina)', 
+                    url: "{{ route('order.azrina_shopee') }}"
+                },
+                { 
+                    name: 'TikTok (Azrina)', 
+                    url: "{{ route('order.azrina_tiktok') }}"
+                },
+                { 
+                    name: 'Lazada (Azrina)', 
+                    url: "{{ route('order.azrina_lazada') }}"
                 }
             ];
 
