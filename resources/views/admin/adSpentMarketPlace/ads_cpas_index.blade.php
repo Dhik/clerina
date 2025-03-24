@@ -294,6 +294,7 @@
 
             $('#picFilter').change(function() {
                 adsMetaTable.draw();
+                fetchImpressionData();
             });
 
             // File input handler
@@ -853,6 +854,7 @@
             function fetchImpressionData() {
                 const filterValue = filterDate.val();
                 const kategoriProduk = $('#kategoriProdukFilter').val();
+                const picValue = $('#picFilter').val();
                 
                 const url = new URL('{{ route("adSpentSocialMedia.line-data") }}', window.location.origin);
                 
@@ -862,6 +864,10 @@
                 
                 if (kategoriProduk) {
                     url.searchParams.append('kategori_produk', kategoriProduk);
+                }
+
+                if (picValue) {
+                    url.searchParams.append('pic', picValue);
                 }
                 
                 try {

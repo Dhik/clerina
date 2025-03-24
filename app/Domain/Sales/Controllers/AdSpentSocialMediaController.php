@@ -760,6 +760,10 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
             if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
                 $query->where('kategori_produk', $request->kategori_produk);
             }
+
+            if ($request->has('pic') && $request->pic !== '') {
+                $query->where('pic', $request->pic);
+            }
             
             $data = $query->groupBy('date')
                 ->orderBy('date')
