@@ -946,7 +946,8 @@ class NetProfitController extends Controller
         }
         
         // Create a sheet name with the current month and year
-        $sheetName = $now->format('F_Y') . 'Report';
+        // $sheetName = $now->format('F_Y') . 'Report';
+        $sheetName = 'SalesReport';
         
         // Export to Google Sheets - using a wider range to accommodate all columns
         $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
