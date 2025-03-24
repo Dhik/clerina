@@ -83,7 +83,7 @@ Route::prefix('admin')
             Route::get('/update-b2b-crm', [NetProfitController::class, 'updateB2bAndCrmSales'])->name('net-profit.update-b2b-crm');
             Route::get('/update-marketing', [NetProfitController::class, 'updateMarketing'])->name('net-profit.update-marketing');
             Route::get('/import-data', [NetProfitController::class, 'importNetProfits'])->name('net-profit.import-data');
-            Route::get('/export-data', [NetProfitExportController::class, 'exportDateAndSales'])->name('net-profit.export-data');
+            Route::get('/export-data', [NetProfitController::class, 'exportDateAndSales'])->name('net-profit.export-data');
             Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');
             Route::get('/hpp-by-date', [NetProfitController::class, 'getHppByDate'])->name('net-profit.getHppByDate');
             Route::get('/update-roas', [NetProfitController::class, 'updateRoas'])->name('net-profit.update-roas');
