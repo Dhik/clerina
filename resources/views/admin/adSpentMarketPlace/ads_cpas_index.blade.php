@@ -295,6 +295,7 @@
             $('#picFilter').change(function() {
                 adsMetaTable.draw();
                 fetchImpressionData();
+                initFunnelChart();
             });
 
             // File input handler
@@ -740,9 +741,19 @@
 
             function initFunnelChart() {
                 const filterValue = filterDate.val();
+                const picValue = $('#picFilter').val();
+                const kategoriProduk = $('#kategoriProdukFilter').val();
+
                 const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
                 if (filterValue) {
                     url.searchParams.append('filterDates', filterValue);
+                }
+                if (kategoriProduk) {
+                    url.searchParams.append('kategori_produk', kategoriProduk);
+                }
+                
+                if (picValue) {
+                    url.searchParams.append('pic', picValue);
                 }
 
                 if (funnelChart) {
