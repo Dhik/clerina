@@ -834,32 +834,128 @@ class NetProfitController extends Controller
         
         return response()->json(['data' => $results]);
     }
-    public function exportDateAndSales()
+    public function exportCurrentMonthData()
     {
-        // Fetch only date and sales from NetProfit model
-        $records = NetProfit::select('date', 'sales')
-            ->orderBy('date')
-            ->get();
+        // Get the authenticated user's current tenant ID
+        $currentTenantId = Auth::user()->current_tenant_id;
         
+        // Set date range for the current month
+        $now = Carbon::now();
+        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        
+        // Use the same query structure as your getNetProfit method
+        $baseQuery = DB::table('net_profits as np')
+            ->select(
+                'np.*', 
+                's.ad_spent_social_media',
+                's.ad_spent_market_place'
+            )
+            ->leftJoin('sales as s', function($join) use ($currentTenantId) {
+                $join->on('np.date', '=', 's.date')
+                    ->where('s.tenant_id', '=', $currentTenantId);
+            })
+            ->where('np.tenant_id', '=', $currentTenantId)
+            ->whereMonth('np.date', $now->month)
+            ->whereYear('np.date', $now->year)
+            ->orderBy('np.date');
+        
+        $records = $baseQuery->get();
+        
+        // Prepare data for Google Sheets
         $data = [];
         
-        // Add headers
-        $data[] = ['Date', 'Sales'];
+        // Add headers with all the columns
+        $data[] = [
+            'Date', 
+            'Sales (IDR)', 
+            'B2B Sales (IDR)', 
+            'CRM Sales (IDR)', 
+            'Total Sales (IDR)',
+            'Net Sales (IDR)',
+            'Marketing (IDR)', 
+            'KOL Spending (IDR)', 
+            'Affiliate (IDR)',
+            'Total Marketing (IDR)',
+            'Fee Ads (IDR)',
+            'Operasional (IDR)', 
+            'HPP (IDR)', 
+            'Fee Packing (IDR)',
+            'Admin Fee (IDR)',
+            'PPN (IDR)',
+            'Net Profit (IDR)',
+            'ROAS',
+            'ROMI',
+            'Visits',
+            'Quantity',
+            'Orders',
+            'Closing Rate',
+            'Ad Spent (Social) (IDR)',
+            'Ad Spent (Marketplace) (IDR)'
+        ];
+        
+        // Format currency function
+        $formatCurrency = function($value) {
+            return number_format($value, 2, '.', ',');
+        };
         
         // Add rows
-        foreach ($records as $record) {
+        foreach ($records as $row) {
+            // Calculate all the derived fields (similar to your DataTables method)
+            $totalSales = ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
+            $netSales = $totalSales * 0.85;
+            $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
+            $romi = ($totalMarketingSpend == 0) ? 0 : ($row->sales / $totalMarketingSpend);
+            $feeAds = $row->marketing * 0.02;
+            $estimasiFeeAdmin = $row->sales * 0.16;
+            $ppn = $row->sales * 0.03;
+            $netProfit = ($row->sales * 0.78) - 
+                        ($row->marketing * 1.05) - 
+                        $row->spent_kol - 
+                        ($row->affiliate ?? 0) - 
+                        $row->operasional - 
+                        $row->hpp;
+            
             $data[] = [
-                $record->date->format('Y-m-d'),  // Format the date using Carbon
-                $record->sales  // Sales field
+                Carbon::parse($row->date)->format('Y-m-d'),
+                $formatCurrency($row->sales ?? 0),
+                $formatCurrency($row->b2b_sales ?? 0),
+                $formatCurrency($row->crm_sales ?? 0),
+                $formatCurrency($totalSales),
+                $formatCurrency($netSales),
+                $formatCurrency($row->marketing ?? 0),
+                $formatCurrency($row->spent_kol ?? 0),
+                $formatCurrency($row->affiliate ?? 0),
+                $formatCurrency($totalMarketingSpend),
+                $formatCurrency($feeAds),
+                $formatCurrency($row->operasional ?? 0),
+                $formatCurrency($row->hpp ?? 0),
+                $formatCurrency($row->fee_packing ?? 0),
+                $formatCurrency($estimasiFeeAdmin),
+                $formatCurrency($ppn),
+                $formatCurrency($netProfit),
+                number_format($row->roas ?? 0, 2),
+                number_format($romi, 2),
+                $row->visit ?? 0,
+                $row->qty ?? 0,
+                $row->order ?? 0,
+                number_format($row->closing_rate ?? 0, 2) . '%',
+                $formatCurrency($row->ad_spent_social_media ?? 0),
+                $formatCurrency($row->ad_spent_market_place ?? 0)
             ];
         }
         
-        $this->googleSheetService->clearRange('SalesReport!A1:B1000');
-        $this->googleSheetService->exportData('SalesReport!A1', $data);
+        // Create a sheet name with the current month and year
+        $sheetName = $now->format('F_Y') . 'Report';
+        
+        // Export to Google Sheets - using a wider range to accommodate all columns
+        $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
         return response()->json([
             'success' => true, 
-            'message' => 'Date and sales data exported successfully',
+            'message' => 'Current month data exported successfully to Google Sheets',
+            'month' => $now->format('F Y'),
             'count' => count($data) - 1 // Subtract 1 for header row
         ]);
     }
