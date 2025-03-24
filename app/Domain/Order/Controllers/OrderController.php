@@ -1275,7 +1275,8 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $skippedRows = []; // Array to track skipped rows
+        $updatedRows = 0;
+        $skippedCount = 0;
         $rowIndex = 2; // Starting from A2 in the sheet
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -1304,7 +1305,6 @@ class OrderController extends Controller
                         'tenant_id'            => $tenant_id,
                         'is_booking'           => 0,
                         'status'               => $row[13] ?? null, // Column N
-                        'created_at'           => now(),
                         'updated_at'           => now(),
                     ];
 
@@ -1314,28 +1314,26 @@ class OrderController extends Controller
                                 ->where('sku', $orderData['sku'])
                                 ->first();
 
-                    // If order doesn't exist, create it
-                    if (!$order) {
+                    // If order exists, update the status
+                    if ($order) {
+                        // Only update if the status has changed
+                        if ($order->status != $orderData['status']) {
+                            $order->status = $orderData['status'];
+                            $order->updated_at = now();
+                            $order->save();
+                            $updatedRows++;
+                        } else {
+                            $skippedCount++;
+                        }
+                    } else {
+                        // If order doesn't exist, create it with created_at timestamp
+                        $orderData['created_at'] = now();
                         Order::create($orderData);
                         $processedRows++;
-                    } else {
-                        // Track duplicates
-                        $skippedRows[] = [
-                            'row' => $rowIndex,
-                            'reason' => 'Duplicate order',
-                            'order_id' => $row[0] ?? 'Unknown',
-                            'product' => $row[2] ?? 'Unknown',
-                            'sku' => $row[1] ?? 'Unknown'
-                        ];
                     }
                 } catch (\Exception $e) {
                     \Log::error("Error processing Tiktok order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                    // Track errors
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Error: ' . $e->getMessage(),
-                        'order_id' => $row[0] ?? 'Unknown'
-                    ];
+                    $skippedCount++;
                     continue; // Skip this row and continue with the next
                 }
                 $rowIndex++;
@@ -1347,7 +1345,8 @@ class OrderController extends Controller
             'message' => 'Tiktok orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'skipped_count' => count($skippedRows)
+            'updated_rows' => $updatedRows,
+            'skipped_count' => $skippedCount
         ]);
     }
     public function importOrdersLazada()
