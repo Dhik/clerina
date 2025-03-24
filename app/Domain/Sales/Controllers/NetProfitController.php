@@ -361,7 +361,6 @@ class NetProfitController extends Controller
     {
         return (int) str_replace(['Rp', '.', ','], '', $currency);
     }
-
     public function updateClosingRate()
     {
         try {
@@ -834,5 +833,34 @@ class NetProfitController extends Controller
         }
         
         return response()->json(['data' => $results]);
+    }
+    public function exportDateAndSales()
+    {
+        // Fetch only date and sales from NetProfit model
+        $records = NetProfit::select('date', 'sales')
+            ->orderBy('date')
+            ->get();
+        
+        $data = [];
+        
+        // Add headers
+        $data[] = ['Date', 'Sales'];
+        
+        // Add rows
+        foreach ($records as $record) {
+            $data[] = [
+                $record->date->format('Y-m-d'),  // Format the date using Carbon
+                $record->sales  // Sales field
+            ];
+        }
+        
+        $this->googleSheetService->clearRange('SalesReport!A1:B1000');
+        $this->googleSheetService->exportData('SalesReport!A1', $data);
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Date and sales data exported successfully',
+            'count' => count($data) - 1 // Subtract 1 for header row
+        ]);
     }
 }
