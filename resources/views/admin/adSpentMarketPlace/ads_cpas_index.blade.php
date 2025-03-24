@@ -26,6 +26,14 @@
                                     </select>
                                 </div>
                                 <div class="col-auto">
+                                    <select class="form-control" id="picFilter">
+                                        <option value="">All PIC</option>
+                                        @foreach($picList as $pic)
+                                            <option value="{{ $pic }}">{{ $pic }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
                                 <div class="col-auto">
