@@ -34,6 +34,11 @@
                                         <i class="fas fa-sync-alt"></i> Refresh Data
                                     </button>
                                 </div>
+                                <div class="col-auto">
+                                    <button class="btn bg-primary text-white" id="importAllOrdersBtn">
+                                        <i class="fas fa-download"></i> Import All Marketplace Orders
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -356,7 +361,103 @@
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
         let funnelChart = null;
-let impressionChart = null;
+        let impressionChart = null;
+
+        $('#importAllOrdersBtn').on('click', function() {
+                importAllOrders();
+            });
+            function importAllOrders() {
+            Swal.fire({
+                title: 'Importing Orders',
+                html: 'Starting import process...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const endpoints = [
+                { 
+                    name: 'Tokopedia', 
+                    url: "{{ route('order.import_tokped') }}"
+                },
+                { 
+                    name: 'Shopee (Cleora)', 
+                    url: "{{ route('order.cleora_shopee') }}"
+                },
+                { 
+                    name: 'TikTok (Cleora)', 
+                    url: "{{ route('order.cleora_tiktok') }}"
+                },
+                { 
+                    name: 'Lazada (Cleora)', 
+                    url: "{{ route('order.cleora_lazada') }}"
+                },
+                { 
+                    name: 'Shopee (2)', 
+                    url: "{{ route('order.import_shopee2') }}"
+                },
+                { 
+                    name: 'Shopee (3)', 
+                    url: "{{ route('order.import_shopee3') }}"
+                }
+            ];
+
+            let completedEndpoints = 0;
+            let failedEndpoints = [];
+            let currentIndex = 0;
+
+            function processNextEndpoint() {
+                if (currentIndex >= endpoints.length) {
+                    // All endpoints processed
+                    if (failedEndpoints.length > 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Import Completed with Warnings',
+                            html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Import Completed Successfully!',
+                            html: `All ${endpoints.length} marketplaces imported successfully.`,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                    
+                    // If you have a table that needs refreshing
+                    if (typeof ordersTable !== 'undefined') {
+                        ordersTable.draw();
+                    }
+                    
+                    return;
+                }
+
+                const endpoint = endpoints[currentIndex];
+                Swal.update({
+                    html: `Importing from ${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
+                });
+
+                $.ajax({
+                    url: endpoint.url,
+                    method: 'GET',
+                    success: function(response) {
+                        completedEndpoints++;
+                        currentIndex++;
+                        processNextEndpoint();
+                    },
+                    error: function(xhr, status, error) {
+                        failedEndpoints.push(endpoint.name);
+                        currentIndex++;
+                        console.error(`Failed to import from ${endpoint.name}:`, error);
+                        processNextEndpoint();
+                    }
+                });
+            }
+            processNextEndpoint();
+        }
 
         $('#btnAddVisit').click(function() {
             $('#dateVisit').val(moment().format("DD/MM/YYYY"));
@@ -598,49 +699,49 @@ let impressionChart = null;
             loadTrendChart();
         });
         function createLineChart(ctx, label, dates, data) {
-    return new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: label,
-                data: data,
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                        return label;
-                    }
-                }
-            },
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true,
-                        callback: function(value, index, values) {
-                            if (parseInt(value) >= 1000) {
-                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                            } else {
-                                return value;
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    tooltips: {
+                        enabled: true,
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                let label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                return label;
                             }
                         }
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function(value, index, values) {
+                                    if (parseInt(value) >= 1000) {
+                                        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                                    } else {
+                                        return value;
+                                    }
+                                }
+                            }
+                        }]
                     }
-                }]
-            }
+                }
+            });
         }
-    });
-}
         function initFunnelChart() {
             const filterValue = filterDate.val();
             const url = new URL('{{ route("adSpentSocialMedia.funnel-data") }}');
@@ -1155,6 +1256,8 @@ let impressionChart = null;
                 initFunnelChart();
             }
         });
+
+        
     </script>
 
     @include('admin.visit.script')

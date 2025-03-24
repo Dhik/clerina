@@ -1107,7 +1107,7 @@ class OrderController extends Controller
     public function importOrdersShopee2()
     {
         set_time_limit(0);
-        $range = 'Shopee Processed!A2:R'; 
+        $range = 'Shopee Processed 2!A2:R'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -1182,7 +1182,7 @@ class OrderController extends Controller
     public function importOrdersShopee3()
     {
         set_time_limit(0);
-        $range = 'Shopee Processed!A2:R'; 
+        $range = 'Shopee Processed 3!A2:R'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
