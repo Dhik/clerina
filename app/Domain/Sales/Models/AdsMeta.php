@@ -22,6 +22,7 @@ class AdsMeta extends Model
         'kategori_produk',
         'campaign_name',
         'account_name',
+        'pic',
     ];
 
     protected $casts = [
