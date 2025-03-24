@@ -292,6 +292,10 @@
                 adsMetaTable.draw();
             });
 
+            $('#picFilter').change(function() {
+                adsMetaTable.draw();
+            });
+
             // File input handler
             $('#metaAdsCsvFile').on('change', function() {
                 let fileName = $(this).val().split('\\').pop();
@@ -384,6 +388,9 @@
                         }
                         if (filterCategory && filterCategory.length > 0) {
                             d.kategori_produk = filterCategory.val();
+                        }
+                        if ($('#picFilter').val()) {
+                            d.pic = $('#picFilter').val();
                         }
                     }
                 },
@@ -523,6 +530,9 @@
                     data: function(d) {
                         // Add the date from the modal to the request
                         d.date = $('#dailyDetailsModal').data('date');
+                        if ($('#picFilter').val()) {
+                            d.pic = $('#picFilter').val();
+                        }
                     }
                 },
                 columns: [
