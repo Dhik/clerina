@@ -1358,7 +1358,8 @@ class SalesController extends Controller
 
     public function importVisitCleora()
     {
-        $range = 'Import Sales!A3:H'; 
+        $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
+        $range = 'Cleora!A2:H'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -1401,42 +1402,64 @@ class SalesController extends Controller
     }
     public function importVisitAzrina()
     {
-        $range = '[Azrina] Visit, Sales, Transaction!A3:E'; 
+        // Set the spreadsheet ID to the new one
+        $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
+        
+        // Update range to match new sheet name and include columns up to G
+        $range = 'Azrina!A2:G'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
         $currentMonth = Carbon::now()->format('Y-m');
 
         foreach ($sheetData as $row) {
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+            // Skip rows without date in column A
+            if (!isset($row[0]) || empty($row[0])) {
                 continue;
             }
-            $salesChannelData = [
-                1 => $row[1] ?? null,
-                4 => $row[2] ?? null,
-                2 => $row[3] ?? null, 
-                3 => $row[4] ?? null, 
-            ];
-
-            foreach ($salesChannelData as $salesChannelId => $amountValue) {
-                if (!isset($amountValue)) {
+            
+            try {
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip rows not from current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $amount = $this->parseCurrencyToInt($amountValue);
+                
+                // Map columns to sales channels according to provided terms
+                // D = Shopee (index 3), E = TikTok (index 4), F = Lazada (index 5), G = Tokopedia (index 6)
+                $salesChannelData = [
+                    1 => $row[3] ?? null, // Shopee (column D)
+                    2 => $row[4] ?? null, // TikTok (column E)
+                    3 => $row[5] ?? null, // Lazada (column F)
+                    4 => $row[6] ?? null, // Tokopedia (column G)
+                ];
 
-                Visit::updateOrCreate(
-                    [
-                        'date'             => $date,
-                        'sales_channel_id' => $salesChannelId,
-                        'tenant_id'        => $tenant_id,
-                    ],
-                    [
-                        'visit_amount'           => $amount,
-                    ]
-                );
+                foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                    if (!isset($amountValue) || empty($amountValue)) {
+                        continue;
+                    }
+                    
+                    $amount = $this->parseCurrencyToInt($amountValue);
+
+                    Visit::updateOrCreate(
+                        [
+                            'date'             => $date,
+                            'sales_channel_id' => $salesChannelId,
+                            'tenant_id'        => $tenant_id,
+                        ],
+                        [
+                            'visit_amount'     => $amount,
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                // Log any date parsing errors or other exceptions
+                \Log::error('Error importing visit data: ' . $e->getMessage());
+                continue; // Skip this row and continue with the next
             }
         }
+        
         return response()->json(['message' => 'Data imported successfully']);
     }
 
