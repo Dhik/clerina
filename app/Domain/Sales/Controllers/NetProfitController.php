@@ -242,7 +242,7 @@ class NetProfitController extends Controller
     {
         try {
             $startDate = now()->startOfMonth();
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 2;
             
             $dates = collect();
             for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
