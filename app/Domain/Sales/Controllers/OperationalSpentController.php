@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use App\Domain\Sales\Models\NetProfit;
 use Carbon\Carbon;
+use Auth;
 use App\Http\Controllers\Controller;
 
 class OperationalSpentController extends Controller
