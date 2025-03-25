@@ -462,6 +462,10 @@
                     url: "{{ route('net-profit.update-spent-kol') }}"
                 },
                 { 
+                    name: 'Azrina KOL Spending', 
+                    url: "{{ route('net-profit.update-spent-kol-azrina') }}"
+                },
+                { 
                     name: 'HPP', 
                     url: "{{ route('net-profit.update-hpp') }}"
                 },
@@ -481,10 +485,10 @@
                     name: 'Order Count', 
                     url: "{{ route('net-profit.update-order-count') }}"
                 },
-                { 
-                    name: 'Sales', 
-                    url: "{{ route('net-profit.update-sales') }}"
-                },
+                // { 
+                //     name: 'Sales', 
+                //     url: "{{ route('net-profit.update-sales') }}"
+                // },
                 { 
                     name: 'B2B and CRM Sales', 
                     url: "{{ route('net-profit.update-b2b-crm') }}"
@@ -505,6 +509,8 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
+
+
             let netProfitsTable = $('#netProfitsTable').DataTable({
                 scrollX: true,
                 responsive: false,
@@ -785,56 +791,6 @@
                 }
             });
         }
-
-        function renderWaterfallChart() {
-            const filterDates = document.getElementById('filterDates').value;
-            
-            $.ajax({
-                url: "{{ route('sales.waterfall-data-2') }}",
-                type: 'GET',
-                data: {
-                    filterDates: filterDates
-                },
-                success: function(salesData) {
-                    const chartData = salesData.map(day => ({
-                        x: day.date,
-                        y: day.net,
-                        measure: 'relative',
-                        text: (day.net >= 0 ? '+' : '') + day.net.toLocaleString(),
-                        textposition: 'outside'
-                    }));
-
-                    const data = [{
-                        type: 'waterfall',
-                        orientation: 'v',
-                        x: chartData.map(d => d.x),
-                        y: chartData.map(d => d.y),
-                        measure: chartData.map(d => d.measure),
-                        text: chartData.map(d => d.text),
-                        textposition: chartData.map(d => d.textposition),
-                        connector: { line: { color: 'rgb(63, 63, 63)' } },
-                        increasing: { marker: { color: '#2ecc71' } },
-                        decreasing: { marker: { color: '#e74c3c' } }
-                    }];
-
-                    const layout = {
-                        title: 'Daily Net Profit Margin',
-                        xaxis: { title: 'Date', tickangle: -45 },
-                        yaxis: { title: 'Amount (Rp)', tickformat: ',d' },
-                        autosize: true,
-                        height: 600,
-                        margin: { l: 80, r: 20, t: 40, b: 120 }
-                    };
-
-                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-
-        renderWaterfallChart();
 
         let netProfitChart = null;
 
