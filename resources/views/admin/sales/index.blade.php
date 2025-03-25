@@ -1139,6 +1139,10 @@
                     url: "{{ route('sales.update_ads') }}"
                 },
                 { 
+                    name: 'Update Ads Azrina', 
+                    url: "{{ route('sales.update_ads_azrina') }}"
+                },
+                { 
                     name: 'Import Cleora Visits', 
                     url: "{{ route('visit.import_cleora') }}"
                 },

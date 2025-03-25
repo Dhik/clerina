@@ -1562,13 +1562,11 @@ class SalesController extends Controller
             for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
-                // Sum social media ad spent excluding social_media_id = 9
                 $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
                     ->where('date', $formattedDate)
                     ->where('social_media_id', '!=', 10)
                     ->sum('amount');
 
-                // Sum marketplace ad spent excluding sales_channel_id = 8
                 $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
                     ->where('date', $formattedDate)
                     ->where('sales_channel_id', '!=', 9)
@@ -1577,6 +1575,51 @@ class SalesController extends Controller
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
 
                 $turnover = Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->value('turnover');
+
+                $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
+                
+                $dataToUpdate = [
+                    'ad_spent_social_media' => $sumSpentSocialMedia,
+                    'ad_spent_market_place' => $sumSpentMarketPlace,
+                    'ad_spent_total' => $totalAdSpent,
+                    'roas' => $roas,
+                ];
+                
+                Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateMonthlyAdSpentDataAzrina()
+    {
+        try {
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
+
+                $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 2)
+                    ->where('date', $formattedDate)
+                    ->where('social_media_id', '!=', 10)
+                    ->sum('amount');
+
+                $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 2)
+                    ->where('date', $formattedDate)
+                    ->where('sales_channel_id', '!=', 9)
+                    ->sum('amount');
+
+                $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
+
+                $turnover = Sales::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->value('turnover');
 
@@ -1637,6 +1680,7 @@ class SalesController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
     private $accessToken = 'EAAvb8cyWo24BO7WfoZC7ROrDFa2lTz9hvMxaP9FZBZC6dOdiSE9LKpB8mGGJNZBwoupqVikudVuZBtB1BZAbkyBKeYsQFuM6JOuG0iexXpfznDIg9yWBwodIp06GF0VAYRtZAG3Sn4wZCkWkCMhVPPtZB8xFsthGtSDWfaOAtPgqy3SWL9T3qcPEl8g32StqUZAq54vSAZBQSUF';
     private $adAccountId = '545160191589598';
 

@@ -113,6 +113,7 @@ Route::prefix('admin')
                 Route::get('/import-sheet', [SalesController::class, 'importFromGoogleSheet'])->name('sales.import_ads');
                 Route::get('/import-ads-azrina', [SalesController::class, 'importAdsAzrina'])->name('sales.import_ads_azrina');
                 Route::get('/update-ads', [SalesController::class, 'updateMonthlyAdSpentData'])->name('sales.update_ads');
+                Route::get('/update-ads-azrina', [SalesController::class, 'updateMonthlyAdSpentDataAzrina'])->name('sales.update_ads_azrina');
                 Route::get('/waterfall-data', [SalesController::class, 'getWaterfallData'])->name('sales.waterfall-data');
                 Route::get('/waterfall-data-2', [SalesController::class, 'getNetProfitMarginDaily'])->name('sales.waterfall-data-2');
 
