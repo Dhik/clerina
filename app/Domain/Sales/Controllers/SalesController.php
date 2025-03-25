@@ -1632,7 +1632,7 @@ class SalesController extends Controller
                     'roas' => $roas,
                 ];
                 
-                Sales::where('tenant_id', 1)
+                Sales::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
             }
