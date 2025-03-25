@@ -1356,6 +1356,87 @@ class SalesController extends Controller
         return response()->json(['message' => 'Data imported successfully']);
     }
 
+    public function importAdsAzrina()
+    {
+        $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
+        $range = 'Azrina!A2:L';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $currentMonth = Carbon::now()->format('Y-m');
+
+        foreach ($sheetData as $row) {
+            if (empty($row) || empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                
+                // Map marketplace ads data according to the provided terms
+                // H=column 7, I=column 8, J=column 9, K=column 10, L=column 11
+                $salesChannelData = [
+                    1 => $row[9] ?? null,  // Shopee (column J)
+                    3 => $row[10] ?? null, // Tokopedia (column K)
+                    2 => $row[11] ?? null, // Lazada (column L)
+                    4 => $row[7] ?? null,
+                ];
+
+                foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                    if (!isset($amountValue) || empty($amountValue)) {
+                        continue;
+                    }
+                    
+                    $amount = $this->parseCurrencyToInt($amountValue);
+
+                    AdSpentMarketPlace::updateOrCreate(
+                        [
+                            'date'             => $date,
+                            'sales_channel_id' => $salesChannelId,
+                            'tenant_id'        => $tenant_id,
+                        ],
+                        [
+                            'amount'           => $amount,
+                        ]
+                    );
+                }
+
+                // Map social media ads data according to the provided terms
+                $socialMediaData = [
+                    1 => $row[8] ?? null,  // Meta ads (column I)
+                ];
+
+                foreach ($socialMediaData as $socialMediaId => $amountValue) {
+                    if (!isset($amountValue) || empty($amountValue)) {
+                        continue;
+                    }
+                    
+                    $amount = $this->parseCurrencyToInt($amountValue);
+
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date'            => $date,
+                            'social_media_id' => $socialMediaId,
+                            'tenant_id'       => $tenant_id,
+                        ],
+                        [
+                            'amount'          => $amount,
+                        ]
+                    );
+                }
+            } catch (\Exception $e) {
+                // Log any date parsing errors or other exceptions
+                \Log::error('Error importing ads data: ' . $e->getMessage());
+                continue; // Skip this row and continue with the next
+            }
+        }
+
+        return response()->json(['message' => 'Azrina ads data imported successfully']);
+    }
+
     public function importVisitCleora()
     {
         $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
