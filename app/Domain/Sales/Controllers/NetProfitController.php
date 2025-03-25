@@ -503,7 +503,7 @@ class NetProfitController extends Controller
             $endDate = Carbon::now()->format('Y-m-d');
 
             $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
-                ->where('tenant_id', 1)
+                ->where('tenant_id', $tenant_id)
                 ->pluck('date');
             
             $excludedStatuses = [
@@ -526,13 +526,13 @@ class NetProfitController extends Controller
                 // Calculate total sales amount for this date and tenant
                 $totalSales = DB::table('orders')
                     ->where('date', $date)
-                    ->where('tenant_id', 1)
+                    ->where('tenant_id', $tenant_id)
                     ->whereNotIn('status', $excludedStatuses)
                     ->sum('amount');
 
                 // Update the net_profit record for this date and tenant
                 $updated = NetProfit::where('date', $date)
-                    ->where('tenant_id', 1)
+                    ->where('tenant_id', $tenant_id)
                     ->update(['sales' => $totalSales]);
                 
                 if ($updated) {
