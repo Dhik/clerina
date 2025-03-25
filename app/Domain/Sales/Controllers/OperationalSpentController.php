@@ -18,7 +18,8 @@ class OperationalSpentController extends Controller
 
     public function get()
     {
-        $query = OperationalSpent::query();
+        $query = OperationalSpent::query()
+            ->where('tenant_id', Auth::user()->current_tenant_id);
 
         return DataTables::of($query)
             ->addColumn('actions', function ($row) {
@@ -34,7 +35,6 @@ class OperationalSpentController extends Controller
     public function getByDate(Request $request)
     {
         $date = Carbon::parse($request->date);
-        
         return OperationalSpent::where('month', $date->month)
             ->where('year', $date->year)
             ->first();
@@ -50,7 +50,7 @@ class OperationalSpentController extends Controller
         ]);
 
         $data['spent'] = (float) str_replace(['Rp ', '.', ','], ['', '', '.'], $data['spent']);
-
+        $data['tenant_id'] = Auth::user()->current_tenant_id;
         OperationalSpent::updateOrCreate(
             ['id' => $data['id'] ?? null],
             $data
@@ -61,6 +61,7 @@ class OperationalSpentController extends Controller
         NetProfit::query()
         ->whereYear('date', $data['year'])
         ->whereMonth('date', $data['month'])
+        ->where('tenant_id', Auth::user()->current_tenant_id)
         ->update(['operasional' => $dailyOperational]);
 
         return response()->json(['success' => true]);
