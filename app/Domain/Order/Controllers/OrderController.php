@@ -318,6 +318,87 @@ class OrderController extends Controller
         
         return response()->json(['message' => 'Net profits sales updated successfully']);
     }
+    public function updateSalesTurnoverAzrina()
+    {
+        try {
+            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            $tenant_id = 2; // Specifically for tenant_id 2
+            
+            // Get daily sales totals from orders
+            $totals = Order::select(DB::raw('DATE(date) as date, SUM(amount) AS total_amount'))
+                            ->where('tenant_id', $tenant_id)
+                            ->whereBetween('date', [$startDate, $endDate])
+                            ->whereNotIn('status', [
+                                'Batal', 
+                                'cancelled', 
+                                'Canceled', 
+                                'Pembatalan diajukan', 
+                                'Dibatalkan Sistem'
+                            ])
+                            ->groupBy('date')
+                            ->get();
+            
+            // Loop through results and update sales table
+            foreach ($totals as $total) {
+                $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
+                
+                // Get the current sales record
+                $salesRecord = DB::table('sales')
+                    ->where('date', $formattedDate)
+                    ->where('tenant_id', $tenant_id)
+                    ->first();
+                
+                if ($salesRecord) {
+                    // Calculate new ROAS if ad_spent_total exists and is not zero
+                    $newRoas = 0;
+                    if ($salesRecord->ad_spent_total > 0) {
+                        $newRoas = ($total->total_amount / $salesRecord->ad_spent_total) * 100;
+                    }
+                    
+                    // Update sales record with new turnover and ROAS
+                    DB::table('sales')
+                        ->where('date', $formattedDate)
+                        ->where('tenant_id', $tenant_id)
+                        ->update([
+                            'turnover' => $total->total_amount,
+                            'roas' => $newRoas
+                        ]);
+                } else {
+                    // Create new sales record if it doesn't exist
+                    DB::table('sales')->insert([
+                        'date' => $formattedDate,
+                        'tenant_id' => $tenant_id,
+                        'turnover' => $total->total_amount,
+                        'roas' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            }
+            
+            // Handle dates where there are no orders but sales records exist
+            DB::table('sales')
+                ->where('tenant_id', $tenant_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->whereNotIn('date', $totals->pluck('date')->toArray())
+                ->update([
+                    'turnover' => 0,
+                    'roas' => 0
+                ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Sales turnover and ROAS updated successfully for tenant ID 2'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Update Sales Turnover Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
     private function processSku($sku)
     {
         if (strpos($sku, '1 ') === 0) {

@@ -1153,7 +1153,11 @@
                 { 
                     name: 'Update Visits', 
                     url: "{{ route('visit.update') }}"
-                }
+                },
+                { 
+                    name: 'Sales Turnover Azrina', 
+                    url: "{{ route('order.update_turnover_azrina') }}"
+                },
             ];
 
             let completedEndpoints = 0;
