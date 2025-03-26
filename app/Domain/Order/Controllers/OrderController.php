@@ -309,7 +309,6 @@ class OrderController extends Controller
         
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
-            $formattedDates->push($formattedDate);
                 
                 // Get the current sales record
                 $salesRecord = DB::table('sales')
