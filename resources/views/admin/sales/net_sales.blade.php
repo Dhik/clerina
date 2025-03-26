@@ -485,10 +485,14 @@
                     name: 'Order Count', 
                     url: "{{ route('net-profit.update-order-count') }}"
                 },
-                // { 
-                //     name: 'Sales', 
-                //     url: "{{ route('net-profit.update-sales') }}"
-                // },
+                { 
+                    name: 'Sales', 
+                    url: "{{ route('net-profit.update-sales') }}"
+                },
+                { 
+                    name: 'Sales Azrina', 
+                    url: "{{ route('net-profit.update-sales-azrina') }}"
+                },
                 { 
                     name: 'B2B and CRM Sales', 
                     url: "{{ route('net-profit.update-b2b-crm') }}"

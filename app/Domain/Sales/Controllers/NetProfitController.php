@@ -505,7 +505,66 @@ class NetProfitController extends Controller
     public function updateSales()
     {
         try {
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 1;
+            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+
+            $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
+                ->where('tenant_id', $tenant_id)
+                ->pluck('date');
+            
+            $excludedStatuses = [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ];
+            
+            // Counter for updated records
+            $updatedCount = 0;
+
+            // Process each net_profit record by date
+            foreach ($netProfitDates as $date) {
+                // Calculate total sales amount for this date and tenant
+                $totalSales = DB::table('orders')
+                    ->where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->whereNotIn('status', $excludedStatuses)
+                    ->sum('amount');
+
+                // Update the net_profit record for this date and tenant
+                $updated = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->update(['sales' => $totalSales]);
+                
+                if ($updated) {
+                    $updatedCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully updated $updatedCount net profit records with sales data",
+                'date_range' => "$startDate to $endDate"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating net profit sales data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateSales2()
+    {
+        try {
+            $tenant_id = 2;
             $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
             $endDate = Carbon::now()->format('Y-m-d');
 
