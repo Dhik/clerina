@@ -470,6 +470,10 @@
                     url: "{{ route('net-profit.update-hpp') }}"
                 },
                 { 
+                    name: 'HPP Azrina', 
+                    url: "{{ route('net-profit.update-hpp-azrina') }}"
+                },
+                { 
                     name: 'Marketing', 
                     url: "{{ route('net-profit.update-marketing') }}"
                 },

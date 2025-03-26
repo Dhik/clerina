@@ -85,6 +85,7 @@ Route::prefix('admin')
             Route::get('/import-data', [NetProfitController::class, 'importNetProfits'])->name('net-profit.import-data');
             Route::get('/export-data', [NetProfitController::class, 'exportCurrentMonthData'])->name('net-profit.export-data');
             Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');
+            Route::get('/update-hpp-azrina', [NetProfitController::class, 'updateHppAzrina'])->name('net-profit.update-hpp-azrina');
             Route::get('/hpp-by-date', [NetProfitController::class, 'getHppByDate'])->name('net-profit.getHppByDate');
             Route::get('/update-roas', [NetProfitController::class, 'updateRoas'])->name('net-profit.update-roas');
             Route::get('/update-sales', [NetProfitController::class, 'updateSales'])->name('net-profit.update-sales');
