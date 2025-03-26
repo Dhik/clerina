@@ -30,11 +30,11 @@
                                         <i class="fas fa-cog"></i> Set Operational Spent
                                     </a>
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <button class="btn bg-info" id="importDataBtn">
                                         <i class="fas fa-sync-alt"></i> Import Data
                                     </button>
-                                </div>
+                                </div> -->
                                 <!-- <div class="col-auto">
                                     <button class="btn bg-info" id="importShopeeBtn">
                                         <i class="fas fa-sync-alt"></i> Import Shopee
@@ -414,81 +414,81 @@
             });
         }
 
-        $('#importDataBtn').on('click', function() {
-            Swal.fire({
-                title: 'Importing Data',
-                html: 'Starting import process...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
+        // $('#importDataBtn').on('click', function() {
+        //     Swal.fire({
+        //         title: 'Importing Data',
+        //         html: 'Starting import process...',
+        //         allowOutsideClick: false,
+        //         didOpen: () => {
+        //             Swal.showLoading();
+        //         }
+        //     });
 
-            const endpoints = [
-                { 
-                    name: 'Cleora Import Data', 
-                    url: "{{ route('net-profit.import-data') }}"
-                },
-                { 
-                    name: 'Azrina Import Data', 
-                    url: "{{ route('net-profit.import-data-azrina') }}"
-                }
-            ];
+        //     const endpoints = [
+        //         { 
+        //             name: 'Cleora Import Data', 
+        //             url: "{{ route('net-profit.import-data') }}"
+        //         },
+        //         { 
+        //             name: 'Azrina Import Data', 
+        //             url: "{{ route('net-profit.import-data-azrina') }}"
+        //         }
+        //     ];
 
-            let completedEndpoints = 0;
-            let failedEndpoints = [];
-            let currentIndex = 0;
+        //     let completedEndpoints = 0;
+        //     let failedEndpoints = [];
+        //     let currentIndex = 0;
 
-            function processNextEndpoint() {
-                if (currentIndex >= endpoints.length) {
-                    // All endpoints processed
-                    if (failedEndpoints.length > 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Import Completed with Warnings',
-                            html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
-                            confirmButtonText: 'OK'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Data Imported Successfully!',
-                            text: 'All data has been imported and updated.',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
+        //     function processNextEndpoint() {
+        //         if (currentIndex >= endpoints.length) {
+        //             // All endpoints processed
+        //             if (failedEndpoints.length > 0) {
+        //                 Swal.fire({
+        //                     icon: 'warning',
+        //                     title: 'Import Completed with Warnings',
+        //                     html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
+        //                     confirmButtonText: 'OK'
+        //                 });
+        //             } else {
+        //                 Swal.fire({
+        //                     icon: 'success',
+        //                     title: 'Data Imported Successfully!',
+        //                     text: 'All data has been imported and updated.',
+        //                     timer: 2000,
+        //                     showConfirmButton: false
+        //                 });
+        //             }
                     
-                    // Reload the table to show updated data
-                    netProfitsTable.draw();
+        //             // Reload the table to show updated data
+        //             netProfitsTable.draw();
                     
-                    return;
-                }
+        //             return;
+        //         }
 
-                const endpoint = endpoints[currentIndex];
-                Swal.update({
-                    html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
-                });
+        //         const endpoint = endpoints[currentIndex];
+        //         Swal.update({
+        //             html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
+        //         });
 
-                $.ajax({
-                    url: endpoint.url,
-                    method: 'GET',
-                    success: function(response) {
-                        completedEndpoints++;
-                        currentIndex++;
-                        processNextEndpoint();
-                    },
-                    error: function(xhr, status, error) {
-                        failedEndpoints.push(endpoint.name);
-                        currentIndex++;
-                        console.error(`Failed at ${endpoint.name}:`, error);
-                        processNextEndpoint();
-                    }
-                });
-            }
+        //         $.ajax({
+        //             url: endpoint.url,
+        //             method: 'GET',
+        //             success: function(response) {
+        //                 completedEndpoints++;
+        //                 currentIndex++;
+        //                 processNextEndpoint();
+        //             },
+        //             error: function(xhr, status, error) {
+        //                 failedEndpoints.push(endpoint.name);
+        //                 currentIndex++;
+        //                 console.error(`Failed at ${endpoint.name}:`, error);
+        //                 processNextEndpoint();
+        //             }
+        //         });
+        //     }
             
-            processNextEndpoint();
-        });
+        //     processNextEndpoint();
+        // });
 
         function refreshData() {
             Swal.fire({
@@ -568,6 +568,14 @@
                 { 
                     name: 'B2B and CRM Sales', 
                     url: "{{ route('net-profit.update-b2b-crm') }}"
+                },
+                { 
+                    name: 'Cleora Import Data', 
+                    url: "{{ route('net-profit.import-data') }}"
+                },
+                { 
+                    name: 'Azrina Import Data', 
+                    url: "{{ route('net-profit.import-data-azrina') }}"
                 }
             ];
 
