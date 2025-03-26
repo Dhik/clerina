@@ -554,6 +554,9 @@ class NetProfitController extends Controller
             $range = 'Import Sales!A2:D';
             $sheetData = $this->googleSheetService->getSheetData($range);
 
+            $updatedCount = 0;
+            $skippedCount = 0;
+
             foreach ($sheetData as $row) {
                 if (empty($row[0])) continue;
 
@@ -561,21 +564,38 @@ class NetProfitController extends Controller
                 $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
                 $visit = $this->parseToInt($row[3] ?? null);
 
-                NetProfit::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'tenant_id' => 1
-                    ],
-                    [
-                        'affiliate' => $affiliate,
-                        'tenant_id' => 1 
-                    ]
-                );
+                // Check if record exists before updating
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->exists();
+
+                if ($exists) {
+                    // Only update if record exists
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->update([
+                            'affiliate' => $affiliate,
+                            'updated_at' => now()
+                        ]);
+                        
+                    $updatedCount++;
+                } else {
+                    $skippedCount++;
+                }
             }
+            
             $this->updateClosingRate();
-            return response()->json(['message' => 'Data imported successfully']);
+            
+            return response()->json([
+                'message' => 'Data imported successfully',
+                'updated' => $updatedCount,
+                'skipped' => $skippedCount
+            ]);
         } catch (Exception $e) {
-            return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Import failed', 
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
     public function importNetProfitsAzrina()
