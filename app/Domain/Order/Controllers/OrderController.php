@@ -310,9 +310,9 @@ class OrderController extends Controller
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
             
-            // Update net_profits table instead of sales table
             DB::table('net_profits')
                 ->where('date', $formattedDate)
+                ->where('tenant_id', Auth::user()->current_tenant_id)
                 ->update(['sales' => $total->total_amount]);
         }
         
@@ -339,9 +339,13 @@ class OrderController extends Controller
                             ->groupBy('date')
                             ->get();
             
+            // Create a collection of formatted dates for the whereNotIn clause
+            $formattedDates = collect();
+            
             // Loop through results and update sales table
             foreach ($totals as $total) {
                 $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
+                $formattedDates->push($formattedDate);
                 
                 // Get the current sales record
                 $salesRecord = DB::table('sales')
@@ -378,14 +382,16 @@ class OrderController extends Controller
             }
             
             // Handle dates where there are no orders but sales records exist
-            DB::table('sales')
-                ->where('tenant_id', $tenant_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->whereNotIn('date', $totals->pluck('date')->toArray())
-                ->update([
-                    'turnover' => 0,
-                    'roas' => 0
-                ]);
+            if ($formattedDates->isNotEmpty()) {
+                DB::table('sales')
+                    ->where('tenant_id', $tenant_id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->whereNotIn('date', $formattedDates->toArray())
+                    ->update([
+                        'turnover' => 0,
+                        'roas' => 0
+                    ]);
+            }
             
             return response()->json([
                 'success' => true,
