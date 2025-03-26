@@ -357,7 +357,7 @@ class OrderController extends Controller
                     // Calculate new ROAS if ad_spent_total exists and is not zero
                     $newRoas = 0;
                     if ($salesRecord->ad_spent_total > 0) {
-                        $newRoas = ($total->total_amount / $salesRecord->ad_spent_total) * 100;
+                        $newRoas = $total->total_amount / $salesRecord->ad_spent_total;
                     }
                     
                     // Update sales record with new turnover and ROAS
