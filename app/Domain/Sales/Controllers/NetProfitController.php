@@ -104,19 +104,29 @@ class NetProfitController extends Controller
                 $kolSpent = $this->parseCurrencyToInt($row[17]);
                 $kolSpentData[$date] = $kolSpent;
             }
+            // Counter for tracking updates
+            $updatedCount = 0;
+            
             foreach ($kolSpentData as $date => $amount) {
-                NetProfit::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'tenant_id' => $tenant_id
-                    ],
-                    [
-                        'spent_kol' => $amount
-                    ]
-                );
+                // Check if record exists
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->exists();
+                
+                // Only update if record exists
+                if ($exists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->update(['spent_kol' => $amount]);
+                        
+                    $updatedCount++;
+                }
             }
             
-            return response()->json(['success' => true, 'message' => 'KOL spent data updated successfully']);
+            return response()->json([
+                'success' => true, 
+                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+            ]);
         } catch(\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
