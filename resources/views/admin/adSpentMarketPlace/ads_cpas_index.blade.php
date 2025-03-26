@@ -113,14 +113,23 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="dailyDetailsModalLabel">Campaign Details</h5>
-                <div class="ml-auto mr-3">
-                    <input type="text" id="modalFilterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
-                </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Filter Section -->
+                <div class="row mb-3">
+                    <div class="col-md-4 offset-md-8">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                            </div>
+                            <input type="text" id="modalFilterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Summary Section -->
                 <div class="card mb-4">
                     <div class="card-header">
