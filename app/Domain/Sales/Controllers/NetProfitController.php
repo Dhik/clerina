@@ -403,7 +403,7 @@ class NetProfitController extends Controller
                 WHERE MONTH(net_profits.date) = ?
                 AND YEAR(net_profits.date) = ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, Auth::user()->current_tenant_id]);
+            ", [now(), now()->month, now()->year, 2]);
 
             return response()->json([
                 'success' => true,
