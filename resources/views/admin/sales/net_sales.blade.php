@@ -450,9 +450,10 @@
         function refreshData() {
             Swal.fire({
                 title: 'Refreshing Data',
+                html: 'Starting refresh process...',
                 allowOutsideClick: false,
                 didOpen: () => {
-                    Swal.showLoading()
+                    Swal.showLoading();
                 }
             });
 
@@ -519,17 +520,59 @@
                 }
             ];
 
-            Promise.all(endpoints.map(endpoint => $.get(endpoint.url)))
-                .then(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Data Refreshed!',
-                        html: '<small>KOL Spending, Marketing, HPP, ROAS, Quantity, Count Orders</small>',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
+            let completedEndpoints = 0;
+            let failedEndpoints = [];
+            let currentIndex = 0;
+
+            function processNextEndpoint() {
+                if (currentIndex >= endpoints.length) {
+                    // All endpoints processed
+                    if (failedEndpoints.length > 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Refresh Completed with Warnings',
+                            html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data Refreshed Successfully!',
+                            html: `All ${endpoints.length} operations completed successfully!`,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                    
+                    // Reload the table to show updated data
                     table.ajax.reload();
+                    
+                    return;
+                }
+
+                const endpoint = endpoints[currentIndex];
+                Swal.update({
+                    html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
                 });
+
+                $.ajax({
+                    url: endpoint.url,
+                    method: 'GET',
+                    success: function(response) {
+                        completedEndpoints++;
+                        currentIndex++;
+                        processNextEndpoint();
+                    },
+                    error: function(xhr, status, error) {
+                        failedEndpoints.push(endpoint.name);
+                        currentIndex++;
+                        console.error(`Failed at ${endpoint.name}:`, error);
+                        processNextEndpoint();
+                    }
+                });
+            }
+            
+            processNextEndpoint();
         }
 
         $('#refreshDataBtn').click(refreshData);
