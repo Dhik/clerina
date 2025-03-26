@@ -251,16 +251,19 @@ class NetProfitController extends Controller
     {
         try {
             $startDate = now()->startOfMonth();
-            $tenant_id = 1;
+            $tenant_id = 1; // Explicitly set to 1
             
             $dates = collect();
             for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
                 $dates->push($date->format('Y-m-d'));
             }
 
+            // Add debugging
+            \Log::info('updateHpp function started for tenant_id: ' . $tenant_id);
+
             $hppPerDate = Order::query()
                 ->whereBetween('orders.date', [$startDate, now()])
-                ->where('orders.tenant_id', $tenant_id)
+                ->where('orders.tenant_id', $tenant_id) // Ensure tenant_id filter is applied
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
                     $join->on(DB::raw("TRIM(
@@ -281,42 +284,58 @@ class NetProfitController extends Controller
                 ), 0) as total_hpp')
                 ->groupBy('date');
 
+            // Get the results as a collection before proceeding
+            $hppResults = $hppPerDate->get();
+            
             // First, reset all HPP values for the date range
-            NetProfit::query()
+            $resetCount = NetProfit::query()
                 ->whereBetween('date', [$startDate, now()])
-                ->where('tenant_id', $tenant_id)
+                ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
                 ->update(['hpp' => 0]);
+                
+            \Log::info('Reset HPP for ' . $resetCount . ' records');
 
-            // Then update with calculated values where data exists
-            NetProfit::query()
-                ->where('net_profits.tenant_id', $tenant_id)
-                ->whereBetween('net_profits.date', [$startDate, now()])
-                ->joinSub($hppPerDate, 'hpp', function($join) {
-                    $join->on('net_profits.date', '=', 'hpp.date');
-                })
-                ->update(['hpp' => DB::raw('hpp.total_hpp')]);
+            // Then update with calculated values where data exists - using a simpler approach
+            $updatedCount = 0;
+            foreach ($hppResults as $hpp) {
+                $updated = NetProfit::where('date', $hpp->date)
+                    ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
+                    ->update(['hpp' => $hpp->total_hpp]);
+                    
+                $updatedCount += $updated;
+            }
+            
+            \Log::info('Updated HPP for ' . $updatedCount . ' records');
 
-            // For any missing dates, ensure records exist
+            // For any missing dates, check if we need to create records
+            $createdCount = 0;
             foreach($dates as $date) {
                 $exists = NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id)
+                    ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
                     ->exists();
                     
                 if (!$exists) {
-                    $hppValue = $hppPerDate->where('date', $date)->first();
-                    NetProfit::updateOrCreate(
-                        [
-                            'date' => $date,
-                            'tenant_id' => $tenant_id
-                        ],
-                        [
-                            'hpp' => $hppValue ? $hppValue->total_hpp : 0
-                        ]
-                    );
+                    $hppValue = $hppResults->where('date', $date)->first();
+                    
+                    // Use create instead of updateOrCreate to be explicit
+                    NetProfit::create([
+                        'date' => $date,
+                        'tenant_id' => $tenant_id,
+                        'hpp' => $hppValue ? $hppValue->total_hpp : 0
+                    ]);
+                    
+                    $createdCount++;
                 }
             }
+            
+            \Log::info('Created ' . $createdCount . ' new records');
 
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'reset_count' => $resetCount,
+                'updated_count' => $updatedCount,
+                'created_count' => $createdCount
+            ]);
         } catch(\Exception $e) {
             \Log::error('Update HPP Error: ' . $e->getMessage());
             return response()->json([
