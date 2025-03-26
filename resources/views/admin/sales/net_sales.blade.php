@@ -417,34 +417,77 @@
         $('#importDataBtn').on('click', function() {
             Swal.fire({
                 title: 'Importing Data',
-                html: 'Please wait...',
+                html: 'Starting import process...',
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
             });
 
-            $.ajax({
-                url: "{{ route('net-profit.import-data') }}",
-                method: 'GET',
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'All data has been imported and updated.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    netProfitsTable.draw();
+            const endpoints = [
+                { 
+                    name: 'Cleora Import Data', 
+                    url: "{{ route('net-profit.import-data') }}"
                 },
-                error: function(xhr, status, error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Import failed!',
-                        text: xhr.responseJSON?.message || 'Something went wrong'
-                    });
+                { 
+                    name: 'Azrina Import Data', 
+                    url: "{{ route('net-profit.import-data-azrina') }}"
                 }
-            });
+            ];
+
+            let completedEndpoints = 0;
+            let failedEndpoints = [];
+            let currentIndex = 0;
+
+            function processNextEndpoint() {
+                if (currentIndex >= endpoints.length) {
+                    // All endpoints processed
+                    if (failedEndpoints.length > 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Import Completed with Warnings',
+                            html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data Imported Successfully!',
+                            text: 'All data has been imported and updated.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                    
+                    // Reload the table to show updated data
+                    netProfitsTable.draw();
+                    
+                    return;
+                }
+
+                const endpoint = endpoints[currentIndex];
+                Swal.update({
+                    html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
+                });
+
+                $.ajax({
+                    url: endpoint.url,
+                    method: 'GET',
+                    success: function(response) {
+                        completedEndpoints++;
+                        currentIndex++;
+                        processNextEndpoint();
+                    },
+                    error: function(xhr, status, error) {
+                        failedEndpoints.push(endpoint.name);
+                        currentIndex++;
+                        console.error(`Failed at ${endpoint.name}:`, error);
+                        processNextEndpoint();
+                    }
+                });
+            }
+            
+            processNextEndpoint();
         });
 
         function refreshData() {

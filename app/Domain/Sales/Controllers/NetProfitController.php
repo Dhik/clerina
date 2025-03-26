@@ -568,8 +568,37 @@ class NetProfitController extends Controller
                     ],
                     [
                         'affiliate' => $affiliate,
-                        'visit' => $visit,
                         'tenant_id' => 1 
+                    ]
+                );
+            }
+            $this->updateClosingRate();
+            return response()->json(['message' => 'Data imported successfully']);
+        } catch (Exception $e) {
+            return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
+        }
+    }
+    public function importNetProfitsAzrina()
+    {
+        try {
+            $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
+            $range = 'Azrina!A2:D';
+            $sheetData = $this->googleSheetService->getSheetData($range);
+
+            foreach ($sheetData as $row) {
+                if (empty($row[0])) continue;
+
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                $b2bSales = $this->parseCurrencyToInt($row[2] ?? null);
+
+                NetProfit::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'tenant_id' => 2
+                    ],
+                    [
+                        'b2b_sales' => $b2bSales,
+                        'tenant_id' => 2 
                     ]
                 );
             }
