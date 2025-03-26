@@ -311,58 +311,81 @@ class NetProfitController extends Controller
     public function updateHppAzrina()
     {
         try {
-            $startDate = now()->startOfMonth();
+            $startDate = now()->startOfMonth()->format('Y-m-d');
+            $endDate = now()->format('Y-m-d');
             $tenant_id = 2;
             
-            $dates = collect();
-            for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
-                $dates->push($date->format('Y-m-d'));
+            // Get order quantities and SKUs for each day in the range
+            $dailyOrders = DB::table('orders')
+                ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('COUNT(*) as qty'))
+                ->where('tenant_id', $tenant_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return', 
+                                    'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'])
+                ->groupBy('order_date', 'sku')
+                ->get();
+                
+            $products = DB::table('products')
+                ->select('sku', 'harga_satuan')
+                ->where('tenant_id', $tenant_id)
+                ->get()
+                ->keyBy('sku');
+            
+            // Calculate HPP per day
+            $dailyHpp = [];
+            
+            foreach ($dailyOrders as $order) {
+                $orderDate = $order->order_date;
+                $orderSku = $order->sku;
+                $orderQty = $order->qty;
+                
+                // Extract the base SKU and quantity for cases like "2 AZ-MC50ML-001"
+                $baseQty = 1;
+                $baseSku = $orderSku;
+                
+                if (preg_match('/^(\d+)\s+(.+)$/', $orderSku, $matches)) {
+                    $baseQty = (int) $matches[1];
+                    $baseSku = $matches[2];
+                }
+                
+                // Get the product price
+                $productPrice = 0;
+                if (isset($products[$baseSku])) {
+                    $productPrice = $products[$baseSku]->harga_satuan;
+                }
+                
+                // Calculate total HPP for this order entry: quantity * base quantity * price
+                $orderHpp = $orderQty * $baseQty * $productPrice;
+                
+                // Add to daily total
+                if (!isset($dailyHpp[$orderDate])) {
+                    $dailyHpp[$orderDate] = 0;
+                }
+                $dailyHpp[$orderDate] += $orderHpp;
             }
-
-            $hppPerDate = Order::query()
-                ->whereBetween('orders.date', [$startDate, now()])
-                ->where('orders.tenant_id', $tenant_id) // Ensure tenant_id filter is applied
-                ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
-                ->leftJoin('products', function($join) {
-                    $join->on(DB::raw("TRIM(
-                        CASE 
-                            WHEN orders.sku REGEXP '^[0-9]+\\s+' 
-                            THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
-                            ELSE orders.sku 
-                        END
-                    )"), '=', 'products.sku');
-                })
-                ->select(DB::raw('DATE(orders.date) as date'))
-                ->selectRaw('COALESCE(SUM(
-                    CASE 
-                        WHEN orders.sku REGEXP "^[0-9]+\\s+"
-                        THEN products.harga_satuan * CAST(SUBSTRING_INDEX(orders.sku, " ", 1) AS UNSIGNED)
-                        ELSE products.harga_satuan
-                    END
-                ), 0) as total_hpp')
-                ->groupBy('date');
-
-            $hppResults = $hppPerDate->get();
-            $resetCount = NetProfit::query()
-                ->whereBetween('date', [$startDate, now()])
-                ->where('tenant_id', 2)
-                ->update(['hpp' => 0]);
-
+            $resetCount = DB::table('net_profits')
+                ->where('tenant_id', $tenant_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->update(['hpp' => 0, 'updated_at' => now()]);
+            
             $updatedCount = 0;
-            foreach ($hppResults as $hpp) {
-                $updated = NetProfit::where('date', $hpp->date)
-                    ->where('tenant_id', 2) 
-                    ->update(['hpp' => $hpp->total_hpp]);
+            foreach ($dailyHpp as $date => $hppValue) {
+                $updated = DB::table('net_profits')
+                    ->where('tenant_id', $tenant_id)
+                    ->where('date', $date)
+                    ->update(['hpp' => $hppValue, 'updated_at' => now()]);
                     
                 $updatedCount += $updated;
             }
+            
             return response()->json([
                 'success' => true,
                 'reset_count' => $resetCount,
-                'updated_count' => $updatedCount
+                'updated_count' => $updatedCount,
+                'total_hpp_days' => count($dailyHpp),
+                'message' => "HPP values updated successfully for tenant_id {$tenant_id}"
             ]);
-        } catch(\Exception $e) {
-            \Log::error('Update HPP Error: ' . $e->getMessage());
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
