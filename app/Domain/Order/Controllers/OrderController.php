@@ -441,7 +441,6 @@ class OrderController extends Controller
             // Loop through results and update sales table
             foreach ($totals as $total) {
                 $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
-                $formattedDates->push($formattedDate);
                 
                 // Get the current sales record
                 $salesRecord = DB::table('sales')
