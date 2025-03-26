@@ -192,9 +192,6 @@ class AdSpentSocialMediaController extends Controller
     }
 
     public function get_ads_details_by_date(Request $request) {
-        // Get the date parameter from the request
-        $date = $request->input('date');
-        
         $query = AdsMeta::query()
             ->select([
                 DB::raw('ANY_VALUE(id) as id'), // Changed from MAX(id) to ANY_VALUE for ONLY_FULL_GROUP_BY mode
@@ -210,15 +207,25 @@ class AdSpentSocialMediaController extends Controller
                 'account_name'
             ]);
         
-        // Apply date filter if provided
-        if ($date) {
-            // Try to parse the date in case it comes in a different format
+        // Apply date filter with support for both single date and date range
+        if ($request->has('date_start') && $request->has('date_end')) {
+            // Handle date range
             try {
-                $parsedDate = Carbon::parse($date)->format('Y-m-d');
+                $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+                $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+                $query->whereBetween('date', [$dateStart, $dateEnd]);
+            } catch (\Exception $e) {
+                // If date parsing fails, log the error
+                Log::error('Date parsing error: ' . $e->getMessage());
+            }
+        } elseif ($request->has('date')) {
+            // Handle single date (existing functionality)
+            try {
+                $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
                 $query->where('date', $parsedDate);
             } catch (\Exception $e) {
                 // If date parsing fails, try to use it as is
-                $query->where('date', $date);
+                $query->where('date', $request->input('date'));
             }
         }
         
@@ -234,6 +241,8 @@ class AdSpentSocialMediaController extends Controller
         if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
             $query->where('kategori_produk', $request->kategori_produk);
         }
+        
+        // Apply PIC filter if provided
         if ($request->has('pic') && $request->pic !== '') {
             $query->where('pic', $request->pic);
         }

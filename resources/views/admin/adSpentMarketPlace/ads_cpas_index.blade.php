@@ -113,6 +113,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="dailyDetailsModalLabel">Campaign Details</h5>
+                <div class="ml-auto mr-3">
+                    <input type="text" id="modalFilterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
+                </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -223,6 +226,42 @@
             filterCategory = $('#kategoriProdukFilter');
             let funnelChart = null;
             let impressionChart = null;
+            let modalFilterDate = $('#modalFilterDates');
+
+            modalFilterDate.daterangepicker({
+                autoUpdateInput: false,
+                autoApply: true,
+                alwaysShowCalendars: true,
+                opens: 'right',
+                locale: {
+                    cancelLabel: 'Clear',
+                    format: 'DD/MM/YYYY'
+                },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                }
+            });
+
+            // Apply and Cancel event handlers for modal daterangepicker
+            modalFilterDate.on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+                $(this).trigger('change');
+            });
+
+            modalFilterDate.on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+                $(this).trigger('change');
+            });
+
+            // Filter change handler for modal date range
+            modalFilterDate.change(function() {
+                campaignDetailsTable.draw();
+            });
 
             // Initialize daterangepicker
             filterDate.daterangepicker({
@@ -531,7 +570,14 @@
                     url: "{{ route('adSpentSocialMedia.get_details_by_date') }}",
                     data: function(d) {
                         // Add the date from the modal to the request
-                        d.date = $('#dailyDetailsModal').data('date');
+                        if (modalFilterDate.val()) {
+                            let dates = modalFilterDate.val().split(' - ');
+                            d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                            d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                        } else {
+                            // If no date range is selected, use the single date
+                            d.date = $('#dailyDetailsModal').data('date');
+                        }
                         if ($('#picFilter').val()) {
                             d.pic = $('#picFilter').val();
                         }
@@ -612,9 +658,14 @@
 
             // Modal shown event handler
             $('#dailyDetailsModal').on('shown.bs.modal', function () {
+                // If no date range is set, initialize with the clicked date
+                if (!modalFilterDate.val()) {
+                    const clickedDate = $('#dailyDetailsModal').data('date');
+                    const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
+                    modalFilterDate.val(formattedDate + ' - ' + formattedDate);
+                }
                 $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
             });
-
             // Click event handler for date details
             $('#adsMetaTable').on('click', '.date-details', function(){
                 let date = $(this).data('date');
@@ -622,9 +673,29 @@
                 
                 $('#dailyDetailsModalLabel').text('Campaign Details for ' + formattedDate);
                 $('#dailyDetailsModal').data('date', date);
+
+                modalFilterDate.val('');
                 
                 campaignDetailsTable.draw();
                 $('#dailyDetailsModal').modal('show');
+            });
+
+            $('#dailyDetailsModal .modal-header').append(
+                $('<button>')
+                    .addClass('btn btn-default ml-2')
+                    .text('Reset Filter')
+                    .on('click', function() {
+                        // Reset the modal date filter to the original clicked date
+                        const clickedDate = $('#dailyDetailsModal').data('date');
+                        const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
+                        modalFilterDate.val(formattedDate + ' - ' + formattedDate);
+                        modalFilterDate.trigger('change');
+                    })
+            );
+            $('#dailyDetailsModal .modal-header button.btn-default').css({
+                'position': 'absolute',
+                'right': '80px',
+                'top': '10px'
             });
 
             // Click event handler for delete account
@@ -949,6 +1020,10 @@
                         console.error('Error fetching impression data:', error);
                     });
             }
+
+            $('#dailyDetailsModal').on('hidden.bs.modal', function () {
+                modalFilterDate.val('');
+            });
 
             // Initialize the page
             $(function () {
