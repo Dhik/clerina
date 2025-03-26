@@ -561,7 +561,7 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-    public function updateSales2()
+    public function updateSalesAzrina()
     {
         try {
             $tenant_id = 2;
