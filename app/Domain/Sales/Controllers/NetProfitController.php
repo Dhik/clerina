@@ -258,9 +258,6 @@ class NetProfitController extends Controller
                 $dates->push($date->format('Y-m-d'));
             }
 
-            // Add debugging
-            \Log::info('updateHpp function started for tenant_id: ' . $tenant_id);
-
             $hppPerDate = Order::query()
                 ->whereBetween('orders.date', [$startDate, now()])
                 ->where('orders.tenant_id', $tenant_id) // Ensure tenant_id filter is applied
@@ -284,57 +281,24 @@ class NetProfitController extends Controller
                 ), 0) as total_hpp')
                 ->groupBy('date');
 
-            // Get the results as a collection before proceeding
             $hppResults = $hppPerDate->get();
-            
-            // First, reset all HPP values for the date range
             $resetCount = NetProfit::query()
                 ->whereBetween('date', [$startDate, now()])
-                ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
+                ->where('tenant_id', 1)
                 ->update(['hpp' => 0]);
-                
-            \Log::info('Reset HPP for ' . $resetCount . ' records');
 
-            // Then update with calculated values where data exists - using a simpler approach
             $updatedCount = 0;
             foreach ($hppResults as $hpp) {
                 $updated = NetProfit::where('date', $hpp->date)
-                    ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
+                    ->where('tenant_id', 1) 
                     ->update(['hpp' => $hpp->total_hpp]);
                     
                 $updatedCount += $updated;
             }
-            
-            \Log::info('Updated HPP for ' . $updatedCount . ' records');
-
-            // For any missing dates, check if we need to create records
-            $createdCount = 0;
-            foreach($dates as $date) {
-                $exists = NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id) // Ensure tenant_id filter is applied
-                    ->exists();
-                    
-                if (!$exists) {
-                    $hppValue = $hppResults->where('date', $date)->first();
-                    
-                    // Use create instead of updateOrCreate to be explicit
-                    NetProfit::create([
-                        'date' => $date,
-                        'tenant_id' => $tenant_id,
-                        'hpp' => $hppValue ? $hppValue->total_hpp : 0
-                    ]);
-                    
-                    $createdCount++;
-                }
-            }
-            
-            \Log::info('Created ' . $createdCount . ' new records');
-
             return response()->json([
                 'success' => true,
                 'reset_count' => $resetCount,
-                'updated_count' => $updatedCount,
-                'created_count' => $createdCount
+                'updated_count' => $updatedCount
             ]);
         } catch(\Exception $e) {
             \Log::error('Update HPP Error: ' . $e->getMessage());
