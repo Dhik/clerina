@@ -585,27 +585,47 @@ class NetProfitController extends Controller
             $range = 'Azrina!A2:D';
             $sheetData = $this->googleSheetService->getSheetData($range);
 
+            $updatedCount = 0;
+            $skippedCount = 0;
+
             foreach ($sheetData as $row) {
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
                 $b2bSales = $this->parseCurrencyToInt($row[2] ?? null);
 
-                NetProfit::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'tenant_id' => 2
-                    ],
-                    [
-                        'b2b_sales' => $b2bSales,
-                        'tenant_id' => 2 
-                    ]
-                );
+                // Check if record exists before updating
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 2)
+                        ->exists();
+
+                if ($exists) {
+                    // Only update if record exists
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 2)
+                        ->update([
+                            'b2b_sales' => $b2bSales,
+                            'updated_at' => now()
+                        ]);
+                        
+                    $updatedCount++;
+                } else {
+                    $skippedCount++;
+                }
             }
+            
             $this->updateClosingRate();
-            return response()->json(['message' => 'Data imported successfully']);
+            
+            return response()->json([
+                'message' => 'Data imported successfully',
+                'updated' => $updatedCount,
+                'skipped' => $skippedCount
+            ]);
         } catch (Exception $e) {
-            return response()->json(['message' => 'Import failed', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Import failed', 
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
     private function parseCurrencyToInt($value)
