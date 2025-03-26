@@ -431,6 +431,54 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function updateVisit()
+    {
+        try {
+            DB::statement("
+                UPDATE net_profits
+                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+                SET net_profits.visit = sales.visit, 
+                    net_profits.updated_at = ?
+                WHERE MONTH(net_profits.date) = ?
+                AND YEAR(net_profits.date) = ?
+                AND sales.tenant_id = ?
+            ", [now(), now()->month, now()->year, 1]);
+
+            return response()->json([
+                'success' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateVisitAzrina()
+    {
+        try {
+            DB::statement("
+                UPDATE net_profits
+                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+                SET net_profits.visit = sales.visit, 
+                    net_profits.updated_at = ?
+                WHERE MONTH(net_profits.date) = ?
+                AND YEAR(net_profits.date) = ?
+                AND sales.tenant_id = ?
+            ", [now(), now()->month, now()->year, 2]);
+
+            return response()->json([
+                'success' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function updateMarketingAzrina()
     {
         try {
@@ -510,7 +558,6 @@ class NetProfitController extends Controller
                 if (empty($row[0])) continue;
 
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                // $sales = $this->parseCurrencyToInt($row[1] ?? null);
                 $affiliate = $this->parseCurrencyToInt($row[2] ?? null);
                 $visit = $this->parseToInt($row[3] ?? null);
 
@@ -520,10 +567,9 @@ class NetProfitController extends Controller
                         'tenant_id' => 1
                     ],
                     [
-                        // 'sales' => $sales,
                         'affiliate' => $affiliate,
                         'visit' => $visit,
-                        'tenant_id' => 1  // Ensure tenant_id is set to 1 for new records
+                        'tenant_id' => 1 
                     ]
                 );
             }

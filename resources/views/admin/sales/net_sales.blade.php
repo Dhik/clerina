@@ -483,6 +483,14 @@
                     url: "{{ route('net-profit.update-marketing-azrina') }}"
                 },
                 { 
+                    name: 'Visit', 
+                    url: "{{ route('net-profit.update-visit') }}"
+                },
+                { 
+                    name: 'Visit Azrina', 
+                    url: "{{ route('net-profit.update-visit-azrina') }}"
+                },
+                { 
                     name: 'Sales', 
                     url: "{{ route('net-profit.update-sales') }}"
                 },
