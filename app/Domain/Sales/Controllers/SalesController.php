@@ -273,9 +273,9 @@ class SalesController extends Controller
         $data = $query->selectRaw('
             SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) as total_sales,
             SUM(hpp) as total_hpp,
-            SUM(marketing + spent_kol + COALESCE(affiliate, 0) + operasional) as total_spent,
-            SUM(marketing + spent_kol + COALESCE(affiliate, 0)) as total_marketing_spent,
-            SUM((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit,
+            SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
+            SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
+            SUM((sales * 0.78) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit,
             SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + spent_kol + COALESCE(affiliate, 0)), 0) as avg_romi
         ')
         ->first();
