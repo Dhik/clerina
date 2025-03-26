@@ -403,6 +403,30 @@ class NetProfitController extends Controller
                 WHERE MONTH(net_profits.date) = ?
                 AND YEAR(net_profits.date) = ?
                 AND sales.tenant_id = ?
+            ", [now(), now()->month, now()->year, 1]);
+
+            return response()->json([
+                'success' => true,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateMarketingAzrina()
+    {
+        try {
+            DB::statement("
+                UPDATE net_profits
+                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+                SET net_profits.marketing = sales.ad_spent_total, 
+                    net_profits.updated_at = ?
+                WHERE MONTH(net_profits.date) = ?
+                AND YEAR(net_profits.date) = ?
+                AND sales.tenant_id = ?
             ", [now(), now()->month, now()->year, 2]);
 
             return response()->json([
@@ -543,7 +567,45 @@ class NetProfitController extends Controller
     public function updateRoas()
     {
         try {
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 1;
+
+            // Update ROAS for records with non-zero marketing spend
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
+                ->where('marketing', '!=', 0)
+                ->update([
+                    'roas' => DB::raw('sales / marketing')
+                ]);
+
+            // Set ROAS to null for records with zero marketing spend
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
+                ->where('marketing', 0)
+                ->update([
+                    'roas' => null 
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'ROAS updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Update ROAS Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update ROAS.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateRoasAzrina()
+    {
+        try {
+            $tenant_id = 2;
 
             // Update ROAS for records with non-zero marketing spend
             NetProfit::query()
@@ -699,7 +761,65 @@ class NetProfitController extends Controller
     public function updateQty()
     {
         try {
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 1;
+
+            $dailyQty = Order::query()
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
+                ->where('orders.tenant_id', $tenant_id)
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'cancelled', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
+                ->select('date')
+                ->selectRaw('SUM(qty) as total_qty')
+                ->groupBy('date');
+
+            // Reset the quantity only for the current tenant
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
+                ->update(['qty' => 0]);
+
+            // Update quantities only for the current tenant
+            NetProfit::query()
+                ->where('net_profits.tenant_id', $tenant_id)
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
+                ->joinSub($dailyQty, 'dq', function($join) {
+                    $join->on('net_profits.date', '=', 'dq.date');
+                })
+                ->update([
+                    'qty' => DB::raw('dq.total_qty')
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Quantity updated successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Update Qty Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update quantity.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateQtyAzrina()
+    {
+        try {
+            $tenant_id = 2;
 
             $dailyQty = Order::query()
                 ->whereMonth('orders.date', now()->month)
@@ -757,7 +877,66 @@ class NetProfitController extends Controller
     public function updateOrderCount()
     {
         try {
-            $tenant_id = Auth::user()->current_tenant_id;
+            $tenant_id = 1;
+
+            $dailyOrders = Order::query()
+                ->whereMonth('orders.date', now()->month)
+                ->whereYear('orders.date', now()->year)
+                ->where('orders.tenant_id', $tenant_id)
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'cancelled', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
+                ->select('date')
+                ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
+                ->groupBy('date');
+
+            // Reset order count and packing fee only for the current tenant
+            NetProfit::query()
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->where('tenant_id', $tenant_id)
+                ->update(['order' => 0, 'fee_packing' => 0]);
+                
+            // Update order count and packing fee only for the current tenant
+            NetProfit::query()
+                ->where('net_profits.tenant_id', $tenant_id)
+                ->whereMonth('net_profits.date', now()->month)
+                ->whereYear('net_profits.date', now()->year)
+                ->joinSub($dailyOrders, 'do', function($join) {
+                    $join->on('net_profits.date', '=', 'do.date');
+                })
+                ->update([
+                    'order' => DB::raw('do.total_orders'),
+                    'fee_packing' => DB::raw('do.total_orders * 1000')
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order count and packing fee updated successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Update Order Count Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update order count and packing fee.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateOrderCountAzrina()
+    {
+        try {
+            $tenant_id = 2;
 
             $dailyOrders = Order::query()
                 ->whereMonth('orders.date', now()->month)

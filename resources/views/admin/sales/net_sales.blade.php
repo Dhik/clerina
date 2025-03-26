@@ -478,16 +478,32 @@
                     url: "{{ route('net-profit.update-marketing') }}"
                 },
                 { 
+                    name: 'Marketing Azrina', 
+                    url: "{{ route('net-profit.update-marketing-azrina') }}"
+                },
+                { 
                     name: 'ROAS', 
                     url: "{{ route('net-profit.update-roas') }}"
+                },
+                { 
+                    name: 'ROAS Azrina', 
+                    url: "{{ route('net-profit.update-roas-azrina') }}"
                 },
                 { 
                     name: 'Quantity', 
                     url: "{{ route('net-profit.update-qty') }}"
                 },
                 { 
+                    name: 'Quantity Azrina', 
+                    url: "{{ route('net-profit.update-qty-azrina') }}"
+                },
+                { 
                     name: 'Order Count', 
                     url: "{{ route('net-profit.update-order-count') }}"
+                },
+                { 
+                    name: 'Order Count Azrina', 
+                    url: "{{ route('net-profit.update-order-count-azrina') }}"
                 },
                 { 
                     name: 'Sales', 
