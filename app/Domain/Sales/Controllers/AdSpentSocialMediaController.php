@@ -339,6 +339,80 @@ class AdSpentSocialMediaController extends Controller
             ->rawColumns(['action', 'performance'])
             ->make(true);
     }
+
+    public function get_campaign_summary(Request $request)
+    {
+        $query = AdsMeta::query()
+            ->select([
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(DISTINCT account_name) as accounts_count')
+            ]);
+        
+        // Apply date filter with support for both single date and date range
+        if ($request->has('date_start') && $request->has('date_end')) {
+            // Handle date range
+            try {
+                $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+                $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+                $query->whereBetween('date', [$dateStart, $dateEnd]);
+            } catch (\Exception $e) {
+                // If date parsing fails, log the error
+                Log::error('Date parsing error: ' . $e->getMessage());
+            }
+        } elseif ($request->has('date')) {
+            // Handle single date
+            try {
+                $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+                $query->where('date', $parsedDate);
+            } catch (\Exception $e) {
+                // If date parsing fails, try to use it as is
+                $query->where('date', $request->input('date'));
+            }
+        }
+        
+        // Apply product category filter if provided
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+        
+        // Apply PIC filter if provided
+        if ($request->has('pic') && $request->pic !== '') {
+            $query->where('pic', $request->pic);
+        }
+        
+        $summary = $query->first();
+        
+        // Calculate derived metrics
+        $result = [
+            'total_amount_spent' => $summary->total_amount_spent,
+            'total_impressions' => $summary->total_impressions,
+            'total_link_clicks' => $summary->total_link_clicks,
+            'total_content_views' => $summary->total_content_views,
+            'total_adds_to_cart' => $summary->total_adds_to_cart,
+            'total_purchases' => $summary->total_purchases,
+            'total_conversion_value' => $summary->total_conversion_value,
+            'accounts_count' => $summary->accounts_count,
+            
+            // Derived metrics
+            'cost_per_purchase' => $summary->total_purchases > 0 ? $summary->total_amount_spent / $summary->total_purchases : 0,
+            'cost_per_view' => $summary->total_content_views > 0 ? $summary->total_amount_spent / $summary->total_content_views : 0,
+            'cost_per_atc' => $summary->total_adds_to_cart > 0 ? $summary->total_amount_spent / $summary->total_adds_to_cart : 0,
+            'cpm' => $summary->total_impressions > 0 ? ($summary->total_amount_spent / $summary->total_impressions) * 1000 : 0,
+            'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
+            'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
     public function deleteByAccountAndDate(Request $request)
     {
         try {

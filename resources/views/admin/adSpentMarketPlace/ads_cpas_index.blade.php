@@ -121,6 +121,82 @@
                 </button>
             </div>
             <div class="modal-body">
+                <!-- Summary Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="campaignSummary">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Total Accounts</h6>
+                                        <h4 class="mb-0" id="summaryAccountsCount">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Total Spent</h6>
+                                        <h4 class="mb-0" id="summaryTotalSpent">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Total Purchases</h6>
+                                        <h4 class="mb-0" id="summaryTotalPurchases">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Conversion Value</h6>
+                                        <h4 class="mb-0" id="summaryConversionValue">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Overall ROAS</h6>
+                                        <h4 class="mb-0" id="summaryRoas">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Avg. CPP</h6>
+                                        <h4 class="mb-0" id="summaryCostPerPurchase">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Total Impressions</h6>
+                                        <h4 class="mb-0" id="summaryImpressions">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-muted mb-1">Overall CTR</h6>
+                                        <h4 class="mb-0" id="summaryCtr">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details Table -->
                 <div class="table-responsive">
                     <table id="campaignDetailsTable" class="table table-bordered table-striped dataTable" width="100%">
                         <thead>
@@ -261,6 +337,16 @@
             // Filter change handler for modal date range
             modalFilterDate.change(function() {
                 campaignDetailsTable.draw();
+                updateCampaignSummary();
+    
+                // Update the modal title to reflect the date range
+                let dateRange = $(this).val();
+                if (dateRange) {
+                    $('#dailyDetailsModalLabel').text('Campaign Details for ' + dateRange);
+                } else {
+                    const clickedDate = moment($('#dailyDetailsModal').data('date')).format('D MMM YYYY');
+                    $('#dailyDetailsModalLabel').text('Campaign Details for ' + clickedDate);
+                }
             });
 
             // Initialize daterangepicker
@@ -293,6 +379,84 @@
                 $(this).val('');
                 $(this).trigger('change');
             });
+            function updateCampaignSummary() {
+                // Build parameters object
+                let params = {};
+                
+                // Check if we have a date range filter in the modal
+                if (modalFilterDate.val()) {
+                    let dates = modalFilterDate.val().split(' - ');
+                    params.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                    params.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else if ($('#dailyDetailsModal').data('date')) {
+                    // If no date range is selected, use the single date
+                    params.date = $('#dailyDetailsModal').data('date');
+                }
+                
+                // Add other filters
+                if ($('#picFilter').val()) {
+                    params.pic = $('#picFilter').val();
+                }
+                
+                if (filterCategory.val()) {
+                    params.kategori_produk = filterCategory.val();
+                }
+                
+                // Show loading state in summary cards
+                $('#campaignSummary .card h4').text('Loading...');
+                
+                // Fetch summary data
+                $.ajax({
+                    url: "{{ route('adSpentSocialMedia.get_campaign_summary') }}",
+                    type: 'GET',
+                    data: params,
+                    success: function(response) {
+                        if (response.success) {
+                            const data = response.data;
+                            
+                            // Update summary cards with formatted values
+                            $('#summaryAccountsCount').text(data.accounts_count);
+                            $('#summaryTotalSpent').text('Rp ' + numberFormat(data.total_amount_spent));
+                            $('#summaryTotalPurchases').text(numberFormat(data.total_purchases, 2));
+                            $('#summaryConversionValue').text('Rp ' + numberFormat(data.total_conversion_value));
+                            $('#summaryRoas').text(numberFormat(data.roas, 2));
+                            $('#summaryCostPerPurchase').text('Rp ' + numberFormat(data.cost_per_purchase));
+                            $('#summaryImpressions').text(numberFormat(data.total_impressions));
+                            $('#summaryCtr').text(numberFormat(data.ctr, 2) + '%');
+                            
+                            // Add color coding for ROAS based on performance thresholds
+                            const roasElement = $('#summaryRoas');
+                            roasElement.removeClass('text-success text-primary text-info text-danger');
+                            if (data.roas >= 2.5) {
+                                roasElement.addClass('text-success');
+                            } else if (data.roas >= 2.01) {
+                                roasElement.addClass('text-primary');
+                            } else if (data.roas >= 1.75) {
+                                roasElement.addClass('text-info');
+                            } else if (data.roas > 0) {
+                                roasElement.addClass('text-danger');
+                            }
+                        } else {
+                            // Handle error response
+                            console.error('Error fetching summary data');
+                            $('#campaignSummary .card h4').text('-');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX error:', error);
+                        $('#campaignSummary .card h4').text('-');
+                    }
+                });
+            }
+
+            // Helper function for number formatting
+            function numberFormat(value, decimals = 0) {
+                if (value === null || value === undefined) return '-';
+                return Number(value).toLocaleString('id-ID', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                });
+            }
 
             // Button click handlers
             $('#btnAddVisit').click(function() {
@@ -317,6 +481,11 @@
             filterCategory.change(function() {
                 adsMetaTable.draw();
                 campaignDetailsTable.draw();
+
+                if ($('#dailyDetailsModal').is(':visible')) {
+                    updateCampaignSummary();
+                }
+
                 initFunnelChart();
                 fetchImpressionData();
             });
@@ -333,6 +502,10 @@
 
             $('#picFilter').change(function() {
                 adsMetaTable.draw();
+                if ($('#dailyDetailsModal').is(':visible')) {
+                    campaignDetailsTable.draw();
+                    updateCampaignSummary();
+                }
                 fetchImpressionData();
                 initFunnelChart();
             });
@@ -664,6 +837,7 @@
                     const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
                     modalFilterDate.val(formattedDate + ' - ' + formattedDate);
                 }
+                updateCampaignSummary();
                 $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
             });
             // Click event handler for date details
@@ -696,6 +870,18 @@
                 'position': 'absolute',
                 'right': '80px',
                 'top': '10px'
+            });
+            $('#dailyDetailsModal .modal-header button.btn-default').off('click').on('click', function() {
+                // Reset the modal date filter to the original clicked date
+                const clickedDate = $('#dailyDetailsModal').data('date');
+                const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
+                modalFilterDate.val(formattedDate + ' - ' + formattedDate);
+                
+                // Update the modal title
+                $('#dailyDetailsModalLabel').text('Campaign Details for ' + moment(clickedDate).format('D MMM YYYY'));
+                
+                // Trigger the change event to update the table and summary
+                modalFilterDate.trigger('change');
             });
 
             // Click event handler for delete account

@@ -67,6 +67,7 @@ Route::prefix('admin')
                 Route::get('/', [AdSpentSocialMediaController::class, 'ads_cpas_index'])->name('adSpentSocialMedia.ads_cpas_index');
                 Route::get('/get', [AdSpentSocialMediaController::class, 'get_ads_cpas'])->name('adSpentSocialMedia.get_ads_cpas');
                 Route::get('/show', [AdSpentSocialMediaController::class, 'get_ads_details_by_date'])->name('adSpentSocialMedia.get_details_by_date');
+                Route::get('/campaign-summary', [AdSpentSocialMediaController::class, 'get_campaign_summary'])->name('adSpentSocialMedia.get_campaign_summary');
                 Route::delete('/delete-by-account', [AdSpentSocialMediaController::class, 'deleteByAccountAndDate'])->name('adSpentSocialMedia.delete_by_account');
             });
 
