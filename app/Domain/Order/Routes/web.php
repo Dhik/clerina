@@ -61,7 +61,7 @@ Route::prefix('admin')
                 Route::get('/azrina_tokped', [OrderController::class, 'importAzrinaTokopedia'])->name('order.azrina_tokped');
 
                 Route::get('/update', [OrderController::class, 'updateSalesTurnover'])->name('order.update_turnover');
-                Route::get('/update_azrina', [OrderController::class, 'updateSalesTurnoverAzrina'])->name('order.update_turnover_azrina');
+                Route::get('/update_azrina', [OrderController::class, 'updateSalesTurnover2'])->name('order.update_turnover_azrina');
                 Route::get('/export-unique-skus', [OrderController::class, 'exportUniqueSku']);
 
                 Route::get('/exportTemplate', [OrderController::class, 'downloadTemplate'])
