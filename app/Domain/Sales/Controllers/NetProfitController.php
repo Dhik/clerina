@@ -219,26 +219,37 @@ class NetProfitController extends Controller
                     'crm_sales' => $crmSales
                 ];
             }
+
+            $updatedCount = 0;
+            $skippedCount = 0;
             
-            // Update net_profits table with the sales data
+            // Update net_profits table with the sales data - update only, no create
             foreach ($salesData as $date => $data) {
-                NetProfit::updateOrCreate(
-                    [
-                        'date' => $date
-                    ],
-                    [
-                        'tenant_id' => $tenant_id,
-                        'b2b_sales' => $data['b2b_sales'],
-                        'crm_sales' => $data['crm_sales'],
-                        'updated_at' => now()
-                    ]
-                );
+                $recordExists = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->exists();
+                    
+                if ($recordExists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', $tenant_id)
+                        ->update([
+                            'b2b_sales' => $data['b2b_sales'],
+                            'crm_sales' => $data['crm_sales'],
+                            'updated_at' => now()
+                        ]);
+                        
+                    $updatedCount++;
+                } else {
+                    // Record doesn't exist - skip instead of create
+                    $skippedCount++;
+                }
             }
             
             return response()->json([
                 'success' => true, 
                 'message' => 'B2B and CRM sales data updated successfully',
-                'records_processed' => count($salesData)
+                'records_updated' => $updatedCount,
+                'records_skipped' => $skippedCount
             ]);
         } catch(\Exception $e) {
             return response()->json([

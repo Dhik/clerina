@@ -514,10 +514,10 @@
                     name: 'Order Count Azrina', 
                     url: "{{ route('net-profit.update-order-count-azrina') }}"
                 },
-                // { 
-                //     name: 'B2B and CRM Sales', 
-                //     url: "{{ route('net-profit.update-b2b-crm') }}"
-                // }
+                { 
+                    name: 'B2B and CRM Sales', 
+                    url: "{{ route('net-profit.update-b2b-crm') }}"
+                }
             ];
 
             let completedEndpoints = 0;
