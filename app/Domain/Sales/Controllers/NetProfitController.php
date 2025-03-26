@@ -260,7 +260,7 @@ class NetProfitController extends Controller
 
             $hppPerDate = Order::query()
                 ->whereBetween('orders.date', [$startDate, now()])
-                ->where('orders.tenant_id', $tenant_id) // Ensure tenant_id filter is applied
+                ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
                 ->leftJoin('products', function($join) {
                     $join->on(DB::raw("TRIM(
@@ -284,17 +284,21 @@ class NetProfitController extends Controller
             $hppResults = $hppPerDate->get();
             $resetCount = NetProfit::query()
                 ->whereBetween('date', [$startDate, now()])
-                ->where('tenant_id', 1)
+                ->where('tenant_id', $tenant_id)
                 ->update(['hpp' => 0]);
 
             $updatedCount = 0;
             foreach ($hppResults as $hpp) {
-                $updated = NetProfit::where('date', $hpp->date)
-                    ->where('tenant_id', 1) 
+                // Convert date to Y-m-d format explicitly
+                $formattedDate = date('Y-m-d', strtotime($hpp->date));
+                
+                $updated = NetProfit::where('date', $formattedDate)
+                    ->where('tenant_id', $tenant_id)
                     ->update(['hpp' => $hpp->total_hpp]);
                     
                 $updatedCount += $updated;
             }
+            
             return response()->json([
                 'success' => true,
                 'reset_count' => $resetCount,
