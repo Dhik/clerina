@@ -127,68 +127,92 @@
                         <h5 class="mb-0">Summary</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row" id="campaignSummary">
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Total Accounts</h6>
-                                        <h4 class="mb-0" id="summaryAccountsCount">-</h4>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-success">
+                                    <div class="inner">
+                                        <h4 id="summaryAccountsCount">-</h4>
+                                        <p>Total Accounts</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-users"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Total Spent</h6>
-                                        <h4 class="mb-0" id="summaryTotalSpent">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-primary">
+                                    <div class="inner">
+                                        <h4 id="summaryTotalSpent">-</h4>
+                                        <p>Total Spent</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-money-bill"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Total Purchases</h6>
-                                        <h4 class="mb-0" id="summaryTotalPurchases">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-info">
+                                    <div class="inner">
+                                        <h4 id="summaryTotalPurchases">-</h4>
+                                        <p>Total Purchases</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-shopping-cart"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Conversion Value</h6>
-                                        <h4 class="mb-0" id="summaryConversionValue">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-teal">
+                                    <div class="inner">
+                                        <h4 id="summaryConversionValue">-</h4>
+                                        <p>Conversion Value</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-chart-line"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Overall ROAS</h6>
-                                        <h4 class="mb-0" id="summaryRoas">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-info">
+                                    <div class="inner">
+                                        <h4 id="summaryRoas">-</h4>
+                                        <p>Overall ROAS</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-dollar-sign"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Avg. CPP</h6>
-                                        <h4 class="mb-0" id="summaryCostPerPurchase">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-teal">
+                                    <div class="inner">
+                                        <h4 id="summaryCostPerPurchase">-</h4>
+                                        <p>Avg. CPP</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-tags"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Total Impressions</h6>
-                                        <h4 class="mb-0" id="summaryImpressions">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-primary">
+                                    <div class="inner">
+                                        <h4 id="summaryImpressions">-</h4>
+                                        <p>Total Impressions</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-eye"></i>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-sm-6 mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="card-title text-muted mb-1">Overall CTR</h6>
-                                        <h4 class="mb-0" id="summaryCtr">-</h4>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-success">
+                                    <div class="inner">
+                                        <h4 id="summaryCtr">-</h4>
+                                        <p>Overall CTR</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-mouse-pointer"></i>
                                     </div>
                                 </div>
                             </div>
