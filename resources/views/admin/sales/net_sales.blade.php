@@ -482,6 +482,14 @@
                     name: 'Marketing Azrina', 
                     url: "{{ route('net-profit.update-marketing-azrina') }}"
                 },
+                { 
+                    name: 'Sales', 
+                    url: "{{ route('net-profit.update-sales') }}"
+                },
+                { 
+                    name: 'Sales Azrina', 
+                    url: "{{ route('net-profit.update-sales-azrina') }}"
+                },
                 // { 
                 //     name: 'ROAS', 
                 //     url: "{{ route('net-profit.update-roas') }}"
@@ -505,14 +513,6 @@
                 // { 
                 //     name: 'Order Count Azrina', 
                 //     url: "{{ route('net-profit.update-order-count-azrina') }}"
-                // },
-                // { 
-                //     name: 'Sales', 
-                //     url: "{{ route('net-profit.update-sales') }}"
-                // },
-                // { 
-                //     name: 'Sales Azrina', 
-                //     url: "{{ route('net-profit.update-sales-azrina') }}"
                 // },
                 // { 
                 //     name: 'B2B and CRM Sales', 
