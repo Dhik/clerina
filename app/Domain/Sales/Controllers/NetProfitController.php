@@ -148,45 +148,44 @@ class NetProfitController extends Controller
             $kolSpentData = [];
             
             foreach ($sheetData as $row) {
-                // Check if row is empty, date is empty, or KOL spent column is not set
-                if (empty($row) || empty($row[0]) || !isset($row[12])) { // 12 is index for column M
+                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
                     continue;
                 }
                 
-                try {
-                    // Parse the date
-                    $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                    
-                    // Skip if not in current month
-                    if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                        continue;
-                    }
-                    
-                    // Parse KOL spent value and store in array
-                    $kolSpent = empty($row[12]) ? 0 : $this->parseCurrencyToInt($row[12]);
-                    $kolSpentData[$date] = $kolSpent;
-                } catch (\Exception $e) {
-                    \Log::error('Error processing row in updateSpentKolAzrina: ' . $e->getMessage());
-                    continue; // Skip this row and continue with next
+                // Parse the date
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip if not in current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                $kolSpent = $this->parseCurrencyToInt($row[17]);
+                $kolSpentData[$date] = $kolSpent;
+            }
+            // Counter for tracking updates
+            $updatedCount = 0;
+            
+            foreach ($kolSpentData as $date => $amount) {
+                // Check if record exists
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 2)
+                        ->exists();
+                
+                // Only update if record exists
+                if ($exists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 2)
+                        ->update(['spent_kol' => $amount]);
+                        
+                    $updatedCount++;
                 }
             }
             
-            // Update NetProfit records with KOL spent data
-            foreach ($kolSpentData as $date => $amount) {
-                NetProfit::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'tenant_id' => $tenant_id
-                    ],
-                    [
-                        'spent_kol' => $amount
-                    ]
-                );
-            }
-            
-            return response()->json(['success' => true, 'message' => 'KOL spent data updated successfully']);
+            return response()->json([
+                'success' => true, 
+                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+            ]);
         } catch(\Exception $e) {
-            \Log::error('Error in updateSpentKolAzrina: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
