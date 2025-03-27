@@ -826,21 +826,16 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
                     $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
                     $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
                 } catch (\Exception $e) {
-                    // Log the actual input for debugging
-                    \Log::error("Date parse error with input: " . $request->filterDates);
                     throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
                 }
             }
-
-            // Log the date range for debugging
-            \Log::info("Impression data filter dates: " . $startDate->format('Y-m-d') . " to " . $endDate->format('Y-m-d'));
 
             // Apply kategori_produk filter if provided
             $query = AdsMeta::select(
                 'date',
                 DB::raw('SUM(impressions) as impressions')
             )
-            ->where('tenant_id', auth()->user()->current_tenant_id)
+            ->where('tenant_id', 1)
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
             
             // Apply product category filter if provided
