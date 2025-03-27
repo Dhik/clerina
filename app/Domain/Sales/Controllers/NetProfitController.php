@@ -1497,17 +1497,22 @@ class NetProfitController extends Controller
         // Function to get data for a specific period
         $getDataForPeriod = function($startDate, $endDate, $periodLabel) use ($currentTenantId) {
             $orders = Order::select(
-                    'sku',
-                    DB::raw('SUM(qty) as total_qty'),
-                    DB::raw('COUNT(id) as total_orders'),
-                    DB::raw('AVG(amount) as average_order_value'),
-                    DB::raw('SUM(amount) as gmv'),
-                    DB::raw('COUNT(DISTINCT customer_phone_number) as unique_customers')
+                    'orders.sku',
+                    'products.product as product_name', // Added product name
+                    DB::raw('SUM(orders.qty) as total_qty'),
+                    DB::raw('COUNT(orders.id) as total_orders'),
+                    DB::raw('AVG(orders.amount) as average_order_value'),
+                    DB::raw('SUM(orders.amount) as gmv'),
+                    DB::raw('COUNT(DISTINCT orders.customer_phone_number) as unique_customers')
                 )
-                ->where('tenant_id', $currentTenantId)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->groupBy('sku')
-                ->orderBy('sku')
+                ->leftJoin('products', function($join) use ($currentTenantId) {
+                    $join->on('orders.sku', '=', 'products.sku')
+                        ->where('products.tenant_id', '=', $currentTenantId);
+                })
+                ->where('orders.tenant_id', $currentTenantId)
+                ->whereBetween('orders.date', [$startDate, $endDate])
+                ->groupBy('orders.sku', 'products.product')
+                ->orderBy('orders.sku')
                 ->get();
             
             $periodData = [];
@@ -1515,6 +1520,7 @@ class NetProfitController extends Controller
                 $periodData[] = [
                     $periodLabel,
                     $row->sku,
+                    $row->product_name ?? 'Unknown Product', // Fallback if product not found
                     (int)$row->total_qty,
                     (int)$row->total_orders,
                     (float)$row->average_order_value,
@@ -1529,10 +1535,11 @@ class NetProfitController extends Controller
         // Prepare data for Google Sheets
         $data = [];
         
-        // Add headers
+        // Add headers with new Product Name column
         $data[] = [
             'Period', 
-            'SKU', 
+            'SKU',
+            'Product Name',
             'Qty', 
             'Orders', 
             'AOV', 
@@ -1552,8 +1559,8 @@ class NetProfitController extends Controller
         
         $sheetName = 'Product Report';
         
-        // Export to Google Sheets
-        $this->googleSheetService->clearRange("$sheetName!A1:G1000");
+        // Export to Google Sheets (updated range to H to accommodate the new column)
+        $this->googleSheetService->clearRange("$sheetName!A1:H1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
         return response()->json([
