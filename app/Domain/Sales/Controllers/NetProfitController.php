@@ -1473,4 +1473,76 @@ class NetProfitController extends Controller
             'count' => count($data) - 1 // Subtract 1 for header row
         ]);
     }
+    public function exportProductReport()
+    {
+        $newSpreadsheetId = '1iM61qRxDgjSj6fVnhXrYRA-pY2RtH8XTJqSfvWVYoGs';
+
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
+        $currentTenantId = Auth::user()->current_tenant_id;
+        
+        $now = Carbon::now();
+        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        
+        // Query to get orders for the current month
+        $orders = DB::table('orders')
+            ->select(
+                DB::raw('DATE(date) as order_date'),
+                'sku',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('COUNT(id) as total_orders'),
+                DB::raw('AVG(amount) as average_order_value'),
+                DB::raw('SUM(amount) as gmv'),
+                DB::raw('COUNT(DISTINCT customer_phone_number) as unique_customers')
+            )
+            ->where('tenant_id', '=', $currentTenantId)
+            ->whereMonth('date', $now->month)
+            ->whereYear('date', $now->year)
+            ->groupBy('order_date', 'sku')
+            ->orderBy('order_date')
+            ->orderBy('sku')
+            ->get();
+        
+        // Prepare data for Google Sheets
+        $data = [];
+        
+        // Add headers
+        $data[] = [
+            'Date', 
+            'SKU', 
+            'Qty', 
+            'Orders', 
+            'AOV', 
+            'GMV',
+            'Unique Customers'
+        ];
+        
+        // Add rows
+        foreach ($orders as $row) {
+            $data[] = [
+                $row->order_date,
+                $row->sku,
+                (int)$row->total_qty,
+                (int)$row->total_orders,
+                (float)$row->average_order_value,
+                (float)$row->gmv,
+                (int)$row->unique_customers
+            ];
+        }
+        
+        $sheetName = 'Product Report';
+        
+        // Export to Google Sheets
+        $this->googleSheetService->clearRange("$sheetName!A1:G1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Product report data exported successfully to Google Sheets',
+            'month' => $now->format('F Y'),
+            'count' => count($data) - 1 // Subtract 1 for header row
+        ]);
+    }
 }
