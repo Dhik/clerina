@@ -1483,34 +1483,55 @@ class NetProfitController extends Controller
         $currentTenantId = Auth::user()->current_tenant_id;
         
         $now = Carbon::now();
-        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
-        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        $currentMonth = $now->month;
+        $currentYear = $now->year;
         
-        // Query to get orders for the current month
-        $orders = DB::table('orders')
-            ->select(
-                DB::raw('DATE(date) as order_date'),
-                'sku',
-                DB::raw('SUM(qty) as total_qty'),
-                DB::raw('COUNT(id) as total_orders'),
-                DB::raw('AVG(amount) as average_order_value'),
-                DB::raw('SUM(amount) as gmv'),
-                DB::raw('COUNT(DISTINCT customer_phone_number) as unique_customers')
-            )
-            ->where('tenant_id', '=', $currentTenantId)
-            ->whereMonth('date', $now->month)
-            ->whereYear('date', $now->year)
-            ->groupBy('order_date', 'sku')
-            ->orderBy('order_date')
-            ->orderBy('sku')
-            ->get();
+        // First period: 1st to 15th
+        $firstPeriodStart = Carbon::createFromDate($currentYear, $currentMonth, 1)->format('Y-m-d');
+        $firstPeriodEnd = Carbon::createFromDate($currentYear, $currentMonth, 15)->format('Y-m-d');
+        
+        // Second period: 16th to end of month
+        $secondPeriodStart = Carbon::createFromDate($currentYear, $currentMonth, 16)->format('Y-m-d');
+        $secondPeriodEnd = Carbon::createFromDate($currentYear, $currentMonth, 1)->endOfMonth()->format('Y-m-d');
+        
+        // Function to get data for a specific period
+        $getDataForPeriod = function($startDate, $endDate, $periodLabel) use ($currentTenantId) {
+            $orders = Order::select(
+                    'sku',
+                    DB::raw('SUM(qty) as total_qty'),
+                    DB::raw('COUNT(id) as total_orders'),
+                    DB::raw('AVG(amount) as average_order_value'),
+                    DB::raw('SUM(amount) as gmv'),
+                    DB::raw('COUNT(DISTINCT customer_phone_number) as unique_customers')
+                )
+                ->where('tenant_id', $currentTenantId)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->groupBy('sku')
+                ->orderBy('sku')
+                ->get();
+            
+            $periodData = [];
+            foreach ($orders as $row) {
+                $periodData[] = [
+                    $periodLabel,
+                    $row->sku,
+                    (int)$row->total_qty,
+                    (int)$row->total_orders,
+                    (float)$row->average_order_value,
+                    (float)$row->gmv,
+                    (int)$row->unique_customers
+                ];
+            }
+            
+            return $periodData;
+        };
         
         // Prepare data for Google Sheets
         $data = [];
         
         // Add headers
         $data[] = [
-            'Date', 
+            'Period', 
             'SKU', 
             'Qty', 
             'Orders', 
@@ -1519,18 +1540,15 @@ class NetProfitController extends Controller
             'Unique Customers'
         ];
         
-        // Add rows
-        foreach ($orders as $row) {
-            $data[] = [
-                $row->order_date,
-                $row->sku,
-                (int)$row->total_qty,
-                (int)$row->total_orders,
-                (float)$row->average_order_value,
-                (float)$row->gmv,
-                (int)$row->unique_customers
-            ];
-        }
+        // Get data for first period (1-15)
+        $firstPeriodData = $getDataForPeriod($firstPeriodStart, $firstPeriodEnd, '1-15 ' . $now->format('M Y'));
+        
+        // Get data for second period (16-end)
+        $lastDay = $now->copy()->endOfMonth()->day;
+        $secondPeriodData = $getDataForPeriod($secondPeriodStart, $secondPeriodEnd, "16-{$lastDay} " . $now->format('M Y'));
+        
+        // Combine data
+        $data = array_merge($data, $firstPeriodData, $secondPeriodData);
         
         $sheetName = 'Product Report';
         
@@ -1542,7 +1560,83 @@ class NetProfitController extends Controller
             'success' => true, 
             'message' => 'Product report data exported successfully to Google Sheets',
             'month' => $now->format('F Y'),
+            'periods' => [
+                '1-15 ' . $now->format('M Y'),
+                "16-{$lastDay} " . $now->format('M Y')
+            ],
             'count' => count($data) - 1 // Subtract 1 for header row
         ]);
     }
+    // public function exportProductReport()
+    // {
+    //     $newSpreadsheetId = '1iM61qRxDgjSj6fVnhXrYRA-pY2RtH8XTJqSfvWVYoGs';
+
+    //     if ($newSpreadsheetId) {
+    //         $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+    //     }
+    //     $currentTenantId = Auth::user()->current_tenant_id;
+        
+    //     $now = Carbon::now();
+    //     $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+    //     $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        
+    //     // Query to get orders for the current month
+    //     $orders = DB::table('orders')
+    //         ->select(
+    //             DB::raw('DATE(date) as order_date'),
+    //             'sku',
+    //             DB::raw('SUM(qty) as total_qty'),
+    //             DB::raw('COUNT(id) as total_orders'),
+    //             DB::raw('AVG(amount) as average_order_value'),
+    //             DB::raw('SUM(amount) as gmv'),
+    //             DB::raw('COUNT(DISTINCT customer_phone_number) as unique_customers')
+    //         )
+    //         ->where('tenant_id', '=', $currentTenantId)
+    //         ->whereMonth('date', $now->month)
+    //         ->whereYear('date', $now->year)
+    //         ->groupBy('order_date', 'sku')
+    //         ->orderBy('order_date')
+    //         ->orderBy('sku')
+    //         ->get();
+        
+    //     // Prepare data for Google Sheets
+    //     $data = [];
+        
+    //     // Add headers
+    //     $data[] = [
+    //         'Date', 
+    //         'SKU', 
+    //         'Qty', 
+    //         'Orders', 
+    //         'AOV', 
+    //         'GMV',
+    //         'Unique Customers'
+    //     ];
+        
+    //     // Add rows
+    //     foreach ($orders as $row) {
+    //         $data[] = [
+    //             $row->order_date,
+    //             $row->sku,
+    //             (int)$row->total_qty,
+    //             (int)$row->total_orders,
+    //             (float)$row->average_order_value,
+    //             (float)$row->gmv,
+    //             (int)$row->unique_customers
+    //         ];
+    //     }
+        
+    //     $sheetName = 'Product Report';
+        
+    //     // Export to Google Sheets
+    //     $this->googleSheetService->clearRange("$sheetName!A1:G1000");
+    //     $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+    //     return response()->json([
+    //         'success' => true, 
+    //         'message' => 'Product report data exported successfully to Google Sheets',
+    //         'month' => $now->format('F Y'),
+    //         'count' => count($data) - 1 // Subtract 1 for header row
+    //     ]);
+    // }
 }
