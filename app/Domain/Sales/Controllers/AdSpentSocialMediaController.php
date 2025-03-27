@@ -191,11 +191,13 @@ class AdSpentSocialMediaController extends Controller
             ->make(true);
     }
 
-    public function get_ads_details_by_date(Request $request) {
+    public function get_ads_details_by_date(Request $request) 
+    {
         $query = AdsMeta::query()
             ->select([
-                DB::raw('ANY_VALUE(id) as id'), // Changed from MAX(id) to ANY_VALUE for ONLY_FULL_GROUP_BY mode
-                'date',
+                DB::raw('ANY_VALUE(id) as id'), // Using ANY_VALUE for ONLY_FULL_GROUP_BY mode
+                DB::raw('MIN(date) as start_date'), // Get the earliest date in the range
+                DB::raw('MAX(date) as end_date'), // Get the latest date in the range
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
                 DB::raw('SUM(link_clicks) as link_clicks'),
@@ -229,8 +231,8 @@ class AdSpentSocialMediaController extends Controller
             }
         }
         
-        // Continue with grouping
-        $query->groupBy('account_name', 'date', 'kategori_produk');
+        // Changed grouping to only include account_name and kategori_produk
+        $query->groupBy('account_name', 'kategori_produk');
         
         // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
@@ -251,6 +253,13 @@ class AdSpentSocialMediaController extends Controller
             ->addIndexColumn()
             ->editColumn('account_name', function ($row) {
                 return $row->account_name ?: '-';
+            })
+            ->editColumn('date', function ($row) {
+                // Show date range instead of single date
+                if ($row->start_date == $row->end_date) {
+                    return $row->start_date;
+                }
+                return $row->start_date . ' to ' . $row->end_date;
             })
             ->editColumn('amount_spent', function ($row) {
                 return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
@@ -332,7 +341,7 @@ class AdSpentSocialMediaController extends Controller
                 return '<span class="badge badge-secondary">N/A</span>';
             })
             ->addColumn('action', function ($row) {
-                return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-date="'.$row->date.'">
+                return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-kategori="'.$row->kategori_produk.'">
                     <i class="fas fa-trash"></i> Delete
                 </button>';
             })
