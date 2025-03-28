@@ -844,7 +844,6 @@ private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $or
                 'date',
                 DB::raw('SUM(impressions) as impressions')
             )
-            ->where('tenant_id', 1)
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
             
             // Apply product category filter if provided
