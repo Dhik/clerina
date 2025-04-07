@@ -1554,59 +1554,49 @@ class SalesController extends Controller
     }
 
     public function updateMonthlyAdSpentData()
-{
-    try {
-        // Define specific date range: March 26-31, 2025
-        $startDate = Carbon::parse('2025-03-26');
-        $endDate = Carbon::parse('2025-03-31');
-        
-        // Comment out original date calculation
-        // $startOfMonth = Carbon::now()->startOfMonth();
-        // $endOfMonth = Carbon::now()->endOfMonth();
+    {
+        try {
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
 
-        // Use the specific date range instead
-        for ($date = clone $startDate; $date <= $endDate; $date->addDay()) {
-            $formattedDate = $date->format('Y-m-d');
+            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
 
-            $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->where('social_media_id', '!=', 10)
-                ->sum('amount');
+                $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->where('social_media_id', '!=', 10)
+                    ->sum('amount');
 
-            $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->where('sales_channel_id', '!=', 9)
-                ->sum('amount');
+                $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->where('sales_channel_id', '!=', 9)
+                    ->sum('amount');
 
-            $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
+                $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
 
-            $turnover = Sales::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->value('turnover');
+                $turnover = Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->value('turnover');
 
-            $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
-            
-            $dataToUpdate = [
-                'ad_spent_social_media' => $sumSpentSocialMedia,
-                'ad_spent_market_place' => $sumSpentMarketPlace,
-                'ad_spent_total' => $totalAdSpent,
-                'roas' => $roas,
-            ];
-            
-            Sales::where('tenant_id', 1)
-                ->where('date', $formattedDate)
-                ->update($dataToUpdate);
+                $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
+                
+                $dataToUpdate = [
+                    'ad_spent_social_media' => $sumSpentSocialMedia,
+                    'ad_spent_market_place' => $sumSpentMarketPlace,
+                    'ad_spent_total' => $totalAdSpent,
+                    'roas' => $roas,
+                ];
+                
+                Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+        } catch (Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-
-        return response()->json([
-            'status' => 'success', 
-            'message' => 'Ad spent data updated for March 26-31, 2025.',
-            'date_range' => $startDate->format('Y-m-d') . ' to ' . $endDate->format('Y-m-d')
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
-}
 
     public function updateMonthlyAdSpentDataAzrina()
     {
