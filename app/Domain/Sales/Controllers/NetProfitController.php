@@ -408,47 +408,29 @@ class NetProfitController extends Controller
         }
     }
     public function updateMarketing()
-{
-    try {
-        // Define specific date range: March 26-31, 2025
-        $startDate = '2025-03-26';
-        $endDate = '2025-03-31';
-        
-        // Comment out original month/year filtering query
-        /*
-        DB::statement("
-            UPDATE net_profits
-            INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
-            SET net_profits.marketing = sales.ad_spent_total, 
-                net_profits.updated_at = ?
-            WHERE MONTH(net_profits.date) = ?
-            AND YEAR(net_profits.date) = ?
-            AND sales.tenant_id = ?
-        ", [now(), now()->month, now()->year, 1]);
-        */
-        
-        // New query with specific date range
-        DB::statement("
-            UPDATE net_profits
-            INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
-            SET net_profits.marketing = sales.ad_spent_total, 
-                net_profits.updated_at = ?
-            WHERE net_profits.date BETWEEN ? AND ?
-            AND sales.tenant_id = ?
-        ", [now(), $startDate, $endDate, 1]);
+    {
+        try {
+            DB::statement("
+                UPDATE net_profits
+                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+                SET net_profits.marketing = sales.ad_spent_total, 
+                    net_profits.updated_at = ?
+                WHERE MONTH(net_profits.date) = ?
+                AND YEAR(net_profits.date) = ?
+                AND sales.tenant_id = ?
+            ", [now(), now()->month, now()->year, 1]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Marketing data updated successfully for March 26-31, 2025.'
-        ]);
+            return response()->json([
+                'success' => true,
+            ]);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
     public function updateVisit()
     {
         try {
@@ -792,8 +774,8 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
-            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::now()->format('Y-m-d');
+            $startDate = '2025-03-26';
+            $endDate = '2025-03-31';
 
             $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
