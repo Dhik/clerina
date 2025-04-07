@@ -664,80 +664,156 @@ class AdSpentSocialMediaController extends Controller
         }
     }
 
-/**
- * Process a single CSV file and import its data
- * 
- * @param string $filePath Path to the CSV file
- * @param string $kategoriProduk Product category
- * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
- * @param string|null $originalFilename Original filename of the CSV
- * @return int Number of records imported
- */
-private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
-{
-    $csvData = array_map('str_getcsv', file($filePath));
-    $headers = array_shift($csvData);
-    $count = 0;
-    
-    // Use the provided original filename instead of the temporary path
-    $filename = $originalFilename ?? basename($filePath);
-    
-    // Remove file extension first if it exists
-    $filename = pathinfo($filename, PATHINFO_FILENAME);
-    
-    // Remove everything from "-Campaign" onwards
-    if (strpos($filename, '-Campaign') !== false) {
-        $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
-    } else {
-        // Fallback - use the whole filename as account name
-        $accountName = $filename;
-    }
-    
-    foreach ($csvData as $row) {
-        // Skip empty rows
-        if (empty($row[0])) {
-            continue;
+    /**
+     * Process a single CSV file and import its data
+     * 
+     * @param string $filePath Path to the CSV file
+     * @param string $kategoriProduk Product category
+     * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
+     * @param string|null $originalFilename Original filename of the CSV
+     * @return int Number of records imported
+     */
+    private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
+    {
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        // Use the provided original filename instead of the temporary path
+        $filename = $originalFilename ?? basename($filePath);
+        
+        // Remove file extension first if it exists
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        
+        // Remove everything from "-Campaign" onwards
+        if (strpos($filename, '-Campaign') !== false) {
+            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
+        } else {
+            // Fallback - use the whole filename as account name
+            $accountName = $filename;
         }
         
-        try {
-            $date = Carbon::parse($row[0])->format('Y-m-d');
-            $amount = (int)$row[3];
-            $campaignName = $row[2] ?? null;
-            
-            AdsMeta::updateOrCreate(
-                [
-                    'date' => $date,
-                    'campaign_name' => $campaignName,
-                    'amount_spent' => $amount,
-                    'kategori_produk' => $kategoriProduk,
-                    'tenant_id' => Auth::user()->current_tenant_id
-                ],
-                [
-                    'impressions' => (int)$row[4],
-                    'content_views_shared_items' => (float)($row[5] ?? 0),
-                    'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
-                    'purchases_shared_items' => (float)($row[7] ?? 0),
-                    'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
-                    'link_clicks' => (float)($row[9] ?? 0),
-                    'account_name' => $accountName
-                ]
-            );
-            
-            if (!isset($dateAmountMap[$date])) {
-                $dateAmountMap[$date] = 0;
+        // Determine PIC based on account name patterns
+        $pic = $this->determinePIC($accountName);
+        
+        foreach ($csvData as $row) {
+            // Skip empty rows
+            if (empty($row[0])) {
+                continue;
             }
-            $dateAmountMap[$date] += $amount;
             
-            $count++;
-        } catch (\Exception $e) {
-            // Log the error but continue processing other rows
-            \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            try {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                AdsMeta::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amount,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => Auth::user()->current_tenant_id
+                    ],
+                    [
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName,
+                        'pic' => $pic
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                // Log the error but continue processing other rows
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
         }
+        
+        return $count;
     }
     
-    return $count;
-}
-    
+    /**
+     * Determine the PIC based on account name patterns
+     * 
+     * @param string $accountName The account name to analyze
+     * @return string The determined PIC
+     */
+    private function determinePIC($accountName)
+    {
+        // Regular expressions for matching account names
+        if (preg_match('/---REZA(-|---|$|\s|&)/i', $accountName) || 
+            preg_match('/REZA---/i', $accountName) ||
+            preg_match('/---JB---REZA/i', $accountName) ||
+            preg_match('/---GS---REZA/i', $accountName) ||
+            preg_match('/CPAS-CLEORA-JAKARTA/i', $accountName)) {
+            return 'REZA';
+        }
+        
+        if (preg_match('/---FEBRY(-|---|$|\s)/i', $accountName) || 
+            preg_match('/FEBRY---/i', $accountName) ||
+            strpos($accountName, 'IPO2024---Mohammad-Rocky-Pramana-HKU---2') !== false) {
+            return 'FEBRY';
+        }
+        
+        if (preg_match('/---LABIB(-|---|$|\s)/i', $accountName) || 
+            preg_match('/LABIB---/i', $accountName) ||
+            preg_match('/---GS---LABIB/i', $accountName) ||
+            preg_match('/GS-LABIB/i', $accountName) ||
+            preg_match('/RS-LABIB/i', $accountName) ||
+            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---3') !== false ||
+            strpos($accountName, 'MKH---CLEORA-6') !== false) {
+            return 'LABIB';
+        }
+        
+        if (preg_match('/---ANGGA(-|---|$|\s)/i', $accountName) || 
+            preg_match('/ANGGA---/i', $accountName) ||
+            strpos($accountName, 'IPO2024---AGUS-HKU---') !== false ||
+            strpos($accountName, 'CPAS---CLEORA---ANGGA') !== false ||
+            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---2') !== false) {
+            // Check if it's "ANGGA,REZA" category
+            if (preg_match('/---JB-BID---ANGGA/i', $accountName) ||
+                preg_match('/---JB-ANGGA/i', $accountName) ||
+                preg_match('/---GLOWSMOOTH---ANGGA/i', $accountName) ||
+                strpos($accountName, 'MKH---CLEORA-7') !== false ||
+                strpos($accountName, 'MKH---CLEORA-5') !== false ||
+                strpos($accountName, 'MKH---CLEORA-8') !== false ||
+                preg_match('/---ANGGA---3-MINUT/i', $accountName) ||
+                preg_match('/---ANGGA---RS/i', $accountName) ||
+                preg_match('/---RS---ANGGA/i', $accountName)) {
+                return 'ANGGA,REZA';
+            }
+            return 'ANGGA';
+        }
+        
+        if (strpos($accountName, 'TOFU') !== false ||
+            strpos($accountName, 'MKH---CLEORA-4') !== false ||
+            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---1') !== false ||
+            strpos($accountName, 'CLEORA-71---BOOST-OFFICIAL') !== false ||
+            strpos($accountName, 'CLEORA-72---PROSES') !== false) {
+            return 'TOFU';
+        }
+        
+        if (strpos($accountName, 'CPAS-SHOPEE-CLEORA-1') !== false ||
+            strpos($accountName, 'MKH---CPAS-SHOPEE-CLEORA-3') !== false ||
+            strpos($accountName, 'IPO2024---Mohammad-Rocky-Pramana-HKU---1') !== false) {
+            return 'ALL';
+        }
+        
+        // Default case if no pattern matches
+        return 'UNKNOWN';
+    }
+
+        
     public function getFunnelData(Request $request)
     {
         try {
