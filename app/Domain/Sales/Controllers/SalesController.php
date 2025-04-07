@@ -1283,78 +1283,95 @@ class SalesController extends Controller
 
 
     public function importFromGoogleSheet()
-    {
-        $range = 'Import Sales!A2:Q';
-        $sheetData = $this->googleSheetService->getSheetData($range);
+{
+    $range = 'Import Sales!A2:Q';
+    $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
+    $tenant_id = 1;
+    
+    // Define specific date range: March 26-31, 2025
+    $startDate = '2025-03-26';
+    $endDate = '2025-03-31';
+    
+    // Comment out current month filtering
+    // $currentMonth = Carbon::now()->format('Y-m');
 
-        foreach ($sheetData as $row) {
-            if (empty($row) || empty($row[0])) {
+    foreach ($sheetData as $row) {
+        if (empty($row) || empty($row[0])) {
+            continue;
+        }
+        $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+        
+        // Comment out current month filtering
+        // if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+        //     continue;
+        // }
+        
+        // Check if date is within the specific range (March 26-31, 2025)
+        if ($date < $startDate || $date > $endDate) {
+            continue;
+        }
+        
+        $salesChannelData = [
+            4 => $row[8] ?? null,  // Tiktok Shop (sales_channel_id == 4)
+            1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
+            3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
+            2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
+            8 => $row[13] ?? null, // Lazada (sales_channel_id == 2)
+            9 => $row[14] ?? null, // Lazada (sales_channel_id == 2)
+        ];
+
+        foreach ($salesChannelData as $salesChannelId => $amountValue) {
+            if (!isset($amountValue)) {
                 continue;
             }
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue;
-            }
-            $salesChannelData = [
-                4 => $row[8] ?? null, // Tiktok Shop (sales_channel_id == 4)
-                1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
-                3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
-                2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
-                8 => $row[13] ?? null, // Lazada (sales_channel_id == 2)
-                9 => $row[14] ?? null, // Lazada (sales_channel_id == 2)
-            ];
+            $amount = $this->parseCurrencyToInt($amountValue);
 
-            foreach ($salesChannelData as $salesChannelId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
-
-                AdSpentMarketPlace::updateOrCreate(
-                    [
-                        'date'             => $date,
-                        'sales_channel_id' => $salesChannelId,
-                        'tenant_id'        => $tenant_id,
-                    ],
-                    [
-                        'amount'           => $amount,
-                    ]
-                );
-            }
-
-            // Social Media data
-            $socialMediaData = [
-                1 => $row[9] ?? null, // Facebook (social_media_id == 1)
-                9 => $row[15] ?? null, // Facebook (social_media_id == 1)
-                10 => $row[16] ?? null, // Facebook (social_media_id == 1)
-                // 2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
-                // 5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
-            ];
-
-            foreach ($socialMediaData as $socialMediaId => $amountValue) {
-                if (!isset($amountValue)) {
-                    continue;
-                }
-                $amount = $this->parseCurrencyToInt($amountValue);
-
-                AdSpentSocialMedia::updateOrCreate(
-                    [
-                        'date'            => $date,
-                        'social_media_id' => $socialMediaId,
-                        'tenant_id'       => $tenant_id,
-                    ],
-                    [
-                        'amount'          => $amount,
-                    ]
-                );
-            }
+            AdSpentMarketPlace::updateOrCreate(
+                [
+                    'date'             => $date,
+                    'sales_channel_id' => $salesChannelId,
+                    'tenant_id'        => $tenant_id,
+                ],
+                [
+                    'amount'           => $amount,
+                ]
+            );
         }
 
-        return response()->json(['message' => 'Data imported successfully']);
+        // Social Media data
+        $socialMediaData = [
+            1 => $row[9] ?? null,  // Facebook (social_media_id == 1)
+            9 => $row[15] ?? null, // Facebook (social_media_id == 1)
+            10 => $row[16] ?? null, // Facebook (social_media_id == 1)
+            // 2 => $row[6] ?? null,  // Snack Video (social_media_id == 2)
+            // 5 => $row[7] ?? null,  // Google Ads (social_media_id == 5)
+        ];
+
+        foreach ($socialMediaData as $socialMediaId => $amountValue) {
+            if (!isset($amountValue)) {
+                continue;
+            }
+            $amount = $this->parseCurrencyToInt($amountValue);
+
+            AdSpentSocialMedia::updateOrCreate(
+                [
+                    'date'            => $date,
+                    'social_media_id' => $socialMediaId,
+                    'tenant_id'       => $tenant_id,
+                ],
+                [
+                    'amount'          => $amount,
+                ]
+            );
+        }
     }
+
+    return response()->json([
+        'message' => 'Data imported successfully for date range: March 26-31, 2025',
+        'date_range' => "$startDate to $endDate"
+    ]);
+}
 
     public function importAdsAzrina()
     {
