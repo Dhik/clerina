@@ -77,73 +77,60 @@ class NetProfitController extends Controller
     //     }
     // }
     public function updateSpentKol()
-{
-    try {
-        // Define the range to get KOL spent data from column R
-        $range = 'Import Sales!A2:R';
-        $sheetData = $this->googleSheetService->getSheetData($range);
-        
-        $tenant_id = 1;
-        
-        // Define specific date range: March 26-31, 2025
-        $startDate = '2025-03-26';
-        $endDate = '2025-03-31';
-        
-        // Comment out current month filtering
-        // $currentMonth = Carbon::now()->format('Y-m');
-        
-        // Create an array to store date => KOL spent mapping
-        $kolSpentData = [];
-        
-        foreach ($sheetData as $row) {
-            if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
-                continue;
+    {
+        try {
+            // Define the range to get KOL spent data from column R
+            $range = 'Import Sales!A2:R';
+            $sheetData = $this->googleSheetService->getSheetData($range);
+            
+            $tenant_id = 1;
+            $currentMonth = Carbon::now()->format('Y-m');
+            
+            // Create an array to store date => KOL spent mapping
+            $kolSpentData = [];
+            
+            foreach ($sheetData as $row) {
+                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
+                    continue;
+                }
+                
+                // Parse the date
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip if not in current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                $kolSpent = $this->parseCurrencyToInt($row[17]);
+                $kolSpentData[$date] = $kolSpent;
+            }
+            // Counter for tracking updates
+            $updatedCount = 0;
+            
+            foreach ($kolSpentData as $date => $amount) {
+                // Check if record exists
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->exists();
+                
+                // Only update if record exists
+                if ($exists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->update(['spent_kol' => $amount]);
+                        
+                    $updatedCount++;
+                }
             }
             
-            // Parse the date
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            
-            // Comment out current month filtering
-            // if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-            //     continue;
-            // }
-            
-            // Check if date is within the specific range (March 26-31, 2025)
-            if ($date < $startDate || $date > $endDate) {
-                continue;
-            }
-            
-            $kolSpent = $this->parseCurrencyToInt($row[17]);
-            $kolSpentData[$date] = $kolSpent;
+            return response()->json([
+                'success' => true, 
+                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+            ]);
+        } catch(\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-        
-        // Counter for tracking updates
-        $updatedCount = 0;
-        
-        foreach ($kolSpentData as $date => $amount) {
-            // Check if record exists
-            $exists = NetProfit::where('date', $date)
-                    ->where('tenant_id', 1)
-                    ->exists();
-            
-            // Only update if record exists
-            if ($exists) {
-                NetProfit::where('date', $date)
-                    ->where('tenant_id', 1)
-                    ->update(['spent_kol' => $amount]);
-                    
-                $updatedCount++;
-            }
-        }
-        
-        return response()->json([
-            'success' => true, 
-            'message' => "KOL spent data updated successfully for March 26-31, 2025. Updated {$updatedCount} records."
-        ]);
-    } catch(\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
-}
     public function updateSpentKolAzrina()
     {
         try {
@@ -421,29 +408,47 @@ class NetProfitController extends Controller
         }
     }
     public function updateMarketing()
-    {
-        try {
-            DB::statement("
-                UPDATE net_profits
-                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
-                SET net_profits.marketing = sales.ad_spent_total, 
-                    net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
-                AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 1]);
+{
+    try {
+        // Define specific date range: March 26-31, 2025
+        $startDate = '2025-03-26';
+        $endDate = '2025-03-31';
+        
+        // Comment out original month/year filtering query
+        /*
+        DB::statement("
+            UPDATE net_profits
+            INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+            SET net_profits.marketing = sales.ad_spent_total, 
+                net_profits.updated_at = ?
+            WHERE MONTH(net_profits.date) = ?
+            AND YEAR(net_profits.date) = ?
+            AND sales.tenant_id = ?
+        ", [now(), now()->month, now()->year, 1]);
+        */
+        
+        // New query with specific date range
+        DB::statement("
+            UPDATE net_profits
+            INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+            SET net_profits.marketing = sales.ad_spent_total, 
+                net_profits.updated_at = ?
+            WHERE net_profits.date BETWEEN ? AND ?
+            AND sales.tenant_id = ?
+        ", [now(), $startDate, $endDate, 1]);
 
-            return response()->json([
-                'success' => true,
-            ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Marketing data updated successfully for March 26-31, 2025.'
+        ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     public function updateVisit()
     {
         try {
