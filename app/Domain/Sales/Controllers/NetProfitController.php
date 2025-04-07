@@ -77,60 +77,73 @@ class NetProfitController extends Controller
     //     }
     // }
     public function updateSpentKol()
-    {
-        try {
-            // Define the range to get KOL spent data from column R
-            $range = 'Import Sales!A2:R';
-            $sheetData = $this->googleSheetService->getSheetData($range);
-            
-            $tenant_id = 1;
-            $currentMonth = Carbon::now()->format('Y-m');
-            
-            // Create an array to store date => KOL spent mapping
-            $kolSpentData = [];
-            
-            foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
-                    continue;
-                }
-                
-                // Parse the date
-                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                
-                // Skip if not in current month
-                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                    continue;
-                }
-                $kolSpent = $this->parseCurrencyToInt($row[17]);
-                $kolSpentData[$date] = $kolSpent;
-            }
-            // Counter for tracking updates
-            $updatedCount = 0;
-            
-            foreach ($kolSpentData as $date => $amount) {
-                // Check if record exists
-                $exists = NetProfit::where('date', $date)
-                        ->where('tenant_id', 1)
-                        ->exists();
-                
-                // Only update if record exists
-                if ($exists) {
-                    NetProfit::where('date', $date)
-                        ->where('tenant_id', 1)
-                        ->update(['spent_kol' => $amount]);
-                        
-                    $updatedCount++;
-                }
+{
+    try {
+        // Define the range to get KOL spent data from column R
+        $range = 'Import Sales!A2:R';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+        
+        $tenant_id = 1;
+        
+        // Define specific date range: March 26-31, 2025
+        $startDate = '2025-03-26';
+        $endDate = '2025-03-31';
+        
+        // Comment out current month filtering
+        // $currentMonth = Carbon::now()->format('Y-m');
+        
+        // Create an array to store date => KOL spent mapping
+        $kolSpentData = [];
+        
+        foreach ($sheetData as $row) {
+            if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
+                continue;
             }
             
-            return response()->json([
-                'success' => true, 
-                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
-            ]);
-        } catch(\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            // Parse the date
+            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            
+            // Comment out current month filtering
+            // if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+            //     continue;
+            // }
+            
+            // Check if date is within the specific range (March 26-31, 2025)
+            if ($date < $startDate || $date > $endDate) {
+                continue;
+            }
+            
+            $kolSpent = $this->parseCurrencyToInt($row[17]);
+            $kolSpentData[$date] = $kolSpent;
         }
+        
+        // Counter for tracking updates
+        $updatedCount = 0;
+        
+        foreach ($kolSpentData as $date => $amount) {
+            // Check if record exists
+            $exists = NetProfit::where('date', $date)
+                    ->where('tenant_id', 1)
+                    ->exists();
+            
+            // Only update if record exists
+            if ($exists) {
+                NetProfit::where('date', $date)
+                    ->where('tenant_id', 1)
+                    ->update(['spent_kol' => $amount]);
+                    
+                $updatedCount++;
+            }
+        }
+        
+        return response()->json([
+            'success' => true, 
+            'message' => "KOL spent data updated successfully for March 26-31, 2025. Updated {$updatedCount} records."
+        ]);
+    } catch(\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
     public function updateSpentKolAzrina()
     {
         try {
