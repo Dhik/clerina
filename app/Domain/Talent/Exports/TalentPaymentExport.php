@@ -116,11 +116,11 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
             }
 
             // Pre-calculate values to reduce memory usage
-            $rate_card_per_slot = (float)$talent->price_rate;
+            $rate_card_per_slot = (int)$talent->price_rate; // Cast to integer
             $slot = (int)$talent->slot_final;
-            $rate_harga = $rate_card_per_slot * $slot;
-            $discount = (float)$talent->discount;
-            $harga_setelah_diskon = $rate_harga - $discount;
+            $rate_harga = (int)($rate_card_per_slot * $slot); // Cast to integer
+            $discount = (int)$talent->discount; // Cast to integer
+            $harga_setelah_diskon = (int)($rate_harga - $discount); // Cast to integer
 
             if (!is_null($talent->tax_percentage) && $talent->tax_percentage > 0) {
                 $pphPercentage = $talent->tax_percentage / 100;
@@ -128,15 +128,15 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $pphPercentage = Str::startsWith($talent->nama_rekening, ['PT', 'CV']) ? 0.02 : 0.025;
             }
             
-            $pphAmount = $harga_setelah_diskon * $pphPercentage;
-            $final_tf = $harga_setelah_diskon - $pphAmount;
+            $pphAmount = (int)($harga_setelah_diskon * $pphPercentage); // Cast to integer
+            $final_tf = (int)($harga_setelah_diskon - $pphAmount); // Cast to integer
             
             $displayValue = ($payment->amount_tf === null || $payment->amount_tf == 0) ? 
-            match($payment->status_payment) {
-                "Termin 1", "Termin 2", "Termin 3" => $final_tf / 3,
-                "DP 50%", "Pelunasan 50%" => $final_tf / 2,
-                default => $final_tf
-            } : $payment->amount_tf;
+                match($payment->status_payment) {
+                    "Termin 1", "Termin 2", "Termin 3" => (int)($final_tf / 3), // Cast to integer
+                    "DP 50%", "Pelunasan 50%" => (int)($final_tf / 2), // Cast to integer
+                    default => $final_tf
+                } : (int)$payment->amount_tf; // Cast to integer
 
             // Return array directly without storing in variable
             return [
@@ -144,16 +144,16 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 $payment->tanggal_pengajuan,
                 $talent->username ?? '',
                 $talent->talent_name ?? '',
-                $rate_card_per_slot,
-                $slot,
+                $rate_card_per_slot, // Integer
+                $slot, // Integer
                 $talent->content_type ?? '',
-                $rate_harga,
-                $discount,
-                $harga_setelah_diskon,
+                $rate_harga, // Integer
+                $discount, // Integer
+                $harga_setelah_diskon, // Integer
                 $talent->no_npwp ?? '',
-                $pphAmount,
-                $final_tf,
-                $displayValue,
+                $pphAmount, // Integer
+                $final_tf, // Integer
+                $displayValue, // Integer
                 $payment->status_payment ?? '',
                 $talent->pic ?? '',
                 $talent->no_rekening ?? '',
@@ -167,7 +167,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 'payment_id' => $payment->id ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
-            return array_fill(0, 18, 'ERROR');
+            return array_fill(0, 20, 'ERROR'); // Fixed to match the 20 columns in the heading
         }
     }
 
@@ -190,8 +190,11 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 
                 $lastRow = $sheet->getHighestRow();
                 
-                // Format NIK as text explicitly
+                // Define all numeric columns including L, M, N
+                $numericColumns = ['F', 'E', 'H', 'I', 'J', 'L', 'M', 'N', 'Q', 'R', 'S'];
+                
                 for ($row = 2; $row <= $lastRow; $row++) {
+                    // Format NIK as text explicitly
                     $cell = $sheet->getCell('T' . $row);
                     $value = $cell->getValue();
                     $cell->setValueExplicit(
@@ -199,8 +202,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                         \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
                     );
                     
-                    // Convert decimal values in the numeric columns to integers
-                    foreach (['K', 'F', 'Q', 'R', 'S'] as $column) {
+                    // Convert decimal values in all numeric columns to integers
+                    foreach ($numericColumns as $column) {
                         $numericCell = $sheet->getCell($column . $row);
                         $numericValue = $numericCell->getValue();
                         if (is_numeric($numericValue)) {
@@ -217,8 +220,8 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
 
     protected function applyValidations($spreadsheet)
     {
-        // Columns that should only allow integer values
-        $numericColumns = ['K', 'F', 'Q', 'R', 'S', 'T'];
+        // Include all columns that should only allow integer values
+        $numericColumns = ['F', 'E', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Q', 'R', 'S', 'T'];
         $chunkSize = 50; // Smaller chunks for validation
         
         foreach ($numericColumns as $column) {
