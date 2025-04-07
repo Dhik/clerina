@@ -190,6 +190,7 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                 
                 $lastRow = $sheet->getHighestRow();
                 
+                // Format NIK as text explicitly
                 for ($row = 2; $row <= $lastRow; $row++) {
                     $cell = $sheet->getCell('T' . $row);
                     $value = $cell->getValue();
@@ -197,6 +198,15 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
                         $value, 
                         \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
                     );
+                    
+                    // Convert decimal values in the numeric columns to integers
+                    foreach (['K', 'F', 'Q', 'R', 'S'] as $column) {
+                        $numericCell = $sheet->getCell($column . $row);
+                        $numericValue = $numericCell->getValue();
+                        if (is_numeric($numericValue)) {
+                            $numericCell->setValue((int)$numericValue);
+                        }
+                    }
                 }
                 
                 $this->applyValidations($spreadsheet);
@@ -207,21 +217,27 @@ class TalentPaymentExport implements FromQuery, WithChunkReading, WithMapping, S
 
     protected function applyValidations($spreadsheet)
     {
-        $numericColumns = ['K', 'F', 'U', 'V', 'W', 'X'];
+        // Columns that should only allow integer values
+        $numericColumns = ['K', 'F', 'Q', 'R', 'S', 'T'];
         $chunkSize = 50; // Smaller chunks for validation
         
         foreach ($numericColumns as $column) {
             $validation = $spreadsheet->getCell($column . '2')->getDataValidation();
+            
+            // Set validation to only allow whole numbers (integers)
             $validation->setType(DataValidation::TYPE_WHOLE)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
                 ->setShowInputMessage(true)
                 ->setShowErrorMessage(true)
                 ->setErrorTitle('Input Error')
-                ->setError('Numbers only')
+                ->setError('Only whole numbers (integers) allowed')
                 ->setPromptTitle('Validation')
-                ->setPrompt('Enter number');
-
+                ->setPrompt('Enter an integer (whole number)');
+                
+            // Apply formula validation to ensure only integers
+            $validation->setFormula1('0'); // Minimum value
+            
             // Apply validation in smaller chunks
             for ($row = 2; $row <= 1000; $row += $chunkSize) {
                 $endRow = min($row + $chunkSize - 1, 1000);
