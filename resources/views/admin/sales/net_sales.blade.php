@@ -217,6 +217,31 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="salesDetailModal">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sales Detail</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>HPP/Unit</th>
+                            <th>Total HPP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hppDetailContent"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="hppDetailModal">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -910,7 +935,7 @@
         }
 
         function showSalesDetail(date) {
-            $('#hppDetailModal').modal('show');
+            $('#salesDetailModal').modal('show');
             $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
                 let html = '';
                 data.forEach(function(item) {
