@@ -933,7 +933,21 @@
         }
 
         function showSalesDetail(date) {
+            // Show modal
             $('#salesDetailModal').modal('show');
+            
+            // Clear previous content and show loading
+            $('#salesDetailContent').html(`
+                <tr>
+                    <td colspan="3" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+
+            // Fetch data
             $.get("{{ route('net-profit.getSalesByChannel') }}", { date: date }, function(data) {
                 let html = '';
                 let totalSales = 0;
@@ -955,6 +969,15 @@
                 </tr>`;
                 
                 $('#salesDetailContent').html(html);
+            }).fail(function() {
+                // Handle error case
+                $('#salesDetailContent').html(`
+                    <tr>
+                        <td colspan="3" class="text-center text-danger">
+                            Failed to load data. Please try again.
+                        </td>
+                    </tr>
+                `);
             });
         }
 
