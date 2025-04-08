@@ -223,7 +223,6 @@ class NetProfitController extends Controller
             $updatedCount = 0;
             $skippedCount = 0;
             
-            // Update net_profits table with the sales data - update only, no create
             foreach ($salesData as $date => $data) {
                 $recordExists = NetProfit::where('date', $date)
                     ->where('tenant_id', $tenant_id)
@@ -240,7 +239,6 @@ class NetProfitController extends Controller
                         
                     $updatedCount++;
                 } else {
-                    // Record doesn't exist - skip instead of create
                     $skippedCount++;
                 }
             }
@@ -679,7 +677,7 @@ class NetProfitController extends Controller
     }
     private function parseCurrencyToInt($value)
     {
-        if (empty($value)) return null;
+        if (empty($value) || $value === '0' || $value === '-') return 0; // Return 0 instead of null
         return (int) preg_replace('/[^0-9]/', '', $value);
     }
     private function parseToInt($currency)
