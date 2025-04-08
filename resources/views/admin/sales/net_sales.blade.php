@@ -937,18 +937,20 @@
             $.get("{{ route('net-profit.getSalesByChannel') }}", { date: date }, function(data) {
                 let html = '';
                 let totalSales = 0;
+                let totalOrders = 0;
                 data.forEach(function(item) {
-                    totalSales += item.total_sales;
+                    totalSales += parseFloat(item.total_sales);
+                    totalOrders += parseInt(item.order_count);
                     html += `<tr>
                         <td>${item.sales_channel}</td>
-                        <td class="text-right">${item.order_count.toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(item.total_sales).toLocaleString('id-ID')}</td>
+                        <td class="text-right">${parseInt(item.order_count).toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${Math.round(parseFloat(item.total_sales)).toLocaleString('id-ID')}</td>
                     </tr>`;
                 });
                 
                 html += `<tr class="font-weight-bold">
                     <td>Total</td>
-                    <td class="text-right">${data.reduce((sum, item) => sum + item.order_count, 0).toLocaleString('id-ID')}</td>
+                    <td class="text-right">${totalOrders.toLocaleString('id-ID')}</td>
                     <td class="text-right">Rp ${Math.round(totalSales).toLocaleString('id-ID')}</td>
                 </tr>`;
                 
