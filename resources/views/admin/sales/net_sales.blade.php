@@ -703,7 +703,8 @@
                     {
                         data: 'total_sales',
                         render: function(data) {
-                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                            return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
                         visible: true
                     },
@@ -891,6 +892,24 @@
         });
 
         function showHppDetail(date) {
+            $('#hppDetailModal').modal('show');
+            $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
+                let html = '';
+                data.forEach(function(item) {
+                    let total = item.quantity * item.harga_satuan;
+                    html += `<tr>
+                        <td>${item.sku}</td>
+                        <td>${item.product}</td>
+                        <td class="text-right">${item.quantity.toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${Math.round(item.harga_satuan).toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${Math.round(total).toLocaleString('id-ID')}</td>
+                    </tr>`;
+                });
+                $('#hppDetailContent').html(html);
+            });
+        }
+
+        function showSalesDetail(date) {
             $('#hppDetailModal').modal('show');
             $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
                 let html = '';
