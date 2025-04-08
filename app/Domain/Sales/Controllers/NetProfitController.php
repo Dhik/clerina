@@ -192,77 +192,56 @@ class NetProfitController extends Controller
     public function updateB2bAndCrmSales()
     {
         try {
-            $range = 'Import Sales!A2:U';
+            // Define the range to get KOL spent data from column R
+            $range = 'Import Sales!A2:T';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 1;
             $currentMonth = Carbon::now()->format('Y-m');
             
-            $salesData = [];
+            // Create an array to store date => KOL spent mapping
+            $kolSpentData = [];
             
             foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0])) {
-                    continue;
-                }
-                if (!isset($row[18]) && !isset($row[20])) {
+                if (empty($row) || empty($row[0]) || !isset($row[19])) { // 17 is index for column R
                     continue;
                 }
                 
-                try {
-                    $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                    
-                    // Keep month filtering - only process current month
-                    if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                        continue;
-                    }
-                    
-                    // Make sure we're using 0 instead of null for empty values
-                    $b2bSales = isset($row[18]) && !empty($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
-                    $crmSales = isset($row[20]) && !empty($row[20]) ? $this->parseCurrencyToInt($row[20]) : 0;
-                    
-                    $salesData[$date] = [
-                        'b2b_sales' => $b2bSales,
-                        'crm_sales' => $crmSales
-                    ];
-                } catch (\Exception $e) {
-                    // Skip rows with invalid date format
+                // Parse the date
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                
+                // Skip if not in current month
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
+                $kolSpent = $this->parseCurrencyToInt($row[19]);
+                $kolSpentData[$date] = $kolSpent;
             }
-
+            // Counter for tracking updates
             $updatedCount = 0;
-            $notFoundCount = 0;
             
-            foreach ($salesData as $date => $data) {
-                // Only update existing records (don't create new ones)
-                $record = NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id)
-                    ->first();
-                    
-                if ($record) {
-                    $record->update([
-                        'b2b_sales' => $data['b2b_sales'],
-                        'crm_sales' => $data['crm_sales'],
-                        'updated_at' => now()
-                    ]);
+            foreach ($kolSpentData as $date => $amount) {
+                // Check if record exists
+                $exists = NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->exists();
+                
+                // Only update if record exists
+                if ($exists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', 1)
+                        ->update(['crm_sales' => $amount]);
+                        
                     $updatedCount++;
-                } else {
-                    $notFoundCount++;
                 }
             }
             
             return response()->json([
                 'success' => true, 
-                'message' => 'B2B and CRM sales data updated successfully',
-                'records_updated' => $updatedCount,
-                'records_not_found' => $notFoundCount,
-                'total_processed' => count($salesData)
+                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
             ]);
         } catch(\Exception $e) {
-            return response()->json([
-                'success' => false, 
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
     public function updateHpp()
