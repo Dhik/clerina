@@ -204,7 +204,7 @@ class NetProfitController extends Controller
                 if (empty($row) || empty($row[0])) {
                     continue;
                 }
-                if (!isset($row[18]) && !isset($row[17])) {
+                if (!isset($row[18]) && !isset($row[20])) {
                     continue;
                 }
                 
@@ -218,7 +218,7 @@ class NetProfitController extends Controller
                     
                     // Make sure we're using 0 instead of null for empty values
                     $b2bSales = isset($row[18]) && !empty($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
-                    $crmSales = isset($row[17]) && !empty($row[17]) ? $this->parseCurrencyToInt($row[17]) : 0;
+                    $crmSales = isset($row[20]) && !empty($row[20]) ? $this->parseCurrencyToInt($row[20]) : 0;
                     
                     $salesData[$date] = [
                         'b2b_sales' => $b2bSales,
