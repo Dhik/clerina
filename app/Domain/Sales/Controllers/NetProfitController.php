@@ -90,7 +90,7 @@ class NetProfitController extends Controller
             $kolSpentData = [];
             
             foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
+                if (empty($row) || empty($row[0]) || !isset($row[19])) { // 17 is index for column R
                     continue;
                 }
                 
