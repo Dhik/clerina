@@ -83,45 +83,52 @@ class CampaignController extends Controller
             })
             ->addColumn('view', function ($row) use ($request) {
                 if ($request->has('filterDates')) {
+                    // Keep the date filter logic for specific date ranges
                     [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
                     $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
                     $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
-
+            
                     $sumStartDate = $row->statistics->where('date', $startDate->toDateString())->sum('view');
                     $sumEndDate = $row->statistics->where('date', $endDate->toDateString())->sum('view');
-
+            
                     return $sumEndDate - $sumStartDate;
                 }
-
-                return $row->statistics->sum('view'); // Default to total view if no filterDates
+            
+                // Just return the campaign's view value directly
+                return $row->view;
             })
             ->addColumn('like', function ($row) use ($request) {
                 if ($request->has('filterDates')) {
+                    // Date filter logic remains the same
                     [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
                     $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
                     $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
-
+            
                     $sumStartDateLikes = $row->statistics->where('date', $startDate->toDateString())->sum('like');
                     $sumEndDateLikes = $row->statistics->where('date', $endDate->toDateString())->sum('like');
-
+            
                     return $sumEndDateLikes - $sumStartDateLikes;
                 }
-
-                return $row->statistics->sum('like'); // Default to total likes if no filterDates
+            
+                // Use campaign's like value directly
+                return $row->like;
             })
+            
             ->addColumn('comment', function ($row) use ($request) {
                 if ($request->has('filterDates')) {
+                    // Date filter logic remains the same
                     [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
                     $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->startOfDay();
                     $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->endOfDay();
-
+            
                     $sumStartDateComments = $row->statistics->where('date', $startDate->toDateString())->sum('comment');
                     $sumEndDateComments = $row->statistics->where('date', $endDate->toDateString())->sum('comment');
-
+            
                     return $sumEndDateComments - $sumStartDateComments;
                 }
-
-                return $row->statistics->sum('comment'); // Default to total comments if no filterDates
+            
+                // Use campaign's comment value directly
+                return $row->comment;
             })
             ->addColumn('actions', function ($row) {
                 $actions = '<a href="' . route('campaign.show', $row->id) . '" class="btn btn-success btn-xs">
@@ -272,26 +279,10 @@ class CampaignController extends Controller
     }
     public function bulkRefresh(): RedirectResponse
     {
-        $currentMonthStart = now()->startOfMonth()->format('Y-m-d');
-        $lastMonthStart = now()->subMonth()->startOfMonth()->format('Y-m-d');
-        $lastMonthEnd = now()->subMonth()->endOfMonth()->format('Y-m-d');
+        $currentMonth = now()->format('Y-m'); // Get the current month in 'YYYY-MM' format
 
-        // Get campaigns that are active in current month or previous month
-        $campaigns = Campaign::where(function($query) use ($currentMonthStart, $lastMonthStart, $lastMonthEnd) {
-            // Campaigns active in current month (start date is before or equal to today, end date is after or equal to first day of current month)
-            $query->where(function($q) use ($currentMonthStart) {
-                $q->where('end_date', '>=', $currentMonthStart);
-            })
-            // OR campaigns active in previous month (end date falls within previous month)
-            ->orWhere(function($q) use ($lastMonthStart, $lastMonthEnd) {
-                $q->whereBetween('start_date', [$lastMonthStart, $lastMonthEnd])
-                ->orWhereBetween('end_date', [$lastMonthStart, $lastMonthEnd])
-                ->orWhere(function($inner) use ($lastMonthStart, $lastMonthEnd) {
-                    $inner->where('start_date', '<=', $lastMonthStart)
-                            ->where('end_date', '>=', $lastMonthEnd);
-                });
-            });
-        })->get();
+        $campaigns = Campaign::where('created_at', 'like', "$currentMonth%")->get();
+        // $campaigns = Campaign::all();
 
         foreach ($campaigns as $campaign) {
             $this->cardService->recapStatisticCampaign($campaign->id);
