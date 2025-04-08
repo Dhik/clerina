@@ -730,9 +730,6 @@
                             return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
-                        render: function(data) {
-                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                        },
                         visible: true
                     },
                     {
@@ -740,7 +737,7 @@
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
-                        visible: true
+                        visible: false
                     },
                     {
                         data: 'b2b_sales',
