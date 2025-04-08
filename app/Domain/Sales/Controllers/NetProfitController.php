@@ -190,69 +190,81 @@ class NetProfitController extends Controller
         }
     }
     public function updateB2bAndCrmSales()
-{
-    try {
-        $range = 'Import Sales!A2:T';
-        $sheetData = $this->googleSheetService->getSheetData($range);
-        
-        $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
-        
-        $salesData = [];
-        
-        foreach ($sheetData as $row) {
-            if (empty($row) || empty($row[0]) || (!isset($row[18]) && !isset($row[19]))) {
-                continue;
-            }
+    {
+        try {
+            $range = 'Import Sales!A2:T';
+            $sheetData = $this->googleSheetService->getSheetData($range);
             
-            // Parse the date
-            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            $tenant_id = 1;
+            $currentMonth = Carbon::now()->format('Y-m');
             
-            // Skip if not in current month
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
-                continue;
-            }
+            $salesData = [];
             
-            $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
-            $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
-            
-            $salesData[$date] = [
-                'b2b_sales' => $b2bSales,
-                'crm_sales' => $crmSales
-            ];
-        }
-
-        $updatedCount = 0;
-        
-        foreach ($salesData as $date => $data) {
-            // Use the same update pattern as the working function
-            $exists = NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id)
-                    ->exists();
-            
-            if ($exists) {
-                NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id)
-                    ->update([
-                        'b2b_sales' => $data['b2b_sales'],
-                        'crm_sales' => $data['crm_sales']
-                    ]);
+            foreach ($sheetData as $row) {
+                if (empty($row) || empty($row[0])) {
+                    continue;
+                }
+                if (!isset($row[18]) && !isset($row[19])) {
+                    continue;
+                }
+                
+                try {
+                    $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
                     
-                $updatedCount++;
+                    // Keep month filtering - only process current month
+                    if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                        continue;
+                    }
+                    
+                    // Make sure we're using 0 instead of null for empty values
+                    $b2bSales = isset($row[18]) && !empty($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
+                    $crmSales = isset($row[19]) && !empty($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
+                    
+                    $salesData[$date] = [
+                        'b2b_sales' => $b2bSales,
+                        'crm_sales' => $crmSales
+                    ];
+                } catch (\Exception $e) {
+                    // Skip rows with invalid date format
+                    continue;
+                }
             }
+
+            $updatedCount = 0;
+            $notFoundCount = 0;
+            
+            foreach ($salesData as $date => $data) {
+                // Only update existing records (don't create new ones)
+                $record = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->first();
+                    
+                if ($record) {
+                    $record->update([
+                        'b2b_sales' => $data['b2b_sales'],
+                        'crm_sales' => $data['crm_sales'],
+                        'updated_at' => now()
+                    ]);
+                    $updatedCount++;
+                } else {
+                    $notFoundCount++;
+                }
+            }
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'B2B and CRM sales data updated successfully',
+                'records_updated' => $updatedCount,
+                'records_not_found' => $notFoundCount,
+                'total_processed' => count($salesData)
+            ]);
+        } catch(\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json([
-            'success' => true, 
-            'message' => "B2B and CRM sales data updated successfully. Updated {$updatedCount} records."
-        ]);
-    } catch(\Exception $e) {
-        return response()->json([
-            'success' => false, 
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
     public function updateHpp()
     {
         try {
