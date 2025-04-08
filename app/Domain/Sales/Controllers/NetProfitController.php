@@ -90,7 +90,7 @@ class NetProfitController extends Controller
             $kolSpentData = [];
             
             foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0]) || !isset($row[19])) { // 17 is index for column R
+                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
                     continue;
                 }
                 
@@ -101,7 +101,7 @@ class NetProfitController extends Controller
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $kolSpent = $this->parseCurrencyToInt($row[19]);
+                $kolSpent = $this->parseCurrencyToInt($row[17]);
                 $kolSpentData[$date] = $kolSpent;
             }
             // Counter for tracking updates
