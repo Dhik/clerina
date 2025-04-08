@@ -192,56 +192,69 @@ class NetProfitController extends Controller
     public function updateB2bAndCrmSales()
     {
         try {
-            // Define the range to get KOL spent data from column R
             $range = 'Import Sales!A2:T';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 1;
             $currentMonth = Carbon::now()->format('Y-m');
             
-            // Create an array to store date => KOL spent mapping
-            $kolSpentData = [];
+            $salesData = [];
             
             foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0]) || !isset($row[19])) { // 17 is index for column R
+                if (empty($row) || empty($row[0])) {
                     continue;
                 }
-                
-                // Parse the date
+                if (!isset($row[18]) && !isset($row[19])) {
+                    continue;
+                }
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                
-                // Skip if not in current month
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $kolSpent = $this->parseCurrencyToInt($row[19]);
-                $kolSpentData[$date] = $kolSpent;
-            }
-            // Counter for tracking updates
-            $updatedCount = 0;
-            
-            foreach ($kolSpentData as $date => $amount) {
-                // Check if record exists
-                $exists = NetProfit::where('date', $date)
-                        ->where('tenant_id', 1)
-                        ->exists();
+                $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
+                $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
                 
-                // Only update if record exists
-                if ($exists) {
+                $salesData[$date] = [
+                    'b2b_sales' => $b2bSales,
+                    'crm_sales' => $crmSales
+                ];
+            }
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+            
+            // Update net_profits table with the sales data - update only, no create
+            foreach ($salesData as $date => $data) {
+                $recordExists = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->exists();
+                    
+                if ($recordExists) {
                     NetProfit::where('date', $date)
-                        ->where('tenant_id', 1)
-                        ->update(['crm_sales' => $amount]);
+                        ->where('tenant_id', $tenant_id)
+                        ->update([
+                            'b2b_sales' => $data['b2b_sales'],
+                            'crm_sales' => $data['crm_sales'],
+                            'updated_at' => now()
+                        ]);
                         
                     $updatedCount++;
+                } else {
+                    $skippedCount++;
                 }
             }
             
             return response()->json([
                 'success' => true, 
-                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+                'message' => 'B2B and CRM sales data updated successfully',
+                'records_updated' => $updatedCount,
+                'records_skipped' => $skippedCount
             ]);
         } catch(\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
     public function updateHpp()
@@ -666,11 +679,6 @@ class NetProfitController extends Controller
     private function parseCurrencyToInt($value)
     {
         if (empty($value)) return null;
-        return (int) preg_replace('/[^0-9]/', '', $value);
-    }
-    private function parseCurrencyToInt2($value)
-    {
-        if (empty($value) || $value === '0' || $value === '-') return 0; // Return 0 instead of null
         return (int) preg_replace('/[^0-9]/', '', $value);
     }
     private function parseToInt($currency)
