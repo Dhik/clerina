@@ -548,6 +548,25 @@ class NetProfitController extends Controller
 
         return response()->json($hppDetails);
     }
+    public function getSalesByChannel(Request $request)
+    {
+        $date = $request->date;
+
+        $salesByChannel = Order::query()
+            ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+            ->whereDate('orders.date', $date)
+            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+            ->select([
+                'sales_channels.name as sales_channel',
+                DB::raw('SUM(orders.amount) as total_sales'),
+                DB::raw('COUNT(*) as order_count')
+            ])
+            ->groupBy('sales_channels.name')
+            ->get();
+
+        return response()->json($salesByChannel);
+    }
     public function importNetProfits()
     {
         try {

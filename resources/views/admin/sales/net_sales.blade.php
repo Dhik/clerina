@@ -221,21 +221,19 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Sales Detail</h5>
+                <h5 class="modal-title">Sales by Channel</h5>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>SKU</th>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>HPP/Unit</th>
-                            <th>Total HPP</th>
+                            <th>Sales Channel</th>
+                            <th class="text-right">Number of Orders</th>
+                            <th class="text-right">Total Sales</th>
                         </tr>
                     </thead>
-                    <tbody id="hppDetailContent"></tbody>
+                    <tbody id="salesDetailContent"></tbody>
                 </table>
             </div>
         </div>
@@ -936,19 +934,25 @@
 
         function showSalesDetail(date) {
             $('#salesDetailModal').modal('show');
-            $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
+            $.get("{{ route('net-profit.getSalesByChannel') }}", { date: date }, function(data) {
                 let html = '';
+                let totalSales = 0;
                 data.forEach(function(item) {
-                    let total = item.quantity * item.harga_satuan;
+                    totalSales += item.total_sales;
                     html += `<tr>
-                        <td>${item.sku}</td>
-                        <td>${item.product}</td>
-                        <td class="text-right">${item.quantity.toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(item.harga_satuan).toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(total).toLocaleString('id-ID')}</td>
+                        <td>${item.sales_channel}</td>
+                        <td class="text-right">${item.order_count.toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${Math.round(item.total_sales).toLocaleString('id-ID')}</td>
                     </tr>`;
                 });
-                $('#hppDetailContent').html(html);
+                
+                html += `<tr class="font-weight-bold">
+                    <td>Total</td>
+                    <td class="text-right">${data.reduce((sum, item) => sum + item.order_count, 0).toLocaleString('id-ID')}</td>
+                    <td class="text-right">Rp ${Math.round(totalSales).toLocaleString('id-ID')}</td>
+                </tr>`;
+                
+                $('#salesDetailContent').html(html);
             });
         }
 
