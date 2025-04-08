@@ -80,7 +80,7 @@ class NetProfitController extends Controller
     {
         try {
             // Define the range to get KOL spent data from column R
-            $range = 'Import Sales!A2:R';
+            $range = 'Import Sales!A2:T';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 1;
@@ -101,7 +101,7 @@ class NetProfitController extends Controller
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $kolSpent = $this->parseCurrencyToInt($row[17]);
+                $kolSpent = $this->parseCurrencyToInt($row[19]);
                 $kolSpentData[$date] = $kolSpent;
             }
             // Counter for tracking updates
@@ -117,7 +117,7 @@ class NetProfitController extends Controller
                 if ($exists) {
                     NetProfit::where('date', $date)
                         ->where('tenant_id', 1)
-                        ->update(['spent_kol' => $amount]);
+                        ->update(['crm_sales' => $amount]);
                         
                     $updatedCount++;
                 }
