@@ -240,6 +240,7 @@ class NetProfitController extends Controller
                         
                     $updatedCount++;
                 } else {
+                    // Record doesn't exist - skip instead of create
                     $skippedCount++;
                 }
             }

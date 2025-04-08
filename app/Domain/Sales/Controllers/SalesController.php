@@ -177,6 +177,9 @@ class SalesController extends Controller
             ->addColumn('total_sales', function ($row) {
                 return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
             })
+            ->addColumn('mp_sales', function ($row) {
+                return ($row->sales ?? 0);
+            })
             ->addColumn('penjualan_bersih', function ($row) {
                 $totalSales = ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
                 return $totalSales * 0.85;

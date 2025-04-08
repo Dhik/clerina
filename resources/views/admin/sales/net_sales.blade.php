@@ -143,7 +143,8 @@
                                     <th>Order</th>
                                     <th>Closing Rate</th>
                                     <th>ROAS</th>
-                                    <th>Sales</th>
+                                    <th>Total Sales</th>
+                                    <th>MP Sales</th>
                                     <th>B2B Sales</th>
                                     <th>CRM Sales</th>
                                     <th>Penjualan Bersih (85%)</th>
@@ -725,6 +726,13 @@
                     },
                     {
                         data: 'total_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: true
+                    },
+                    {
+                        data: 'mp_sales',
                         render: function(data, type, row) {
                             return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
