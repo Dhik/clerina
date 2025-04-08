@@ -556,7 +556,17 @@ class NetProfitController extends Controller
             ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
             ->whereDate('orders.date', $date)
             ->where('orders.tenant_id', Auth::user()->current_tenant_id)
-            ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
             ->select([
                 'sales_channels.name as sales_channel',
                 DB::raw('SUM(orders.amount) as total_sales'),
