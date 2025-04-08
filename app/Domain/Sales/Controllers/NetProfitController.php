@@ -551,11 +551,13 @@ class NetProfitController extends Controller
     public function getSalesByChannel(Request $request)
     {
         $date = $request->date;
+        $tenantId = Auth::user()->current_tenant_id;
 
+        // Get sales by channel data
         $salesByChannel = Order::query()
             ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
             ->whereDate('orders.date', $date)
-            ->where('orders.tenant_id', Auth::user()->current_tenant_id)
+            ->where('orders.tenant_id', $tenantId)
             ->whereNotIn('orders.status', [
                 'pending', 
                 'cancelled', 
@@ -575,7 +577,21 @@ class NetProfitController extends Controller
             ->groupBy('sales_channels.name')
             ->get();
 
-        return response()->json($salesByChannel);
+        // Get net profits data for the same date and tenant
+        $netProfits = DB::table('net_profits')
+            ->where('date', $date)
+            ->where('tenant_id', $tenantId)
+            ->select(['b2b_sales', 'crm_sales'])
+            ->first();
+
+        // Create the response data including both datasets
+        $responseData = [
+            'salesByChannel' => $salesByChannel,
+            'b2b_sales' => $netProfits ? $netProfits->b2b_sales : 0,
+            'crm_sales' => $netProfits ? $netProfits->crm_sales : 0
+        ];
+
+        return response()->json($responseData);
     }
     public function importNetProfits()
     {

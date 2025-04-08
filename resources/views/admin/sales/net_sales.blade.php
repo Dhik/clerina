@@ -726,6 +726,10 @@
                     },
                     {
                         data: 'total_sales',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        },
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
@@ -733,9 +737,8 @@
                     },
                     {
                         data: 'mp_sales',
-                        render: function(data, type, row) {
-                            return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
-                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
                         visible: true
                     },
@@ -960,7 +963,9 @@
                 let html = '';
                 let totalSales = 0;
                 let totalOrders = 0;
-                data.forEach(function(item) {
+                
+                // Process salesByChannel data
+                data.salesByChannel.forEach(function(item) {
                     totalSales += parseFloat(item.total_sales);
                     totalOrders += parseInt(item.order_count);
                     html += `<tr>
@@ -970,10 +975,37 @@
                     </tr>`;
                 });
                 
+                // Add normal total row
                 html += `<tr class="font-weight-bold">
                     <td>Total</td>
                     <td class="text-right">${totalOrders.toLocaleString('id-ID')}</td>
                     <td class="text-right">Rp ${Math.round(totalSales).toLocaleString('id-ID')}</td>
+                </tr>`;
+                
+                // Add B2B and CRM sales rows
+                html += `<tr class="bg-light">
+                    <td colspan="3" class="font-weight-bold">Additional Sales</td>
+                </tr>`;
+                
+                html += `<tr>
+                    <td>B2B Sales</td>
+                    <td></td>
+                    <td class="text-right">Rp ${Math.round(parseFloat(data.b2b_sales || 0)).toLocaleString('id-ID')}</td>
+                </tr>`;
+                
+                html += `<tr>
+                    <td>CRM Sales</td>
+                    <td></td>
+                    <td class="text-right">Rp ${Math.round(parseFloat(data.crm_sales || 0)).toLocaleString('id-ID')}</td>
+                </tr>`;
+                
+                // Calculate grand total including all sales types
+                const grandTotal = totalSales + parseFloat(data.b2b_sales || 0) + parseFloat(data.crm_sales || 0);
+                
+                html += `<tr class="font-weight-bold bg-success text-white">
+                    <td>Grand Total</td>
+                    <td></td>
+                    <td class="text-right">Rp ${Math.round(grandTotal).toLocaleString('id-ID')}</td>
                 </tr>`;
                 
                 $('#salesDetailContent').html(html);
