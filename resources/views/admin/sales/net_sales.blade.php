@@ -702,7 +702,7 @@
                     },
                     {
                         data: 'total_sales',
-                        render: function(data) {
+                        render: function(data, type, row) {
                             return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
                                 'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
                         },
