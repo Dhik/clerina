@@ -272,10 +272,14 @@ class CampaignController extends Controller
     }
     public function bulkRefresh(): RedirectResponse
     {
-        $currentMonth = now()->format('Y-m'); // Get the current month in 'YYYY-MM' format
+        $currentMonth = now()->format('Y-m'); // Current month in 'YYYY-MM' format
+        $lastMonth = now()->subMonth()->format('Y-m'); // Last month in 'YYYY-MM' format
 
-        $campaigns = Campaign::where('created_at', 'like', "$currentMonth%")->get();
-        // $campaigns = Campaign::all();
+        // Get campaigns from both current and last month
+        $campaigns = Campaign::where(function($query) use ($currentMonth, $lastMonth) {
+            $query->where('created_at', 'like', "$currentMonth%")
+                ->orWhere('created_at', 'like', "$lastMonth%");
+        })->get();
 
         foreach ($campaigns as $campaign) {
             $this->cardService->recapStatisticCampaign($campaign->id);
