@@ -217,8 +217,8 @@ class NetProfitController extends Controller
                     }
                     
                     // Make sure we're using 0 instead of null for empty values
-                    $b2bSales = isset($row[18]) && !empty($row[18]) ? $this->parseCurrencyToInt2($row[18]) : 0;
-                    $crmSales = isset($row[19]) && !empty($row[19]) ? $this->parseCurrencyToInt2($row[19]) : 0;
+                    $b2bSales = isset($row[18]) && !empty($row[18]) ? $this->parseCurrencyToInt($row[18]) : 0;
+                    $crmSales = isset($row[19]) && !empty($row[19]) ? $this->parseCurrencyToInt($row[19]) : 0;
                     
                     $salesData[$date] = [
                         'b2b_sales' => $b2bSales,
