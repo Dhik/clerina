@@ -272,13 +272,25 @@ class CampaignController extends Controller
     }
     public function bulkRefresh(): RedirectResponse
     {
-        $currentMonth = now()->format('Y-m'); // Current month in 'YYYY-MM' format
-        $lastMonth = now()->subMonth()->format('Y-m'); // Last month in 'YYYY-MM' format
+        $currentMonthStart = now()->startOfMonth()->format('Y-m-d');
+        $lastMonthStart = now()->subMonth()->startOfMonth()->format('Y-m-d');
+        $lastMonthEnd = now()->subMonth()->endOfMonth()->format('Y-m-d');
 
-        // Get campaigns from both current and last month
-        $campaigns = Campaign::where(function($query) use ($currentMonth, $lastMonth) {
-            $query->where('created_at', 'like', "$currentMonth%")
-                ->orWhere('created_at', 'like', "$lastMonth%");
+        // Get campaigns that are active in current month or previous month
+        $campaigns = Campaign::where(function($query) use ($currentMonthStart, $lastMonthStart, $lastMonthEnd) {
+            // Campaigns active in current month (start date is before or equal to today, end date is after or equal to first day of current month)
+            $query->where(function($q) use ($currentMonthStart) {
+                $q->where('end_date', '>=', $currentMonthStart);
+            })
+            // OR campaigns active in previous month (end date falls within previous month)
+            ->orWhere(function($q) use ($lastMonthStart, $lastMonthEnd) {
+                $q->whereBetween('start_date', [$lastMonthStart, $lastMonthEnd])
+                ->orWhereBetween('end_date', [$lastMonthStart, $lastMonthEnd])
+                ->orWhere(function($inner) use ($lastMonthStart, $lastMonthEnd) {
+                    $inner->where('start_date', '<=', $lastMonthStart)
+                            ->where('end_date', '>=', $lastMonthEnd);
+                });
+            });
         })->get();
 
         foreach ($campaigns as $campaign) {
