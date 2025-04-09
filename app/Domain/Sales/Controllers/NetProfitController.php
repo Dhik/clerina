@@ -819,8 +819,11 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
-            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::now()->format('Y-m-d');
+            // $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            // $endDate = Carbon::now()->format('Y-m-d');
+
+            $startDate = Carbon::create(2025, 3, 1)->format('Y-m-d'); // March 1, 2025
+            $endDate = Carbon::create(2025, 3, 31)->format('Y-m-d');
 
             $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
