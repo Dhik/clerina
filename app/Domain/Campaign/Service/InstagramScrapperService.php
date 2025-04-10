@@ -5,6 +5,7 @@ namespace App\Domain\Campaign\Service;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class InstagramScrapperService
 {
@@ -13,10 +14,10 @@ class InstagramScrapperService
     public function __construct()
     {
         $this->client = new Client([
-            'base_uri' => 'https://instagram-scraper-api2.p.rapidapi.com/v1/',
+            'base_uri' => 'https://flashapi1.p.rapidapi.com/',
             'headers' => [
-                'X-RapidAPI-Host' => 'instagram-scraper-api2.p.rapidapi.com',
-                'X-RapidAPI-Key' => config('rapidapi.rapid_api_key')
+                'X-RapidAPI-Host' => 'flashapi1.p.rapidapi.com',
+                'X-RapidAPI-Key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986'
             ],
             'allow_redirects' => true,
         ]);
@@ -27,17 +28,41 @@ class InstagramScrapperService
         try {
             $finalUrl = $this->getFinalUrl($link);
             $shortCode = $this->extractShortCode($finalUrl);
-            $response = $this->client->request('GET', 'post_info', [
-                'query' => ['code_or_id_or_url' => $shortCode],
+            
+            if (empty($shortCode)) {
+                Log::error('Failed to extract shortcode from URL: ' . $link);
+                return null;
+            }
+            
+            $response = $this->client->request('GET', 'ig/post_info_v2/', [
+                'query' => [
+                    'nocors' => 'false',
+                    'shortcode' => $shortCode
+                ],
             ]);
 
             $data = json_decode($response->getBody()->getContents());
-
+            
+            // Check if we have valid items in the response
+            if (!isset($data->items) || empty($data->items)) {
+                Log::error('No items in response for IG post: ' . $shortCode);
+                return null;
+            }
+            
+            $item = $data->items[0];
+            
+            // Extract the date from "taken_at" timestamp
+            $uploadDate = null;
+            if (isset($item->taken_at)) {
+                // Convert Unix timestamp to Carbon date
+                $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
+            }
+            
             return [
-                'comment' => $data->data->metrics->comment_count ?? 0,
-                'view' => $data->data->metrics->play_count ?? 0,
-                'like' => $data->data->metrics->like_count ?? 0,
-                'upload_date' => $data->data->taken_at ?? null
+                'comment' => $item->comment_count ?? 0,
+                'view' => $item->ig_play_count ?? 0,
+                'like' => $item->like_count ?? 0,
+                'upload_date' => $uploadDate
             ];
         } catch (\Exception $e) {
             Log::error('Error fetching IG info: ' . $e);
