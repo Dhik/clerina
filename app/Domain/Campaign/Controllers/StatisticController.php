@@ -78,8 +78,10 @@ class StatisticController extends Controller
         $this->authorize('viewCampaignContent', CampaignContent::class);
 
         $campaignContents = $campaign->load('campaignContents');
+        $totalContents = count($campaignContents->campaignContents);
+        $processedCount = 0;
 
-        foreach ($campaignContents->campaignContents as $content) {
+        foreach ($campaignContents->campaignContents as $index => $content) {
             if (!is_null($content->link)) {
                 $data = [
                     'campaign_id' => $campaign->id,
@@ -90,14 +92,23 @@ class StatisticController extends Controller
                     'rate_card' => $content->rate_card
                 ];
                 
-                // Only dispatch the job - don't process immediately
-                ScrapJob::dispatch($data);
+                // Add increasing delay for each job to avoid rate limiting
+                // 10 seconds is a safer interval for most external APIs
+                ScrapJob::dispatch($data)->delay(now()->addSeconds($index * 10));
+                
+                $processedCount++;
+                
+                // Log each job dispatch
+                Log::info("Queued refresh job for content ID: {$content->id}, channel: {$content->channel}");
             }
         }
 
+        // Log the bulk operation summary
+        Log::info("Bulk refresh initiated for campaign {$campaign->id}: {$processedCount} of {$totalContents} contents queued");
+
         return redirect()->back()->with([
             'alert' => 'success',
-            'message' => trans('messages.process_ongoing'),
+            'message' => trans('messages.process_ongoing') . " ({$processedCount} " . trans('messages.items_queued') . ")",
         ]);
     }
 
