@@ -78,37 +78,54 @@ class StatisticController extends Controller
         $this->authorize('viewCampaignContent', CampaignContent::class);
 
         $campaignContents = $campaign->load('campaignContents');
-        $totalContents = count($campaignContents->campaignContents);
-        $processedCount = 0;
+        $successCount = 0;
+        $failedCount = 0;
 
-        foreach ($campaignContents->campaignContents as $index => $content) {
+        foreach ($campaignContents->campaignContents as $content) {
             if (!is_null($content->link)) {
-                $data = [
-                    'campaign_id' => $campaign->id,
-                    'campaign_content_id' => $content->id,
-                    'channel' => $content->channel,
-                    'link' => $content->link,
-                    'tenant_id' => $content->tenant_id,
-                    'rate_card' => $content->rate_card
-                ];
+                // Small delay between each request to avoid rate limiting
+                if ($successCount > 0 || $failedCount > 0) {
+                    sleep(3); // Sleep for 3 seconds between requests
+                }
                 
-                // Add increasing delay for each job to avoid rate limiting
-                // 10 seconds is a safer interval for most external APIs
-                ScrapJob::dispatch($data)->delay(now()->addSeconds($index * 10));
-                
-                $processedCount++;
-                
-                // Log each job dispatch
-                Log::info("Queued refresh job for content ID: {$content->id}, channel: {$content->channel}");
+                try {
+                    // Do exactly what the refresh method does
+                    $result = $this->statisticBLL->scrapData(
+                        $campaign->id,
+                        $content->id,
+                        $content->channel,
+                        $content->link,
+                        $content->tenant_id,
+                        $content->rate_card
+                    );
+                    
+                    // Check if views are above 10000 and update is_fyp field
+                    if ($result && isset($result['view']) && $result['view'] > 10000) {
+                        $content->is_fyp = 1;
+                        $content->save();
+                    }
+                    
+                    // Count success
+                    if ($result) {
+                        $successCount++;
+                        Log::info("Successfully refreshed content ID: {$content->id}");
+                    } else {
+                        $failedCount++;
+                        Log::error("Failed to refresh content ID: {$content->id}");
+                    }
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    Log::error("Exception refreshing content ID: {$content->id}, error: " . $e->getMessage());
+                }
             }
         }
 
-        // Log the bulk operation summary
-        Log::info("Bulk refresh initiated for campaign {$campaign->id}: {$processedCount} of {$totalContents} contents queued");
+        // Log the results
+        Log::info("Bulk refresh completed for campaign {$campaign->id}: {$successCount} succeeded, {$failedCount} failed");
 
         return redirect()->back()->with([
-            'alert' => 'success',
-            'message' => trans('messages.process_ongoing') . " ({$processedCount} " . trans('messages.items_queued') . ")",
+            'alert' => $failedCount > 0 ? 'warning' : 'success',
+            'message' => trans('messages.process_completed') . " ({$successCount} " . trans('messages.succeeded') . ", {$failedCount} " . trans('messages.failed') . ")",
         ]);
     }
 
