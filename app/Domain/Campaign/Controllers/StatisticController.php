@@ -80,32 +80,18 @@ class StatisticController extends Controller
         $campaignContents = $campaign->load('campaignContents');
 
         foreach ($campaignContents->campaignContents as $content) {
-            $data = [
-                'campaign_id' => $campaign->id,
-                'campaign_content_id' => $content->id,
-                'channel' => $content->channel,
-                'link' => $content->link,
-                'tenant_id' => $content->tenant_id,
-                'rate_card' => $content->rate_card
-            ];
-
             if (!is_null($content->link)) {
+                $data = [
+                    'campaign_id' => $campaign->id,
+                    'campaign_content_id' => $content->id,
+                    'channel' => $content->channel,
+                    'link' => $content->link,
+                    'tenant_id' => $content->tenant_id,
+                    'rate_card' => $content->rate_card
+                ];
+                
+                // Only dispatch the job - don't process immediately
                 ScrapJob::dispatch($data);
-
-                // Retrieve statistics and update is_fyp if view count is above 10000
-                $statistics = $this->statisticBLL->scrapData(
-                    $campaign->id,
-                    $content->id,
-                    $content->channel,
-                    $content->link,
-                    $content->tenant_id,
-                    $content->rate_card
-                );
-
-                if ($statistics && $statistics['view'] > 10000) {
-                    $content->is_fyp = 1;
-                    $content->save();
-                }
             }
         }
 
