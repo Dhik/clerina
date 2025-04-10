@@ -93,8 +93,6 @@ class CampaignController extends Controller
             
                     return $sumEndDate - $sumStartDate;
                 }
-            
-                // Just return the campaign's view value directly
                 return $row->view;
             })
             ->addColumn('like', function ($row) use ($request) {
