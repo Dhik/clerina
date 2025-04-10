@@ -1565,15 +1565,13 @@ class SalesController extends Controller
             for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
-                // $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
-                //     ->where('date', $formattedDate)
-                //     ->where('social_media_id', '!=', 10)
-                //     ->sum('amount');
+                $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
 
-                // $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
-                //     ->where('date', $formattedDate)
-                //     ->where('sales_channel_id', '!=', 9)
-                //     ->sum('amount');
+                $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
 
                 $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
 
