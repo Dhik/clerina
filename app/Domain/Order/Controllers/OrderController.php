@@ -1882,6 +1882,14 @@ class OrderController extends Controller
         $range = 'Azrina Tokopedia Processed!A2:P'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
+        if (empty($sheetData)) {
+            return response()->json([
+                'message' => 'Tokopedia orders imported successfully',
+                'total_rows' => 0,
+                'processed_rows' => 0
+            ]);
+        }
+
         $tenant_id = 2;
         $chunkSize = 50;
         $totalRows = count($sheetData);
