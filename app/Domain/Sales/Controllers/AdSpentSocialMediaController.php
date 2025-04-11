@@ -692,25 +692,19 @@ class AdSpentSocialMediaController extends Controller
         $headers = array_shift($csvData);
         $count = 0;
         
-        // Use the provided original filename instead of the temporary path
         $filename = $originalFilename ?? basename($filePath);
         
-        // Remove file extension first if it exists
         $filename = pathinfo($filename, PATHINFO_FILENAME);
         
-        // Remove everything from "-Campaign" onwards
         if (strpos($filename, '-Campaign') !== false) {
             $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
         } else {
-            // Fallback - use the whole filename as account name
             $accountName = $filename;
         }
         
-        // Determine PIC based on account name patterns
         $pic = $this->determinePIC($accountName);
         
         foreach ($csvData as $row) {
-            // Skip empty rows
             if (empty($row[0])) {
                 continue;
             }
@@ -719,6 +713,25 @@ class AdSpentSocialMediaController extends Controller
                 $date = Carbon::parse($row[0])->format('Y-m-d');
                 $amount = (int)$row[3];
                 $campaignName = $row[2] ?? null;
+                
+                $newCreated = null;
+                $lastUpdated = null;
+                
+                if (isset($row[10]) && !empty($row[10])) {
+                    try {
+                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
+                    }
+                }
+                
+                if (isset($row[11]) && !empty($row[11])) {
+                    try {
+                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
+                    }
+                }
                 
                 AdsMeta::updateOrCreate(
                     [
@@ -736,7 +749,9 @@ class AdSpentSocialMediaController extends Controller
                         'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
                         'link_clicks' => (float)($row[9] ?? 0),
                         'account_name' => $accountName,
-                        'pic' => $pic
+                        'pic' => $pic,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
                     ]
                 );
                 
@@ -747,14 +762,13 @@ class AdSpentSocialMediaController extends Controller
                 
                 $count++;
             } catch (\Exception $e) {
-                // Log the error but continue processing other rows
                 \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
             }
         }
         
         return $count;
     }
-    
+        
     /**
      * Determine the PIC based on account name patterns
      * 
