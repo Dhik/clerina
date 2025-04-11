@@ -272,6 +272,12 @@
                             <tr>
                                 <th>Nama Akun</th>
                                 <th>Product Category</th>
+                                <th>TOFU Spent</th>
+                                <th>TOFU %</th>
+                                <th>MOFU Spent</th>
+                                <th>MOFU %</th>
+                                <th>BOFU Spent</th>
+                                <th>BOFU %</th>
                                 <th>Total Spent</th>
                                 <th>Impressions</th>
                                 <th>Link Clicks</th>
@@ -308,51 +314,103 @@
         height: 400px !important;
         width: 100% !important;
     }
+    
     .modal-content {
-    border-radius: 8px;
-}
-
-.modal-header {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.table th, .table td {
-    padding: 12px;
-    vertical-align: middle;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-#salesDetailTable td {
-    border-top: 1px solid #dee2e6;
-}
-
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-#funnelMetrics {
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-}
-.text-muted {
-    color: #6c757d;
-}
-.font-weight-bold {
-    font-weight: 600;
-}
-.ml-2 {
-    margin-left: 0.5rem;
-}
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
+        border-radius: 8px;
+    }
+    
+    .modal-header {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table th, .table td {
+        padding: 12px;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    #salesDetailTable td {
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+    
+    #funnelMetrics {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .text-muted {
+        color: #6c757d;
+    }
+    
+    .font-weight-bold {
+        font-weight: 600;
+    }
+    
+    .ml-2 {
+        margin-left: 0.5rem;
+    }
+    
+    .mb-2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* DataTable horizontal scrolling styles */
+    .dataTables_wrapper {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    #campaignDetailsTable {
+        width: 100% !important;
+    }
+    
+    .dataTables_wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .dataTables_wrapper::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .dataTables_wrapper::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    .dataTables_wrapper::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    /* Ensure proper column sizing */
+    #campaignDetailsTable th, 
+    #campaignDetailsTable td {
+        white-space: nowrap;
+        padding: 8px 12px;
+    }
+    
+    /* Make percentage columns narrower */
+    #campaignDetailsTable th:nth-child(4),
+    #campaignDetailsTable th:nth-child(6),
+    #campaignDetailsTable th:nth-child(8),
+    #campaignDetailsTable td:nth-child(4),
+    #campaignDetailsTable td:nth-child(6),
+    #campaignDetailsTable td:nth-child(8) {
+        width: 70px;
+        max-width: 70px;
+    }
 </style>
 @stop
 
@@ -838,6 +896,14 @@
                 columns: [
                     {data: 'account_name', name: 'account_name'},
                     {data: 'kategori_produk', name: 'kategori_produk'},
+                    // New TOFU/MOFU/BOFU columns
+                    {data: 'tofu_spent', name: 'tofu_spent'},
+                    {data: 'tofu_percentage', name: 'tofu_percentage'},
+                    {data: 'mofu_spent', name: 'mofu_spent'},
+                    {data: 'mofu_percentage', name: 'mofu_percentage'},
+                    {data: 'bofu_spent', name: 'bofu_spent'},
+                    {data: 'bofu_percentage', name: 'bofu_percentage'},
+                    // Original columns
                     {data: 'amount_spent', name: 'amount_spent'},
                     {data: 'impressions', name: 'impressions'},
                     {
@@ -899,13 +965,20 @@
                     {data: 'action', name: 'action', orderable: false, searchable: false}
                 ],
                 columnDefs: [
-                    { "targets": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "className": "text-right" },
-                    { "targets": [1, 15], "className": "text-center" },
-                    { "targets": [16], "className": "text-center" }
+                    // Update the targets for right alignment to include the new columns
+                    { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "className": "text-right" },
+                    // Update the targets for center alignment to include the new columns
+                    { "targets": [1, 3, 5, 7, 21], "className": "text-center" },
+                    { "targets": [22], "className": "text-center" }
                 ],
                 order: [[0, 'asc']],
                 // Initialize with fixed column headers
-                fixedHeader: true
+                fixedHeader: true,
+                // Ensure horizontal scrolling is correctly implemented
+                scrollCollapse: true,
+                // Additional settings for better performance with many columns
+                deferRender: true,
+                scroller: true
             });
 
             // Modal shown event handler

@@ -205,6 +205,10 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
                 DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
                 DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
+                // Add TOFU/MOFU/BOFU calculations
+                DB::raw('SUM(CASE WHEN account_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN account_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN account_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
                 'kategori_produk',
                 'account_name'
             ]);
@@ -248,7 +252,7 @@ class AdSpentSocialMediaController extends Controller
         if ($request->has('pic') && $request->pic !== '') {
             $query->where('pic', $request->pic);
         }
-    
+
         return DataTables::of($query)
             ->addIndexColumn()
             ->editColumn('account_name', function ($row) {
@@ -272,6 +276,42 @@ class AdSpentSocialMediaController extends Controller
             })
             ->editColumn('content_views_shared_items', function ($row) {
                 return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
+            })
+            // Add TOFU spent column
+            ->addColumn('tofu_spent', function ($row) {
+                return $row->tofu_spent ? 'Rp ' . number_format($row->tofu_spent, 0, ',', '.') : '-';
+            })
+            // Add TOFU percentage column
+            ->addColumn('tofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->tofu_spent > 0) {
+                    $percentage = ($row->tofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            // Add MOFU spent column
+            ->addColumn('mofu_spent', function ($row) {
+                return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
+            })
+            // Add MOFU percentage column
+            ->addColumn('mofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
+                    $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            // Add BOFU spent column
+            ->addColumn('bofu_spent', function ($row) {
+                return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
+            })
+            // Add BOFU percentage column
+            ->addColumn('bofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
+                    $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
             })
             ->addColumn('cost_per_view', function ($row) {
                 if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
