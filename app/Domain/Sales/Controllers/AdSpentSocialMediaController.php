@@ -360,7 +360,12 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
                 DB::raw('SUM(purchases_shared_items) as total_purchases'),
                 DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
-                DB::raw('COUNT(DISTINCT account_name) as accounts_count')
+                DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
+                
+                // New TOFU/MOFU/BOFU metrics
+                DB::raw('SUM(CASE WHEN account_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN account_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN account_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
             ]);
         
         // Apply date filter with support for both single date and date range
@@ -414,7 +419,15 @@ class AdSpentSocialMediaController extends Controller
             'cost_per_atc' => $summary->total_adds_to_cart > 0 ? $summary->total_amount_spent / $summary->total_adds_to_cart : 0,
             'cpm' => $summary->total_impressions > 0 ? ($summary->total_amount_spent / $summary->total_impressions) * 1000 : 0,
             'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
-            'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0
+            'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0,
+            
+            // New funnel stage metrics with percentages
+            'tofu_spent' => $summary->tofu_spent,
+            'mofu_spent' => $summary->mofu_spent, 
+            'bofu_spent' => $summary->bofu_spent,
+            'tofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->tofu_spent / $summary->total_amount_spent) * 100 : 0,
+            'mofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->mofu_spent / $summary->total_amount_spent) * 100 : 0,
+            'bofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->bofu_spent / $summary->total_amount_spent) * 100 : 0
         ];
         
         return response()->json([

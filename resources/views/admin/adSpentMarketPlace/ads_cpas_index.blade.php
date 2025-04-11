@@ -137,6 +137,42 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            <!-- New Funnel Stage KPI Cards -->
+                            <div class="col-4">
+                                <div class="small-box bg-gradient-warning">
+                                    <div class="inner">
+                                        <h4 id="summaryTofuSpent">-</h4>
+                                        <p>TOFU Spent <span id="summaryTofuPercentage" class="badge badge-light">-%</span></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-funnel-dollar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="small-box bg-gradient-warning">
+                                    <div class="inner">
+                                        <h4 id="summaryMofuSpent">-</h4>
+                                        <p>MOFU Spent <span id="summaryMofuPercentage" class="badge badge-light">-%</span></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-funnel-dollar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="small-box bg-gradient-warning">
+                                    <div class="inner">
+                                        <h4 id="summaryBofuSpent">-</h4>
+                                        <p>BOFU Spent <span id="summaryBofuPercentage" class="badge badge-light">-%</span></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-funnel-dollar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Existing KPI Cards -->
                             <div class="col-3">
                                 <div class="small-box bg-gradient-success">
                                     <div class="inner">
@@ -456,6 +492,16 @@
                             $('#summaryCostPerPurchase').text('Rp ' + numberFormat(data.cost_per_purchase));
                             $('#summaryImpressions').text(numberFormat(data.total_impressions));
                             $('#summaryCtr').text(numberFormat(data.ctr, 2) + '%');
+                            
+                            // Update new funnel stage metrics
+                            $('#summaryTofuSpent').text('Rp ' + numberFormat(data.tofu_spent));
+                            $('#summaryMofuSpent').text('Rp ' + numberFormat(data.mofu_spent));
+                            $('#summaryBofuSpent').text('Rp ' + numberFormat(data.bofu_spent));
+                            
+                            // Update percentage badges
+                            $('#summaryTofuPercentage').text(numberFormat(data.tofu_percentage, 2) + '%');
+                            $('#summaryMofuPercentage').text(numberFormat(data.mofu_percentage, 2) + '%');
+                            $('#summaryBofuPercentage').text(numberFormat(data.bofu_percentage, 2) + '%');
                             
                             // Add color coding for ROAS based on performance thresholds
                             const roasElement = $('#summaryRoas');
