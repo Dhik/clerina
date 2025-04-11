@@ -314,103 +314,51 @@
         height: 400px !important;
         width: 100% !important;
     }
-    
     .modal-content {
-        border-radius: 8px;
-    }
-    
-    .modal-header {
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .table th, .table td {
-        padding: 12px;
-        vertical-align: middle;
-    }
-    
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    #salesDetailTable td {
-        border-top: 1px solid #dee2e6;
-    }
-    
-    .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-    }
-    
-    #funnelMetrics {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-    }
-    
-    .text-muted {
-        color: #6c757d;
-    }
-    
-    .font-weight-bold {
-        font-weight: 600;
-    }
-    
-    .ml-2 {
-        margin-left: 0.5rem;
-    }
-    
-    .mb-2 {
-        margin-bottom: 0.5rem;
-    }
-    
-    /* DataTable horizontal scrolling styles */
-    .dataTables_wrapper {
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-    
-    #campaignDetailsTable {
-        width: 100% !important;
-    }
-    
-    .dataTables_wrapper::-webkit-scrollbar {
-        height: 8px;
-    }
-    
-    .dataTables_wrapper::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    .dataTables_wrapper::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-    
-    .dataTables_wrapper::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-    
-    /* Ensure proper column sizing */
-    #campaignDetailsTable th, 
-    #campaignDetailsTable td {
-        white-space: nowrap;
-        padding: 8px 12px;
-    }
-    
-    /* Make percentage columns narrower */
-    #campaignDetailsTable th:nth-child(4),
-    #campaignDetailsTable th:nth-child(6),
-    #campaignDetailsTable th:nth-child(8),
-    #campaignDetailsTable td:nth-child(4),
-    #campaignDetailsTable td:nth-child(6),
-    #campaignDetailsTable td:nth-child(8) {
-        width: 70px;
-        max-width: 70px;
-    }
+    border-radius: 8px;
+}
+
+.modal-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table th, .table td {
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+#salesDetailTable td {
+    border-top: 1px solid #dee2e6;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+#funnelMetrics {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+.text-muted {
+    color: #6c757d;
+}
+.font-weight-bold {
+    font-weight: 600;
+}
+.ml-2 {
+    margin-left: 0.5rem;
+}
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
 </style>
 @stop
 
