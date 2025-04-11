@@ -7,20 +7,6 @@
 @stop
 
 @section('content')
-<div class="card">
-    <div class="card-header">
-        <!-- <div class="btn-group">
-            <form id="orderExportForm" action="{{ route('customer.export') }}" method="post">
-                @csrf
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-file-download"></i> {{ trans('labels.export') }}
-                </button>
-            </form>
-        </div> -->
-        <a href="{{ route('customer_analysis.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Customers Data from January 2024</a>
-        <!-- <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button> -->
-    </div>
-</div>
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -31,7 +17,6 @@
                                 <th>{{ trans('labels.name') }}</th>
                                 <th>{{ trans('labels.phone_number') }}</th>
                                 <th>{{ trans('labels.total_order') }}</th>
-                                <th>{{ trans('labels.tenant_name') }}</th>
                                 <th width="10%">{{ trans('labels.action') }}</th>
                             </tr>
                         </thead>
@@ -117,7 +102,6 @@
                     {data: 'name', name: 'name'},
                     {data: 'phone_number', name: 'phone_number'},
                     {data: 'count_orders', name: 'count_orders'},
-                    {data: 'tenant_name', name: 'tenant_name'},
                     {data: 'actions', sortable: false, orderable: false}
                 ]
             });
