@@ -18,6 +18,7 @@ class Customer extends Model
         'shipping_address',
         'city',
         'province',
+        'last_order_date',
     ];
 
     protected $appends = [
