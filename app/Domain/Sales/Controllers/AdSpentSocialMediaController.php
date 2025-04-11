@@ -206,9 +206,9 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
                 DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
                 // Add TOFU/MOFU/BOFU calculations
-                DB::raw('SUM(CASE WHEN account_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
-                DB::raw('SUM(CASE WHEN account_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
-                DB::raw('SUM(CASE WHEN account_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
                 'kategori_produk',
                 'account_name'
             ]);
