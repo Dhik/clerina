@@ -23,6 +23,8 @@ class AdsMeta extends Model
         'campaign_name',
         'account_name',
         'pic',
+        'last_updated',
+        'new_created',
     ];
 
     protected $casts = [

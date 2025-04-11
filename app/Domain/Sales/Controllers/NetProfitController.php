@@ -258,6 +258,75 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function updateB2bAndCrmSalesAzrina()
+    {
+        try {
+            $range = 'Import Sales!A2:V';
+            $sheetData = $this->googleSheetService->getSheetData($range);
+            
+            $tenant_id = 2;
+            $currentMonth = Carbon::now()->format('Y-m');
+            
+            $salesData = [];
+            
+            foreach ($sheetData as $row) {
+                if (empty($row) || empty($row[0])) {
+                    continue;
+                }
+                if (!isset($row[20]) && !isset($row[21])) {
+                    continue;
+                }
+                $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                    continue;
+                }
+                $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[20]) : 0;
+                $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[21]) : 0;
+                
+                $salesData[$date] = [
+                    'b2b_sales' => $b2bSales,
+                    'crm_sales' => $crmSales
+                ];
+            }
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+            
+            // Update net_profits table with the sales data - update only, no create
+            foreach ($salesData as $date => $data) {
+                $recordExists = NetProfit::where('date', $date)
+                    ->where('tenant_id', $tenant_id)
+                    ->exists();
+                    
+                if ($recordExists) {
+                    NetProfit::where('date', $date)
+                        ->where('tenant_id', $tenant_id)
+                        ->update([
+                            'b2b_sales' => $data['b2b_sales'],
+                            'crm_sales' => $data['crm_sales'],
+                            'updated_at' => now()
+                        ]);
+                        
+                    $updatedCount++;
+                } else {
+                    // Record doesn't exist - skip instead of create
+                    $skippedCount++;
+                }
+            }
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'B2B and CRM sales data updated successfully',
+                'records_updated' => $updatedCount,
+                'records_skipped' => $skippedCount
+            ]);
+        } catch(\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function updateHpp()
     {
         try {

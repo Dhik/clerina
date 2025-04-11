@@ -82,6 +82,7 @@ Route::prefix('admin')
             Route::get('/update-spent-kol', [NetProfitController::class, 'updateSpentKol'])->name('net-profit.update-spent-kol');
             Route::get('/update-spent-kol-azrina', [NetProfitController::class, 'updateSpentKolAzrina'])->name('net-profit.update-spent-kol-azrina');
             Route::get('/update-b2b-crm', [NetProfitController::class, 'updateB2bAndCrmSales'])->name('net-profit.update-b2b-crm');
+            Route::get('/update-b2b-crm-azrina', [NetProfitController::class, 'updateB2bAndCrmSalesAzrina'])->name('net-profit.update-b2b-crm-azrina');
             Route::get('/update-marketing', [NetProfitController::class, 'updateMarketing'])->name('net-profit.update-marketing');
             Route::get('/update-marketing-azrina', [NetProfitController::class, 'updateMarketingAzrina'])->name('net-profit.update-marketing-azrina');
             Route::get('/update-visit', [NetProfitController::class, 'updateVisit'])->name('net-profit.update-visit');

@@ -594,6 +594,10 @@
                     url: "{{ route('net-profit.update-b2b-crm') }}"
                 },
                 { 
+                    name: 'B2B and CRM Sales Azrina', 
+                    url: "{{ route('net-profit.update-b2b-crm-azrina') }}"
+                },
+                { 
                     name: 'Cleora Import Data', 
                     url: "{{ route('net-profit.import-data') }}"
                 },
