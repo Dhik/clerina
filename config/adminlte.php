@@ -338,9 +338,15 @@ return [
         //     'icon' => 'nav-icon far fa-circle text-info',
         //     'can' => [PermissionEnum::ViewMarketing],
         // ],
+        // [
+        //     'text' => 'Customer',
+        //     'url' => 'admin/cstmr_analysis',
+        //     'icon' => 'nav-icon far fa-circle text-info',
+        //     'can' => [PermissionEnum::ViewCustomer],
+        // ],
         [
             'text' => 'Customer',
-            'url' => 'admin/cstmr_analysis',
+            'url' => 'admin/customer',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
