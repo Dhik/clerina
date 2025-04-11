@@ -363,9 +363,9 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
                 
                 // New TOFU/MOFU/BOFU metrics
-                DB::raw('SUM(CASE WHEN account_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
-                DB::raw('SUM(CASE WHEN account_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
-                DB::raw('SUM(CASE WHEN account_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
             ]);
         
         // Apply date filter with support for both single date and date range
