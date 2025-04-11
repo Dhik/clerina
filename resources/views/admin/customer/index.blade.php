@@ -72,22 +72,13 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            Swal.fire({
-                title: 'Loading Dashboard',
-                html: 'Please wait while we prepare your data...',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
             let loadingCounter = 0;
             const totalLoads = 3;
 
             function checkAllLoaded() {
                 loadingCounter++;
                 if (loadingCounter === totalLoads) {
-                    Swal.close();
+                    // Counter function kept but Swal.close() removed
                 }
             }
 
