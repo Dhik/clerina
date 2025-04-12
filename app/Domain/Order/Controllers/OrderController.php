@@ -1271,9 +1271,19 @@ class OrderController extends Controller
 
                 // If order exists, update the status
                 if ($order) {
-                    // Only update if the status has changed
+                    $needsUpdate = false;
+                
                     if ($order->status != $orderData['status']) {
                         $order->status = $orderData['status'];
+                        $needsUpdate = true;
+                    }
+                    
+                    if ($order->sku != $orderData['sku']) {
+                        $order->sku = $orderData['sku'];
+                        $needsUpdate = true;
+                    }
+                    
+                    if ($needsUpdate) {
                         $order->updated_at = now();
                         $order->save();
                         $updatedRows++;
