@@ -278,6 +278,8 @@
                                 <th>MOFU %</th>
                                 <th>BOFU Spent</th>
                                 <th>BOFU %</th>
+                                <th>Last Updated Count</th>
+                                <th>New Created Count</th>
                                 <th>Total Spent</th>
                                 <th>Impressions</th>
                                 <th>Link Clicks</th>
@@ -851,6 +853,8 @@
                     {data: 'mofu_percentage', name: 'mofu_percentage'},
                     {data: 'bofu_spent', name: 'bofu_spent'},
                     {data: 'bofu_percentage', name: 'bofu_percentage'},
+                    {data: 'last_updated_count', name: 'last_updated_count'},
+                    {data: 'new_created_count', name: 'new_created_count'},
                     // Original columns
                     {data: 'amount_spent', name: 'amount_spent'},
                     {data: 'impressions', name: 'impressions'},
@@ -914,10 +918,10 @@
                 ],
                 columnDefs: [
                     // Update the targets for right alignment to include the new columns
-                    { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "className": "text-right" },
+                    { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], "className": "text-right" },
                     // Update the targets for center alignment to include the new columns
-                    { "targets": [1, 3, 5, 7, 21], "className": "text-center" },
-                    { "targets": [22], "className": "text-center" }
+                    { "targets": [1, 3, 5, 7, 23], "className": "text-center" },
+                    { "targets": [24], "className": "text-center" }
                 ],
                 order: [[0, 'asc']],
                 // Initialize with fixed column headers

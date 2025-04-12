@@ -195,9 +195,9 @@ class AdSpentSocialMediaController extends Controller
     {
         $query = AdsMeta::query()
             ->select([
-                DB::raw('ANY_VALUE(id) as id'), // Using ANY_VALUE for ONLY_FULL_GROUP_BY mode
-                DB::raw('MIN(date) as start_date'), // Get the earliest date in the range
-                DB::raw('MAX(date) as end_date'), // Get the latest date in the range
+                DB::raw('ANY_VALUE(id) as id'),
+                DB::raw('MIN(date) as start_date'),
+                DB::raw('MAX(date) as end_date'),
                 DB::raw('SUM(amount_spent) as amount_spent'),
                 DB::raw('SUM(impressions) as impressions'),
                 DB::raw('SUM(link_clicks) as link_clicks'),
@@ -205,10 +205,12 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
                 DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
                 DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
-                // Add TOFU/MOFU/BOFU calculations
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
+                // Add these new count fields
+                DB::raw('COUNT(last_updated) as last_updated_count'),
+                DB::raw('COUNT(new_created) as new_created_count'),
                 'kategori_produk',
                 'account_name'
             ]);
@@ -312,6 +314,12 @@ class AdSpentSocialMediaController extends Controller
                     return number_format($percentage, 2, ',', '.') . '%';
                 }
                 return '-';
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?: '0';
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?: '0';
             })
             ->addColumn('cost_per_view', function ($row) {
                 if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
