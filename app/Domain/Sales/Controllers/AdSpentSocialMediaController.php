@@ -83,7 +83,9 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(content_views_shared_items) as total_content_views'),
                 DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
                 DB::raw('SUM(purchases_shared_items) as total_purchases'),
-                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(CASE WHEN last_updated = date THEN account_name END) as last_updated_count'),
+                DB::raw('COUNT(CASE WHEN new_created = date THEN account_name END) as new_created_count')
             ])
             ->groupBy('date');
     
@@ -122,6 +124,12 @@ class AdSpentSocialMediaController extends Controller
             })
             ->editColumn('total_link_clicks', function ($row) {
                 return $row->total_link_clicks ?? 0;
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?? 0;
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?? 0;
             })
             ->editColumn('total_content_views', function ($row) {
                 return $row->total_content_views ?? 0;

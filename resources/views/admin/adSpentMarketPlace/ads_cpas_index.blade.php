@@ -85,6 +85,8 @@
                     <thead>
                         <tr>
                             <th>Date</th>
+                            <th>Last Updated Count</th>
+                            <th>New Created Count</th>
                             <th>Total Spent</th>
                             <th>View Content</th>
                             <th>ATC</th>
@@ -697,6 +699,26 @@
                 },
                 columns: [
                     {data: 'date', name: 'date'},
+                    {
+                        data: 'last_updated_count',
+                        name: 'last_updated_count',
+                        render: function(data) {
+                            return Number(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    {
+                        data: 'new_created_count',
+                        name: 'new_created_count',
+                        render: function(data) {
+                            return Number(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
                     {
                         data: 'total_amount_spent', 
                         name: 'total_amount_spent',
