@@ -1255,7 +1255,7 @@ class OrderController extends Controller
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount'               => $row[16] ?? null, // Column Q
+                    'amount' => (!empty($row[14]) && !empty($row[15])) ? ($row[14] + $row[15]) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
@@ -1335,7 +1335,7 @@ class OrderController extends Controller
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount'               => $row[16] ?? null, // Column Q
+                    'amount' => (!empty($row[14]) && !empty($row[15])) ? ($row[14] + $row[15]) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
@@ -1410,7 +1410,7 @@ class OrderController extends Controller
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount'               => $row[16] ?? null, // Column Q
+                    'amount' => (!empty($row[14]) && !empty($row[15])) ? ($row[14] + $row[15]) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
