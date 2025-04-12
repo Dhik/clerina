@@ -839,7 +839,11 @@
                     { "targets": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "className": "text-right" },
                     { "targets": [12], "className": "text-center" }
                 ],
-                order: [[0, 'desc']]
+                order: [[0, 'desc']],
+                fixedHeader: true,
+                scrollCollapse: true,
+                deferRender: true,
+                scroller: true
             });
 
             let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
