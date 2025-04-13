@@ -44,7 +44,7 @@ class OrdersExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, W
             ->where('tenant_id', $this->tenantId)
             ->where('date', '>=', $this->startDate)
             ->where('date', '<=', $this->endDate)
-            ->where('sales_channel_id', 4)
+            ->where('sales_channel_id', 3)
             ->orderBy('date', 'asc');
     }
 
