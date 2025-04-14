@@ -2825,7 +2825,7 @@ class OrderController extends Controller
                     'shipping_address'      => $row[7] ?? null, // Same as customer_name
                     'city'                  => null,
                     'province'              => null,
-                    'amount'                => $row[6] ?? null,
+                    'amount'                => $this->parseAmount($row[6] ?? null),
                     'tenant_id'             => $tenant_id,
                     'is_booking'            => 0,
                     'status'                => 'reported',
@@ -2861,5 +2861,31 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
-    
+
+    /**
+     * Parse amount values from various formats to integer
+     * 
+     * @param string|null $amount
+     * @return int|null
+     */
+    private function parseAmount($amount)
+    {
+        if (empty($amount)) {
+            return null;
+        }
+        
+        // Remove currency symbol (Rp) if present
+        $amount = str_replace('Rp', '', $amount);
+        
+        // Remove all dots, commas, and spaces
+        $amount = str_replace(['.', ',', ' '], '', $amount);
+        
+        // If the amount is still not numeric, return null
+        if (!is_numeric($amount)) {
+            return null;
+        }
+        
+        // Convert to integer (bigint in MySQL)
+        return (int) $amount;
+    }
 }
