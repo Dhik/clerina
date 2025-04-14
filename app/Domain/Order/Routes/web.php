@@ -49,6 +49,7 @@ Route::prefix('admin')
                 Route::get('/import_customer', [OrderController::class, 'importOrdersCleora'])->name('order.import_customer');
                 Route::get('/import_cleora_b2b', [OrderController::class, 'importCleoraB2B'])->name('order.import_cleora_b2b');
                 Route::get('/import_azrina_b2b', [OrderController::class, 'importAzrinaB2B'])->name('order.import_azrina_b2b');
+                Route::get('/import_cleora_crm', [OrderController::class, 'importClosingAnisa'])->name('order.import_cleora_crm');
                 Route::get('/import_crm_customer', [OrderController::class, 'importCRMCustomer'])->name('order.import_crm_customer');
                 Route::get('/import_tokped', [OrderController::class, 'importOrdersTokopedia'])->name('order.import_tokped');
                 Route::get('/cleora_shopee', [OrderController::class, 'importOrdersShopee'])->name('order.cleora_shopee');
