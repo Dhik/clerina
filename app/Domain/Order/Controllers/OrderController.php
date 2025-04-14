@@ -2874,12 +2874,21 @@ class OrderController extends Controller
         $updatedRows = 0;
         $skippedRows = 0;
         $orderCountMap = []; // To keep track of order numbers per employee per month
+        $skippedRowsData = []; // Array to store skipped rows data
 
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
+        foreach (array_chunk($sheetData, $chunkSize) as $chunkIndex => $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                // Calculate the actual row number in the sheet
+                $actualRowNumber = $chunkIndex * $chunkSize + $rowIndex + 3; // +3 because we start at A3
+                
                 // Skip if essential data is missing
                 if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
                     $skippedRows++;
+                    $skippedRowsData[] = [
+                        'row_number' => $actualRowNumber,
+                        'reason' => 'Missing essential data',
+                        'data' => $row
+                    ];
                     continue;
                 }
                 
@@ -2889,6 +2898,12 @@ class OrderController extends Controller
                     $orderDate = Carbon::parse($row[0])->format('Y-m-d');
                 } catch (\Exception $e) {
                     $skippedRows++;
+                    $skippedRowsData[] = [
+                        'row_number' => $actualRowNumber,
+                        'reason' => 'Invalid date format: ' . $row[0],
+                        'error' => $e->getMessage(),
+                        'data' => $row
+                    ];
                     continue; // Skip if date is invalid
                 }
                 
@@ -2900,6 +2915,11 @@ class OrderController extends Controller
                     $employeeId = 'CLEOAZ103';
                 } else {
                     $skippedRows++;
+                    $skippedRowsData[] = [
+                        'row_number' => $actualRowNumber,
+                        'reason' => 'Unknown employee name: ' . $row[1],
+                        'data' => $row
+                    ];
                     continue; // Skip if employee name is not recognized
                 }
                 
@@ -2967,12 +2987,16 @@ class OrderController extends Controller
             usleep(100000); // Small delay to prevent overwhelming the server
         }
 
+        // Log the skipped rows for debugging
+        Log::info('Skipped rows in B2B Azrina import: ' . json_encode($skippedRowsData, JSON_PRETTY_PRINT));
+
         return response()->json([
-            'message' => 'B2B Cleora orders imported successfully', 
+            'message' => 'B2B Azrina orders imported successfully', // Fixed the message
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'updated_rows' => $updatedRows,
-            'skipped_rows' => $skippedRows
+            'skipped_rows' => $skippedRows,
+            'skipped_rows_data' => $skippedRowsData // Added skipped rows data to the response
         ]);
     }
 
