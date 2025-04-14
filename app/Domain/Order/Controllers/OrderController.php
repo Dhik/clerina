@@ -2747,4 +2747,119 @@ class OrderController extends Controller
             'sku_count' => $data->sku_count ?? 0
         ]);
     }
+    public function importCleoraB2B()
+    {
+        $this->googleSheetService->setSpreadsheetId('1bqiRz8rHFYjLyu9wN1CTDEt9nzeez0dzthPkoJSBUDI');
+        $range = 'B2B Cleora!A3:H';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+        $orderCountMap = []; // To keep track of order numbers per employee per month
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if essential data is missing
+                if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Process date (Column A)
+                $orderDate = null;
+                try {
+                    $orderDate = Carbon::parse($row[0])->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $skippedRows++;
+                    continue; // Skip if date is invalid
+                }
+                
+                // Process employee ID (Column B)
+                $employeeId = '';
+                if ($row[1] == 'Fauzhi') {
+                    $employeeId = 'CLEOAZ104';
+                } elseif ($row[1] == 'Anisa') {
+                    $employeeId = 'CLEOAZ103';
+                } else {
+                    $skippedRows++;
+                    continue; // Skip if employee name is not recognized
+                }
+                
+                // Generate order number
+                $month = Carbon::parse($orderDate)->format('m');
+                $year = Carbon::parse($orderDate)->format('y');
+                $monthYearKey = $month . $year . $employeeId;
+                
+                if (!isset($orderCountMap[$monthYearKey])) {
+                    $orderCountMap[$monthYearKey] = 1;
+                } else {
+                    $orderCountMap[$monthYearKey]++;
+                }
+                
+                $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
+                $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
+                
+                // Generate receipt number (same as id_order)
+                $receiptNumber = $generatedIdOrder;
+                
+                $orderData = [
+                    'date'                  => $orderDate,
+                    'process_at'            => null,
+                    'id_order'              => $generatedIdOrder,
+                    'sales_channel_id'      => 5, // As specified
+                    'customer_name'         => $row[7] ?? null,
+                    'customer_phone_number' => null,
+                    'product'               => $row[2] ?? null,
+                    'qty'                   => $row[5] ?? null,
+                    'receipt_number'        => $receiptNumber,
+                    'shipment'              => '-',
+                    'payment_method'        => null,
+                    'sku'                   => $row[3] ?? null,
+                    'variant'               => null,
+                    'price'                 => $row[4] ?? null,
+                    'username'              => $row[7] ?? null, // Same as customer_name
+                    'shipping_address'      => $row[7] ?? null, // Same as customer_name
+                    'city'                  => null,
+                    'province'              => null,
+                    'amount'                => $row[6] ?? null,
+                    'tenant_id'             => $tenant_id,
+                    'is_booking'            => 0,
+                    'status'                => 'reported',
+                    'updated_at'            => now(),
+                ];
+
+                // Check if order already exists
+                $order = Order::where('id_order', $orderData['id_order'])
+                            ->where('product', $orderData['product'])
+                            ->where('sku', $orderData['sku'])
+                            ->first();
+
+                if ($order) {
+                    // Update the existing order
+                    $order->fill($orderData);
+                    $order->save();
+                    $updatedRows++;
+                } else {
+                    // Create new order
+                    $orderData['created_at'] = now();
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'B2B Cleora orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
+    
 }
