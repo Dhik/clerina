@@ -2871,8 +2871,8 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $updatedRows = 0;
         $skippedRows = 0;
+        $duplicateRows = 0; // Track duplicates separately
         $orderCountMap = []; // To keep track of order numbers per employee per month
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -2914,6 +2914,25 @@ class OrderController extends Controller
                     continue; // Skip if employee name is not recognized
                 }
                 
+                // Parse amount
+                $amount = $this->parseAmount($row[6] ?? null);
+                
+                // Check for duplicates based on the combination of fields from the sheet
+                $existingOrder = Order::where('date', $orderDate)
+                                ->where('product', $row[2])
+                                ->where('sku', $row[3])
+                                ->where('price', $row[4])
+                                ->where('qty', $row[5])
+                                ->where('amount', $amount)
+                                ->where('customer_name', $row[7])
+                                ->where('tenant_id', $tenant_id)
+                                ->first();
+
+                if ($existingOrder) {
+                    $duplicateRows++;
+                    continue;
+                }
+                
                 // Generate order number
                 $month = Carbon::parse($orderDate)->format('m');
                 $year = Carbon::parse($orderDate)->format('y');
@@ -2943,9 +2962,6 @@ class OrderController extends Controller
                 // Generate receipt number (same as id_order)
                 $receiptNumber = $generatedIdOrder;
                 
-                // Parse amount
-                $amount = $this->parseAmount($row[6] ?? null);
-                
                 $orderData = [
                     'date'                  => $orderDate,
                     'process_at'            => null,
@@ -2970,30 +2986,12 @@ class OrderController extends Controller
                     'is_booking'            => 0,
                     'status'                => 'reported',
                     'updated_at'            => now(),
+                    'created_at'            => now(),
                 ];
 
-                // Check for duplicates based on the combination of fields from the sheet
-                $existingOrder = Order::where('date', $orderDate)
-                                ->where('product', $row[2])
-                                ->where('sku', $row[3])
-                                ->where('price', $row[4])
-                                ->where('qty', $row[5])
-                                ->where('amount', $amount)
-                                ->where('customer_name', $row[7])
-                                ->where('tenant_id', $tenant_id)
-                                ->first();
-
-                if ($existingOrder) {
-                    // Update the existing order
-                    $existingOrder->fill($orderData);
-                    $existingOrder->save();
-                    $updatedRows++;
-                } else {
-                    // Create new order
-                    $orderData['created_at'] = now();
-                    Order::create($orderData);
-                    $processedRows++;
-                }
+                // Create new order
+                Order::create($orderData);
+                $processedRows++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
@@ -3002,8 +3000,8 @@ class OrderController extends Controller
             'message' => 'B2B Azrina orders imported successfully',
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'updated_rows' => $updatedRows,
-            'skipped_rows' => $skippedRows
+            'skipped_rows' => $skippedRows,
+            'duplicate_rows' => $duplicateRows
         ]);
     }
 
