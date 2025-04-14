@@ -3067,7 +3067,7 @@ class OrderController extends Controller
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
         $range = 'Closing Anisa!A:I';
         $sheetData = $this->googleSheetService->getSheetData($range);
-
+    
         $tenant_id = 1;
         $chunkSize = 50;
         $totalRows = count($sheetData);
@@ -3075,66 +3075,116 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Initialize variables to track the last valid values for columns A-D
+        $lastOrderDate = null;
         $lastCustomerName = null;
-
+        $lastShippingAddress = null;
+        $lastPhoneNumber = null;
+    
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                // Skip if no product (Column E) or amount (Column H) is provided
+                if (empty($row[4]) || empty($row[7])) {
                     $skippedRows++;
                     continue;
                 }
+                
+                // Process date (Column A)
                 $orderDate = null;
-                try {
-                    $dateStr = $row[0];
-                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-                        $day = $matches[1];
-                        $month = $matches[2];
-                        $year = $matches[3];
-                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                    } else {
-                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                if (!empty($row[0])) {
+                    try {
+                        $dateStr = $row[0];
+                        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                            $day = $matches[1];
+                            $month = $matches[2];
+                            $year = $matches[3];
+                            $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        } else {
+                            $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        }
+                    } catch (\Exception $e) {
+                        // If date parsing fails, use the last valid date if available
+                        $orderDate = $lastOrderDate;
+                        if (empty($orderDate)) {
+                            $skippedRows++;
+                            continue; // Skip if no valid date can be determined
+                        }
                     }
-                } catch (\Exception $e) {
-                    $skippedRows++;
-                    continue;
-                }
-                if (!empty($row[1])) {
-                    $lastCustomerName = $row[1];
-                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
-                    // Use the previous customer name if current is empty but there's a product
                 } else {
-                    $skippedRows++;
-                    continue; 
+                    // If no date provided, use the last valid date if available
+                    $orderDate = $lastOrderDate;
+                    if (empty($orderDate)) {
+                        $skippedRows++;
+                        continue; // Skip if no valid date can be determined
+                    }
                 }
-                $phoneNumber = null;
+                
+                // Process customer name (Column B)
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1]; // Update the last valid customer name
+                }
+                
+                // Process shipping address (Column C)
+                if (!empty($row[2])) {
+                    $lastShippingAddress = $row[2]; // Update the last valid shipping address
+                }
+                
+                // Process phone number (Column D)
                 if (!empty($row[3])) {
+                    // Remove non-digit characters
                     $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    
+                    // Ensure it starts with 0
                     if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
                         $cleanedPhone = '0' . $cleanedPhone;
                     }
                     
-                    $phoneNumber = $cleanedPhone;
+                    $lastPhoneNumber = $cleanedPhone; // Update the last valid phone number
                 }
                 
+                // Skip if we still don't have a customer name
+                if (empty($lastCustomerName)) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Process SKUs (Column F)
                 $skus = [];
                 if (!empty($row[5])) {
+                    // Split SKUs by comma and trim whitespace
                     $skus = array_map('trim', explode(',', $row[5]));
                 } else {
-                    $skus = [null];
+                    $skus = [null]; // Create at least one row even if SKU is missing
                 }
-
+                
+                // Parse the amount/price from Column H
+                $amount = $this->parseAmount($row[7]);
+                
+                // Double-check that amount isn't null after parsing
+                if ($amount === null) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Create a separate order entry for each SKU
                 foreach ($skus as $sku) {
+                    // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
-                    $employeeId = 'CLEOAZ110';
+                    $employeeId = 'CLEOAZ110'; // As specified in requirements
                     $monthYearKey = $month . $year . $employeeId;
                     
                     if (!isset($orderCountMap[$monthYearKey])) {
+                        // Check if there are existing orders in the database for this month/year/employee
                         $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
                                         ->orderBy('id_order', 'desc')
                                         ->first();
                         
                         if ($lastOrder) {
+                            // Extract the order number from the last order
                             $parts = explode('/', $lastOrder->id_order);
                             $lastOrderNumber = (int)end($parts);
                             $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -3148,28 +3198,29 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $row[7] ?? null)
+                                    ->where('amount', $amount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
-
+    
                     if ($existingOrder) {
+                        // Skip this row as it already exists
                         $duplicateRows++;
                         continue;
                     }
-                    $amount = $this->parseAmount($row[7] ?? null);
                     
                     $orderData = [
                         'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $generatedIdOrder,
-                        'sales_channel_id'      => 10,
+                        'sales_channel_id'      => 10, // As specified
                         'customer_name'         => $lastCustomerName,
-                        'customer_phone_number' => $phoneNumber,
+                        'customer_phone_number' => $lastPhoneNumber,
                         'product'               => $row[4] ?? null,
                         'qty'                   => $row[6] ?? null,
                         'receipt_number'        => "-",
@@ -3178,8 +3229,8 @@ class OrderController extends Controller
                         'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
-                        'username'              => $lastCustomerName,
-                        'shipping_address'      => $row[2] ?? null,
+                        'username'              => $lastCustomerName, // Same as customer_name
+                        'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
                         'amount'                => $amount,
@@ -3189,14 +3240,16 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
+    
+                    // Create new order
                     Order::create($orderData);
                     $processedRows++;
                 }
                 
-                usleep(100000);
+                usleep(100000); // Small delay to prevent overwhelming the server
             }
         }
-
+    
         return response()->json([
             'message' => 'Closing Anisa orders imported successfully', 
             'total_rows' => $totalRows,
@@ -3218,66 +3271,116 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Initialize variables to track the last valid values for columns A-D
+        $lastOrderDate = null;
         $lastCustomerName = null;
+        $lastShippingAddress = null;
+        $lastPhoneNumber = null;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                // Skip if no product (Column E) or amount (Column H) is provided
+                if (empty($row[4]) || empty($row[7])) {
                     $skippedRows++;
                     continue;
                 }
+                
+                // Process date (Column A)
                 $orderDate = null;
-                try {
-                    $dateStr = $row[0];
-                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-                        $day = $matches[1];
-                        $month = $matches[2];
-                        $year = $matches[3];
-                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                    } else {
-                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                if (!empty($row[0])) {
+                    try {
+                        $dateStr = $row[0];
+                        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                            $day = $matches[1];
+                            $month = $matches[2];
+                            $year = $matches[3];
+                            $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        } else {
+                            $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        }
+                    } catch (\Exception $e) {
+                        // If date parsing fails, use the last valid date if available
+                        $orderDate = $lastOrderDate;
+                        if (empty($orderDate)) {
+                            $skippedRows++;
+                            continue; // Skip if no valid date can be determined
+                        }
                     }
-                } catch (\Exception $e) {
+                } else {
+                    // If no date provided, use the last valid date if available
+                    $orderDate = $lastOrderDate;
+                    if (empty($orderDate)) {
+                        $skippedRows++;
+                        continue; // Skip if no valid date can be determined
+                    }
+                }
+                
+                // Process customer name (Column B)
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1]; // Update the last valid customer name
+                }
+                
+                // Skip if we still don't have a customer name
+                if (empty($lastCustomerName)) {
                     $skippedRows++;
                     continue;
                 }
-                if (!empty($row[1])) {
-                    $lastCustomerName = $row[1];
-                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
-                    // Use the previous customer name if current is empty but there's a product
-                } else {
-                    $skippedRows++;
-                    continue; 
+                
+                // Process shipping address (Column C)
+                if (!empty($row[2])) {
+                    $lastShippingAddress = $row[2]; // Update the last valid shipping address
                 }
-                $phoneNumber = null;
+                
+                // Process phone number (Column D)
                 if (!empty($row[3])) {
+                    // Remove non-digit characters
                     $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    
+                    // Ensure it starts with 0
                     if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
                         $cleanedPhone = '0' . $cleanedPhone;
                     }
                     
-                    $phoneNumber = $cleanedPhone;
+                    $lastPhoneNumber = $cleanedPhone; // Update the last valid phone number
                 }
                 
+                // Process SKUs (Column F)
                 $skus = [];
                 if (!empty($row[5])) {
+                    // Split SKUs by comma and trim whitespace
                     $skus = array_map('trim', explode(',', $row[5]));
                 } else {
-                    $skus = [null];
+                    $skus = [null]; // Create at least one row even if SKU is missing
                 }
-
+                
+                // Parse the amount/price from Column H
+                $amount = $this->parseAmount($row[7]);
+                
+                // Double-check that amount isn't null after parsing
+                if ($amount === null) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Create a separate order entry for each SKU
                 foreach ($skus as $sku) {
+                    // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
-                    $employeeId = 'CLEOAZ110';
+                    $employeeId = 'CLEOAZ111'; // As specified in requirements
                     $monthYearKey = $month . $year . $employeeId;
                     
                     if (!isset($orderCountMap[$monthYearKey])) {
+                        // Check if there are existing orders in the database for this month/year/employee
                         $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
                                         ->orderBy('id_order', 'desc')
                                         ->first();
                         
                         if ($lastOrder) {
+                            // Extract the order number from the last order
                             $parts = explode('/', $lastOrder->id_order);
                             $lastOrderNumber = (int)end($parts);
                             $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -3291,28 +3394,29 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $row[7] ?? null)
+                                    ->where('amount', $amount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
 
                     if ($existingOrder) {
+                        // Skip this row as it already exists
                         $duplicateRows++;
                         continue;
                     }
-                    $amount = $this->parseAmount($row[7] ?? null);
                     
                     $orderData = [
                         'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $generatedIdOrder,
-                        'sales_channel_id'      => 10,
+                        'sales_channel_id'      => 10, // As specified
                         'customer_name'         => $lastCustomerName,
-                        'customer_phone_number' => $phoneNumber,
+                        'customer_phone_number' => $lastPhoneNumber,
                         'product'               => $row[4] ?? null,
                         'qty'                   => $row[6] ?? null,
                         'receipt_number'        => "-",
@@ -3321,8 +3425,8 @@ class OrderController extends Controller
                         'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
-                        'username'              => $lastCustomerName,
-                        'shipping_address'      => $row[2] ?? null,
+                        'username'              => $lastCustomerName, // Same as customer_name
+                        'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
                         'amount'                => $amount,
@@ -3332,16 +3436,18 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
+
+                    // Create new order
                     Order::create($orderData);
                     $processedRows++;
                 }
                 
-                usleep(100000);
+                usleep(100000); // Small delay to prevent overwhelming the server
             }
         }
 
         return response()->json([
-            'message' => 'Closing Anisa orders imported successfully', 
+            'message' => 'Closing Iis orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
@@ -3361,66 +3467,116 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Initialize variables to track the last valid values for columns A-D
+        $lastOrderDate = null;
         $lastCustomerName = null;
+        $lastShippingAddress = null;
+        $lastPhoneNumber = null;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                // Skip if no product (Column E) or amount (Column H) is provided
+                if (empty($row[4]) || empty($row[7])) {
                     $skippedRows++;
                     continue;
                 }
+                
+                // Process date (Column A)
                 $orderDate = null;
-                try {
-                    $dateStr = $row[0];
-                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-                        $day = $matches[1];
-                        $month = $matches[2];
-                        $year = $matches[3];
-                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                    } else {
-                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                if (!empty($row[0])) {
+                    try {
+                        $dateStr = $row[0];
+                        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                            $day = $matches[1];
+                            $month = $matches[2];
+                            $year = $matches[3];
+                            $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        } else {
+                            $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        }
+                    } catch (\Exception $e) {
+                        // If date parsing fails, use the last valid date if available
+                        $orderDate = $lastOrderDate;
+                        if (empty($orderDate)) {
+                            $skippedRows++;
+                            continue; // Skip if no valid date can be determined
+                        }
                     }
-                } catch (\Exception $e) {
+                } else {
+                    // If no date provided, use the last valid date if available
+                    $orderDate = $lastOrderDate;
+                    if (empty($orderDate)) {
+                        $skippedRows++;
+                        continue; // Skip if no valid date can be determined
+                    }
+                }
+                
+                // Process customer name (Column B)
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1]; // Update the last valid customer name
+                }
+                
+                // Skip if we still don't have a customer name
+                if (empty($lastCustomerName)) {
                     $skippedRows++;
                     continue;
                 }
-                if (!empty($row[1])) {
-                    $lastCustomerName = $row[1];
-                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
-                    // Use the previous customer name if current is empty but there's a product
-                } else {
-                    $skippedRows++;
-                    continue; 
+                
+                // Process shipping address (Column C)
+                if (!empty($row[2])) {
+                    $lastShippingAddress = $row[2]; // Update the last valid shipping address
                 }
-                $phoneNumber = null;
+                
+                // Process phone number (Column D)
                 if (!empty($row[3])) {
+                    // Remove non-digit characters
                     $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    
+                    // Ensure it starts with 0
                     if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
                         $cleanedPhone = '0' . $cleanedPhone;
                     }
                     
-                    $phoneNumber = $cleanedPhone;
+                    $lastPhoneNumber = $cleanedPhone; // Update the last valid phone number
                 }
                 
+                // Process SKUs (Column F)
                 $skus = [];
                 if (!empty($row[5])) {
+                    // Split SKUs by comma and trim whitespace
                     $skus = array_map('trim', explode(',', $row[5]));
                 } else {
-                    $skus = [null];
+                    $skus = [null]; // Create at least one row even if SKU is missing
                 }
-
+                
+                // Parse the amount/price from Column H
+                $amount = $this->parseAmount($row[7]);
+                
+                // Double-check that amount isn't null after parsing
+                if ($amount === null) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Create a separate order entry for each SKU
                 foreach ($skus as $sku) {
+                    // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
-                    $employeeId = 'CLEOAZ110';
+                    $employeeId = 'CLEOAZ112'; // As specified in requirements
                     $monthYearKey = $month . $year . $employeeId;
                     
                     if (!isset($orderCountMap[$monthYearKey])) {
+                        // Check if there are existing orders in the database for this month/year/employee
                         $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
                                         ->orderBy('id_order', 'desc')
                                         ->first();
                         
                         if ($lastOrder) {
+                            // Extract the order number from the last order
                             $parts = explode('/', $lastOrder->id_order);
                             $lastOrderNumber = (int)end($parts);
                             $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -3434,28 +3590,29 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $row[7] ?? null)
+                                    ->where('amount', $amount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
 
                     if ($existingOrder) {
+                        // Skip this row as it already exists
                         $duplicateRows++;
                         continue;
                     }
-                    $amount = $this->parseAmount($row[7] ?? null);
                     
                     $orderData = [
                         'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $generatedIdOrder,
-                        'sales_channel_id'      => 10,
+                        'sales_channel_id'      => 10, // As specified
                         'customer_name'         => $lastCustomerName,
-                        'customer_phone_number' => $phoneNumber,
+                        'customer_phone_number' => $lastPhoneNumber,
                         'product'               => $row[4] ?? null,
                         'qty'                   => $row[6] ?? null,
                         'receipt_number'        => "-",
@@ -3464,8 +3621,8 @@ class OrderController extends Controller
                         'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
-                        'username'              => $lastCustomerName,
-                        'shipping_address'      => $row[2] ?? null,
+                        'username'              => $lastCustomerName, // Same as customer_name
+                        'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
                         'amount'                => $amount,
@@ -3475,16 +3632,18 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
+
+                    // Create new order
                     Order::create($orderData);
                     $processedRows++;
                 }
                 
-                usleep(100000);
+                usleep(100000); // Small delay to prevent overwhelming the server
             }
         }
 
         return response()->json([
-            'message' => 'Closing Anisa orders imported successfully', 
+            'message' => 'Closing Kiki orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
@@ -3504,66 +3663,116 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Initialize variables to track the last valid values for columns A-D
+        $lastOrderDate = null;
         $lastCustomerName = null;
+        $lastShippingAddress = null;
+        $lastPhoneNumber = null;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                // Skip if no product (Column E) or amount (Column H) is provided
+                if (empty($row[4]) || empty($row[7])) {
                     $skippedRows++;
                     continue;
                 }
+                
+                // Process date (Column A)
                 $orderDate = null;
-                try {
-                    $dateStr = $row[0];
-                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-                        $day = $matches[1];
-                        $month = $matches[2];
-                        $year = $matches[3];
-                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                    } else {
-                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                if (!empty($row[0])) {
+                    try {
+                        $dateStr = $row[0];
+                        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                            $day = $matches[1];
+                            $month = $matches[2];
+                            $year = $matches[3];
+                            $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        } else {
+                            $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $lastOrderDate = $orderDate; // Update the last valid date
+                        }
+                    } catch (\Exception $e) {
+                        // If date parsing fails, use the last valid date if available
+                        $orderDate = $lastOrderDate;
+                        if (empty($orderDate)) {
+                            $skippedRows++;
+                            continue; // Skip if no valid date can be determined
+                        }
                     }
-                } catch (\Exception $e) {
+                } else {
+                    // If no date provided, use the last valid date if available
+                    $orderDate = $lastOrderDate;
+                    if (empty($orderDate)) {
+                        $skippedRows++;
+                        continue; // Skip if no valid date can be determined
+                    }
+                }
+                
+                // Process customer name (Column B)
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1]; // Update the last valid customer name
+                }
+                
+                // Skip if we still don't have a customer name
+                if (empty($lastCustomerName)) {
                     $skippedRows++;
                     continue;
                 }
-                if (!empty($row[1])) {
-                    $lastCustomerName = $row[1];
-                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
-                    // Use the previous customer name if current is empty but there's a product
-                } else {
-                    $skippedRows++;
-                    continue; 
+                
+                // Process shipping address (Column C)
+                if (!empty($row[2])) {
+                    $lastShippingAddress = $row[2]; // Update the last valid shipping address
                 }
-                $phoneNumber = null;
+                
+                // Process phone number (Column D)
                 if (!empty($row[3])) {
+                    // Remove non-digit characters
                     $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    
+                    // Ensure it starts with 0
                     if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
                         $cleanedPhone = '0' . $cleanedPhone;
                     }
                     
-                    $phoneNumber = $cleanedPhone;
+                    $lastPhoneNumber = $cleanedPhone; // Update the last valid phone number
                 }
                 
+                // Process SKUs (Column F)
                 $skus = [];
                 if (!empty($row[5])) {
+                    // Split SKUs by comma and trim whitespace
                     $skus = array_map('trim', explode(',', $row[5]));
                 } else {
-                    $skus = [null];
+                    $skus = [null]; // Create at least one row even if SKU is missing
                 }
-
+                
+                // Parse the amount/price from Column H
+                $amount = $this->parseAmount($row[7]);
+                
+                // Double-check that amount isn't null after parsing
+                if ($amount === null) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Create a separate order entry for each SKU
                 foreach ($skus as $sku) {
+                    // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
-                    $employeeId = 'CLEOAZ110';
+                    $employeeId = 'CLEOAZ113'; // As specified in requirements
                     $monthYearKey = $month . $year . $employeeId;
                     
                     if (!isset($orderCountMap[$monthYearKey])) {
+                        // Check if there are existing orders in the database for this month/year/employee
                         $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
                                         ->orderBy('id_order', 'desc')
                                         ->first();
                         
                         if ($lastOrder) {
+                            // Extract the order number from the last order
                             $parts = explode('/', $lastOrder->id_order);
                             $lastOrderNumber = (int)end($parts);
                             $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -3577,28 +3786,29 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $row[7] ?? null)
+                                    ->where('amount', $amount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
 
                     if ($existingOrder) {
+                        // Skip this row as it already exists
                         $duplicateRows++;
                         continue;
                     }
-                    $amount = $this->parseAmount($row[7] ?? null);
                     
                     $orderData = [
                         'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $generatedIdOrder,
-                        'sales_channel_id'      => 10,
+                        'sales_channel_id'      => 10, // As specified
                         'customer_name'         => $lastCustomerName,
-                        'customer_phone_number' => $phoneNumber,
+                        'customer_phone_number' => $lastPhoneNumber,
                         'product'               => $row[4] ?? null,
                         'qty'                   => $row[6] ?? null,
                         'receipt_number'        => "-",
@@ -3607,8 +3817,8 @@ class OrderController extends Controller
                         'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
-                        'username'              => $lastCustomerName,
-                        'shipping_address'      => $row[2] ?? null,
+                        'username'              => $lastCustomerName, // Same as customer_name
+                        'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
                         'amount'                => $amount,
@@ -3618,16 +3828,18 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
+
+                    // Create new order
                     Order::create($orderData);
                     $processedRows++;
                 }
                 
-                usleep(100000);
+                usleep(100000); // Small delay to prevent overwhelming the server
             }
         }
 
         return response()->json([
-            'message' => 'Closing Anisa orders imported successfully', 
+            'message' => 'Closing Zalsa orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
