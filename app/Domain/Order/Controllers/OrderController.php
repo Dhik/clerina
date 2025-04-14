@@ -3074,55 +3074,41 @@ class OrderController extends Controller
         $processedRows = 0;
         $skippedRows = 0;
         $duplicateRows = 0;
-        $orderCountMap = []; // To keep track of order numbers per month
-        $lastCustomerName = null; // To track the last valid customer name
+        $orderCountMap = [];
+        $lastCustomerName = null;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                // Skip if essential data is missing (date and either customer name or product)
                 if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
                     $skippedRows++;
                     continue;
                 }
-                
-                // Process date (Column A)
                 $orderDate = null;
                 try {
-                    // Properly handle DD/MM/YYYY format
                     $dateStr = $row[0];
                     if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-                        // Format is DD/MM/YYYY
                         $day = $matches[1];
                         $month = $matches[2];
                         $year = $matches[3];
                         $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
                     } else {
-                        // Try standard parsing as fallback
                         $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
                     }
                 } catch (\Exception $e) {
                     $skippedRows++;
-                    continue; // Skip if date is invalid
+                    continue;
                 }
-                
-                // Process customer name (Column B)
-                // If Column B is empty but Column E (product) is not, use the last known customer name
                 if (!empty($row[1])) {
                     $lastCustomerName = $row[1];
                 } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
                     // Use the previous customer name if current is empty but there's a product
                 } else {
                     $skippedRows++;
-                    continue; // Skip if we can't determine a customer name
+                    continue; 
                 }
-                
-                // Process phone number (Column D)
                 $phoneNumber = null;
                 if (!empty($row[3])) {
-                    // Remove non-digit characters
                     $cleanedPhone = preg_replace('/\D/', '', $row[3]);
-                    
-                    // Ensure it starts with 0
                     if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
                         $cleanedPhone = '0' . $cleanedPhone;
                     }
@@ -3130,31 +3116,25 @@ class OrderController extends Controller
                     $phoneNumber = $cleanedPhone;
                 }
                 
-                // Process SKUs (Column F)
                 $skus = [];
                 if (!empty($row[5])) {
-                    // Split SKUs by comma and trim whitespace
                     $skus = array_map('trim', explode(',', $row[5]));
                 } else {
-                    $skus = [null]; // Create at least one row even if SKU is missing
+                    $skus = [null];
                 }
-                
-                // Create a separate order entry for each SKU
+
                 foreach ($skus as $sku) {
-                    // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
-                    $employeeId = 'CLEOAZ110'; // As specified in requirements
+                    $employeeId = 'CLEOAZ110';
                     $monthYearKey = $month . $year . $employeeId;
                     
                     if (!isset($orderCountMap[$monthYearKey])) {
-                        // Check if there are existing orders in the database for this month/year/employee
                         $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
                                         ->orderBy('id_order', 'desc')
                                         ->first();
                         
                         if ($lastOrder) {
-                            // Extract the order number from the last order
                             $parts = explode('/', $lastOrder->id_order);
                             $lastOrderNumber = (int)end($parts);
                             $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -3168,7 +3148,6 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
-                    // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
@@ -3179,7 +3158,6 @@ class OrderController extends Controller
                                     ->first();
 
                     if ($existingOrder) {
-                        // Skip this row as it already exists
                         $duplicateRows++;
                         continue;
                     }
@@ -3189,7 +3167,7 @@ class OrderController extends Controller
                         'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $generatedIdOrder,
-                        'sales_channel_id'      => 10, // As specified
+                        'sales_channel_id'      => 10,
                         'customer_name'         => $lastCustomerName,
                         'customer_phone_number' => $phoneNumber,
                         'product'               => $row[4] ?? null,
@@ -3200,7 +3178,7 @@ class OrderController extends Controller
                         'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
-                        'username'              => $lastCustomerName, // Same as customer_name
+                        'username'              => $lastCustomerName,
                         'shipping_address'      => $row[2] ?? null,
                         'city'                  => null,
                         'province'              => null,
@@ -3211,13 +3189,440 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
-
-                    // Create new order
                     Order::create($orderData);
                     $processedRows++;
                 }
                 
-                usleep(100000); // Small delay to prevent overwhelming the server
+                usleep(100000);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Closing Anisa orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'duplicate_rows' => $duplicateRows
+        ]);
+    }
+    public function importClosingIis()
+    {
+        $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
+        $range = 'Closing Iis!A:I';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $duplicateRows = 0;
+        $orderCountMap = [];
+        $lastCustomerName = null;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                    $skippedRows++;
+                    continue;
+                }
+                $orderDate = null;
+                try {
+                    $dateStr = $row[0];
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                        $day = $matches[1];
+                        $month = $matches[2];
+                        $year = $matches[3];
+                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                    } else {
+                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                    }
+                } catch (\Exception $e) {
+                    $skippedRows++;
+                    continue;
+                }
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1];
+                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
+                    // Use the previous customer name if current is empty but there's a product
+                } else {
+                    $skippedRows++;
+                    continue; 
+                }
+                $phoneNumber = null;
+                if (!empty($row[3])) {
+                    $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
+                        $cleanedPhone = '0' . $cleanedPhone;
+                    }
+                    
+                    $phoneNumber = $cleanedPhone;
+                }
+                
+                $skus = [];
+                if (!empty($row[5])) {
+                    $skus = array_map('trim', explode(',', $row[5]));
+                } else {
+                    $skus = [null];
+                }
+
+                foreach ($skus as $sku) {
+                    $month = Carbon::parse($orderDate)->format('m');
+                    $year = Carbon::parse($orderDate)->format('y');
+                    $employeeId = 'CLEOAZ110';
+                    $monthYearKey = $month . $year . $employeeId;
+                    
+                    if (!isset($orderCountMap[$monthYearKey])) {
+                        $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
+                                        ->orderBy('id_order', 'desc')
+                                        ->first();
+                        
+                        if ($lastOrder) {
+                            $parts = explode('/', $lastOrder->id_order);
+                            $lastOrderNumber = (int)end($parts);
+                            $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
+                        } else {
+                            $orderCountMap[$monthYearKey] = 1;
+                        }
+                    } else {
+                        $orderCountMap[$monthYearKey]++;
+                    }
+                    
+                    $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
+                    $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
+                    
+                    $existingOrder = Order::where('date', $orderDate)
+                                    ->where('product', $row[4] ?? null)
+                                    ->where('sku', $sku)
+                                    ->where('qty', $row[6] ?? null)
+                                    ->where('amount', $row[7] ?? null)
+                                    ->where('customer_name', $lastCustomerName)
+                                    ->where('tenant_id', $tenant_id)
+                                    ->first();
+
+                    if ($existingOrder) {
+                        $duplicateRows++;
+                        continue;
+                    }
+                    $amount = $this->parseAmount($row[7] ?? null);
+                    
+                    $orderData = [
+                        'date'                  => $orderDate,
+                        'process_at'            => null,
+                        'id_order'              => $generatedIdOrder,
+                        'sales_channel_id'      => 10,
+                        'customer_name'         => $lastCustomerName,
+                        'customer_phone_number' => $phoneNumber,
+                        'product'               => $row[4] ?? null,
+                        'qty'                   => $row[6] ?? null,
+                        'receipt_number'        => "-",
+                        'shipment'              => "-",
+                        'payment_method'        => $row[8] ?? null,
+                        'sku'                   => $sku,
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => $lastCustomerName,
+                        'shipping_address'      => $row[2] ?? null,
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => 'reported',
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                    ];
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+                
+                usleep(100000);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Closing Anisa orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'duplicate_rows' => $duplicateRows
+        ]);
+    }
+    public function importClosingKiki()
+    {
+        $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
+        $range = 'Closing Kiki!A:I';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $duplicateRows = 0;
+        $orderCountMap = [];
+        $lastCustomerName = null;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                    $skippedRows++;
+                    continue;
+                }
+                $orderDate = null;
+                try {
+                    $dateStr = $row[0];
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                        $day = $matches[1];
+                        $month = $matches[2];
+                        $year = $matches[3];
+                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                    } else {
+                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                    }
+                } catch (\Exception $e) {
+                    $skippedRows++;
+                    continue;
+                }
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1];
+                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
+                    // Use the previous customer name if current is empty but there's a product
+                } else {
+                    $skippedRows++;
+                    continue; 
+                }
+                $phoneNumber = null;
+                if (!empty($row[3])) {
+                    $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
+                        $cleanedPhone = '0' . $cleanedPhone;
+                    }
+                    
+                    $phoneNumber = $cleanedPhone;
+                }
+                
+                $skus = [];
+                if (!empty($row[5])) {
+                    $skus = array_map('trim', explode(',', $row[5]));
+                } else {
+                    $skus = [null];
+                }
+
+                foreach ($skus as $sku) {
+                    $month = Carbon::parse($orderDate)->format('m');
+                    $year = Carbon::parse($orderDate)->format('y');
+                    $employeeId = 'CLEOAZ110';
+                    $monthYearKey = $month . $year . $employeeId;
+                    
+                    if (!isset($orderCountMap[$monthYearKey])) {
+                        $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
+                                        ->orderBy('id_order', 'desc')
+                                        ->first();
+                        
+                        if ($lastOrder) {
+                            $parts = explode('/', $lastOrder->id_order);
+                            $lastOrderNumber = (int)end($parts);
+                            $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
+                        } else {
+                            $orderCountMap[$monthYearKey] = 1;
+                        }
+                    } else {
+                        $orderCountMap[$monthYearKey]++;
+                    }
+                    
+                    $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
+                    $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
+                    
+                    $existingOrder = Order::where('date', $orderDate)
+                                    ->where('product', $row[4] ?? null)
+                                    ->where('sku', $sku)
+                                    ->where('qty', $row[6] ?? null)
+                                    ->where('amount', $row[7] ?? null)
+                                    ->where('customer_name', $lastCustomerName)
+                                    ->where('tenant_id', $tenant_id)
+                                    ->first();
+
+                    if ($existingOrder) {
+                        $duplicateRows++;
+                        continue;
+                    }
+                    $amount = $this->parseAmount($row[7] ?? null);
+                    
+                    $orderData = [
+                        'date'                  => $orderDate,
+                        'process_at'            => null,
+                        'id_order'              => $generatedIdOrder,
+                        'sales_channel_id'      => 10,
+                        'customer_name'         => $lastCustomerName,
+                        'customer_phone_number' => $phoneNumber,
+                        'product'               => $row[4] ?? null,
+                        'qty'                   => $row[6] ?? null,
+                        'receipt_number'        => "-",
+                        'shipment'              => "-",
+                        'payment_method'        => $row[8] ?? null,
+                        'sku'                   => $sku,
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => $lastCustomerName,
+                        'shipping_address'      => $row[2] ?? null,
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => 'reported',
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                    ];
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+                
+                usleep(100000);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Closing Anisa orders imported successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'duplicate_rows' => $duplicateRows
+        ]);
+    }
+    public function importClosingZalsa()
+    {
+        $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
+        $range = 'Closing Zalsa!A:I';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $duplicateRows = 0;
+        $orderCountMap = [];
+        $lastCustomerName = null;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                if (empty($row[0]) || (empty($row[1]) && empty($row[4]))) {
+                    $skippedRows++;
+                    continue;
+                }
+                $orderDate = null;
+                try {
+                    $dateStr = $row[0];
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                        $day = $matches[1];
+                        $month = $matches[2];
+                        $year = $matches[3];
+                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                    } else {
+                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                    }
+                } catch (\Exception $e) {
+                    $skippedRows++;
+                    continue;
+                }
+                if (!empty($row[1])) {
+                    $lastCustomerName = $row[1];
+                } elseif (!empty($row[4]) && !empty($lastCustomerName)) {
+                    // Use the previous customer name if current is empty but there's a product
+                } else {
+                    $skippedRows++;
+                    continue; 
+                }
+                $phoneNumber = null;
+                if (!empty($row[3])) {
+                    $cleanedPhone = preg_replace('/\D/', '', $row[3]);
+                    if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
+                        $cleanedPhone = '0' . $cleanedPhone;
+                    }
+                    
+                    $phoneNumber = $cleanedPhone;
+                }
+                
+                $skus = [];
+                if (!empty($row[5])) {
+                    $skus = array_map('trim', explode(',', $row[5]));
+                } else {
+                    $skus = [null];
+                }
+
+                foreach ($skus as $sku) {
+                    $month = Carbon::parse($orderDate)->format('m');
+                    $year = Carbon::parse($orderDate)->format('y');
+                    $employeeId = 'CLEOAZ110';
+                    $monthYearKey = $month . $year . $employeeId;
+                    
+                    if (!isset($orderCountMap[$monthYearKey])) {
+                        $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
+                                        ->orderBy('id_order', 'desc')
+                                        ->first();
+                        
+                        if ($lastOrder) {
+                            $parts = explode('/', $lastOrder->id_order);
+                            $lastOrderNumber = (int)end($parts);
+                            $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
+                        } else {
+                            $orderCountMap[$monthYearKey] = 1;
+                        }
+                    } else {
+                        $orderCountMap[$monthYearKey]++;
+                    }
+                    
+                    $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
+                    $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
+                    
+                    $existingOrder = Order::where('date', $orderDate)
+                                    ->where('product', $row[4] ?? null)
+                                    ->where('sku', $sku)
+                                    ->where('qty', $row[6] ?? null)
+                                    ->where('amount', $row[7] ?? null)
+                                    ->where('customer_name', $lastCustomerName)
+                                    ->where('tenant_id', $tenant_id)
+                                    ->first();
+
+                    if ($existingOrder) {
+                        $duplicateRows++;
+                        continue;
+                    }
+                    $amount = $this->parseAmount($row[7] ?? null);
+                    
+                    $orderData = [
+                        'date'                  => $orderDate,
+                        'process_at'            => null,
+                        'id_order'              => $generatedIdOrder,
+                        'sales_channel_id'      => 10,
+                        'customer_name'         => $lastCustomerName,
+                        'customer_phone_number' => $phoneNumber,
+                        'product'               => $row[4] ?? null,
+                        'qty'                   => $row[6] ?? null,
+                        'receipt_number'        => "-",
+                        'shipment'              => "-",
+                        'payment_method'        => $row[8] ?? null,
+                        'sku'                   => $sku,
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => $lastCustomerName,
+                        'shipping_address'      => $row[2] ?? null,
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => 'reported',
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                    ];
+                    Order::create($orderData);
+                    $processedRows++;
+                }
+                
+                usleep(100000);
             }
         }
 
