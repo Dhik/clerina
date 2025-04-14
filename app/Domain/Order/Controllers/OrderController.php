@@ -3183,6 +3183,7 @@ class OrderController extends Controller
                         $duplicateRows++;
                         continue;
                     }
+                    $amount = $this->parseAmount($row[7] ?? null);
                     
                     $orderData = [
                         'date'                  => $orderDate,
@@ -3198,12 +3199,12 @@ class OrderController extends Controller
                         'payment_method'        => $row[8] ?? null,
                         'sku'                   => $sku,
                         'variant'               => null,
-                        'price'                 => $row[7] ?? null,
+                        'price'                 => $amount,
                         'username'              => $lastCustomerName, // Same as customer_name
                         'shipping_address'      => $row[2] ?? null,
                         'city'                  => null,
                         'province'              => null,
-                        'amount'                => $row[7] ?? null,
+                        'amount'                => $amount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
                         'status'                => 'reported',
