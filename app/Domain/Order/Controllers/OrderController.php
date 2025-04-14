@@ -2757,8 +2757,8 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $updatedRows = 0;
         $skippedRows = 0;
+        $duplicateRows = 0; // Track duplicates separately
         $orderCountMap = []; // To keep track of order numbers per employee per month
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -2772,7 +2772,18 @@ class OrderController extends Controller
                 // Process date (Column A)
                 $orderDate = null;
                 try {
-                    $orderDate = Carbon::parse($row[0])->format('Y-m-d');
+                    // Properly handle DD/MM/YYYY format
+                    $dateStr = $row[0];
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                        // Format is DD/MM/YYYY
+                        $day = $matches[1];
+                        $month = $matches[2];
+                        $year = $matches[3];
+                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                    } else {
+                        // Try standard parsing as fallback
+                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                    }
                 } catch (\Exception $e) {
                     $skippedRows++;
                     continue; // Skip if date is invalid
@@ -2780,13 +2791,33 @@ class OrderController extends Controller
                 
                 // Process employee ID (Column B)
                 $employeeId = '';
-                if ($row[1] == 'Fauzhi') {
+                if (trim($row[1]) == 'Fauzhi') {
                     $employeeId = 'CLEOAZ104';
-                } elseif ($row[1] == 'Anisa') {
+                } elseif (trim($row[1]) == 'Anisa') {
                     $employeeId = 'CLEOAZ103';
                 } else {
                     $skippedRows++;
                     continue; // Skip if employee name is not recognized
+                }
+                
+                // Parse amount
+                $amount = $this->parseAmount($row[6] ?? null);
+                
+                // Check for duplicates based on the combination of fields from the sheet
+                $existingOrder = Order::where('date', $orderDate)
+                                ->where('product', $row[2])
+                                ->where('sku', $row[3])
+                                ->where('price', $row[4])
+                                ->where('qty', $row[5])
+                                ->where('amount', $amount)
+                                ->where('customer_name', $row[7])
+                                ->where('tenant_id', $tenant_id)
+                                ->first();
+
+                if ($existingOrder) {
+                    // Skip this row as it already exists
+                    $duplicateRows++;
+                    continue;
                 }
                 
                 // Generate order number
@@ -2795,7 +2826,19 @@ class OrderController extends Controller
                 $monthYearKey = $month . $year . $employeeId;
                 
                 if (!isset($orderCountMap[$monthYearKey])) {
-                    $orderCountMap[$monthYearKey] = 1;
+                    // Check if there are existing orders in the database for this month/year/employee
+                    $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
+                                        ->orderBy('id_order', 'desc')
+                                        ->first();
+                    
+                    if ($lastOrder) {
+                        // Extract the order number from the last order
+                        $parts = explode('/', $lastOrder->id_order);
+                        $lastOrderNumber = (int)end($parts);
+                        $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
+                    } else {
+                        $orderCountMap[$monthYearKey] = 1;
+                    }
                 } else {
                     $orderCountMap[$monthYearKey]++;
                 }
@@ -2825,30 +2868,17 @@ class OrderController extends Controller
                     'shipping_address'      => $row[7] ?? null, // Same as customer_name
                     'city'                  => null,
                     'province'              => null,
-                    'amount'                => $this->parseAmount($row[6] ?? null),
+                    'amount'                => $amount,
                     'tenant_id'             => $tenant_id,
                     'is_booking'            => 0,
                     'status'                => 'reported',
                     'updated_at'            => now(),
+                    'created_at'            => now(),
                 ];
 
-                // Check if order already exists
-                $order = Order::where('id_order', $orderData['id_order'])
-                            ->where('product', $orderData['product'])
-                            ->where('sku', $orderData['sku'])
-                            ->first();
-
-                if ($order) {
-                    // Update the existing order
-                    $order->fill($orderData);
-                    $order->save();
-                    $updatedRows++;
-                } else {
-                    // Create new order
-                    $orderData['created_at'] = now();
-                    Order::create($orderData);
-                    $processedRows++;
-                }
+                // Create new order
+                Order::create($orderData);
+                $processedRows++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
@@ -2857,8 +2887,8 @@ class OrderController extends Controller
             'message' => 'B2B Cleora orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'updated_rows' => $updatedRows,
-            'skipped_rows' => $skippedRows
+            'skipped_rows' => $skippedRows,
+            'duplicate_rows' => $duplicateRows
         ]);
     }
     public function importAzrinaB2B()
