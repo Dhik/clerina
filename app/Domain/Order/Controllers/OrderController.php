@@ -2874,52 +2874,43 @@ class OrderController extends Controller
         $updatedRows = 0;
         $skippedRows = 0;
         $orderCountMap = []; // To keep track of order numbers per employee per month
-        $skippedRowsData = []; // Array to store skipped rows data
 
-        foreach (array_chunk($sheetData, $chunkSize) as $chunkIndex => $chunk) {
-            foreach ($chunk as $rowIndex => $row) {
-                // Calculate the actual row number in the sheet
-                $actualRowNumber = $chunkIndex * $chunkSize + $rowIndex + 3; // +3 because we start at A3
-                
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
                 // Skip if essential data is missing
                 if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
                     $skippedRows++;
-                    $skippedRowsData[] = [
-                        'row_number' => $actualRowNumber,
-                        'reason' => 'Missing essential data',
-                        'data' => $row
-                    ];
                     continue;
                 }
                 
                 // Process date (Column A)
                 $orderDate = null;
                 try {
-                    $orderDate = Carbon::parse($row[0])->format('Y-m-d');
+                    // Properly handle DD/MM/YYYY format
+                    $dateStr = $row[0];
+                    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
+                        // Format is DD/MM/YYYY
+                        $day = $matches[1];
+                        $month = $matches[2];
+                        $year = $matches[3];
+                        $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                    } else {
+                        // Try standard parsing as fallback
+                        $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                    }
                 } catch (\Exception $e) {
                     $skippedRows++;
-                    $skippedRowsData[] = [
-                        'row_number' => $actualRowNumber,
-                        'reason' => 'Invalid date format: ' . $row[0],
-                        'error' => $e->getMessage(),
-                        'data' => $row
-                    ];
                     continue; // Skip if date is invalid
                 }
                 
                 // Process employee ID (Column B)
                 $employeeId = '';
-                if ($row[1] == 'Fauzhi') {
+                if (trim($row[1]) == 'Fauzhi') {
                     $employeeId = 'CLEOAZ104';
-                } elseif ($row[1] == 'Anisa') {
+                } elseif (trim($row[1]) == 'Anisa') {
                     $employeeId = 'CLEOAZ103';
                 } else {
                     $skippedRows++;
-                    $skippedRowsData[] = [
-                        'row_number' => $actualRowNumber,
-                        'reason' => 'Unknown employee name: ' . $row[1],
-                        'data' => $row
-                    ];
                     continue; // Skip if employee name is not recognized
                 }
                 
@@ -2929,7 +2920,19 @@ class OrderController extends Controller
                 $monthYearKey = $month . $year . $employeeId;
                 
                 if (!isset($orderCountMap[$monthYearKey])) {
-                    $orderCountMap[$monthYearKey] = 1;
+                    // Check if there are existing orders in the database for this month/year/employee
+                    $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
+                                    ->orderBy('id_order', 'desc')
+                                    ->first();
+                    
+                    if ($lastOrder) {
+                        // Extract the order number from the last order
+                        $parts = explode('/', $lastOrder->id_order);
+                        $lastOrderNumber = (int)end($parts);
+                        $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
+                    } else {
+                        $orderCountMap[$monthYearKey] = 1;
+                    }
                 } else {
                     $orderCountMap[$monthYearKey]++;
                 }
@@ -2987,16 +2990,12 @@ class OrderController extends Controller
             usleep(100000); // Small delay to prevent overwhelming the server
         }
 
-        // Log the skipped rows for debugging
-        Log::info('Skipped rows in B2B Azrina import: ' . json_encode($skippedRowsData, JSON_PRETTY_PRINT));
-
         return response()->json([
-            'message' => 'B2B Azrina orders imported successfully', // Fixed the message
+            'message' => 'B2B Azrina orders imported successfully',
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'updated_rows' => $updatedRows,
-            'skipped_rows' => $skippedRows,
-            'skipped_rows_data' => $skippedRowsData // Added skipped rows data to the response
+            'skipped_rows' => $skippedRows
         ]);
     }
 
