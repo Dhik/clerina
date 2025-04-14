@@ -2922,8 +2922,8 @@ class OrderController extends Controller
                 if (!isset($orderCountMap[$monthYearKey])) {
                     // Check if there are existing orders in the database for this month/year/employee
                     $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
-                                    ->orderBy('id_order', 'desc')
-                                    ->first();
+                                        ->orderBy('id_order', 'desc')
+                                        ->first();
                     
                     if ($lastOrder) {
                         // Extract the order number from the last order
@@ -2942,6 +2942,9 @@ class OrderController extends Controller
                 
                 // Generate receipt number (same as id_order)
                 $receiptNumber = $generatedIdOrder;
+                
+                // Parse amount
+                $amount = $this->parseAmount($row[6] ?? null);
                 
                 $orderData = [
                     'date'                  => $orderDate,
@@ -2962,23 +2965,28 @@ class OrderController extends Controller
                     'shipping_address'      => $row[7] ?? null, // Same as customer_name
                     'city'                  => null,
                     'province'              => null,
-                    'amount'                => $this->parseAmount($row[6] ?? null),
+                    'amount'                => $amount,
                     'tenant_id'             => $tenant_id,
                     'is_booking'            => 0,
                     'status'                => 'reported',
                     'updated_at'            => now(),
                 ];
 
-                // Check if order already exists
-                $order = Order::where('id_order', $orderData['id_order'])
-                            ->where('product', $orderData['product'])
-                            ->where('sku', $orderData['sku'])
-                            ->first();
+                // Check for duplicates based on the combination of fields from the sheet
+                $existingOrder = Order::where('date', $orderDate)
+                                ->where('product', $row[2])
+                                ->where('sku', $row[3])
+                                ->where('price', $row[4])
+                                ->where('qty', $row[5])
+                                ->where('amount', $amount)
+                                ->where('customer_name', $row[7])
+                                ->where('tenant_id', $tenant_id)
+                                ->first();
 
-                if ($order) {
+                if ($existingOrder) {
                     // Update the existing order
-                    $order->fill($orderData);
-                    $order->save();
+                    $existingOrder->fill($orderData);
+                    $existingOrder->save();
                     $updatedRows++;
                 } else {
                     // Create new order
