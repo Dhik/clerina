@@ -1335,7 +1335,8 @@ class OrderController extends Controller
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount' => (isset($row[14]) && isset($row[15])) ? (floatval($row[14]) + floatval($row[15])) : null,
+                    'amount' => (isset($row[14]) && isset($row[15])) ? 
+    (int)(floatval($row[14]) + floatval($row[15])) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
@@ -1410,7 +1411,8 @@ class OrderController extends Controller
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount' => (isset($row[14]) && isset($row[15])) ? (floatval($row[14]) + floatval($row[15])) : null,
+                    'amount' => (isset($row[14]) && isset($row[15])) ? 
+    (int)(floatval($row[14]) + floatval($row[15])) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
@@ -3716,7 +3718,7 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
-    
+
     public function importClosingZalsa()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
