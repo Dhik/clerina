@@ -251,29 +251,7 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-8">
-                        <h6>Product Details</h6>
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>HPP/Unit</th>
-                                        <th>Total HPP</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="hppProductContent"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div id="salesChannelPieChart" style="height: 250px;"></div>
-                    </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <h6>Sales Channel Details</h6>
+                        <h6>Sales Channel Summary</h6>
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <thead>
@@ -291,6 +269,28 @@
                                         <td id="totalHpp" class="text-right"></td>
                                     </tr>
                                 </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div id="salesChannelPieChart" style="height: 250px;"></div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6>Product Details</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>HPP/Unit</th>
+                                        <th>Total HPP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hppProductContent"></tbody>
                             </table>
                         </div>
                     </div>
