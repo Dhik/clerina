@@ -1395,7 +1395,7 @@ class OrderController extends Controller
                     'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
-                    'sales_channel_id'     => 9, // Shopee
+                    'sales_channel_id'     => 9,
                     'customer_name'        => $row[7] ?? null,
                     'customer_phone_number' => $row[8] ?? null,
                     'product'              => $row[5] ?? null,
@@ -1413,29 +1413,25 @@ class OrderController extends Controller
                     'amount' => isset($row[16]) ? ($row[16]) : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
-                    'status'               => $row[17] ?? null, // Column R
+                    'status'               => $row[17] ?? null,
                     'created_at'           => now(),
                     'updated_at'           => now(),
                 ];
-
-                // Check if order with the same id_order, product, sku exists
                 $order = Order::where('id_order', $orderData['id_order'])
                             ->where('product', $orderData['product'])
                             ->where('sku', $orderData['sku'])
                             ->where('amount', $orderData['amount'])
                             ->first();
 
-                // If order exists, update its sales_channel_id to 8
                 if ($order) {
                     $order->update(['sales_channel_id' => 9, 'updated_at' => now()]);
                     $updatedRows++;
                 } else {
-                    // If order doesn't exist, create it
                     Order::create($orderData);
                     $processedRows++;
                 }
             }
-            usleep(100000); // Small delay to prevent overwhelming the server
+            usleep(100000);
         }
 
         return response()->json([
@@ -2539,7 +2535,7 @@ class OrderController extends Controller
             $orders = Order::select(
                     'orders.date',
                     'orders.sku',
-                    DB::raw('COUNT(DISTINCT orders.id_order) as quantity'),
+                    DB::raw('SUM(orders.qty) as quantity'), // Changed to SUM(qty) instead of COUNT
                     'products.harga_satuan as hpp',
                     DB::raw("$tenantId as tenant_id"),
                     'orders.sales_channel_id',
