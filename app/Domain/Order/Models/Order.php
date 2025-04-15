@@ -33,6 +33,7 @@ class Order extends Model
         'amount',
         'tenant_id',
         'process_at',
+        'success_date',
     ];
 
     /**
