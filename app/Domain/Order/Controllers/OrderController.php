@@ -3958,10 +3958,11 @@ class OrderController extends Controller
                 }
                 
                 try {
-                    $successDate = Carbon::parse($row[0])->format('Y-m-d');
+                    $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
+                    $inAmount = isset($row[1]) ? intval($row[1]) : 0; // Column B = orders.in_amount
+                    $feeAdmin = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.fee_admin
                     $idOrder = $row[3]; // Column D = orders.id_order
-                    $amount = isset($row[5]) ? intval($row[5]) : 0; // Column F
-                    $status = isset($row[6]) ? $row[6] : "unknown"; // Column G = status
+                    $status = "Selesai"; // Fixed value for orders.status
                     
                     // Check if order exists
                     $order = Order::where('id_order', $idOrder)->first();
@@ -3969,7 +3970,8 @@ class OrderController extends Controller
                     if ($order) {
                         $order->success_date = $successDate;
                         $order->status = $status;
-                        $order->in_amount = $amount;
+                        $order->in_amount = $inAmount;
+                        $order->fee_admin = $feeAdmin;
                         $order->updated_at = now();
                         $order->save();
                         $updatedRows++;
@@ -3988,13 +3990,14 @@ class OrderController extends Controller
                             'payment_method'        => "unknown",
                             'sku'                   => "unknown",
                             'variant'               => null,
-                            'price'                 => $amount,
+                            'price'                 => $inAmount,
                             'username'              => "unknown",
                             'shipping_address'      => "unknown",
                             'city'                  => null,
                             'province'              => null,
-                            'amount'                => $amount,
-                            'in_amount'             => $amount,
+                            'amount'                => $inAmount,
+                            'in_amount'             => $inAmount,
+                            'fee_admin'             => $feeAdmin,
                             'tenant_id'             => $tenant_id,
                             'is_booking'            => 0,
                             'status'                => $status,
