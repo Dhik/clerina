@@ -280,8 +280,8 @@ class NetProfitController extends Controller
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $b2bSales = isset($row[18]) ? $this->parseCurrencyToInt($row[20]) : 0;
-                $crmSales = isset($row[19]) ? $this->parseCurrencyToInt($row[21]) : 0;
+                $b2bSales = isset($row[20]) ? $this->parseCurrencyToInt($row[20]) : 0;
+                $crmSales = isset($row[21]) ? $this->parseCurrencyToInt($row[21]) : 0;
                 
                 $salesData[$date] = [
                     'b2b_sales' => $b2bSales,
