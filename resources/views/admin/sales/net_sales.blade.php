@@ -780,14 +780,14 @@
                         visible: true
                     },
                     {
-                        data: 'mp_sales',
+                        data: 'balance_amount',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
                         visible: false
                     },
                     {
-                        data: 'balance_amount',
+                        data: 'mp_sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
                         },
