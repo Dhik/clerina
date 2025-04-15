@@ -3952,7 +3952,8 @@ class OrderController extends Controller
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                if (empty($row[0]) || empty($row[3])) {
+                // Skip rows without success date or order ID or if ID is "-"
+                if (empty($row[0]) || empty($row[3]) || $row[3] === "-") {
                     $skippedRows++;
                     continue;
                 }
