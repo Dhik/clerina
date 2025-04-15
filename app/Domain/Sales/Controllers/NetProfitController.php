@@ -587,8 +587,10 @@ class NetProfitController extends Controller
     public function getHppByDate(Request $request)
     {
         $date = $request->date;
+        $tenantId = Auth::user()->current_tenant_id;
 
-        $hppDetails = Order::query()
+        // Get product details
+        $productDetails = Order::query()
             ->join('products', function($join) {
                 $join->on(DB::raw("TRIM(
                     CASE 
@@ -599,23 +601,69 @@ class NetProfitController extends Controller
                 )"), '=', 'products.sku');
             })
             ->whereDate('orders.date', $date)
-            ->where('products.tenant_id', Auth::user()->current_tenant_id)
-            ->whereNotIn('orders.status', ['pending', 'cancelled', 'request_cancel', 'request_return'])
+            ->where('products.tenant_id', $tenantId)
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
             ->select([
                 'products.sku',
                 'products.product', 
                 'products.harga_satuan',
-                DB::raw('COUNT(*) as order_count'),
-                DB::raw('SUM(CASE 
-                    WHEN orders.sku REGEXP "^[0-9]+\\s+"
-                    THEN CAST(SUBSTRING_INDEX(orders.sku, " ", 1) AS UNSIGNED)
-                    ELSE 1 
-                END) as quantity')
+                DB::raw('SUM(orders.qty) as quantity')
             ])
             ->groupBy('products.sku', 'products.product', 'products.harga_satuan')
             ->get();
 
-        return response()->json($hppDetails);
+        // Get sales channel details
+        $channelDetails = Order::query()
+            ->join('products', function($join) {
+                $join->on(DB::raw("TRIM(
+                    CASE 
+                        WHEN orders.sku REGEXP '^[0-9]+\\s+' 
+                        THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
+                        ELSE orders.sku 
+                    END
+                )"), '=', 'products.sku');
+            })
+            ->leftJoin('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+            ->whereDate('orders.date', $date)
+            ->where('products.tenant_id', $tenantId)
+            ->whereNotIn('orders.status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
+            ->select([
+                'orders.sales_channel_id',
+                'sales_channels.name as channel_name',
+                DB::raw('SUM(orders.qty) as quantity'),
+                DB::raw('SUM(orders.qty * products.harga_satuan) as total_hpp')
+            ])
+            ->groupBy('orders.sales_channel_id', 'sales_channels.name')
+            ->get();
+
+        // Calculate total HPP
+        $totalHpp = $channelDetails->sum('total_hpp');
+
+        return response()->json([
+            'productDetails' => $productDetails,
+            'channelDetails' => $channelDetails,
+            'totalHpp' => $totalHpp
+        ]);
     }
     public function getSalesByChannel(Request $request)
     {
