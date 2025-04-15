@@ -3062,12 +3062,13 @@ class OrderController extends Controller
         // Convert to integer (bigint in MySQL)
         return (int) $amount;
     }
+    
     public function importClosingAnisa()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
         $range = 'Closing Anisa!A:I';
         $sheetData = $this->googleSheetService->getSheetData($range);
-    
+
         $tenant_id = 1;
         $chunkSize = 50;
         $totalRows = count($sheetData);
@@ -3076,12 +3077,16 @@ class OrderController extends Controller
         $duplicateRows = 0;
         $orderCountMap = [];
         
+        // Get current month and year for filtering
+        $currentMonth = Carbon::now()->format('m');
+        $currentYear = Carbon::now()->format('Y');
+        
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
         $lastCustomerName = null;
         $lastShippingAddress = null;
         $lastPhoneNumber = null;
-    
+
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
                 // Skip if no product (Column E) or amount (Column H) is provided
@@ -3092,6 +3097,8 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
+                $isCurrentMonth = false;
+                
                 if (!empty($row[0])) {
                     try {
                         $dateStr = $row[0];
@@ -3100,9 +3107,18 @@ class OrderController extends Controller
                             $month = $matches[2];
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $parsedDate = Carbon::parse($dateStr);
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
                     } catch (\Exception $e) {
@@ -3120,6 +3136,12 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
+                }
+                
+                // Skip if not from current month
+                if (!$isCurrentMonth) {
+                    $skippedRows++;
+                    continue;
                 }
                 
                 // Process customer name (Column B)
@@ -3207,7 +3229,7 @@ class OrderController extends Controller
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
-    
+
                     if ($existingOrder) {
                         // Skip this row as it already exists
                         $duplicateRows++;
@@ -3240,7 +3262,7 @@ class OrderController extends Controller
                         'updated_at'            => now(),
                         'created_at'            => now(),
                     ];
-    
+
                     // Create new order
                     Order::create($orderData);
                     $processedRows++;
@@ -3249,15 +3271,16 @@ class OrderController extends Controller
                 usleep(100000); // Small delay to prevent overwhelming the server
             }
         }
-    
+
         return response()->json([
-            'message' => 'Closing Anisa orders imported successfully', 
+            'message' => 'Closing Anisa orders imported successfully (current month only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
             'duplicate_rows' => $duplicateRows
         ]);
     }
+
     public function importClosingIis()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -3271,6 +3294,10 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Get current month and year for filtering
+        $currentMonth = Carbon::now()->format('m');
+        $currentYear = Carbon::now()->format('Y');
         
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
@@ -3288,6 +3315,8 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
+                $isCurrentMonth = false;
+                
                 if (!empty($row[0])) {
                     try {
                         $dateStr = $row[0];
@@ -3296,9 +3325,18 @@ class OrderController extends Controller
                             $month = $matches[2];
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $parsedDate = Carbon::parse($dateStr);
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
                     } catch (\Exception $e) {
@@ -3316,6 +3354,12 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
+                }
+                
+                // Skip if not from current month
+                if (!$isCurrentMonth) {
+                    $skippedRows++;
+                    continue;
                 }
                 
                 // Process customer name (Column B)
@@ -3447,13 +3491,14 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Iis orders imported successfully', 
+            'message' => 'Closing Iis orders imported successfully (current month only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
             'duplicate_rows' => $duplicateRows
         ]);
     }
+
     public function importClosingKiki()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -3467,6 +3512,10 @@ class OrderController extends Controller
         $skippedRows = 0;
         $duplicateRows = 0;
         $orderCountMap = [];
+        
+        // Get current month and year for filtering
+        $currentMonth = Carbon::now()->format('m');
+        $currentYear = Carbon::now()->format('Y');
         
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
@@ -3484,6 +3533,8 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
+                $isCurrentMonth = false;
+                
                 if (!empty($row[0])) {
                     try {
                         $dateStr = $row[0];
@@ -3492,9 +3543,18 @@ class OrderController extends Controller
                             $month = $matches[2];
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $parsedDate = Carbon::parse($dateStr);
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
                     } catch (\Exception $e) {
@@ -3512,6 +3572,12 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
+                }
+                
+                // Skip if not from current month
+                if (!$isCurrentMonth) {
+                    $skippedRows++;
+                    continue;
                 }
                 
                 // Process customer name (Column B)
@@ -3643,7 +3709,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Kiki orders imported successfully', 
+            'message' => 'Closing Kiki orders imported successfully (current month only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
@@ -3664,6 +3730,10 @@ class OrderController extends Controller
         $duplicateRows = 0;
         $orderCountMap = [];
         
+        // Get current month and year for filtering
+        $currentMonth = Carbon::now()->format('m');
+        $currentYear = Carbon::now()->format('Y');
+        
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
         $lastCustomerName = null;
@@ -3680,6 +3750,8 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
+                $isCurrentMonth = false;
+                
                 if (!empty($row[0])) {
                     try {
                         $dateStr = $row[0];
@@ -3688,9 +3760,18 @@ class OrderController extends Controller
                             $month = $matches[2];
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
+                            $parsedDate = Carbon::parse($dateStr);
+                            
+                            // Check if date is from current month
+                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
                     } catch (\Exception $e) {
@@ -3708,6 +3789,12 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
+                }
+                
+                // Skip if not from current month
+                if (!$isCurrentMonth) {
+                    $skippedRows++;
+                    continue;
                 }
                 
                 // Process customer name (Column B)
@@ -3839,7 +3926,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Zalsa orders imported successfully', 
+            'message' => 'Closing Zalsa orders imported successfully (current month only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
