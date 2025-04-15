@@ -3934,6 +3934,7 @@ class OrderController extends Controller
     public function updateSuccessDateFromSheet()
     {
         set_time_limit(0);
+        $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
         $range = 'Shopee Balance!A:G';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
