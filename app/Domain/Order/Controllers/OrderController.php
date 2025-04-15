@@ -4059,7 +4059,6 @@ class OrderController extends Controller
                     $orderDate = !empty($row[2]) ? Carbon::parse($row[2])->format('Y-m-d') : Carbon::createFromFormat('Y-m-d', '1970-01-01')->format('Y-m-d'); // Column C = orders.date
                     $successDate = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.success_date
                     $amount = isset($row[5]) ? intval($row[5]) : 0; // Column F = orders.in_amount
-                    $status = isset($row[6]) ? $row[6] : "unknown"; // Column G = status
                     
                     // Check if order exists
                     $order = Order::where('id_order', $idOrder)->first();
@@ -4095,7 +4094,7 @@ class OrderController extends Controller
                             'in_amount'             => $amount,
                             'tenant_id'             => $tenant_id,
                             'is_booking'            => 0,
-                            'status'                => $status,
+                            'status'                => "Selesai",
                             'updated_at'            => now(),
                             'created_at'            => now(),
                             'success_date'          => $successDate,
@@ -4117,6 +4116,104 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Success dates updated successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'new_orders_created' => $newOrdersCreated,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
+    public function updateSuccessDateLazada()
+    {
+        $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
+        $range = 'Lazada Balance Processed!A:D';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+        $newOrdersCreated = 0;
+
+        // Skip header row if present
+        if (isset($sheetData[0]) && isset($sheetData[0][0]) && $sheetData[0][0] != '' && !is_numeric($sheetData[0][0])) {
+            array_shift($sheetData);
+            $totalRows--;
+        }
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if order ID (Column A) is empty or success date (Column B) is empty
+                if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                try {
+                    $idOrder = $row[0]; // Column A = orders.id_order
+                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                    $orderDate = Carbon::parse($row[3])->format('Y-m-d');
+                    $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                    $status = "Selesai"; // As specified in requirements
+                    
+                    // Check if order exists
+                    $order = Order::where('id_order', $idOrder)->first();
+                    
+                    if ($order) {
+                        $order->success_date = $successDate;
+                        $order->status = $status;
+                        $order->in_amount = $amount;
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    } else {
+                        $orderData = [
+                            'date'                  => $orderDate, // Using success date as order date for new records
+                            'process_at'            => null,
+                            'id_order'              => $idOrder,
+                            'sales_channel_id'      => 2, // As specified in requirements
+                            'customer_name'         => "unknown",
+                            'customer_phone_number' => "unknown",
+                            'product'               => "unknown",
+                            'qty'                   => 1,
+                            'receipt_number'        => "unknown",
+                            'shipment'              => "unknown",
+                            'payment_method'        => "unknown",
+                            'sku'                   => "unknown",
+                            'variant'               => null,
+                            'price'                 => $amount,
+                            'username'              => "unknown",
+                            'shipping_address'      => "unknown",
+                            'city'                  => null,
+                            'province'              => null,
+                            'amount'                => $amount,
+                            'in_amount'             => $amount,
+                            'tenant_id'             => $tenant_id,
+                            'is_booking'            => 0,
+                            'status'                => $status,
+                            'updated_at'            => now(),
+                            'created_at'            => now(),
+                            'success_date'          => $successDate,
+                        ];
+                        
+                        Order::create($orderData);
+                        $newOrdersCreated++;
+                    }
+                    
+                    $processedRows++;
+                    
+                } catch (\Exception $e) {
+                    \Log::error("Error processing row for order ID {$row[0]}: " . $e->getMessage() . " | Row data: " . json_encode($row));
+                    $skippedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Lazada success dates updated successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'updated_rows' => $updatedRows,
