@@ -1158,6 +1158,30 @@
                     name: 'Sales Turnover Azrina', 
                     url: "{{ route('order.update_turnover_azrina') }}"
                 },
+                { 
+                    name: 'Import Order B2B Cleora', 
+                    url: "{{ route('order.import_cleora_b2b') }}"
+                },
+                { 
+                    name: 'Import Order B2B Azrina', 
+                    url: "{{ route('order.import_azrina_b2b') }}"
+                },
+                { 
+                    name: 'Import Cleora CRM 1', 
+                    url: "{{ route('order.import_cleora_crm') }}"
+                },
+                { 
+                    name: 'Import Cleora CRM 2', 
+                    url: "{{ route('order.import_cleora_crm2') }}"
+                },
+                { 
+                    name: 'Import Cleora CRM 3', 
+                    url: "{{ route('order.import_cleora_crm3') }}"
+                },
+                { 
+                    name: 'Import Cleora CRM 4', 
+                    url: "{{ route('order.import_cleora_crm4') }}"
+                },
             ];
 
             let completedEndpoints = 0;
