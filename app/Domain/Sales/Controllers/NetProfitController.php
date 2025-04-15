@@ -415,8 +415,17 @@ class NetProfitController extends Controller
                 ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('COUNT(*) as qty'))
                 ->where('tenant_id', $tenant_id)
                 ->whereBetween('date', [$startDate, $endDate])
-                ->whereNotIn('status', ['pending', 'cancelled', 'request_cancel', 'request_return', 
-                                    'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'])
+                ->whereNotIn('status', [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'cancelled', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
                 ->groupBy('order_date', 'sku')
                 ->get();
                 
