@@ -249,46 +249,57 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <h6>Sales Channel Summary</h6>
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Sales Channel</th>
-                                        <th>Quantity</th>
-                                        <th>Total HPP</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="hppChannelContent"></tbody>
-                                <tfoot>
-                                    <tr class="font-weight-bold">
-                                        <td>Total</td>
-                                        <td id="totalQuantity" class="text-right"></td>
-                                        <td id="totalHpp2" class="text-right"></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                <!-- Loading animation -->
+                <div id="loadingAnimation" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading data...</p>
+                </div>
+                
+                <!-- Content (initially hidden) -->
+                <div id="modalContent" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6>Sales Channel Summary</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Sales Channel</th>
+                                            <th>Quantity</th>
+                                            <th>Total HPP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hppChannelContent"></tbody>
+                                    <tfoot>
+                                        <tr class="font-weight-bold">
+                                            <td>Total</td>
+                                            <td id="totalQuantity" class="text-right"></td>
+                                            <td id="totalHpp2" class="text-right"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <h6>Product Details</h6>
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>SKU</th>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>HPP/Unit</th>
-                                        <th>Total HPP</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="hppProductContent"></tbody>
-                            </table>
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6>Product Details</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>HPP/Unit</th>
+                                            <th>Total HPP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hppProductContent"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -958,7 +969,10 @@
         });
 
         function showHppDetail(date) {
+            // Show modal with loading animation
             $('#hppDetailModal').modal('show');
+            $('#loadingAnimation').show();
+            $('#modalContent').hide();
             
             $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
                 // Product details table
@@ -970,7 +984,7 @@
                     productHtml += `<tr>
                         <td>${item.sku}</td>
                         <td>${item.product}</td>
-                        <td class="text-right">${item.quantity.toLocaleString('id-ID')}</td>
+                        <td class="text-right">${parseInt(item.quantity).toLocaleString('id-ID')}</td>
                         <td class="text-right">Rp ${Math.round(item.harga_satuan).toLocaleString('id-ID')}</td>
                         <td class="text-right">Rp ${Math.round(total).toLocaleString('id-ID')}</td>
                     </tr>`;
@@ -986,8 +1000,8 @@
                 data.channelDetails.forEach(function(item) {
                     channelHtml += `<tr>
                         <td>${item.channel_name || 'Unknown'}</td>
-                        <td class="text-right">${item.quantity.toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(item.total_hpp).toLocaleString('id-ID')}</td>
+                        <td class="text-right">${parseInt(item.quantity).toLocaleString('id-ID')}</td>
+                        <td class="text-right">Rp ${Math.round(parseFloat(item.total_hpp)).toLocaleString('id-ID')}</td>
                     </tr>`;
                     totalChannelQuantity += parseInt(item.quantity);
                 });
@@ -996,7 +1010,16 @@
                 
                 // Set totals
                 $('#totalQuantity').text(totalChannelQuantity.toLocaleString('id-ID'));
-                $('#totalHpp2').text('Rp ' + Math.round(data.totalHpp).toLocaleString('id-ID'));
+                $('#totalHpp2').text('Rp ' + Math.round(parseFloat(data.totalHpp)).toLocaleString('id-ID'));
+                
+                // Hide loading animation and show content
+                $('#loadingAnimation').hide();
+                $('#modalContent').fadeIn(300);
+            })
+            .fail(function(error) {
+                console.error("Error fetching HPP data:", error);
+                $('#loadingAnimation').hide();
+                $('#modalContent').html('<div class="alert alert-danger">Failed to load data. Please try again.</div>').show();
             });
         }
 
