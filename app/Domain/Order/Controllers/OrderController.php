@@ -1336,7 +1336,7 @@ class OrderController extends Controller
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
                     'amount' => (isset($row[14]) && isset($row[15])) ? 
-    (int)(floatval($row[14]) + floatval($row[15])) : null,
+    number_format(floatval($row[14]) + floatval($row[15]), 0, '.', '') : null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
