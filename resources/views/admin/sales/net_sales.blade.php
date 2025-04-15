@@ -250,7 +250,7 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <h6>Sales Channel Summary</h6>
                         <div class="table-responsive">
                             <table class="table table-bordered">
@@ -266,14 +266,11 @@
                                     <tr class="font-weight-bold">
                                         <td>Total</td>
                                         <td id="totalQuantity" class="text-right"></td>
-                                        <td id="totalHpp" class="text-right"></td>
+                                        <td id="totalHpp2" class="text-right"></td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div id="salesChannelPieChart" style="height: 250px;"></div>
                     </div>
                 </div>
                 <div class="row mt-4">
@@ -999,94 +996,8 @@
                 
                 // Set totals
                 $('#totalQuantity').text(totalChannelQuantity.toLocaleString('id-ID'));
-                $('#totalHpp').text('Rp ' + Math.round(data.totalHpp).toLocaleString('id-ID'));
-                
-                // Generate pie chart
-                generateSalesChannelPieChart(data.channelDetails);
+                $('#totalHpp2').text('Rp ' + Math.round(data.totalHpp).toLocaleString('id-ID'));
             });
-        }
-
-        function generateSalesChannelPieChart(channelData) {
-            // Prepare data for the pie chart
-            const labels = channelData.map(item => item.channel_name || 'Unknown');
-            const values = channelData.map(item => parseFloat(item.total_hpp));
-            
-            // Generate random colors
-            const backgroundColors = generateRandomColors(channelData.length);
-            
-            // Get canvas context
-            const ctx = document.getElementById('salesChannelPieChart').getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (salesChannelPieChart) {
-                salesChannelPieChart.destroy();
-            }
-            
-            // Create new chart
-            salesChannelPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'HPP by Sales Channel',
-                            font: {
-                                size: 14
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw;
-                                    const formattedValue = 'Rp ' + Math.round(value).toLocaleString('id-ID');
-                                    return label + ': ' + formattedValue;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function generateRandomColors(count) {
-            const colors = [];
-            const predefinedColors = [
-                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                '#5a5c69', '#6610f2', '#6f42c1', '#fd7e14', '#20c9a6'
-            ];
-            
-            for (let i = 0; i < count; i++) {
-                if (i < predefinedColors.length) {
-                    colors.push(predefinedColors[i]);
-                } else {
-                    // Generate random colors if we need more
-                    const r = Math.floor(Math.random() * 255);
-                    const g = Math.floor(Math.random() * 255);
-                    const b = Math.floor(Math.random() * 255);
-                    colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
-                }
-            }
-            
-            return colors;
         }
 
         function showSalesDetail(date) {
