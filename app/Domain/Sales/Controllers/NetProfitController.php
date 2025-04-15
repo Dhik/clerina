@@ -331,7 +331,7 @@ class NetProfitController extends Controller
     {
         try {
             $startDate = now()->startOfMonth();
-            $tenant_id = 1;
+            $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID instead of hardcoded value
             
             $dates = collect();
             for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
@@ -348,7 +348,6 @@ class NetProfitController extends Controller
                     'request_cancel', 
                     'request_return',
                     'Batal', 
-                    'cancelled', 
                     'Canceled', 
                     'Pembatalan diajukan', 
                     'Dibatalkan Sistem'
@@ -363,13 +362,7 @@ class NetProfitController extends Controller
                     )"), '=', 'products.sku');
                 })
                 ->select(DB::raw('DATE(orders.date) as date'))
-                ->selectRaw('COALESCE(SUM(
-                    CASE 
-                        WHEN orders.sku REGEXP "^[0-9]+\\s+"
-                        THEN products.harga_satuan * CAST(SUBSTRING_INDEX(orders.sku, " ", 1) AS UNSIGNED)
-                        ELSE products.harga_satuan
-                    END
-                ), 0) as total_hpp')
+                ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp') // Simplified calculation
                 ->groupBy('date');
 
             $hppResults = $hppPerDate->get();
@@ -412,7 +405,7 @@ class NetProfitController extends Controller
             
             // Get order quantities and SKUs for each day in the range
             $dailyOrders = DB::table('orders')
-                ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('COUNT(*) as qty'))
+                ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('SUM(qty) as total_qty'))
                 ->where('tenant_id', $tenant_id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->whereNotIn('status', [
@@ -421,7 +414,6 @@ class NetProfitController extends Controller
                     'request_cancel', 
                     'request_return',
                     'Batal', 
-                    'cancelled', 
                     'Canceled', 
                     'Pembatalan diajukan', 
                     'Dibatalkan Sistem'
@@ -441,14 +433,12 @@ class NetProfitController extends Controller
             foreach ($dailyOrders as $order) {
                 $orderDate = $order->order_date;
                 $orderSku = $order->sku;
-                $orderQty = $order->qty;
+                $orderQty = $order->total_qty;
                 
-                // Extract the base SKU and quantity for cases like "2 AZ-MC50ML-001"
-                $baseQty = 1;
+                // Extract the base SKU for cases like "2 AZ-MC50ML-001"
                 $baseSku = $orderSku;
                 
                 if (preg_match('/^(\d+)\s+(.+)$/', $orderSku, $matches)) {
-                    $baseQty = (int) $matches[1];
                     $baseSku = $matches[2];
                 }
                 
@@ -458,8 +448,8 @@ class NetProfitController extends Controller
                     $productPrice = $products[$baseSku]->harga_satuan;
                 }
                 
-                // Calculate total HPP for this order entry: quantity * base quantity * price
-                $orderHpp = $orderQty * $baseQty * $productPrice;
+                // Calculate total HPP for this order entry
+                $orderHpp = $orderQty * $productPrice;
                 
                 // Add to daily total
                 if (!isset($dailyHpp[$orderDate])) {
@@ -467,6 +457,7 @@ class NetProfitController extends Controller
                 }
                 $dailyHpp[$orderDate] += $orderHpp;
             }
+            
             $resetCount = DB::table('net_profits')
                 ->where('tenant_id', $tenant_id)
                 ->whereBetween('date', [$startDate, $endDate])
