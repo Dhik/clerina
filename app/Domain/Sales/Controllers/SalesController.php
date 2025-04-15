@@ -246,6 +246,9 @@ class SalesController extends Controller
             ->editColumn('crm_sales', function ($row) {
                 return $row->crm_sales ?? 0;
             })
+            ->editColumn('balance_amount', function ($row) {
+                return $row->balance_amount ?? 0;
+            })
             ->editColumn('roas', function ($row) {
                 return number_format($row->roas ?? 0, 2);
             })
