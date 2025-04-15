@@ -863,7 +863,6 @@ class AdSpentSocialMediaController extends Controller
             strpos($accountName, 'IPO2024---AGUS-HKU---') !== false ||
             strpos($accountName, 'CPAS---CLEORA---ANGGA') !== false ||
             strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---2') !== false) {
-            // Check if it's "ANGGA,REZA" category
             if (preg_match('/---JB-BID---ANGGA/i', $accountName) ||
                 preg_match('/---JB-ANGGA/i', $accountName) ||
                 preg_match('/---GLOWSMOOTH---ANGGA/i', $accountName) ||

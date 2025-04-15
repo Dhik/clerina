@@ -35,6 +35,7 @@ class Order extends Model
         'process_at',
         'success_date',
         'in_amount',
+        'fee_admin',
     ];
 
     /**
