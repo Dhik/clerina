@@ -3930,4 +3930,100 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
+
+    public function updateSuccessDateFromSheet()
+    {
+        set_time_limit(0);
+        $range = 'Shopee Balance!A:G';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+        $newOrdersCreated = 0;
+
+        if (isset($sheetData[0]) && isset($sheetData[0][0]) && $sheetData[0][0] == 'Success Date') {
+            array_shift($sheetData);
+            $totalRows--;
+        }
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                if (empty($row[0]) || empty($row[3])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                try {
+                    $successDate = Carbon::parse($row[0])->format('Y-m-d');
+                    $idOrder = $row[3]; // Column D = orders.id_order
+                    $amount = isset($row[5]) ? intval($row[5]) : 0; // Column F
+                    $status = isset($row[6]) ? $row[6] : "unknown"; // Column G = status
+                    
+                    // Check if order exists
+                    $order = Order::where('id_order', $idOrder)->first();
+                    
+                    if ($order) {
+                        // Update existing order with success_date and status
+                        $order->success_date = $successDate;
+                        $order->status = $status;
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    } else {
+                        // Create new order with placeholder data
+                        $orderData = [
+                            'date'                  => Carbon::createFromFormat('Y-m-d', '1970-01-01')->format('Y-m-d'),
+                            'process_at'            => null,
+                            'id_order'              => $idOrder,
+                            'sales_channel_id'      => 1,
+                            'customer_name'         => "unknown",
+                            'customer_phone_number' => "unknown",
+                            'product'               => "unknown",
+                            'qty'                   => 1,
+                            'receipt_number'        => "unknown",
+                            'shipment'              => "unknown",
+                            'payment_method'        => "unknown",
+                            'sku'                   => "unknown",
+                            'variant'               => null,
+                            'price'                 => $amount,
+                            'username'              => "unknown",
+                            'shipping_address'      => "unknown",
+                            'city'                  => null,
+                            'province'              => null,
+                            'amount'                => $amount,
+                            'tenant_id'             => $tenant_id,
+                            'is_booking'            => 0,
+                            'status'                => $status,
+                            'updated_at'            => now(),
+                            'created_at'            => now(),
+                            'success_date'          => $successDate,
+                        ];
+                        
+                        Order::create($orderData);
+                        $newOrdersCreated++;
+                    }
+                    
+                    $processedRows++;
+                    
+                } catch (\Exception $e) {
+                    \Log::error("Error processing row for order ID {$row[3]}: " . $e->getMessage());
+                    $skippedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Success dates updated successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'new_orders_created' => $newOrdersCreated,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
 }

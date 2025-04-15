@@ -837,8 +837,7 @@ class AdSpentSocialMediaController extends Controller
         if (preg_match('/---REZA(-|---|$|\s|&)/i', $accountName) || 
             preg_match('/REZA---/i', $accountName) ||
             preg_match('/---JB---REZA/i', $accountName) ||
-            preg_match('/---GS---REZA/i', $accountName) ||
-            preg_match('/CPAS-CLEORA-JAKARTA/i', $accountName)) {
+            preg_match('/---GS---REZA/i', $accountName)) {
             return 'REZA';
         }
         
@@ -853,6 +852,7 @@ class AdSpentSocialMediaController extends Controller
             preg_match('/---GS---LABIB/i', $accountName) ||
             preg_match('/GS-LABIB/i', $accountName) ||
             preg_match('/RS-LABIB/i', $accountName) ||
+            preg_match('/CPAS-CLEORA-JAKARTA/i', $accountName) ||
             strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---3') !== false ||
             strpos($accountName, 'MKH---CLEORA-6') !== false) {
             return 'LABIB';
