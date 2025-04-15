@@ -3952,7 +3952,6 @@ class OrderController extends Controller
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                // Skip rows without success date or order ID or if ID is "-"
                 if (empty($row[0]) || empty($row[3]) || $row[3] === "-") {
                     $skippedRows++;
                     continue;
@@ -3971,6 +3970,7 @@ class OrderController extends Controller
                         // Update existing order with success_date and status
                         $order->success_date = $successDate;
                         $order->status = $status;
+                        $order->in_amount = $amount;
                         $order->updated_at = now();
                         $order->save();
                         $updatedRows++;
@@ -3996,6 +3996,7 @@ class OrderController extends Controller
                             'city'                  => null,
                             'province'              => null,
                             'amount'                => $amount,
+                            'in_amount'             => $amount,
                             'tenant_id'             => $tenant_id,
                             'is_booking'            => 0,
                             'status'                => $status,
