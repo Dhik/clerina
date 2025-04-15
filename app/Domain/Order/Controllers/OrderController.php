@@ -3967,7 +3967,6 @@ class OrderController extends Controller
                     $order = Order::where('id_order', $idOrder)->first();
                     
                     if ($order) {
-                        // Update existing order with success_date and status
                         $order->success_date = $successDate;
                         $order->status = $status;
                         $order->in_amount = $amount;
