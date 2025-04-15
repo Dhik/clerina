@@ -261,7 +261,8 @@ class NetProfitController extends Controller
     public function updateB2bAndCrmSalesAzrina()
     {
         try {
-            $range = 'Import Sales!A2:V';
+            $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
+            $range = 'Azrina!A2:D';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 2;
@@ -273,15 +274,15 @@ class NetProfitController extends Controller
                 if (empty($row) || empty($row[0])) {
                     continue;
                 }
-                if (!isset($row[20]) && !isset($row[21])) {
+                if (!isset($row[1]) && !isset($row[2])) {
                     continue;
                 }
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
                 if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                     continue;
                 }
-                $b2bSales = isset($row[20]) ? $this->parseCurrencyToInt($row[20]) : 0;
-                $crmSales = isset($row[21]) ? $this->parseCurrencyToInt($row[21]) : 0;
+                $b2bSales = isset($row[1]) ? $this->parseCurrencyToInt($row[1]) : 0;
+                $crmSales = isset($row[2]) ? $this->parseCurrencyToInt($row[2]) : 0;
                 
                 $salesData[$date] = [
                     'b2b_sales' => $b2bSales,
