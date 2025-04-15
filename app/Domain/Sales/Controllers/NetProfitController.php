@@ -292,7 +292,6 @@ class NetProfitController extends Controller
             $updatedCount = 0;
             $skippedCount = 0;
             
-            // Update net_profits table with the sales data - update only, no create
             foreach ($salesData as $date => $data) {
                 $recordExists = NetProfit::where('date', $date)
                     ->where('tenant_id', $tenant_id)
@@ -309,7 +308,6 @@ class NetProfitController extends Controller
                         
                     $updatedCount++;
                 } else {
-                    // Record doesn't exist - skip instead of create
                     $skippedCount++;
                 }
             }
