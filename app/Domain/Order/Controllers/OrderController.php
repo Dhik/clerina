@@ -4976,129 +4976,113 @@ class OrderController extends Controller
     }
 
     public function importMissingData()
-    {
-        $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
-        $range = 'Import Missing Data!A2:T';
-        $sheetData = $this->googleSheetService->getSheetData($range);
+{
+    $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
+    $range = 'Import Missing Data!A2:T';
+    $sheetData = $this->googleSheetService->getSheetData($range);
 
-        $tenant_id = 1;
-        $chunkSize = 50;
-        $totalRows = count($sheetData);
-        $processedRows = 0;
-        $updatedRows = 0;
-        $newOrdersCreated = 0;
-        $skippedRows = 0;
-        $deletedRows = 0;
+    $tenant_id = 1;
+    $chunkSize = 50;
+    $totalRows = count($sheetData);
+    $processedRows = 0;
+    $updatedRows = 0;
+    $newOrdersCreated = 0;
+    $skippedRows = 0;
+    $deletedRows = 0;
 
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
-                // Skip if id_order is empty
-                if (empty($row[0])) {
-                    $skippedRows++;
-                    continue;
-                }
-                
-                try {
-                    $idOrder = $row[0]; // Column A = orders.id_order
-                    
-                    // Try to parse date from Column D
-                    try {
-                        $date = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
-                    } catch (\Exception $e) {
-                        \Log::warning("Invalid date format for order ID {$idOrder}: {$row[3]}");
-                        $date = Carbon::now()->format('Y-m-d'); // Fallback to current date
-                    }
-                    
-                    $amount = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.amount
-                    $sku = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.sku
-                    $variant = isset($row[7]) ? $row[7] : null; // Column H = orders.variant
-                    $price = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.price
-                    $qty = isset($row[9]) ? intval($row[9]) : 1; // Column J = orders.qty
-                    $username = isset($row[10]) ? $row[10] : "unknown"; // Column K = orders.username
-                    $customerName = isset($row[11]) ? $row[11] : "unknown"; // Column L = orders.customer_name
-                    $customerPhoneNumber = isset($row[12]) ? $row[12] : "unknown"; // Column M = orders.customer_phone_number
-                    $shippingAddress = isset($row[13]) ? $row[13] : "unknown"; // Column N = orders.shipping_address
-                    $city = isset($row[14]) ? $row[14] : null; // Column O = orders.city
-                    $province = isset($row[15]) ? $row[15] : null; // Column P = orders.province
-                    
-                    // Determine sales_channel_id based on Column Q
-                    $salesChannelId = 1; // Default
-                    if (isset($row[16]) && $row[16] == "Shopee") {
-                        $salesChannelId = 1;
-                    }
-                    
-                    $inAmount = isset($row[17]) ? intval($row[17]) : 0; // Column R = orders.in_amount
-                    
-                    // Try to parse success_date from Column S
-                    $successDate = null;
-                    if (isset($row[18]) && !empty($row[18])) {
-                        try {
-                            $successDate = Carbon::parse($row[18])->format('Y-m-d'); // Column S = orders.success_date
-                        } catch (\Exception $e) {
-                            \Log::warning("Invalid success date format for order ID {$idOrder}: {$row[18]}");
-                            $successDate = null;
-                        }
-                    }
-                    
-                    $feeAdmin = isset($row[19]) ? intval($row[19]) : 0; // Column T = orders.fee_admin
-                    
-                    // Delete existing order with same id_order if it exists
-                    $deleted = Order::where('id_order', $idOrder)->delete();
-                    if ($deleted) {
-                        $deletedRows += $deleted;
-                    }
-                    
-                    // Create new order data
-                    $orderData = [
-                        'id_order'              => $idOrder,
-                        'date'                  => $date,
-                        'process_at'            => null,
-                        'product'               => null,
-                        'receipt_number'        => null,
-                        'shipment'              => null,
-                        'payment_method'        => null,
-                        'amount'                => $amount,
-                        'tenant_id'             => $tenant_id,
-                        'is_booking'            => 0,
-                        'status'                => "Selesai",
-                        'sku'                   => $sku,
-                        'variant'               => $variant,
-                        'price'                 => $price,
-                        'qty'                   => $qty,
-                        'username'              => $username,
-                        'customer_name'         => $customerName,
-                        'customer_phone_number' => $customerPhoneNumber,
-                        'shipping_address'      => $shippingAddress,
-                        'city'                  => $city,
-                        'province'              => $province,
-                        'sales_channel_id'      => $salesChannelId,
-                        'in_amount'             => $inAmount,
-                        'success_date'          => $successDate,
-                        'fee_admin'             => $feeAdmin,
-                        'created_at'            => now(),
-                        'updated_at'            => now(),
-                    ];
-                    
-                    // Create new order
-                    Order::create($orderData);
-                    $newOrdersCreated++;
-                    $processedRows++;
-                    
-                } catch (\Exception $e) {
-                    \Log::error("Error processing row for order ID {$row[0]}: " . $e->getMessage());
-                    $skippedRows++;
-                }
+    foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+        foreach ($chunk as $row) {
+            // Skip if id_order is empty
+            if (empty($row[0])) {
+                $skippedRows++;
+                continue;
             }
-            usleep(100000); // Slight delay between processing chunks
+            
+            $idOrder = $row[0]; // Column A = orders.id_order
+            
+            // Parse date from Column D
+            $date = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
+            
+            $amount = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.amount
+            $sku = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.sku
+            $variant = isset($row[7]) ? $row[7] : null; // Column H = orders.variant
+            $price = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.price
+            $qty = isset($row[9]) ? intval($row[9]) : 1; // Column J = orders.qty
+            $username = isset($row[10]) ? $row[10] : "unknown"; // Column K = orders.username
+            $customerName = isset($row[11]) ? $row[11] : "unknown"; // Column L = orders.customer_name
+            $customerPhoneNumber = isset($row[12]) ? $row[12] : "unknown"; // Column M = orders.customer_phone_number
+            $shippingAddress = isset($row[13]) ? $row[13] : "unknown"; // Column N = orders.shipping_address
+            $city = isset($row[14]) ? $row[14] : null; // Column O = orders.city
+            $province = isset($row[15]) ? $row[15] : null; // Column P = orders.province
+            
+            // Determine sales_channel_id based on Column Q
+            $salesChannelId = 1; // Default
+            if (isset($row[16]) && $row[16] == "Shopee") {
+                $salesChannelId = 1;
+            }
+            
+            $inAmount = isset($row[17]) ? intval($row[17]) : 0; // Column R = orders.in_amount
+            
+            // Parse success_date from Column S
+            $successDate = null;
+            if (isset($row[18]) && !empty($row[18])) {
+                $successDate = Carbon::parse($row[18])->format('Y-m-d'); // Column S = orders.success_date
+            }
+            
+            $feeAdmin = isset($row[19]) ? intval($row[19]) : 0; // Column T = orders.fee_admin
+            
+            // Delete existing order with same id_order if it exists
+            $deleted = Order::where('id_order', $idOrder)->delete();
+            if ($deleted) {
+                $deletedRows += $deleted;
+            }
+            
+            // Create new order data
+            $orderData = [
+                'id_order'              => $idOrder,
+                'date'                  => $date,
+                'process_at'            => null,
+                'product'               => null,
+                'receipt_number'        => null,
+                'shipment'              => null,
+                'payment_method'        => null,
+                'amount'                => $amount,
+                'tenant_id'             => $tenant_id,
+                'is_booking'            => 0,
+                'status'                => "Selesai",
+                'sku'                   => $sku,
+                'variant'               => $variant,
+                'price'                 => $price,
+                'qty'                   => $qty,
+                'username'              => $username,
+                'customer_name'         => $customerName,
+                'customer_phone_number' => $customerPhoneNumber,
+                'shipping_address'      => $shippingAddress,
+                'city'                  => $city,
+                'province'              => $province,
+                'sales_channel_id'      => $salesChannelId,
+                'in_amount'             => $inAmount,
+                'success_date'          => $successDate,
+                'fee_admin'             => $feeAdmin,
+                'created_at'            => now(),
+                'updated_at'            => now(),
+            ];
+            
+            // Create new order
+            Order::create($orderData);
+            $newOrdersCreated++;
+            $processedRows++;
         }
-
-        return response()->json([
-            'message' => 'Missing data imported successfully', 
-            'total_rows' => $totalRows,
-            'processed_rows' => $processedRows,
-            'new_orders_created' => $newOrdersCreated,
-            'deleted_rows' => $deletedRows,
-            'skipped_rows' => $skippedRows
-        ]);
+        usleep(100000); // Slight delay between processing chunks
     }
+
+    return response()->json([
+        'message' => 'Missing data imported successfully', 
+        'total_rows' => $totalRows,
+        'processed_rows' => $processedRows,
+        'new_orders_created' => $newOrdersCreated,
+        'deleted_rows' => $deletedRows,
+        'skipped_rows' => $skippedRows
+    ]);
+}
 }
