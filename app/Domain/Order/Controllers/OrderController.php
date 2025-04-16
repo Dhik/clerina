@@ -4403,6 +4403,7 @@ class OrderController extends Controller
                     $order->in_amount = $inAmount;
                     $order->fee_admin = $feeAdmin;
                     $order->updated_at = now();
+                    $order->sales_channel_id = 8;
                     $order->save();
                     $updatedRows++;
                 } else {
