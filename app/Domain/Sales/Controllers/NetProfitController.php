@@ -340,7 +340,7 @@ class NetProfitController extends Controller
             }
 
             $hppPerDate = Order::query()
-                ->whereBetween('orders.date', [$startDate, $endDate])
+                ->whereBetween('orders.success_date', [$startDate, $endDate])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -362,7 +362,7 @@ class NetProfitController extends Controller
                         END
                     )"), '=', 'products.sku');
                 })
-                ->select(DB::raw('DATE(orders.date) as date'))
+                ->select(DB::raw('DATE(orders.success_date) as date'))
                 ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp')
                 ->groupBy('date');
 
