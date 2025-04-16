@@ -56,6 +56,7 @@ Route::prefix('admin')
                 Route::get('/import_balance_shopee', [OrderController::class, 'updateSuccessDateShopee'])->name('order.import_balance_shopee');
                 Route::get('/import_balance_tiktok', [OrderController::class, 'updateSuccessDateTiktok'])->name('order.import_balance_tiktok');
                 Route::get('/import_balance_lazada', [OrderController::class, 'updateSuccessDateLazada'])->name('order.import_balance_lazada');
+                Route::get('/import_balance_tokped', [OrderController::class, 'updateSuccessDateTokopedia'])->name('order.import_balance_tokped');
                 Route::get('/import_crm_customer', [OrderController::class, 'importCRMCustomer'])->name('order.import_crm_customer');
                 Route::get('/import_tokped', [OrderController::class, 'importOrdersTokopedia'])->name('order.import_tokped');
                 Route::get('/cleora_shopee', [OrderController::class, 'importOrdersShopee'])->name('order.cleora_shopee');

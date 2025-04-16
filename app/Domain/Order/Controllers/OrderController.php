@@ -4236,4 +4236,107 @@ class OrderController extends Controller
             'chunks_processed' => $chunkProcessed
         ]);
     }
+    public function updateSuccessDateTokopedia()
+    {
+        $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
+        $range = 'Tokopedia Balance!A:G';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 1;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+        $newOrdersCreated = 0;
+
+        // Always assume the first row is a header and skip it
+        if (count($sheetData) > 0) {
+            array_shift($sheetData);
+            $totalRows--;
+        }
+
+        // Track processed order IDs to prevent duplicates
+        $processedOrderIds = [];
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                // Skip if success date (Column A) is empty or id_order (Column F) is empty
+                if (empty($row[0]) || empty($row[5])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
+                $amount = isset($row[3]) ? intval($row[3]) : 0; // Column D = orders.in_amount
+                $idOrder = $row[5]; // Column F = orders.id_order
+                
+                // Skip if we've already processed this order ID
+                if (in_array($idOrder, $processedOrderIds)) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Add to processed IDs
+                $processedOrderIds[] = $idOrder;
+                
+                // Check if order exists
+                $order = Order::where('id_order', $idOrder)->first();
+                
+                if ($order) {
+                    $order->success_date = $successDate;
+                    $order->status = "Selesai";
+                    $order->in_amount = $amount;
+                    $order->updated_at = now();
+                    $order->save();
+                    $updatedRows++;
+                } else {
+                    $orderData = [
+                        'date'                  => $successDate,
+                        'process_at'            => null,
+                        'id_order'              => $idOrder,
+                        'sales_channel_id'      => 3, // Tokopedia = 3
+                        'customer_name'         => "unknown",
+                        'customer_phone_number' => "unknown",
+                        'product'               => "unknown",
+                        'qty'                   => 1,
+                        'receipt_number'        => "unknown",
+                        'shipment'              => "unknown",
+                        'payment_method'        => "unknown", 
+                        'sku'                   => "unknown",
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => "unknown",
+                        'shipping_address'      => "unknown",
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'in_amount'             => $amount,
+                        'fee_admin'             => null, // No fee_admin for Tokopedia
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => "Selesai",
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                        'success_date'          => $successDate,
+                    ];
+                    
+                    Order::create($orderData);
+                    $newOrdersCreated++;
+                }
+                
+                $processedRows++;
+            }
+            usleep(100000);
+        }
+
+        return response()->json([
+            'message' => 'Tokopedia success dates updated successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'new_orders_created' => $newOrdersCreated,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
 }
