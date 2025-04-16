@@ -4142,37 +4142,41 @@ class OrderController extends Controller
             array_shift($sheetData);
             $totalRows--;
         }
+        
+        // Group data by id_order to handle duplicates
+        $groupedData = [];
+        foreach ($sheetData as $row) {
+            // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty
+            if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
+                $skippedRows++;
+                continue;
+            }
+            
+            $idOrder = $row[0];
+            if (!isset($groupedData[$idOrder])) {
+                $groupedData[$idOrder] = [];
+            }
+            $groupedData[$idOrder][] = $row;
+        }
 
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
-                // Skip if order ID (Column A) is empty or success date (Column B) is empty
-                if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
-                    $skippedRows++;
-                    continue;
-                }
-                
-                $idOrder = $row[0]; // Column A = orders.id_order
-                $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                $orderDate = Carbon::parse($row[3])->format('Y-m-d');
-                $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
-                $status = "Selesai"; // As specified in requirements
-                
-                // Check if order exists
-                $order = Order::where('id_order', $idOrder)->first();
-                
-                if ($order) {
-                    $order->success_date = $successDate;
-                    $order->status = $status;
-                    $order->in_amount = $amount;
-                    $order->updated_at = now();
-                    $order->save();
-                    $updatedRows++;
-                } else {
+        // Process each group of orders with the same id_order
+        foreach ($groupedData as $idOrder => $orderGroup) {
+            $existingOrders = Order::where('id_order', $idOrder)->get();
+            $existingCount = $existingOrders->count();
+            $groupCount = count($orderGroup);
+            
+            if ($existingCount == 0) {
+                // No existing orders, create all from the group
+                foreach ($orderGroup as $row) {
+                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                    $orderDate = Carbon::parse($row[3])->format('Y-m-d');
+                    $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    
                     $orderData = [
-                        'date'                  => $orderDate, // Using success date as order date for new records
+                        'date'                  => $orderDate,
                         'process_at'            => null,
                         'id_order'              => $idOrder,
-                        'sales_channel_id'      => 2, // As specified in requirements
+                        'sales_channel_id'      => 2,
                         'customer_name'         => "unknown",
                         'customer_phone_number' => "unknown",
                         'product'               => "unknown",
@@ -4191,7 +4195,7 @@ class OrderController extends Controller
                         'in_amount'             => $amount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
-                        'status'                => $status,
+                        'status'                => "Selesai",
                         'updated_at'            => now(),
                         'created_at'            => now(),
                         'success_date'          => $successDate,
@@ -4199,11 +4203,123 @@ class OrderController extends Controller
                     
                     Order::create($orderData);
                     $newOrdersCreated++;
+                    $processedRows++;
+                }
+            } else if ($existingCount == $groupCount) {
+                // Same number of orders in DB as in sheet, update them pairwise
+                // Sort both arrays by in_amount to match them appropriately
+                $existingOrders = $existingOrders->sortBy('in_amount')->values();
+                
+                // Sort order group by amount
+                usort($orderGroup, function($a, $b) {
+                    $amountA = isset($a[2]) ? intval($a[2]) : 0;
+                    $amountB = isset($b[2]) ? intval($b[2]) : 0;
+                    return $amountA - $amountB;
+                });
+                
+                // Update each existing order with corresponding sheet data
+                foreach ($orderGroup as $index => $row) {
+                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                    $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    
+                    if (isset($existingOrders[$index])) {
+                        $order = $existingOrders[$index];
+                        $order->success_date = $successDate;
+                        $order->status = "Selesai";
+                        $order->in_amount = $amount;
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                        $processedRows++;
+                    }
+                }
+            } else if ($existingCount < $groupCount) {
+                // Fewer orders in DB than in sheet, update existing ones and create new ones
+                // First, update existing orders
+                $existingOrderIds = $existingOrders->pluck('id')->toArray();
+                $updateCount = 0;
+                
+                foreach ($existingOrders as $order) {
+                    if ($updateCount < count($orderGroup)) {
+                        $row = $orderGroup[$updateCount];
+                        $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                        $amount = isset($row[2]) ? intval($row[2]) : 0;
+                        
+                        $order->success_date = $successDate;
+                        $order->status = "Selesai";
+                        $order->in_amount = $amount;
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                        $processedRows++;
+                        $updateCount++;
+                    }
                 }
                 
-                $processedRows++;
+                // Create additional orders
+                for ($i = $updateCount; $i < count($orderGroup); $i++) {
+                    $row = $orderGroup[$i];
+                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                    $orderDate = Carbon::parse($row[3])->format('Y-m-d');
+                    $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    
+                    $orderData = [
+                        'date'                  => $orderDate,
+                        'process_at'            => null,
+                        'id_order'              => $idOrder,
+                        'sales_channel_id'      => 2,
+                        'customer_name'         => "unknown",
+                        'customer_phone_number' => "unknown",
+                        'product'               => "unknown",
+                        'qty'                   => 1,
+                        'receipt_number'        => "unknown",
+                        'shipment'              => "unknown",
+                        'payment_method'        => "unknown",
+                        'sku'                   => "unknown",
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => "unknown",
+                        'shipping_address'      => "unknown",
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'in_amount'             => $amount,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => "Selesai",
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                        'success_date'          => $successDate,
+                    ];
+                    
+                    Order::create($orderData);
+                    $newOrdersCreated++;
+                    $processedRows++;
+                }
+            } else {
+                // More orders in DB than in sheet, update only what we can match
+                for ($i = 0; $i < min($existingCount, $groupCount); $i++) {
+                    if (isset($orderGroup[$i])) {
+                        $row = $orderGroup[$i];
+                        $successDate = Carbon::parse($row[1])->format('Y-m-d');
+                        $amount = isset($row[2]) ? intval($row[2]) : 0;
+                        
+                        if (isset($existingOrders[$i])) {
+                            $order = $existingOrders[$i];
+                            $order->success_date = $successDate;
+                            $order->status = "Selesai";
+                            $order->in_amount = $amount;
+                            $order->updated_at = now();
+                            $order->save();
+                            $updatedRows++;
+                            $processedRows++;
+                        }
+                    }
+                }
             }
-            usleep(100000); // Small delay to prevent overwhelming the server
+            
+            // Add a small delay after processing each id_order group
+            usleep(10000);
         }
 
         return response()->json([
