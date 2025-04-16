@@ -364,7 +364,7 @@ class NetProfitController extends Controller
                 })
                 ->select(DB::raw('DATE(orders.success_date) as date'))
                 ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp')
-                ->groupBy('date');
+                ->groupBy('success_date');
 
             $hppResults = $hppPerDate->get();
             $resetCount = NetProfit::query()
