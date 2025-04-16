@@ -145,6 +145,8 @@
                                     <th>ROAS</th>
                                     <th>Total Sales</th>
                                     <th>Balance Amount</th>
+                                    <th>Gross Revenue</th>
+                                    <th>Fee Admin</th>
                                     <th>MP Sales</th>
                                     <th>B2B Sales</th>
                                     <th>CRM Sales</th>
