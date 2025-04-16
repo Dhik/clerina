@@ -4125,16 +4125,20 @@ class OrderController extends Controller
     }
     public function updateSuccessDateLazada()
     {
+        // Increase PHP execution time limit
+        set_time_limit(600); // 10 minutes
+        
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
-        $range = 'Lazada Balance Processed!A:G';  // Updated range to include columns E, F, G
+        $range = 'Lazada Balance Processed!A:G';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
-        $chunkSize = 50;
+        $chunkSize = 20; // Smaller chunk size for better performance
         $totalRows = count($sheetData);
         $processedRows = 0;
         $skippedRows = 0;
         $newOrdersCreated = 0;
+        $chunkProcessed = 0;
 
         // Always assume the first row is a header and skip it
         if (count($sheetData) > 0) {
@@ -4143,55 +4147,84 @@ class OrderController extends Controller
         }
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
-                // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty
-                if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
-                    $skippedRows++;
-                    continue;
+            // Use database transaction for each chunk
+            DB::beginTransaction();
+            try {
+                $rowsInChunk = [];
+                
+                foreach ($chunk as $row) {
+                    // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty
+                    if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
+                        $skippedRows++;
+                        continue;
+                    }
+                    
+                    try {
+                        $idOrder = $row[0]; // Column A = orders.id_order
+                        $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
+                        $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                        $orderDate = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
+                        $sku = isset($row[4]) ? $row[4] : "unknown"; // Column E = orders.sku
+                        $status = isset($row[5]) ? $row[5] : "Selesai"; // Column F = orders.status
+                        $product = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.product
+                        
+                        $orderData = [
+                            'date'                  => $orderDate,
+                            'process_at'            => null,
+                            'id_order'              => $idOrder,
+                            'sales_channel_id'      => 2,
+                            'customer_name'         => "unknown",
+                            'customer_phone_number' => "unknown",
+                            'product'               => $product,
+                            'qty'                   => 1,
+                            'receipt_number'        => "unknown",
+                            'shipment'              => "unknown",
+                            'payment_method'        => "unknown",
+                            'sku'                   => $sku,
+                            'variant'               => null,
+                            'price'                 => $amount,
+                            'username'              => "unknown",
+                            'shipping_address'      => "unknown",
+                            'city'                  => null,
+                            'province'              => null,
+                            'amount'                => $amount,
+                            'in_amount'             => $amount,
+                            'tenant_id'             => $tenant_id,
+                            'is_booking'            => 0,
+                            'status'                => $status,
+                            'updated_at'            => now(),
+                            'created_at'            => now(),
+                            'success_date'          => $successDate,
+                        ];
+                        
+                        $rowsInChunk[] = $orderData;
+                        $processedRows++;
+                    } catch (\Exception $e) {
+                        \Log::warning("Error parsing data in row: " . json_encode($row) . " - " . $e->getMessage());
+                        $skippedRows++;
+                    }
                 }
                 
-                $idOrder = $row[0]; // Column A = orders.id_order
-                $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
-                $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
-                $orderDate = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
-                $sku = isset($row[4]) ? $row[4] : "unknown"; // Column E = orders.sku
-                $status = isset($row[5]) ? $row[5] : "Selesai"; // Column F = orders.status
-                $product = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.product
+                // Insert all rows in the chunk at once for better performance
+                if (!empty($rowsInChunk)) {
+                    Order::insert($rowsInChunk);
+                    $newOrdersCreated += count($rowsInChunk);
+                }
                 
-                $orderData = [
-                    'date'                  => $orderDate,
-                    'process_at'            => null,
-                    'id_order'              => $idOrder,
-                    'sales_channel_id'      => 2,
-                    'customer_name'         => "unknown",
-                    'customer_phone_number' => "unknown",
-                    'product'               => $product,
-                    'qty'                   => 1,
-                    'receipt_number'        => "unknown",
-                    'shipment'              => "unknown",
-                    'payment_method'        => "unknown",
-                    'sku'                   => $sku,
-                    'variant'               => null,
-                    'price'                 => $amount,
-                    'username'              => "unknown",
-                    'shipping_address'      => "unknown",
-                    'city'                  => null,
-                    'province'              => null,
-                    'amount'                => $amount,
-                    'in_amount'             => $amount,
-                    'tenant_id'             => $tenant_id,
-                    'is_booking'            => 0,
-                    'status'                => $status,
-                    'updated_at'            => now(),
-                    'created_at'            => now(),
-                    'success_date'          => $successDate,
-                ];
+                DB::commit();
+                $chunkProcessed++;
                 
-                Order::create($orderData);
-                $newOrdersCreated++;
-                $processedRows++;
+                // Log progress to help with debugging
+                \Log::info("Processed chunk {$chunkProcessed} of " . ceil($totalRows / $chunkSize) . 
+                        " with {$processedRows} rows processed and {$newOrdersCreated} orders created");
+                        
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error("Error processing chunk {$chunkProcessed}: " . $e->getMessage());
             }
-            usleep(100000); // Small delay to prevent overwhelming the server
+            
+            // Give the database a chance to breathe
+            usleep(200000); // 200ms
         }
 
         return response()->json([
@@ -4199,7 +4232,8 @@ class OrderController extends Controller
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'new_orders_created' => $newOrdersCreated,
-            'skipped_rows' => $skippedRows
+            'skipped_rows' => $skippedRows,
+            'chunks_processed' => $chunkProcessed
         ]);
     }
 }
