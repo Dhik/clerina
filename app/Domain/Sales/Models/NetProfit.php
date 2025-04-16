@@ -30,6 +30,8 @@ class NetProfit extends Model
         'crm_sales',
         'b2b_sales',
         'balance_amount',
+        'gross_revenue', 
+        'fee_admin',
     ];
     protected $casts = [
         'date' => 'date'
