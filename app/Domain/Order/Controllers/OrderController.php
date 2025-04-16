@@ -4051,68 +4051,64 @@ class OrderController extends Controller
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                // Skip if order ID (Column A) is empty or success date (Column D) is empty or "-"
-                if (empty($row[0]) || empty($row[3]) || $row[3] === "-") {
+                // Skip if order ID (Column A) is empty or success date (Column B) is empty or "-"
+                if (empty($row[0]) || empty($row[1]) || $row[1] === "-") {
                     $skippedRows++;
                     continue;
                 }
                 
-                try {
-                    $idOrder = $row[0]; // Column A = orders.id_order
-                    $orderDate = !empty($row[2]) ? Carbon::parse($row[2])->format('Y-m-d') : Carbon::createFromFormat('Y-m-d', '1970-01-01')->format('Y-m-d'); // Column C = orders.date
-                    $successDate = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.success_date
-                    $amount = isset($row[5]) ? intval($row[5]) : 0; // Column F = orders.in_amount
+                $idOrder = $row[0]; // Column A = orders.id_order
+                $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
+                $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                $feeAdmin = isset($row[3]) ? intval($row[3]) : 0; // Column D = orders.fee_admin
+                
+                // Check if order exists
+                $order = Order::where('id_order', $idOrder)->first();
+                
+                if ($order) {
+                    $order->success_date = $successDate;
+                    $order->status = "Selesai"; // Fixed undefined $status variable
+                    $order->in_amount = $amount;
+                    $order->fee_admin = $feeAdmin; // Added fee_admin field
+                    $order->updated_at = now();
+                    $order->save();
+                    $updatedRows++;
+                } else {
+                    $orderData = [
+                        'date'                  => $successDate, // Using success_date as order date for new records
+                        'process_at'            => null,
+                        'id_order'              => $idOrder,
+                        'sales_channel_id'      => 4,
+                        'customer_name'         => "unknown",
+                        'customer_phone_number' => "unknown",
+                        'product'               => "unknown",
+                        'qty'                   => 1,
+                        'receipt_number'        => "unknown",
+                        'shipment'              => "unknown",
+                        'payment_method'        => "unknown",
+                        'sku'                   => "unknown",
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => "unknown",
+                        'shipping_address'      => "unknown",
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'in_amount'             => $amount,
+                        'fee_admin'             => $feeAdmin, // Added fee_admin field
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => "Selesai",
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                        'success_date'          => $successDate,
+                    ];
                     
-                    // Check if order exists
-                    $order = Order::where('id_order', $idOrder)->first();
-                    
-                    if ($order) {
-                        $order->success_date = $successDate;
-                        $order->status = $status;
-                        $order->in_amount = $amount;
-                        $order->updated_at = now();
-                        $order->save();
-                        $updatedRows++;
-                    } else {
-                        $orderData = [
-                            'date'                  => $orderDate, // Using column C for new orders
-                            'process_at'            => null,
-                            'id_order'              => $idOrder,
-                            'sales_channel_id'      => 4,
-                            'customer_name'         => "unknown",
-                            'customer_phone_number' => "unknown",
-                            'product'               => "unknown",
-                            'qty'                   => 1,
-                            'receipt_number'        => "unknown",
-                            'shipment'              => "unknown",
-                            'payment_method'        => "unknown",
-                            'sku'                   => "unknown",
-                            'variant'               => null,
-                            'price'                 => $amount,
-                            'username'              => "unknown",
-                            'shipping_address'      => "unknown",
-                            'city'                  => null,
-                            'province'              => null,
-                            'amount'                => $amount,
-                            'in_amount'             => $amount,
-                            'tenant_id'             => $tenant_id,
-                            'is_booking'            => 0,
-                            'status'                => "Selesai",
-                            'updated_at'            => now(),
-                            'created_at'            => now(),
-                            'success_date'          => $successDate,
-                        ];
-                        
-                        Order::create($orderData);
-                        $newOrdersCreated++;
-                    }
-                    
-                    $processedRows++;
-                    
-                } catch (\Exception $e) {
-                    \Log::error("Error processing row for order ID {$row[0]}: " . $e->getMessage());
-                    $skippedRows++;
+                    Order::create($orderData);
+                    $newOrdersCreated++;
                 }
+                
+                $processedRows++;
             }
             usleep(100000);
         }
