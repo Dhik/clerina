@@ -4032,7 +4032,7 @@ class OrderController extends Controller
     public function updateSuccessDateTiktok()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
-        $range = 'Tiktok Balance!A2:G';
+        $range = 'Tiktok Processed!A2:G';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
