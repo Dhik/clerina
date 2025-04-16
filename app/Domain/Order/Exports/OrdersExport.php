@@ -42,9 +42,9 @@ class OrdersExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, W
         return Order::query()
             ->with('salesChannel')
             ->where('tenant_id', $this->tenantId)
-            ->where('date', '>=', $this->startDate)
-            ->where('date', '<=', $this->endDate)
-            ->where('sales_channel_id', 2)
+            ->where('success_date', '>=', $this->startDate)
+            ->where('success_date', '<=', $this->endDate)
+            ->where('customer_name', 'unknown')
             ->orderBy('date', 'asc');
     }
 
@@ -68,6 +68,9 @@ class OrdersExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, W
             $row->city,
             $row->province,
             $row->salesChannel->name ?? '',
+            $row->in_amount,
+            $row->success_date,
+            $row->fee_admin
         ];
     }
 
@@ -96,6 +99,9 @@ class OrdersExport implements FromQuery, ShouldAutoSize, WithColumnFormatting, W
             trans('labels.city'), //O
             trans('labels.province'), // P
             trans('labels.channel'), // Q
+            'In Amount', // Q
+            'Success Date', // Q
+            'Fee Admin', // Q
         ];
     }
 
