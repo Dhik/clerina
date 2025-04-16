@@ -4126,7 +4126,7 @@ class OrderController extends Controller
     public function updateSuccessDateLazada()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
-        $range = 'Lazada Balance Processed!A:D';
+        $range = 'Lazada Balance Processed!A:G';  // Updated range to include columns E, F, G
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -4171,6 +4171,9 @@ class OrderController extends Controller
                     $successDate = Carbon::parse($row[1])->format('Y-m-d');
                     $orderDate = Carbon::parse($row[3])->format('Y-m-d');
                     $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
+                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
+                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
                     
                     $orderData = [
                         'date'                  => $orderDate,
@@ -4179,12 +4182,12 @@ class OrderController extends Controller
                         'sales_channel_id'      => 2,
                         'customer_name'         => "unknown",
                         'customer_phone_number' => "unknown",
-                        'product'               => "unknown",
+                        'product'               => $product,
                         'qty'                   => 1,
                         'receipt_number'        => "unknown",
                         'shipment'              => "unknown",
                         'payment_method'        => "unknown",
-                        'sku'                   => "unknown",
+                        'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
                         'username'              => "unknown",
@@ -4195,7 +4198,7 @@ class OrderController extends Controller
                         'in_amount'             => $amount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
-                        'status'                => "Selesai",
+                        'status'                => $status,
                         'updated_at'            => now(),
                         'created_at'            => now(),
                         'success_date'          => $successDate,
@@ -4221,12 +4224,17 @@ class OrderController extends Controller
                 foreach ($orderGroup as $index => $row) {
                     $successDate = Carbon::parse($row[1])->format('Y-m-d');
                     $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
+                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
+                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
                     
                     if (isset($existingOrders[$index])) {
                         $order = $existingOrders[$index];
                         $order->success_date = $successDate;
-                        $order->status = "Selesai";
+                        $order->status = $status;
                         $order->in_amount = $amount;
+                        $order->sku = $sku;
+                        $order->product = $product;
                         $order->updated_at = now();
                         $order->save();
                         $updatedRows++;
@@ -4244,10 +4252,15 @@ class OrderController extends Controller
                         $row = $orderGroup[$updateCount];
                         $successDate = Carbon::parse($row[1])->format('Y-m-d');
                         $amount = isset($row[2]) ? intval($row[2]) : 0;
+                        $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
+                        $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
+                        $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
                         
                         $order->success_date = $successDate;
-                        $order->status = "Selesai";
+                        $order->status = $status;
                         $order->in_amount = $amount;
+                        $order->sku = $sku;
+                        $order->product = $product;
                         $order->updated_at = now();
                         $order->save();
                         $updatedRows++;
@@ -4262,6 +4275,9 @@ class OrderController extends Controller
                     $successDate = Carbon::parse($row[1])->format('Y-m-d');
                     $orderDate = Carbon::parse($row[3])->format('Y-m-d');
                     $amount = isset($row[2]) ? intval($row[2]) : 0;
+                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
+                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
+                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
                     
                     $orderData = [
                         'date'                  => $orderDate,
@@ -4270,12 +4286,12 @@ class OrderController extends Controller
                         'sales_channel_id'      => 2,
                         'customer_name'         => "unknown",
                         'customer_phone_number' => "unknown",
-                        'product'               => "unknown",
+                        'product'               => $product,
                         'qty'                   => 1,
                         'receipt_number'        => "unknown",
                         'shipment'              => "unknown",
                         'payment_method'        => "unknown",
-                        'sku'                   => "unknown",
+                        'sku'                   => $sku,
                         'variant'               => null,
                         'price'                 => $amount,
                         'username'              => "unknown",
@@ -4286,7 +4302,7 @@ class OrderController extends Controller
                         'in_amount'             => $amount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
-                        'status'                => "Selesai",
+                        'status'                => $status,
                         'updated_at'            => now(),
                         'created_at'            => now(),
                         'success_date'          => $successDate,
@@ -4303,12 +4319,17 @@ class OrderController extends Controller
                         $row = $orderGroup[$i];
                         $successDate = Carbon::parse($row[1])->format('Y-m-d');
                         $amount = isset($row[2]) ? intval($row[2]) : 0;
+                        $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
+                        $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
+                        $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
                         
                         if (isset($existingOrders[$i])) {
                             $order = $existingOrders[$i];
                             $order->success_date = $successDate;
-                            $order->status = "Selesai";
+                            $order->status = $status;
                             $order->in_amount = $amount;
+                            $order->sku = $sku;
+                            $order->product = $product;
                             $order->updated_at = now();
                             $order->save();
                             $updatedRows++;
