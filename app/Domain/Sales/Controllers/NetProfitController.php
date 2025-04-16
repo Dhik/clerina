@@ -329,6 +329,77 @@ class NetProfitController extends Controller
     public function updateHpp()
     {
         try {
+            // Change from current month to fixed date range: March 1-31, 2025
+            $startDate = Carbon::createFromFormat('Y-m-d', '2025-03-01')->startOfDay();
+            $endDate = Carbon::createFromFormat('Y-m-d', '2025-03-31')->endOfDay();
+            $tenant_id = Auth::user()->current_tenant_id;
+            
+            $dates = collect();
+            for($date = clone $startDate; $date->lte($endDate); $date->addDay()) {
+                $dates->push($date->format('Y-m-d'));
+            }
+
+            $hppPerDate = Order::query()
+                ->whereBetween('orders.date', [$startDate, $endDate])
+                ->where('orders.tenant_id', $tenant_id)
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
+                ->leftJoin('products', function($join) {
+                    $join->on(DB::raw("TRIM(
+                        CASE 
+                            WHEN orders.sku REGEXP '^[0-9]+\\s+' 
+                            THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
+                            ELSE orders.sku 
+                        END
+                    )"), '=', 'products.sku');
+                })
+                ->select(DB::raw('DATE(orders.date) as date'))
+                ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp')
+                ->groupBy('date');
+
+            $hppResults = $hppPerDate->get();
+            $resetCount = NetProfit::query()
+                ->whereBetween('date', [$startDate, $endDate])
+                ->where('tenant_id', $tenant_id)
+                ->update(['hpp' => 0]);
+
+            $updatedCount = 0;
+            foreach ($hppResults as $hpp) {
+                // Convert date to Y-m-d format explicitly
+                $formattedDate = date('Y-m-d', strtotime($hpp->date));
+                
+                $updated = NetProfit::where('date', $formattedDate)
+                    ->where('tenant_id', $tenant_id)
+                    ->update(['hpp' => $hpp->total_hpp]);
+                    
+                $updatedCount += $updated;
+            }
+            
+            return response()->json([
+                'success' => true,
+                'reset_count' => $resetCount,
+                'updated_count' => $updatedCount
+            ]);
+        } catch(\Exception $e) {
+            \Log::error('Update HPP Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateHpp2()
+    {
+        try {
             $startDate = now()->startOfMonth();
             $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID instead of hardcoded value
             
