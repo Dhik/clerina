@@ -3950,6 +3950,9 @@ class OrderController extends Controller
             $totalRows--;
         }
 
+        // Track processed order IDs to prevent duplicates
+        $processedOrderIds = [];
+
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
                 if (empty($row[0]) || empty($row[3]) || $row[3] === "-") {
@@ -3957,65 +3960,68 @@ class OrderController extends Controller
                     continue;
                 }
                 
-                try {
-                    $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
-                    $inAmount = isset($row[1]) ? intval($row[1]) : 0; // Column B = orders.in_amount
-                    $feeAdmin = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.fee_admin
-                    $idOrder = $row[3]; // Column D = orders.id_order
-                    $status = "Selesai"; // Fixed value for orders.status
-                    
-                    // Check if order exists
-                    $order = Order::where('id_order', $idOrder)->first();
-                    
-                    if ($order) {
-                        $order->success_date = $successDate;
-                        $order->status = $status;
-                        $order->in_amount = $inAmount;
-                        $order->fee_admin = $feeAdmin;
-                        $order->updated_at = now();
-                        $order->save();
-                        $updatedRows++;
-                    } else {
-                        $orderData = [
-                            'date'                  => Carbon::createFromFormat('Y-m-d', '1970-01-01')->format('Y-m-d'),
-                            'process_at'            => null,
-                            'id_order'              => $idOrder,
-                            'sales_channel_id'      => 1,
-                            'customer_name'         => "unknown",
-                            'customer_phone_number' => "unknown",
-                            'product'               => "unknown",
-                            'qty'                   => 1,
-                            'receipt_number'        => "unknown",
-                            'shipment'              => "unknown",
-                            'payment_method'        => "unknown",
-                            'sku'                   => "unknown",
-                            'variant'               => null,
-                            'price'                 => $inAmount,
-                            'username'              => "unknown",
-                            'shipping_address'      => "unknown",
-                            'city'                  => null,
-                            'province'              => null,
-                            'amount'                => $inAmount,
-                            'in_amount'             => $inAmount,
-                            'fee_admin'             => $feeAdmin,
-                            'tenant_id'             => $tenant_id,
-                            'is_booking'            => 0,
-                            'status'                => $status,
-                            'updated_at'            => now(),
-                            'created_at'            => now(),
-                            'success_date'          => $successDate,
-                        ];
-                        
-                        Order::create($orderData);
-                        $newOrdersCreated++;
-                    }
-                    
-                    $processedRows++;
-                    
-                } catch (\Exception $e) {
-                    \Log::error("Error processing row for order ID {$row[3]}: " . $e->getMessage());
+                $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
+                $inAmount = isset($row[1]) ? intval($row[1]) : 0; // Column B = orders.in_amount
+                $feeAdmin = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.fee_admin
+                $idOrder = $row[3]; // Column D = orders.id_order
+                $status = "Selesai"; // Fixed value for orders.status
+                
+                // Skip if we've already processed this order ID
+                if (in_array($idOrder, $processedOrderIds)) {
                     $skippedRows++;
+                    continue;
                 }
+                
+                // Add to processed IDs
+                $processedOrderIds[] = $idOrder;
+                
+                // Check if order exists
+                $order = Order::where('id_order', $idOrder)->first();
+                
+                if ($order) {
+                    $order->success_date = $successDate;
+                    $order->status = $status;
+                    $order->in_amount = $inAmount;
+                    $order->fee_admin = $feeAdmin;
+                    $order->updated_at = now();
+                    $order->save();
+                    $updatedRows++;
+                } else {
+                    $orderData = [
+                        'date'                  => Carbon::createFromFormat('Y-m-d', '1970-01-01')->format('Y-m-d'),
+                        'process_at'            => null,
+                        'id_order'              => $idOrder,
+                        'sales_channel_id'      => 1,
+                        'customer_name'         => "unknown",
+                        'customer_phone_number' => "unknown",
+                        'product'               => "unknown",
+                        'qty'                   => 1,
+                        'receipt_number'        => "unknown",
+                        'shipment'              => "unknown",
+                        'payment_method'        => "unknown",
+                        'sku'                   => "unknown",
+                        'variant'               => null,
+                        'price'                 => $inAmount,
+                        'username'              => "unknown",
+                        'shipping_address'      => "unknown",
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $inAmount,
+                        'in_amount'             => $inAmount,
+                        'fee_admin'             => $feeAdmin,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => $status,
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                        'success_date'          => $successDate,
+                    ];
+                    
+                    Order::create($orderData);
+                    $newOrdersCreated++;
+                }
+                
+                $processedRows++;
             }
             usleep(100000);
         }
