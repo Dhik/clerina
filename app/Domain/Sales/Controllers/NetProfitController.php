@@ -1735,7 +1735,7 @@ class NetProfitController extends Controller
         $sheetName = 'UnknownOrders';
         
         // Export to Google Sheets - using a separate sheet for unknown orders
-        $this->googleSheetService->clearRange("$sheetName!A1:AA10000");
+        $this->googleSheetService->clearRange("$sheetName!A1:AZ10000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
         return response()->json([
