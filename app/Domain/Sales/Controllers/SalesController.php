@@ -249,6 +249,12 @@ class SalesController extends Controller
             ->editColumn('balance_amount', function ($row) {
                 return $row->balance_amount ?? 0;
             })
+            ->editColumn('gross_revenue', function ($row) {
+                return $row->gross_revenue ?? 0;
+            })
+            ->editColumn('fee_admin', function ($row) {
+                return $row->fee_admin ?? 0;
+            })
             ->editColumn('roas', function ($row) {
                 return number_format($row->roas ?? 0, 2);
             })
