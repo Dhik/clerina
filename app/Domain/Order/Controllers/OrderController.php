@@ -4042,15 +4042,16 @@ class OrderController extends Controller
         $updatedRows = 0;
         $skippedRows = 0;
         $newOrdersCreated = 0;
+        $errorRows = 0;
 
-        // Skip header row if present
-        if (isset($sheetData[0]) && isset($sheetData[0][0]) && $sheetData[0][0] != '' && !is_numeric($sheetData[0][0])) {
+        // Always assume the first row is a header and skip it
+        if (count($sheetData) > 0) {
             array_shift($sheetData);
             $totalRows--;
         }
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
+            foreach ($chunk as $rowIndex => $row) {
                 // Skip if order ID (Column A) is empty or success date (Column B) is empty or "-"
                 if (empty($row[0]) || empty($row[1]) || $row[1] === "-") {
                     $skippedRows++;
@@ -4067,15 +4068,15 @@ class OrderController extends Controller
                 
                 if ($order) {
                     $order->success_date = $successDate;
-                    $order->status = "Selesai"; // Fixed undefined $status variable
+                    $order->status = "Selesai";
                     $order->in_amount = $amount;
-                    $order->fee_admin = $feeAdmin; // Added fee_admin field
+                    $order->fee_admin = $feeAdmin;
                     $order->updated_at = now();
                     $order->save();
                     $updatedRows++;
                 } else {
                     $orderData = [
-                        'date'                  => $successDate, // Using success_date as order date for new records
+                        'date'                  => $successDate,
                         'process_at'            => null,
                         'id_order'              => $idOrder,
                         'sales_channel_id'      => 4,
@@ -4085,7 +4086,7 @@ class OrderController extends Controller
                         'qty'                   => 1,
                         'receipt_number'        => "unknown",
                         'shipment'              => "unknown",
-                        'payment_method'        => "unknown",
+                        'payment_method'        => "unknown", 
                         'sku'                   => "unknown",
                         'variant'               => null,
                         'price'                 => $amount,
@@ -4095,7 +4096,7 @@ class OrderController extends Controller
                         'province'              => null,
                         'amount'                => $amount,
                         'in_amount'             => $amount,
-                        'fee_admin'             => $feeAdmin, // Added fee_admin field
+                        'fee_admin'             => $feeAdmin,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
                         'status'                => "Selesai",
