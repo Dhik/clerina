@@ -4133,7 +4133,6 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $updatedRows = 0;
         $skippedRows = 0;
         $newOrdersCreated = 0;
 
@@ -4142,212 +4141,63 @@ class OrderController extends Controller
             array_shift($sheetData);
             $totalRows--;
         }
-        
-        // Group data by id_order to handle duplicates
-        $groupedData = [];
-        foreach ($sheetData as $row) {
-            // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty
-            if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
-                $skippedRows++;
-                continue;
-            }
-            
-            $idOrder = $row[0];
-            if (!isset($groupedData[$idOrder])) {
-                $groupedData[$idOrder] = [];
-            }
-            $groupedData[$idOrder][] = $row;
-        }
 
-        // Process each group of orders with the same id_order
-        foreach ($groupedData as $idOrder => $orderGroup) {
-            $existingOrders = Order::where('id_order', $idOrder)->get();
-            $existingCount = $existingOrders->count();
-            $groupCount = count($orderGroup);
-            
-            if ($existingCount == 0) {
-                // No existing orders, create all from the group
-                foreach ($orderGroup as $row) {
-                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                    $orderDate = Carbon::parse($row[3])->format('Y-m-d');
-                    $amount = isset($row[2]) ? intval($row[2]) : 0;
-                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
-                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
-                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
-                    
-                    $orderData = [
-                        'date'                  => $orderDate,
-                        'process_at'            => null,
-                        'id_order'              => $idOrder,
-                        'sales_channel_id'      => 2,
-                        'customer_name'         => "unknown",
-                        'customer_phone_number' => "unknown",
-                        'product'               => $product,
-                        'qty'                   => 1,
-                        'receipt_number'        => "unknown",
-                        'shipment'              => "unknown",
-                        'payment_method'        => "unknown",
-                        'sku'                   => $sku,
-                        'variant'               => null,
-                        'price'                 => $amount,
-                        'username'              => "unknown",
-                        'shipping_address'      => "unknown",
-                        'city'                  => null,
-                        'province'              => null,
-                        'amount'                => $amount,
-                        'in_amount'             => $amount,
-                        'tenant_id'             => $tenant_id,
-                        'is_booking'            => 0,
-                        'status'                => $status,
-                        'updated_at'            => now(),
-                        'created_at'            => now(),
-                        'success_date'          => $successDate,
-                    ];
-                    
-                    Order::create($orderData);
-                    $newOrdersCreated++;
-                    $processedRows++;
-                }
-            } else if ($existingCount == $groupCount) {
-                // Same number of orders in DB as in sheet, update them pairwise
-                // Sort both arrays by in_amount to match them appropriately
-                $existingOrders = $existingOrders->sortBy('in_amount')->values();
-                
-                // Sort order group by amount
-                usort($orderGroup, function($a, $b) {
-                    $amountA = isset($a[2]) ? intval($a[2]) : 0;
-                    $amountB = isset($b[2]) ? intval($b[2]) : 0;
-                    return $amountA - $amountB;
-                });
-                
-                // Update each existing order with corresponding sheet data
-                foreach ($orderGroup as $index => $row) {
-                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                    $amount = isset($row[2]) ? intval($row[2]) : 0;
-                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
-                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
-                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
-                    
-                    if (isset($existingOrders[$index])) {
-                        $order = $existingOrders[$index];
-                        $order->success_date = $successDate;
-                        $order->status = $status;
-                        $order->in_amount = $amount;
-                        $order->sku = $sku;
-                        $order->product = $product;
-                        $order->updated_at = now();
-                        $order->save();
-                        $updatedRows++;
-                        $processedRows++;
-                    }
-                }
-            } else if ($existingCount < $groupCount) {
-                // Fewer orders in DB than in sheet, update existing ones and create new ones
-                // First, update existing orders
-                $existingOrderIds = $existingOrders->pluck('id')->toArray();
-                $updateCount = 0;
-                
-                foreach ($existingOrders as $order) {
-                    if ($updateCount < count($orderGroup)) {
-                        $row = $orderGroup[$updateCount];
-                        $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                        $amount = isset($row[2]) ? intval($row[2]) : 0;
-                        $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
-                        $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
-                        $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
-                        
-                        $order->success_date = $successDate;
-                        $order->status = $status;
-                        $order->in_amount = $amount;
-                        $order->sku = $sku;
-                        $order->product = $product;
-                        $order->updated_at = now();
-                        $order->save();
-                        $updatedRows++;
-                        $processedRows++;
-                        $updateCount++;
-                    }
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty
+                if (empty($row[0]) || empty($row[1]) || empty($row[3])) {
+                    $skippedRows++;
+                    continue;
                 }
                 
-                // Create additional orders
-                for ($i = $updateCount; $i < count($orderGroup); $i++) {
-                    $row = $orderGroup[$i];
-                    $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                    $orderDate = Carbon::parse($row[3])->format('Y-m-d');
-                    $amount = isset($row[2]) ? intval($row[2]) : 0;
-                    $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
-                    $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
-                    $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
-                    
-                    $orderData = [
-                        'date'                  => $orderDate,
-                        'process_at'            => null,
-                        'id_order'              => $idOrder,
-                        'sales_channel_id'      => 2,
-                        'customer_name'         => "unknown",
-                        'customer_phone_number' => "unknown",
-                        'product'               => $product,
-                        'qty'                   => 1,
-                        'receipt_number'        => "unknown",
-                        'shipment'              => "unknown",
-                        'payment_method'        => "unknown",
-                        'sku'                   => $sku,
-                        'variant'               => null,
-                        'price'                 => $amount,
-                        'username'              => "unknown",
-                        'shipping_address'      => "unknown",
-                        'city'                  => null,
-                        'province'              => null,
-                        'amount'                => $amount,
-                        'in_amount'             => $amount,
-                        'tenant_id'             => $tenant_id,
-                        'is_booking'            => 0,
-                        'status'                => $status,
-                        'updated_at'            => now(),
-                        'created_at'            => now(),
-                        'success_date'          => $successDate,
-                    ];
-                    
-                    Order::create($orderData);
-                    $newOrdersCreated++;
-                    $processedRows++;
-                }
-            } else {
-                // More orders in DB than in sheet, update only what we can match
-                for ($i = 0; $i < min($existingCount, $groupCount); $i++) {
-                    if (isset($orderGroup[$i])) {
-                        $row = $orderGroup[$i];
-                        $successDate = Carbon::parse($row[1])->format('Y-m-d');
-                        $amount = isset($row[2]) ? intval($row[2]) : 0;
-                        $sku = isset($row[4]) ? $row[4] : "unknown";  // Column E = orders.sku
-                        $status = isset($row[5]) ? $row[5] : "Selesai";  // Column F = orders.status
-                        $product = isset($row[6]) ? $row[6] : "unknown";  // Column G = orders.product
-                        
-                        if (isset($existingOrders[$i])) {
-                            $order = $existingOrders[$i];
-                            $order->success_date = $successDate;
-                            $order->status = $status;
-                            $order->in_amount = $amount;
-                            $order->sku = $sku;
-                            $order->product = $product;
-                            $order->updated_at = now();
-                            $order->save();
-                            $updatedRows++;
-                            $processedRows++;
-                        }
-                    }
-                }
+                $idOrder = $row[0]; // Column A = orders.id_order
+                $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
+                $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                $orderDate = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
+                $sku = isset($row[4]) ? $row[4] : "unknown"; // Column E = orders.sku
+                $status = isset($row[5]) ? $row[5] : "Selesai"; // Column F = orders.status
+                $product = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.product
+                
+                $orderData = [
+                    'date'                  => $orderDate,
+                    'process_at'            => null,
+                    'id_order'              => $idOrder,
+                    'sales_channel_id'      => 2,
+                    'customer_name'         => "unknown",
+                    'customer_phone_number' => "unknown",
+                    'product'               => $product,
+                    'qty'                   => 1,
+                    'receipt_number'        => "unknown",
+                    'shipment'              => "unknown",
+                    'payment_method'        => "unknown",
+                    'sku'                   => $sku,
+                    'variant'               => null,
+                    'price'                 => $amount,
+                    'username'              => "unknown",
+                    'shipping_address'      => "unknown",
+                    'city'                  => null,
+                    'province'              => null,
+                    'amount'                => $amount,
+                    'in_amount'             => $amount,
+                    'tenant_id'             => $tenant_id,
+                    'is_booking'            => 0,
+                    'status'                => $status,
+                    'updated_at'            => now(),
+                    'created_at'            => now(),
+                    'success_date'          => $successDate,
+                ];
+                
+                Order::create($orderData);
+                $newOrdersCreated++;
+                $processedRows++;
             }
-            
-            // Add a small delay after processing each id_order group
-            usleep(10000);
+            usleep(100000); // Small delay to prevent overwhelming the server
         }
 
         return response()->json([
-            'message' => 'Lazada success dates updated successfully', 
+            'message' => 'Lazada success dates created successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'updated_rows' => $updatedRows,
             'new_orders_created' => $newOrdersCreated,
             'skipped_rows' => $skippedRows
         ]);
