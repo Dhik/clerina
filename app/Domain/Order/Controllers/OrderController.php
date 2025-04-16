@@ -4297,7 +4297,7 @@ class OrderController extends Controller
                 if ($order) {
                     $order->success_date = $successDate;
                     $order->status = "Selesai";
-                    $order->in_amount = $amount;
+                    $order->fee_admin = $amount;
                     $order->updated_at = now();
                     $order->save();
                     $updatedRows++;
