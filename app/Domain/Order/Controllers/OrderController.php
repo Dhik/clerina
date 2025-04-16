@@ -4990,21 +4990,32 @@ class OrderController extends Controller
     $skippedRows = 0;
     $deletedRows = 0;
 
-    foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-        foreach ($chunk as $row) {
-            // Skip if id_order is empty
-            if (empty($row[0])) {
-                $skippedRows++;
-                continue;
-            }
-            
-            $idOrder = $row[0]; // Column A = orders.id_order
+    // First, collect all the data to process
+    $ordersToProcess = [];
+    foreach ($sheetData as $row) {
+        // Skip if id_order is empty
+        if (empty($row[0])) {
+            $skippedRows++;
+            continue;
+        }
+        
+        $idOrder = $row[0]; // Column A = orders.id_order
+        $sku = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.sku
+        
+        // Add to processing queue with a composite key of id_order + sku
+        $compositeKey = $idOrder . '|' . $sku;
+        $ordersToProcess[$compositeKey] = $row;
+    }
+
+    // Process in chunks
+    foreach (array_chunk($ordersToProcess, $chunkSize, true) as $chunk) {
+        foreach ($chunk as $compositeKey => $row) {
+            list($idOrder, $sku) = explode('|', $compositeKey);
             
             // Parse date from Column D
             $date = Carbon::parse($row[3])->format('Y-m-d'); // Column D = orders.date
             
             $amount = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.amount
-            $sku = isset($row[6]) ? $row[6] : "unknown"; // Column G = orders.sku
             $variant = isset($row[7]) ? $row[7] : null; // Column H = orders.variant
             $price = isset($row[8]) ? intval($row[8]) : 0; // Column I = orders.price
             $qty = isset($row[9]) ? intval($row[9]) : 1; // Column J = orders.qty
@@ -5031,8 +5042,11 @@ class OrderController extends Controller
             
             $feeAdmin = isset($row[19]) ? intval($row[19]) : 0; // Column T = orders.fee_admin
             
-            // Delete existing order with same id_order if it exists
-            $deleted = Order::where('id_order', $idOrder)->delete();
+            // Delete existing order with same id_order AND sku if it exists
+            $deleted = Order::where('id_order', $idOrder)
+                ->where('sku', $sku)
+                ->delete();
+                
             if ($deleted) {
                 $deletedRows += $deleted;
             }
