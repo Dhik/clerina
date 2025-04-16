@@ -4268,7 +4268,12 @@ class OrderController extends Controller
                 }
                 
                 $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
-                $amount = isset($row[3]) ? intval($row[3]) : 0; // Column D = orders.in_amount
+                $amount = 0;
+                if (isset($row[3]) && !empty($row[3])) {
+                    // Remove dots (used as thousand separators) and convert to integer
+                    $cleanAmount = str_replace('.', '', $row[3]);
+                    $amount = intval($cleanAmount);
+                }
                 $idOrder = $row[5]; // Column F = orders.id_order
                 
                 // Skip if we've already processed this order ID
