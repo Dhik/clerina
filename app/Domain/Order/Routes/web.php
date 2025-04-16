@@ -53,6 +53,7 @@ Route::prefix('admin')
                 Route::get('/import_cleora_crm2', [OrderController::class, 'importClosingIis'])->name('order.import_cleora_crm2');
                 Route::get('/import_cleora_crm3', [OrderController::class, 'importClosingKiki'])->name('order.import_cleora_crm3');
                 Route::get('/import_cleora_crm4', [OrderController::class, 'importClosingZalsa'])->name('order.import_cleora_crm4');
+                Route::get('/import_cleora_crm5', [OrderController::class, 'importClosingRani'])->name('order.import_cleora_crm5');
                 Route::get('/import_balance_shopee', [OrderController::class, 'updateSuccessDateShopee'])->name('order.import_balance_shopee');
                 Route::get('/import_balance_shopee2', [OrderController::class, 'updateSuccessDateShopee2'])->name('order.import_balance_shopee2');
                 Route::get('/import_balance_shopee3', [OrderController::class, 'updateSuccessDateShopee3'])->name('order.import_balance_shopee3');
