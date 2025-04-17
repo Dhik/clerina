@@ -99,10 +99,15 @@ class LaporanKeuanganController extends Controller
                     ->where('sales_channel_id', '=', $channel->id)
                     ->first();
                 
-                $row['channel_' . $channel->id] = $channelData ? $channelData->gross_revenue : 0;
-                $row['total_gross_revenue'] += $channelData ? $channelData->gross_revenue : 0;
-                $row['total_hpp'] += $channelData ? $channelData->hpp : 0;
-                $row['total_fee_admin'] += $channelData ? $channelData->fee_admin : 0;
+                // Set default value to 0 if no data found
+                $grossRevenue = $channelData ? ($channelData->gross_revenue ?: 0) : 0;
+                $hpp = $channelData ? ($channelData->hpp ?: 0) : 0;
+                $feeAdmin = $channelData ? ($channelData->fee_admin ?: 0) : 0;
+                
+                $row['channel_' . $channel->id] = $grossRevenue;
+                $row['total_gross_revenue'] += $grossRevenue;
+                $row['total_hpp'] += $hpp;
+                $row['total_fee_admin'] += $feeAdmin;
             }
             
             $result[] = $row;
@@ -125,8 +130,12 @@ class LaporanKeuanganController extends Controller
         // Add formatters for each channel column individually
         foreach ($salesChannels as $channel) {
             $dataTable->addColumn('channel_' . $channel->id, function ($row) use ($channel) {
+                // Convert value to 0 if it's null or NaN
+                $value = $row['channel_' . $channel->id] ?? 0;
+                $value = is_numeric($value) ? $value : 0;
+                
                 return '<span class="text-primary">Rp ' . 
-                    number_format($row['channel_' . $channel->id] ?? 0, 0, ',', '.') . 
+                    number_format($value, 0, ',', '.') . 
                     '</span>';
             });
         }

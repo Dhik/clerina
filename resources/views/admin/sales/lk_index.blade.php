@@ -247,39 +247,52 @@
                 name: 'date'
             }
         ];
-        
+
         // Add a column for each sales channel
         salesChannels.forEach(function(channel) {
             columns.push({
                 data: 'channel_' + channel.id,
                 name: 'channel_' + channel.id,
                 render: function(data) {
-                    return '<span class="text-primary">Rp ' + formatNumber(data || 0) + '</span>';
+                    // Check if data contains NaN (it will be a string with HTML)
+                    if (data && data.includes('NaN')) {
+                        return '<span class="text-primary">Rp 0</span>';
+                    }
+                    return data || '<span class="text-primary">Rp 0</span>';
                 }
             });
         });
-        
+
         // Add total columns
         columns.push(
             {
                 data: 'total_gross_revenue',
                 name: 'total_gross_revenue',
                 render: function(data) {
-                    return '<span class="text-success">Rp ' + formatNumber(data || 0) + '</span>';
+                    if (data && data.includes('NaN')) {
+                        return '<span class="text-success">Rp 0</span>';
+                    }
+                    return data || '<span class="text-success">Rp 0</span>';
                 }
             },
             {
                 data: 'total_hpp',
                 name: 'total_hpp',
                 render: function(data) {
-                    return 'Rp ' + formatNumber(data || 0);
+                    if (data && data.includes('NaN')) {
+                        return 'Rp 0';
+                    }
+                    return data || 'Rp 0';
                 }
             },
             {
                 data: 'total_fee_admin',
                 name: 'total_fee_admin',
                 render: function(data) {
-                    return 'Rp ' + formatNumber(data || 0);
+                    if (data && data.includes('NaN')) {
+                        return 'Rp 0';
+                    }
+                    return data || 'Rp 0';
                 }
             }
         );
