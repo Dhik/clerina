@@ -3,7 +3,7 @@
 namespace App\Domain\Sales\Controllers;
 
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
+use Yajra\DataTables\DataTables;
 use App\Domain\Sales\Models\LaporanKeuangan;
 use Carbon\Carbon;
 use Auth;
@@ -60,42 +60,87 @@ class LaporanKeuanganController extends Controller
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
         }
         
-        $baseQuery = DB::table('laporan_keuangan as lk')
-            ->select(
-                'lk.gross_revenue',
-                'lk.hpp',
-                'lk.date',
-                'lk.fee_admin'
-            )
-            ->where('lk.tenant_id', '=', $currentTenantId);
+        // Get all distinct dates in the selected range
+        $query = DB::table('laporan_keuangan')
+            ->select('date')
+            ->where('tenant_id', '=', $currentTenantId)
+            ->distinct();
         
         // Apply date filtering
         if (!is_null($request->input('filterDates'))) {
-            $baseQuery->where('lk.date', '>=', $startDate)
-                    ->where('lk.date', '<=', $endDate);
+            $query->where('date', '>=', $startDate)
+                ->where('date', '<=', $endDate);
         } else {
-            $baseQuery->whereMonth('lk.date', Carbon::now()->month)
-                    ->whereYear('lk.date', Carbon::now()->year);
+            $query->whereMonth('date', Carbon::now()->month)
+                ->whereYear('date', Carbon::now()->year);
         }
         
-        $baseQuery->orderBy('lk.date');
-        $data = $baseQuery->get();
+        $dates = $query->orderBy('date')->pluck('date');
         
-        return DataTables::of($data)
+        // Get all sales channels
+        $salesChannels = DB::table('sales_channels')->orderBy('id')->get();
+        
+        // Prepare data for DataTables
+        $result = [];
+        
+        foreach ($dates as $date) {
+            $row = [
+                'date' => Carbon::parse($date)->format('Y-m-d'),
+                'total_gross_revenue' => 0,
+                'total_hpp' => 0,
+                'total_fee_admin' => 0,
+            ];
+            
+            // Add gross revenue for each sales channel
+            foreach ($salesChannels as $channel) {
+                $channelData = DB::table('laporan_keuangan')
+                    ->where('tenant_id', '=', $currentTenantId)
+                    ->where('date', '=', $date)
+                    ->where('sales_channel_id', '=', $channel->id)
+                    ->first();
+                
+                $row['channel_' . $channel->id] = $channelData ? $channelData->gross_revenue : 0;
+                $row['total_gross_revenue'] += $channelData ? $channelData->gross_revenue : 0;
+                $row['total_hpp'] += $channelData ? $channelData->hpp : 0;
+                $row['total_fee_admin'] += $channelData ? $channelData->fee_admin : 0;
+            }
+            
+            $result[] = $row;
+        }
+        
+        $dataTable = DataTables::of($result)
             ->editColumn('date', function ($row) {
-                return Carbon::parse($row->date)->format('Y-m-d');
+                return $row['date'];
             })
-            ->editColumn('gross_revenue', function ($row) {
-                return $row->gross_revenue ?? 0;
+            ->editColumn('total_gross_revenue', function ($row) {
+                return '<span class="text-success">Rp ' . number_format($row['total_gross_revenue'], 0, ',', '.') . '</span>';
             })
-            ->editColumn('hpp', function ($row) {
-                return $row->hpp ?? 0;
+            ->editColumn('total_hpp', function ($row) {
+                return 'Rp ' . number_format($row['total_hpp'], 0, ',', '.');
             })
-            ->editColumn('fee_admin', function ($row) {
-                return $row->fee_admin ?? 0;
-            })
-            ->make(true);
+            ->editColumn('total_fee_admin', function ($row) {
+                return 'Rp ' . number_format($row['total_fee_admin'], 0, ',', '.');
+            });
+        
+        // Add formatters for each channel column individually
+        foreach ($salesChannels as $channel) {
+            $dataTable->addColumn('channel_' . $channel->id, function ($row) use ($channel) {
+                return '<span class="text-primary">Rp ' . 
+                    number_format($row['channel_' . $channel->id] ?? 0, 0, ',', '.') . 
+                    '</span>';
+            });
+        }
+        
+        $rawColumns = ['total_gross_revenue', 'total_hpp', 'total_fee_admin'];
+        
+        // Add all channel columns to raw columns
+        foreach ($salesChannels as $channel) {
+            $rawColumns[] = 'channel_' . $channel->id;
+        }
+        
+        return $dataTable->rawColumns($rawColumns)->make(true);
     }
+    
     public function getSummary(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
@@ -115,10 +160,10 @@ class LaporanKeuanganController extends Controller
         // Apply date filtering
         if (!is_null($request->input('filterDates'))) {
             $query->where('date', '>=', $startDate)
-                ->where('date', '<=', $endDate);
+                  ->where('date', '<=', $endDate);
         } else {
             $query->whereMonth('date', Carbon::now()->month)
-                ->whereYear('date', Carbon::now()->year);
+                  ->whereYear('date', Carbon::now()->year);
         }
         
         $summary = $query->selectRaw('
@@ -127,13 +172,37 @@ class LaporanKeuanganController extends Controller
             SUM(fee_admin) as total_fee_admin
         ')->first();
         
+        // Get channel-wise summary
+        $channelSummary = DB::table('laporan_keuangan as lk')
+            ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
+            ->where('lk.tenant_id', '=', $currentTenantId);
+            
+        // Apply date filtering to channel summary
+        if (!is_null($request->input('filterDates'))) {
+            $channelSummary->where('lk.date', '>=', $startDate)
+                          ->where('lk.date', '<=', $endDate);
+        } else {
+            $channelSummary->whereMonth('lk.date', Carbon::now()->month)
+                          ->whereYear('lk.date', Carbon::now()->year);
+        }
+        
+        $channelSummary = $channelSummary->selectRaw('
+                sc.id as channel_id,
+                sc.name as channel_name,
+                SUM(lk.gross_revenue) as channel_gross_revenue
+            ')
+            ->groupBy('sc.id', 'sc.name')
+            ->orderBy('sc.name')
+            ->get();
+        
         return response()->json([
             'total_gross_revenue' => $summary->total_gross_revenue ?? 0,
             'total_hpp' => $summary->total_hpp ?? 0,
-            'total_fee_admin' => $summary->total_fee_admin ?? 0
+            'total_fee_admin' => $summary->total_fee_admin ?? 0,
+            'channel_summary' => $channelSummary
         ]);
     }
-
+    
     public function refresh()
     {
         // Implement your data refresh logic here
