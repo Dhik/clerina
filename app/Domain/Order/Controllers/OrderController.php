@@ -1571,7 +1571,7 @@ class OrderController extends Controller
                     'customer_name'        => $row[9] ?? null,
                     'customer_phone_number' => $row[16] ?? null, // Column Q
                     'product'              => $row[5] ?? null,
-                    'qty'                  => $row[10] ?? null,
+                    'qty'                  => 1,
                     'receipt_number'       => $row[1] ?? null,
                     'shipment'             => $row[15] ?? null, // Column P
                     'payment_method'       => $row[4] ?? null,
