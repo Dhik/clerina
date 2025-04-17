@@ -7,6 +7,7 @@ use App\Domain\Sales\Controllers\SalesController;
 use App\Domain\Sales\Controllers\OperationalSpentController;
 use App\Domain\Sales\Controllers\NetProfitController;
 use App\Domain\Sales\Controllers\VisitController;
+use App\Domain\Sales\Controllers\LaporanKeuanganController;
 use Illuminate\Support\Facades\Route;
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +108,13 @@ Route::prefix('admin')
             Route::get('/update-order-count-azrina', [NetProfitController::class, 'updateOrderCountAzrina'])->name('net-profit.update-order-count-azrina');
             Route::get('/update-closing-rate', [NetProfitController::class, 'updateClosingRate'])->name('net-profit.update-closing-rate');
             Route::get('/sales-vs-marketing', [NetProfitController::class, 'getCurrentMonthCorrelation'])->name('net-profit.sales-vs-marketing');
+        });
+
+        Route::prefix('lk')->group(function () {
+            Route::get('/', [LaporanKeuanganController::class, 'index'])->name('lk.index');
+            Route::get('/get', [LaporanKeuanganController::class, 'get'])->name('lk.get');
+            Route::get('/summary', [LaporanKeuanganController::class, 'getSummary'])->name('lk.summary');
+            Route::get('/refresh', [LaporanKeuanganController::class, 'refresh'])->name('lk.refresh');
         });
 
         // Sales

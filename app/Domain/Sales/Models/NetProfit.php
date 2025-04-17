@@ -16,22 +16,12 @@ class NetProfit extends Model
     protected $fillable = [
         'date',
         'sales',
-        'marketing',
-        'spent_kol',
-        'affiliate',
-        'operasional',
         'hpp',
-        'roas',
-        'visit',
-        'qty',
-        'order',
-        'closing_rate',
         'tenant_id',
-        'crm_sales',
-        'b2b_sales',
         'balance_amount',
         'gross_revenue', 
         'fee_admin',
+        'sales_channel_id'
     ];
     protected $casts = [
         'date' => 'date'

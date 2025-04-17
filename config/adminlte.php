@@ -327,6 +327,12 @@ return [
             'can' => [PermissionEnum::ViewTenant],
         ],
         [
+            'text' => 'Financial Report',
+            'url' => 'admin/lk',
+            'icon' => 'nav-icon far fa-circle text-success',
+            'can' => [PermissionEnum::ViewTenant],
+        ],
+        [
             'text' => 'Order',
             'url' => 'admin/order',
             'icon' => 'nav-icon far fa-circle text-info',

@@ -16,23 +16,15 @@ return new class extends Migration
             $table->date('date')->nullable();
             $table->unsignedBigInteger('tenant_id')->nullable();
             $table->decimal('sales', 15, 2)->nullable();
-            $table->decimal('b2b_sales', 15, 2)->nullable();
-            $table->decimal('crm_sales', 15, 2)->nullable();
-            $table->decimal('marketing', 15, 2)->nullable();
-            $table->decimal('spent_kol', 15, 2)->nullable();
-            $table->decimal('affiliate', 15, 2)->nullable();
-            $table->decimal('operasional', 15, 2)->nullable();
             $table->decimal('hpp', 15, 2)->nullable();
-            $table->decimal('fee_packing', 15, 2)->nullable();
-            $table->decimal('roas', 30, 2)->nullable();
-            $table->decimal('romi', 30, 2)->nullable();
-            $table->bigInteger('visit')->nullable();
-            $table->bigInteger('qty')->nullable();
-            $table->bigInteger('order')->nullable();
-            $table->decimal('closing_rate', 30, 2)->nullable();
             $table->decimal('balance_amount', 15, 2)->nullable();
             $table->decimal('gross_revenue', 15, 2)->nullable();
             $table->decimal('fee_admin', 15, 2)->nullable();
+            $table->unsignedBigInteger('sales_channel_id')->nullable();
+            $table->foreign('sales_channel_id')
+                ->references('id')
+                ->on('sales_channels')
+                ->onDelete('set null');
             $table->timestamps();
             
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
