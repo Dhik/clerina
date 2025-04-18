@@ -94,7 +94,7 @@
         </div>
     </div>
     
-    <!-- Detail Modal -->
+    <!-- Standard Detail Modal -->
     <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -117,6 +117,42 @@
                                 <!-- Dynamic footer will be added here -->
                             </tfoot>
                         </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- HPP Detail Modal with Tabs -->
+    <div class="modal fade" id="hppDetailModal" tabindex="-1" role="dialog" aria-labelledby="hppDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hppDetailModalLabel">HPP Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Channel summary section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card card-primary card-outline card-tabs">
+                                <div class="card-header p-0 pt-1 border-bottom-0">
+                                    <ul class="nav nav-tabs" id="channel-tabs" role="tablist">
+                                        <!-- Channel tabs will be added here -->
+                                    </ul>
+                                </div>
+                                <div class="card-body">
+                                    <div class="tab-content" id="channel-tab-content">
+                                        <!-- Channel tab contents will be added here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -294,12 +330,44 @@
     .other-card {
         background: linear-gradient(135deg, #607d8b, #90a4ae);
     }
+    
+    /* Tab styles */
+    .nav-tabs .nav-link {
+        border-radius: 0.25rem 0.25rem 0 0;
+    }
+    
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+    }
+    
+    .tab-content {
+        padding: 15px;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-top: 0;
+        border-radius: 0 0 0.25rem 0.25rem;
+    }
+    
+    .channel-summary {
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .channel-summary h5 {
+        margin-bottom: 0;
+    }
 </style>
 @stop
 
 @section('js')
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script>
     // Date range picker
     let filterDate = $('#filterDates');
@@ -376,122 +444,9 @@
         ],
         order: [[0, 'desc']]
     });
-
-    // Handle detail modal
-    $(document).on('click', '.show-details', function(e) {
-        e.preventDefault();
-        
-        const date = $(this).data('date');
-        const type = $(this).data('type');
-        
-        $.ajax({
-            url: "{{ route('lk.details') }}",
-            method: 'GET',
-            data: {
-                date: date,
-                type: type
-            },
-            success: function(response) {
-                // Set modal title based on type and date
-                let modalTitle;
-                switch(type) {
-                    case 'gross_revenue':
-                        modalTitle = 'Gross Revenue Details - ' + date;
-                        break;
-                    case 'hpp':
-                        modalTitle = 'HPP Details - ' + date;
-                        break;
-                    case 'fee_admin':
-                        modalTitle = 'Fee Admin Details - ' + date;
-                        break;
-                    case 'net_profit':
-                        modalTitle = 'Net Profit & HPP Percentage Details - ' + date;
-                        break;
-                    default:
-                        modalTitle = 'Details - ' + date;
-                }
-                
-                $('#detailModalLabel').text(modalTitle);
-                
-                // Clear previous table content
-                $('#detailTableHead').empty();
-                $('#detailTableBody').empty();
-                $('#detailTableFoot').empty();
-                
-                // Create table header
-                let headerRow = '<tr>';
-                headerRow += '<th>Sales Channel</th>';
-                
-                if (type === 'gross_revenue') {
-                    headerRow += '<th class="text-right">Gross Revenue</th>';
-                } else if (type === 'hpp') {
-                    headerRow += '<th class="text-right">HPP</th>';
-                } else if (type === 'fee_admin') {
-                    headerRow += '<th class="text-right">Fee Admin</th>';
-                } else if (type === 'net_profit') {
-                    headerRow += '<th class="text-right">Gross Revenue</th>';
-                    headerRow += '<th class="text-right">Fee Admin</th>';
-                    headerRow += '<th class="text-right">Net Profit</th>';
-                    headerRow += '<th class="text-right">HPP</th>';
-                    headerRow += '<th class="text-right">HPP %</th>';
-                }
-                
-                headerRow += '</tr>';
-                $('#detailTableHead').append(headerRow);
-                
-                // Add data rows
-                $.each(response.details, function(index, item) {
-                    let row = '<tr>';
-                    row += '<td>' + item.channel_name + '</td>';
-                    
-                    if (type === 'gross_revenue') {
-                        row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
-                    } else if (type === 'hpp') {
-                        row += '<td class="text-right">Rp ' + formatNumber(item.hpp) + '</td>';
-                    } else if (type === 'fee_admin') {
-                        row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
-                    } else if (type === 'net_profit') {
-                        row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
-                        row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
-                        row += '<td class="text-right">Rp ' + formatNumber(item.net_profit) + '</td>';
-                        row += '<td class="text-right">Rp ' + formatNumber(item.hpp) + '</td>';
-                        row += '<td class="text-right">' + item.hpp_percentage.toFixed(2) + '%</td>';
-                    }
-                    
-                    row += '</tr>';
-                    $('#detailTableBody').append(row);
-                });
-                
-                // Add footer row with totals
-                let footerRow = '<tr class="font-weight-bold">';
-                footerRow += '<td>Total</td>';
-                
-                if (type === 'gross_revenue') {
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
-                } else if (type === 'hpp') {
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_hpp) + '</td>';
-                } else if (type === 'fee_admin') {
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
-                } else if (type === 'net_profit') {
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_net_profit) + '</td>';
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_hpp) + '</td>';
-                    footerRow += '<td class="text-right">' + response.summary.total_hpp_percentage.toFixed(2) + '%</td>';
-                }
-                
-                footerRow += '</tr>';
-                $('#detailTableFoot').append(footerRow);
-                
-                // Show the modal
-                $('#detailModal').modal('show');
-            },
-            error: function(xhr, status, error) {
-                console.error('Error fetching details:', error);
-                alert('Error fetching details. Please try again.');
-            }
-        });
-    });
+    
+    // Initialize channel dataTables object to store DataTable instances
+    let channelDataTables = {};
 
     function fetchSummary() {
         const filterDates = document.getElementById('filterDates').value;
@@ -569,6 +524,240 @@
             container.innerHTML += card;
         });
     }
+    
+    // Handle detail modal
+    $(document).on('click', '.show-details', function(e) {
+        e.preventDefault();
+        
+        const date = $(this).data('date');
+        const type = $(this).data('type');
+        
+        // Special handling for HPP details with tabs
+        if (type === 'hpp') {
+            $.ajax({
+                url: "{{ route('lk.details') }}",
+                method: 'GET',
+                data: {
+                    date: date,
+                    type: type
+                },
+                success: function(response) {
+                    // Set modal title
+                    $('#hppDetailModalLabel').text('HPP Details - ' + date);
+                    
+                    // Clear previous tabs and content
+                    $('#channel-tabs').empty();
+                    $('#channel-tab-content').empty();
+                    
+                    // Add tabs for each channel
+                    let isFirst = true;
+                    response.channels.forEach(function(channel, index) {
+                        // Create tab
+                        const tabId = 'channel-tab-' + channel.id;
+                        const tabClass = isFirst ? 'nav-link active' : 'nav-link';
+                        const tab = `
+                            <li class="nav-item">
+                                <a class="${tabClass}" id="${tabId}-tab" data-toggle="pill" href="#${tabId}" 
+                                   role="tab" aria-controls="${tabId}" aria-selected="${isFirst ? 'true' : 'false'}">
+                                    ${channel.name}
+                                </a>
+                            </li>
+                        `;
+                        $('#channel-tabs').append(tab);
+                        
+                        // Create tab content
+                        const channelData = response.data[channel.id] || [];
+                        const channelSummary = response.summaries[channel.id] || { total: 0 };
+                        const tabContentClass = isFirst ? 'tab-pane fade show active' : 'tab-pane fade';
+                        
+                        let tabContent = `
+                            <div class="${tabContentClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
+                                <div class="channel-summary">
+                                    <h5>${channel.name}</h5>
+                                    <h5>Total: Rp ${formatNumber(channelSummary.total)}</h5>
+                                </div>
+                                <div class="table-responsive">
+                                    <table id="hpp-table-${channel.id}" class="table table-bordered table-striped table-sm" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>SKU</th>
+                                                <th>Product</th>
+                                                <th class="text-right">Quantity</th>
+                                                <th class="text-right">HPP</th>
+                                                <th class="text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                        
+                        // Add rows to the tab content
+                        if (channelData.length > 0) {
+                            channelData.forEach(function(item) {
+                                tabContent += `
+                                    <tr>
+                                        <td>${item.sku}</td>
+                                        <td>${item.product}</td>
+                                        <td class="text-right">${item.qty}</td>
+                                        <td class="text-right">Rp ${formatNumber(item.hpp)}</td>
+                                        <td class="text-right">Rp ${formatNumber(item.total)}</td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            tabContent += `
+                                <tr>
+                                    <td colspan="5" class="text-center">No data available</td>
+                                </tr>
+                            `;
+                        }
+                        
+                        tabContent += `
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold">
+                                                <td colspan="4" class="text-right">Total</td>
+                                                <td class="text-right">Rp ${formatNumber(channelSummary.total)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                        
+                        $('#channel-tab-content').append(tabContent);
+                        
+                        isFirst = false;
+                    });
+                    
+                    // Show the modal
+                    $('#hppDetailModal').modal('show');
+                    
+                    // Initialize DataTables for each channel
+                    response.channels.forEach(function(channel) {
+                        if (channelDataTables[channel.id]) {
+                            channelDataTables[channel.id].destroy();
+                        }
+                        
+                        channelDataTables[channel.id] = $(`#hpp-table-${channel.id}`).DataTable({
+                            paging: true,
+                            lengthChange: false,
+                            searching: true,
+                            ordering: true,
+                            info: true,
+                            autoWidth: false,
+                            pageLength: 10,
+                            language: {
+                                search: "Search SKU/Product:"
+                            }
+                        });
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching HPP details:', error);
+                    alert('Error fetching HPP details. Please try again.');
+                }
+            });
+        } else {
+            // Standard detail modal for other types
+            $.ajax({
+                url: "{{ route('lk.details') }}",
+                method: 'GET',
+                data: {
+                    date: date,
+                    type: type
+                },
+                success: function(response) {
+                    // Set modal title based on type and date
+                    let modalTitle;
+                    switch(type) {
+                        case 'gross_revenue':
+                            modalTitle = 'Gross Revenue Details - ' + date;
+                            break;
+                        case 'fee_admin':
+                            modalTitle = 'Fee Admin Details - ' + date;
+                            break;
+                        case 'net_profit':
+                            modalTitle = 'Net Profit & HPP Percentage Details - ' + date;
+                            break;
+                        default:
+                            modalTitle = 'Details - ' + date;
+                    }
+                    
+                    $('#detailModalLabel').text(modalTitle);
+                    
+                    // Clear previous table content
+                    $('#detailTableHead').empty();
+                    $('#detailTableBody').empty();
+                    $('#detailTableFoot').empty();
+                    
+                    // Create table header
+                    let headerRow = '<tr>';
+                    headerRow += '<th>Sales Channel</th>';
+                    
+                    if (type === 'gross_revenue') {
+                        headerRow += '<th class="text-right">Gross Revenue</th>';
+                    } else if (type === 'fee_admin') {
+                        headerRow += '<th class="text-right">Fee Admin</th>';
+                    } else if (type === 'net_profit') {
+                        headerRow += '<th class="text-right">Gross Revenue</th>';
+                        headerRow += '<th class="text-right">Fee Admin</th>';
+                        headerRow += '<th class="text-right">Net Profit</th>';
+                        headerRow += '<th class="text-right">HPP</th>';
+                        headerRow += '<th class="text-right">HPP %</th>';
+                    }
+                    
+                    headerRow += '</tr>';
+                    $('#detailTableHead').append(headerRow);
+                    
+                    // Add data rows
+                    $.each(response.details, function(index, item) {
+                        let row = '<tr>';
+                        row += '<td>' + item.channel_name + '</td>';
+                        
+                        if (type === 'gross_revenue') {
+                            row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
+                        } else if (type === 'fee_admin') {
+                            row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
+                        } else if (type === 'net_profit') {
+                            row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
+                            row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
+                            row += '<td class="text-right">Rp ' + formatNumber(item.net_profit) + '</td>';
+                            row += '<td class="text-right">Rp ' + formatNumber(item.hpp) + '</td>';
+                            row += '<td class="text-right">' + item.hpp_percentage.toFixed(2) + '%</td>';
+                        }
+                        
+                        row += '</tr>';
+                        $('#detailTableBody').append(row);
+                    });
+                    
+                    // Add footer row with totals
+                    let footerRow = '<tr class="font-weight-bold">';
+                    footerRow += '<td>Total</td>';
+                    
+                    if (type === 'gross_revenue') {
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
+                    } else if (type === 'fee_admin') {
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
+                    } else if (type === 'net_profit') {
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_net_profit) + '</td>';
+                        footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_hpp) + '</td>';
+                        footerRow += '<td class="text-right">' + response.summary.total_hpp_percentage.toFixed(2) + '%</td>';
+                    }
+                    
+                    footerRow += '</tr>';
+                    $('#detailTableFoot').append(footerRow);
+                    
+                    // Show the modal
+                    $('#detailModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching details:', error);
+                    alert('Error fetching details. Please try again.');
+                }
+            });
+        }
+    });
     
     // Initial load
     fetchSummary();

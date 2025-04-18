@@ -134,61 +134,145 @@ class LaporanKeuanganController extends Controller
         $type = $request->input('type');
         $currentTenantId = Auth::user()->current_tenant_id;
         
-        $query = DB::table('laporan_keuangan as lk')
-            ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
-            ->where('lk.tenant_id', '=', $currentTenantId)
-            ->where('lk.date', '=', $date)
-            ->select('sc.name as channel_name', 'lk.*');
+        // For HPP, get detailed SKU information with quantities
+        if ($type === 'hpp') {
+            // Get all sales channels for the tenant
+            $salesChannels = DB::table('sales_channels')
+                ->orderBy('name')
+                ->get();
+                
+            $allSkuData = [];
+            $channelSummaries = [];
+            $grandTotal = 0;
             
-        $data = $query->get();
-        
-        // Transform data based on the requested type
-        $details = [];
-        $totalGrossRevenue = 0;
-        $totalHpp = 0;
-        $totalFeeAdmin = 0;
-        $totalNetProfit = 0;
-        
-        foreach ($data as $row) {
-            $grossRevenue = $row->gross_revenue ?: 0;
-            $hpp = $row->hpp ?: 0;
-            $feeAdmin = $row->fee_admin ?: 0;
-            $netProfit = $grossRevenue - $feeAdmin;
-            $hppPercentage = $grossRevenue > 0 ? ($hpp / $grossRevenue) * 100 : 0;
+            // For each sales channel, get SKU-based HPP details
+            foreach ($salesChannels as $channel) {
+                // Get orders for this date and channel
+                $orders = DB::table('orders')
+                    ->where('tenant_id', $currentTenantId)
+                    ->where('date', $date)
+                    ->where('sales_channel_id', $channel->id)
+                    ->get();
+                    
+                $skuData = [];
+                $channelTotal = 0;
+                
+                // Process each order
+                foreach ($orders as $order) {
+                    // Find product information
+                    $product = DB::table('products')
+                        ->where('tenant_id', $currentTenantId)
+                        ->where('sku', $order->sku)
+                        ->first();
+                        
+                    if ($product) {
+                        $unitPrice = $product->harga_satuan ?: 0;
+                        $totalPrice = $unitPrice * $order->qty;
+                        $channelTotal += $totalPrice;
+                        $grandTotal += $totalPrice;
+                        
+                        // Check if SKU already exists in the array
+                        $skuExists = false;
+                        foreach ($skuData as &$item) {
+                            if ($item['sku'] === $order->sku) {
+                                $item['qty'] += $order->qty;
+                                $item['total'] += $totalPrice;
+                                $skuExists = true;
+                                break;
+                            }
+                        }
+                        
+                        // If SKU doesn't exist, add it
+                        if (!$skuExists) {
+                            $skuData[] = [
+                                'sku' => $order->sku,
+                                'product' => $product->product,
+                                'qty' => $order->qty,
+                                'hpp' => $unitPrice,
+                                'total' => $totalPrice
+                            ];
+                        }
+                    }
+                }
+                
+                // Sort by total price (highest first)
+                usort($skuData, function($a, $b) {
+                    return $b['total'] <=> $a['total'];
+                });
+                
+                $allSkuData[$channel->id] = $skuData;
+                $channelSummaries[$channel->id] = [
+                    'name' => $channel->name,
+                    'total' => $channelTotal
+                ];
+            }
             
-            $totalGrossRevenue += $grossRevenue;
-            $totalHpp += $hpp;
-            $totalFeeAdmin += $feeAdmin;
-            $totalNetProfit += $netProfit;
+            return response()->json([
+                'date' => $date,
+                'type' => $type,
+                'channels' => $salesChannels,
+                'data' => $allSkuData,
+                'summaries' => $channelSummaries,
+                'grand_total' => $grandTotal
+            ]);
+        } else {
+            // For other types, use the existing query
+            $query = DB::table('laporan_keuangan as lk')
+                ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
+                ->where('lk.tenant_id', '=', $currentTenantId)
+                ->where('lk.date', '=', $date)
+                ->select('sc.name as channel_name', 'lk.*');
+                
+            $data = $query->get();
             
-            $details[] = [
-                'channel_name' => $row->channel_name,
-                'gross_revenue' => $grossRevenue,
-                'hpp' => $hpp,
-                'fee_admin' => $feeAdmin,
-                'net_profit' => $netProfit,
-                'hpp_percentage' => $hppPercentage
+            // Transform data based on the requested type
+            $details = [];
+            $totalGrossRevenue = 0;
+            $totalHpp = 0;
+            $totalFeeAdmin = 0;
+            $totalNetProfit = 0;
+            
+            foreach ($data as $row) {
+                $grossRevenue = $row->gross_revenue ?: 0;
+                $hpp = $row->hpp ?: 0;
+                $feeAdmin = $row->fee_admin ?: 0;
+                $netProfit = $grossRevenue - $feeAdmin;
+                $hppPercentage = $grossRevenue > 0 ? ($hpp / $grossRevenue) * 100 : 0;
+                
+                $totalGrossRevenue += $grossRevenue;
+                $totalHpp += $hpp;
+                $totalFeeAdmin += $feeAdmin;
+                $totalNetProfit += $netProfit;
+                
+                $details[] = [
+                    'channel_name' => $row->channel_name,
+                    'gross_revenue' => $grossRevenue,
+                    'hpp' => $hpp,
+                    'fee_admin' => $feeAdmin,
+                    'net_profit' => $netProfit,
+                    'hpp_percentage' => $hppPercentage
+                ];
+            }
+            
+            // Calculate total percentage
+            $totalHppPercentage = $totalGrossRevenue > 0 ? ($totalHpp / $totalGrossRevenue) * 100 : 0;
+            
+            // Add totals
+            $summary = [
+                'total_gross_revenue' => $totalGrossRevenue,
+                'total_hpp' => $totalHpp,
+                'total_fee_admin' => $totalFeeAdmin,
+                'total_net_profit' => $totalNetProfit,
+                'total_hpp_percentage' => $totalHppPercentage
             ];
+            
+            return response()->json([
+                'date' => $date,
+                'type' => $type,
+                'details' => $details,
+                'summary' => $summary
+            ]);
         }
-        
-        // Calculate total percentage
-        $totalHppPercentage = $totalGrossRevenue > 0 ? ($totalHpp / $totalGrossRevenue) * 100 : 0;
-        
-        // Add totals
-        $summary = [
-            'total_gross_revenue' => $totalGrossRevenue,
-            'total_hpp' => $totalHpp,
-            'total_fee_admin' => $totalFeeAdmin,
-            'total_net_profit' => $totalNetProfit,
-            'total_hpp_percentage' => $totalHppPercentage
-        ];
-        
-        return response()->json([
-            'date' => $date,
-            'type' => $type,
-            'details' => $details,
-            'summary' => $summary
-        ]);
     }
     
     public function getSummary(Request $request)
@@ -263,43 +347,13 @@ class LaporanKeuanganController extends Controller
                 : 0;
         }
         
-        // Get daily trend data
-        $dailyTrend = DB::table('laporan_keuangan')
-            ->where('tenant_id', '=', $currentTenantId);
-            
-        // Apply date filtering to daily trend
-        if (!is_null($request->input('filterDates'))) {
-            $dailyTrend->where('date', '>=', $startDate)
-                      ->where('date', '<=', $endDate);
-        } else {
-            $dailyTrend->whereMonth('date', Carbon::now()->month)
-                      ->whereYear('date', Carbon::now()->year);
-        }
-        
-        $dailyTrend = $dailyTrend->selectRaw('
-                date,
-                SUM(gross_revenue) as daily_gross_revenue,
-                SUM(hpp) as daily_hpp,
-                SUM(fee_admin) as daily_fee_admin
-            ')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-            
-        // Calculate net profit for daily trend
-        foreach ($dailyTrend as $day) {
-            $day->daily_net_profit = $day->daily_gross_revenue - $day->daily_fee_admin;
-            $day->date_formatted = Carbon::parse($day->date)->format('d M');
-        }
-        
         return response()->json([
             'total_gross_revenue' => $summary->total_gross_revenue ?? 0,
             'total_hpp' => $summary->total_hpp ?? 0,
             'total_fee_admin' => $summary->total_fee_admin ?? 0,
             'net_profit' => $netProfit,
             'hpp_percentage' => $hppPercentage,
-            'channel_summary' => $channelSummary,
-            'daily_trend' => $dailyTrend
+            'channel_summary' => $channelSummary
         ]);
     }
 }
