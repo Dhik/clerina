@@ -66,42 +66,11 @@
                 </div>
             </div>
             
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Revenue Distribution by Channel</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="salesPieChart" style="height: 300px;"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">HPP/Revenue Percentage by Channel</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="hppPercentageChart" style="height: 300px;"></canvas>
-                        </div>
-                    </div>
-                </div>
+            <!-- Channel Summary Cards -->
+            <div class="row" id="channelSummaryCards">
+                <!-- Cards will be dynamically added here -->
             </div>
-            
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Daily Trend</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="dailyTrendChart" style="height: 300px;"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
+
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Financial Report Details</h3>
@@ -239,28 +208,99 @@
         padding: 10px;
     }
     
-    .chart-container {
+    /* Marketplace specific styles */
+    .marketplace-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         position: relative;
-        height: 100%;
-        width: 100%;
     }
     
-    #salesPieChart, #hppPercentageChart, #dailyTrendChart {
-        width: 100% !important;
+    .marketplace-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .marketplace-card .inner {
+        padding: 15px;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .marketplace-card h5 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+        color: #fff;
+    }
+    
+    .marketplace-card p {
+        font-size: 1rem;
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .marketplace-card .logo {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.5rem;
+        opacity: 0.8;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    
+    /* Shopee specific styles */
+    .shopee-card {
+        background: linear-gradient(135deg, #ee4d2d, #ff7337);
+    }
+    
+    .shopee-2-card {
+        background: linear-gradient(135deg, #d93b1c, #ee4d2d);
+    }
+    
+    .shopee-3-card {
+        background: linear-gradient(135deg, #c52d0e, #d93b1c);
+    }
+    
+    /* Lazada specific styles */
+    .lazada-card {
+        background: linear-gradient(135deg, #0f146d, #2026b2);
+    }
+    
+    /* Tokopedia specific styles */
+    .tokopedia-card {
+        background: linear-gradient(135deg, #03ac0e, #42d149);
+    }
+    
+    /* TikTok specific styles */
+    .tiktok-card {
+        background: linear-gradient(135deg, #010101, #333333);
+    }
+    
+    /* B2B specific styles */
+    .b2b-card {
+        background: linear-gradient(135deg, #6a7d90, #8ca3ba);
+    }
+    
+    /* CRM specific styles */
+    .crm-card {
+        background: linear-gradient(135deg, #7b68ee, #9370db);
+    }
+    
+    /* Generic style for other channels */
+    .other-card {
+        background: linear-gradient(135deg, #607d8b, #90a4ae);
     }
 </style>
 @stop
 
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 <script>
-    // Chart objects
-    let salesPieChart = null;
-    let hppPercentageChart = null;
-    let dailyTrendChart = null;
-    
     // Date range picker
     let filterDate = $('#filterDates');
     
@@ -469,212 +509,65 @@
                 document.getElementById('totalFeeAdmin').textContent = 'Rp ' + formatNumber(data.total_fee_admin || 0);
                 document.getElementById('netProfit').textContent = 'Rp ' + formatNumber(data.net_profit || 0);
                 
-                // Update charts
-                updateSalesPieChart(data.channel_summary);
-                updateHppPercentageChart(data.channel_summary);
-                updateDailyTrendChart(data.daily_trend);
+                // Update channel summary cards
+                updateChannelSummaryCards(data.channel_summary);
             })
             .catch(error => console.error('Error:', error));
     }
     
-    function updateSalesPieChart(channelSummary) {
-        // Prepare data for pie chart
-        const labels = channelSummary.map(channel => channel.channel_name);
-        const data = channelSummary.map(channel => channel.channel_gross_revenue);
+    function updateChannelSummaryCards(channelSummary) {
+        const container = document.getElementById('channelSummaryCards');
+        container.innerHTML = ''; // Clear previous cards
         
-        // Generate colors
-        const colors = generateColors(channelSummary.length);
-        
-        // Create or update chart
-        const ctx = document.getElementById('salesPieChart').getContext('2d');
-        
-        if (salesPieChart) {
-            salesPieChart.destroy();
-        }
-        
-        salesPieChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = (value * 100 / total).toFixed(2) + '%';
-                                return context.label + ': Rp ' + formatNumber(value) + ' (' + percentage + ')';
-                            }
-                        }
-                    }
-                }
+        // Create a card for each channel
+        channelSummary.forEach(channel => {
+            const channelName = channel.channel_name.toLowerCase();
+            let cardClass = 'other-card';
+            let logoClass = 'fa-shopping-bag';
+            
+            // Determine the card class and logo based on channel name
+            if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
+                cardClass = 'shopee-card';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
+                cardClass = 'shopee-2-card';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
+                cardClass = 'shopee-3-card';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('lazada')) {
+                cardClass = 'lazada-card';
+                logoClass = 'fa-box';
+            } else if (channelName.includes('tokopedia')) {
+                cardClass = 'tokopedia-card';
+                logoClass = 'fa-store';
+            } else if (channelName.includes('tiktok')) {
+                cardClass = 'tiktok-card';
+                logoClass = 'fa-music';
+            } else if (channelName === 'b2b') {
+                cardClass = 'b2b-card';
+                logoClass = 'fa-handshake';
+            } else if (channelName === 'crm') {
+                cardClass = 'crm-card';
+                logoClass = 'fa-users';
             }
+            
+            const card = `
+            <div class="col-md-3 col-sm-6">
+                <div class="marketplace-card ${cardClass}">
+                    <div class="inner">
+                        <h5>Rp ${formatNumber(channel.channel_gross_revenue)}</h5>
+                        <p>${channel.channel_name}</p>
+                        <div class="logo">
+                            <i class="fas ${logoClass}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            
+            container.innerHTML += card;
         });
-    }
-    
-    function updateHppPercentageChart(channelSummary) {
-        // Prepare data for bar chart
-        const labels = channelSummary.map(channel => channel.channel_name);
-        const data = channelSummary.map(channel => channel.channel_hpp_percentage);
-        
-        // Create or update chart
-        const ctx = document.getElementById('hppPercentageChart').getContext('2d');
-        
-        if (hppPercentageChart) {
-            hppPercentageChart.destroy();
-        }
-        
-        hppPercentageChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'HPP/Revenue Percentage',
-                    data: data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    function updateDailyTrendChart(dailyTrend) {
-        // Prepare data for line chart
-        const labels = dailyTrend.map(day => day.date_formatted);
-        const grossRevenueData = dailyTrend.map(day => day.daily_gross_revenue);
-        const netProfitData = dailyTrend.map(day => day.daily_net_profit);
-        const hppData = dailyTrend.map(day => day.daily_hpp);
-        
-        // Create or update chart
-        const ctx = document.getElementById('dailyTrendChart').getContext('2d');
-        
-        if (dailyTrendChart) {
-            dailyTrendChart.destroy();
-        }
-        
-        dailyTrendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Gross Revenue',
-                        data: grossRevenueData,
-                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                        borderColor: 'rgba(40, 167, 69, 1)',
-                        borderWidth: 2,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'Net Profit',
-                        data: netProfitData,
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 2,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'HPP',
-                        data: hppData,
-                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                        borderColor: 'rgba(220, 53, 69, 1)',
-                        borderWidth: 2,
-                        tension: 0.1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'Rp ' + formatNumber(value);
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': Rp ' + formatNumber(context.raw);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    function generateColors(count) {
-        const baseColors = [
-            'rgba(255, 99, 132, 0.8)',
-            'rgba(54, 162, 235, 0.8)',
-            'rgba(255, 206, 86, 0.8)',
-            'rgba(75, 192, 192, 0.8)',
-            'rgba(153, 102, 255, 0.8)',
-            'rgba(255, 159, 64, 0.8)',
-            'rgba(199, 199, 199, 0.8)',
-            'rgba(83, 102, 255, 0.8)',
-            'rgba(40, 167, 69, 0.8)',
-            'rgba(220, 53, 69, 0.8)'
-        ];
-        
-        let colors = [];
-        
-        // Use base colors first
-        for (let i = 0; i < count; i++) {
-            if (i < baseColors.length) {
-                colors.push(baseColors[i]);
-            } else {
-                // Generate random colors if we need more than the base colors
-                const r = Math.floor(Math.random() * 255);
-                const g = Math.floor(Math.random() * 255);
-                const b = Math.floor(Math.random() * 255);
-                colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
-            }
-        }
-        
-        return colors;
     }
     
     // Initial load
