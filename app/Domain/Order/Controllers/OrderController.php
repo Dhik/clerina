@@ -4442,7 +4442,7 @@ class OrderController extends Controller
     public function updateSuccessDateTokopedia()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
-        $range = 'Tokopedia Balance!A:G';
+        $range = 'Tokopedia Balance!A:D';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
@@ -4464,20 +4464,33 @@ class OrderController extends Controller
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $rowIndex => $row) {
-                // Skip if success date (Column A) is empty or id_order (Column F) is empty
-                if (empty($row[0]) || empty($row[5])) {
+                // Skip if success date (Column A) is empty or id_order (Column B) is empty
+                if (empty($row[0]) || empty($row[1])) {
                     $skippedRows++;
                     continue;
                 }
                 
-                $successDate = Carbon::parse($row[0])->format('Y-m-d'); // Column A = orders.success_date
-                $amount = 0;
+                // Parse the date part only from Column A
+                $successDateWithTime = Carbon::parse($row[0]);
+                $successDate = $successDateWithTime->format('Y-m-d');
+                
+                $idOrder = $row[1]; // Column B = orders.id_order
+                
+                // Get in_amount from Column C
+                $inAmount = 0;
+                if (isset($row[2]) && !empty($row[2])) {
+                    // Remove dots (used as thousand separators) and convert to integer
+                    $cleanInAmount = str_replace('.', '', $row[2]);
+                    $inAmount = intval($cleanInAmount);
+                }
+                
+                // Get fee_admin from Column D
+                $feeAdmin = 0;
                 if (isset($row[3]) && !empty($row[3])) {
                     // Remove dots (used as thousand separators) and convert to integer
-                    $cleanAmount = str_replace('.', '', $row[3]);
-                    $amount = intval($cleanAmount);
+                    $cleanFeeAdmin = str_replace('.', '', $row[3]);
+                    $feeAdmin = intval($cleanFeeAdmin);
                 }
-                $idOrder = $row[5]; // Column F = orders.id_order
                 
                 // Skip if we've already processed this order ID
                 if (in_array($idOrder, $processedOrderIds)) {
@@ -4494,7 +4507,8 @@ class OrderController extends Controller
                 if ($order) {
                     $order->success_date = $successDate;
                     $order->status = "Selesai";
-                    $order->fee_admin = $amount;
+                    $order->in_amount = $inAmount;
+                    $order->fee_admin = $feeAdmin;
                     $order->updated_at = now();
                     $order->save();
                     $updatedRows++;
@@ -4513,14 +4527,14 @@ class OrderController extends Controller
                         'payment_method'        => "unknown", 
                         'sku'                   => "unknown",
                         'variant'               => null,
-                        'price'                 => $amount,
+                        'price'                 => $inAmount,
                         'username'              => "unknown",
                         'shipping_address'      => "unknown",
                         'city'                  => null,
                         'province'              => null,
-                        'amount'                => $amount,
-                        'in_amount'             => $amount,
-                        'fee_admin'             => null, // No fee_admin for Tokopedia
+                        'amount'                => $inAmount,
+                        'in_amount'             => $inAmount,
+                        'fee_admin'             => $feeAdmin,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
                         'status'                => "Selesai",
