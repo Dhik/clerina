@@ -256,9 +256,9 @@
                 render: function(data) {
                     // Check if data contains NaN (it will be a string with HTML)
                     if (data && data.includes('NaN')) {
-                        return '<span class="text-primary">Rp 0</span>';
+                        return 'Rp 0';
                     }
-                    return data || '<span class="text-primary">Rp 0</span>';
+                    return data || 'Rp 0';
                 }
             });
         });
