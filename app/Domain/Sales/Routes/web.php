@@ -114,7 +114,7 @@ Route::prefix('admin')
             Route::get('/', [LaporanKeuanganController::class, 'index'])->name('lk.index');
             Route::get('/get', [LaporanKeuanganController::class, 'get'])->name('lk.get');
             Route::get('/summary', [LaporanKeuanganController::class, 'getSummary'])->name('lk.summary');
-            Route::get('/refresh', [LaporanKeuanganController::class, 'refresh'])->name('lk.refresh');
+            Route::get('/details', [LaporanKeuanganController::class, 'getDetails'])->name('lk.details');
         });
 
         // Sales
