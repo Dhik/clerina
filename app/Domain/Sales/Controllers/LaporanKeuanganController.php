@@ -52,6 +52,7 @@ class LaporanKeuanganController extends Controller
     public function get(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
+        $type = $request->input('type', 'summary');
         
         $startDate = null;
         $endDate = null;
@@ -62,70 +63,124 @@ class LaporanKeuanganController extends Controller
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
         }
         
-        // Get all distinct dates in the selected range
-        $query = DB::table('laporan_keuangan')
-            ->select('date')
-            ->where('tenant_id', '=', $currentTenantId)
-            ->distinct();
-        
-        // Apply date filtering
-        if (!is_null($request->input('filterDates'))) {
-            $query->where('date', '>=', $startDate)
-                ->where('date', '<=', $endDate);
-        } else {
-            $query->whereMonth('date', Carbon::now()->month)
-                ->whereYear('date', Carbon::now()->year);
-        }
-        
-        $dates = $query->orderBy('date')->pluck('date');
-        
-        // Prepare data for DataTables
-        $result = [];
-        
-        foreach ($dates as $date) {
-            // Get summary data for this date
-            $summaryData = DB::table('laporan_keuangan')
+        // Handle different tab types
+        if ($type === 'summary') {
+            // Get all distinct dates in the selected range
+            $query = DB::table('laporan_keuangan')
+                ->select('date')
                 ->where('tenant_id', '=', $currentTenantId)
-                ->where('date', '=', $date)
-                ->selectRaw('
-                    SUM(gross_revenue) as total_gross_revenue,
-                    SUM(hpp) as total_hpp,
-                    SUM(fee_admin) as total_fee_admin
-                ')
-                ->first();
+                ->distinct();
             
-            // Calculate net profit
-            $netProfit = $summaryData->total_gross_revenue - $summaryData->total_fee_admin;
+            // Apply date filtering
+            if (!is_null($request->input('filterDates'))) {
+                $query->where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate);
+            } else {
+                $query->whereMonth('date', Carbon::now()->month)
+                    ->whereYear('date', Carbon::now()->year);
+            }
             
-            $row = [
-                'date' => Carbon::parse($date)->format('Y-m-d'),
-                'total_gross_revenue' => $summaryData->total_gross_revenue ?: 0,
-                'total_hpp' => $summaryData->total_hpp ?: 0,
-                'total_fee_admin' => $summaryData->total_fee_admin ?: 0,
-                'net_profit' => $netProfit ?: 0,
-            ];
+            $dates = $query->orderBy('date')->pluck('date');
             
-            $result[] = $row;
+            // Prepare data for DataTables
+            $result = [];
+            
+            foreach ($dates as $date) {
+                // Get summary data for this date
+                $summaryData = DB::table('laporan_keuangan')
+                    ->where('tenant_id', '=', $currentTenantId)
+                    ->where('date', '=', $date)
+                    ->selectRaw('
+                        SUM(gross_revenue) as total_gross_revenue,
+                        SUM(hpp) as total_hpp,
+                        SUM(fee_admin) as total_fee_admin
+                    ')
+                    ->first();
+                
+                // Calculate net profit
+                $netProfit = $summaryData->total_gross_revenue - $summaryData->total_fee_admin;
+                
+                $row = [
+                    'date' => Carbon::parse($date)->format('Y-m-d'),
+                    'total_gross_revenue' => $summaryData->total_gross_revenue ?: 0,
+                    'total_hpp' => $summaryData->total_hpp ?: 0,
+                    'total_fee_admin' => $summaryData->total_fee_admin ?: 0,
+                    'net_profit' => $netProfit ?: 0,
+                ];
+                
+                $result[] = $row;
+            }
+            
+            $dataTable = DataTables::of($result)
+                ->editColumn('date', function ($row) {
+                    return $row['date'];
+                })
+                ->editColumn('total_gross_revenue', function ($row) {
+                    return '<a href="#" class="text-success show-details" data-type="gross_revenue" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_gross_revenue'], 0, ',', '.') . '</a>';
+                })
+                ->editColumn('total_hpp', function ($row) {
+                    return '<a href="#" class="show-details" data-type="hpp" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_hpp'], 0, ',', '.') . '</a>';
+                })
+                ->editColumn('total_fee_admin', function ($row) {
+                    return '<a href="#" class="show-details" data-type="fee_admin" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_fee_admin'], 0, ',', '.') . '</a>';
+                })
+                ->editColumn('net_profit', function ($row) {
+                    return '<a href="#" class="text-primary show-details" data-type="net_profit" data-date="' . $row['date'] . '">Rp ' . number_format($row['net_profit'], 0, ',', '.') . '</a>';
+                });
+            
+            return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit'])->make(true);
+        } else {
+            // For other tab types (hpp, gross_revenue, fee_admin), show daily per sales_channel
+            $query = DB::table('laporan_keuangan as lk')
+                ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
+                ->where('lk.tenant_id', '=', $currentTenantId)
+                ->select('lk.date', 'sc.name as channel_name', 'lk.*');
+            
+            // Apply date filtering
+            if (!is_null($request->input('filterDates'))) {
+                $query->where('lk.date', '>=', $startDate)
+                    ->where('lk.date', '<=', $endDate);
+            } else {
+                $query->whereMonth('lk.date', Carbon::now()->month)
+                    ->whereYear('lk.date', Carbon::now()->year);
+            }
+            
+            $data = $query->get();
+            
+            $result = [];
+            foreach ($data as $row) {
+                $date = $row->date;
+                $channelName = $row->channel_name;
+                
+                // Calculate values based on type
+                $value = 0;
+                $netProfit = 0;
+                
+                if ($type === 'gross_revenue') {
+                    $value = $row->gross_revenue ?: 0;
+                } else if ($type === 'hpp') {
+                    $value = $row->hpp ?: 0;
+                } else if ($type === 'fee_admin') {
+                    $value = $row->fee_admin ?: 0;
+                }
+                
+                $result[] = [
+                    'date' => Carbon::parse($date)->format('Y-m-d'),
+                    'channel_name' => $channelName,
+                    'value' => $value
+                ];
+            }
+            
+            $dataTable = DataTables::of($result)
+                ->editColumn('date', function ($row) {
+                    return $row['date'];
+                })
+                ->editColumn('value', function ($row) {
+                    return 'Rp ' . number_format($row['value'], 0, ',', '.');
+                });
+            
+            return $dataTable->rawColumns(['value'])->make(true);
         }
-        
-        $dataTable = DataTables::of($result)
-            ->editColumn('date', function ($row) {
-                return $row['date'];
-            })
-            ->editColumn('total_gross_revenue', function ($row) {
-                return '<a href="#" class="text-success show-details" data-type="gross_revenue" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_gross_revenue'], 0, ',', '.') . '</a>';
-            })
-            ->editColumn('total_hpp', function ($row) {
-                return '<a href="#" class="show-details" data-type="hpp" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_hpp'], 0, ',', '.') . '</a>';
-            })
-            ->editColumn('total_fee_admin', function ($row) {
-                return '<a href="#" class="show-details" data-type="fee_admin" data-date="' . $row['date'] . '">Rp ' . number_format($row['total_fee_admin'], 0, ',', '.') . '</a>';
-            })
-            ->editColumn('net_profit', function ($row) {
-                return '<a href="#" class="text-primary show-details" data-type="net_profit" data-date="' . $row['date'] . '">Rp ' . number_format($row['net_profit'], 0, ',', '.') . '</a>';
-            });
-        
-        return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit'])->make(true);
     }
     
     public function getDetails(Request $request)
