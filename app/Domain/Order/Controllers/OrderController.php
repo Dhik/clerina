@@ -2810,7 +2810,6 @@ class OrderController extends Controller
                                 ->first();
 
                 if ($existingOrder) {
-                    // Skip this row as it already exists
                     $duplicateRows++;
                     continue;
                 }
@@ -2827,7 +2826,6 @@ class OrderController extends Controller
                                         ->first();
                     
                     if ($lastOrder) {
-                        // Extract the order number from the last order
                         $parts = explode('/', $lastOrder->id_order);
                         $lastOrderNumber = (int)end($parts);
                         $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
@@ -2875,7 +2873,7 @@ class OrderController extends Controller
                 Order::create($orderData);
                 $processedRows++;
             }
-            usleep(100000); // Small delay to prevent overwhelming the server
+            usleep(100000);
         }
 
         return response()->json([
@@ -3275,224 +3273,6 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
-
-    // public function importClosingRina()
-    // {
-    //     $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
-    //     $range = 'Closing Rina!A:I';
-    //     $sheetData = $this->googleSheetService->getSheetData($range);
-
-    //     $tenant_id = 1;
-    //     $chunkSize = 50;
-    //     $totalRows = count($sheetData);
-    //     $processedRows = 0;
-    //     $skippedRows = 0;
-    //     $duplicateRows = 0;
-    //     $orderCountMap = [];
-        
-    //     // Get current month and year for filtering
-    //     $currentMonth = Carbon::now()->format('m');
-    //     $currentYear = Carbon::now()->format('Y');
-        
-    //     // Initialize variables to track the last valid values for columns A-D
-    //     $lastOrderDate = null;
-    //     $lastCustomerName = null;
-    //     $lastShippingAddress = null;
-    //     $lastPhoneNumber = null;
-
-    //     foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-    //         foreach ($chunk as $rowIndex => $row) {
-    //             // Skip if no product (Column E) or amount (Column H) is provided
-    //             if (empty($row[4]) || empty($row[7])) {
-    //                 $skippedRows++;
-    //                 continue;
-    //             }
-                
-    //             // Process date (Column A)
-    //             $orderDate = null;
-    //             $isCurrentMonth = false;
-                
-    //             if (!empty($row[0])) {
-    //                 try {
-    //                     $dateStr = $row[0];
-    //                     if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateStr, $matches)) {
-    //                         $day = $matches[1];
-    //                         $month = $matches[2];
-    //                         $year = $matches[3];
-    //                         $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                            
-    //                         // Check if date is from current month
-    //                         $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
-                            
-    //                         $lastOrderDate = $orderDate; // Update the last valid date
-    //                     } else {
-    //                         $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
-    //                         $parsedDate = Carbon::parse($dateStr);
-                            
-    //                         // Check if date is from current month
-    //                         $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
-                            
-    //                         $lastOrderDate = $orderDate; // Update the last valid date
-    //                     }
-    //                 } catch (\Exception $e) {
-    //                     // If date parsing fails, use the last valid date if available
-    //                     $orderDate = $lastOrderDate;
-    //                     if (empty($orderDate)) {
-    //                         $skippedRows++;
-    //                         continue; // Skip if no valid date can be determined
-    //                     }
-    //                 }
-    //             } else {
-    //                 // If no date provided, use the last valid date if available
-    //                 $orderDate = $lastOrderDate;
-    //                 if (empty($orderDate)) {
-    //                     $skippedRows++;
-    //                     continue; // Skip if no valid date can be determined
-    //                 }
-    //             }
-                
-    //             // Skip if not from current month
-    //             if (!$isCurrentMonth) {
-    //                 $skippedRows++;
-    //                 continue;
-    //             }
-                
-    //             // Process customer name (Column B)
-    //             if (!empty($row[1])) {
-    //                 $lastCustomerName = $row[1]; // Update the last valid customer name
-    //             }
-                
-    //             // Process shipping address (Column C)
-    //             if (!empty($row[2])) {
-    //                 $lastShippingAddress = $row[2]; // Update the last valid shipping address
-    //             }
-                
-    //             // Process phone number (Column D)
-    //             if (!empty($row[3])) {
-    //                 // Remove non-digit characters
-    //                 $cleanedPhone = preg_replace('/\D/', '', $row[3]);
-                    
-    //                 // Ensure it starts with 0
-    //                 if (!empty($cleanedPhone) && substr($cleanedPhone, 0, 1) !== '0') {
-    //                     $cleanedPhone = '0' . $cleanedPhone;
-    //                 }
-                    
-    //                 $lastPhoneNumber = $cleanedPhone; // Update the last valid phone number
-    //             }
-                
-    //             // Skip if we still don't have a customer name
-    //             if (empty($lastCustomerName)) {
-    //                 $skippedRows++;
-    //                 continue;
-    //             }
-                
-    //             // Process SKUs (Column F)
-    //             $skus = [];
-    //             if (!empty($row[5])) {
-    //                 // Split SKUs by comma and trim whitespace
-    //                 $skus = array_map('trim', explode(',', $row[5]));
-    //             } else {
-    //                 $skus = [null]; // Create at least one row even if SKU is missing
-    //             }
-                
-    //             // Parse the amount/price from Column H
-    //             $amount = $this->parseAmount($row[7]);
-                
-    //             // Double-check that amount isn't null after parsing
-    //             if ($amount === null) {
-    //                 $skippedRows++;
-    //                 continue;
-    //             }
-                
-    //             // Create a separate order entry for each SKU
-    //             foreach ($skus as $sku) {
-    //                 // Generate order number
-    //                 $month = Carbon::parse($orderDate)->format('m');
-    //                 $year = Carbon::parse($orderDate)->format('y');
-    //                 $employeeId = 'CLEOAZ114'; // As specified in requirements
-    //                 $monthYearKey = $month . $year . $employeeId;
-                    
-    //                 if (!isset($orderCountMap[$monthYearKey])) {
-    //                     // Check if there are existing orders in the database for this month/year/employee
-    //                     $lastOrder = Order::where('id_order', 'like', "CLE/{$month}{$year}/{$employeeId}/%")
-    //                                     ->orderBy('id_order', 'desc')
-    //                                     ->first();
-                        
-    //                     if ($lastOrder) {
-    //                         // Extract the order number from the last order
-    //                         $parts = explode('/', $lastOrder->id_order);
-    //                         $lastOrderNumber = (int)end($parts);
-    //                         $orderCountMap[$monthYearKey] = $lastOrderNumber + 1;
-    //                     } else {
-    //                         $orderCountMap[$monthYearKey] = 1;
-    //                     }
-    //                 } else {
-    //                     $orderCountMap[$monthYearKey]++;
-    //                 }
-                    
-    //                 $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
-    //                 $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
-                    
-    //                 // Check for duplicates based on the combination of fields from the sheet
-    //                 $existingOrder = Order::where('date', $orderDate)
-    //                                 ->where('product', $row[4] ?? null)
-    //                                 ->where('sku', $sku)
-    //                                 ->where('qty', $row[6] ?? null)
-    //                                 ->where('amount', $amount)
-    //                                 ->where('customer_name', $lastCustomerName)
-    //                                 ->where('tenant_id', $tenant_id)
-    //                                 ->first();
-
-    //                 if ($existingOrder) {
-    //                     // Skip this row as it already exists
-    //                     $duplicateRows++;
-    //                     continue;
-    //                 }
-                    
-    //                 $orderData = [
-    //                     'date'                  => $orderDate,
-    //                     'process_at'            => null,
-    //                     'id_order'              => $generatedIdOrder,
-    //                     'sales_channel_id'      => 10, // As specified
-    //                     'customer_name'         => $lastCustomerName,
-    //                     'customer_phone_number' => $lastPhoneNumber,
-    //                     'product'               => $row[4] ?? null,
-    //                     'qty'                   => $row[6] ?? null,
-    //                     'receipt_number'        => "-",
-    //                     'shipment'              => "-",
-    //                     'payment_method'        => $row[8] ?? null,
-    //                     'sku'                   => $sku,
-    //                     'variant'               => null,
-    //                     'price'                 => $amount,
-    //                     'username'              => $lastCustomerName, // Same as customer_name
-    //                     'shipping_address'      => $lastShippingAddress,
-    //                     'city'                  => null,
-    //                     'province'              => null,
-    //                     'amount'                => $amount,
-    //                     'tenant_id'             => $tenant_id,
-    //                     'is_booking'            => 0,
-    //                     'status'                => 'reported',
-    //                     'updated_at'            => now(),
-    //                     'created_at'            => now(),
-    //                 ];
-
-    //                 // Create new order
-    //                 Order::create($orderData);
-    //                 $processedRows++;
-    //             }
-                
-    //             usleep(100000); // Small delay to prevent overwhelming the server
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'Closing Anisa orders imported successfully (current month only)', 
-    //         'total_rows' => $totalRows,
-    //         'processed_rows' => $processedRows,
-    //         'skipped_rows' => $skippedRows,
-    //         'duplicate_rows' => $duplicateRows
-    //     ]);
-    // }
     public function importClosingRina()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -3690,7 +3470,6 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
-
     public function importClosingIis()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -3908,7 +3687,6 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
-
     public function importClosingKiki()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -4126,7 +3904,6 @@ class OrderController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
-
     public function importClosingZalsa()
     {
         $this->googleSheetService->setSpreadsheetId('1hMubpvYFyDnPJB3NtiOwH-nH0Qwb9wz7Sq4laVESvPM');
@@ -4979,7 +4756,6 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
-
     public function importMissingData()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');

@@ -78,7 +78,7 @@ class LaporanKeuanganController extends Controller
         $dates = $query->orderBy('date')->pluck('date');
         
         // Get all sales channels
-        $salesChannels = DB::table('sales_channels')->orderBy('id')->get();
+        $salesChannels = DB::table('sales_channels')->where('id', '!=', 6)->orderBy('id')->get();
         
         // Prepare data for DataTables
         $result = [];
@@ -127,7 +127,6 @@ class LaporanKeuanganController extends Controller
                 return 'Rp ' . number_format($row['total_fee_admin'], 0, ',', '.');
             });
         
-        // Add formatters for each channel column individually
         foreach ($salesChannels as $channel) {
             $dataTable->addColumn('channel_' . $channel->id, function ($row) use ($channel) {
                 // Convert value to 0 if it's null or NaN
