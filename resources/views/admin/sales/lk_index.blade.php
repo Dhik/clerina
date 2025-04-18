@@ -512,7 +512,7 @@ function formatNumber(num) {
 
 // Initialize DataTables for all tabs
 function initializeTables() {
-    // Summary table
+    // Summary table (keep as is)
     dataTables.summary = $('#summaryTable').DataTable({
         processing: true,
         serverSide: true,
@@ -549,27 +549,29 @@ function initializeTables() {
         order: [[0, 'desc']]
     });
     
-    // Gross Revenue table
+    // Create the channel columns dynamically for the other tabs
+    // Use an array where we know the exact structure
     let grossRevenueColumns = [
         { data: 'date', name: 'date' }
     ];
     
-    // Add columns for each sales channel
+    // Loop through sales channels to build column definitions
     @foreach($salesChannels as $channel)
     grossRevenueColumns.push({ 
         data: 'channel_{{ $channel->id }}', 
         name: 'channel_{{ $channel->id }}',
-        className: 'text-right'
+        className: 'text-right',
+        defaultContent: 'Rp 0'  // Provide default content if the value is missing
     });
     @endforeach
     
-    // Add total column
     grossRevenueColumns.push({ 
         data: 'total', 
         name: 'total',
         className: 'text-right font-weight-bold'
     });
     
+    // Gross Revenue table with dynamic columns
     dataTables.grossRevenue = $('#grossRevenueTable').DataTable({
         processing: true,
         serverSide: true,
@@ -595,21 +597,20 @@ function initializeTables() {
         order: [[0, 'desc']]
     });
     
-    // HPP table
+    // HPP table (similar structure)
     let hppColumns = [
         { data: 'date', name: 'date' }
     ];
     
-    // Add columns for each sales channel
     @foreach($salesChannels as $channel)
     hppColumns.push({ 
         data: 'channel_{{ $channel->id }}', 
         name: 'channel_{{ $channel->id }}',
-        className: 'text-right'
+        className: 'text-right',
+        defaultContent: 'Rp 0'  // Provide default content
     });
     @endforeach
     
-    // Add total column
     hppColumns.push({ 
         data: 'total', 
         name: 'total',
@@ -641,21 +642,20 @@ function initializeTables() {
         order: [[0, 'desc']]
     });
     
-    // Fee Admin table
+    // Fee Admin table (similar structure)
     let feeAdminColumns = [
         { data: 'date', name: 'date' }
     ];
     
-    // Add columns for each sales channel
     @foreach($salesChannels as $channel)
     feeAdminColumns.push({ 
         data: 'channel_{{ $channel->id }}', 
         name: 'channel_{{ $channel->id }}',
-        className: 'text-right'
+        className: 'text-right',
+        defaultContent: 'Rp 0'  // Provide default content
     });
     @endforeach
     
-    // Add total column
     feeAdminColumns.push({ 
         data: 'total', 
         name: 'total',

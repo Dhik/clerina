@@ -153,6 +153,19 @@ class LaporanKeuanganController extends Controller
                 ->orderBy('name')
                 ->get();
             
+            $query = DB::table('laporan_keuangan')
+                ->where('tenant_id', '=', $currentTenantId);
+                
+            if (!is_null($request->input('filterDates'))) {
+                $query->where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate);
+            } else {
+                $query->whereMonth('date', Carbon::now()->month)
+                    ->whereYear('date', Carbon::now()->year);
+            }
+            
+            $allData = $query->get();
+
             // Prepare pivot data
             $result = [];
             
@@ -161,27 +174,27 @@ class LaporanKeuanganController extends Controller
                 $row = ['date' => $formattedDate];
                 $totalValue = 0;
                 
+                // Initialize all channel values to 0
                 foreach ($salesChannels as $channel) {
-                    // Get the value for this date and channel
-                    $data = DB::table('laporan_keuangan')
-                        ->where('tenant_id', '=', $currentTenantId)
-                        ->where('date', '=', $date)
-                        ->where('sales_channel_id', '=', $channel->id)
-                        ->first();
-                    
+                    $row['channel_' . $channel->id] = 0;
+                }
+                
+                // Find data for this date
+                $dateData = $allData->where('date', $date);
+                
+                // Fill in values for each channel
+                foreach ($dateData as $data) {
                     $value = 0;
                     
-                    if ($data) {
-                        if ($type === 'gross_revenue') {
-                            $value = $data->gross_revenue ?: 0;
-                        } else if ($type === 'hpp') {
-                            $value = $data->hpp ?: 0;
-                        } else if ($type === 'fee_admin') {
-                            $value = $data->fee_admin ?: 0;
-                        }
+                    if ($type === 'gross_revenue') {
+                        $value = $data->gross_revenue ?: 0;
+                    } else if ($type === 'hpp') {
+                        $value = $data->hpp ?: 0;
+                    } else if ($type === 'fee_admin') {
+                        $value = $data->fee_admin ?: 0;
                     }
                     
-                    $row['channel_' . $channel->id] = $value;
+                    $row['channel_' . $data->sales_channel_id] = $value;
                     $totalValue += $value;
                 }
                 
