@@ -117,14 +117,16 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Sales Channel</th>
-                                            <th>Gross Revenue</th>
+                                            @foreach($salesChannels as $channel)
+                                            <th>{{ $channel->name }}</th>
+                                            @endforeach
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                 </table>
                             </div>
                         </div>
-                        
+
                         <!-- HPP Tab -->
                         <div class="tab-pane fade" id="hpp" role="tabpanel" aria-labelledby="hpp-tab">
                             <div class="table-responsive">
@@ -132,14 +134,16 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Sales Channel</th>
-                                            <th>HPP</th>
+                                            @foreach($salesChannels as $channel)
+                                            <th>{{ $channel->name }}</th>
+                                            @endforeach
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                 </table>
                             </div>
                         </div>
-                        
+
                         <!-- Fee Admin Tab -->
                         <div class="tab-pane fade" id="fee-admin" role="tabpanel" aria-labelledby="fee-admin-tab">
                             <div class="table-responsive">
@@ -147,8 +151,10 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Sales Channel</th>
-                                            <th>Fee Admin</th>
+                                            @foreach($salesChannels as $channel)
+                                            <th>{{ $channel->name }}</th>
+                                            @endforeach
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -544,11 +550,32 @@ function initializeTables() {
     });
     
     // Gross Revenue table
+    let grossRevenueColumns = [
+        { data: 'date', name: 'date' }
+    ];
+    
+    // Add columns for each sales channel
+    @foreach($salesChannels as $channel)
+    grossRevenueColumns.push({ 
+        data: 'channel_{{ $channel->id }}', 
+        name: 'channel_{{ $channel->id }}',
+        className: 'text-right'
+    });
+    @endforeach
+    
+    // Add total column
+    grossRevenueColumns.push({ 
+        data: 'total', 
+        name: 'total',
+        className: 'text-right font-weight-bold'
+    });
+    
     dataTables.grossRevenue = $('#grossRevenueTable').DataTable({
         processing: true,
         serverSide: true,
         pageLength: 25,
         dom: 'Bfrtip',
+        scrollX: true,
         buttons: [
             {
                 extend: 'excel',
@@ -564,26 +591,37 @@ function initializeTables() {
                 d.type = 'gross_revenue';
             }
         },
-        columns: [
-            { data: 'date', name: 'date' },
-            { data: 'channel_name', name: 'channel_name' },
-            { data: 'value', name: 'value' }
-        ],
-        columnDefs: [
-            { 
-                "targets": [2], 
-                "className": "text-right" 
-            }
-        ],
-        order: [[0, 'desc'], [1, 'asc']]
+        columns: grossRevenueColumns,
+        order: [[0, 'desc']]
     });
     
     // HPP table
+    let hppColumns = [
+        { data: 'date', name: 'date' }
+    ];
+    
+    // Add columns for each sales channel
+    @foreach($salesChannels as $channel)
+    hppColumns.push({ 
+        data: 'channel_{{ $channel->id }}', 
+        name: 'channel_{{ $channel->id }}',
+        className: 'text-right'
+    });
+    @endforeach
+    
+    // Add total column
+    hppColumns.push({ 
+        data: 'total', 
+        name: 'total',
+        className: 'text-right font-weight-bold'
+    });
+    
     dataTables.hpp = $('#hppTable').DataTable({
         processing: true,
         serverSide: true,
         pageLength: 25,
         dom: 'Bfrtip',
+        scrollX: true,
         buttons: [
             {
                 extend: 'excel',
@@ -599,26 +637,37 @@ function initializeTables() {
                 d.type = 'hpp';
             }
         },
-        columns: [
-            { data: 'date', name: 'date' },
-            { data: 'channel_name', name: 'channel_name' },
-            { data: 'value', name: 'value' }
-        ],
-        columnDefs: [
-            { 
-                "targets": [2], 
-                "className": "text-right" 
-            }
-        ],
-        order: [[0, 'desc'], [1, 'asc']]
+        columns: hppColumns,
+        order: [[0, 'desc']]
     });
     
     // Fee Admin table
+    let feeAdminColumns = [
+        { data: 'date', name: 'date' }
+    ];
+    
+    // Add columns for each sales channel
+    @foreach($salesChannels as $channel)
+    feeAdminColumns.push({ 
+        data: 'channel_{{ $channel->id }}', 
+        name: 'channel_{{ $channel->id }}',
+        className: 'text-right'
+    });
+    @endforeach
+    
+    // Add total column
+    feeAdminColumns.push({ 
+        data: 'total', 
+        name: 'total',
+        className: 'text-right font-weight-bold'
+    });
+    
     dataTables.feeAdmin = $('#feeAdminTable').DataTable({
         processing: true,
         serverSide: true,
         pageLength: 25,
         dom: 'Bfrtip',
+        scrollX: true,
         buttons: [
             {
                 extend: 'excel',
@@ -634,18 +683,8 @@ function initializeTables() {
                 d.type = 'fee_admin';
             }
         },
-        columns: [
-            { data: 'date', name: 'date' },
-            { data: 'channel_name', name: 'channel_name' },
-            { data: 'value', name: 'value' }
-        ],
-        columnDefs: [
-            { 
-                "targets": [2], 
-                "className": "text-right" 
-            }
-        ],
-        order: [[0, 'desc'], [1, 'asc']]
+        columns: feeAdminColumns,
+        order: [[0, 'desc']]
     });
 }
 

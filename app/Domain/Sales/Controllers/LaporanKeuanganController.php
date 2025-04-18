@@ -130,56 +130,92 @@ class LaporanKeuanganController extends Controller
             
             return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit'])->make(true);
         } else {
-            // For other tab types (hpp, gross_revenue, fee_admin), show daily per sales_channel
-            $query = DB::table('laporan_keuangan as lk')
-                ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
-                ->where('lk.tenant_id', '=', $currentTenantId)
-                ->select('lk.date', 'sc.name as channel_name', 'lk.*');
+            // For pivot tables (gross_revenue, hpp, fee_admin)
+            // Get all dates in the selected range
+            $datesQuery = DB::table('laporan_keuangan')
+                ->select('date')
+                ->where('tenant_id', '=', $currentTenantId)
+                ->distinct();
             
-            // Apply date filtering
+            // Apply date filtering to dates
             if (!is_null($request->input('filterDates'))) {
-                $query->where('lk.date', '>=', $startDate)
-                    ->where('lk.date', '<=', $endDate);
+                $datesQuery->where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate);
             } else {
-                $query->whereMonth('lk.date', Carbon::now()->month)
-                    ->whereYear('lk.date', Carbon::now()->year);
+                $datesQuery->whereMonth('date', Carbon::now()->month)
+                    ->whereYear('date', Carbon::now()->year);
             }
             
-            $data = $query->get();
+            $dates = $datesQuery->orderBy('date')->pluck('date');
             
+            // Get all sales channels
+            $salesChannels = DB::table('sales_channels')
+                ->orderBy('name')
+                ->get();
+            
+            // Prepare pivot data
             $result = [];
-            foreach ($data as $row) {
-                $date = $row->date;
-                $channelName = $row->channel_name;
+            
+            foreach ($dates as $date) {
+                $formattedDate = Carbon::parse($date)->format('Y-m-d');
+                $row = ['date' => $formattedDate];
+                $totalValue = 0;
                 
-                // Calculate values based on type
-                $value = 0;
-                $netProfit = 0;
-                
-                if ($type === 'gross_revenue') {
-                    $value = $row->gross_revenue ?: 0;
-                } else if ($type === 'hpp') {
-                    $value = $row->hpp ?: 0;
-                } else if ($type === 'fee_admin') {
-                    $value = $row->fee_admin ?: 0;
+                foreach ($salesChannels as $channel) {
+                    // Get the value for this date and channel
+                    $data = DB::table('laporan_keuangan')
+                        ->where('tenant_id', '=', $currentTenantId)
+                        ->where('date', '=', $date)
+                        ->where('sales_channel_id', '=', $channel->id)
+                        ->first();
+                    
+                    $value = 0;
+                    
+                    if ($data) {
+                        if ($type === 'gross_revenue') {
+                            $value = $data->gross_revenue ?: 0;
+                        } else if ($type === 'hpp') {
+                            $value = $data->hpp ?: 0;
+                        } else if ($type === 'fee_admin') {
+                            $value = $data->fee_admin ?: 0;
+                        }
+                    }
+                    
+                    $row['channel_' . $channel->id] = $value;
+                    $totalValue += $value;
                 }
                 
-                $result[] = [
-                    'date' => Carbon::parse($date)->format('Y-m-d'),
-                    'channel_name' => $channelName,
-                    'value' => $value
-                ];
+                $row['total'] = $totalValue;
+                $result[] = $row;
             }
             
             $dataTable = DataTables::of($result)
                 ->editColumn('date', function ($row) {
                     return $row['date'];
-                })
-                ->editColumn('value', function ($row) {
-                    return 'Rp ' . number_format($row['value'], 0, ',', '.');
                 });
             
-            return $dataTable->rawColumns(['value'])->make(true);
+            // Add columns for each sales channel
+            foreach ($salesChannels as $channel) {
+                $dataTable->editColumn('channel_' . $channel->id, function ($row) use ($channel) {
+                    $value = $row['channel_' . $channel->id];
+                    return 'Rp ' . number_format($value, 0, ',', '.');
+                });
+            }
+            
+            // Add total column
+            $dataTable->editColumn('total', function ($row) {
+                return 'Rp ' . number_format($row['total'], 0, ',', '.');
+            });
+            
+            $rawColumns = ['date'];
+            
+            // Add all channel columns to rawColumns
+            foreach ($salesChannels as $channel) {
+                $rawColumns[] = 'channel_' . $channel->id;
+            }
+            $rawColumns[] = 'total';
+            
+            return $dataTable->rawColumns($rawColumns)->make(true);
         }
     }
     
