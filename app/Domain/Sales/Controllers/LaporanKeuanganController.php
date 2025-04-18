@@ -78,10 +78,7 @@ class LaporanKeuanganController extends Controller
         $dates = $query->orderBy('date')->pluck('date');
         
         // Get all sales channels
-        $salesChannels = DB::table('sales_channels')
-            ->whereNotIn('id', [6]) // Add any other IDs you want to exclude in this array
-            ->orderBy('id')
-            ->get();
+        $salesChannels = DB::table('sales_channels')->orderBy('id')->get();
         
         // Prepare data for DataTables
         $result = [];
