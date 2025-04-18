@@ -133,9 +133,7 @@ class LaporanKeuanganController extends Controller
                 $value = $row['channel_' . $channel->id] ?? 0;
                 $value = is_numeric($value) ? $value : 0;
                 
-                return '<span class="text-primary">Rp ' . 
-                    number_format($value, 0, ',', '.') . 
-                    '</span>';
+                return 'Rp'.number_format($value, 0, ',', '.');
             });
         }
         
