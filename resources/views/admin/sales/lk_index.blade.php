@@ -159,6 +159,93 @@
     .dt-button.buttons-columnVisibility.active {
         background: #e9ecef;
     }
+    
+    /* Marketplace specific styles */
+    .marketplace-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    
+    .marketplace-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .marketplace-card .inner {
+        padding: 15px;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .marketplace-card h5 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+        color: #fff;
+    }
+    
+    .marketplace-card p {
+        font-size: 1rem;
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .marketplace-card .logo {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.5rem;
+        opacity: 0.8;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    
+    /* Shopee specific styles */
+    .shopee-card {
+        background: linear-gradient(135deg, #ee4d2d, #ff7337);
+    }
+    
+    .shopee-2-card {
+        background: linear-gradient(135deg, #d93b1c, #ee4d2d);
+    }
+    
+    .shopee-3-card {
+        background: linear-gradient(135deg, #c52d0e, #d93b1c);
+    }
+    
+    /* Lazada specific styles */
+    .lazada-card {
+        background: linear-gradient(135deg, #0f146d, #2026b2);
+    }
+    
+    /* Tokopedia specific styles */
+    .tokopedia-card {
+        background: linear-gradient(135deg, #03ac0e, #42d149);
+    }
+    
+    /* TikTok specific styles */
+    .tiktok-card {
+        background: linear-gradient(135deg, #010101, #333333);
+    }
+    
+    /* B2B specific styles */
+    .b2b-card {
+        background: linear-gradient(135deg, #6a7d90, #8ca3ba);
+    }
+    
+    /* CRM specific styles */
+    .crm-card {
+        background: linear-gradient(135deg, #7b68ee, #9370db);
+    }
+    
+    /* Generic style for other channels */
+    .other-card {
+        background: linear-gradient(135deg, #607d8b, #90a4ae);
+    }
 </style>
 @stop
 
@@ -356,20 +443,47 @@
             container.innerHTML = ''; // Clear previous cards
             
             // Create a card for each channel
-            channelSummary.forEach((channel, index) => {
-                // Calculate background color based on index (rotating through a few colors)
-                const colorClasses = ['bg-info', 'bg-success', 'bg-warning', 'bg-primary', 'bg-danger'];
-                const colorClass = colorClasses[index % colorClasses.length];
+            channelSummary.forEach(channel => {
+                const channelName = channel.channel_name.toLowerCase();
+                let cardClass = 'other-card';
+                let logoClass = 'fa-shopping-bag';
+                
+                // Determine the card class and logo based on channel name
+                if (channelName === 'shopee') {
+                    cardClass = 'shopee-card';
+                    logoClass = 'fa-shopping-bag';
+                } else if (channelName.includes('shopee 2')) {
+                    cardClass = 'shopee-2-card';
+                    logoClass = 'fa-shopping-bag';
+                } else if (channelName.includes('shopee 3')) {
+                    cardClass = 'shopee-3-card';
+                    logoClass = 'fa-shopping-bag';
+                } else if (channelName === 'lazada') {
+                    cardClass = 'lazada-card';
+                    logoClass = 'fa-box';
+                } else if (channelName === 'tokopedia') {
+                    cardClass = 'tokopedia-card';
+                    logoClass = 'fa-store';
+                } else if (channelName.includes('tiktok')) {
+                    cardClass = 'tiktok-card';
+                    logoClass = 'fa-music';
+                } else if (channelName === 'b2b') {
+                    cardClass = 'b2b-card';
+                    logoClass = 'fa-handshake';
+                } else if (channelName === 'crm') {
+                    cardClass = 'crm-card';
+                    logoClass = 'fa-users';
+                }
                 
                 const card = `
                 <div class="col-md-3 col-sm-6">
-                    <div class="small-box ${colorClass} channel-card">
+                    <div class="marketplace-card ${cardClass}">
                         <div class="inner">
                             <h5>Rp ${formatNumber(channel.channel_gross_revenue)}</h5>
                             <p>${channel.channel_name}</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-shopping-bag"></i>
+                            <div class="logo">
+                                <i class="fas ${logoClass}"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
