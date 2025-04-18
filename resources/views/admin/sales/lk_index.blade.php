@@ -127,40 +127,48 @@
     </div>
     
     <!-- HPP Detail Modal with Tabs -->
-    <div class="modal fade" id="hppDetailModal" tabindex="-1" role="dialog" aria-labelledby="hppDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="hppDetailModalLabel">HPP Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <!-- HPP Detail Modal with Tabs -->
+<div class="modal fade" id="hppDetailModal" tabindex="-1" role="dialog" aria-labelledby="hppDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="hppDetailModalLabel">HPP Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body position-relative">
+                <!-- Loading overlay positioned inside modal-body with position-relative -->
+                <div id="hpp-loading-overlay" class="loading-overlay">
+                    <div class="spinner-border loading-spinner text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <!-- Channel summary section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card card-primary card-outline card-tabs">
-                                <div class="card-header p-0 pt-1 border-bottom-0">
-                                    <ul class="nav nav-tabs" id="channel-tabs" role="tablist">
-                                        <!-- Channel tabs will be added here -->
-                                    </ul>
-                                </div>
-                                <div class="card-body">
-                                    <div class="tab-content" id="channel-tab-content">
-                                        <!-- Channel tab contents will be added here -->
-                                    </div>
+                
+                <!-- Channel summary section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card card-primary card-outline card-tabs">
+                            <div class="card-header p-0 pt-1 border-bottom-0">
+                                <ul class="nav nav-tabs" id="channel-tabs" role="tablist">
+                                    <!-- Channel tabs will be added here -->
+                                </ul>
+                            </div>
+                            <div class="card-body">
+                                <div class="tab-content" id="channel-tab-content">
+                                    <!-- Channel tab contents will be added here -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
+</div>
 @stop
 
 @section('css')
@@ -361,6 +369,25 @@
     .channel-summary h5 {
         margin-bottom: 0;
     }
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        border-radius: 10px;
+    }
+
+    .loading-spinner {
+        width: 4rem;
+        height: 4rem;
+        border-width: 0.25em;
+    }
 </style>
 @stop
 
@@ -534,6 +561,10 @@
         
         // Special handling for HPP details with tabs
         if (type === 'hpp') {
+
+            $('#hppDetailModal').modal('show');
+            $('#hpp-loading-overlay').show();
+
             $.ajax({
                 url: "{{ route('lk.details') }}",
                 method: 'GET',
@@ -543,6 +574,7 @@
                 },
                 success: function(response) {
                     // Set modal title
+                    $('#hpp-loading-overlay').hide();
                     $('#hppDetailModalLabel').text('HPP Details - ' + date);
                     
                     // Clear previous tabs and content
@@ -652,6 +684,7 @@
                     });
                 },
                 error: function(xhr, status, error) {
+                    $('#hpp-loading-overlay').hide();
                     console.error('Error fetching HPP details:', error);
                     alert('Error fetching HPP details. Please try again.');
                 }
