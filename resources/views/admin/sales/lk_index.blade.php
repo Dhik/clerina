@@ -486,6 +486,14 @@
         height: 4rem;
         border-width: 0.25em;
     }
+    /* HPP Card styles - using different color schemes */
+    .shopee-hpp-card {
+        background: linear-gradient(135deg, #6f42c1, #9370db);
+    }
+    .shopee-2-hpp-card {
+        background: linear-gradient(135deg, #5e37a6, #6f42c1);
+    }
+    /* and so on for each channel type */
 </style>
 @stop
 
