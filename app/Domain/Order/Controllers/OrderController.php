@@ -1440,6 +1440,27 @@ class OrderController extends Controller
                     $skippedRows++;
                     continue;
                 }
+
+                // Parse price by completely removing all dots and commas to store as integer
+                $price = null;
+                if (isset($row[14])) {
+                    // Remove all dots (thousand separators) and any commas
+                    $price = preg_replace('/[.,]/', '', $row[14]);
+                    // Make sure it's a valid integer
+                    $price = is_numeric($price) ? (int)$price : null;
+                }
+                
+                // Parse amount similarly
+                $amount = null;
+                if (isset($row[14]) && isset($row[15])) {
+                    $price_val = preg_replace('/[.,]/', '', $row[14]);
+                    $shipping_val = preg_replace('/[.,]/', '', $row[15]);
+                    
+                    // Only calculate if both are numeric
+                    if (is_numeric($price_val) && is_numeric($shipping_val)) {
+                        $amount = (int)$price_val + (int)$shipping_val;
+                    }
+                }
                 
                 $orderData = [
                     'date'                 => Carbon::parse($row[3])->format('Y-m-d'),
@@ -1473,10 +1494,20 @@ class OrderController extends Controller
                             ->where('amount', $orderData['amount'])
                             ->first();
 
+                // If order exists, update the status
                 if ($order) {
-                    $order->update(['sales_channel_id' => 9, 'updated_at' => now()]);
-                    $updatedRows++;
+                    // Only update if the status has changed
+                    if ($order->status != $orderData['status']) {
+                        $order->status = $orderData['status'];
+                        $order->sku = $orderData['sku'];
+                        $order->amount = $orderData['amount'];
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    }
                 } else {
+                    // If order doesn't exist, create it with created_at timestamp
+                    $orderData['created_at'] = now();
                     Order::create($orderData);
                     $processedRows++;
                 }
