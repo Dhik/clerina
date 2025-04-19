@@ -326,7 +326,7 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-    public function updateHpp()
+    public function updateHpp2()
     {
         try {
             // Change from current month to fixed date range: March 1-31, 2025
@@ -397,7 +397,7 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
-    public function updateHpp2()
+    public function updateHpp()
     {
         try {
             $startDate = now()->startOfMonth();
