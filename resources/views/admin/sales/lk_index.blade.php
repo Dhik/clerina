@@ -487,13 +487,41 @@
         border-width: 0.25em;
     }
     /* HPP Card styles - using different color schemes */
-    .shopee-hpp-card {
-        background: linear-gradient(135deg, #6f42c1, #9370db);
-    }
-    .shopee-2-hpp-card {
-        background: linear-gradient(135deg, #5e37a6, #6f42c1);
-    }
-    /* and so on for each channel type */
+.shopee-hpp-card {
+    background: linear-gradient(135deg, #6f42c1, #9370db);
+}
+
+.shopee-2-hpp-card {
+    background: linear-gradient(135deg, #5e37a6, #6f42c1);
+}
+
+.shopee-3-hpp-card {
+    background: linear-gradient(135deg, #4b2d89, #5e37a6);
+}
+
+.lazada-hpp-card {
+    background: linear-gradient(135deg, #fd7e14, #f8a064);
+}
+
+.tokopedia-hpp-card {
+    background: linear-gradient(135deg, #007bff, #59a6ff);
+}
+
+.tiktok-hpp-card {
+    background: linear-gradient(135deg, #6c757d, #8f9193);
+}
+
+.b2b-hpp-card {
+    background: linear-gradient(135deg, #20c997, #68e3c5);
+}
+
+.crm-hpp-card {
+    background: linear-gradient(135deg, #e83e8c, #f493c3);
+}
+
+.other-hpp-card {
+    background: linear-gradient(135deg, #17a2b8, #6ad7e5);
+}
 </style>
 @stop
 
