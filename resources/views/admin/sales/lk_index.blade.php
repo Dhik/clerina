@@ -66,9 +66,35 @@
                 </div>
             </div>
             
-            <!-- Channel Summary Cards -->
-            <div class="row" id="channelSummaryCards">
-                <!-- Cards will be dynamically added here -->
+            <!-- Channel Summary Cards Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Revenue by Channel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="channelRevenueCards">
+                                <!-- Cards will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">HPP by Channel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="channelHppCards">
+                                <!-- Cards will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -966,13 +992,14 @@ function fetchSummary() {
             document.getElementById('netProfit').textContent = 'Rp ' + formatNumber(data.net_profit || 0);
             
             // Update channel summary cards
-            updateChannelSummaryCards(data.channel_summary);
+            updateChannelRevenueCards(data.channel_summary);
+            updateChannelHppCards(data.channel_summary);
         })
         .catch(error => console.error('Error:', error));
 }
 
-function updateChannelSummaryCards(channelSummary) {
-    const container = document.getElementById('channelSummaryCards');
+function updateChannelRevenueCards(channelSummary) {
+    const container = document.getElementById('channelRevenueCards');
     container.innerHTML = ''; // Clear previous cards
     
     // Create a card for each channel
@@ -1014,6 +1041,62 @@ function updateChannelSummaryCards(channelSummary) {
                 <div class="inner">
                     <h5>Rp ${formatNumber(channel.channel_gross_revenue)}</h5>
                     <p>${channel.channel_name}</p>
+                    <div class="logo">
+                        <i class="fas ${logoClass}"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        container.innerHTML += card;
+    });
+}
+
+function updateChannelHppCards(channelSummary) {
+    const container = document.getElementById('channelHppCards');
+    container.innerHTML = ''; // Clear previous cards
+    
+    // Create a card for each channel
+    channelSummary.forEach(channel => {
+        const channelName = channel.channel_name.toLowerCase();
+        let cardClass = 'other-card';
+        let logoClass = 'fa-shopping-bag';
+        
+        // Determine the card class and logo based on channel name
+        // Using different color scheme for HPP cards
+        if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
+            cardClass = 'shopee-hpp-card';
+            logoClass = 'fa-shopping-bag';
+        } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
+            cardClass = 'shopee-2-hpp-card';
+            logoClass = 'fa-shopping-bag';
+        } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
+            cardClass = 'shopee-3-hpp-card';
+            logoClass = 'fa-shopping-bag';
+        } else if (channelName.includes('lazada')) {
+            cardClass = 'lazada-hpp-card';
+            logoClass = 'fa-box';
+        } else if (channelName.includes('tokopedia')) {
+            cardClass = 'tokopedia-hpp-card';
+            logoClass = 'fa-store';
+        } else if (channelName.includes('tiktok')) {
+            cardClass = 'tiktok-hpp-card';
+            logoClass = 'fa-music';
+        } else if (channelName === 'b2b') {
+            cardClass = 'b2b-hpp-card';
+            logoClass = 'fa-handshake';
+        } else if (channelName === 'crm') {
+            cardClass = 'crm-hpp-card';
+            logoClass = 'fa-users';
+        }
+        
+        const card = `
+        <div class="col-md-3 col-sm-6">
+            <div class="marketplace-card ${cardClass}">
+                <div class="inner">
+                    <h5>Rp ${formatNumber(channel.channel_hpp)}</h5>
+                    <p>${channel.channel_name} (${channel.channel_hpp_percentage.toFixed(1)}%)</p>
                     <div class="logo">
                         <i class="fas ${logoClass}"></i>
                     </div>

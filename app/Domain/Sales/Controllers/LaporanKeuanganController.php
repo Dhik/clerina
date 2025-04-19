@@ -398,10 +398,10 @@ class LaporanKeuanganController extends Controller
         // Apply date filtering
         if (!is_null($request->input('filterDates'))) {
             $query->where('date', '>=', $startDate)
-                  ->where('date', '<=', $endDate);
+                ->where('date', '<=', $endDate);
         } else {
             $query->whereMonth('date', Carbon::now()->month)
-                  ->whereYear('date', Carbon::now()->year);
+                ->whereYear('date', Carbon::now()->year);
         }
         
         $summary = $query->selectRaw('
@@ -426,10 +426,10 @@ class LaporanKeuanganController extends Controller
         // Apply date filtering to channel summary
         if (!is_null($request->input('filterDates'))) {
             $channelSummary->where('lk.date', '>=', $startDate)
-                          ->where('lk.date', '<=', $endDate);
+                        ->where('lk.date', '<=', $endDate);
         } else {
             $channelSummary->whereMonth('lk.date', Carbon::now()->month)
-                          ->whereYear('lk.date', Carbon::now()->year);
+                        ->whereYear('lk.date', Carbon::now()->year);
         }
         
         $channelSummary = $channelSummary->selectRaw('
