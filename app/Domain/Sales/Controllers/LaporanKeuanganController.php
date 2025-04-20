@@ -238,9 +238,7 @@ class LaporanKeuanganController extends Controller
         $type = $request->input('type');
         $currentTenantId = Auth::user()->current_tenant_id;
         
-        // For HPP, get detailed SKU information with quantities
         if ($type === 'hpp') {
-            // Get all sales channels for the tenant
             $salesChannels = DB::table('sales_channels')
                 ->orderBy('name')
                 ->get();
@@ -251,10 +249,9 @@ class LaporanKeuanganController extends Controller
             
             // For each sales channel, get SKU-based HPP details
             foreach ($salesChannels as $channel) {
-                // Get orders for this date and channel
                 $orders = DB::table('orders')
                     ->where('tenant_id', $currentTenantId)
-                    ->where('date', $date)
+                    ->where('success_date', $date)
                     ->where('sales_channel_id', $channel->id)
                     ->get();
                     
