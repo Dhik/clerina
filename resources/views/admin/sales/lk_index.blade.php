@@ -530,7 +530,7 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script>
-    // Date range picker
+   // Date range picker
 let filterDate = $('#filterDates');
 let currentTab = 'summary';
 let dataTables = {};
@@ -690,7 +690,6 @@ function initializeTables() {
         className: 'text-right font-weight-bold'
     });
     
-    // HPP table (similar structure)
     dataTables.hpp = $('#hppTable').DataTable({
         processing: true,
         serverSide: true,
@@ -727,8 +726,6 @@ function initializeTables() {
         }
     });
 
-    
-    
     // Fee Admin table (similar structure)
     let feeAdminColumns = [
         { data: 'date', name: 'date' }
@@ -934,7 +931,7 @@ $(document).on('click', '.show-details', function(e) {
             }
         });
     } else {
-        // Standard detail modal for other types
+        // Standard detail modal for other types (fee_admin and net_profit)
         $.ajax({
             url: "{{ route('lk.details') }}",
             method: 'GET',
@@ -946,9 +943,6 @@ $(document).on('click', '.show-details', function(e) {
                 // Set modal title based on type and date
                 let modalTitle;
                 switch(type) {
-                    case 'gross_revenue':
-                        modalTitle = 'Gross Revenue Details - ' + date;
-                        break;
                     case 'fee_admin':
                         modalTitle = 'Fee Admin Details - ' + date;
                         break;
@@ -970,9 +964,7 @@ $(document).on('click', '.show-details', function(e) {
                 let headerRow = '<tr>';
                 headerRow += '<th>Sales Channel</th>';
                 
-                if (type === 'gross_revenue') {
-                    headerRow += '<th class="text-right">Gross Revenue</th>';
-                } else if (type === 'fee_admin') {
+                if (type === 'fee_admin') {
                     headerRow += '<th class="text-right">Fee Admin</th>';
                 } else if (type === 'net_profit') {
                     headerRow += '<th class="text-right">Gross Revenue</th>';
@@ -990,9 +982,7 @@ $(document).on('click', '.show-details', function(e) {
                     let row = '<tr>';
                     row += '<td>' + item.channel_name + '</td>';
                     
-                    if (type === 'gross_revenue') {
-                        row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
-                    } else if (type === 'fee_admin') {
+                    if (type === 'fee_admin') {
                         row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
                     } else if (type === 'net_profit') {
                         row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
@@ -1010,9 +1000,7 @@ $(document).on('click', '.show-details', function(e) {
                 let footerRow = '<tr class="font-weight-bold">';
                 footerRow += '<td>Total</td>';
                 
-                if (type === 'gross_revenue') {
-                    footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
-                } else if (type === 'fee_admin') {
+                if (type === 'fee_admin') {
                     footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
                 } else if (type === 'net_profit') {
                     footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
