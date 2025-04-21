@@ -656,7 +656,18 @@ function initializeTables() {
             }
         },
         columns: grossRevenueColumns,
-        order: [[0, 'desc']]
+        order: [[0, 'desc']],
+        createdRow: function(row, data, dataIndex) {
+            // For each cell except the first (date) and last (total)
+            $(row).find('td').not(':first').not(':last').each(function(cellIndex) {
+                const cellData = $(this).html();
+                if (cellData !== 'Rp 0' && cellData !== '') {
+                    // Add data attributes and click handler class to the cell
+                    const date = data.date;
+                    $(this).html(`<a href="#" class="show-gross-revenue-details" data-date="${date}" data-type="gross_revenue">${cellData}</a>`);
+                }
+            });
+        }
     });
     
     // HPP table (similar structure)
@@ -703,6 +714,8 @@ function initializeTables() {
         columns: hppColumns,
         order: [[0, 'desc']]
     });
+
+    
     
     // Fee Admin table (similar structure)
     let feeAdminColumns = [
@@ -1009,6 +1022,143 @@ $(document).on('click', '.show-details', function(e) {
             }
         });
     }
+});
+
+// Handle gross revenue detail modal
+$(document).on('click', '.show-gross-revenue-details', function(e) {
+    e.preventDefault();
+    
+    const date = $(this).data('date');
+    const type = 'gross_revenue'; // Always set to gross_revenue for this function
+    
+    // Show the modal with loading overlay
+    $('#hppDetailModal').modal('show');
+    $('#hpp-loading-overlay').show();
+    
+    $.ajax({
+        url: "{{ route('lk.gross_revenue_details') }}",
+        method: 'GET',
+        data: {
+            date: date,
+            type: type
+        },
+        success: function(response) {
+            // Hide loading overlay when data is ready
+            $('#hpp-loading-overlay').hide();
+            
+            // Set modal title
+            $('#hppDetailModalLabel').text('Gross Revenue Details - ' + date);
+            
+            // Clear previous tabs and content
+            $('#channel-tabs').empty();
+            $('#channel-tab-content').empty();
+            
+            // Add tabs for each channel
+            let isFirst = true;
+            response.channels.forEach(function(channel, index) {
+                // Create tab
+                const tabId = 'channel-tab-' + channel.id;
+                const tabClass = isFirst ? 'nav-link active' : 'nav-link';
+                const tab = `
+                    <li class="nav-item">
+                        <a class="${tabClass}" id="${tabId}-tab" data-toggle="pill" href="#${tabId}" 
+                           role="tab" aria-controls="${tabId}" aria-selected="${isFirst ? 'true' : 'false'}">
+                            ${channel.name}
+                        </a>
+                    </li>
+                `;
+                $('#channel-tabs').append(tab);
+                
+                // Create tab content
+                const channelData = response.data[channel.id] || [];
+                const channelSummary = response.summaries[channel.id] || { total: 0 };
+                const tabContentClass = isFirst ? 'tab-pane fade show active' : 'tab-pane fade';
+                
+                let tabContent = `
+                    <div class="${tabContentClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
+                        <div class="channel-summary">
+                            <h5>${channel.name}</h5>
+                            <h5>Total: Rp ${formatNumber(channelSummary.total)}</h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="gross-revenue-table-${channel.id}" class="table table-bordered table-striped table-sm" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Product</th>
+                                        <th class="text-right">Quantity</th>
+                                        <th class="text-right">Gross Revenue</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                
+                // Add rows to the tab content
+                if (channelData.length > 0) {
+                    channelData.forEach(function(item) {
+                        tabContent += `
+                            <tr>
+                                <td>${item.sku}</td>
+                                <td>${item.product}</td>
+                                <td class="text-right">${item.qty}</td>
+                                <td class="text-right">Rp ${formatNumber(item.gross_revenue)}</td>
+                                <td class="text-right">Rp ${formatNumber(item.total)}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tabContent += `
+                        <tr>
+                            <td colspan="5" class="text-center">No data available</td>
+                        </tr>
+                    `;
+                }
+                
+                tabContent += `
+                                </tbody>
+                                <tfoot>
+                                    <tr class="font-weight-bold">
+                                        <td colspan="4" class="text-right">Total</td>
+                                        <td class="text-right">Rp ${formatNumber(channelSummary.total)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+                $('#channel-tab-content').append(tabContent);
+                
+                isFirst = false;
+            });
+            
+            // Initialize DataTables for each channel
+            response.channels.forEach(function(channel) {
+                if (channelDataTables[channel.id]) {
+                    channelDataTables[channel.id].destroy();
+                }
+                
+                channelDataTables[channel.id] = $(`#gross-revenue-table-${channel.id}`).DataTable({
+                    paging: true,
+                    lengthChange: false,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    pageLength: 10,
+                    language: {
+                        search: "Search SKU/Product:"
+                    }
+                });
+            });
+        },
+        error: function(xhr, status, error) {
+            // Hide loading overlay on error
+            $('#hpp-loading-overlay').hide();
+            console.error('Error fetching Gross Revenue details:', error);
+            alert('Error fetching Gross Revenue details. Please try again.');
+        }
+    });
 });
 
 function fetchSummary() {
