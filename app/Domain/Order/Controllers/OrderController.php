@@ -4066,6 +4066,10 @@ class OrderController extends Controller
                             $skippedRows++;
                             continue; // Skip if no valid date can be determined
                         }
+                        
+                        // Check if the last valid date is from current month
+                        $parsedDate = Carbon::parse($orderDate);
+                        $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
                     }
                 } else {
                     // If no date provided, use the last valid date if available
@@ -4074,6 +4078,10 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
+                    
+                    // Check if the last valid date is from current month
+                    $parsedDate = Carbon::parse($orderDate);
+                    $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
                 }
                 
                 // Skip if not from current month
@@ -4130,7 +4138,7 @@ class OrderController extends Controller
                 }
                 
                 // Create a separate order entry for each SKU
-                foreach ($skus as $sku) {
+                foreach ($skus as $index => $sku) {
                     // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
@@ -4158,12 +4166,16 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Only assign the amount to the first SKU, set 0 for others
+                    $orderAmount = ($index === 0) ? $amount : 0;
+                    $orderPrice = ($index === 0) ? $amount : 0;
+                    
                     // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $amount)
+                                    ->where('amount', $orderAmount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
@@ -4188,12 +4200,12 @@ class OrderController extends Controller
                         'payment_method'        => $row[8] ?? null,
                         'sku'                   => $sku,
                         'variant'               => null,
-                        'price'                 => $amount,
+                        'price'                 => $orderPrice,
                         'username'              => $lastCustomerName, // Same as customer_name
                         'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
-                        'amount'                => $amount,
+                        'amount'                => $orderAmount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
                         'status'                => 'reported',
