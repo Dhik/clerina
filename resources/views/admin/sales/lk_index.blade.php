@@ -690,6 +690,7 @@ function initializeTables() {
         className: 'text-right font-weight-bold'
     });
     
+    // HPP table (similar structure)
     dataTables.hpp = $('#hppTable').DataTable({
         processing: true,
         serverSide: true,
@@ -712,7 +713,18 @@ function initializeTables() {
             }
         },
         columns: hppColumns,
-        order: [[0, 'desc']]
+        order: [[0, 'desc']],
+        createdRow: function(row, data, dataIndex) {
+            // For each cell except the first (date) and last (total)
+            $(row).find('td').not(':first').not(':last').each(function(cellIndex) {
+                const cellData = $(this).html();
+                if (cellData !== 'Rp 0' && cellData !== '') {
+                    // Add data attributes and click handler class to the cell
+                    const date = data.date;
+                    $(this).html(`<a href="#" class="show-details" data-date="${date}" data-type="hpp">${cellData}</a>`);
+                }
+            });
+        }
     });
 
     
