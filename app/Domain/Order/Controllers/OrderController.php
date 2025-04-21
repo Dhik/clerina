@@ -3131,10 +3131,6 @@ class OrderController extends Controller
         $duplicateRows = 0;
         $orderCountMap = [];
         
-        // Get current month and year for filtering
-        $currentMonth = Carbon::now()->format('m');
-        $currentYear = Carbon::now()->format('Y');
-        
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
         $lastCustomerName = null;
@@ -3151,7 +3147,6 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
-                $isCurrentMonth = false;
                 
                 if (!empty($row[0])) {
                     try {
@@ -3161,18 +3156,9 @@ class OrderController extends Controller
                             $month = $matches[2];
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
-                            
-                            // Check if date is from current month
-                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
-                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
-                            $parsedDate = Carbon::parse($dateStr);
-                            
-                            // Check if date is from current month
-                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
-                            
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
                     } catch (\Exception $e) {
@@ -3190,12 +3176,6 @@ class OrderController extends Controller
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
                     }
-                }
-                
-                // Skip if not from current month
-                if (!$isCurrentMonth) {
-                    $skippedRows++;
-                    continue;
                 }
                 
                 // Process customer name (Column B)
@@ -3327,7 +3307,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Anisa orders imported successfully (current month only)', 
+            'message' => 'Closing Anisa orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
