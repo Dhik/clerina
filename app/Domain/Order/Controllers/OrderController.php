@@ -3326,7 +3326,12 @@ class OrderController extends Controller
         $processedRows = 0;
         $skippedRows = 0;
         $duplicateRows = 0;
+        $notCurrentMonthRows = 0;
         $orderCountMap = [];
+        
+        // Get current month and year for filtering
+        $currentMonth = Carbon::now()->format('m');
+        $currentYear = Carbon::now()->format('Y');
         
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
@@ -3358,12 +3363,27 @@ class OrderController extends Controller
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
+                        
+                        // Check if the order date is in the current month
+                        $orderMonthYear = Carbon::parse($orderDate);
+                        if ($orderMonthYear->format('m') != $currentMonth || $orderMonthYear->format('Y') != $currentYear) {
+                            $notCurrentMonthRows++;
+                            continue; // Skip if not in current month and year
+                        }
+                        
                     } catch (\Exception $e) {
                         // If date parsing fails, use the last valid date if available
                         $orderDate = $lastOrderDate;
                         if (empty($orderDate)) {
                             $skippedRows++;
                             continue; // Skip if no valid date can be determined
+                        }
+                        
+                        // Check if the last valid date is in the current month
+                        $orderMonthYear = Carbon::parse($orderDate);
+                        if ($orderMonthYear->format('m') != $currentMonth || $orderMonthYear->format('Y') != $currentYear) {
+                            $notCurrentMonthRows++;
+                            continue; // Skip if not in current month and year
                         }
                     }
                 } else {
@@ -3372,6 +3392,13 @@ class OrderController extends Controller
                     if (empty($orderDate)) {
                         $skippedRows++;
                         continue; // Skip if no valid date can be determined
+                    }
+                    
+                    // Check if the last valid date is in the current month
+                    $orderMonthYear = Carbon::parse($orderDate);
+                    if ($orderMonthYear->format('m') != $currentMonth || $orderMonthYear->format('Y') != $currentYear) {
+                        $notCurrentMonthRows++;
+                        continue; // Skip if not in current month and year
                     }
                 }
                 
@@ -3423,7 +3450,7 @@ class OrderController extends Controller
                 }
                 
                 // Create a separate order entry for each SKU
-                foreach ($skus as $sku) {
+                foreach ($skus as $index => $sku) {
                     // Generate order number
                     $month = Carbon::parse($orderDate)->format('m');
                     $year = Carbon::parse($orderDate)->format('y');
@@ -3451,12 +3478,16 @@ class OrderController extends Controller
                     $orderNumber = str_pad($orderCountMap[$monthYearKey], 5, '0', STR_PAD_LEFT);
                     $generatedIdOrder = "CLE/{$month}{$year}/{$employeeId}/{$orderNumber}";
                     
+                    // Only assign the amount to the first SKU, set 0 for others
+                    $orderAmount = ($index === 0) ? $amount : 0;
+                    $orderPrice = ($index === 0) ? $amount : 0;
+                    
                     // Check for duplicates based on the combination of fields from the sheet
                     $existingOrder = Order::where('date', $orderDate)
                                     ->where('product', $row[4] ?? null)
                                     ->where('sku', $sku)
                                     ->where('qty', $row[6] ?? null)
-                                    ->where('amount', $amount)
+                                    ->where('amount', $orderAmount)
                                     ->where('customer_name', $lastCustomerName)
                                     ->where('tenant_id', $tenant_id)
                                     ->first();
@@ -3481,12 +3512,12 @@ class OrderController extends Controller
                         'payment_method'        => $row[8] ?? null,
                         'sku'                   => $sku,
                         'variant'               => null,
-                        'price'                 => $amount,
+                        'price'                 => $orderPrice,
                         'username'              => $lastCustomerName, // Same as customer_name
                         'shipping_address'      => $lastShippingAddress,
                         'city'                  => null,
                         'province'              => null,
-                        'amount'                => $amount,
+                        'amount'                => $orderAmount,
                         'tenant_id'             => $tenant_id,
                         'is_booking'            => 0,
                         'status'                => 'reported',
@@ -3504,11 +3535,12 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Rina orders imported successfully', 
+            'message' => 'Closing Rina orders imported successfully (current month only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
-            'duplicate_rows' => $duplicateRows
+            'duplicate_rows' => $duplicateRows,
+            'not_current_month_rows' => $notCurrentMonthRows
         ]);
     }
     public function importClosingIis()
