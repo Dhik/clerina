@@ -19,10 +19,6 @@ class Product extends Model
         'harga_batas_bawah',
         'tenant_id',
         'harga_satuan',
-        'type',
-        'reference_sku',
-        'hpp_real',
-        'hpp_price',
     ];
     public function orders() 
     {

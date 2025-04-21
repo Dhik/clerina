@@ -38,12 +38,9 @@ class ProductController extends Controller
 
     public function data(Request $request)
     {
-        // Get the selected month from the request, default to current month if not provided
         $selectedMonth = $request->input('month', date('Y-m'));
 
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
-
-        // Filter orders by the selected month and current tenant
         $orderCounts = Order::where('tenant_id', Auth::user()->current_tenant_id)
             ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
                 date('Y', strtotime($selectedMonth)), 
