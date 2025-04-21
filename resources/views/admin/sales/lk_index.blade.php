@@ -326,13 +326,13 @@
         border-top-right-radius: 10px;
     }
     
-    a.show-details {
+    a.show-details, a.show-gross-revenue-details {
         color: inherit;
         text-decoration: none;
         cursor: pointer;
     }
     
-    a.show-details:hover {
+    a.show-details:hover, a.show-gross-revenue-details:hover {
         text-decoration: underline;
     }
     
