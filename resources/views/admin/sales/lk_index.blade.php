@@ -223,48 +223,7 @@
             </div>
         </div>
     </div>
-    <!-- Gross Revenue Detail Modal with Tabs -->
-<div class="modal fade" id="grossRevenueDetailModal" tabindex="-1" role="dialog" aria-labelledby="grossRevenueDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="grossRevenueDetailModalLabel">Gross Revenue Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body position-relative">
-                <!-- Loading overlay positioned inside modal-body with position-relative -->
-                <div id="gross-revenue-loading-overlay" class="loading-overlay">
-                    <div class="spinner-border loading-spinner text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                </div>
-                
-                <!-- Channel summary section -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="card card-primary card-outline card-tabs">
-                            <div class="card-header p-0 pt-1 border-bottom-0">
-                                <ul class="nav nav-tabs" id="gross-revenue-channel-tabs" role="tablist">
-                                    <!-- Channel tabs will be added here -->
-                                </ul>
-                            </div>
-                            <div class="card-body">
-                                <div class="tab-content" id="gross-revenue-channel-tab-content">
-                                    <!-- Channel tab contents will be added here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+    
     <!-- HPP Detail Modal with Tabs -->
     <div class="modal fade" id="hppDetailModal" tabindex="-1" role="dialog" aria-labelledby="hppDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
@@ -571,8 +530,7 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script>
-   // Date range picker
-// Date range picker
+ // Date range picker
 let filterDate = $('#filterDates');
 let currentTab = 'summary';
 let dataTables = {};
@@ -650,7 +608,28 @@ function initializeTables() {
                 "className": "text-right" 
             }
         ],
-        order: [[0, 'desc']]
+        order: [[0, 'desc']],
+        createdRow: function(row, data, dataIndex) {
+            // Make Gross Revenue clickable in column 1
+            const grossRevenueCell = $(row).find('td:eq(1)');
+            const grossRevenueData = grossRevenueCell.html();
+            grossRevenueCell.html(`<a href="#" class="show-gross-revenue-details" data-date="${data.date}" data-type="gross_revenue">${grossRevenueData}</a>`);
+            
+            // Make HPP clickable in column 2
+            const hppCell = $(row).find('td:eq(2)');
+            const hppData = hppCell.html();
+            hppCell.html(`<a href="#" class="show-details" data-date="${data.date}" data-type="hpp">${hppData}</a>`);
+            
+            // Make Fee Admin clickable in column 3
+            const feeAdminCell = $(row).find('td:eq(3)');
+            const feeAdminData = feeAdminCell.html();
+            feeAdminCell.html(`<a href="#" class="show-details" data-date="${data.date}" data-type="fee_admin">${feeAdminData}</a>`);
+            
+            // Make Net Profit clickable in column 4
+            const netProfitCell = $(row).find('td:eq(4)');
+            const netProfitData = netProfitCell.html();
+            netProfitCell.html(`<a href="#" class="show-details" data-date="${data.date}" data-type="net_profit">${netProfitData}</a>`);
+        }
     });
     
     // Create the channel columns dynamically for the other tabs
@@ -1074,8 +1053,8 @@ $(document).on('click', '.show-gross-revenue-details', function(e) {
     const type = 'gross_revenue'; // Always set to gross_revenue for this function
     
     // Show the modal with loading overlay
-    $('#grossRevenueDetailModal').modal('show');
-    $('#gross-revenue-loading-overlay').show();
+    $('#hppDetailModal').modal('show');
+    $('#hpp-loading-overlay').show();
     
     $.ajax({
         url: "{{ route('lk.gross_revenue_details') }}",
@@ -1086,20 +1065,20 @@ $(document).on('click', '.show-gross-revenue-details', function(e) {
         },
         success: function(response) {
             // Hide loading overlay when data is ready
-            $('#gross-revenue-loading-overlay').hide();
+            $('#hpp-loading-overlay').hide();
             
             // Set modal title
-            $('#grossRevenueDetailModalLabel').text('Gross Revenue Details - ' + date);
+            $('#hppDetailModalLabel').text('Gross Revenue Details - ' + date);
             
             // Clear previous tabs and content
-            $('#gross-revenue-channel-tabs').empty();
-            $('#gross-revenue-channel-tab-content').empty();
+            $('#channel-tabs').empty();
+            $('#channel-tab-content').empty();
             
             // Add tabs for each channel
             let isFirst = true;
             response.channels.forEach(function(channel, index) {
                 // Create tab
-                const tabId = 'gr-channel-tab-' + channel.id;
+                const tabId = 'channel-tab-' + channel.id;
                 const tabClass = isFirst ? 'nav-link active' : 'nav-link';
                 const tab = `
                     <li class="nav-item">
@@ -1109,7 +1088,7 @@ $(document).on('click', '.show-gross-revenue-details', function(e) {
                         </a>
                     </li>
                 `;
-                $('#gross-revenue-channel-tabs').append(tab);
+                $('#channel-tabs').append(tab);
                 
                 // Create tab content
                 const channelData = response.data[channel.id] || [];
@@ -1169,37 +1148,34 @@ $(document).on('click', '.show-gross-revenue-details', function(e) {
                     </div>
                 `;
                 
-                $('#gross-revenue-channel-tab-content').append(tabContent);
+                $('#channel-tab-content').append(tabContent);
                 
                 isFirst = false;
             });
             
             // Initialize DataTables for each channel
             response.channels.forEach(function(channel) {
-                const tableId = `#gross-revenue-table-${channel.id}`;
-                if ($(tableId).length) {
-                    if (channelDataTables[`gr_${channel.id}`]) {
-                        channelDataTables[`gr_${channel.id}`].destroy();
-                    }
-                    
-                    channelDataTables[`gr_${channel.id}`] = $(tableId).DataTable({
-                        paging: true,
-                        lengthChange: false,
-                        searching: true,
-                        ordering: true,
-                        info: true,
-                        autoWidth: false,
-                        pageLength: 10,
-                        language: {
-                            search: "Search SKU/Product:"
-                        }
-                    });
+                if (channelDataTables[channel.id]) {
+                    channelDataTables[channel.id].destroy();
                 }
+                
+                channelDataTables[channel.id] = $(`#gross-revenue-table-${channel.id}`).DataTable({
+                    paging: true,
+                    lengthChange: false,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    pageLength: 10,
+                    language: {
+                        search: "Search SKU/Product:"
+                    }
+                });
             });
         },
         error: function(xhr, status, error) {
             // Hide loading overlay on error
-            $('#gross-revenue-loading-overlay').hide();
+            $('#hpp-loading-overlay').hide();
             console.error('Error fetching Gross Revenue details:', error);
             alert('Error fetching Gross Revenue details. Please try again.');
         }
