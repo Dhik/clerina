@@ -46,7 +46,7 @@
                     <div class="small-box bg-gradient-info">
                         <div class="inner">
                             <h4 id="totalFeeAdmin">Rp 0</h4>
-                            <p>Total Fee Admin</p>
+                            <p>Total Fee Admin, Service and Discount</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-money-bill"></i>
@@ -57,7 +57,7 @@
                     <div class="small-box bg-gradient-warning">
                         <div class="inner">
                             <h4 id="netProfit">Rp 0</h4>
-                            <p>Net Profit</p>
+                            <p>Net Revenue</p>
                         </div>
                         <div class="icon">
                             <i class="fas fa-chart-line"></i>
