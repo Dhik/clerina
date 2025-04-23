@@ -10,7 +10,7 @@
     <div class="card">
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" id="monitorTabs" role="tablist">
-                <!-- <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link active" id="shopee-mall-tab" data-toggle="tab" href="#shopee-mall-content" role="tab" aria-controls="shopee-mall-content" aria-selected="true">
                         <i class="fas fa-store"></i> Shopee Mall
                     </a>
@@ -19,7 +19,7 @@
                     <a class="nav-link" id="shopee2-tab" data-toggle="tab" href="#shopee2-content" role="tab" aria-controls="shopee2-content" aria-selected="false">
                         <i class="fas fa-shopping-bag"></i> Shopee 2
                     </a>
-                </li> -->
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" id="shopee3-tab" data-toggle="tab" href="#shopee3-content" role="tab" aria-controls="shopee3-content" aria-selected="false">
                         <i class="fas fa-shopping-cart"></i> Shopee 3
