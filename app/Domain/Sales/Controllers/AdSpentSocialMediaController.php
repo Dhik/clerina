@@ -2119,7 +2119,9 @@ class AdSpentSocialMediaController extends Controller
                         'campaign_name' => $campaignName,
                         'amount_spent' => $amount,
                         'kategori_produk' => $kategoriProduk,
-                        'tenant_id' => Auth::user()->current_tenant_id
+                        'tenant_id' => Auth::user()->current_tenant_id,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
                     ],
                     [
                         'impressions' => (int)$row[4],
@@ -2129,9 +2131,7 @@ class AdSpentSocialMediaController extends Controller
                         'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
                         'link_clicks' => (float)($row[9] ?? 0),
                         'account_name' => $accountName,
-                        'pic' => $pic,
-                        'new_created' => $newCreated,
-                        'last_updated' => $lastUpdated
+                        'pic' => $pic
                     ]
                 );
                 
