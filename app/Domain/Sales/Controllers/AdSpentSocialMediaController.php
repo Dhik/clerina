@@ -7,6 +7,9 @@ use App\Domain\Sales\BLL\AdSpentSocialMedia\AdSpentSocialMediaBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\AdsMeta;
+use App\Domain\Sales\Models\AdsMeta2;
+use App\Domain\Sales\Models\AdsMeta3;
+use App\Domain\Sales\Models\AdsTiktok;
 use App\Domain\Sales\Requests\AdSpentSocialMediaRequest;
 use App\Http\Controllers\Controller;
 use Auth;
@@ -527,9 +530,2118 @@ class AdSpentSocialMediaController extends Controller
         }
     }
 
-    /**
-     * Create or update data Ad SpentSocial Media
-     */
+
+    public function get_shopee2_ads_cpas(Request $request)
+    {
+        $query = AdsMeta2::query()
+            ->select([
+                DB::raw('date'),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(CASE WHEN last_updated = date THEN account_name END) as last_updated_count'),
+                DB::raw('COUNT(CASE WHEN new_created = date THEN account_name END) as new_created_count')
+            ])
+            ->groupBy('date');
+    
+        // Apply filters
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kategori_produk') && $request->kategori_produk) {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic) {
+            $query->where('pic', $request->pic);
+        }
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
+                       Carbon::parse($row->date)->format('d M Y').'</a>';
+            })
+            // Return raw values instead of formatted strings
+            ->editColumn('total_amount_spent', function ($row) {
+                return $row->total_amount_spent ?? 0;
+            })
+            ->editColumn('total_impressions', function ($row) {
+                return $row->total_impressions ?? 0;
+            })
+            ->editColumn('total_link_clicks', function ($row) {
+                return $row->total_link_clicks ?? 0;
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?? 0;
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?? 0;
+            })
+            ->editColumn('total_content_views', function ($row) {
+                return $row->total_content_views ?? 0;
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->total_content_views > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_content_views;
+                }
+                return 0;
+            })
+            ->editColumn('total_adds_to_cart', function ($row) {
+                return $row->total_adds_to_cart ?? 0;
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->total_adds_to_cart > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_adds_to_cart;
+                }
+                return 0;
+            })
+            ->editColumn('total_purchases', function ($row) {
+                return $row->total_purchases ?? 0;
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_purchases;
+                }
+                return 0;
+            })
+            ->editColumn('total_conversion_value', function ($row) {
+                return $row->total_conversion_value ?? 0;
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    return $row->total_conversion_value / $row->total_amount_spent;
+                }
+                return 0;
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
+                    return ($row->total_amount_spent / $row->total_impressions) * 1000;
+                }
+                return 0;
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
+                    return ($row->total_link_clicks / $row->total_impressions) * 100;
+                }
+                return 0;
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->rawColumns(['date', 'performance'])
+            ->make(true);
+    }
+
+    public function get_shopee3_ads_cpas(Request $request)
+    {
+        $query = AdsMeta3::query()
+            ->select([
+                DB::raw('date'),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(CASE WHEN last_updated = date THEN account_name END) as last_updated_count'),
+                DB::raw('COUNT(CASE WHEN new_created = date THEN account_name END) as new_created_count')
+            ])
+            ->groupBy('date');
+    
+        // Apply filters
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kategori_produk') && $request->kategori_produk) {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic) {
+            $query->where('pic', $request->pic);
+        }
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
+                       Carbon::parse($row->date)->format('d M Y').'</a>';
+            })
+            // Return raw values instead of formatted strings
+            ->editColumn('total_amount_spent', function ($row) {
+                return $row->total_amount_spent ?? 0;
+            })
+            ->editColumn('total_impressions', function ($row) {
+                return $row->total_impressions ?? 0;
+            })
+            ->editColumn('total_link_clicks', function ($row) {
+                return $row->total_link_clicks ?? 0;
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?? 0;
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?? 0;
+            })
+            ->editColumn('total_content_views', function ($row) {
+                return $row->total_content_views ?? 0;
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->total_content_views > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_content_views;
+                }
+                return 0;
+            })
+            ->editColumn('total_adds_to_cart', function ($row) {
+                return $row->total_adds_to_cart ?? 0;
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->total_adds_to_cart > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_adds_to_cart;
+                }
+                return 0;
+            })
+            ->editColumn('total_purchases', function ($row) {
+                return $row->total_purchases ?? 0;
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_purchases;
+                }
+                return 0;
+            })
+            ->editColumn('total_conversion_value', function ($row) {
+                return $row->total_conversion_value ?? 0;
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    return $row->total_conversion_value / $row->total_amount_spent;
+                }
+                return 0;
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
+                    return ($row->total_amount_spent / $row->total_impressions) * 1000;
+                }
+                return 0;
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
+                    return ($row->total_link_clicks / $row->total_impressions) * 100;
+                }
+                return 0;
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->rawColumns(['date', 'performance'])
+            ->make(true);
+    }
+
+    public function get_tiktok_ads_cpas(Request $request)
+    {
+        $query = AdsTiktok::query()
+            ->select([
+                DB::raw('date'),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(CASE WHEN last_updated = date THEN account_name END) as last_updated_count'),
+                DB::raw('COUNT(CASE WHEN new_created = date THEN account_name END) as new_created_count')
+            ])
+            ->groupBy('date');
+    
+        // Apply filters
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kategori_produk') && $request->kategori_produk) {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic) {
+            $query->where('pic', $request->pic);
+        }
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
+                       Carbon::parse($row->date)->format('d M Y').'</a>';
+            })
+            // Return raw values instead of formatted strings
+            ->editColumn('total_amount_spent', function ($row) {
+                return $row->total_amount_spent ?? 0;
+            })
+            ->editColumn('total_impressions', function ($row) {
+                return $row->total_impressions ?? 0;
+            })
+            ->editColumn('total_link_clicks', function ($row) {
+                return $row->total_link_clicks ?? 0;
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?? 0;
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?? 0;
+            })
+            ->editColumn('total_content_views', function ($row) {
+                return $row->total_content_views ?? 0;
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->total_content_views > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_content_views;
+                }
+                return 0;
+            })
+            ->editColumn('total_adds_to_cart', function ($row) {
+                return $row->total_adds_to_cart ?? 0;
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->total_adds_to_cart > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_adds_to_cart;
+                }
+                return 0;
+            })
+            ->editColumn('total_purchases', function ($row) {
+                return $row->total_purchases ?? 0;
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_purchases;
+                }
+                return 0;
+            })
+            ->editColumn('total_conversion_value', function ($row) {
+                return $row->total_conversion_value ?? 0;
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    return $row->total_conversion_value / $row->total_amount_spent;
+                }
+                return 0;
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
+                    return ($row->total_amount_spent / $row->total_impressions) * 1000;
+                }
+                return 0;
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
+                    return ($row->total_link_clicks / $row->total_impressions) * 100;
+                }
+                return 0;
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->rawColumns(['date', 'performance'])
+            ->make(true);
+    }
+
+    public function get_platform_comparison_data(Request $request)
+    {
+        try {
+            // Get data from all platforms
+            $shopeeMallQuery = AdsMeta::query()->select(
+                DB::raw("'Shopee Mall' as platform"),
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue')
+            );
+            
+            $shopee2Query = AdsMeta2::query()->select(
+                DB::raw("'Shopee 2' as platform"),
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue')
+            );
+            
+            $shopee3Query = AdsMeta3::query()->select(
+                DB::raw("'Shopee 3' as platform"),
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue')
+            );
+            
+            $tiktokQuery = AdsTiktok::query()->select(
+                DB::raw("'TikTok' as platform"),
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue')
+            );
+            
+            // Apply filters to all queries
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $shopeeMallQuery->whereBetween('date', [$startDate, $endDate]);
+                $shopee2Query->whereBetween('date', [$startDate, $endDate]);
+                $shopee3Query->whereBetween('date', [$startDate, $endDate]);
+                $tiktokQuery->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month
+                $shopeeMallQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $shopee2Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $shopee3Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $tiktokQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+            }
+            
+            // Apply category filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $shopeeMallQuery->where('kategori_produk', $request->kategori_produk);
+                $shopee2Query->where('kategori_produk', $request->kategori_produk);
+                $shopee3Query->where('kategori_produk', $request->kategori_produk);
+                $tiktokQuery->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply PIC filter
+            if ($request->has('pic') && $request->pic) {
+                $shopeeMallQuery->where('pic', $request->pic);
+                $shopee2Query->where('pic', $request->pic);
+                $shopee3Query->where('pic', $request->pic);
+                $tiktokQuery->where('pic', $request->pic);
+            }
+            
+            // Get data from all platforms
+            $shopeeMallData = $shopeeMallQuery->first();
+            $shopee2Data = $shopee2Query->first();
+            $shopee3Data = $shopee3Query->first();
+            $tiktokData = $tiktokQuery->first();
+            
+            // Combine data for chart
+            $platforms = ['Shopee Mall', 'Shopee 2', 'Shopee 3', 'TikTok'];
+            $spent = [
+                $shopeeMallData ? (float)$shopeeMallData->spent : 0,
+                $shopee2Data ? (float)$shopee2Data->spent : 0,
+                $shopee3Data ? (float)$shopee3Data->spent : 0,
+                $tiktokData ? (float)$tiktokData->spent : 0
+            ];
+            $revenue = [
+                $shopeeMallData ? (float)$shopeeMallData->revenue : 0,
+                $shopee2Data ? (float)$shopee2Data->revenue : 0,
+                $shopee3Data ? (float)$shopee3Data->revenue : 0,
+                $tiktokData ? (float)$tiktokData->revenue : 0
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'labels' => $platforms,
+                    'spent' => $spent,
+                    'revenue' => $revenue
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function get_overall_performance(Request $request)
+    {
+        // Create a union of all data sources with updated platform names
+        $shopeeMallQuery = AdsMeta::query()
+            ->select([
+                'date',
+                DB::raw("'Shopee Mall' as platform"), 
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+            ])
+            ->groupBy('date');
+            
+        $shopee2Query = AdsMeta2::query()
+            ->select([
+                'date',
+                DB::raw("'Shopee 2' as platform"),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+            ])
+            ->groupBy('date');
+            
+        $shopee3Query = AdsMeta3::query()
+            ->select([
+                'date',
+                DB::raw("'Shopee 3' as platform"),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+            ])
+            ->groupBy('date');
+            
+        $tiktokQuery = AdsTiktok::query()
+            ->select([
+                'date',
+                DB::raw("'TikTok' as platform"),
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value')
+            ])
+            ->groupBy('date');
+    
+        // Apply filters to all queries
+        if (auth()->user()->tenant_id) {
+            $shopeeMallQuery->where('tenant_id', auth()->user()->tenant_id);
+            $shopee2Query->where('tenant_id', auth()->user()->tenant_id);
+            $shopee3Query->where('tenant_id', auth()->user()->tenant_id);
+            $tiktokQuery->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $shopeeMallQuery->whereBetween('date', [$request->date_start, $request->date_end]);
+            $shopee2Query->whereBetween('date', [$request->date_start, $request->date_end]);
+            $shopee3Query->whereBetween('date', [$request->date_start, $request->date_end]);
+            $tiktokQuery->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $shopeeMallQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+            $shopee2Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+            $shopee3Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+            $tiktokQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kategori_produk') && $request->kategori_produk) {
+            $shopeeMallQuery->where('kategori_produk', $request->kategori_produk);
+            $shopee2Query->where('kategori_produk', $request->kategori_produk);
+            $shopee3Query->where('kategori_produk', $request->kategori_produk);
+            $tiktokQuery->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic) {
+            $shopeeMallQuery->where('pic', $request->pic);
+            $shopee2Query->where('pic', $request->pic);
+            $shopee3Query->where('pic', $request->pic);
+            $tiktokQuery->where('pic', $request->pic);
+        }
+        
+        // Combine the queries using union
+        $query = $shopeeMallQuery->unionAll($shopee2Query)->unionAll($shopee3Query)->unionAll($tiktokQuery);
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return Carbon::parse($row->date)->format('d M Y');
+            })
+            // Add calculated columns
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->total_purchases > 0 && $row->total_amount_spent > 0) {
+                    return $row->total_amount_spent / $row->total_purchases;
+                }
+                return 0;
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    return $row->total_conversion_value / $row->total_amount_spent;
+                }
+                return 0;
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_amount_spent > 0) {
+                    return ($row->total_amount_spent / $row->total_impressions) * 1000;
+                }
+                return 0;
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_impressions > 0 && $row->total_link_clicks > 0) {
+                    return ($row->total_link_clicks / $row->total_impressions) * 100;
+                }
+                return 0;
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_amount_spent > 0 && $row->total_conversion_value > 0) {
+                    $roas = $row->total_conversion_value / $row->total_amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->addColumn('compare', function ($row) {
+                return '<button type="button" class="btn btn-info btn-sm compare-platform" data-date="'.$row->date.'" data-platform="'.$row->platform.'">
+                    <i class="fas fa-chart-line"></i> Compare
+                </button>';
+            })
+            ->rawColumns(['performance', 'compare'])
+            ->make(true);
+    }
+
+    public function get_overall_metrics_data(Request $request)
+    {
+        try {
+            // Get aggregated data from all platforms
+            $shopeeMallQuery = AdsMeta::query()->select(
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            );
+            
+            $shopee2Query = AdsMeta2::query()->select(
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            );
+            
+            $shopee3Query = AdsMeta3::query()->select(
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            );
+            
+            $tiktokQuery = AdsTiktok::query()->select(
+                DB::raw('SUM(amount_spent) as spent'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as revenue'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            );
+            
+            // Apply filters
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $shopeeMallQuery->whereBetween('date', [$startDate, $endDate]);
+                $shopee2Query->whereBetween('date', [$startDate, $endDate]);
+                $shopee3Query->whereBetween('date', [$startDate, $endDate]);
+                $tiktokQuery->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month
+                $shopeeMallQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $shopee2Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $shopee3Query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $tiktokQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+            }
+            
+            // Apply other filters
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $shopeeMallQuery->where('kategori_produk', $request->kategori_produk);
+                $shopee2Query->where('kategori_produk', $request->kategori_produk);
+                $shopee3Query->where('kategori_produk', $request->kategori_produk);
+                $tiktokQuery->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            if ($request->has('pic') && $request->pic) {
+                $shopeeMallQuery->where('pic', $request->pic);
+                $shopee2Query->where('pic', $request->pic);
+                $shopee3Query->where('pic', $request->pic);
+                $tiktokQuery->where('pic', $request->pic);
+            }
+            
+            // Get data
+            $shopeeMallData = $shopeeMallQuery->first();
+            $shopee2Data = $shopee2Query->first();
+            $shopee3Data = $shopee3Query->first();
+            $tiktokData = $tiktokQuery->first();
+            
+            // Calculate total metrics
+            $totalSpent = 
+                ($shopeeMallData ? (float)$shopeeMallData->spent : 0) + 
+                ($shopee2Data ? (float)$shopee2Data->spent : 0) + 
+                ($shopee3Data ? (float)$shopee3Data->spent : 0) + 
+                ($tiktokData ? (float)$tiktokData->spent : 0);
+                
+            $totalRevenue = 
+                ($shopeeMallData ? (float)$shopeeMallData->revenue : 0) + 
+                ($shopee2Data ? (float)$shopee2Data->revenue : 0) + 
+                ($shopee3Data ? (float)$shopee3Data->revenue : 0) + 
+                ($tiktokData ? (float)$tiktokData->revenue : 0);
+                
+            $totalPurchases = 
+                ($shopeeMallData ? (float)$shopeeMallData->purchases : 0) + 
+                ($shopee2Data ? (float)$shopee2Data->purchases : 0) + 
+                ($shopee3Data ? (float)$shopee3Data->purchases : 0) + 
+                ($tiktokData ? (float)$tiktokData->purchases : 0);
+            
+            // Calculate platform-specific metrics
+            $shopeeMallRoas = $shopeeMallData && $shopeeMallData->spent > 0 ? $shopeeMallData->revenue / $shopeeMallData->spent : 0;
+            $shopee2Roas = $shopee2Data && $shopee2Data->spent > 0 ? $shopee2Data->revenue / $shopee2Data->spent : 0;
+            $shopee3Roas = $shopee3Data && $shopee3Data->spent > 0 ? $shopee3Data->revenue / $shopee3Data->spent : 0;
+            $tiktokRoas = $tiktokData && $tiktokData->spent > 0 ? $tiktokData->revenue / $tiktokData->spent : 0;
+            
+            $shopeeMallCPP = $shopeeMallData && $shopeeMallData->purchases > 0 ? $shopeeMallData->spent / $shopeeMallData->purchases : 0;
+            $shopee2CPP = $shopee2Data && $shopee2Data->purchases > 0 ? $shopee2Data->spent / $shopee2Data->purchases : 0;
+            $shopee3CPP = $shopee3Data && $shopee3Data->purchases > 0 ? $shopee3Data->spent / $shopee3Data->purchases : 0;
+            $tiktokCPP = $tiktokData && $tiktokData->purchases > 0 ? $tiktokData->spent / $tiktokData->purchases : 0;
+            
+            // Calculate overall ROAS
+            $overallRoas = $totalSpent > 0 ? $totalRevenue / $totalSpent : 0;
+            
+            // Calculate average CPP
+            $avgCPP = $totalPurchases > 0 ? $totalSpent / $totalPurchases : 0;
+            
+            // Prepare data for radial chart
+            $series = [
+                $overallRoas > 0 ? min($overallRoas * 40, 100) : 0, // Convert ROAS to percentage (capped at 100%)
+                $totalPurchases > 0 ? min($totalPurchases / 100, 100) : 0, // Convert purchases to percentage
+                $totalRevenue > 0 ? min($totalRevenue / 1000000 * 50, 100) : 0, // Convert revenue to percentage
+                $totalSpent > 0 && $totalRevenue > 0 ? min(($totalRevenue / $totalSpent) * 25, 100) : 0 // Efficiency score
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'labels' => ['ROAS', 'Conversions', 'Revenue', 'Efficiency'],
+                    'series' => $series,
+                    'metrics' => [
+                        'total_spent' => $totalSpent,
+                        'total_revenue' => $totalRevenue,
+                        'total_purchases' => $totalPurchases,
+                        'overall_roas' => $overallRoas,
+                        'avg_cpp' => $avgCPP,
+                        'spent_breakdown' => [
+                            'Shopee Mall' => $shopeeMallData ? (float)$shopeeMallData->spent : 0,
+                            'Shopee 2' => $shopee2Data ? (float)$shopee2Data->spent : 0,
+                            'Shopee 3' => $shopee3Data ? (float)$shopee3Data->spent : 0,
+                            'TikTok' => $tiktokData ? (float)$tiktokData->spent : 0
+                        ],
+                        'revenue_breakdown' => [
+                            'Shopee Mall' => $shopeeMallData ? (float)$shopeeMallData->revenue : 0,
+                            'Shopee 2' => $shopee2Data ? (float)$shopee2Data->revenue : 0,
+                            'Shopee 3' => $shopee3Data ? (float)$shopee3Data->revenue : 0,
+                            'TikTok' => $tiktokData ? (float)$tiktokData->revenue : 0
+                        ],
+                        'roas_breakdown' => [
+                            'Shopee Mall ROAS' => $shopeeMallRoas,
+                            'Shopee 2 ROAS' => $shopee2Roas,
+                            'Shopee 3 ROAS' => $shopee3Roas,
+                            'TikTok ROAS' => $tiktokRoas
+                        ],
+                        'purchases_breakdown' => [
+                            'Shopee Mall' => $shopeeMallData ? (float)$shopeeMallData->purchases : 0,
+                            'Shopee 2' => $shopee2Data ? (float)$shopee2Data->purchases : 0,
+                            'Shopee 3' => $shopee3Data ? (float)$shopee3Data->purchases : 0,
+                            'TikTok' => $tiktokData ? (float)$tiktokData->purchases : 0
+                        ],
+                        'cpp_breakdown' => [
+                            'Shopee Mall CPP' => $shopeeMallCPP,
+                            'Shopee 2 CPP' => $shopee2CPP,
+                            'Shopee 3 CPP' => $shopee3CPP,
+                            'TikTok CPP' => $tiktokCPP
+                        ]
+                    ]
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function get_shopee2_line_data(Request $request)
+    {
+        try {
+            $query = AdsMeta2::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Group by date and get sum of impressions
+            $impressionData = $query->select(
+                'date',
+                DB::raw('SUM(impressions) as impressions')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+            
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $impressionData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_shopee3_line_data(Request $request)
+    {
+        try {
+            $query = AdsMeta3::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Group by date and get sum of impressions
+            $impressionData = $query->select(
+                'date',
+                DB::raw('SUM(impressions) as impressions')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+            
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $impressionData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_tiktok_line_data(Request $request)
+    {
+        try {
+            $query = AdsTiktok::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Group by date and get sum of impressions
+            $impressionData = $query->select(
+                'date',
+                DB::raw('SUM(impressions) as impressions')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+            
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $impressionData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function get_shopee2_funnel_data(Request $request)
+    {
+        try {
+            $query = AdsMeta2::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Get aggregate data
+            $aggregates = $query->select(
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            )->first();
+            
+            // Prepare data for funnel chart
+            $funnelData = [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)$aggregates->impressions
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Add to Cart',
+                    'value' => (int)$aggregates->adds_to_cart
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)$aggregates->purchases
+                ]
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_shopee3_funnel_data(Request $request)
+    {
+        try {
+            $query = AdsMeta3::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Get aggregate data
+            $aggregates = $query->select(
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            )->first();
+            
+            // Prepare data for funnel chart
+            $funnelData = [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)$aggregates->impressions
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Add to Cart',
+                    'value' => (int)$aggregates->adds_to_cart
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)$aggregates->purchases
+                ]
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_tiktok_funnel_data(Request $request)
+    {
+        try {
+            $query = AdsTiktok::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Get aggregate data
+            $aggregates = $query->select(
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            )->first();
+            
+            // Prepare data for funnel chart
+            $funnelData = [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)$aggregates->impressions
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Add to Cart',
+                    'value' => (int)$aggregates->adds_to_cart
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)$aggregates->purchases
+                ]
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_google_line_data(Request $request)
+    {
+        try {
+            $query = AdsGoogle::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Group by date and get sum of impressions
+            $impressionData = $query->select(
+                'date',
+                DB::raw('SUM(impressions) as impressions')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+            
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $impressionData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_google_funnel_data(Request $request)
+    {
+        try {
+            $query = AdsGoogle::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Get aggregate data
+            $aggregates = $query->select(
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            )->first();
+            
+            // Prepare data for funnel chart
+            $funnelData = [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)$aggregates->impressions
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Add to Cart',
+                    'value' => (int)$aggregates->adds_to_cart
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)$aggregates->purchases
+                ]
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function export_overall_report(Request $request)
+    {
+        try {
+            // Create an export file with data from all platforms
+            $fileName = 'overall_ads_performance_' . date('Y-m-d') . '.xlsx';
+            
+            // You'll need to implement the actual export logic based on your requirements
+            // For example, you might want to create a new Excel export class
+            
+            return Excel::download(new OverallPerformanceExport($request), $fileName);
+            
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error exporting report: ' . $e->getMessage());
+        }
+    }
+    public function get_line_data(Request $request)
+    {
+        try {
+            $query = AdsMeta::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Group by date and get sum of impressions
+            $impressionData = $query->select(
+                'date',
+                DB::raw('SUM(impressions) as impressions')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'impressions' => (int)$item->impressions
+                ];
+            });
+            
+            return response()->json([
+                'status' => 'success',
+                'impressions' => $impressionData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function get_funnel_data(Request $request)
+    {
+        try {
+            $query = AdsMeta::query();
+            
+            // Apply date filter
+            if ($request->has('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
+                
+                $query->whereBetween('date', [$startDate, $endDate]);
+            } else {
+                // Default to current month if no date filter
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+            }
+            
+            // Apply kategori_produk filter
+            if ($request->has('kategori_produk') && $request->kategori_produk) {
+                $query->where('kategori_produk', $request->kategori_produk);
+            }
+            
+            // Apply pic filter
+            if ($request->has('pic') && $request->pic) {
+                $query->where('pic', $request->pic);
+            }
+            
+            // Get aggregate data
+            $aggregates = $query->select(
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as purchases')
+            )->first();
+            
+            // Prepare data for funnel chart
+            $funnelData = [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)$aggregates->impressions
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Add to Cart',
+                    'value' => (int)$aggregates->adds_to_cart
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)$aggregates->purchases
+                ]
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+    public function import_ads(Request $request)
+    {
+        try {
+            $request->validate([
+                'meta_ads_csv_file' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
+                'kategori_produk' => 'required|string'
+            ]);
+
+            $file = $request->file('meta_ads_csv_file');
+            $kategoriProduk = $request->input('kategori_produk');
+            $dateAmountMap = [];
+            $importCount = 0;
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    // Create a temporary directory to extract files
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
+                    }
+                    
+                    // Extract the ZIP file
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        // Process each CSV file in the ZIP
+                        $csvFiles = glob($tempDir . '/*.csv');
+                        foreach ($csvFiles as $csvFile) {
+                            // Pass the actual CSV filename (not the temp path)
+                            $csvFilename = basename($csvFile);
+                            $importCount += $this->processCsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
+                        }
+                        
+                        // Clean up the temporary directory
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single CSV file
+                    // Pass the original CSV filename
+                    $originalFilename = $file->getClientOriginalName();
+                    $importCount = $this->processCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
+                }
+
+                // Update AdSpentSocialMedia with aggregated totals
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 1,
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Meta ads data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
+    {
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        $filename = $originalFilename ?? basename($filePath);
+        
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        
+        if (strpos($filename, '-Campaign') !== false) {
+            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
+        } else {
+            $accountName = $filename;
+        }
+        
+        $pic = $this->determinePIC($accountName);
+        
+        foreach ($csvData as $row) {
+            if (empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                $newCreated = null;
+                $lastUpdated = null;
+                
+                if (isset($row[10]) && !empty($row[10])) {
+                    try {
+                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
+                    }
+                }
+                
+                if (isset($row[11]) && !empty($row[11])) {
+                    try {
+                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
+                    }
+                }
+                
+                AdsMeta::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amount,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => Auth::user()->current_tenant_id
+                    ],
+                    [
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName,
+                        'pic' => $pic,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
+        }
+        
+        return $count;
+    }
+
+    public function import_shopee2_ads(Request $request)
+    {
+        try {
+            $request->validate([
+                'shopee2AdsFile' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
+                'kategori_produk' => 'required|string'
+            ]);
+
+            $file = $request->file('shopee2AdsFile');
+            $kategoriProduk = $request->input('kategori_produk');
+            $dateAmountMap = [];
+            $importCount = 0;
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    // Create a temporary directory to extract files
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
+                    }
+                    
+                    // Extract the ZIP file
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        // Process each CSV file in the ZIP
+                        $csvFiles = glob($tempDir . '/*.csv');
+                        foreach ($csvFiles as $csvFile) {
+                            // Pass the actual CSV filename (not the temp path)
+                            $csvFilename = basename($csvFile);
+                            $importCount += $this->processShopee2CsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
+                        }
+                        
+                        // Clean up the temporary directory
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single CSV file
+                    // Pass the original CSV filename
+                    $originalFilename = $file->getClientOriginalName();
+                    $importCount = $this->processShopee2CsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
+                }
+
+                // Update AdSpentSocialMedia with aggregated totals (if needed)
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 2, // Assuming 2 is for Shopee 2
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Shopee 2 ads data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function processShopee2CsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
+    {
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        $filename = $originalFilename ?? basename($filePath);
+        
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        
+        if (strpos($filename, '-Campaign') !== false) {
+            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
+        } else {
+            $accountName = $filename;
+        }
+        
+        $pic = $this->determinePIC($accountName);
+        
+        foreach ($csvData as $row) {
+            if (empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                $newCreated = null;
+                $lastUpdated = null;
+                
+                if (isset($row[10]) && !empty($row[10])) {
+                    try {
+                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
+                    }
+                }
+                
+                if (isset($row[11]) && !empty($row[11])) {
+                    try {
+                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
+                    }
+                }
+                
+                AdsMeta2::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amount,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => Auth::user()->current_tenant_id
+                    ],
+                    [
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName,
+                        'pic' => $pic,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
+        }
+        
+        return $count;
+    }
+    public function import_shopee3_ads(Request $request)
+    {
+        try {
+            $request->validate([
+                'shopee3AdsFile' => 'required|file|mimes:csv,txt,zip|max:5120',
+                'kategori_produk' => 'required|string'
+            ]);
+
+            $file = $request->file('shopee3AdsFile');
+            $kategoriProduk = $request->input('kategori_produk');
+            $dateAmountMap = [];
+            $importCount = 0;
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    // Similar implementation to above, extracting zip and processing files
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
+                    }
+                    
+                    // Extract and process ZIP contents
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        $csvFiles = glob($tempDir . '/*.csv');
+                        foreach ($csvFiles as $csvFile) {
+                            $csvFilename = basename($csvFile);
+                            $importCount += $this->processShopee3CsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
+                        }
+                        
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single CSV file
+                    $originalFilename = $file->getClientOriginalName();
+                    $importCount = $this->processShopee3CsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
+                }
+
+                // Update AdSpentSocialMedia if needed
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 3, // Assuming 3 is for Shopee 3
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Shopee 3 ads data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function processShopee3CsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
+    {
+        // Similar implementation to processShopee2CsvFile but using AdsMeta3 model
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        $filename = $originalFilename ?? basename($filePath);
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        
+        if (strpos($filename, '-Campaign') !== false) {
+            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
+        } else {
+            $accountName = $filename;
+        }
+        
+        $pic = $this->determinePIC($accountName);
+        
+        // Process each row
+        foreach ($csvData as $row) {
+            if (empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                // Extract and process data
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                $newCreated = null;
+                $lastUpdated = null;
+                
+                if (isset($row[10]) && !empty($row[10])) {
+                    try {
+                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
+                    }
+                }
+                
+                if (isset($row[11]) && !empty($row[11])) {
+                    try {
+                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
+                    }
+                }
+                
+                // Update or create record in AdsMeta3
+                AdsMeta3::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amount,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => Auth::user()->current_tenant_id
+                    ],
+                    [
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName,
+                        'pic' => $pic,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
+        }
+        
+        return $count;
+    }
+    public function import_tiktok_ads(Request $request)
+    {
+        try {
+            $request->validate([
+                'tiktokAdsFile' => 'required|file|mimes:csv,txt,zip|max:5120',
+                'kategori_produk' => 'required|string'
+            ]);
+
+            $file = $request->file('tiktokAdsFile');
+            $kategoriProduk = $request->input('kategori_produk');
+            $dateAmountMap = [];
+            $importCount = 0;
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    // Process ZIP file
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
+                    }
+                    
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        $csvFiles = glob($tempDir . '/*.csv');
+                        foreach ($csvFiles as $csvFile) {
+                            $csvFilename = basename($csvFile);
+                            $importCount += $this->processTiktokCsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
+                        }
+                        
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single CSV file
+                    $originalFilename = $file->getClientOriginalName();
+                    $importCount = $this->processTiktokCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
+                }
+
+                // Update AdSpentSocialMedia with aggregated totals
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 4, // Assuming 4 is for TikTok
+                            'tenant_id' => auth()->user()->current_tenant_id
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'TikTok ads data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+    private function processTiktokCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
+    {
+        // Similar implementation but for TikTok data
+        $csvData = array_map('str_getcsv', file($filePath));
+        $headers = array_shift($csvData);
+        $count = 0;
+        
+        $filename = $originalFilename ?? basename($filePath);
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
+        
+        if (strpos($filename, '-Campaign') !== false) {
+            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
+        } else {
+            $accountName = $filename;
+        }
+        
+        $pic = $this->determinePIC($accountName);
+        
+        foreach ($csvData as $row) {
+            if (empty($row[0])) {
+                continue;
+            }
+            
+            try {
+                $date = Carbon::parse($row[0])->format('Y-m-d');
+                $amount = (int)$row[3];
+                $campaignName = $row[2] ?? null;
+                
+                $newCreated = null;
+                $lastUpdated = null;
+                
+                if (isset($row[10]) && !empty($row[10])) {
+                    try {
+                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
+                    }
+                }
+                
+                if (isset($row[11]) && !empty($row[11])) {
+                    try {
+                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
+                    }
+                }
+                
+                AdsTiktok::updateOrCreate(
+                    [
+                        'date' => $date,
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amount,
+                        'kategori_produk' => $kategoriProduk,
+                        'tenant_id' => Auth::user()->current_tenant_id
+                    ],
+                    [
+                        'impressions' => (int)$row[4],
+                        'content_views_shared_items' => (float)($row[5] ?? 0),
+                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
+                        'purchases_shared_items' => (float)($row[7] ?? 0),
+                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
+                        'link_clicks' => (float)($row[9] ?? 0),
+                        'account_name' => $accountName,
+                        'pic' => $pic,
+                        'new_created' => $newCreated,
+                        'last_updated' => $lastUpdated
+                    ]
+                );
+                
+                if (!isset($dateAmountMap[$date])) {
+                    $dateAmountMap[$date] = 0;
+                }
+                $dateAmountMap[$date] += $amount;
+                
+                $count++;
+            } catch (\Exception $e) {
+                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+            }
+        }
+        
+        return $count;
+    }
+
+
+
+
     public function store(AdSpentSocialMediaRequest $request): JsonResponse
     {
         $this->authorize('createAdSpentSocialMedia', AdSpentSocialMedia::class);
@@ -648,189 +2760,6 @@ class AdSpentSocialMediaController extends Controller
     //     }
     // }
     
-
-    public function import_ads(Request $request)
-    {
-        try {
-            $request->validate([
-                'meta_ads_csv_file' => 'required|file|mimes:csv,txt,zip|max:5120', // Increased size limit for ZIP
-                'kategori_produk' => 'required|string'
-            ]);
-
-            $file = $request->file('meta_ads_csv_file');
-            $kategoriProduk = $request->input('kategori_produk');
-            $dateAmountMap = [];
-            $importCount = 0;
-
-            DB::beginTransaction();
-            try {
-                // Check if the file is a ZIP file
-                if ($file->getClientOriginalExtension() == 'zip') {
-                    // Create a temporary directory to extract files
-                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
-                    if (!file_exists($tempDir)) {
-                        mkdir($tempDir, 0755, true);
-                    }
-                    
-                    // Extract the ZIP file
-                    $zip = new \ZipArchive;
-                    if ($zip->open($file->getPathname()) === TRUE) {
-                        $zip->extractTo($tempDir);
-                        $zip->close();
-                        
-                        // Process each CSV file in the ZIP
-                        $csvFiles = glob($tempDir . '/*.csv');
-                        foreach ($csvFiles as $csvFile) {
-                            // Pass the actual CSV filename (not the temp path)
-                            $csvFilename = basename($csvFile);
-                            $importCount += $this->processCsvFile($csvFile, $kategoriProduk, $dateAmountMap, $csvFilename);
-                        }
-                        
-                        // Clean up the temporary directory
-                        array_map('unlink', glob($tempDir . '/*'));
-                        rmdir($tempDir);
-                    } else {
-                        throw new \Exception("Could not open ZIP file");
-                    }
-                } else {
-                    // Process a single CSV file
-                    // Pass the original CSV filename
-                    $originalFilename = $file->getClientOriginalName();
-                    $importCount = $this->processCsvFile($file->getPathname(), $kategoriProduk, $dateAmountMap, $originalFilename);
-                }
-
-                // Update AdSpentSocialMedia with aggregated totals
-                foreach ($dateAmountMap as $date => $totalAmount) {
-                    AdSpentSocialMedia::updateOrCreate(
-                        [
-                            'date' => $date,
-                            'social_media_id' => 1,
-                            'tenant_id' => auth()->user()->current_tenant_id
-                        ],
-                        [
-                            'amount' => $totalAmount
-                        ]
-                    );
-                }
-                
-                DB::commit();
-                
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Meta ads data imported successfully. ' . $importCount . ' records imported.'
-                ]);
-                
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error importing data: ' . $e->getMessage()
-            ], 422);
-        }
-    }
-
-    /**
-     * Process a single CSV file and import its data
-     * 
-     * @param string $filePath Path to the CSV file
-     * @param string $kategoriProduk Product category
-     * @param array &$dateAmountMap Reference to date-amount mapping for aggregation
-     * @param string|null $originalFilename Original filename of the CSV
-     * @return int Number of records imported
-     */
-    private function processCsvFile($filePath, $kategoriProduk, &$dateAmountMap, $originalFilename = null)
-    {
-        $csvData = array_map('str_getcsv', file($filePath));
-        $headers = array_shift($csvData);
-        $count = 0;
-        
-        $filename = $originalFilename ?? basename($filePath);
-        
-        $filename = pathinfo($filename, PATHINFO_FILENAME);
-        
-        if (strpos($filename, '-Campaign') !== false) {
-            $accountName = substr($filename, 0, strpos($filename, '-Campaign'));
-        } else {
-            $accountName = $filename;
-        }
-        
-        $pic = $this->determinePIC($accountName);
-        
-        foreach ($csvData as $row) {
-            if (empty($row[0])) {
-                continue;
-            }
-            
-            try {
-                $date = Carbon::parse($row[0])->format('Y-m-d');
-                $amount = (int)$row[3];
-                $campaignName = $row[2] ?? null;
-                
-                $newCreated = null;
-                $lastUpdated = null;
-                
-                if (isset($row[10]) && !empty($row[10])) {
-                    try {
-                        $newCreated = Carbon::parse($row[10])->format('Y-m-d');
-                    } catch (\Exception $e) {
-                        \Log::warning("Invalid new_created date format in CSV: " . $row[10]);
-                    }
-                }
-                
-                if (isset($row[11]) && !empty($row[11])) {
-                    try {
-                        $lastUpdated = Carbon::parse($row[11])->format('Y-m-d');
-                    } catch (\Exception $e) {
-                        \Log::warning("Invalid last_updated date format in CSV: " . $row[11]);
-                    }
-                }
-                
-                AdsMeta::updateOrCreate(
-                    [
-                        'date' => $date,
-                        'campaign_name' => $campaignName,
-                        'amount_spent' => $amount,
-                        'kategori_produk' => $kategoriProduk,
-                        'tenant_id' => Auth::user()->current_tenant_id
-                    ],
-                    [
-                        'impressions' => (int)$row[4],
-                        'content_views_shared_items' => (float)($row[5] ?? 0),
-                        'adds_to_cart_shared_items' => (float)($row[6] ?? 0),
-                        'purchases_shared_items' => (float)($row[7] ?? 0),
-                        'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
-                        'link_clicks' => (float)($row[9] ?? 0),
-                        'account_name' => $accountName,
-                        'pic' => $pic,
-                        'new_created' => $newCreated,
-                        'last_updated' => $lastUpdated
-                    ]
-                );
-                
-                if (!isset($dateAmountMap[$date])) {
-                    $dateAmountMap[$date] = 0;
-                }
-                $dateAmountMap[$date] += $amount;
-                
-                $count++;
-            } catch (\Exception $e) {
-                \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
-            }
-        }
-        
-        return $count;
-    }
-        
-    /**
-     * Determine the PIC based on account name patterns
-     * 
-     * @param string $accountName The account name to analyze
-     * @return string The determined PIC
-     */
     private function determinePIC($accountName)
     {
         // Regular expressions for matching account names

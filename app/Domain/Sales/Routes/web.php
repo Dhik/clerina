@@ -70,6 +70,33 @@ Route::prefix('admin')
                 Route::get('/show', [AdSpentSocialMediaController::class, 'get_ads_details_by_date'])->name('adSpentSocialMedia.get_details_by_date');
                 Route::get('/campaign-summary', [AdSpentSocialMediaController::class, 'get_campaign_summary'])->name('adSpentSocialMedia.get_campaign_summary');
                 Route::delete('/delete-by-account', [AdSpentSocialMediaController::class, 'deleteByAccountAndDate'])->name('adSpentSocialMedia.delete_by_account');
+
+                Route::get('/shopee2/get', [AdSpentSocialMediaController::class, 'get_shopee2_ads_cpas'])->name('adSpentSocialMedia.get_shopee2_ads_cpas');
+                Route::post('/shopee2/import', [AdSpentSocialMediaController::class, 'import_shopee2_ads'])->name('adSpentSocialMedia.import_shopee2');
+                Route::get('/shopee2/line-data', [AdSpentSocialMediaController::class, 'get_shopee2_line_data'])->name('adSpentSocialMedia.shopee2-line-data');
+                Route::get('/shopee2/funnel-data', [AdSpentSocialMediaController::class, 'get_shopee2_funnel_data'])->name('adSpentSocialMedia.shopee2-funnel-data');
+                
+                // New routes for Shopee 3
+                Route::get('/shopee3/get', [AdSpentSocialMediaController::class, 'get_shopee3_ads_cpas'])->name('adSpentSocialMedia.get_shopee3_ads_cpas');
+                Route::post('/shopee3/import', [AdSpentSocialMediaController::class, 'import_shopee3_ads'])->name('adSpentSocialMedia.import_shopee3');
+                Route::get('/shopee3/line-data', [AdSpentSocialMediaController::class, 'get_shopee3_line_data'])->name('adSpentSocialMedia.shopee3-line-data');
+                Route::get('/shopee3/funnel-data', [AdSpentSocialMediaController::class, 'get_shopee3_funnel_data'])->name('adSpentSocialMedia.shopee3-funnel-data');
+                
+                // New routes for TikTok
+                Route::get('/tiktok/get', [AdSpentSocialMediaController::class, 'get_tiktok_ads_cpas'])->name('adSpentSocialMedia.get_tiktok_ads_cpas');
+                Route::post('/tiktok/import', [AdSpentSocialMediaController::class, 'import_tiktok_ads'])->name('adSpentSocialMedia.import_tiktok');
+                Route::get('/tiktok/line-data', [AdSpentSocialMediaController::class, 'get_tiktok_line_data'])->name('adSpentSocialMedia.tiktok-line-data');
+                Route::get('/tiktok/funnel-data', [AdSpentSocialMediaController::class, 'get_tiktok_funnel_data'])->name('adSpentSocialMedia.tiktok-funnel-data');
+                
+                // New routes for Overall Performance
+                Route::get('/overall/get', [AdSpentSocialMediaController::class, 'get_overall_performance'])->name('adSpentSocialMedia.get_overall_performance');
+                Route::get('/platform-comparison', [AdSpentSocialMediaController::class, 'get_platform_comparison_data'])->name('adSpentSocialMedia.platform-comparison-data');
+                Route::get('/overall-metrics', [AdSpentSocialMediaController::class, 'get_overall_metrics_data'])->name('adSpentSocialMedia.overall-metrics-data');
+                Route::post('/export-report', [AdSpentSocialMediaController::class, 'export_overall_report'])->name('adSpentSocialMedia.export_overall_report');
+                
+                // Existing chart data routes
+                // Route::get('/line-data', [AdSpentSocialMediaController::class, 'get_line_data'])->name('adSpentSocialMedia.line-data');
+                // Route::get('/funnel-data', [AdSpentSocialMediaController::class, 'get_funnel_data'])->name('adSpentSocialMedia.funnel-data');
             });
 
         Route::prefix('operational-spent')->group(function () {
