@@ -25,59 +25,66 @@ class InstagramScrapperService
 
     public function getPostInfo($link): ?array
     {
-        try {
-            $finalUrl = $this->getFinalUrl($link);
-            $shortCode = $this->extractShortCode($finalUrl);
-            
-            if (empty($shortCode)) {
-                Log::error('Failed to extract shortcode from URL: ' . $link);
-                return null;
-            }
-            
-            $response = $this->client->request('GET', 'ig/post_info_v2/', [
-                'query' => [
-                    'nocors' => 'false',
-                    'shortcode' => $shortCode
-                ],
-            ]);
-
-            $data = json_decode($response->getBody()->getContents());
-            
-            // Check if we have valid items in the response
-            if (!isset($data->items) || empty($data->items)) {
-                Log::error('No items in response for IG post: ' . $shortCode);
-                return null;
-            }
-            
-            $item = $data->items[0];
-            
-            // Extract the date from "taken_at" timestamp
-            $uploadDate = null;
-            if (isset($item->taken_at)) {
-                // Convert Unix timestamp to Carbon date
-                $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
-            }
-            
-            // More flexible approach to get view count - try different fields
-            $viewCount = 0;
-            if (isset($item->play_count)) {
-                $viewCount = $item->play_count;
-            } elseif (isset($item->ig_play_count)) {
-                $viewCount = $item->ig_play_count;
-            } elseif (isset($item->view_count)) {
-                $viewCount = $item->view_count;
-            }
-            
-            return [
-                'comment' => $item->comment_count ?? 0,
-                'view' => $viewCount,
-                'like' => $item->like_count ?? 0,
-                'upload_date' => $uploadDate
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error fetching IG info: ' . $e);
+        // Remove try-catch to see actual errors
+        $finalUrl = $this->getFinalUrl($link);
+        $shortCode = $this->extractShortCode($finalUrl);
+        
+        if (empty($shortCode)) {
+            Log::error('Failed to extract shortcode from URL: ' . $link);
             return null;
         }
+        
+        $response = $this->client->request('GET', 'ig/post_info_v2/', [
+            'query' => [
+                'nocors' => 'false',
+                'shortcode' => $shortCode
+            ],
+        ]);
+
+        $data = json_decode($response->getBody()->getContents());
+        
+        // Debug logging to see the actual response structure
+        Log::info('Instagram API Response for ' . $shortCode . ': ' . json_encode($data));
+        
+        // Check if we have valid items in the response
+        if (!isset($data->items) || empty($data->items)) {
+            Log::error('No items in response for IG post: ' . $shortCode);
+            return null;
+        }
+        
+        $item = $data->items[0];
+        
+        // Extract the date from "taken_at" timestamp
+        $uploadDate = null;
+        if (isset($item->taken_at)) {
+            // Convert Unix timestamp to Carbon date
+            $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
+        }
+        
+        // More flexible approach to get view count
+        $viewCount = 0;
+        if (isset($item->play_count)) {
+            $viewCount = $item->play_count;
+        } elseif (isset($item->ig_play_count)) {
+            $viewCount = $item->ig_play_count;
+        } elseif (isset($item->view_count)) {
+            $viewCount = $item->view_count;
+        }
+        
+        // Log the extracted data for debugging
+        Log::info('Extracted data: ', [
+            'comment' => $item->comment_count ?? 0,
+            'view' => $viewCount,
+            'like' => $item->like_count ?? 0,
+            'upload_date' => $uploadDate
+        ]);
+        
+        return [
+            'comment' => $item->comment_count ?? 0,
+            'view' => $viewCount,
+            'like' => $item->like_count ?? 0,
+            'upload_date' => $uploadDate
+        ];
     }
 
     protected function getFinalUrl($url): string
