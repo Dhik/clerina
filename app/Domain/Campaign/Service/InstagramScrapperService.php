@@ -58,9 +58,19 @@ class InstagramScrapperService
                 $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
             }
             
+            // More flexible approach to get view count - try different fields
+            $viewCount = 0;
+            if (isset($item->play_count)) {
+                $viewCount = $item->play_count;
+            } elseif (isset($item->ig_play_count)) {
+                $viewCount = $item->ig_play_count;
+            } elseif (isset($item->view_count)) {
+                $viewCount = $item->view_count;
+            }
+            
             return [
                 'comment' => $item->comment_count ?? 0,
-                'view' => $item->ig_play_count ?? 0,
+                'view' => $viewCount,
                 'like' => $item->like_count ?? 0,
                 'upload_date' => $uploadDate
             ];
