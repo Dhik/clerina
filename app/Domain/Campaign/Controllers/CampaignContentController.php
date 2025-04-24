@@ -437,13 +437,19 @@ class CampaignContentController extends Controller
     {
         $campaignContent = $campaignContent->load('campaign');
         $this->authorize('deleteCampaign', $campaignContent->campaign);
+    
+        $campaign_id = $campaignContent->campaign_id;
+        $link = $campaignContent->link;
+        
         $this->campaignContentBLL->deleteCampaignContent($campaignContent);
-
-        TalentContent::where('campaign_id', $campaignContent->campaign_id)
-            ->where('upload_link', $campaignContent->link)
-            ->first()
-            ->delete();
-
+        $talentContent = TalentContent::where('campaign_id', $campaign_id)
+            ->where('upload_link', $link)
+            ->first();
+        
+        if ($talentContent) {
+            $talentContent->delete();
+        }
+        
         return response()->json(['message' => trans('messages.success_delete')]);
     }
     public function getCampaignContentDataTableForRefresh(int $campaignId): JsonResponse
