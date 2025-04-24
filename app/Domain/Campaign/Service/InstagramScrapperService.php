@@ -26,13 +26,29 @@ class InstagramScrapperService
     public function getPostInfo($link): ?array
     {
         try {
-            $finalUrl = $this->getFinalUrl($link);
-            $shortCode = $this->extractShortCode($finalUrl);
+            Log::error('INSTAGRAM_TEST_MARKER: Starting to process ' . $link);
             
+            // Try to extract shortcode directly from the original link first
+            $shortCode = $this->extractShortCode($link);
+            
+            // If that fails, try following redirects
             if (empty($shortCode)) {
-                Log::error('InstagramScrapperService: Failed to extract shortcode', ['link' => $link]);
-                return null;
+                $finalUrl = $this->getFinalUrl($link);
+                Log::info('InstagramScrapperService: URL resolution', [
+                    'original' => $link,
+                    'final' => $finalUrl
+                ]);
+                
+                $shortCode = $this->extractShortCode($finalUrl);
+                
+                if (empty($shortCode)) {
+                    Log::error('InstagramScrapperService: Failed to extract shortcode', ['link' => $finalUrl]);
+                    Log::error('InstagramScrapperService: Failed to extract shortcode from URL', ['link' => $link]);
+                    return null;
+                }
             }
+            
+            Log::info('InstagramScrapperService: Using shortcode', ['shortCode' => $shortCode]);
             
             $response = $this->client->request('GET', 'ig/post_info_v2/', [
                 'query' => [
@@ -50,7 +66,10 @@ class InstagramScrapperService
             }
             
             if (!isset($data->items) || empty($data->items)) {
-                Log::error('InstagramScrapperService: No items in response', ['shortCode' => $shortCode]);
+                Log::error('InstagramScrapperService: No items in response', [
+                    'shortCode' => $shortCode,
+                    'response' => substr($content, 0, 500) . '...' // Log just a portion to avoid huge logs
+                ]);
                 return null;
             }
             
@@ -67,18 +86,27 @@ class InstagramScrapperService
             $viewCount = 0;
             if (isset($item->play_count)) {
                 $viewCount = $item->play_count;
+                Log::info('InstagramScrapperService: Using play_count', ['viewCount' => $viewCount]);
             } elseif (isset($item->ig_play_count)) {
                 $viewCount = $item->ig_play_count;
+                Log::info('InstagramScrapperService: Using ig_play_count', ['viewCount' => $viewCount]);
             } elseif (isset($item->view_count)) {
                 $viewCount = $item->view_count;
+                Log::info('InstagramScrapperService: Using view_count', ['viewCount' => $viewCount]);
+            } else {
+                Log::warning('InstagramScrapperService: No view count field found');
             }
             
-            return [
+            $result = [
                 'comment' => $item->comment_count ?? 0,
                 'view' => $viewCount,
                 'like' => $item->like_count ?? 0,
                 'upload_date' => $uploadDate
             ];
+            
+            Log::info('InstagramScrapperService: Successfully extracted data', $result);
+            
+            return $result;
             
         } catch (\Exception $e) {
             // Log the specific error details with enough context to debug
@@ -107,14 +135,49 @@ class InstagramScrapperService
         // Define the patterns to match the reel ID or post ID
         $reelPattern = '/\/reel\/([^\/?]+)/';
         $postPattern = '/\/p\/([^\/?]+)/';
-
-        // Perform the regular expression match
+        
+        // First try direct pattern match
         if (preg_match($reelPattern, $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted reel shortcode directly', ['shortCode' => $matches[1]]);
             return $matches[1];
         } elseif (preg_match($postPattern, $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted post shortcode directly', ['shortCode' => $matches[1]]);
             return $matches[1];
         }
-
+        
+        // If redirected to login page, look for the ID in the "next" parameter
+        if (strpos($link, 'accounts/login') !== false && strpos($link, 'next=') !== false) {
+            $urlParts = parse_url($link);
+            if (isset($urlParts['query'])) {
+                parse_str($urlParts['query'], $query);
+                if (isset($query['next'])) {
+                    // URL decode the next parameter
+                    $nextUrl = urldecode($query['next']);
+                    Log::info('InstagramScrapperService: Checking next URL', ['nextUrl' => $nextUrl]);
+                    
+                    // Try to extract the shortcode from the next URL
+                    if (preg_match($reelPattern, $nextUrl, $matches)) {
+                        Log::info('InstagramScrapperService: Extracted reel shortcode from next parameter', ['shortCode' => $matches[1]]);
+                        return $matches[1];
+                    } elseif (preg_match($postPattern, $nextUrl, $matches)) {
+                        Log::info('InstagramScrapperService: Extracted post shortcode from next parameter', ['shortCode' => $matches[1]]);
+                        return $matches[1];
+                    }
+                }
+            }
+        }
+        
+        // As a last resort, just try to find the ID pattern anywhere in the URL
+        // This handles cases where the URL structure might be unexpected
+        if (preg_match('/reel\/([a-zA-Z0-9_-]+)/', $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted reel shortcode using fallback pattern', ['shortCode' => $matches[1]]);
+            return $matches[1];
+        } elseif (preg_match('/p\/([a-zA-Z0-9_-]+)/', $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted post shortcode using fallback pattern', ['shortCode' => $matches[1]]);
+            return $matches[1];
+        }
+        
+        Log::error('InstagramScrapperService: Failed to extract shortcode with all methods', ['link' => $link]);
         return '';
     }
 }
