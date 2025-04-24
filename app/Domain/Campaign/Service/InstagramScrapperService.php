@@ -17,7 +17,7 @@ class InstagramScrapperService
             'base_uri' => 'https://flashapi1.p.rapidapi.com/',
             'headers' => [
                 'X-RapidAPI-Host' => 'flashapi1.p.rapidapi.com',
-                'X-RapidAPI-Key' => '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986'
+                'X-RapidAPI-Key' => config('rapidapi.rapid_api_key', '2bc060ac02msh3d873c6c4d26f04p103ac5jsn00306dda9986')
             ],
             'allow_redirects' => true,
         ]);
@@ -25,25 +25,17 @@ class InstagramScrapperService
 
     public function getPostInfo($link): ?array
     {
-        Log::info('InstagramScrapperService: Starting with link', ['link' => $link]);
+        Log::error('INSTAGRAM_TEST_MARKER: Starting to process ' . $link);
         
         $finalUrl = $this->getFinalUrl($link);
-        Log::info('InstagramScrapperService: Final URL after redirect', ['finalUrl' => $finalUrl]);
-        
         $shortCode = $this->extractShortCode($finalUrl);
-        Log::info('InstagramScrapperService: Extracted shortcode', ['shortCode' => $shortCode]);
         
         if (empty($shortCode)) {
-            Log::error('Failed to extract shortcode from URL', ['link' => $link, 'finalUrl' => $finalUrl]);
+            Log::error('InstagramScrapperService: Failed to extract shortcode from URL', ['link' => $link]);
             return null;
         }
         
         try {
-            Log::info('InstagramScrapperService: Making API request', [
-                'endpoint' => 'ig/post_info_v2/',
-                'shortcode' => $shortCode
-            ]);
-            
             $response = $this->client->request('GET', 'ig/post_info_v2/', [
                 'query' => [
                     'nocors' => 'false',
@@ -51,68 +43,64 @@ class InstagramScrapperService
                 ],
             ]);
             
-            $statusCode = $response->getStatusCode();
-            Log::info('InstagramScrapperService: API response status', ['statusCode' => $statusCode]);
-            
             $responseContent = $response->getBody()->getContents();
-            Log::info('InstagramScrapperService: API response content length', ['length' => strlen($responseContent)]);
-            
             $data = json_decode($responseContent);
             
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('InstagramScrapperService: JSON decode error', ['error' => json_last_error_msg()]);
+            if (!$data || !isset($data->items) || empty($data->items)) {
+                Log::error('InstagramScrapperService: Invalid response or no items', [
+                    'shortCode' => $shortCode,
+                    'response' => substr($responseContent, 0, 500) . '...' // Log just a portion to avoid huge logs
+                ]);
                 return null;
             }
             
-            // Check if we have valid items in the response
-            if (!isset($data->items) || empty($data->items)) {
-                Log::error('No items in response for IG post', ['shortCode' => $shortCode]);
-                Log::info('Instagram API Response', ['data' => json_encode($data)]);
-                return null;
-            }
+            return $this->prepareData($data);
             
-            $item = $data->items[0];
-            
-            // Extract the date from "taken_at" timestamp
-            $uploadDate = null;
-            if (isset($item->taken_at)) {
-                // Convert Unix timestamp to Carbon date
-                $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
-                Log::info('InstagramScrapperService: Found upload date', ['uploadDate' => $uploadDate]);
-            }
-            
-            // More flexible approach to get view count
-            $viewCount = 0;
-            if (isset($item->play_count)) {
-                $viewCount = $item->play_count;
-                Log::info('InstagramScrapperService: Using play_count', ['viewCount' => $viewCount]);
-            } elseif (isset($item->ig_play_count)) {
-                $viewCount = $item->ig_play_count;
-                Log::info('InstagramScrapperService: Using ig_play_count', ['viewCount' => $viewCount]);
-            } elseif (isset($item->view_count)) {
-                $viewCount = $item->view_count;
-                Log::info('InstagramScrapperService: Using view_count', ['viewCount' => $viewCount]);
-            } else {
-                Log::warning('InstagramScrapperService: No view count found in response');
-            }
-            
-            $result = [
-                'comment' => $item->comment_count ?? 0,
-                'view' => $viewCount,
-                'like' => $item->like_count ?? 0,
-                'upload_date' => $uploadDate
-            ];
-            
-            Log::info('InstagramScrapperService: Successfully extracted data', $result);
-            
-            return $result;
         } catch (\Exception $e) {
-            Log::error('Error in Instagram API request', [
+            Log::error('InstagramScrapperService: API request error', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'shortCode' => $shortCode
             ]);
             return null;
         }
+    }
+
+    protected function prepareData($apiResponse): ?array
+    {
+        if (empty($apiResponse) || empty($apiResponse->items[0])) {
+            return null;
+        }
+        
+        $item = $apiResponse->items[0];
+        
+        // Extract the date from "taken_at" timestamp
+        $uploadDate = null;
+        if (isset($item->taken_at)) {
+            $uploadDate = Carbon::createFromTimestamp($item->taken_at)->toDateTimeString();
+        }
+        
+        // Get view count - try different possible fields
+        $viewCount = 0;
+        if (isset($item->play_count)) {
+            $viewCount = $item->play_count;
+        } elseif (isset($item->ig_play_count)) {
+            $viewCount = $item->ig_play_count;
+        } elseif (isset($item->view_count)) {
+            $viewCount = $item->view_count;
+        }
+        
+        Log::info('InstagramScrapperService: Prepared data', [
+            'comment' => $item->comment_count ?? 0,
+            'view' => $viewCount,
+            'like' => $item->like_count ?? 0
+        ]);
+        
+        return [
+            'comment' => $item->comment_count ?? 0,
+            'view' => $viewCount,
+            'like' => $item->like_count ?? 0,
+            'upload_date' => $uploadDate
+        ];
     }
 
     protected function getFinalUrl($url): string
@@ -120,13 +108,21 @@ class InstagramScrapperService
         try {
             // Perform the HTTP request and follow redirects automatically
             $response = Http::get($url);
-
+            
             // Get the final redirected URL
             $finalUrl = $response->effectiveUri();
-
+            
+            Log::info('InstagramScrapperService: URL resolution', [
+                'original' => $url,
+                'final' => $finalUrl
+            ]);
+            
             return $finalUrl;
         } catch (\Exception $e) {
-            Log::error('Error following URL redirect: ' . $e);
+            Log::error('InstagramScrapperService: Error following URL redirect', [
+                'error' => $e->getMessage(),
+                'url' => $url
+            ]);
             return '';
         }
     }
@@ -137,14 +133,17 @@ class InstagramScrapperService
         // Define the patterns to match the reel ID or post ID
         $reelPattern = '/\/reel\/([^\/?]+)/';
         $postPattern = '/\/p\/([^\/?]+)/';
-
+        
         // Perform the regular expression match
         if (preg_match($reelPattern, $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted reel shortcode', ['shortCode' => $matches[1]]);
             return $matches[1];
         } elseif (preg_match($postPattern, $link, $matches)) {
+            Log::info('InstagramScrapperService: Extracted post shortcode', ['shortCode' => $matches[1]]);
             return $matches[1];
         }
-
+        
+        Log::error('InstagramScrapperService: Failed to extract shortcode', ['link' => $link]);
         return '';
     }
 }
