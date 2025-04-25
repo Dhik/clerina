@@ -1115,23 +1115,6 @@
                     <td class="text-right">Rp ${Math.round(totalSales).toLocaleString('id-ID')}</td>
                 </tr>`;
                 
-                // Add B2B and CRM sales rows
-                html += `<tr class="bg-light">
-                    <td colspan="3" class="font-weight-bold">Additional Sales</td>
-                </tr>`;
-                
-                html += `<tr>
-                    <td>B2B Sales</td>
-                    <td></td>
-                    <td class="text-right">Rp ${Math.round(parseFloat(data.b2b_sales || 0)).toLocaleString('id-ID')}</td>
-                </tr>`;
-                
-                html += `<tr>
-                    <td>CRM Sales</td>
-                    <td></td>
-                    <td class="text-right">Rp ${Math.round(parseFloat(data.crm_sales || 0)).toLocaleString('id-ID')}</td>
-                </tr>`;
-                
                 // Calculate grand total including all sales types
                 const grandTotal = totalSales + parseFloat(data.b2b_sales || 0) + parseFloat(data.crm_sales || 0);
                 
