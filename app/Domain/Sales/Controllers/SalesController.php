@@ -1296,6 +1296,7 @@ class SalesController extends Controller
 
     public function importFromGoogleSheet()
     {
+        $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
         $range = 'Import Sales!A2:Q';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
