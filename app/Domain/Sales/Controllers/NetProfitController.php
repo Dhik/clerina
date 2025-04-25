@@ -79,7 +79,7 @@ class NetProfitController extends Controller
     public function updateSpentKol()
     {
         try {
-            // Define the range to get KOL spent data from column R
+            $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
             $range = 'Import Sales!A2:R';
             $sheetData = $this->googleSheetService->getSheetData($range);
             
