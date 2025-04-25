@@ -175,7 +175,7 @@ class SalesController extends Controller
         
         return DataTables::of($data)
             ->addColumn('total_sales', function ($row) {
-                return ($row->sales ?? 0) + ($row->b2b_sales ?? 0) + ($row->crm_sales ?? 0);
+                return ($row->sales ?? 0);
             })
             ->addColumn('mp_sales', function ($row) {
                 return ($row->sales ?? 0);
