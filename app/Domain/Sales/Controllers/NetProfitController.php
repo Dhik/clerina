@@ -794,6 +794,7 @@ class NetProfitController extends Controller
     public function importNetProfits()
     {
         try {
+            $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
             $range = 'Import Sales!A2:D';
             $sheetData = $this->googleSheetService->getSheetData($range);
 
