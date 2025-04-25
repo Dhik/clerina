@@ -201,8 +201,8 @@ class SalesController extends Controller
                     $row->hpp;
             })
             ->addColumn('estimasi_fee_admin', function ($row) {
-                // 16% from sales
-                return $row->sales * 0.16;
+                // 16.7% from sales
+                return $row->sales * 0.167;
             })
             ->addColumn('ppn', function ($row) {
                 // 3% from sales
