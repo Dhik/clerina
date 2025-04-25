@@ -60,6 +60,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Updated HTML with percentage display elements -->
             <div class="row">
                 <div class="col-3">
                     <div class="small-box bg-gradient-success">
@@ -76,7 +77,8 @@
                     <div class="small-box bg-gradient-primary">
                         <div class="inner">
                             <h4 id="totalHpp">Rp 0</h4>
-                            <p>Total HPP</p>
+                            <p class="mb-0">Total HPP</p>
+                            <small id="totalHppPercentage" class="text-white">0%</small>
                         </div>
                         <div class="icon">
                             <i class="fas fa-box"></i>
@@ -87,7 +89,8 @@
                     <div class="small-box bg-gradient-info">
                         <div class="inner">
                             <h4 id="totalSpent">Rp 0</h4>
-                            <p>Total Spent</p>
+                            <p class="mb-0">Total Spent</p>
+                            <small id="totalSpentPercentage" class="text-white">0%</small>
                         </div>
                         <div class="icon">
                             <i class="fas fa-money-bill"></i>
@@ -98,7 +101,8 @@
                     <div class="small-box bg-gradient-teal">
                         <div class="inner">
                             <h4 id="totalNetProfit">Rp 0</h4>
-                            <p>Total Net Profit</p>
+                            <p class="mb-0">Total Net Profit</p>
+                            <small id="totalNetProfitPercentage" class="text-white">0%</small>
                         </div>
                         <div class="icon">
                             <i class="fas fa-chart-line"></i>
@@ -109,7 +113,8 @@
                     <div class="small-box bg-gradient-info">
                         <div class="inner">
                             <h4 id="totalMarketingSpent">Rp 0</h4>
-                            <p>Total Marketing Spent</p>
+                            <p class="mb-0">Total Marketing Spent</p>
+                            <small id="totalMarketingSpentPercentage" class="text-white">0%</small>
                         </div>
                         <div class="icon">
                             <i class="fas fa-dollar-sign"></i>
@@ -128,6 +133,7 @@
                     </div>
                 </div>
             </div>
+
 
             @include('admin.sales.net-recap-card')
 
@@ -955,6 +961,10 @@
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
+                        // Store total sales value for percentage calculations
+                        const totalSalesValue = parseFloat(data.total_sales) || 0;
+                        
+                        // Format and display the main values
                         document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
                         document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
                         document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
@@ -964,10 +974,29 @@
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
                         });
+                        
+                        // Calculate and display percentages relative to total sales
+                        if (totalSalesValue > 0) {
+                            const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
+                            const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
+                            const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
+                            const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
+                            
+                            document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
+                            document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
+                            document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
+                            document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
+                        } else {
+                            // Handle case when total sales is zero
+                            document.getElementById('totalHppPercentage').textContent = '0%';
+                            document.getElementById('totalSpentPercentage').textContent = '0%';
+                            document.getElementById('totalNetProfitPercentage').textContent = '0%';
+                            document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
+                        }
                     })
                     .catch(error => console.error('Error:', error));
             }
-        fetchSummary();
+            fetchSummary();
 
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
