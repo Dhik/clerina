@@ -78,7 +78,7 @@
                         <div class="inner">
                             <h4 id="totalHpp">Rp 0</h4>
                             <p class="mb-0">Total HPP</p>
-                            <small id="totalHppPercentage" class="text-white">0%</small>
+                            <span id="totalHppPercentage" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-box"></i>
@@ -90,7 +90,7 @@
                         <div class="inner">
                             <h4 id="totalSpent">Rp 0</h4>
                             <p class="mb-0">Total Spent</p>
-                            <small id="totalSpentPercentage" class="text-white">0%</small>
+                            <span id="totalSpentPercentage" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-money-bill"></i>
@@ -102,7 +102,7 @@
                         <div class="inner">
                             <h4 id="totalNetProfit">Rp 0</h4>
                             <p class="mb-0">Total Net Profit</p>
-                            <small id="totalNetProfitPercentage" class="text-white">0%</small>
+                            <span id="totalNetProfitPercentage" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-chart-line"></i>
@@ -114,7 +114,7 @@
                         <div class="inner">
                             <h4 id="totalMarketingSpent">Rp 0</h4>
                             <p class="mb-0">Total Marketing Spent</p>
-                            <small id="totalMarketingSpentPercentage" class="text-white">0%</small>
+                            <span id="totalMarketingSpentPercentage" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-dollar-sign"></i>
