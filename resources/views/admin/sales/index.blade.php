@@ -1239,74 +1239,8 @@
             
             processNextEndpoint();
         }
-        function renderWaterfallChart() {
-            fetch('{{ route('sales.waterfall-data') }}')
-                .then(response => response.json())
-                .then(salesData => {
-                    const chartData = salesData.map(day => ({
-                        x: day.date,
-                        y: day.is_weekly_total ? day.net : (day.turnover - day.ad_spent),
-                        measure: day.is_weekly_total ? 'total' : 'relative',
-                        text: ((day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)) >= 0 ? '+' : '') + 
-                            (day.is_weekly_total ? day.net : (day.turnover - day.ad_spent)).toLocaleString(),
-                        textposition: 'outside'
-                    }));
-
-                    const data = [{
-                        type: 'waterfall',
-                        orientation: 'v',
-                        x: chartData.map(d => d.x),
-                        y: chartData.map(d => d.y),
-                        measure: chartData.map(d => d.measure),
-                        text: chartData.map(d => d.text),
-                        textposition: chartData.map(d => d.textposition),
-                        connector: { 
-                            line: { color: 'rgb(63, 63, 63)' } 
-                        },
-                        increasing: { 
-                            marker: { color: '#2ecc71' }  // Green for positive net
-                        },
-                        decreasing: { 
-                            marker: { color: '#e74c3c' }  // Red for negative net
-                        },
-                        totals: { 
-                            marker: { color: '#3498db' }  // Blue for weekly totals
-                        }
-                    }];
-
-                    const layout = {
-                        title: 'Daily Net Revenue (Omset - Ads Spent)',
-                        xaxis: {
-                            title: 'Date',
-                            tickangle: -45
-                        },
-                        yaxis: {
-                            title: 'Amount (Rp)',
-                            tickformat: ',d'
-                        },
-                        autosize: true,
-                        height: 600,
-                        margin: { 
-                            l: 80, 
-                            r: 20, 
-                            t: 40, 
-                            b: 120 
-                        }
-                    };
-
-                    Plotly.newPlot('waterfallChart', data, layout, { responsive: true });
-                })
-                .catch(error => console.error('Error fetching waterfall data:', error));
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            renderWaterfallChart();
-        });
 
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            if (e.target.getAttribute('href') === '#recapChartTab') {
-                renderWaterfallChart();
-            }
             if (e.target.getAttribute('href') === '#funnelChartTab') {
                 initFunnelChart();
             }
