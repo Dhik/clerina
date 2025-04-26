@@ -811,6 +811,20 @@
                         visible: false
                     },
                     {
+                        data: 'estimasi_cancelation',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_retur',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
                         data: 'mp_sales',
                         render: function(data) {
                             return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
@@ -908,20 +922,6 @@
                     },
                     {
                         data: 'estimasi_fee_admin',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        },
-                        visible: false  // Hidden by default
-                    },
-                    {
-                        data: 'estimasi_cancelation',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        },
-                        visible: false  // Hidden by default
-                    },
-                    {
-                        data: 'estimasi_retur',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
