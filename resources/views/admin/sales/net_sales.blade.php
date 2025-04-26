@@ -811,7 +811,7 @@
                         visible: false
                     },
                     {
-                        data: 'estimasi_cancelation',
+                        data: 'estimasi_cancel',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
