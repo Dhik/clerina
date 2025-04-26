@@ -177,6 +177,12 @@ class SalesController extends Controller
             ->addColumn('total_sales', function ($row) {
                 return ($row->sales ?? 0);
             })
+            ->addColumn('estimasi_cancel', function ($row) {
+                return ($row->sales * 0.07?? 0);
+            })
+            ->addColumn('estimasi_retur', function ($row) {
+                return ($row->sales * 0.02 ?? 0);
+            })
             ->addColumn('mp_sales', function ($row) {
                 return ($row->sales ?? 0);
             })
@@ -287,7 +293,7 @@ class SalesController extends Controller
             SUM(hpp) as total_hpp,
             SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
             SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-            SUM((sales * 0.78) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - hpp) as total_net_profit,
+            SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
             SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi
         ')
         ->first();
