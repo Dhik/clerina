@@ -678,74 +678,50 @@
         const container = document.getElementById('channelRevenueCards');
         container.innerHTML = ''; // Clear previous content
         
-        // Calculate how many columns we need (up to 4 per row)
-        let currentRow;
-        let cellCount = 0;
-        
-        // Process each channel
-        channelSummary.forEach((channel, index) => {
-            // Start a new row after every 4 items
-            if (index % 4 === 0) {
-                currentRow = document.createElement('tr');
-                container.appendChild(currentRow);
-                cellCount = 0;
-            }
-            
+        // Create a table row for each channel
+        channelSummary.forEach(channel => {
             const channelName = channel.channel_name.toLowerCase();
-            let cardClass = 'other-card';
+            let indicatorClass = 'other-indicator';
             let logoClass = 'fa-shopping-bag';
             
-            // Same class determination logic as before
+            // Determine the indicator class and logo based on channel name
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
-                cardClass = 'shopee-card';
+                indicatorClass = 'shopee-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
-                cardClass = 'shopee-2-card';
+                indicatorClass = 'shopee-2-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
-                cardClass = 'shopee-3-card';
+                indicatorClass = 'shopee-3-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('lazada')) {
-                cardClass = 'lazada-card';
+                indicatorClass = 'lazada-indicator';
                 logoClass = 'fa-box';
             } else if (channelName.includes('tokopedia')) {
-                cardClass = 'tokopedia-card';
+                indicatorClass = 'tokopedia-indicator';
                 logoClass = 'fa-store';
             } else if (channelName.includes('tiktok')) {
-                cardClass = 'tiktok-card';
+                indicatorClass = 'tiktok-indicator';
                 logoClass = 'fa-music';
             } else if (channelName === 'b2b') {
-                cardClass = 'b2b-card';
+                indicatorClass = 'b2b-indicator';
                 logoClass = 'fa-handshake';
             } else if (channelName === 'crm') {
-                cardClass = 'crm-card';
+                indicatorClass = 'crm-indicator';
                 logoClass = 'fa-users';
             }
             
-            // Create table cell with card inside
-            const cell = document.createElement('td');
-            cell.innerHTML = `
-                <div class="marketplace-card ${cardClass}">
-                    <div class="inner">
-                        <h5>Rp ${formatNumber(channel.channel_gross_revenue)}</h5>
-                        <p>${channel.channel_name}</p>
-                        <div class="logo">
-                            <i class="fas ${logoClass}"></i>
-                        </div>
-                    </div>
-                </div>
+            // Create table row
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="${indicatorClass}">
+                    <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
+                    ${channel.channel_name}
+                </td>
+                <td class="text-right">Rp ${formatNumber(channel.channel_gross_revenue)}</td>
             `;
             
-            currentRow.appendChild(cell);
-            cellCount++;
-            
-            // Fill remaining cells in the last row if needed
-            if (index === channelSummary.length - 1 && cellCount < 4) {
-                for (let i = cellCount; i < 4; i++) {
-                    const emptyCell = document.createElement('td');
-                    currentRow.appendChild(emptyCell);
-                }
-            }
+            container.appendChild(row);
         });
     }
 
@@ -753,74 +729,51 @@
         const container = document.getElementById('channelHppCards');
         container.innerHTML = ''; // Clear previous content
         
-        // Calculate how many columns we need (up to 4 per row)
-        let currentRow;
-        let cellCount = 0;
-        
-        // Process each channel
-        channelSummary.forEach((channel, index) => {
-            // Start a new row after every 4 items
-            if (index % 4 === 0) {
-                currentRow = document.createElement('tr');
-                container.appendChild(currentRow);
-                cellCount = 0;
-            }
-            
+        // Create a table row for each channel
+        channelSummary.forEach(channel => {
             const channelName = channel.channel_name.toLowerCase();
-            let cardClass = 'other-hpp-card';
+            let indicatorClass = 'other-hpp-indicator';
             let logoClass = 'fa-shopping-bag';
             
-            // Same class determination logic as before
+            // Determine the indicator class and logo based on channel name
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
-                cardClass = 'shopee-hpp-card';
+                indicatorClass = 'shopee-hpp-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
-                cardClass = 'shopee-2-hpp-card';
+                indicatorClass = 'shopee-2-hpp-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
-                cardClass = 'shopee-3-hpp-card';
+                indicatorClass = 'shopee-3-hpp-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('lazada')) {
-                cardClass = 'lazada-hpp-card';
+                indicatorClass = 'lazada-hpp-indicator';
                 logoClass = 'fa-box';
             } else if (channelName.includes('tokopedia')) {
-                cardClass = 'tokopedia-hpp-card';
+                indicatorClass = 'tokopedia-hpp-indicator';
                 logoClass = 'fa-store';
             } else if (channelName.includes('tiktok')) {
-                cardClass = 'tiktok-hpp-card';
+                indicatorClass = 'tiktok-hpp-indicator';
                 logoClass = 'fa-music';
             } else if (channelName === 'b2b') {
-                cardClass = 'b2b-hpp-card';
+                indicatorClass = 'b2b-hpp-indicator';
                 logoClass = 'fa-handshake';
             } else if (channelName === 'crm') {
-                cardClass = 'crm-hpp-card';
+                indicatorClass = 'crm-hpp-indicator';
                 logoClass = 'fa-users';
             }
             
-            // Create table cell with card inside
-            const cell = document.createElement('td');
-            cell.innerHTML = `
-                <div class="marketplace-card ${cardClass}">
-                    <div class="inner">
-                        <h5>Rp ${formatNumber(channel.channel_hpp)}</h5>
-                        <p>${channel.channel_name} (${channel.channel_hpp_percentage.toFixed(1)}%)</p>
-                        <div class="logo">
-                            <i class="fas ${logoClass}"></i>
-                        </div>
-                    </div>
-                </div>
+            // Create table row
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="${indicatorClass}">
+                    <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
+                    ${channel.channel_name}
+                </td>
+                <td class="text-right">Rp ${formatNumber(channel.channel_hpp)}</td>
+                <td class="text-right">${channel.channel_hpp_percentage.toFixed(1)}%</td>
             `;
             
-            currentRow.appendChild(cell);
-            cellCount++;
-            
-            // Fill remaining cells in the last row if needed
-            if (index === channelSummary.length - 1 && cellCount < 4) {
-                for (let i = cellCount; i < 4; i++) {
-                    const emptyCell = document.createElement('td');
-                    currentRow.appendChild(emptyCell);
-                }
-            }
+            container.appendChild(row);
         });
     }
 

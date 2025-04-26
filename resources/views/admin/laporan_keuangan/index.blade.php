@@ -66,32 +66,51 @@
                 </div>
             </div>
             
-            <!-- Channel Summary Cards Section -->
+            <!-- Channel Summary Tables Section (2 tables side by side) -->
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Revenue by Channel</h3>
                         </div>
                         <div class="card-body">
-                            <table class="channel-table" id="channelRevenueCards">
-                                <!-- Table rows will be dynamically added here -->
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th>Gross Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="channelRevenueCards">
+                                        <!-- Table rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-12">
+                
+                <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">HPP by Channel</h3>
                         </div>
                         <div class="card-body">
-                            <table class="channel-table" id="channelHppCards">
-                                <!-- Table rows will be dynamically added here -->
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th>HPP</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="channelHppCards">
+                                        <!-- Table rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
