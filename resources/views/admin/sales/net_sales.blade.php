@@ -135,9 +135,9 @@
                 <div class="col-3">
                     <div class="small-box bg-gradient-success">
                         <div class="inner">
-                            <h4 id="totalHpp">Rp 0</h4>
+                            <h4 id="totalNetSales2">Rp 0</h4>
                             <p class="mb-0">Total Net Sales</p>
-                            <span id="totalNetSales" class="text-white font-italic" style="font-size: 1rem;">0%</span>
+                            <span id="totalNetSales2" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-box"></i>
@@ -1017,7 +1017,7 @@
             });
             
             // New fields from the updated HTML
-            document.getElementById('totalNetSales').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
+            document.getElementById('totalNetSales2').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
             document.getElementById('avgNetROMI').textContent = Number(data.avg_net_romi).toLocaleString('id-ID', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
