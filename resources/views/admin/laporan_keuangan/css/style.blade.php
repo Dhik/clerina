@@ -159,38 +159,65 @@
 .shopee-indicator .channel-icon,
 .shopee-hpp-indicator .channel-icon,
 .shopee-fee-indicator .channel-icon { color: #ee4d2d; }
+.shopee-indicator,
+.shopee-hpp-indicator,
+.shopee-fee-indicator { color: #ee4d2d; font-weight: 600; }
 
 .shopee-2-indicator .channel-icon,
 .shopee-2-hpp-indicator .channel-icon,
 .shopee-2-fee-indicator .channel-icon { color: #d93b1c; }
+.shopee-2-indicator,
+.shopee-2-hpp-indicator,
+.shopee-2-fee-indicator { color: #d93b1c; font-weight: 600; }
 
 .shopee-3-indicator .channel-icon,
 .shopee-3-hpp-indicator .channel-icon,
 .shopee-3-fee-indicator .channel-icon { color: #c52d0e; }
+.shopee-3-indicator,
+.shopee-3-hpp-indicator,
+.shopee-3-fee-indicator { color: #c52d0e; font-weight: 600; }
 
 .lazada-indicator .channel-icon,
 .lazada-hpp-indicator .channel-icon,
 .lazada-fee-indicator .channel-icon { color: #0f146d; }
+.lazada-indicator,
+.lazada-hpp-indicator,
+.lazada-fee-indicator { color: #0f146d; font-weight: 600; }
 
 .tokopedia-indicator .channel-icon,
 .tokopedia-hpp-indicator .channel-icon,
 .tokopedia-fee-indicator .channel-icon { color: #03ac0e; }
+.tokopedia-indicator,
+.tokopedia-hpp-indicator,
+.tokopedia-fee-indicator { color: #03ac0e; font-weight: 600; }
 
 .tiktok-indicator .channel-icon,
 .tiktok-hpp-indicator .channel-icon,
 .tiktok-fee-indicator .channel-icon { color: #333333; }
+.tiktok-indicator,
+.tiktok-hpp-indicator,
+.tiktok-fee-indicator { color: #333333; font-weight: 600; }
 
 .b2b-indicator .channel-icon,
 .b2b-hpp-indicator .channel-icon,
 .b2b-fee-indicator .channel-icon { color: #6a7d90; }
+.b2b-indicator,
+.b2b-hpp-indicator,
+.b2b-fee-indicator { color: #6a7d90; font-weight: 600; }
 
 .crm-indicator .channel-icon,
 .crm-hpp-indicator .channel-icon,
 .crm-fee-indicator .channel-icon { color: #7b68ee; }
+.crm-indicator,
+.crm-hpp-indicator,
+.crm-fee-indicator { color: #7b68ee; font-weight: 600; }
 
 .other-indicator .channel-icon,
 .other-hpp-indicator .channel-icon,
 .other-fee-indicator .channel-icon { color: #607d8b; }
+.other-indicator,
+.other-hpp-indicator,
+.other-fee-indicator { color: #607d8b; font-weight: 600; }
 
 /* Modal styles */
 .modal-content {
