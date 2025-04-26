@@ -297,12 +297,15 @@ class SalesController extends Controller
         }
 
         $data = $query->selectRaw('
-            SUM(COALESCE(sales, 0)) as total_sales,
+            SUM((sales, 0)) as total_sales,
             SUM(hpp) * 0.96 as total_hpp,
             SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
             SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
             SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
-            SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi
+            SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
+            SUM((sales * 0.743) as total_net_sales,
+            SUM((COALESCE(sales, 0) * 0.743) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
+
         ')
         ->first();
 
@@ -312,7 +315,9 @@ class SalesController extends Controller
             'total_spent' => $data->total_spent ?? 0,
             'total_marketing_spent' => $data->total_marketing_spent ?? 0,
             'total_net_profit' => $data->total_net_profit ?? 0,
-            'avg_romi' => $data->avg_romi ?? 0
+            'avg_romi' => $data->avg_romi ?? 0,
+            'total_net_sales' => $data->total_net_sales ?? 0,
+            'avg_net_romi' => $data->avg_net_romi ?? 0,
         ]);
     }
     public function getHPPChannelSummary(Request $request)
