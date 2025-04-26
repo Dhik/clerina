@@ -153,6 +153,8 @@
                                     <th>Balance Amount</th>
                                     <th>Gross Revenue</th>
                                     <th>Fee Admin</th>
+                                    <th>Estimasi Batal (4%)</th>
+                                    <th>Estimasi Retur (1%)</th>
                                     <th>MP Sales</th>
                                     <th>B2B Sales</th>
                                     <th>CRM Sales</th>
@@ -906,6 +908,20 @@
                     },
                     {
                         data: 'estimasi_fee_admin',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_cancelation',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_retur',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
