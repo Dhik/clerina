@@ -46,7 +46,7 @@ class LaporanKeuanganController extends Controller
         $salesChannels = $this->salesChannelBLL->getSalesChannel();
         $socialMedia = $this->socialMediaBLL->getSocialMedia();
 
-        return view('admin.sales.lk_index', compact('salesChannels', 'socialMedia'));
+        return view('admin.laporan_keuangan.index', compact('salesChannels', 'socialMedia'));
     }
     
     public function get(Request $request)
