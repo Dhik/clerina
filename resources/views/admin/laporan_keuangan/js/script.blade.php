@@ -676,15 +676,26 @@
 
     function updateChannelRevenueCards(channelSummary) {
         const container = document.getElementById('channelRevenueCards');
-        container.innerHTML = ''; // Clear previous cards
+        container.innerHTML = ''; // Clear previous content
         
-        // Create a card for each channel
-        channelSummary.forEach(channel => {
+        // Calculate how many columns we need (up to 4 per row)
+        let currentRow;
+        let cellCount = 0;
+        
+        // Process each channel
+        channelSummary.forEach((channel, index) => {
+            // Start a new row after every 4 items
+            if (index % 4 === 0) {
+                currentRow = document.createElement('tr');
+                container.appendChild(currentRow);
+                cellCount = 0;
+            }
+            
             const channelName = channel.channel_name.toLowerCase();
             let cardClass = 'other-card';
             let logoClass = 'fa-shopping-bag';
             
-            // Determine the card class and logo based on channel name
+            // Same class determination logic as before
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
                 cardClass = 'shopee-card';
                 logoClass = 'fa-shopping-bag';
@@ -711,8 +722,9 @@
                 logoClass = 'fa-users';
             }
             
-            const card = `
-            <div class="col-md-3 col-sm-6">
+            // Create table cell with card inside
+            const cell = document.createElement('td');
+            cell.innerHTML = `
                 <div class="marketplace-card ${cardClass}">
                     <div class="inner">
                         <h5>Rp ${formatNumber(channel.channel_gross_revenue)}</h5>
@@ -722,25 +734,43 @@
                         </div>
                     </div>
                 </div>
-            </div>
             `;
             
-            container.innerHTML += card;
+            currentRow.appendChild(cell);
+            cellCount++;
+            
+            // Fill remaining cells in the last row if needed
+            if (index === channelSummary.length - 1 && cellCount < 4) {
+                for (let i = cellCount; i < 4; i++) {
+                    const emptyCell = document.createElement('td');
+                    currentRow.appendChild(emptyCell);
+                }
+            }
         });
     }
 
     function updateChannelHppCards(channelSummary) {
         const container = document.getElementById('channelHppCards');
-        container.innerHTML = ''; // Clear previous cards
+        container.innerHTML = ''; // Clear previous content
         
-        // Create a card for each channel
-        channelSummary.forEach(channel => {
+        // Calculate how many columns we need (up to 4 per row)
+        let currentRow;
+        let cellCount = 0;
+        
+        // Process each channel
+        channelSummary.forEach((channel, index) => {
+            // Start a new row after every 4 items
+            if (index % 4 === 0) {
+                currentRow = document.createElement('tr');
+                container.appendChild(currentRow);
+                cellCount = 0;
+            }
+            
             const channelName = channel.channel_name.toLowerCase();
-            let cardClass = 'other-card';
+            let cardClass = 'other-hpp-card';
             let logoClass = 'fa-shopping-bag';
             
-            // Determine the card class and logo based on channel name
-            // Using different color scheme for HPP cards
+            // Same class determination logic as before
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
                 cardClass = 'shopee-hpp-card';
                 logoClass = 'fa-shopping-bag';
@@ -767,8 +797,9 @@
                 logoClass = 'fa-users';
             }
             
-            const card = `
-            <div class="col-md-3 col-sm-6">
+            // Create table cell with card inside
+            const cell = document.createElement('td');
+            cell.innerHTML = `
                 <div class="marketplace-card ${cardClass}">
                     <div class="inner">
                         <h5>Rp ${formatNumber(channel.channel_hpp)}</h5>
@@ -778,10 +809,18 @@
                         </div>
                     </div>
                 </div>
-            </div>
             `;
             
-            container.innerHTML += card;
+            currentRow.appendChild(cell);
+            cellCount++;
+            
+            // Fill remaining cells in the last row if needed
+            if (index === channelSummary.length - 1 && cellCount < 4) {
+                for (let i = cellCount; i < 4; i++) {
+                    const emptyCell = document.createElement('td');
+                    currentRow.appendChild(emptyCell);
+                }
+            }
         });
     }
 

@@ -74,9 +74,9 @@
                             <h3 class="card-title">Revenue by Channel</h3>
                         </div>
                         <div class="card-body">
-                            <div class="row" id="channelRevenueCards">
-                                <!-- Cards will be dynamically added here -->
-                            </div>
+                            <table class="channel-table" id="channelRevenueCards">
+                                <!-- Table rows will be dynamically added here -->
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -89,9 +89,9 @@
                             <h3 class="card-title">HPP by Channel</h3>
                         </div>
                         <div class="card-body">
-                            <div class="row" id="channelHppCards">
-                                <!-- Cards will be dynamically added here -->
-                            </div>
+                            <table class="channel-table" id="channelHppCards">
+                                <!-- Table rows will be dynamically added here -->
+                            </table>
                         </div>
                     </div>
                 </div>
