@@ -290,4 +290,36 @@
     border-top: 0;
     border-radius: 0 0 0.25rem 0.25rem;
 }
+/* Channel color indicators for all tables */
+.shopee-indicator .channel-icon { color: #ee4d2d; }
+.shopee-2-indicator .channel-icon { color: #d93b1c; }
+.shopee-3-indicator .channel-icon { color: #c52d0e; }
+.lazada-indicator .channel-icon { color: #0f146d; }
+.tokopedia-indicator .channel-icon { color: #03ac0e; }
+.tiktok-indicator .channel-icon { color: #333333; }
+.b2b-indicator .channel-icon { color: #6a7d90; }
+.crm-indicator .channel-icon { color: #7b68ee; }
+.other-indicator .channel-icon { color: #607d8b; }
+
+/* Matching value colors for rows with specific channel indicators */
+.shopee-indicator + td { color: #ee4d2d; font-weight: 700; }
+.shopee-2-indicator + td { color: #d93b1c; font-weight: 700; }
+.shopee-3-indicator + td { color: #c52d0e; font-weight: 700; }
+.lazada-indicator + td { color: #0f146d; font-weight: 700; }
+.tokopedia-indicator + td { color: #03ac0e; font-weight: 700; }
+.tiktok-indicator + td { color: #333333; font-weight: 700; }
+.b2b-indicator + td { color: #6a7d90; font-weight: 700; }
+.crm-indicator + td { color: #7b68ee; font-weight: 700; }
+.other-indicator + td { color: #607d8b; font-weight: 700; }
+
+/* Make percentage values match the same color */
+.shopee-indicator + td + td { color: #ee4d2d; font-weight: 600; }
+.shopee-2-indicator + td + td { color: #d93b1c; font-weight: 600; }
+.shopee-3-indicator + td + td { color: #c52d0e; font-weight: 600; }
+.lazada-indicator + td + td { color: #0f146d; font-weight: 600; }
+.tokopedia-indicator + td + td { color: #03ac0e; font-weight: 600; }
+.tiktok-indicator + td + td { color: #333333; font-weight: 600; }
+.b2b-indicator + td + td { color: #6a7d90; font-weight: 600; }
+.crm-indicator + td + td { color: #7b68ee; font-weight: 600; }
+.other-indicator + td + td { color: #607d8b; font-weight: 600; }
 </style>

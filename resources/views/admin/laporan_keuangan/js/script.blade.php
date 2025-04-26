@@ -733,33 +733,33 @@
         // Create a table row for each channel
         channelSummary.forEach(channel => {
             const channelName = channel.channel_name.toLowerCase();
-            let indicatorClass = 'other-hpp-indicator';
+            let indicatorClass = 'other-indicator'; // Use the same indicator classes as revenue table
             let logoClass = 'fa-shopping-bag';
             
             // Determine the indicator class and logo based on channel name
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
-                indicatorClass = 'shopee-hpp-indicator';
+                indicatorClass = 'shopee-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
-                indicatorClass = 'shopee-2-hpp-indicator';
+                indicatorClass = 'shopee-2-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
-                indicatorClass = 'shopee-3-hpp-indicator';
+                indicatorClass = 'shopee-3-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('lazada')) {
-                indicatorClass = 'lazada-hpp-indicator';
+                indicatorClass = 'lazada-indicator';
                 logoClass = 'fa-box';
             } else if (channelName.includes('tokopedia')) {
-                indicatorClass = 'tokopedia-hpp-indicator';
+                indicatorClass = 'tokopedia-indicator';
                 logoClass = 'fa-store';
             } else if (channelName.includes('tiktok')) {
-                indicatorClass = 'tiktok-hpp-indicator';
+                indicatorClass = 'tiktok-indicator';
                 logoClass = 'fa-music';
             } else if (channelName === 'b2b') {
-                indicatorClass = 'b2b-hpp-indicator';
+                indicatorClass = 'b2b-indicator';
                 logoClass = 'fa-handshake';
             } else if (channelName === 'crm') {
-                indicatorClass = 'crm-hpp-indicator';
+                indicatorClass = 'crm-indicator';
                 logoClass = 'fa-users';
             }
             
@@ -785,33 +785,33 @@
         // Create a table row for each channel
         channelSummary.forEach(channel => {
             const channelName = channel.channel_name.toLowerCase();
-            let indicatorClass = 'other-fee-indicator';
+            let indicatorClass = 'other-indicator'; // Use the same indicator classes as revenue table
             let logoClass = 'fa-shopping-bag';
             
             // Determine the indicator class and logo based on channel name
             if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
-                indicatorClass = 'shopee-fee-indicator';
+                indicatorClass = 'shopee-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
-                indicatorClass = 'shopee-2-fee-indicator';
+                indicatorClass = 'shopee-2-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
-                indicatorClass = 'shopee-3-fee-indicator';
+                indicatorClass = 'shopee-3-indicator';
                 logoClass = 'fa-shopping-bag';
             } else if (channelName.includes('lazada')) {
-                indicatorClass = 'lazada-fee-indicator';
+                indicatorClass = 'lazada-indicator';
                 logoClass = 'fa-box';
             } else if (channelName.includes('tokopedia')) {
-                indicatorClass = 'tokopedia-fee-indicator';
+                indicatorClass = 'tokopedia-indicator';
                 logoClass = 'fa-store';
             } else if (channelName.includes('tiktok')) {
-                indicatorClass = 'tiktok-fee-indicator';
+                indicatorClass = 'tiktok-indicator';
                 logoClass = 'fa-music';
             } else if (channelName === 'b2b') {
-                indicatorClass = 'b2b-fee-indicator';
+                indicatorClass = 'b2b-indicator';
                 logoClass = 'fa-handshake';
             } else if (channelName === 'crm') {
-                indicatorClass = 'crm-fee-indicator';
+                indicatorClass = 'crm-indicator';
                 logoClass = 'fa-users';
             }
             
