@@ -155,69 +155,81 @@
     padding: 15px;
 }
 
-/* Unified Channel color indicators for all tables */
-.shopee-indicator .channel-icon,
-.shopee-hpp-indicator .channel-icon,
-.shopee-fee-indicator .channel-icon { color: #ee4d2d; }
-.shopee-indicator,
-.shopee-hpp-indicator,
-.shopee-fee-indicator { color: #ee4d2d; font-weight: 600; }
+/* Channel color indicators for all tables */
+.shopee-indicator .channel-icon { color: #ee4d2d; }
+.shopee-2-indicator .channel-icon { color: #d93b1c; }
+.shopee-3-indicator .channel-icon { color: #c52d0e; }
+.lazada-indicator .channel-icon { color: #0f146d; }
+.tokopedia-indicator .channel-icon { color: #03ac0e; }
+.tiktok-indicator .channel-icon { color: #333333; }
+.b2b-indicator .channel-icon { color: #6a7d90; }
+.crm-indicator .channel-icon { color: #7b68ee; }
+.other-indicator .channel-icon { color: #607d8b; }
 
-.shopee-2-indicator .channel-icon,
-.shopee-2-hpp-indicator .channel-icon,
-.shopee-2-fee-indicator .channel-icon { color: #d93b1c; }
-.shopee-2-indicator,
-.shopee-2-hpp-indicator,
-.shopee-2-fee-indicator { color: #d93b1c; font-weight: 600; }
+/* Matching value colors for rows with specific channel indicators */
+.shopee-indicator + td, 
+.shopee-hpp-indicator + td, 
+.shopee-fee-indicator + td { color: #ee4d2d; font-weight: 700; }
 
-.shopee-3-indicator .channel-icon,
-.shopee-3-hpp-indicator .channel-icon,
-.shopee-3-fee-indicator .channel-icon { color: #c52d0e; }
-.shopee-3-indicator,
-.shopee-3-hpp-indicator,
-.shopee-3-fee-indicator { color: #c52d0e; font-weight: 600; }
+.shopee-2-indicator + td, 
+.shopee-2-hpp-indicator + td, 
+.shopee-2-fee-indicator + td { color: #d93b1c; font-weight: 700; }
 
-.lazada-indicator .channel-icon,
-.lazada-hpp-indicator .channel-icon,
-.lazada-fee-indicator .channel-icon { color: #0f146d; }
-.lazada-indicator,
-.lazada-hpp-indicator,
-.lazada-fee-indicator { color: #0f146d; font-weight: 600; }
+.shopee-3-indicator + td, 
+.shopee-3-hpp-indicator + td, 
+.shopee-3-fee-indicator + td { color: #c52d0e; font-weight: 700; }
 
-.tokopedia-indicator .channel-icon,
-.tokopedia-hpp-indicator .channel-icon,
-.tokopedia-fee-indicator .channel-icon { color: #03ac0e; }
-.tokopedia-indicator,
-.tokopedia-hpp-indicator,
-.tokopedia-fee-indicator { color: #03ac0e; font-weight: 600; }
+.lazada-indicator + td, 
+.lazada-hpp-indicator + td, 
+.lazada-fee-indicator + td { color: #0f146d; font-weight: 700; }
 
-.tiktok-indicator .channel-icon,
-.tiktok-hpp-indicator .channel-icon,
-.tiktok-fee-indicator .channel-icon { color: #333333; }
-.tiktok-indicator,
-.tiktok-hpp-indicator,
-.tiktok-fee-indicator { color: #333333; font-weight: 600; }
+.tokopedia-indicator + td, 
+.tokopedia-hpp-indicator + td, 
+.tokopedia-fee-indicator + td { color: #03ac0e; font-weight: 700; }
 
-.b2b-indicator .channel-icon,
-.b2b-hpp-indicator .channel-icon,
-.b2b-fee-indicator .channel-icon { color: #6a7d90; }
-.b2b-indicator,
-.b2b-hpp-indicator,
-.b2b-fee-indicator { color: #6a7d90; font-weight: 600; }
+.tiktok-indicator + td, 
+.tiktok-hpp-indicator + td, 
+.tiktok-fee-indicator + td { color: #333333; font-weight: 700; }
 
-.crm-indicator .channel-icon,
-.crm-hpp-indicator .channel-icon,
-.crm-fee-indicator .channel-icon { color: #7b68ee; }
-.crm-indicator,
-.crm-hpp-indicator,
-.crm-fee-indicator { color: #7b68ee; font-weight: 600; }
+.b2b-indicator + td, 
+.b2b-hpp-indicator + td, 
+.b2b-fee-indicator + td { color: #6a7d90; font-weight: 700; }
 
-.other-indicator .channel-icon,
-.other-hpp-indicator .channel-icon,
-.other-fee-indicator .channel-icon { color: #607d8b; }
-.other-indicator,
-.other-hpp-indicator,
-.other-fee-indicator { color: #607d8b; font-weight: 600; }
+.crm-indicator + td, 
+.crm-hpp-indicator + td, 
+.crm-fee-indicator + td { color: #7b68ee; font-weight: 700; }
+
+.other-indicator + td, 
+.other-hpp-indicator + td, 
+.other-fee-indicator + td { color: #607d8b; font-weight: 700; }
+
+/* Make percentage values match the same color */
+.shopee-hpp-indicator + td + td,
+.shopee-fee-indicator + td + td { color: #ee4d2d; font-weight: 600; }
+
+.shopee-2-hpp-indicator + td + td,
+.shopee-2-fee-indicator + td + td { color: #d93b1c; font-weight: 600; }
+
+.shopee-3-hpp-indicator + td + td,
+.shopee-3-fee-indicator + td + td { color: #c52d0e; font-weight: 600; }
+
+.lazada-hpp-indicator + td + td,
+.lazada-fee-indicator + td + td { color: #0f146d; font-weight: 600; }
+
+.tokopedia-hpp-indicator + td + td,
+.tokopedia-fee-indicator + td + td { color: #03ac0e; font-weight: 600; }
+
+.tiktok-hpp-indicator + td + td,
+.tiktok-fee-indicator + td + td { color: #333333; font-weight: 600; }
+
+.b2b-hpp-indicator + td + td,
+.b2b-fee-indicator + td + td { color: #6a7d90; font-weight: 600; }
+
+.crm-hpp-indicator + td + td,
+.crm-fee-indicator + td + td { color: #7b68ee; font-weight: 600; }
+
+.other-hpp-indicator + td + td,
+.other-fee-indicator + td + td { color: #607d8b; font-weight: 600; }
 
 /* Modal styles */
 .modal-content {
