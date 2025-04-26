@@ -298,7 +298,7 @@ class SalesController extends Controller
 
         $data = $query->selectRaw('
             SUM(COALESCE(sales, 0)) as total_sales,
-            SUM(hpp) as total_hpp,
+            SUM(hpp) * 0.96 as total_hpp,
             SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
             SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
             SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
