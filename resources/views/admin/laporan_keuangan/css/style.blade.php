@@ -286,4 +286,15 @@
 .b2b-hpp-indicator .channel-icon { color: #20c997; }
 .crm-hpp-indicator .channel-icon { color: #e83e8c; }
 .other-hpp-indicator .channel-icon { color: #17a2b8; }
+
+/* Fee Admin indicators */
+.shopee-fee-indicator .channel-icon { color: #2c3e50; }
+.shopee-2-fee-indicator .channel-icon { color: #34495e; }
+.shopee-3-fee-indicator .channel-icon { color: #1e2a37; }
+.lazada-fee-indicator .channel-icon { color: #8e44ad; }
+.tokopedia-fee-indicator .channel-icon { color: #16a085; }
+.tiktok-fee-indicator .channel-icon { color: #2980b9; }
+.b2b-fee-indicator .channel-icon { color: #f39c12; }
+.crm-fee-indicator .channel-icon { color: #d35400; }
+.other-fee-indicator .channel-icon { color: #7f8c8d; }
 </style>

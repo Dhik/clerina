@@ -66,9 +66,8 @@
                 </div>
             </div>
             
-            <!-- Channel Summary Tables Section (2 tables side by side) -->
             <div class="row mb-4">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Revenue by Channel</h3>
@@ -91,7 +90,7 @@
                     </div>
                 </div>
                 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">HPP by Channel</h3>
@@ -107,6 +106,30 @@
                                         </tr>
                                     </thead>
                                     <tbody id="channelHppCards">
+                                        <!-- Table rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Fee Admin by Channel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th>Fee Admin</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="channelFeeAdminCards">
                                         <!-- Table rows will be dynamically added here -->
                                     </tbody>
                                 </table>

@@ -667,9 +667,10 @@
                 document.getElementById('totalFeeAdmin').textContent = 'Rp ' + formatNumber(data.total_fee_admin || 0);
                 document.getElementById('netProfit').textContent = 'Rp ' + formatNumber(data.net_profit || 0);
                 
-                // Update channel summary cards
+                // Update channel summary tables
                 updateChannelRevenueCards(data.channel_summary);
                 updateChannelHppCards(data.channel_summary);
+                updateChannelFeeAdminCards(data.channel_summary); // Add this line
             })
             .catch(error => console.error('Error:', error));
     }
@@ -771,6 +772,63 @@
                 </td>
                 <td class="text-right">Rp ${formatNumber(channel.channel_hpp)}</td>
                 <td class="text-right">${channel.channel_hpp_percentage.toFixed(1)}%</td>
+            `;
+            
+            container.appendChild(row);
+        });
+    }
+
+    function updateChannelFeeAdminCards(channelSummary) {
+        const container = document.getElementById('channelFeeAdminCards');
+        container.innerHTML = ''; // Clear previous content
+        
+        // Create a table row for each channel
+        channelSummary.forEach(channel => {
+            const channelName = channel.channel_name.toLowerCase();
+            let indicatorClass = 'other-fee-indicator';
+            let logoClass = 'fa-shopping-bag';
+            
+            // Determine the indicator class and logo based on channel name
+            if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
+                indicatorClass = 'shopee-fee-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
+                indicatorClass = 'shopee-2-fee-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
+                indicatorClass = 'shopee-3-fee-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('lazada')) {
+                indicatorClass = 'lazada-fee-indicator';
+                logoClass = 'fa-box';
+            } else if (channelName.includes('tokopedia')) {
+                indicatorClass = 'tokopedia-fee-indicator';
+                logoClass = 'fa-store';
+            } else if (channelName.includes('tiktok')) {
+                indicatorClass = 'tiktok-fee-indicator';
+                logoClass = 'fa-music';
+            } else if (channelName === 'b2b') {
+                indicatorClass = 'b2b-fee-indicator';
+                logoClass = 'fa-handshake';
+            } else if (channelName === 'crm') {
+                indicatorClass = 'crm-fee-indicator';
+                logoClass = 'fa-users';
+            }
+            
+            // Calculate fee admin percentage relative to gross revenue
+            const feeAdminPercentage = (channel.channel_gross_revenue > 0) 
+                ? ((channel.channel_fee_admin / channel.channel_gross_revenue) * 100)
+                : 0;
+            
+            // Create table row
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="${indicatorClass}">
+                    <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
+                    ${channel.channel_name}
+                </td>
+                <td class="text-right">Rp ${formatNumber(channel.channel_fee_admin)}</td>
+                <td class="text-right">${feeAdminPercentage.toFixed(1)}%</td>
             `;
             
             container.appendChild(row);
