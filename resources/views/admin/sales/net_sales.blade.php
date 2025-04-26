@@ -132,6 +132,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-success">
+                        <div class="inner">
+                            <h4 id="totalHpp">Rp 0</h4>
+                            <p class="mb-0">Total Net Sales</p>
+                            <span id="totalNetSales" class="text-white font-italic" style="font-size: 1rem;">0%</span>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="small-box bg-gradient-primary">
+                        <div class="inner">
+                            <h4 id="avgNetROMI">Rp 0</h4>
+                            <p>Average Net ROMI</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
 
@@ -968,51 +991,60 @@
             });
 
             function fetchSummary() {
-                const filterDates = document.getElementById('filterDates').value;
-                const url = new URL("{{ route('sales.get_net_sales_summary') }}");
-                if (filterDates) {
-                    url.searchParams.append('filterDates', filterDates);
-                }
+    const filterDates = document.getElementById('filterDates').value;
+    const url = new URL("{{ route('sales.get_net_sales_summary') }}");
+    if (filterDates) {
+        url.searchParams.append('filterDates', filterDates);
+    }
 
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Store total sales value for percentage calculations
-                        const totalSalesValue = parseFloat(data.total_sales) || 0;
-                        
-                        // Format and display the main values
-                        document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-                        document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-                        document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
-                        document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
-                        document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
-                        document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-                        
-                        // Calculate and display percentages relative to total sales
-                        if (totalSalesValue > 0) {
-                            const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
-                            const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
-                            const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
-                            const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
-                            
-                            document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
-                            document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
-                            document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
-                            document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
-                        } else {
-                            // Handle case when total sales is zero
-                            document.getElementById('totalHppPercentage').textContent = '0%';
-                            document.getElementById('totalSpentPercentage').textContent = '0%';
-                            document.getElementById('totalNetProfitPercentage').textContent = '0%';
-                            document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Store total sales value for percentage calculations
+            const totalSalesValue = parseFloat(data.total_sales) || 0;
+            
+            // Format and display the main values
+            document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
+            document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+            document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
+            document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
+            document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
+            
+            // Format and display the ROMI values
+            document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // New fields from the updated HTML
+            document.getElementById('totalNetSales').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
+            document.getElementById('avgNetROMI').textContent = Number(data.avg_net_romi).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // Calculate and display percentages relative to total sales
+            if (totalSalesValue > 0) {
+                const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
+                const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
+                const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
+                const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
+                
+                document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
+                document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
+                document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
+                document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
+            } else {
+                // Handle case when total sales is zero
+                document.getElementById('totalHppPercentage').textContent = '0%';
+                document.getElementById('totalSpentPercentage').textContent = '0%';
+                document.getElementById('totalNetProfitPercentage').textContent = '0%';
+                document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
             }
-            fetchSummary();
+        })
+        .catch(error => console.error('Error:', error));
+}
+fetchSummary();
 
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
