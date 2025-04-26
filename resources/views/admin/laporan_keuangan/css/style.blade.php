@@ -61,6 +61,21 @@
     padding-left: 40px;
 }
 
+/* Larger and bolder font for amount values */
+#channelRevenueCards tr td:nth-child(2),
+#channelHppCards tr td:nth-child(2),
+#channelFeeAdminCards tr td:nth-child(2) {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Styling for percentage values */
+#channelHppCards tr td:nth-child(3),
+#channelFeeAdminCards tr td:nth-child(3) {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
 .channel-icon {
     position: absolute;
     left: 10px;
@@ -93,6 +108,7 @@
     vertical-align: bottom;
     border-bottom: 2px solid #dee2e6;
     background-color: #f8f9fa;
+    font-weight: 600;
 }
 
 .table tbody tr:hover {
@@ -139,38 +155,42 @@
     padding: 15px;
 }
 
-/* Channel color indicators - Revenue */
-.shopee-indicator .channel-icon { color: #ee4d2d; }
-.shopee-2-indicator .channel-icon { color: #d93b1c; }
-.shopee-3-indicator .channel-icon { color: #c52d0e; }
-.lazada-indicator .channel-icon { color: #0f146d; }
-.tokopedia-indicator .channel-icon { color: #03ac0e; }
-.tiktok-indicator .channel-icon { color: #333333; }
-.b2b-indicator .channel-icon { color: #6a7d90; }
-.crm-indicator .channel-icon { color: #7b68ee; }
-.other-indicator .channel-icon { color: #607d8b; }
+/* Unified Channel color indicators for all tables */
+.shopee-indicator .channel-icon,
+.shopee-hpp-indicator .channel-icon,
+.shopee-fee-indicator .channel-icon { color: #ee4d2d; }
 
-/* Channel color indicators - HPP */
-.shopee-hpp-indicator .channel-icon { color: #6f42c1; }
-.shopee-2-hpp-indicator .channel-icon { color: #5e37a6; }
-.shopee-3-hpp-indicator .channel-icon { color: #4b2d89; }
-.lazada-hpp-indicator .channel-icon { color: #fd7e14; }
-.tokopedia-hpp-indicator .channel-icon { color: #007bff; }
-.tiktok-hpp-indicator .channel-icon { color: #6c757d; }
-.b2b-hpp-indicator .channel-icon { color: #20c997; }
-.crm-hpp-indicator .channel-icon { color: #e83e8c; }
-.other-hpp-indicator .channel-icon { color: #17a2b8; }
+.shopee-2-indicator .channel-icon,
+.shopee-2-hpp-indicator .channel-icon,
+.shopee-2-fee-indicator .channel-icon { color: #d93b1c; }
 
-/* Channel color indicators - Fee Admin */
-.shopee-fee-indicator .channel-icon { color: #2c3e50; }
-.shopee-2-fee-indicator .channel-icon { color: #34495e; }
-.shopee-3-fee-indicator .channel-icon { color: #1e2a37; }
-.lazada-fee-indicator .channel-icon { color: #8e44ad; }
-.tokopedia-fee-indicator .channel-icon { color: #16a085; }
-.tiktok-fee-indicator .channel-icon { color: #2980b9; }
-.b2b-fee-indicator .channel-icon { color: #f39c12; }
-.crm-fee-indicator .channel-icon { color: #d35400; }
-.other-fee-indicator .channel-icon { color: #7f8c8d; }
+.shopee-3-indicator .channel-icon,
+.shopee-3-hpp-indicator .channel-icon,
+.shopee-3-fee-indicator .channel-icon { color: #c52d0e; }
+
+.lazada-indicator .channel-icon,
+.lazada-hpp-indicator .channel-icon,
+.lazada-fee-indicator .channel-icon { color: #0f146d; }
+
+.tokopedia-indicator .channel-icon,
+.tokopedia-hpp-indicator .channel-icon,
+.tokopedia-fee-indicator .channel-icon { color: #03ac0e; }
+
+.tiktok-indicator .channel-icon,
+.tiktok-hpp-indicator .channel-icon,
+.tiktok-fee-indicator .channel-icon { color: #333333; }
+
+.b2b-indicator .channel-icon,
+.b2b-hpp-indicator .channel-icon,
+.b2b-fee-indicator .channel-icon { color: #6a7d90; }
+
+.crm-indicator .channel-icon,
+.crm-hpp-indicator .channel-icon,
+.crm-fee-indicator .channel-icon { color: #7b68ee; }
+
+.other-indicator .channel-icon,
+.other-hpp-indicator .channel-icon,
+.other-fee-indicator .channel-icon { color: #607d8b; }
 
 /* Modal styles */
 .modal-content {
