@@ -297,14 +297,14 @@ class SalesController extends Controller
         }
 
         $data = $query->selectRaw('
-            SUM((sales, 0)) as total_sales,
-            SUM(hpp) * 0.96 as total_hpp,
-            SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
-            SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-            SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
-            SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
-            SUM((sales * 0.743) as total_net_sales,
-            SUM((COALESCE(sales, 0) * 0.743) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(marketing + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
+SUM(COALESCE(sales, 0)) as total_sales,
+    SUM(hpp) * 0.96 as total_hpp,
+    SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
+    SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
+    SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
+    SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
+    SUM(sales * 0.743) as total_net_sales,
+    SUM((COALESCE(sales, 0) * 0.743) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
         ')
         ->first();
 
