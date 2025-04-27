@@ -137,7 +137,7 @@
                         <div class="inner">
                             <h4 id="totalNetSales2">Rp 0</h4>
                             <p class="mb-0">Total Net Sales</p>
-                            <span id="totalNetSales2" class="text-white font-italic" style="font-size: 1rem;">0%</span>
+                            <span id="totalNetSalesPercentage" class="text-white font-italic" style="font-size: 1rem;">0%</span>
                         </div>
                         <div class="icon">
                             <i class="fas fa-box"></i>
@@ -176,12 +176,12 @@
                                     <th>Balance Amount</th>
                                     <th>Gross Revenue</th>
                                     <th>Fee Admin</th>
-                                    <th>Estimasi Batal (4%)</th>
-                                    <th>Estimasi Retur (1%)</th>
+                                    <th>Estimasi Batal (6%)</th>
+                                    <th>Estimasi Retur (2%)</th>
                                     <th>MP Sales</th>
                                     <th>B2B Sales</th>
                                     <th>CRM Sales</th>
-                                    <th>Penjualan Bersih (85%)</th>
+                                    <th>Penjualan Bersih</th>
                                     <th>Ads Spent</th>
                                     <th>KOL</th>
                                     <th>ROMI</th>
@@ -1020,12 +1020,14 @@
                 const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
                 const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
                 const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
+                const netSalesPercentage = (parseFloat(data.total_net_sales) / totalSalesValue * 100);
                 const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
                 
                 document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
                 document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
                 document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
                 document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
+                document.getElementById('totalNetSalesPercentage').textContent = netSalesPercentage.toFixed(2) + '%';
             } else {
                 // Handle case when total sales is zero
                 document.getElementById('totalHppPercentage').textContent = '0%';
