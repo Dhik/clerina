@@ -1665,18 +1665,18 @@ class NetProfitController extends Controller
         foreach ($records as $row) {
             // Calculate all the derived fields (similar to your DataTables method)
             $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
-            $netSales = $totalSales * 0.85;
+            $netSales = $totalSales * 0.713;
             $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
             $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
             $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
             $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
-            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.78) - 
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.713) - 
                         ($ensureNumber($row->marketing ?? 0) * 1.05) - 
                         $ensureNumber($row->spent_kol ?? 0) - 
                         $ensureNumber($row->affiliate ?? 0) - 
                         $ensureNumber($row->operasional ?? 0) - 
-                        $ensureNumber($row->hpp ?? 0);
+                        $ensureNumber($row->hpp ?? 0.94);
             
             $data[] = [
                 Carbon::parse($row->date)->format('Y-m-d'),
