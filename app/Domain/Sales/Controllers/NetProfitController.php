@@ -1671,11 +1671,11 @@ class NetProfitController extends Controller
             $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
             $netProfit = ($ensureNumber($row->sales ?? 0) * 0.713) - 
-                        ($ensureNumber($row->marketing ?? 0) * 1.05) - 
-                        $ensureNumber($row->spent_kol ?? 0) - 
-                        $ensureNumber($row->affiliate ?? 0) - 
-                        $ensureNumber($row->operasional ?? 0) - 
-                        $ensureNumber($row->hpp ?? 0.94);
+            ($ensureNumber($row->marketing ?? 0) * 1.05) - 
+            $ensureNumber($row->spent_kol ?? 0) - 
+            $ensureNumber($row->affiliate ?? 0) - 
+            $ensureNumber($row->operasional ?? 0) - 
+            ($ensureNumber($row->hpp ?? 0) * 0.94);
             
             $data[] = [
                 Carbon::parse($row->date)->format('Y-m-d'),
@@ -1692,8 +1692,8 @@ class NetProfitController extends Controller
                 $ensureNumber($row->operasional ?? 0),
                 $ensureNumber(($row->hpp * 0.94) ?? 0),
                 $ensureNumber(($row->sales * 0.01) ?? 0),
-                $estimasiFeeAdmin,
-                $ppn,
+                $ensureNumber(($row->sales * 0.167) ?? 0),
+                $ensureNumber(($row->sales * 0.03) ?? 0),
                 $ensureNumber($row->roas ?? 0),
                 $romi,
                 (int)($row->visit ?? 0),
