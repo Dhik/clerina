@@ -290,7 +290,7 @@ class SalesController extends Controller
         } else {
             // Get the first day of the current month and today's date
             $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $today = Carbon::now()->format('Y-m-d');
+            $today = Carbon::now()->subDay()->format('Y-m-d');
             
             $query->where('date', '>=', $startOfMonth)
                 ->where('date', '<=', $today);
