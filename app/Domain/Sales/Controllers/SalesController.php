@@ -199,12 +199,12 @@ class SalesController extends Controller
                 return $row->sales / $totalMarketingSpend;
             })
             ->addColumn('net_profit', function ($row) {
-                return ($row->sales * 0.743) - 
+                return ($row->sales * 0.713) - 
                     ($row->marketing * 1.05) - 
                     $row->spent_kol - 
                     ($row->affiliate ?? 0) - 
                     $row->operasional - 
-                    ($row->hpp * 0.96);
+                    ($row->hpp * 0.94);
             })
             ->addColumn('estimasi_fee_admin', function ($row) {
                 // 16.7% from sales
@@ -212,11 +212,11 @@ class SalesController extends Controller
             })
 	        ->addColumn('estimasi_cancelation', function ($row) {
                 // 4% from sales
-                return $row->sales * 0.04;
+                return $row->sales * 0.06;
             })
             ->addColumn('estimasi_retur', function ($row) {
                 // 1% from sales
-                return $row->sales * 0.01;
+                return $row->sales * 0.02;
             })
             ->addColumn('ppn', function ($row) {
                 // 3% from sales
@@ -298,13 +298,13 @@ class SalesController extends Controller
 
         $data = $query->selectRaw('
 SUM(COALESCE(sales, 0)) as total_sales,
-    SUM(hpp) * 0.96 as total_hpp,
+    SUM(hpp) * 0.94 as total_hpp,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-    SUM((sales * 0.743) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.96)) as total_net_profit,
+    SUM((sales * 0.713) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94)) as total_net_profit,
     SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
-    SUM(sales * 0.743) as total_net_sales,
-    SUM((COALESCE(sales, 0) * 0.743) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
+    SUM(sales * 0.713) as total_net_sales,
+    SUM((COALESCE(sales, 0) * 0.713) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
         ')
         ->first();
 

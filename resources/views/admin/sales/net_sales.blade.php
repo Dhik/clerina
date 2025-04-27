@@ -193,7 +193,6 @@
                                     <th>Fee Packing</th>
                                     <th>Fee Admin (16%)</th>
                                     <th>PPN (3%)</th>
-                                    <th>Fee Ads (2%)</th>
                                     <th>Total Marketing</th>
                                     <th>Net Profit</th>
                                 </tr>
@@ -952,13 +951,6 @@
                     },
                     {
                         data: 'ppn',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                        },
-                        visible: false  // Hidden by default
-                    },
-                    {
-                        data: 'fee_ads',
                         render: function(data) {
                             return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
                         },
