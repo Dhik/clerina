@@ -1692,7 +1692,7 @@ class NetProfitController extends Controller
                 $totalMarketingSpend,
                 $feeAds,
                 $ensureNumber($row->operasional ?? 0),
-                $ensureNumber($row->hpp ?? 0),
+                $ensureNumber(($row->hpp * 0.94) ?? 0),
                 $ensureNumber($row->fee_packing ?? 0),
                 $estimasiFeeAdmin,
                 $ppn,
