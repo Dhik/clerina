@@ -1598,7 +1598,7 @@ class NetProfitController extends Controller
         if ($newSpreadsheetId) {
             $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
         }
-        $currentTenantId = Auth::user()->current_tenant_id;
+        $currentTenantId = 1;
         
         $now = Carbon::now();
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
