@@ -288,7 +288,6 @@ class SalesController extends Controller
             $query->where('date', '>=', $startDate)
                 ->where('date', '<=', $endDate);
         } else {
-            // Get the first day of the current month and today's date
             $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d');
             $today = Carbon::now()->subDay()->format('Y-m-d');
             
