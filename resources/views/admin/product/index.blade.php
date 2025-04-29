@@ -47,11 +47,11 @@
             </div>
 
             <div class="card-body pb-0">
-                <!-- Product Tables -->
+                <!-- Product Tables Stacked -->
                 <div class="row">
-                    <!-- Single Products Table -->
-                    <div class="col-md-6">
-                        <div class="card mb-4">
+                    <!-- Single Products Table - Full Width -->
+                    <div class="col-12 mb-4">
+                        <div class="card">
                             <div class="card-header bg-gradient-light py-2">
                                 <h5 class="mb-0"><i class="fas fa-box mr-2"></i>Single Products</h5>
                             </div>
@@ -72,9 +72,9 @@
                         </div>
                     </div>
                     
-                    <!-- Bundle Products Table -->
-                    <div class="col-md-6">
-                        <div class="card mb-4">
+                    <!-- Bundle Products Table - Full Width -->
+                    <div class="col-12 mb-4">
+                        <div class="card">
                             <div class="card-header bg-gradient-light py-2">
                                 <h5 class="mb-0"><i class="fas fa-boxes mr-2"></i>Bundle Products</h5>
                             </div>
