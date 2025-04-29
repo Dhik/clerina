@@ -523,6 +523,9 @@ class ProductController extends Controller
     }
 
     // Updated getOrderCountPerDay method to include bundle orders
+    /**
+     * Get order count per day for a product, including both direct orders and bundle usage
+     */
     public function getOrderCountPerDay(Product $product, Request $request)
     {
         $type = request('type', 'daily');
@@ -530,7 +533,7 @@ class ProductController extends Controller
         $month = $request->input('month', date('Y-m'));
         $productSku = $product->sku;
 
-        // Base query conditions
+        // Date condition
         $dateCondition = [];
         if ($month) {
             $dateCondition = [
@@ -539,60 +542,87 @@ class ProductController extends Controller
             ];
         }
 
-        // Direct orders query
-        $directOrdersQuery = Order::where('sku', $productSku);
-        
-        // Apply filters to direct orders
-        if ($salesChannel) {
-            $directOrdersQuery->where('sales_channel_id', $salesChannel);
-        }
-        if ($month) {
-            $directOrdersQuery->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', $dateCondition);
-        }
-        
-        // Bundle orders query
-        $bundleOrdersQuery = Order::join('products as p', 'orders.sku', '=', 'p.sku')
-            ->where('p.type', 'Bundle')
-            ->where(function($query) use ($productSku) {
-                $query->where('p.combination_sku_1', $productSku)
-                    ->orWhere('p.combination_sku_2', $productSku);
-            });
-            
-        // Apply filters to bundle orders
-        if ($salesChannel) {
-            $bundleOrdersQuery->where('orders.sales_channel_id', $salesChannel);
-        }
-        if ($month) {
-            $bundleOrdersQuery->whereRaw('YEAR(orders.date) = ? AND MONTH(orders.date) = ?', $dateCondition);
-        }
-        
-        // Combined query for daily counts
-        $orderCounts = DB::table(function($query) use ($directOrdersQuery, $bundleOrdersQuery) {
-            // Direct orders
-            $directDailyQuery = (clone $directOrdersQuery)
-                ->selectRaw('DATE(date) as period, COUNT(id_order) as order_count, "direct" as type');
-                
-            // Bundle orders
-            $bundleDailyQuery = (clone $bundleOrdersQuery)
-                ->selectRaw('DATE(orders.date) as period, COUNT(orders.id_order) as order_count, "bundle" as type');
-                
-            // Union both queries
-            $query->from(DB::raw("({$directDailyQuery->toSql()} UNION ALL {$bundleDailyQuery->toSql()}) as combined_orders"))
-                ->mergeBindings($directDailyQuery)
-                ->mergeBindings($bundleDailyQuery)
-                ->selectRaw('period, SUM(order_count) as total_count')
+        // For Single products, include both direct and bundle orders
+        if ($product->type == 'Single') {
+            // Get direct orders count per day
+            $directOrders = DB::table('orders')
+                ->where('sku', $productSku)
+                ->when($salesChannel, function($query) use ($salesChannel) {
+                    return $query->where('sales_channel_id', $salesChannel);
+                })
+                ->when($month, function($query) use ($dateCondition) {
+                    return $query->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', $dateCondition);
+                })
+                ->selectRaw('DATE(date) as period, COUNT(id_order) as order_count')
                 ->groupBy('period');
-        })
-        ->orderBy('period', 'asc')
-        ->get();
+                
+            // Get bundle orders count per day
+            $bundleOrders = DB::table('orders')
+                ->join('products as p', 'orders.sku', '=', 'p.sku')
+                ->where('p.type', 'Bundle')
+                ->where(function($query) use ($productSku) {
+                    $query->where('p.combination_sku_1', $productSku)
+                        ->orWhere('p.combination_sku_2', $productSku);
+                })
+                ->when($salesChannel, function($query) use ($salesChannel) {
+                    return $query->where('orders.sales_channel_id', $salesChannel);
+                })
+                ->when($month, function($query) use ($dateCondition) {
+                    return $query->whereRaw('YEAR(orders.date) = ? AND MONTH(orders.date) = ?', $dateCondition);
+                })
+                ->selectRaw('DATE(orders.date) as period, COUNT(orders.id_order) as order_count')
+                ->groupBy('period');
+                
+            // Get SQL for both queries
+            $directSql = $directOrders->toSql();
+            $bundleSql = $bundleOrders->toSql();
+            
+            // Get bindings for both queries
+            $directBindings = $directOrders->getBindings();
+            $bundleBindings = $bundleOrders->getBindings();
+            
+            // Combine the results using a raw expression
+            $combinedOrders = DB::table(DB::raw("($directSql UNION ALL $bundleSql) as combined_orders"))
+                ->mergeBindings($directOrders)
+                ->mergeBindings($bundleOrders)
+                ->selectRaw('period, SUM(order_count) as total_count')
+                ->groupBy('period')
+                ->orderBy('period', 'asc')
+                ->get();
+                
+            $labels = $combinedOrders->pluck('period');
+            $data = $combinedOrders->pluck('total_count');
+            
+            return response()->json([
+                'labels' => $labels,
+                'data' => $data
+            ]);
+        } else {
+            // For non-Single products, use the original logic
+            $query = DB::table('orders')
+                ->where('sku', $productSku);
 
-        $labels = $orderCounts->pluck('period');
-        $data = $orderCounts->pluck('total_count');
+            if (!is_null($salesChannel)) {
+                $query->where('sales_channel_id', $salesChannel);
+            }
+            
+            if ($month) {
+                $query->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', $dateCondition);
+            }
+            
+            $orderCounts = $query->selectRaw('DATE(date) as period, COUNT(id_order) as order_count')
+                ->groupBy('period')
+                ->orderBy('period', 'asc')
+                ->get();
 
-        return response()->json([
-            'labels' => $labels,
-            'data' => $data
-        ]);
+            $labels = $orderCounts->pluck('period');
+            $data = $orderCounts->pluck('order_count');
+
+            return response()->json([
+                'labels' => $labels,
+                'data' => $data
+            ]);
+        }
     }
 
     /**
