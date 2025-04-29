@@ -41,10 +41,15 @@ class ProductController extends Controller
         $selectedMonth = $request->input('month', date('Y-m'));
         $type = $request->input('type', 'Single');
 
+        // Parse the selected month to get start and end dates
+        $monthStart = date('Y-m-01', strtotime($selectedMonth));
+        $monthEnd = date('Y-m-t', strtotime($selectedMonth));
+
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)
             ->where('type', $type)
             ->get();
             
+        // Get direct order quantities for products
         $orderQuantities = Order::where('tenant_id', Auth::user()->current_tenant_id)
             ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
                 date('Y', strtotime($selectedMonth)), 
@@ -53,14 +58,82 @@ class ProductController extends Controller
             ->selectRaw('sku, SUM(qty) as total_qty')
             ->groupBy('sku')
             ->pluck('total_qty', 'sku');
+        
+        // For Single products, get additional usage in bundles
+        $bundleUsage = [];
+        if ($type === 'Single') {
+            // Get all single product SKUs to optimize the query
+            $singleSkus = $products->pluck('sku')->toArray();
+            
+            // Query to get bundle usage for each single product
+            $bundleUsageCounts = \DB::table('orders as o')
+                ->join('products as p', 'o.sku', '=', 'p.sku')
+                ->whereIn(function($query) use ($singleSkus) {
+                    $query->select('sku')
+                        ->from('products')
+                        ->where('type', 'Single');
+                }, $singleSkus)
+                ->where('p.type', 'Bundle')
+                ->whereBetween('o.date', [$monthStart, $monthEnd])
+                ->where(function($query) {
+                    $query->whereIn('p.combination_sku_1', function($subquery) {
+                        $subquery->select('sku')
+                                ->from('products')
+                                ->where('type', 'Single');
+                    })
+                    ->orWhereIn('p.combination_sku_2', function($subquery) {
+                        $subquery->select('sku')
+                                ->from('products')
+                                ->where('type', 'Single');
+                    });
+                })
+                ->select(
+                    \DB::raw('CASE 
+                        WHEN p.combination_sku_1 IN (SELECT sku FROM products WHERE type = "Single") 
+                        THEN p.combination_sku_1 
+                        ELSE p.combination_sku_2 
+                    END AS single_sku'),
+                    \DB::raw('SUM(o.qty) as bundle_qty')
+                )
+                ->groupBy('single_sku')
+                ->get();
+            
+            // Convert to associative array
+            foreach ($bundleUsageCounts as $usage) {
+                $bundleUsage[$usage->single_sku] = $usage->bundle_qty;
+            }
+        }
 
-        $dataTable = DataTables::of($products)
-            ->addColumn('order_count', function ($product) use ($orderQuantities) {
+        $dataTable = DataTables::of($products);
+        
+        if ($type === 'Single') {
+            // For Single products, show direct orders and bundle usage
+            $dataTable->addColumn('direct_orders', function($product) use ($orderQuantities) {
                 return $orderQuantities[$product->sku] ?? 0;
             });
-        
-        // For Bundle products, add columns to show combination SKUs
-        if ($type === 'Bundle') {
+            
+            $dataTable->addColumn('bundle_usage', function($product) use ($bundleUsage) {
+                $usage = $bundleUsage[$product->sku] ?? 0;
+                if ($usage > 0) {
+                    return '<span class="text-success">' . number_format($usage) . '</span>';
+                }
+                return 0;
+            });
+            
+            $dataTable->addColumn('order_count', function($product) use ($orderQuantities, $bundleUsage) {
+                $direct = $orderQuantities[$product->sku] ?? 0;
+                $bundle = $bundleUsage[$product->sku] ?? 0;
+                $total = $direct + $bundle;
+                
+                return $total;
+            });
+        } else {
+            // For Bundle products, just show order count
+            $dataTable->addColumn('order_count', function ($product) use ($orderQuantities) {
+                return $orderQuantities[$product->sku] ?? 0;
+            });
+            
+            // Add combination SKUs for Bundle products
             $dataTable->addColumn('combination_skus', function($product) {
                 $output = '';
                 
@@ -76,6 +149,7 @@ class ProductController extends Controller
             });
         }
         
+        // Add action column for both tables
         $dataTable->addColumn('action', function ($product) {
             return '
                 <button class="btn btn-sm btn-primary viewButton" 
@@ -102,7 +176,16 @@ class ProductController extends Controller
             ';
         });
         
-        $dataTable->rawColumns(['action', 'combination_skus']);
+        // Define which columns should render HTML
+        $rawColumns = ['action'];
+        
+        if ($type === 'Bundle') {
+            $rawColumns[] = 'combination_skus';
+        } else {
+            $rawColumns[] = 'bundle_usage';
+        }
+        
+        $dataTable->rawColumns($rawColumns);
         
         return $dataTable->make(true);
     }
