@@ -25,21 +25,19 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-4">
-                                <select class="form-control" id="filterChannel">
-                                    <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
-                                    <option value="">{{ trans('labels.all') }}</option>
-                                    @foreach($salesChannels as $salesChannel)
-                                        <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
-                            </div>
-                        </div>
+                    <select class="form-control" id="filterChannel">
+                        <option value="" selected>{{ trans('placeholder.select_sales_channel') }}</option>
+                        <option value="">{{ trans('labels.all') }}</option>
+                        @foreach($salesChannels as $salesChannel)
+                            <option value="{{ $salesChannel->id }}">{{ $salesChannel->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
+                </div>
+            </div>
             <div class="row">
-                
-
                 <div class="col-6">
                     <div class="row">
                         <div class="col-6">
@@ -90,6 +88,16 @@
                                         <td>Total Orders</td>
                                         <td style="font-size: 18px;"><strong id="totalOrdersCount">0</strong></td>
                                     </tr>
+                                    @if($product->type == 'Single')
+                                    <tr>
+                                        <td><i class="fas fa-shopping-cart text-primary"></i> Direct Orders</td>
+                                        <td style="font-size: 18px;"><strong id="directOrdersCount">0</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-box-open text-success"></i> Bundle Usage</td>
+                                        <td style="font-size: 18px;"><strong id="bundleOrdersCount">0</strong></td>
+                                    </tr>
+                                    @endif
                                     <tr>
                                         <td>Total Revenue</td>
                                         <td style="font-size: 18px;"><strong id="totalAmountSum">Rp 0</strong></td>
@@ -151,8 +159,6 @@
                         </div>
                     </div>
                 </div>
-
-                
             </div>
         </div>
         <!-- Orders Table -->
@@ -160,7 +166,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ $product->product }} (SKU: {{ $product->sku }})</h3>
+                        <h3>{{ $product->product }} (SKU: {{ $product->sku }}) Orders</h3>
                     </div>
                     <div class="card-body">
                         <table id="ordersTable" class="table table-bordered table-striped">
@@ -172,6 +178,9 @@
                                     <th>Total Price</th>
                                     <th>Shipment</th>
                                     <th>SKU</th>
+                                    @if($product->type == 'Single')
+                                    <th>Order Source</th>
+                                    @endif
                                     <th>Date</th>
                                 </tr>
                             </thead>
@@ -254,13 +263,8 @@
             </div>
         </div>
     </div>
-
 </div>
-
-
-
 @stop
-
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -293,7 +297,12 @@
                         'rgba(255, 99, 132, 0.6)',
                         'rgba(54, 162, 235, 0.6)',
                         'rgba(153, 102, 255, 0.6)',
-                        'rgba(255, 159, 64, 0.6)'
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(105, 100, 210, 0.6)',
+                        'rgba(45, 150, 150, 0.6)',
+                        'rgba(200, 90, 120, 0.6)',
+                        'rgba(120, 180, 100, 0.6)'
                     ]
                 }]
             },
@@ -301,7 +310,11 @@
                 responsive: true,
                 plugins: {
                     legend: {
-                        display: false // Hide legend
+                        display: true,
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12
+                        }
                     },
                     tooltip: {
                         callbacks: {
@@ -405,6 +418,31 @@
         // Initial state: Show Sales content
         $('#salesBtn').click();
 
+        // Determine if this is a Single product to include the Order Source column
+        const isSingleProduct = {{ $product->type == 'Single' ? 'true' : 'false' }};
+        
+        // Define columns for the orders table
+        let ordersTableColumns = [
+            { data: 'id_order', name: 'id_order' },
+            { data: 'customer_name', name: 'customer_name' },
+            { data: 'qty', name: 'qty' },
+            { data: 'total_price', name: 'total_price' },
+            { data: 'shipment', name: 'shipment' },
+            { data: 'sku', name: 'sku' }
+        ];
+        
+        // Add Order Source column for Single products
+        if (isSingleProduct) {
+            ordersTableColumns.push({ 
+                data: 'order_source', 
+                name: 'order_source',
+                orderable: false
+            });
+        }
+        
+        // Add date column
+        ordersTableColumns.push({ data: 'date', name: 'date' });
+        
         var ordersTable = $('#ordersTable').DataTable({
             processing: true,
             serverSide: true,
@@ -415,34 +453,8 @@
                     d.month = $('#monthFilter').val();
                 }
             },
-            columns: [
-                { data: 'id_order', name: 'id_order' },
-                { data: 'customer_name', name: 'customer_name' },
-                { data: 'qty', name: 'qty' },
-                { data: 'total_price', name: 'total_price' },
-                { data: 'shipment', name: 'shipment' },
-                { data: 'sku', name: 'sku' },
-                { data: 'date', name: 'date' }
-            ],
-            order: [[6, 'desc']]
-        });
-
-        filterChannel.change(function () {
-            ordersTable.draw();
-            fetchSalesMetrics();
-            loadSkuOrderCountChart();
-            loadSalesChannelOrderCountChart();
-            lineDailyChart();
-        });
-        monthFilter.change(function () {
-            ordersTable.draw();
-            fetchSalesMetrics();
-            loadSkuOrderCountChart();
-            loadSalesChannelOrderCountChart();
-            lineDailyChart();
-        });
-        monthFilterMarketing.change(function () {
-            talentContentTable.draw();
+            columns: ordersTableColumns,
+            order: [[ordersTableColumns.length - 1, 'desc']]
         });
 
         var talentContentTable = $('#talentContentTable').DataTable({
@@ -489,6 +501,24 @@
             ],
             order: [[0, 'desc']], // Order by ID descending
             responsive: true,
+        });
+
+        filterChannel.change(function () {
+            ordersTable.draw();
+            fetchSalesMetrics();
+            loadSkuOrderCountChart();
+            loadSalesChannelOrderCountChart();
+            lineDailyChart();
+        });
+        monthFilter.change(function () {
+            ordersTable.draw();
+            fetchSalesMetrics();
+            loadSkuOrderCountChart();
+            loadSalesChannelOrderCountChart();
+            lineDailyChart();
+        });
+        monthFilterMarketing.change(function () {
+            talentContentTable.draw();
         });
 
         function loadSkuOrderCountChart() {
@@ -554,6 +584,14 @@
                     $('#ordersPerCustomerRatio').text(new Intl.NumberFormat().format(data.ordersPerCustomerRatio));
                     $('#averageOrderValue').text('Rp ' + new Intl.NumberFormat().format(data.averageOrderValue));
                     $('#netProfit').text('Rp ' + new Intl.NumberFormat().format(data.netProfitSingleProduct));
+                    
+                    // Update direct and bundle counts if they exist in the data
+                    if (data.directOrdersCount !== undefined) {
+                        $('#directOrdersCount').text(new Intl.NumberFormat().format(data.directOrdersCount));
+                    }
+                    if (data.bundleOrdersCount !== undefined) {
+                        $('#bundleOrdersCount').text(new Intl.NumberFormat().format(data.bundleOrdersCount));
+                    }
                 },
                 error: function (error) {
                     console.error('Error fetching sales metrics:', error);
