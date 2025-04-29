@@ -39,8 +39,12 @@ class ProductController extends Controller
     public function data(Request $request)
     {
         $selectedMonth = $request->input('month', date('Y-m'));
+        $type = $request->input('type', 'Single');
 
-        $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
+        $products = Product::where('tenant_id', Auth::user()->current_tenant_id)
+            ->where('type', $type)
+            ->get();
+            
         $orderQuantities = Order::where('tenant_id', Auth::user()->current_tenant_id)
             ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
                 date('Y', strtotime($selectedMonth)), 

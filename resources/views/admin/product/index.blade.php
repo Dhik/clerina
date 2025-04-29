@@ -8,9 +8,6 @@
 
 @section('content')
 <div class="row mb-4">
-    
-</div>
-<div class="row mb-4">
     <div class="col-12">
         <div id="topProductCard" class="card card-primary card-outline">
             <div class="card-header">
@@ -24,6 +21,7 @@
         </div>
     </div>
 </div>
+
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -42,20 +40,42 @@
                 </div>
             </div>
 
-
             <div class="card-body">
-                <table id="productsTable" class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>SKU</th>
-                            <th width="50%">Product Name</th>
-                            <th>Jumlah Order</th>
-                            <th>Harga Jual</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                </table>
+                <div class="row">
+                    <!-- Single Products Table -->
+                    <div class="col-md-6">
+                        <h4>Single Products</h4>
+                        <table id="singleProductsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Jumlah Order</th>
+                                    <th>Harga Jual</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    
+                    <!-- Combination Products Table -->
+                    <div class="col-md-6">
+                        <h4>Combination Products</h4>
+                        <table id="combinationProductsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Jumlah Order</th>
+                                    <th>Harga Jual</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -120,93 +140,94 @@
             
             
             var table = $('#productsTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: { 
-                url: '{{ route('product.data') }}',
-                data: function(d) {
-                    d.month = $('#monthFilter').val();
+                processing: true,
+                serverSide: true,
+                ajax: { 
+                    url: '{{ route('product.data') }}',
+                    data: function(d) {
+                        d.month = $('#monthFilter').val();
+                        d.type = type;
+                    },
+                    dataSrc: function(response) {
+                        checkAllLoaded();
+                        return response.data;
+                    }
                 },
-                dataSrc: function(response) {
-                    checkAllLoaded();
-                    return response.data;
-                }
-            },
-            columns: [
-                { 
-                    data: null, 
-                    name: 'rank', 
-                    render: function(data, type, row, meta) {
-                        var rank = meta.row + 1;
+                columns: [
+                    { 
+                        data: null, 
+                        name: 'rank', 
+                        render: function(data, type, row, meta) {
+                            var rank = meta.row + 1;
 
+                            if (rank === 1) {
+                                return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'; // Gold Medal for rank 1
+                            } else if (rank === 2) {
+                                return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'; // Silver Medal for rank 2
+                            } else if (rank === 3) {
+                                return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'; // Bronze Medal for rank 3
+                            } else {
+                                return rank;
+                            }
+                        }
+                    },
+                    { data: 'sku', name: 'sku' },
+                    { 
+                        data: 'product', 
+                        name: 'product', 
+                        render: function(data, type, row) {
+                            return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
+                        }
+                    },
+                    { 
+                        data: 'order_count', 
+                        name: 'order_count', 
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '';
+                            }
+                            return parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    { 
+                        data: 'harga_jual', 
+                        name: 'harga_jual', 
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '';
+                            }
+                            return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    { data: 'action', name: 'action', orderable: false, searchable: false }
+                ],
+                order: [[3, 'desc']], 
+                drawCallback: function(settings) {
+                    var api = this.api();
+                    api.rows().every(function() {
+                        var row = this.node();
+                        var rankCell = $(row).find('td').eq(0); // The rank column (0 index)
+                        var rank = api.row(row).index() + 1; // Get the rank (1-based index)
+
+                        // Set the rank and add the medal icon
                         if (rank === 1) {
-                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'; // Gold Medal for rank 1
+                            rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'); // Gold Medal
                         } else if (rank === 2) {
-                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'; // Silver Medal for rank 2
+                            rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'); // Silver Medal
                         } else if (rank === 3) {
-                            return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'; // Bronze Medal for rank 3
+                            rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'); // Bronze Medal
                         } else {
-                            return rank;
+                            rankCell.html(rank); // For all other ranks
                         }
-                    }
-                },
-                { data: 'sku', name: 'sku' },
-                { 
-                    data: 'product', 
-                    name: 'product', 
-                    render: function(data, type, row) {
-                        return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
-                    }
-                },
-                { 
-                    data: 'order_count', 
-                    name: 'order_count', 
-                    render: function(data, type, row) {
-                        if (data == null) {
-                            return '';
-                        }
-                        return parseFloat(data).toLocaleString('id-ID', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        });
-                    }
-                },
-                { 
-                    data: 'harga_jual', 
-                    name: 'harga_jual', 
-                    render: function(data, type, row) {
-                        if (data == null) {
-                            return '';
-                        }
-                        return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        });
-                    }
-                },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
-            ],
-            order: [[3, 'desc']], 
-            drawCallback: function(settings) {
-                var api = this.api();
-                api.rows().every(function() {
-                    var row = this.node();
-                    var rankCell = $(row).find('td').eq(0); // The rank column (0 index)
-                    var rank = api.row(row).index() + 1; // Get the rank (1-based index)
-
-                    // Set the rank and add the medal icon
-                    if (rank === 1) {
-                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'); // Gold Medal
-                    } else if (rank === 2) {
-                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'); // Silver Medal
-                    } else if (rank === 3) {
-                        rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'); // Bronze Medal
-                    } else {
-                        rankCell.html(rank); // For all other ranks
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
 
         $('#monthFilter').on('change', function() {
             Swal.fire({
