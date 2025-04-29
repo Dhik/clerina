@@ -61,7 +61,7 @@
                     
                     <!-- Combination Products Table -->
                     <div class="col-md-6">
-                        <h4>Combination Products</h4>
+                        <h4>Bundle Products</h4>
                         <table id="combinationProductsTable" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
@@ -232,7 +232,7 @@
 
             // Initialize both tables
             var singleTable = initProductTable('singleProductsTable', 'Single');
-            var combinationTable = initProductTable('combinationProductsTable', 'Combination');
+            var combinationTable = initProductTable('combinationProductsTable', 'Bundle');
 
             $('#monthFilter').on('change', function() {
                 Swal.fire({
