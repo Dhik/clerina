@@ -62,45 +62,24 @@ class ProductController extends Controller
         // For Single products, get additional usage in bundles
         $bundleUsage = [];
         if ($type === 'Single') {
-            // Get all single product SKUs to optimize the query
+            // Get all single product SKUs
             $singleSkus = $products->pluck('sku')->toArray();
             
-            // Query to get bundle usage for each single product
-            $bundleUsageCounts = \DB::table('orders as o')
-                ->join('products as p', 'o.sku', '=', 'p.sku')
-                ->whereIn(function($query) use ($singleSkus) {
-                    $query->select('sku')
-                        ->from('products')
-                        ->where('type', 'Single');
-                }, $singleSkus)
-                ->where('p.type', 'Bundle')
-                ->whereBetween('o.date', [$monthStart, $monthEnd])
-                ->where(function($query) {
-                    $query->whereIn('p.combination_sku_1', function($subquery) {
-                        $subquery->select('sku')
-                                ->from('products')
-                                ->where('type', 'Single');
+            // For each single product, calculate its usage in bundles
+            foreach ($singleSkus as $singleSku) {
+                // Query to count bundle usage for this specific single product
+                $usage = \DB::table('orders as o')
+                    ->join('products as p', 'o.sku', '=', 'p.sku')
+                    ->where('p.type', 'Bundle')
+                    ->where(function($query) use ($singleSku) {
+                        $query->where('p.combination_sku_1', $singleSku)
+                            ->orWhere('p.combination_sku_2', $singleSku);
                     })
-                    ->orWhereIn('p.combination_sku_2', function($subquery) {
-                        $subquery->select('sku')
-                                ->from('products')
-                                ->where('type', 'Single');
-                    });
-                })
-                ->select(
-                    \DB::raw('CASE 
-                        WHEN p.combination_sku_1 IN (SELECT sku FROM products WHERE type = "Single") 
-                        THEN p.combination_sku_1 
-                        ELSE p.combination_sku_2 
-                    END AS single_sku'),
-                    \DB::raw('SUM(o.qty) as bundle_qty')
-                )
-                ->groupBy('single_sku')
-                ->get();
-            
-            // Convert to associative array
-            foreach ($bundleUsageCounts as $usage) {
-                $bundleUsage[$usage->single_sku] = $usage->bundle_qty;
+                    ->whereBetween('o.date', [$monthStart, $monthEnd])
+                    ->where('o.tenant_id', Auth::user()->current_tenant_id)
+                    ->sum('o.qty');
+                    
+                $bundleUsage[$singleSku] = $usage;
             }
         }
 
@@ -117,7 +96,7 @@ class ProductController extends Controller
                 if ($usage > 0) {
                     return '<span class="text-success">' . number_format($usage) . '</span>';
                 }
-                return 0;
+                return '0';
             });
             
             $dataTable->addColumn('order_count', function($product) use ($orderQuantities, $bundleUsage) {
