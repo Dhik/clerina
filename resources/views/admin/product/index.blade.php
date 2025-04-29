@@ -215,6 +215,7 @@
                 return $('#' + tableId).DataTable({
                     processing: true,
                     serverSide: true,
+                    responsive: true,
                     ajax: { 
                         url: '{{ route('product.data') }}',
                         data: function(d) {
@@ -229,35 +230,43 @@
                     columns: [
                         { 
                             data: null, 
-                            name: 'rank', 
+                            name: 'rank',
+                            className: 'text-center',
+                            width: '60px',
                             render: function(data, type, row, meta) {
                                 var rank = meta.row + 1;
 
                                 if (rank === 1) {
-                                    return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'; // Gold Medal for rank 1
+                                    return rank + ' <i class="fas fa-medal medal-icon medal-gold"></i>';
                                 } else if (rank === 2) {
-                                    return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'; // Silver Medal for rank 2
+                                    return rank + ' <i class="fas fa-medal medal-icon medal-silver"></i>';
                                 } else if (rank === 3) {
-                                    return rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'; // Bronze Medal for rank 3
+                                    return rank + ' <i class="fas fa-medal medal-icon medal-bronze"></i>';
                                 } else {
                                     return rank;
                                 }
                             }
                         },
-                        { data: 'sku', name: 'sku' },
+                        { 
+                            data: 'sku', 
+                            name: 'sku',
+                            className: 'text-nowrap'
+                        },
                         { 
                             data: 'product', 
-                            name: 'product', 
+                            name: 'product',
+                            className: 'font-weight-medium',
                             render: function(data, type, row) {
                                 return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
                             }
                         },
                         { 
                             data: 'order_count', 
-                            name: 'order_count', 
+                            name: 'order_count',
+                            className: 'text-right font-weight-bold',
                             render: function(data, type, row) {
                                 if (data == null) {
-                                    return '';
+                                    return '0';
                                 }
                                 return parseFloat(data).toLocaleString('id-ID', {
                                     minimumFractionDigits: 0,
@@ -267,10 +276,11 @@
                         },
                         { 
                             data: 'harga_jual', 
-                            name: 'harga_jual', 
+                            name: 'harga_jual',
+                            className: 'text-right',
                             render: function(data, type, row) {
                                 if (data == null) {
-                                    return '';
+                                    return '-';
                                 }
                                 return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
                                     minimumFractionDigits: 0,
@@ -278,25 +288,65 @@
                                 });
                             }
                         },
-                        { data: 'action', name: 'action', orderable: false, searchable: false }
+                        { 
+                            data: 'action', 
+                            name: 'action', 
+                            orderable: false, 
+                            searchable: false,
+                            className: 'text-center',
+                            width: '100px',
+                            render: function(data, type, row) {
+                                return `
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ route('product.show', ':id') }}".replace(':id', row.id) class="btn btn-xs btn-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-xs btn-success editButton" data-id="${row.id}" title="Edit">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </button>
+                                        <button class="btn btn-xs btn-danger deleteButton" data-id="${row.id}" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                `;
+                            }
+                        }
                     ],
                     order: [[3, 'desc']], 
+                    language: {
+                        processing: '<i class="fas fa-spinner fa-spin fa-2x fa-fw"></i>',
+                        search: '<i class="fas fa-search"></i> _INPUT_',
+                        searchPlaceholder: 'Search...',
+                        lengthMenu: '<i class="fas fa-list-ol"></i> _MENU_',
+                        info: 'Showing _START_ to _END_ of _TOTAL_ products',
+                        infoEmpty: 'No products found',
+                        zeroRecords: 'No matching products found',
+                        paginate: {
+                            first: '<i class="fas fa-angle-double-left"></i>',
+                            previous: '<i class="fas fa-angle-left"></i>',
+                            next: '<i class="fas fa-angle-right"></i>',
+                            last: '<i class="fas fa-angle-double-right"></i>'
+                        }
+                    },
+                    dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
+                    pagingType: 'simple_numbers',
+                    pageLength: 10,
+                    lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
                     drawCallback: function(settings) {
                         var api = this.api();
                         api.rows().every(function() {
                             var row = this.node();
-                            var rankCell = $(row).find('td').eq(0); // The rank column (0 index)
-                            var rank = api.row(row).index() + 1; // Get the rank (1-based index)
+                            var rankCell = $(row).find('td').eq(0);
+                            var rank = api.row(row).index() + 1;
 
-                            // Set the rank and add the medal icon
                             if (rank === 1) {
-                                rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-gold"></i>'); // Gold Medal
+                                rankCell.html(rank + ' <i class="fas fa-medal medal-icon medal-gold"></i>');
                             } else if (rank === 2) {
-                                rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-silver"></i>'); // Silver Medal
+                                rankCell.html(rank + ' <i class="fas fa-medal medal-icon medal-silver"></i>');
                             } else if (rank === 3) {
-                                rankCell.html(rank + ' <i class="fas fa-medal fa-2x medal-icon medal-bronze"></i>'); // Bronze Medal
+                                rankCell.html(rank + ' <i class="fas fa-medal medal-icon medal-bronze"></i>');
                             } else {
-                                rankCell.html(rank); // For all other ranks
+                                rankCell.html(rank);
                             }
                         });
                     }
