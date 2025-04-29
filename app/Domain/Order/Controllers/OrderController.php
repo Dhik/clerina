@@ -1615,15 +1615,23 @@ class OrderController extends Controller
         $processedRows = 0;
         $updatedRows = 0;
         $skippedCount = 0;
+        $skippedDueToNullDate = 0;
         $rowIndex = 2; // Starting from A2 in the sheet
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
+                // Skip the row if date is empty or null
+                if (empty($row[6])) {
+                    $skippedDueToNullDate++;
+                    $rowIndex++;
+                    continue;
+                }
+
                 $orderData = [
-                    'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
+                    'date'                 => Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d'),
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
-                    'sales_channel_id'     => 3, // Tiktok
+                    'sales_channel_id'     => 3,
                     'customer_name'        => $row[8] ?? null,
                     'customer_phone_number' => $row[9] ?? null,
                     'product'              => $row[2] ?? null,
@@ -1675,11 +1683,12 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Tiktok orders imported successfully', 
+            'message' => 'Tokopedia orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'updated_rows' => $updatedRows,
-            'skipped_count' => $skippedCount
+            'skipped_count' => $skippedCount,
+            'skipped_due_to_null_date' => $skippedDueToNullDate
         ]);
     }
     public function importOrdersLazada()
