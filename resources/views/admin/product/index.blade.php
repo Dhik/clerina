@@ -85,6 +85,7 @@
                                             <th width="60">Rank</th>
                                             <th>SKU</th>
                                             <th>Product</th>
+                                            <th>Combination SKUs</th>
                                             <th>Orders</th>
                                             <th>Price</th>
                                             <th width="100">Actions</th>
@@ -190,8 +191,108 @@
         $(document).ready(function() {
             var initialMonth = $('#monthFilter').val();
             
-            // Function to initialize DataTable with improved settings
             function initProductTable(tableId, type) {
+                // Define base columns that are common to both tables
+                let columns = [
+                    { 
+                        data: null, 
+                        name: 'rank',
+                        className: 'text-center',
+                        width: '60px',
+                        render: function(data, type, row, meta) {
+                            var rank = meta.row + 1;
+
+                            if (rank === 1) {
+                                return rank + ' <i class="fas fa-medal medal-icon medal-gold"></i>';
+                            } else if (rank === 2) {
+                                return rank + ' <i class="fas fa-medal medal-icon medal-silver"></i>';
+                            } else if (rank === 3) {
+                                return rank + ' <i class="fas fa-medal medal-icon medal-bronze"></i>';
+                            } else {
+                                return rank;
+                            }
+                        }
+                    },
+                    { 
+                        data: 'sku', 
+                        name: 'sku',
+                        className: 'text-nowrap'
+                    },
+                    { 
+                        data: 'product', 
+                        name: 'product',
+                        className: 'font-weight-medium',
+                        render: function(data, type, row) {
+                            return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
+                        }
+                    }
+                ];
+                
+                // Add combination_skus column for Bundle products
+                if (type === 'Bundle') {
+                    columns.push({ 
+                        data: 'combination_skus', 
+                        name: 'combination_skus',
+                        className: 'text-center',
+                        orderable: false
+                    });
+                }
+                
+                // Add remaining common columns
+                columns = columns.concat([
+                    { 
+                        data: 'order_count', 
+                        name: 'order_count',
+                        className: 'text-right font-weight-bold',
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '0';
+                            }
+                            return parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    { 
+                        data: 'harga_jual', 
+                        name: 'harga_jual',
+                        className: 'text-right',
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '-';
+                            }
+                            return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            });
+                        }
+                    },
+                    { 
+                        data: 'action', 
+                        name: 'action', 
+                        orderable: false, 
+                        searchable: false,
+                        className: 'text-center',
+                        width: '100px',
+                        render: function(data, type, row) {
+                            return `
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('product.show', ':id') }}".replace(':id', row.id) class="btn btn-xs btn-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-xs btn-success editButton" data-id="${row.id}" title="Edit">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="btn btn-xs btn-danger deleteButton" data-id="${row.id}" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ]);
+
                 return $('#' + tableId).DataTable({
                     processing: true,
                     serverSide: true,
@@ -203,92 +304,8 @@
                             d.type = type;
                         }
                     },
-                    columns: [
-                        { 
-                            data: null, 
-                            name: 'rank',
-                            className: 'text-center',
-                            width: '60px',
-                            render: function(data, type, row, meta) {
-                                var rank = meta.row + 1;
-
-                                if (rank === 1) {
-                                    return rank + ' <i class="fas fa-medal medal-icon medal-gold"></i>';
-                                } else if (rank === 2) {
-                                    return rank + ' <i class="fas fa-medal medal-icon medal-silver"></i>';
-                                } else if (rank === 3) {
-                                    return rank + ' <i class="fas fa-medal medal-icon medal-bronze"></i>';
-                                } else {
-                                    return rank;
-                                }
-                            }
-                        },
-                        { 
-                            data: 'sku', 
-                            name: 'sku',
-                            className: 'text-nowrap'
-                        },
-                        { 
-                            data: 'product', 
-                            name: 'product',
-                            className: 'font-weight-medium',
-                            render: function(data, type, row) {
-                                return '<a href="' + '{{ route('product.show', ':id') }}'.replace(':id', row.id) + '">' + data + '</a>';
-                            }
-                        },
-                        { 
-                            data: 'order_count', 
-                            name: 'order_count',
-                            className: 'text-right font-weight-bold',
-                            render: function(data, type, row) {
-                                if (data == null) {
-                                    return '0';
-                                }
-                                return parseFloat(data).toLocaleString('id-ID', {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                });
-                            }
-                        },
-                        { 
-                            data: 'harga_jual', 
-                            name: 'harga_jual',
-                            className: 'text-right',
-                            render: function(data, type, row) {
-                                if (data == null) {
-                                    return '-';
-                                }
-                                return 'Rp ' + parseFloat(data).toLocaleString('id-ID', {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                });
-                            }
-                        },
-                        { 
-                            data: 'action', 
-                            name: 'action', 
-                            orderable: false, 
-                            searchable: false,
-                            className: 'text-center',
-                            width: '100px',
-                            render: function(data, type, row) {
-                                return `
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('product.show', ':id') }}".replace(':id', row.id) class="btn btn-xs btn-primary" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <button class="btn btn-xs btn-success editButton" data-id="${row.id}" title="Edit">
-                                            <i class="fas fa-pencil-alt"></i>
-                                        </button>
-                                        <button class="btn btn-xs btn-danger deleteButton" data-id="${row.id}" title="Delete">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                `;
-                            }
-                        }
-                    ],
-                    order: [[3, 'desc']], 
+                    columns: columns,
+                    order: [[3 + (type === 'Bundle' ? 1 : 0), 'desc']], // Adjust order column index based on table type
                     language: {
                         processing: '<div class="text-center my-2"><i class="fas fa-spinner fa-spin fa-2x fa-fw"></i><div class="mt-2">Loading...</div></div>',
                         search: '<i class="fas fa-search"></i> _INPUT_',

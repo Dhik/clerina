@@ -54,37 +54,57 @@ class ProductController extends Controller
             ->groupBy('sku')
             ->pluck('total_qty', 'sku');
 
-        return DataTables::of($products)
-            ->addColumn('action', function ($product) {
-                return '
-                    <button class="btn btn-sm btn-primary viewButton" 
-                        data-id="' . $product->id . '" 
-                        data-toggle="modal" 
-                        data-target="#viewProductModal">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-success editButton" 
-                        data-id="' . $product->id . '" 
-                        data-product="' . htmlspecialchars($product->product, ENT_QUOTES, 'UTF-8') . '" 
-                        data-stock="' . $product->stock . '" 
-                        data-sku="' . $product->sku . '" 
-                        data-harga_jual="' . $product->harga_jual . '" 
-                        data-harga_markup="' . $product->harga_markup . '" 
-                        data-harga_cogs="' . $product->harga_cogs . '" 
-                        data-harga_batas_bawah="' . $product->harga_batas_bawah . '" 
-                        data-tenant_id="' . $product->tenant_id . '" 
-                        data-toggle="modal" 
-                        data-target="#productModal">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
-                ';
-            })
+        $dataTable = DataTables::of($products)
             ->addColumn('order_count', function ($product) use ($orderQuantities) {
                 return $orderQuantities[$product->sku] ?? 0;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+            });
+        
+        // For Bundle products, add columns to show combination SKUs
+        if ($type === 'Bundle') {
+            $dataTable->addColumn('combination_skus', function($product) {
+                $output = '';
+                
+                if ($product->combination_sku_1) {
+                    $output .= '<span class="badge badge-info mr-1">' . $product->combination_sku_1 . '</span>';
+                }
+                
+                if ($product->combination_sku_2) {
+                    $output .= '<span class="badge badge-primary">' . $product->combination_sku_2 . '</span>';
+                }
+                
+                return $output ?: '-';
+            });
+        }
+        
+        $dataTable->addColumn('action', function ($product) {
+            return '
+                <button class="btn btn-sm btn-primary viewButton" 
+                    data-id="' . $product->id . '" 
+                    data-toggle="modal" 
+                    data-target="#viewProductModal">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-success editButton" 
+                    data-id="' . $product->id . '" 
+                    data-product="' . htmlspecialchars($product->product, ENT_QUOTES, 'UTF-8') . '" 
+                    data-stock="' . $product->stock . '" 
+                    data-sku="' . $product->sku . '" 
+                    data-harga_jual="' . $product->harga_jual . '" 
+                    data-harga_markup="' . $product->harga_markup . '" 
+                    data-harga_cogs="' . $product->harga_cogs . '" 
+                    data-harga_batas_bawah="' . $product->harga_batas_bawah . '" 
+                    data-tenant_id="' . $product->tenant_id . '" 
+                    data-toggle="modal" 
+                    data-target="#productModal">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
+            ';
+        });
+        
+        $dataTable->rawColumns(['action', 'combination_skus']);
+        
+        return $dataTable->make(true);
     }
 
 
