@@ -595,6 +595,136 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Get order count by sales channel, including both direct orders and bundle usage
+     */
+    public function getOrderCountBySalesChannel($productId, Request $request)
+    {
+        $product = Product::findOrFail($productId);
+        $productSku = $product->sku;
+        $salesChannelId = request('sales_channel');
+        $month = $request->input('month', date('Y-m'));
+        
+        // Set date conditions if month provided
+        $dateCondition = [];
+        if ($month) {
+            $dateCondition = [
+                date('Y', strtotime($month)),
+                date('m', strtotime($month))
+            ];
+        }
+
+        // For single products, include both direct orders and bundle usage
+        if ($product->type == 'Single') {
+            // Query for direct orders by sales channel
+            $directOrdersQuery = Order::where('sku', $productSku)
+                ->when($salesChannelId, function($query) use ($salesChannelId) {
+                    return $query->where('sales_channel_id', $salesChannelId);
+                })
+                ->when($month, function($query) use ($dateCondition) {
+                    return $query->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', $dateCondition);
+                })
+                ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+                ->select(
+                    'sales_channels.name as sales_channel',
+                    DB::raw('COUNT(orders.id) as order_count'),
+                    DB::raw("'direct' as order_type")
+                )
+                ->groupBy('sales_channels.id', 'sales_channels.name');
+            
+            // Query for bundle orders by sales channel
+            $bundleOrdersQuery = Order::join('products as p', 'orders.sku', '=', 'p.sku')
+                ->where('p.type', 'Bundle')
+                ->where(function($query) use ($productSku) {
+                    $query->where('p.combination_sku_1', $productSku)
+                        ->orWhere('p.combination_sku_2', $productSku);
+                })
+                ->when($salesChannelId, function($query) use ($salesChannelId) {
+                    return $query->where('orders.sales_channel_id', $salesChannelId);
+                })
+                ->when($month, function($query) use ($dateCondition) {
+                    return $query->whereRaw('YEAR(orders.date) = ? AND MONTH(orders.date) = ?', $dateCondition);
+                })
+                ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+                ->select(
+                    'sales_channels.name as sales_channel',
+                    DB::raw('COUNT(orders.id) as order_count'),
+                    DB::raw("'bundle' as order_type")
+                )
+                ->groupBy('sales_channels.id', 'sales_channels.name');
+                
+            // Combine both queries with union
+            $combinedQuery = $directOrdersQuery->union($bundleOrdersQuery);
+            
+            // Get the combined counts grouped by sales channel
+            $orderCounts = DB::query()
+                ->fromSub($combinedQuery, 'combined_orders')
+                ->select(
+                    'sales_channel',
+                    DB::raw('SUM(order_count) as total_count'),
+                    'order_type'
+                )
+                ->groupBy('sales_channel', 'order_type')
+                ->get();
+                
+            // Organize data for the stacked bar chart
+            $channels = $orderCounts->pluck('sales_channel')->unique();
+            
+            $directData = [];
+            $bundleData = [];
+            
+            foreach ($channels as $channel) {
+                $directItem = $orderCounts->where('sales_channel', $channel)
+                                        ->where('order_type', 'direct')
+                                        ->first();
+                
+                $bundleItem = $orderCounts->where('sales_channel', $channel)
+                                        ->where('order_type', 'bundle')
+                                        ->first();
+                                        
+                $directData[] = $directItem ? $directItem->total_count : 0;
+                $bundleData[] = $bundleItem ? $bundleItem->total_count : 0;
+            }
+            
+            return response()->json([
+                'labels' => $channels,
+                'datasets' => [
+                    [
+                        'label' => 'Direct Orders',
+                        'data' => $directData,
+                        'backgroundColor' => 'rgba(54, 162, 235, 0.6)'
+                    ],
+                    [
+                        'label' => 'Bundle Usage',
+                        'data' => $bundleData,
+                        'backgroundColor' => 'rgba(75, 192, 192, 0.6)'
+                    ]
+                ]
+            ]);
+        } else {
+            // For non-single products, use the original logic
+            $orderCounts = Order::where('sku', $product->sku)
+                ->when($salesChannelId, function($query) use ($salesChannelId) {
+                    return $query->where('sales_channel_id', $salesChannelId);
+                })
+                ->when($month, function($query) use ($dateCondition) {
+                    return $query->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', $dateCondition);
+                })
+                ->join('sales_channels', 'orders.sales_channel_id', '=', 'sales_channels.id')
+                ->select('sales_channels.name as sales_channel', DB::raw('COUNT(orders.id) as order_count'))
+                ->groupBy('sales_channels.id', 'sales_channels.name')
+                ->get();
+
+            $labels = $orderCounts->pluck('sales_channel');
+            $data = $orderCounts->pluck('order_count');
+
+            return response()->json([
+                'labels' => $labels,
+                'data' => $data
+            ]);
+        }
+    }
+
     public function getTalentContent($productId, Request $request)
     {
         $product = Product::findOrFail($productId);

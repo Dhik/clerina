@@ -329,51 +329,109 @@
     }
 
     function createSalesChannelOrderCountChart(chartId, response) {
-        const ctx = document.getElementById(chartId).getContext('2d');
+            const ctx = document.getElementById(chartId).getContext('2d');
 
-        // Destroy the previous chart instance if it exists
-        if (salesChannelOrderCountChartInstance) {
-            salesChannelOrderCountChartInstance.destroy();
-        }
-
-        // Create a new chart instance
-        salesChannelOrderCountChartInstance = new Chart(ctx, {
-            type: 'bar', // Bar chart
-            data: {
-                labels: response.labels, // Sales channel labels
-                datasets: [{
-                    label: 'Order Count by Sales Channel',
-                    data: response.data, // Order count values
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)', // Bar color
-                    borderColor: 'rgba(54, 162, 235, 1)', // Border color
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Sales Channel'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Order Count'
-                        },
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false // Hide legend
-                    }
-                }
+            // Destroy the previous chart instance if it exists
+            if (salesChannelOrderCountChartInstance) {
+                salesChannelOrderCountChartInstance.destroy();
             }
-        });
-    }
+            
+            // Check if we have stacked data (for Single products) or regular data
+            const isStackedData = response.datasets !== undefined;
+            
+            if (isStackedData) {
+                // Create a stacked bar chart for Single products (showing direct + bundle)
+                salesChannelOrderCountChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: response.labels,
+                        datasets: response.datasets
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Sales Channel'
+                                },
+                                stacked: true
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Order Count'
+                                },
+                                stacked: true,
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterTitle: function(tooltipItems) {
+                                        const item = tooltipItems[0];
+                                        const dataset = item.dataset;
+                                        const index = item.dataIndex;
+                                        const value = dataset.data[index];
+                                        return `${dataset.label}: ${value}`;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        let sum = 0;
+                                        tooltipItems.forEach(item => {
+                                            sum += item.parsed.y;
+                                        });
+                                        return `Total: ${sum}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Create a regular bar chart for non-Single products
+                salesChannelOrderCountChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: response.labels,
+                        datasets: [{
+                            label: 'Order Count by Sales Channel',
+                            data: response.data,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Sales Channel'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Order Count'
+                                },
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
 
     $(document).ready(function() {
         $('#salesBtn').on('click', function() {
