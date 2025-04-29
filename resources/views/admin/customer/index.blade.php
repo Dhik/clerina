@@ -102,8 +102,10 @@
                     {data: 'name', name: 'name'},
                     {data: 'phone_number', name: 'phone_number'},
                     {data: 'count_orders', name: 'count_orders'},
+                    {data: 'last_order_date', name: 'last_order_date'},
                     {data: 'actions', sortable: false, orderable: false}
-                ]
+                ],
+                order: [[3, 'desc']] // Sort by last_order_date column (index 3) in descending order
             });
 
             filterCountOrders.change(function () {

@@ -49,12 +49,13 @@ class CustomerController extends Controller
     public function getCustomer(Request $request): JsonResponse
     {
         $this->authorize('viewCustomer', Customer::class);
-
         $query = $this->customerBLL->getCustomerDatatable($request, Auth::user()->current_tenant_id);
-
         return DataTables::of($query)
             ->addColumn('tenant_name', function ($row) {
                 return $row->tenant_name;
+            })
+            ->addColumn('last_order_date', function ($row) {
+                return $row->last_order_date ? date('d M Y', strtotime($row->last_order_date)) : '-';
             })
             ->addColumn('actions', function ($row) {
                 return '<a href="'. $row->wa_link .'" class="btn btn-success btn-sm" target="_blank">

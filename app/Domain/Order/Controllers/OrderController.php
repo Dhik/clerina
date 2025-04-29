@@ -891,7 +891,6 @@ class OrderController extends Controller
         }
     }
 
-
     private function getSalesChannelId($channelName)
     {
         return match ($channelName) {
