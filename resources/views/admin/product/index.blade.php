@@ -61,8 +61,8 @@
                                             <th width="60">Rank</th>
                                             <th>SKU</th>
                                             <th>Product</th>
-                                            <th>Direct Orders</th>
-                                            <th>Bundle Usage</th>
+                                            <th>Direct Orders Qty</th>
+                                            <th>Bundle Usage Qty</th>
                                             <th>Total</th>
                                             <th>Price</th>
                                             <th width="100">Actions</th>
