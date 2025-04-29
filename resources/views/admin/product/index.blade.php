@@ -9,9 +9,9 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <div id="topProductCard" class="card card-primary card-outline">
-            <div class="card-header">
-                <h3 class="card-title">🏆 Top Performing Product of the Month</h3>
+        <div id="topProductCard" class="card card-primary card-outline shadow-sm">
+            <div class="card-header bg-light">
+                <h3 class="card-title"><i class="fas fa-trophy text-warning mr-2"></i>Top Performing Product of the Month</h3>
             </div>
             <div class="card-body">
                 <div id="topProductContent" class="text-center">
@@ -24,56 +24,75 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+                            </div>
                             <input type="month" id="monthFilter" class="form-control" value="{{ date('Y-m') }}">
                         </div>
-                        <div class="col-auto">
-                            <button class="btn btn-primary" data-toggle="modal" data-target="#addProductModal">
-                                <i class="fas fa-plus"></i> Add Product
-                            </button>
-                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 class="mb-0 text-center">Product Performance Dashboard</h4>
+                    </div>
+                    <div class="col-md-3 text-right">
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addProductModal">
+                            <i class="fas fa-plus mr-1"></i> Add Product
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card-body">
+            <div class="card-body pb-0">
+                <!-- Product Tables -->
                 <div class="row">
                     <!-- Single Products Table -->
                     <div class="col-md-6">
-                        <h4>Single Products</h4>
-                        <table id="singleProductsTable" class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>SKU</th>
-                                    <th>Product Name</th>
-                                    <th>Jumlah Order</th>
-                                    <th>Harga Jual</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
+                        <div class="card mb-4">
+                            <div class="card-header bg-gradient-light py-2">
+                                <h5 class="mb-0"><i class="fas fa-box mr-2"></i>Single Products</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <table id="singleProductsTable" class="table table-striped table-hover m-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th width="60">Rank</th>
+                                            <th>SKU</th>
+                                            <th>Product</th>
+                                            <th>Orders</th>
+                                            <th>Price</th>
+                                            <th width="100">Actions</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Combination Products Table -->
+                    <!-- Bundle Products Table -->
                     <div class="col-md-6">
-                        <h4>Bundle Products</h4>
-                        <table id="combinationProductsTable" class="table table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>SKU</th>
-                                    <th>Product Name</th>
-                                    <th>Jumlah Order</th>
-                                    <th>Harga Jual</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
+                        <div class="card mb-4">
+                            <div class="card-header bg-gradient-light py-2">
+                                <h5 class="mb-0"><i class="fas fa-boxes mr-2"></i>Bundle Products</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <table id="combinationProductsTable" class="table table-striped table-hover m-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th width="60">Rank</th>
+                                            <th>SKU</th>
+                                            <th>Product</th>
+                                            <th>Orders</th>
+                                            <th>Price</th>
+                                            <th width="100">Actions</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -87,25 +106,79 @@
 
 @section('css')
 <style>
+    /* Medal styling */
     .medal-icon {
         position: relative;
-        top: -2px; /* Slight vertical adjustment */
-        margin-left: 5px; /* Space between rank number and medal */
+        top: -2px;
+        margin-left: 5px;
     }
 
     .medal-gold {
-        color: #FFD700; /* Gold color */
+        color: #FFD700;
         text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
     }
 
     .medal-silver {
-        color: #C0C0C0; /* Silver color */
+        color: #C0C0C0;
         text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
     }
 
     .medal-bronze {
-        color: #CD7F32; /* Bronze color */
+        color: #CD7F32;
         text-shadow: 0 0 5px rgba(205, 127, 50, 0.5);
+    }
+
+    /* DataTable improvements */
+    .table {
+        width: 100% !important;
+    }
+    
+    .dataTables_wrapper .row {
+        margin: 0;
+    }
+    
+    .dataTables_filter, .dataTables_length {
+        padding: 8px 15px;
+    }
+    
+    .dataTables_info, .dataTables_paginate {
+        padding: 10px 15px;
+    }
+    
+    .dataTables_length select, .dataTables_filter input {
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+        padding: 4px 8px;
+    }
+    
+    .card-header.bg-gradient-light {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    }
+    
+    /* Action button spacing */
+    .btn-sm {
+        margin-right: 3px;
+    }
+    
+    /* Helper class for smaller icons */
+    .fas.fa-sm {
+        font-size: 0.8em;
+    }
+    
+    /* Compact table */
+    .table-compact td, .table-compact th {
+        padding: 0.5rem;
+    }
+    
+    /* Improve hover effects */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    /* Better scrolling for tables */
+    .card-body-scroll {
+        max-height: 500px;
+        overflow-y: auto;
     }
 </style>
 @endsection
