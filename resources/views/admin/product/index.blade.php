@@ -188,29 +188,9 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
         $(document).ready(function() {
-            Swal.fire({
-                title: 'Loading Products',
-                html: 'Please wait while we prepare your data...',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            let loadingCounter = 0;
-            const totalLoads = 3; // Top product + 2 tables
-
-            function checkAllLoaded() {
-                loadingCounter++;
-                if (loadingCounter === totalLoads) {
-                    Swal.close();   
-                }
-            }
-
             var initialMonth = $('#monthFilter').val();
             
-            // Function to initialize DataTable
+            // Function to initialize DataTable with improved settings
             function initProductTable(tableId, type) {
                 return $('#' + tableId).DataTable({
                     processing: true,
@@ -221,10 +201,6 @@
                         data: function(d) {
                             d.month = $('#monthFilter').val();
                             d.type = type;
-                        },
-                        dataSrc: function(response) {
-                            checkAllLoaded();
-                            return response.data;
                         }
                     },
                     columns: [
@@ -314,7 +290,7 @@
                     ],
                     order: [[3, 'desc']], 
                     language: {
-                        processing: '<i class="fas fa-spinner fa-spin fa-2x fa-fw"></i>',
+                        processing: '<div class="text-center my-2"><i class="fas fa-spinner fa-spin fa-2x fa-fw"></i><div class="mt-2">Loading...</div></div>',
                         search: '<i class="fas fa-search"></i> _INPUT_',
                         searchPlaceholder: 'Search...',
                         lengthMenu: '<i class="fas fa-list-ol"></i> _MENU_',
@@ -358,16 +334,7 @@
             var combinationTable = initProductTable('combinationProductsTable', 'Bundle');
 
             $('#monthFilter').on('change', function() {
-                Swal.fire({
-                    title: 'Updating Data',
-                    html: 'Please wait...',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                loadingCounter = 0;
+                // Instead of showing a global loading overlay, let the individual tables show their loading state
                 singleTable.ajax.reload();
                 combinationTable.ajax.reload();
 
@@ -376,8 +343,11 @@
             });
 
             function fetchTopProduct(month) {
+                // Add loading indicator to top product card
+                $('#topProductContent').html('<div class="text-center my-3"><i class="fas fa-spinner fa-spin fa-2x"></i><div class="mt-2">Loading top product...</div></div>');
+                
                 $.ajax({
-                    url: '{{ route('product.top') }}', // You'll need to create this route
+                    url: '{{ route('product.top') }}',
                     method: 'GET',
                     data: { month: month },
                     success: function(response) {
@@ -404,11 +374,9 @@
                         } else {
                             $('#topProductContent').html('<p class="text-muted">No top product found this month.</p>');
                         }
-                        checkAllLoaded();
                     },
                     error: function() {
                         $('#topProductContent').html('<p class="text-danger">Failed to load top product.</p>');
-                        checkAllLoaded();
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops...',
@@ -430,12 +398,6 @@
                     });
                 }
             }
-
-            // Click handler for view buttons on both tables
-            $('#singleProductsTable, #combinationProductsTable').on('click', '.viewButton', function() {
-                var id = $(this).data('id');
-                window.location.href = '{{ route('product.show', ':id') }}'.replace(':id', id);
-            });
 
             // Click handler for edit buttons on both tables
             $('#singleProductsTable, #combinationProductsTable').on('click', '.editButton', function() {
@@ -464,8 +426,6 @@
             // Click handler for delete buttons on both tables
             $('#singleProductsTable, #combinationProductsTable').on('click', '.deleteButton', function() {
                 var id = $(this).data('id');
-                var table = $(this).closest('table').DataTable();
-                var row = table.row($(this).closest('tr'));
                 
                 Swal.fire({
                     title: 'Are you sure?',
