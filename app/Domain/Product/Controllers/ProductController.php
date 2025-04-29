@@ -41,14 +41,14 @@ class ProductController extends Controller
         $selectedMonth = $request->input('month', date('Y-m'));
 
         $products = Product::where('tenant_id', Auth::user()->current_tenant_id)->get();
-        $orderCounts = Order::where('tenant_id', Auth::user()->current_tenant_id)
+        $orderQuantities = Order::where('tenant_id', Auth::user()->current_tenant_id)
             ->whereRaw('YEAR(date) = ? AND MONTH(date) = ?', [
                 date('Y', strtotime($selectedMonth)), 
                 date('m', strtotime($selectedMonth))
             ])
-            ->selectRaw('sku, COUNT(*) as count')
+            ->selectRaw('sku, SUM(qty) as total_qty')
             ->groupBy('sku')
-            ->pluck('count', 'sku');
+            ->pluck('total_qty', 'sku');
 
         return DataTables::of($products)
             ->addColumn('action', function ($product) {
@@ -76,10 +76,8 @@ class ProductController extends Controller
                     <button class="btn btn-sm btn-danger deleteButton" data-id="' . $product->id . '"><i class="fas fa-trash-alt"></i></button>
                 ';
             })
-            ->addColumn('order_count', function ($product) use ($orderCounts) {
-                return $orderCounts->filter(function($count, $sku) use ($product) {
-                    return strpos($sku, $product->sku) !== false;
-                })->sum() ?? 0;
+            ->addColumn('order_count', function ($product) use ($orderQuantities) {
+                return $orderQuantities[$product->sku] ?? 0;
             })
             ->rawColumns(['action'])
             ->make(true);
