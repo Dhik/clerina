@@ -1604,12 +1604,31 @@ class NetProfitController extends Controller
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
         
-        // Use the same query structure as your getNetProfit method
-        $baseQuery = DB::table('net_profits as np')
+        // Get all sales data aggregated by sales channel
+        $salesData = DB::table('laporan_keuangan as lk')
             ->select(
-                'np.*', 
-                's.ad_spent_social_media',
-                's.ad_spent_market_place'
+                'sc.id as channel_id',
+                'sc.name as channel_name',
+                DB::raw('SUM(lk.sales) as total_sales'),
+                DB::raw('SUM(lk.hpp) as total_hpp'),
+                DB::raw('SUM(lk.fee_admin) as total_fee_admin')
+            )
+            ->leftJoin('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
+            ->where('lk.tenant_id', '=', $currentTenantId)
+            ->whereMonth('lk.date', $now->month)
+            ->whereYear('lk.date', $now->year)
+            ->groupBy('sc.id', 'sc.name')
+            ->get();
+        
+        // Get additional data from net_profits and sales tables if needed
+        $additionalData = DB::table('net_profits as np')
+            ->select(
+                DB::raw('SUM(np.marketing) as total_marketing'),
+                DB::raw('SUM(np.spent_kol) as total_kol'),
+                DB::raw('SUM(np.affiliate) as total_affiliate'),
+                DB::raw('SUM(np.operasional) as total_operasional'),
+                DB::raw('SUM(s.ad_spent_social_media) as total_ad_spent_social'),
+                DB::raw('SUM(s.ad_spent_market_place) as total_ad_spent_marketplace')
             )
             ->leftJoin('sales as s', function($join) use ($currentTenantId) {
                 $join->on('np.date', '=', 's.date')
@@ -1618,96 +1637,147 @@ class NetProfitController extends Controller
             ->where('np.tenant_id', '=', $currentTenantId)
             ->whereMonth('np.date', $now->month)
             ->whereYear('np.date', $now->year)
-            ->orderBy('np.date');
+            ->first();
         
-        $records = $baseQuery->get();
-        
-        // Prepare data for Google Sheets
+        // Prepare data for Google Sheets in the format shown in the image
         $data = [];
         
-        // Add headers with all the columns
-        $data[] = [
-            'Date', 
-            'Net Profit',
-            'Sales', 
-            'B2B Sales', 
-            'CRM Sales', 
-            'Total Sales',
-            'Net Sales',
-            'Marketing', 
-            'KOL Spending', 
-            'Affiliate',
-            'Total Marketing',
-            'Operasional', 
-            'HPP', 
-            'Fee Packing',
-            'Admin Fee',
-            'PPN',
-            'ROAS',
-            'ROMI',
-            'Visits',
-            'Quantity',
-            'Orders',
-            'Closing Rate',
-            'Ad Spent (Social)',
-            'Ad Spent (Marketplace)'
-        ];
+        // Title
+        $data[] = ['LABA RUGI KONSOLIDASI BRAND CLEORA'];
+        $data[] = []; // Empty row
         
-        // Helper function to ensure number format
-        $ensureNumber = function($value) {
-            // Cast to float to ensure it's a number
-            // This will handle both string and numeric inputs
-            return (float)$value;
-        };
+        // Gross Revenue section
+        $data[] = ['Gross Revenue', ''];
         
-        // Add rows
-        foreach ($records as $row) {
-            // Calculate all the derived fields (similar to your DataTables method)
-            $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
-            $netSales = $totalSales * 0.713;
-            $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
-            $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
-            $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
-            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
-            $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
-            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.713) - 
-            ($ensureNumber($row->marketing ?? 0) * 1.05) - 
-            $ensureNumber($row->spent_kol ?? 0) - 
-            $ensureNumber($row->affiliate ?? 0) - 
-            $ensureNumber($row->operasional ?? 0) - 
-            ($ensureNumber($row->hpp ?? 0) * 0.94);
+        // Format channel names as shown in the image
+        $shopeeChannels = $salesData->filter(function($item) {
+            return str_contains(strtolower($item->channel_name), 'shopee');
+        });
+        
+        // Add Shopee Mall
+        $shopeeMall = $shopeeChannels->where('channel_name', 'Shopee')->first();
+        $data[] = ['', 'Shopee Mall', $shopeeMall ? $shopeeMall->total_sales : 0];
+        
+        // Add Shopee Toko Bandung
+        $shopeeBandung = $shopeeChannels->where('channel_name', 'Shopee 2 - Bandung')->first();
+        $data[] = ['', 'Shopee Toko Bandung', $shopeeBandung ? $shopeeBandung->total_sales : 0];
+        
+        // Add Shopee Toko Jakarta
+        $shopeeJakarta = $shopeeChannels->where('channel_name', 'Shopee 3 - Jakarta')->first();
+        $data[] = ['', 'Shopee Toko Jakarta', $shopeeJakarta ? $shopeeJakarta->total_sales : 0];
+        
+        // Add Tiktok Mall
+        $tiktok = $salesData->where('channel_name', 'Tiktok Shop')->first();
+        $data[] = ['', 'Tiktok Mall', $tiktok ? $tiktok->total_sales : 0];
+        
+        // Add Lazada
+        $lazada = $salesData->where('channel_name', 'Lazada')->first();
+        $data[] = ['', 'Lazada', $lazada ? $lazada->total_sales : 0];
+        
+        // Add Tokopedia
+        $tokopedia = $salesData->where('channel_name', 'Tokopedia')->first();
+        $data[] = ['', 'Tokopedia', $tokopedia ? $tokopedia->total_sales : 0];
+        
+        // Add B2B
+        $b2b = $salesData->where('channel_name', 'B2B')->first();
+        $data[] = ['', 'B2B', $b2b ? $b2b->total_sales : 0];
+        
+        // Add CRM
+        $crm = $salesData->where('channel_name', 'CRM')->first();
+        $data[] = ['', 'Others Sales Chanel (CRM)', $crm ? $crm->total_sales : 0];
+        
+        // Calculate total gross revenue
+        $totalGrossRevenue = $salesData->sum('total_sales');
+        $data[] = ['', 'Total Gross Revenue', $totalGrossRevenue];
+        
+        // Net Revenue section
+        $data[] = ['Net Revenue', ''];
+        
+        // Calculate potential marketplace fees (assuming 28.7% deduction for marketplace fees)
+        $potentialMPRate = 0.287; // 28.7%
+        
+        // Add potential marketplace deductions for each channel
+        $data[] = ['', 'Pot. MP Shopee', -($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Shopee Bandung', -($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Shopee Jakarta', -($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Tiktok', -($tiktok ? $tiktok->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Lazada', -($lazada ? $lazada->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Tokopedia', -($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0)];
+        
+        // Add refund for CRM sales (if applicable)
+        $data[] = ['', 'Refund Sales (CRM)', -($crm ? $crm->total_sales * 0.05 : 0)]; // Assuming 5% refund rate
+        
+        // Add B2B discounts
+        $data[] = ['', 'Regular Diskon B2B', -($b2b ? $b2b->total_sales * 0.1 : 0)]; // Assuming 10% discount
+        
+        // Add other sales channel discounts
+        $data[] = ['', 'Diskon Others Sales Chanel', -($crm ? $crm->total_sales * 0.08 : 0)]; // Assuming 8% discount
+        
+        // Calculate total deductions
+        $totalDeductions = ($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0) +
+                        ($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0) +
+                        ($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0) +
+                        ($tiktok ? $tiktok->total_sales * $potentialMPRate : 0) +
+                        ($lazada ? $lazada->total_sales * $potentialMPRate : 0) +
+                        ($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0) +
+                        ($crm ? $crm->total_sales * 0.05 : 0) +
+                        ($b2b ? $b2b->total_sales * 0.1 : 0) +
+                        ($crm ? $crm->total_sales * 0.08 : 0);
+        
+        // Calculate net revenue
+        $netRevenue = $totalGrossRevenue - $totalDeductions;
+        $data[] = ['', 'Total Net Revenue', $netRevenue];
+        
+        // PPN section (assuming 11% tax)
+        $ppnRate = 0.11;
+        $ppn = $netRevenue * $ppnRate;
+        $data[] = ['PPN', $ppn];
+        
+        // COGS (Cost of Goods Sold) section
+        $data[] = ['COGS', ''];
+        
+        // Add HPP for each channel
+        $data[] = ['', 'HPP Shopee Mall', $shopeeMall ? $shopeeMall->total_hpp : 0];
+        $data[] = ['', 'HPP Shopee Bandung', $shopeeBandung ? $shopeeBandung->total_hpp : 0];
+        $data[] = ['', 'HPP Shopee Jakarta', $shopeeJakarta ? $shopeeJakarta->total_hpp : 0];
+        $data[] = ['', 'HPP Tiktok', $tiktok ? $tiktok->total_hpp : 0];
+        $data[] = ['', 'HPP Lazada', $lazada ? $lazada->total_hpp : 0];
+        $data[] = ['', 'HPP Tokopedia', $tokopedia ? $tokopedia->total_hpp : 0];
+        
+        // Calculate total COGS
+        $totalCOGS = $salesData->sum('total_hpp');
+        $data[] = ['', 'Total COGS', $totalCOGS];
+        
+        // Calculate Gross Profit
+        $grossProfit = $netRevenue - $ppn - $totalCOGS;
+        $data[] = ['Gross Profit', $grossProfit];
+        
+        // Add marketing expenses and operational costs from additional data if needed
+        if ($additionalData) {
+            $data[] = ['Marketing Expenses', ''];
+            $data[] = ['', 'Social Media Ads', $additionalData->total_ad_spent_social ?? 0];
+            $data[] = ['', 'Marketplace Ads', $additionalData->total_ad_spent_marketplace ?? 0];
+            $data[] = ['', 'KOL Spending', $additionalData->total_kol ?? 0];
+            $data[] = ['', 'Affiliate Marketing', $additionalData->total_affiliate ?? 0];
             
-            $data[] = [
-                Carbon::parse($row->date)->format('Y-m-d'),
-                $netProfit,
-                $ensureNumber($row->sales ?? 0),
-                $ensureNumber($row->b2b_sales ?? 0),
-                $ensureNumber($row->crm_sales ?? 0),
-                $totalSales,
-                $ensureNumber(($row->sales * 0.713) ?? 0),
-                $ensureNumber($row->marketing ?? 0),
-                $ensureNumber($row->spent_kol ?? 0),
-                $ensureNumber($row->affiliate ?? 0),
-                $totalMarketingSpend,
-                $ensureNumber($row->operasional ?? 0),
-                $ensureNumber(($row->hpp * 0.94) ?? 0),
-                $ensureNumber(($row->sales * 0.01) ?? 0),
-                $ensureNumber(($row->sales * 0.167) ?? 0),
-                $ensureNumber(($row->sales * 0.03) ?? 0),
-                $ensureNumber($row->roas ?? 0),
-                $romi,
-                (int)($row->visit ?? 0),
-                (int)($row->qty ?? 0),
-                (int)($row->order ?? 0),
-                $ensureNumber($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
-                $ensureNumber($row->ad_spent_social_media ?? 0),
-                $ensureNumber($row->ad_spent_market_place ?? 0)
-            ];
+            $totalMarketing = ($additionalData->total_ad_spent_social ?? 0) + 
+                            ($additionalData->total_ad_spent_marketplace ?? 0) + 
+                            ($additionalData->total_kol ?? 0) + 
+                            ($additionalData->total_affiliate ?? 0);
+            
+            $data[] = ['', 'Total Marketing Expenses', $totalMarketing];
+            
+            // Operational expenses
+            $data[] = ['Operational Expenses', $additionalData->total_operasional ?? 0];
+            
+            // Calculate Net Profit
+            $netProfit = $grossProfit - $totalMarketing - ($additionalData->total_operasional ?? 0);
+            $data[] = ['Net Profit', $netProfit];
         }
         
         $sheetName = 'Laporan Keuangan';
         
-        // Export to Google Sheets - using a wider range to accommodate all columns
+        // Export to Google Sheets
         $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
@@ -1715,7 +1785,7 @@ class NetProfitController extends Controller
             'success' => true, 
             'message' => 'Current month data exported successfully to Google Sheets',
             'month' => $now->format('F Y'),
-            'count' => count($data) - 1 // Subtract 1 for header row
+            'count' => count($data) - 1
         ]);
     }
     public function exportCurrentMonthData()
