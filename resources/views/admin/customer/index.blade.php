@@ -18,7 +18,7 @@
             <div class="small-box bg-info elevation-3">
                 <div class="inner">
                     <h3 id="totalCustomersKPI">0</h3>
-                    <p>{{ trans('labels.filtered_customers') }}</p>
+                    <p>Total Customers</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-users"></i>
@@ -29,7 +29,7 @@
             <div class="small-box bg-success elevation-3">
                 <div class="inner">
                     <h3 id="newCustomersKPI">0</h3>
-                    <p>{{ trans('labels.new_customers') }}</p>
+                    <p>New Customers</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-user-plus"></i>
@@ -40,7 +40,7 @@
             <div class="small-box bg-warning elevation-3">
                 <div class="inner">
                     <h3 id="repeatedCustomersKPI">0</h3>
-                    <p>{{ trans('labels.repeated_customers') }}</p>
+                    <p>Repeated Customers</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-redo"></i>
@@ -55,7 +55,7 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i class="fas fa-filter mr-1"></i> {{ trans('labels.filters') }}
+                        <i class="fas fa-filter mr-1"></i> Filters
                     </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -76,10 +76,10 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="filterMonth">
-                                    <i class="fas fa-calendar-day mr-1"></i> {{ trans('labels.order_date') }}
+                                    <i class="fas fa-calendar-day mr-1"></i> Order Date
                                 </label>
                                 <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
-                                <small class="form-text text-muted">{{ trans('labels.leave_empty_for_current_month') }}</small>
+                                <small class="form-text text-muted">leave empty for current month</small>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -88,18 +88,18 @@
                                     <i class="fas fa-tag mr-1"></i> {{ trans('labels.type') }}
                                 </label>
                                 <select id="filterType" class="form-control">
-                                    <option value="">{{ trans('labels.all_types') }}</option>
-                                    <option value="New Customer">{{ trans('labels.new_customer') }}</option>
-                                    <option value="Repeated">{{ trans('labels.repeated_customer') }}</option>
+                                    <option value="">All Types</option>
+                                    <option value="New Customer">New Customer</option>
+                                    <option value="Repeated">Repeated</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button id="applyFilterBtn" class="btn btn-primary mr-2">
-                                <i class="fas fa-search mr-1"></i> {{ trans('labels.apply') }}
+                                <i class="fas fa-search mr-1"></i> Apply Filter
                             </button>
                             <button id="resetFilterBtn" class="btn btn-secondary">
-                                <i class="fas fa-redo mr-1"></i> {{ trans('labels.reset') }}
+                                <i class="fas fa-redo mr-1"></i> Reset Filter
                             </button>
                         </div>
                     </div>
@@ -114,7 +114,7 @@
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i class="fas fa-user mr-1"></i> {{ trans('labels.customer_list') }}
+                        <i class="fas fa-user mr-1"></i> Customer List
                     </h3>
                 </div>
                 <div class="card-body">
@@ -125,7 +125,7 @@
                                 <th width="15%">{{ trans('labels.type') }}</th>
                                 <th>{{ trans('labels.phone_number') }}</th>
                                 <th>{{ trans('labels.total_order') }}</th>
-                                <th>{{ trans('labels.last_order_date') }}</th>
+                                <th>Last Order Date</th>
                                 <th width="10%">{{ trans('labels.action') }}</th>
                             </tr>
                         </thead>
