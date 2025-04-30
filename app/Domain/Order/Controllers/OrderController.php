@@ -1960,6 +1960,7 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
+        $updatedRows = 0;
         $skippedRows = 0;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
@@ -1967,6 +1968,27 @@ class OrderController extends Controller
                 if (empty($row[3])) {
                     $skippedRows++;
                     continue;
+                }
+                
+                // Parse price by completely removing all dots and commas to store as integer
+                $price = null;
+                if (isset($row[14])) {
+                    // Remove all dots (thousand separators) and any commas
+                    $price = preg_replace('/[.,]/', '', $row[14]);
+                    // Make sure it's a valid integer
+                    $price = is_numeric($price) ? (int)$price : null;
+                }
+                
+                // Parse amount similarly
+                $amount = null;
+                if (isset($row[14]) && isset($row[15])) {
+                    $price_val = preg_replace('/[.,]/', '', $row[14]);
+                    $shipping_val = preg_replace('/[.,]/', '', $row[15]);
+                    
+                    // Only calculate if both are numeric
+                    if (is_numeric($price_val) && is_numeric($shipping_val)) {
+                        $amount = (int)$price_val + (int)$shipping_val;
+                    }
                 }
                 
                 $orderData = [
@@ -1983,16 +2005,15 @@ class OrderController extends Controller
                     'payment_method'       => $row[13] ?? null,
                     'sku'                  => $row[4] ?? null,
                     'variant'              => null,
-                    'price'                => $row[14] ?? null,
+                    'price'                => $price,
                     'username'             => $row[6] ?? null,
                     'shipping_address'     => $row[9] ?? null,
                     'city'                 => $row[10] ?? null,
                     'province'             => $row[11] ?? null,
-                    'amount'               => $row[16] ?? null, // Column Q
+                    'amount'               => $amount,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
                     'status'               => $row[17] ?? null, // Column R
-                    'created_at'           => now(),
                     'updated_at'           => now(),
                 ];
 
@@ -2003,8 +2024,19 @@ class OrderController extends Controller
                             ->where('amount', $orderData['amount'])
                             ->first();
 
-                // If order doesn't exist, create it
-                if (!$order) {
+                // If order exists, update the status
+                if ($order) {
+                    // Only update if the status has changed
+                    if ($order->status != $orderData['status']) {
+                        $order->status = $orderData['status'];
+                        $order->sku = $orderData['sku'];
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    }
+                } else {
+                    // If order doesn't exist, create it with created_at timestamp
+                    $orderData['created_at'] = now();
                     Order::create($orderData);
                     $processedRows++;
                 }
@@ -2016,6 +2048,7 @@ class OrderController extends Controller
             'message' => 'Shopee orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
             'skipped_rows' => $skippedRows
         ]);
     }
