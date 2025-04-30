@@ -2035,45 +2035,47 @@ class OrderController extends Controller
         $range = 'Azrina Tokopedia Processed!A2:P'; 
         $sheetData = $this->googleSheetService->getSheetData($range);
 
-        if (empty($sheetData)) {
-            return response()->json([
-                'message' => 'Tokopedia orders imported successfully',
-                'total_rows' => 0,
-                'processed_rows' => 0
-            ]);
-        }
-
         $tenant_id = 2;
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
+        $updatedRows = 0;
+        $skippedCount = 0;
+        $skippedDueToNullDate = 0;
+        $rowIndex = 2; // Starting from A2 in the sheet
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
+                // Skip the row if date is empty or null
+                if (empty($row[6])) {
+                    $skippedDueToNullDate++;
+                    $rowIndex++;
+                    continue;
+                }
+
                 $orderData = [
-                    'date' => !empty($row[1]) ? Carbon::createFromFormat('d-m-Y H:i:s', $row[1])->format('Y-m-d') : null,
+                    'date'                 => Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d'),
                     'process_at'           => null,
                     'id_order'             => $row[0] ?? null,
-                    'sales_channel_id'     => 3, // Tokopedia
-                    'customer_name'        => $row[7] ?? null,
-                    'customer_phone_number' => $row[8] ?? null,
+                    'sales_channel_id'     => 3,
+                    'customer_name'        => $row[8] ?? null,
+                    'customer_phone_number' => $row[9] ?? null,
                     'product'              => $row[2] ?? null,
-                    'qty'                  => $row[5] ?? null,
-                    'receipt_number'       => $row[14] ?? null,
-                    'shipment'             => $row[15] ?? null,
-                    'payment_method'       => null,
-                    'sku'                  => $row[4] ?? null,
+                    'qty'                  => $row[4] ?? null,
+                    'receipt_number'       => $row[15] ?? null, // Column P
+                    'shipment'             => $row[14] ?? null, // Column O
+                    'payment_method'       => $row[16] ?? null, // Column Q
+                    'sku'                  => $row[1] ?? null,
                     'variant'              => $row[3] ?? null,
-                    'price'                => $row[6] ?? null,
+                    'price'                => $row[5] ?? null,
                     'username'             => $row[7] ?? null,
-                    'shipping_address'     => $row[9] ?? null,
-                    'city'                 => $row[10] ?? null,
-                    'province'             => $row[11] ?? null,
-                    'amount'               => $row[6] ?? null,
+                    'shipping_address'     => $row[12] ?? null, // Column M
+                    'city'                 => $row[11] ?? null, // Column L
+                    'province'             => $row[10] ?? null, // Column K
+                    'amount'               => $row[18] ?? null,
                     'tenant_id'            => $tenant_id,
                     'is_booking'           => 0,
-                    'status'               => $row[13] ?? null,
-                    'created_at'           => now(),
+                    'status'               => $row[13] ?? null, // Column N
                     'updated_at'           => now(),
                 ];
 
@@ -2083,11 +2085,25 @@ class OrderController extends Controller
                             ->where('sku', $orderData['sku'])
                             ->first();
 
-                // If order doesn't exist, create it
-                if (!$order) {
+                // If order exists, update the status
+                if ($order) {
+                    // Only update if the status has changed
+                    if ($order->status != $orderData['status']) {
+                        $order->status = $orderData['status'];
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
+                    } else {
+                        $skippedCount++;
+                    }
+                } else {
+                    // If order doesn't exist, create it with created_at timestamp
+                    $orderData['created_at'] = now();
                     Order::create($orderData);
                     $processedRows++;
                 }
+                
+                $rowIndex++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
@@ -2095,7 +2111,10 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Tokopedia orders imported successfully', 
             'total_rows' => $totalRows,
-            'processed_rows' => $processedRows
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'skipped_count' => $skippedCount,
+            'skipped_due_to_null_date' => $skippedDueToNullDate
         ]);
     }
 
