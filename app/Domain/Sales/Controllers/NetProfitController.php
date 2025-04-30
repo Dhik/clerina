@@ -1609,6 +1609,7 @@ class NetProfitController extends Controller
             ->select(
                 'sc.id as channel_id',
                 'sc.name as channel_name',
+                DB::raw('SUM(lk.gross_revenue) as total_gross_revenue'),
                 DB::raw('SUM(lk.sales) as total_sales'),
                 DB::raw('SUM(lk.hpp) as total_hpp'),
                 DB::raw('SUM(lk.fee_admin) as total_fee_admin')
@@ -1656,38 +1657,38 @@ class NetProfitController extends Controller
         
         // Add Shopee Mall
         $shopeeMall = $shopeeChannels->where('channel_name', 'Shopee')->first();
-        $data[] = ['', 'Shopee Mall', $shopeeMall ? (int)$shopeeMall->total_sales : 0];
+        $data[] = ['', 'Shopee Mall', $shopeeMall ? (int)$shopeeMall->total_gross_revenue : 0];
         
         // Add Shopee Toko Bandung
         $shopeeBandung = $shopeeChannels->where('channel_name', 'Shopee 2 - Bandung')->first();
-        $data[] = ['', 'Shopee Toko Bandung', $shopeeBandung ? (int)$shopeeBandung->total_sales : 0];
+        $data[] = ['', 'Shopee Toko Bandung', $shopeeBandung ? (int)$shopeeBandung->total_gross_revenue : 0];
         
         // Add Shopee Toko Jakarta
         $shopeeJakarta = $shopeeChannels->where('channel_name', 'Shopee 3 - Jakarta')->first();
-        $data[] = ['', 'Shopee Toko Jakarta', $shopeeJakarta ? (int)$shopeeJakarta->total_sales : 0];
+        $data[] = ['', 'Shopee Toko Jakarta', $shopeeJakarta ? (int)$shopeeJakarta->total_gross_revenue : 0];
         
         // Add Tiktok Mall
         $tiktok = $salesData->where('channel_name', 'Tiktok Shop')->first();
-        $data[] = ['', 'Tiktok Mall', $tiktok ? (int)$tiktok->total_sales : 0];
+        $data[] = ['', 'Tiktok Mall', $tiktok ? (int)$tiktok->total_gross_revenue : 0];
         
         // Add Lazada
         $lazada = $salesData->where('channel_name', 'Lazada')->first();
-        $data[] = ['', 'Lazada', $lazada ? (int)$lazada->total_sales : 0];
+        $data[] = ['', 'Lazada', $lazada ? (int)$lazada->total_gross_revenue : 0];
         
         // Add Tokopedia
         $tokopedia = $salesData->where('channel_name', 'Tokopedia')->first();
-        $data[] = ['', 'Tokopedia', $tokopedia ? (int)$tokopedia->total_sales : 0];
+        $data[] = ['', 'Tokopedia', $tokopedia ? (int)$tokopedia->total_gross_revenue : 0];
         
         // Add B2B
         $b2b = $salesData->where('channel_name', 'B2B')->first();
-        $data[] = ['', 'B2B', $b2b ? (int)$b2b->total_sales : 0];
+        $data[] = ['', 'B2B', $b2b ? (int)$b2b->total_gross_revenue : 0];
         
         // Add CRM
         $crm = $salesData->where('channel_name', 'CRM')->first();
-        $data[] = ['', 'Others Sales Chanel (CRM)', $crm ? (int)$crm->total_sales : 0];
+        $data[] = ['', 'Others Sales Chanel (CRM)', $crm ? (int)$crm->total_gross_revenue : 0];
         
         // Calculate total gross revenue
-        $totalGrossRevenue = $salesData->sum('total_sales');
+        $totalGrossRevenue = $salesData->sum('total_gross_revenue');
         $data[] = ['', 'Total Gross Revenue', (int)$totalGrossRevenue];
         
         // Net Revenue section
