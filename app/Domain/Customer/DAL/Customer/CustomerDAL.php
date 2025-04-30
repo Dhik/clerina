@@ -34,8 +34,9 @@ class CustomerDAL extends BaseDAL implements CustomerDALInterface
     public function getCustomerDataTable(): Builder
     {
         return $this->customer->query()
-            ->select('customers.id', 'customers.name', 'customers.phone_number', 'customers.count_orders', 
-                    'customers.tenant_id', 'customers.last_order_date', 'tenants.name as tenant_name')
+            ->select('customers.id', 'customers.name', 'customers.type', 'customers.phone_number', 
+                    'customers.count_orders', 'customers.tenant_id', 'customers.last_order_date', 
+                    'tenants.name as tenant_name')
             ->join('tenants', 'customers.tenant_id', '=', 'tenants.id');
     }
 

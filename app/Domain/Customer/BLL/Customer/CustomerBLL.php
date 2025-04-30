@@ -52,6 +52,9 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
         if ($request->has('filterCountOrders') && !is_null($request->input('filterCountOrders'))) {
             $query->where('customers.count_orders', '=', $request->input('filterCountOrders'));
         }
+        if ($request->has('filterType') && !empty($request->input('filterType'))) {
+            $query->where('customers.type', $request->input('filterType'));
+        }
 
         return $query;
     }

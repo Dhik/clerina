@@ -21,14 +21,24 @@
                                 <input type="number" id="filterCountOrders" class="form-control" min="0">
                             </div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label for="filterMonth">{{ trans('labels.order_date') }}</label>
                                 <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
                                 <small class="form-text text-muted">{{ trans('labels.leave_empty_for_all_dates') }}</small>
                             </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="filterType">{{ trans('labels.type') }}</label>
+                                <select id="filterType" class="form-control">
+                                    <option value="">{{ trans('labels.all_types') }}</option>
+                                    <option value="New Customer">{{ trans('labels.new_customer') }}</option>
+                                    <option value="Repeated">{{ trans('labels.repeated_customer') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
                             <button id="applyFilterBtn" class="btn btn-primary mr-2">{{ trans('labels.apply') }}</button>
                             <button id="resetFilterBtn" class="btn btn-secondary">{{ trans('labels.reset') }}</button>
                         </div>
@@ -46,6 +56,7 @@
                         <thead>
                             <tr>
                                 <th>{{ trans('labels.name') }}</th>
+                                <th>{{ trans('labels.type') }}</th>
                                 <th>{{ trans('labels.phone_number') }}</th>
                                 <th>{{ trans('labels.total_order') }}</th>
                                 <th>{{ trans('labels.last_order_date') }}</th>
@@ -117,6 +128,8 @@
             
             const customerTableSelector = $('#customerTable');
             const filterCountOrders = $('#filterCountOrders');
+            const filterType = $('#filterType');
+            const filterMonth = $('#filterMonth');
 
             let customerTable = customerTableSelector.DataTable({
                 responsive: true,
@@ -127,17 +140,19 @@
                     url: "{{ route('customer.get') }}",
                     data: function (d) {
                         d.filterCountOrders = filterCountOrders.val();
-                        d.filterMonth = $('#filterMonth').val();
+                        d.filterMonth = filterMonth.val();
+                        d.filterType = filterType.val();
                     }
                 },
                 columns: [
                     {data: 'name', name: 'name'},
+                    {data: 'type', name: 'type'},
                     {data: 'phone_number', name: 'phone_number'},
                     {data: 'count_orders', name: 'count_orders'},
                     {data: 'last_order_date', name: 'last_order_date'},
                     {data: 'actions', sortable: false, orderable: false}
                 ],
-                order: [[3, 'desc']] // Sort by last_order_date column (index 3) in descending order
+                order: [[4, 'desc']] // Sort by last_order_date column (now index 4) in descending order
             });
 
             // Apply filters button
@@ -148,7 +163,8 @@
             // Reset filters button
             $('#resetFilterBtn').click(function () {
                 filterCountOrders.val('');
-                $('#filterMonth').val('');
+                filterMonth.val('');
+                filterType.val('');
                 customerTable.draw();
             });
             
@@ -157,7 +173,7 @@
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
-                $('#filterMonth').val(`${year}-${month}`);
+                filterMonth.val(`${year}-${month}`);
             });
             
             $('.small-box').click(function() {
