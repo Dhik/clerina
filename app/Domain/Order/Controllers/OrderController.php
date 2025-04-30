@@ -1779,69 +1779,62 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $skippedRows = []; // Array to track skipped rows
+        $updatedRows = 0;
+        $skippedCount = 0;
         $rowIndex = 2; // Starting from A2 in the sheet
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                try {
-                    $orderData = [
-                        'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
-                        'process_at'           => null,
-                        'id_order'             => $row[0] ?? null,
-                        'sales_channel_id'     => 4, // Tiktok
-                        'customer_name'        => $row[8] ?? null,
-                        'customer_phone_number' => $row[9] ?? null,
-                        'product'              => $row[2] ?? null,
-                        'qty'                  => $row[4] ?? null,
-                        'receipt_number'       => $row[15] ?? null, // Column P
-                        'shipment'             => $row[14] ?? null, // Column O
-                        'payment_method'       => $row[16] ?? null, // Column Q
-                        'sku'                  => $row[1] ?? null,
-                        'variant'              => $row[3] ?? null,
-                        'price'                => $row[5] ?? null,
-                        'username'             => $row[7] ?? null,
-                        'shipping_address'     => $row[12] ?? null, // Column M
-                        'city'                 => $row[11] ?? null, // Column L
-                        'province'             => $row[10] ?? null, // Column K
-                        'amount'               => $row[18] ?? null,
-                        'tenant_id'            => $tenant_id,
-                        'is_booking'           => 0,
-                        'status'               => $row[13] ?? null, // Column N
-                        'created_at'           => now(),
-                        'updated_at'           => now(),
-                    ];
+                $orderData = [
+                    'date'                 => !empty($row[6]) ? Carbon::createFromFormat('d/m/Y H:i:s', $row[6])->format('Y-m-d') : null,
+                    'process_at'           => null,
+                    'id_order'             => $row[0] ?? null,
+                    'sales_channel_id'     => 4, // Tiktok
+                    'customer_name'        => $row[8] ?? null,
+                    'customer_phone_number' => $row[9] ?? null,
+                    'product'              => $row[2] ?? null,
+                    'qty'                  => $row[4] ?? null,
+                    'receipt_number'       => $row[15] ?? null, // Column P
+                    'shipment'             => $row[14] ?? null, // Column O
+                    'payment_method'       => $row[16] ?? null, // Column Q
+                    'sku'                  => $row[1] ?? null,
+                    'variant'              => $row[3] ?? null,
+                    'price'                => $row[5] ?? null,
+                    'username'             => $row[7] ?? null,
+                    'shipping_address'     => $row[12] ?? null, // Column M
+                    'city'                 => $row[11] ?? null, // Column L
+                    'province'             => $row[10] ?? null, // Column K
+                    'amount'               => $row[18] ?? null,
+                    'tenant_id'            => $tenant_id,
+                    'is_booking'           => 0,
+                    'status'               => $row[13] ?? null, // Column N
+                    'updated_at'           => now(),
+                ];
 
-                    // Check if order with the same id_order, product, sku exists
-                    $order = Order::where('id_order', $orderData['id_order'])
-                                ->where('product', $orderData['product'])
-                                ->where('sku', $orderData['sku'])
-                                ->first();
+                // Check if order with the same id_order, product, sku exists
+                $order = Order::where('id_order', $orderData['id_order'])
+                            ->where('product', $orderData['product'])
+                            ->where('sku', $orderData['sku'])
+                            ->first();
 
-                    // If order doesn't exist, create it
-                    if (!$order) {
-                        Order::create($orderData);
-                        $processedRows++;
+                // If order exists, update the status
+                if ($order) {
+                    // Only update if the status has changed
+                    if ($order->status != $orderData['status']) {
+                        $order->status = $orderData['status'];
+                        $order->updated_at = now();
+                        $order->save();
+                        $updatedRows++;
                     } else {
-                        // Track duplicates
-                        $skippedRows[] = [
-                            'row' => $rowIndex,
-                            'reason' => 'Duplicate order',
-                            'order_id' => $row[0] ?? 'Unknown',
-                            'product' => $row[2] ?? 'Unknown',
-                            'sku' => $row[1] ?? 'Unknown'
-                        ];
+                        $skippedCount++;
                     }
-                } catch (\Exception $e) {
-                    \Log::error("Error processing Tiktok order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                    // Track errors
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Error: ' . $e->getMessage(),
-                        'order_id' => $row[0] ?? 'Unknown'
-                    ];
-                    continue; // Skip this row and continue with the next
+                } else {
+                    // If order doesn't exist, create it with created_at timestamp
+                    $orderData['created_at'] = now();
+                    Order::create($orderData);
+                    $processedRows++;
                 }
+                
                 $rowIndex++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
@@ -1851,7 +1844,8 @@ class OrderController extends Controller
             'message' => 'Tiktok orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
-            'skipped_count' => count($skippedRows)
+            'updated_rows' => $updatedRows,
+            'skipped_count' => $skippedCount
         ]);
     }
     public function importAzrinaLazada()
