@@ -118,6 +118,7 @@ Route::prefix('admin')
             Route::get('/import-data', [NetProfitController::class, 'importNetProfits'])->name('net-profit.import-data');
             Route::get('/import-data-azrina', [NetProfitController::class, 'importNetProfitsAzrina'])->name('net-profit.import-data-azrina');
             Route::get('/export-data', [NetProfitController::class, 'exportCurrentMonthData'])->name('net-profit.export-data');
+            Route::get('/export-lk', [NetProfitController::class, 'exportLK'])->name('net-profit.export-lk');
             Route::get('/export-unknown-orders', [NetProfitController::class, 'exportUnknownOrders'])->name('net-profit.export-unknown-orders');
             Route::get('/export-product-data', [NetProfitController::class, 'exportProductReport'])->name('net-profit.export-product-data');
             Route::get('/update-hpp', [NetProfitController::class, 'updateHpp'])->name('net-profit.update-hpp');

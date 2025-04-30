@@ -1591,6 +1591,133 @@ class NetProfitController extends Controller
         
         return response()->json(['data' => $results]);
     }
+    public function exportLK()
+    {
+        $newSpreadsheetId = '1Ukssd8FRbGA6Pa_Rsn3FJ2SP_W2CS4rkIhh3o5yw1gQ';
+
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
+        $currentTenantId = 1;
+        
+        $now = Carbon::now();
+        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        
+        // Use the same query structure as your getNetProfit method
+        $baseQuery = DB::table('net_profits as np')
+            ->select(
+                'np.*', 
+                's.ad_spent_social_media',
+                's.ad_spent_market_place'
+            )
+            ->leftJoin('sales as s', function($join) use ($currentTenantId) {
+                $join->on('np.date', '=', 's.date')
+                    ->where('s.tenant_id', '=', $currentTenantId);
+            })
+            ->where('np.tenant_id', '=', $currentTenantId)
+            ->whereMonth('np.date', $now->month)
+            ->whereYear('np.date', $now->year)
+            ->orderBy('np.date');
+        
+        $records = $baseQuery->get();
+        
+        // Prepare data for Google Sheets
+        $data = [];
+        
+        // Add headers with all the columns
+        $data[] = [
+            'Date', 
+            'Net Profit',
+            'Sales', 
+            'B2B Sales', 
+            'CRM Sales', 
+            'Total Sales',
+            'Net Sales',
+            'Marketing', 
+            'KOL Spending', 
+            'Affiliate',
+            'Total Marketing',
+            'Operasional', 
+            'HPP', 
+            'Fee Packing',
+            'Admin Fee',
+            'PPN',
+            'ROAS',
+            'ROMI',
+            'Visits',
+            'Quantity',
+            'Orders',
+            'Closing Rate',
+            'Ad Spent (Social)',
+            'Ad Spent (Marketplace)'
+        ];
+        
+        // Helper function to ensure number format
+        $ensureNumber = function($value) {
+            // Cast to float to ensure it's a number
+            // This will handle both string and numeric inputs
+            return (float)$value;
+        };
+        
+        // Add rows
+        foreach ($records as $row) {
+            // Calculate all the derived fields (similar to your DataTables method)
+            $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
+            $netSales = $totalSales * 0.713;
+            $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
+            $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
+            $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
+            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
+            $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.713) - 
+            ($ensureNumber($row->marketing ?? 0) * 1.05) - 
+            $ensureNumber($row->spent_kol ?? 0) - 
+            $ensureNumber($row->affiliate ?? 0) - 
+            $ensureNumber($row->operasional ?? 0) - 
+            ($ensureNumber($row->hpp ?? 0) * 0.94);
+            
+            $data[] = [
+                Carbon::parse($row->date)->format('Y-m-d'),
+                $netProfit,
+                $ensureNumber($row->sales ?? 0),
+                $ensureNumber($row->b2b_sales ?? 0),
+                $ensureNumber($row->crm_sales ?? 0),
+                $totalSales,
+                $ensureNumber(($row->sales * 0.713) ?? 0),
+                $ensureNumber($row->marketing ?? 0),
+                $ensureNumber($row->spent_kol ?? 0),
+                $ensureNumber($row->affiliate ?? 0),
+                $totalMarketingSpend,
+                $ensureNumber($row->operasional ?? 0),
+                $ensureNumber(($row->hpp * 0.94) ?? 0),
+                $ensureNumber(($row->sales * 0.01) ?? 0),
+                $ensureNumber(($row->sales * 0.167) ?? 0),
+                $ensureNumber(($row->sales * 0.03) ?? 0),
+                $ensureNumber($row->roas ?? 0),
+                $romi,
+                (int)($row->visit ?? 0),
+                (int)($row->qty ?? 0),
+                (int)($row->order ?? 0),
+                $ensureNumber($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
+                $ensureNumber($row->ad_spent_social_media ?? 0),
+                $ensureNumber($row->ad_spent_market_place ?? 0)
+            ];
+        }
+        
+        $sheetName = 'Laporan Keuangan';
+        
+        // Export to Google Sheets - using a wider range to accommodate all columns
+        $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Current month data exported successfully to Google Sheets',
+            'month' => $now->format('F Y'),
+            'count' => count($data) - 1 // Subtract 1 for header row
+        ]);
+    }
     public function exportCurrentMonthData()
     {
         $newSpreadsheetId = '1Ukssd8FRbGA6Pa_Rsn3FJ2SP_W2CS4rkIhh3o5yw1gQ';
