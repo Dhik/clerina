@@ -1864,79 +1864,64 @@ class OrderController extends Controller
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
-        $skippedRows = []; // Array to track skipped rows
-        $rowIndex = 2; // Starting from A2 in the sheet
+        $skippedCount = 0; 
+        $rowIndex = 2;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
-                try {
-                    // Handle price formatting (remove decimal part for bigint)
-                    $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
-                    
-                    // Parse date
-                    $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
-                    
-                    $orderData = [
-                        'date'                 => $orderDate,
-                        'process_at'           => null,
-                        'id_order'             => $row[0] ?? null,
-                        'sales_channel_id'     => 2, // Lazada
-                        'customer_name'        => $row[9] ?? null,
-                        'customer_phone_number' => $row[16] ?? null, // Column Q
-                        'product'              => $row[5] ?? null,
-                        'qty'                  => $row[10] ?? null,
-                        'receipt_number'       => $row[1] ?? null,
-                        'shipment'             => $row[15] ?? null, // Column P
-                        'payment_method'       => $row[4] ?? null,
-                        'sku'                  => $row[6] ?? null,
-                        'variant'              => $row[7] ?? null,
-                        'price'                => $price,
-                        'username'             => $row[9] ?? null,
-                        'shipping_address'     => $row[11] ?? null,
-                        'city'                 => $row[12] ?? null,
-                        'province'             => $row[13] ?? null,
-                        'amount'               => $price,
-                        'tenant_id'            => $tenant_id,
-                        'is_booking'           => 0,
-                        'status'               => $row[14] ?? null, // Column O
-                    ];
+                // Handle price formatting (remove decimal part for bigint)
+                $price = !empty($row[8]) ? floatval(str_replace(',', '', $row[8])) : 0;
+                
+                // Parse date
+                $orderDate = !empty($row[3]) ? Carbon::parse($row[3])->format('Y-m-d') : null;
+                
+                $orderData = [
+                    'date'                 => $orderDate,
+                    'process_at'           => null,
+                    'id_order'             => $row[0] ?? null,
+                    'sales_channel_id'     => 2, // Lazada
+                    'customer_name'        => $row[9] ?? null,
+                    'customer_phone_number' => $row[16] ?? null, // Column Q
+                    'product'              => $row[5] ?? null,
+                    'qty'                  => 1,
+                    'receipt_number'       => $row[1] ?? null,
+                    'shipment'             => $row[15] ?? null, // Column P
+                    'payment_method'       => $row[4] ?? null,
+                    'sku'                  => $row[6] ?? null,
+                    'variant'              => $row[7] ?? null,
+                    'price'                => $price,
+                    'username'             => $row[9] ?? null,
+                    'shipping_address'     => $row[11] ?? null,
+                    'city'                 => $row[12] ?? null,
+                    'province'             => $row[13] ?? null,
+                    'amount'               => $price,
+                    'tenant_id'            => $tenant_id,
+                    'is_booking'           => 0,
+                    'status'               => $row[14] ?? null, // Column O
+                ];
 
-                    // Check for identical record
-                    $query = Order::query();
-                    foreach ($orderData as $field => $value) {
-                        if ($value !== null) {
-                            $query->where($field, $value);
-                        }
-                    }
-                    
-                    $existingOrder = $query->first();
+                // Only check for duplicates when id_order, sku, and date are all the same
+                $existingOrder = Order::where('id_order', $orderData['id_order'])
+                    ->where('sku', $orderData['sku'])
+                    ->where('date', $orderData['date'])
+                    ->first();
 
-                    // If no identical order exists, create it
-                    if (!$existingOrder) {
-                        // Add timestamps for creation
-                        $orderData['created_at'] = now();
-                        $orderData['updated_at'] = now();
-                        
-                        Order::create($orderData);
-                        $processedRows++;
-                    } else {
-                        // Track duplicates
-                        $skippedRows[] = [
-                            'row' => $rowIndex,
-                            'reason' => 'Duplicate order',
-                            'order_id' => $row[0] ?? 'Unknown'
-                        ];
-                    }
-                } catch (\Exception $e) {
-                    \Log::error("Error processing Lazada order row: " . json_encode($row) . " Error: " . $e->getMessage());
-                    // Track errors
-                    $skippedRows[] = [
-                        'row' => $rowIndex,
-                        'reason' => 'Error: ' . $e->getMessage(),
-                        'order_id' => $row[0] ?? 'Unknown'
-                    ];
-                    continue; // Skip this row and continue with the next
+                // If no identical order exists (based on id_order, sku, date), create it
+                if (!$existingOrder) {
+                    // Add timestamps for creation
+                    $orderData['created_at'] = now();
+                    $orderData['updated_at'] = now();
+                    
+                    Order::create($orderData);
+                    $processedRows++;
+                } else {
+                    // Update the status of the existing order
+                    $existingOrder->status = $orderData['status'];
+                    $existingOrder->updated_at = now();
+                    $existingOrder->save();
+                    $processedRows++;
                 }
+                
                 $rowIndex++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
@@ -1945,9 +1930,7 @@ class OrderController extends Controller
         return response()->json([
             'message' => 'Lazada orders imported successfully', 
             'total_rows' => $totalRows,
-            'processed_rows' => $processedRows,
-            'skipped_rows' => $skippedRows,
-            'skipped_count' => count($skippedRows)
+            'processed_rows' => $processedRows
         ]);
     }
     public function importAzrinaShopee()
