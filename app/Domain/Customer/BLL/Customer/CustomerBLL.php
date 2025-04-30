@@ -38,15 +38,14 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
         // Apply tenant filter (from authenticated user)
         $query->where('customers.tenant_id', $tenant_id);
 
-        // Add filter for current month orders
-        if ($request->has('currentMonthOnly') && $request->input('currentMonthOnly') == 'true') {
-            $query->whereYear('customers.last_order_date', '=', now()->year)
-                ->whereMonth('customers.last_order_date', '=', now()->month);
-        } 
-        // If showAllDates is not explicitly set to true, default to current month
-        else if (!$request->has('showAllDates') || $request->input('showAllDates') != 'true') {
-            $query->whereYear('customers.last_order_date', '=', now()->year)
-                ->whereMonth('customers.last_order_date', '=', now()->month);
+        // Apply month filter if provided
+        if ($request->has('filterMonth') && !empty($request->input('filterMonth'))) {
+            $date = explode('-', $request->input('filterMonth'));
+            $year = $date[0];
+            $month = $date[1];
+            
+            $query->whereYear('customers.last_order_date', '=', $year)
+                ->whereMonth('customers.last_order_date', '=', $month);
         }
 
         // Keep the count_orders filter
