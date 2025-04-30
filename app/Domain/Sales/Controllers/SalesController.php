@@ -1388,8 +1388,8 @@ SUM(COALESCE(sales, 0)) as total_sales,
 
     public function importAdsAzrina()
     {
-        $this->googleSheetService->setSpreadsheetId('1sDhPAvqXkBE3m2n1yt2ghFROygTxKx1gLiBnUkb26Q0');
-        $range = 'Azrina!A2:L';
+        $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
+        $range = 'Import Azrina!A2:L';
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
