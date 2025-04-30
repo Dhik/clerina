@@ -34,15 +34,24 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
     public function getCustomerDatatable(Request $request, int $tenant_id): Builder
     {
         $query = $this->customerDAL->getCustomerDataTable();
-
+        
+        // Apply tenant filter (from authenticated user)
         $query->where('customers.tenant_id', $tenant_id);
 
-        if ($request->has('filterCountOrders') && !is_null($request->input('filterCountOrders'))) {
-            $query->where('count_orders', '=', $request->input('filterCountOrders'));
+        // Add filter for current month orders
+        if ($request->has('currentMonthOnly') && $request->input('currentMonthOnly') == 'true') {
+            $query->whereYear('customers.last_order_date', '=', now()->year)
+                ->whereMonth('customers.last_order_date', '=', now()->month);
+        } 
+        // If showAllDates is not explicitly set to true, default to current month
+        else if (!$request->has('showAllDates') || $request->input('showAllDates') != 'true') {
+            $query->whereYear('customers.last_order_date', '=', now()->year)
+                ->whereMonth('customers.last_order_date', '=', now()->month);
         }
 
-        if ($request->has('filterTenant') && !is_null($request->input('filterTenant'))) {
-            $query->where('tenant_id', $request->input('filterTenant'));
+        // Keep the count_orders filter
+        if ($request->has('filterCountOrders') && !is_null($request->input('filterCountOrders'))) {
+            $query->where('customers.count_orders', '=', $request->input('filterCountOrders'));
         }
 
         return $query;
