@@ -1691,43 +1691,41 @@ class NetProfitController extends Controller
         $totalGrossRevenue = $salesData->sum('total_gross_revenue');
         $data[] = ['', 'Total Gross Revenue', (int)$totalGrossRevenue];
         
-        // Net Revenue section
-        $data[] = ['Net Revenue', ''];
+        // Fee Admin section (replacing Net Revenue)
+        $data[] = ['Fee Admin', ''];
         
-        // Calculate potential marketplace fees (assuming 28.7% deduction for marketplace fees)
-        $potentialMPRate = 0.287; // 28.7%
+        // Add fee admin for each channel
+        $data[] = ['', 'Fee Admin Shopee', $shopeeMall ? (int)$shopeeMall->total_fee_admin : 0];
+        $data[] = ['', 'Fee Admin Shopee Bandung', $shopeeBandung ? (int)$shopeeBandung->total_fee_admin : 0];
+        $data[] = ['', 'Fee Admin Shopee Jakarta', $shopeeJakarta ? (int)$shopeeJakarta->total_fee_admin : 0];
+        $data[] = ['', 'Fee Admin Tiktok', $tiktok ? (int)$tiktok->total_fee_admin : 0];
+        $data[] = ['', 'Fee Admin Lazada', $lazada ? (int)$lazada->total_fee_admin : 0];
+        $data[] = ['', 'Fee Admin Tokopedia', $tokopedia ? (int)$tokopedia->total_fee_admin : 0];
         
-        // Add potential marketplace deductions for each channel
-        $data[] = ['', 'Pot. MP Shopee', -(int)($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Shopee Bandung', -(int)($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Shopee Jakarta', -(int)($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Tiktok', -(int)($tiktok ? $tiktok->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Lazada', -(int)($lazada ? $lazada->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Tokopedia', -(int)($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0)];
+        // Add B2B fee admin (if applicable)
+        $data[] = ['', 'Fee Admin B2B', $b2b ? (int)$b2b->total_fee_admin : 0];
         
-        // Add refund for CRM sales (if applicable)
-        $data[] = ['', 'Refund Sales (CRM)', -(int)($crm ? $crm->total_sales * 0.05 : 0)]; // Assuming 5% refund rate
+        // Add CRM fee admin (if applicable)
+        $data[] = ['', 'Fee Admin CRM', $crm ? (int)$crm->total_fee_admin : 0];
         
-        // Add B2B discounts
-        $data[] = ['', 'Regular Diskon B2B', -(int)($b2b ? $b2b->total_sales * 0.1 : 0)]; // Assuming 10% discount
+        // Calculate total fee admin
+        $totalFeeAdmin = $salesData->sum('total_fee_admin');
+        $data[] = ['', 'Total Fee Admin', (int)$totalFeeAdmin];
         
-        // Add other sales channel discounts
-        $data[] = ['', 'Diskon Others Sales Chanel', -(int)($crm ? $crm->total_sales * 0.08 : 0)]; // Assuming 8% discount
+        // Calculate total deductions - no longer needed with Fee Admin approach
+        // $totalDeductions = ($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0) +
+        //                  ($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0) +
+        //                  ($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0) +
+        //                  ($tiktok ? $tiktok->total_sales * $potentialMPRate : 0) +
+        //                  ($lazada ? $lazada->total_sales * $potentialMPRate : 0) +
+        //                  ($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0) +
+        //                  ($crm ? $crm->total_sales * 0.05 : 0) +
+        //                  ($b2b ? $b2b->total_sales * 0.1 : 0) +
+        //                  ($crm ? $crm->total_sales * 0.08 : 0);
         
-        // Calculate total deductions
-        $totalDeductions = ($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0) +
-                        ($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0) +
-                        ($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0) +
-                        ($tiktok ? $tiktok->total_sales * $potentialMPRate : 0) +
-                        ($lazada ? $lazada->total_sales * $potentialMPRate : 0) +
-                        ($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0) +
-                        ($crm ? $crm->total_sales * 0.05 : 0) +
-                        ($b2b ? $b2b->total_sales * 0.1 : 0) +
-                        ($crm ? $crm->total_sales * 0.08 : 0);
-        
-        // Calculate net revenue
-        $netRevenue = $totalGrossRevenue - $totalDeductions;
-        $data[] = ['', 'Total Net Revenue', (int)$netRevenue];
+        // Calculate net revenue - now it's gross revenue minus fee admin
+        $netRevenue = $totalGrossRevenue - $totalFeeAdmin;
+        $data[] = ['Net Revenue', (int)$netRevenue];
         
         // PPN section (assuming 11% tax)
         $ppnRate = 0.11;
