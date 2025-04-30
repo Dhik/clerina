@@ -1656,39 +1656,39 @@ class NetProfitController extends Controller
         
         // Add Shopee Mall
         $shopeeMall = $shopeeChannels->where('channel_name', 'Shopee')->first();
-        $data[] = ['', 'Shopee Mall', $shopeeMall ? $shopeeMall->total_sales : 0];
+        $data[] = ['', 'Shopee Mall', $shopeeMall ? (int)$shopeeMall->total_sales : 0];
         
         // Add Shopee Toko Bandung
         $shopeeBandung = $shopeeChannels->where('channel_name', 'Shopee 2 - Bandung')->first();
-        $data[] = ['', 'Shopee Toko Bandung', $shopeeBandung ? $shopeeBandung->total_sales : 0];
+        $data[] = ['', 'Shopee Toko Bandung', $shopeeBandung ? (int)$shopeeBandung->total_sales : 0];
         
         // Add Shopee Toko Jakarta
         $shopeeJakarta = $shopeeChannels->where('channel_name', 'Shopee 3 - Jakarta')->first();
-        $data[] = ['', 'Shopee Toko Jakarta', $shopeeJakarta ? $shopeeJakarta->total_sales : 0];
+        $data[] = ['', 'Shopee Toko Jakarta', $shopeeJakarta ? (int)$shopeeJakarta->total_sales : 0];
         
         // Add Tiktok Mall
         $tiktok = $salesData->where('channel_name', 'Tiktok Shop')->first();
-        $data[] = ['', 'Tiktok Mall', $tiktok ? $tiktok->total_sales : 0];
+        $data[] = ['', 'Tiktok Mall', $tiktok ? (int)$tiktok->total_sales : 0];
         
         // Add Lazada
         $lazada = $salesData->where('channel_name', 'Lazada')->first();
-        $data[] = ['', 'Lazada', $lazada ? $lazada->total_sales : 0];
+        $data[] = ['', 'Lazada', $lazada ? (int)$lazada->total_sales : 0];
         
         // Add Tokopedia
         $tokopedia = $salesData->where('channel_name', 'Tokopedia')->first();
-        $data[] = ['', 'Tokopedia', $tokopedia ? $tokopedia->total_sales : 0];
+        $data[] = ['', 'Tokopedia', $tokopedia ? (int)$tokopedia->total_sales : 0];
         
         // Add B2B
         $b2b = $salesData->where('channel_name', 'B2B')->first();
-        $data[] = ['', 'B2B', $b2b ? $b2b->total_sales : 0];
+        $data[] = ['', 'B2B', $b2b ? (int)$b2b->total_sales : 0];
         
         // Add CRM
         $crm = $salesData->where('channel_name', 'CRM')->first();
-        $data[] = ['', 'Others Sales Chanel (CRM)', $crm ? $crm->total_sales : 0];
+        $data[] = ['', 'Others Sales Chanel (CRM)', $crm ? (int)$crm->total_sales : 0];
         
         // Calculate total gross revenue
         $totalGrossRevenue = $salesData->sum('total_sales');
-        $data[] = ['', 'Total Gross Revenue', $totalGrossRevenue];
+        $data[] = ['', 'Total Gross Revenue', (int)$totalGrossRevenue];
         
         // Net Revenue section
         $data[] = ['Net Revenue', ''];
@@ -1697,21 +1697,21 @@ class NetProfitController extends Controller
         $potentialMPRate = 0.287; // 28.7%
         
         // Add potential marketplace deductions for each channel
-        $data[] = ['', 'Pot. MP Shopee', -($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Shopee Bandung', -($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Shopee Jakarta', -($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Tiktok', -($tiktok ? $tiktok->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Lazada', -($lazada ? $lazada->total_sales * $potentialMPRate : 0)];
-        $data[] = ['', 'Pot. MP Tokopedia', -($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Shopee', -(int)($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Shopee Bandung', -(int)($shopeeBandung ? $shopeeBandung->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Shopee Jakarta', -(int)($shopeeJakarta ? $shopeeJakarta->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Tiktok', -(int)($tiktok ? $tiktok->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Lazada', -(int)($lazada ? $lazada->total_sales * $potentialMPRate : 0)];
+        $data[] = ['', 'Pot. MP Tokopedia', -(int)($tokopedia ? $tokopedia->total_sales * $potentialMPRate : 0)];
         
         // Add refund for CRM sales (if applicable)
-        $data[] = ['', 'Refund Sales (CRM)', -($crm ? $crm->total_sales * 0.05 : 0)]; // Assuming 5% refund rate
+        $data[] = ['', 'Refund Sales (CRM)', -(int)($crm ? $crm->total_sales * 0.05 : 0)]; // Assuming 5% refund rate
         
         // Add B2B discounts
-        $data[] = ['', 'Regular Diskon B2B', -($b2b ? $b2b->total_sales * 0.1 : 0)]; // Assuming 10% discount
+        $data[] = ['', 'Regular Diskon B2B', -(int)($b2b ? $b2b->total_sales * 0.1 : 0)]; // Assuming 10% discount
         
         // Add other sales channel discounts
-        $data[] = ['', 'Diskon Others Sales Chanel', -($crm ? $crm->total_sales * 0.08 : 0)]; // Assuming 8% discount
+        $data[] = ['', 'Diskon Others Sales Chanel', -(int)($crm ? $crm->total_sales * 0.08 : 0)]; // Assuming 8% discount
         
         // Calculate total deductions
         $totalDeductions = ($shopeeMall ? $shopeeMall->total_sales * $potentialMPRate : 0) +
@@ -1726,53 +1726,53 @@ class NetProfitController extends Controller
         
         // Calculate net revenue
         $netRevenue = $totalGrossRevenue - $totalDeductions;
-        $data[] = ['', 'Total Net Revenue', $netRevenue];
+        $data[] = ['', 'Total Net Revenue', (int)$netRevenue];
         
         // PPN section (assuming 11% tax)
         $ppnRate = 0.11;
         $ppn = $netRevenue * $ppnRate;
-        $data[] = ['PPN', $ppn];
+        $data[] = ['PPN', (int)$ppn];
         
         // COGS (Cost of Goods Sold) section
         $data[] = ['COGS', ''];
         
         // Add HPP for each channel
-        $data[] = ['', 'HPP Shopee Mall', $shopeeMall ? $shopeeMall->total_hpp : 0];
-        $data[] = ['', 'HPP Shopee Bandung', $shopeeBandung ? $shopeeBandung->total_hpp : 0];
-        $data[] = ['', 'HPP Shopee Jakarta', $shopeeJakarta ? $shopeeJakarta->total_hpp : 0];
-        $data[] = ['', 'HPP Tiktok', $tiktok ? $tiktok->total_hpp : 0];
-        $data[] = ['', 'HPP Lazada', $lazada ? $lazada->total_hpp : 0];
-        $data[] = ['', 'HPP Tokopedia', $tokopedia ? $tokopedia->total_hpp : 0];
+        $data[] = ['', 'HPP Shopee Mall', $shopeeMall ? (int)$shopeeMall->total_hpp : 0];
+        $data[] = ['', 'HPP Shopee Bandung', $shopeeBandung ? (int)$shopeeBandung->total_hpp : 0];
+        $data[] = ['', 'HPP Shopee Jakarta', $shopeeJakarta ? (int)$shopeeJakarta->total_hpp : 0];
+        $data[] = ['', 'HPP Tiktok', $tiktok ? (int)$tiktok->total_hpp : 0];
+        $data[] = ['', 'HPP Lazada', $lazada ? (int)$lazada->total_hpp : 0];
+        $data[] = ['', 'HPP Tokopedia', $tokopedia ? (int)$tokopedia->total_hpp : 0];
         
         // Calculate total COGS
         $totalCOGS = $salesData->sum('total_hpp');
-        $data[] = ['', 'Total COGS', $totalCOGS];
+        $data[] = ['', 'Total COGS', (int)$totalCOGS];
         
         // Calculate Gross Profit
         $grossProfit = $netRevenue - $ppn - $totalCOGS;
-        $data[] = ['Gross Profit', $grossProfit];
+        $data[] = ['Gross Profit', (int)$grossProfit];
         
         // Add marketing expenses and operational costs from additional data if needed
         if ($additionalData) {
             $data[] = ['Marketing Expenses', ''];
-            $data[] = ['', 'Social Media Ads', $additionalData->total_ad_spent_social ?? 0];
-            $data[] = ['', 'Marketplace Ads', $additionalData->total_ad_spent_marketplace ?? 0];
-            $data[] = ['', 'KOL Spending', $additionalData->total_kol ?? 0];
-            $data[] = ['', 'Affiliate Marketing', $additionalData->total_affiliate ?? 0];
+            $data[] = ['', 'Social Media Ads', (int)($additionalData->total_ad_spent_social ?? 0)];
+            $data[] = ['', 'Marketplace Ads', (int)($additionalData->total_ad_spent_marketplace ?? 0)];
+            $data[] = ['', 'KOL Spending', (int)($additionalData->total_kol ?? 0)];
+            $data[] = ['', 'Affiliate Marketing', (int)($additionalData->total_affiliate ?? 0)];
             
             $totalMarketing = ($additionalData->total_ad_spent_social ?? 0) + 
                             ($additionalData->total_ad_spent_marketplace ?? 0) + 
                             ($additionalData->total_kol ?? 0) + 
                             ($additionalData->total_affiliate ?? 0);
             
-            $data[] = ['', 'Total Marketing Expenses', $totalMarketing];
+            $data[] = ['', 'Total Marketing Expenses', (int)$totalMarketing];
             
             // Operational expenses
-            $data[] = ['Operational Expenses', $additionalData->total_operasional ?? 0];
+            $data[] = ['Operational Expenses', (int)($additionalData->total_operasional ?? 0)];
             
             // Calculate Net Profit
             $netProfit = $grossProfit - $totalMarketing - ($additionalData->total_operasional ?? 0);
-            $data[] = ['Net Profit', $netProfit];
+            $data[] = ['Net Profit', (int)$netProfit];
         }
         
         $sheetName = 'Laporan Keuangan';
