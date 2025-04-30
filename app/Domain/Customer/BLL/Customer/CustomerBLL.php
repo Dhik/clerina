@@ -31,6 +31,7 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
     /**
      * Return customer note for DataTable
      */
+    // In CustomerBLL
     public function getCustomerDatatable(Request $request, int $tenant_id): Builder
     {
         $query = $this->customerDAL->getCustomerDataTable();
@@ -38,7 +39,7 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
         // Apply tenant filter (from authenticated user)
         $query->where('customers.tenant_id', $tenant_id);
 
-        // Apply month filter if provided
+        // Apply month filter if provided, otherwise default to current month
         if ($request->has('filterMonth') && !empty($request->input('filterMonth'))) {
             $date = explode('-', $request->input('filterMonth'));
             $year = $date[0];
@@ -46,14 +47,20 @@ class CustomerBLL extends BaseBLL implements CustomerBLLInterface
             
             $query->whereYear('customers.last_order_date', '=', $year)
                 ->whereMonth('customers.last_order_date', '=', $month);
+        } else {
+            // Default to current month if no month filter is provided
+            $query->whereYear('customers.last_order_date', '=', now()->year)
+                ->whereMonth('customers.last_order_date', '=', now()->month);
         }
-
-        // Keep the count_orders filter
-        if ($request->has('filterCountOrders') && !is_null($request->input('filterCountOrders'))) {
-            $query->where('customers.count_orders', '=', $request->input('filterCountOrders'));
-        }
+        
+        // Apply customer type filter if provided
         if ($request->has('filterType') && !empty($request->input('filterType'))) {
             $query->where('customers.type', $request->input('filterType'));
+        }
+        
+        // Apply count_orders filter if provided
+        if ($request->has('filterCountOrders') && !empty($request->input('filterCountOrders'))) {
+            $query->where('customers.count_orders', '=', $request->input('filterCountOrders'));
         }
 
         return $query;
