@@ -14,18 +14,18 @@
 @section('content')
     <!-- KPI Cards Row -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="col-lg-4 col-md-4 col-sm-12">
             <div class="small-box bg-info elevation-3">
                 <div class="inner">
                     <h3 id="totalCustomersKPI">0</h3>
-                    <p>{{ trans('labels.total_customers') }}</p>
+                    <p>{{ trans('labels.filtered_customers') }}</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-users"></i>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="col-lg-4 col-md-4 col-sm-12">
             <div class="small-box bg-success elevation-3">
                 <div class="inner">
                     <h3 id="newCustomersKPI">0</h3>
@@ -36,7 +36,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="col-lg-4 col-md-4 col-sm-12">
             <div class="small-box bg-warning elevation-3">
                 <div class="inner">
                     <h3 id="repeatedCustomersKPI">0</h3>
@@ -44,17 +44,6 @@
                 </div>
                 <div class="icon">
                     <i class="fas fa-redo"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
-            <div class="small-box bg-danger elevation-3">
-                <div class="inner">
-                    <h3 id="currentMonthCustomersKPI">0</h3>
-                    <p>{{ trans('labels.this_month') }}</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-calendar-alt"></i>
                 </div>
             </div>
         </div>
@@ -238,6 +227,7 @@
             const filterCountOrders = $('#filterCountOrders');
             const filterType = $('#filterType');
             const filterMonth = $('#filterMonth');
+            let dataTableInfo = {};
             
             // Set default month value to current month
             const now = new Date();
@@ -257,6 +247,18 @@
                         d.filterCountOrders = filterCountOrders.val();
                         d.filterMonth = filterMonth.val();
                         d.filterType = filterType.val();
+                    },
+                    dataSrc: function(json) {
+                        // Store the total records and filtered records info
+                        dataTableInfo = {
+                            recordsTotal: json.recordsTotal,
+                            recordsFiltered: json.recordsFiltered
+                        };
+                        
+                        // Update KPI counters after data is fetched
+                        updateKPICounters();
+                        
+                        return json.data;
                     }
                 },
                 columns: [
@@ -299,17 +301,11 @@
                         orderable: false, 
                         searchable: false,
                         render: function(data) {
-                            // This assumes 'actions' contains HTML like in your original code
-                            // We're returning it as-is to preserve your action buttons
                             return data;
                         }
                     }
                 ],
-                order: [[4, 'desc']], // Sort by last_order_date column in descending order
-                drawCallback: function() {
-                    // Load KPI data after table is drawn
-                    loadKPIData();
-                }
+                order: [[4, 'desc']] // Sort by last_order_date column in descending order
             });
 
             // Apply filters button
@@ -334,36 +330,40 @@
             // Refresh stats button
             $('#refreshStats').click(function() {
                 $(this).find('.fa-sync-alt').addClass('spin');
-                loadKPIData();
+                customerTable.ajax.reload();
                 setTimeout(() => {
                     $(this).find('.fa-sync-alt').removeClass('spin');
                 }, 1000);
             });
             
-            function loadKPIData() {
-                // Get current filter month value
-                const filterMonthValue = $('#filterMonth').val();
+            // Function to update KPI counters based on the DataTable data
+            function updateKPICounters() {
+                if (!dataTableInfo.recordsFiltered) return;
                 
-                // Show loading state
-                $('.small-box h3').text('...');
+                // Get counts of new and repeated customers
+                let newCount = 0;
+                let repeatedCount = 0;
                 
-                // Make AJAX request to get current stats
+                // We need to make an additional AJAX request to get type breakdown for filtered data
                 $.ajax({
-                    url: '{{ route("customer.kpi") }}',
-                    method: 'GET',
+                    url: "{{ route('customer.kpi') }}",
+                    method: "GET",
                     data: {
-                        filterMonth: filterMonthValue
+                        filterMonth: filterMonth.val(),
+                        filterCountOrders: filterCountOrders.val(),
+                        filterType: filterType.val()
                     },
                     success: function(response) {
-                        // Update KPI values with animation
+                        // Update the KPI counters with animation
                         animateCounter($('#totalCustomersKPI'), 0, response.total);
                         animateCounter($('#newCustomersKPI'), 0, response.new);
                         animateCounter($('#repeatedCustomersKPI'), 0, response.repeated);
-                        animateCounter($('#currentMonthCustomersKPI'), 0, response.currentMonth);
                     },
                     error: function() {
-                        // In case of error, show error indicator
-                        $('.small-box h3').text('!');
+                        // Fallback if API call fails - at least show total
+                        animateCounter($('#totalCustomersKPI'), 0, dataTableInfo.recordsFiltered);
+                        $('#newCustomersKPI').text('!');
+                        $('#repeatedCustomersKPI').text('!');
                     }
                 });
             }
@@ -377,12 +377,13 @@
                     easing: 'swing',
                     step: function() {
                         $element.text(Math.ceil(this.Counter));
+                    },
+                    complete: function() {
+                        // Ensure the final number is exactly right (no rounding issues)
+                        $element.text(end);
                     }
                 });
             }
-            
-            // Load KPI data on initial page load
-            loadKPIData();
             
             // Handle KPI card click for detailed information
             $('.small-box').click(function() {

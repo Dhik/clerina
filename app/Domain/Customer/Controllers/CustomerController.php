@@ -74,42 +74,43 @@ class CustomerController extends Controller
         $this->authorize('viewCustomer', Customer::class);
         
         $tenantId = Auth::user()->current_tenant_id;
+        $query = Customer::where('tenant_id', $tenantId);
         
-        // Get filter month
-        $filterMonth = $request->input('filterMonth');
-        if (!empty($filterMonth)) {
-            $date = explode('-', $filterMonth);
+        // Apply the same filters as in the DataTable
+        // Month filter
+        if ($request->has('filterMonth') && !empty($request->input('filterMonth'))) {
+            $date = explode('-', $request->input('filterMonth'));
             $year = $date[0];
             $month = $date[1];
+            
+            $query->whereYear('last_order_date', '=', $year)
+                ->whereMonth('last_order_date', '=', $month);
         } else {
-            $year = now()->year;
-            $month = now()->month;
+            // Default to current month if no month filter is provided
+            $query->whereYear('last_order_date', '=', now()->year)
+                ->whereMonth('last_order_date', '=', now()->month);
         }
         
-        // Get total customers for tenant
-        $totalCustomers = Customer::where('tenant_id', $tenantId)->count();
+        // Count orders filter
+        if ($request->has('filterCountOrders') && !empty($request->input('filterCountOrders'))) {
+            $query->where('count_orders', '=', $request->input('filterCountOrders'));
+        }
         
-        // Get new customers count
-        $newCustomers = Customer::where('tenant_id', $tenantId)
-                            ->where('type', 'New Customer')
-                            ->count();
+        // Copy the base query before applying type filter
+        $totalQuery = clone $query;
+        $total = $totalQuery->count();
         
-        // Get repeated customers count
-        $repeatedCustomers = Customer::where('tenant_id', $tenantId)
-                                ->where('type', 'Repeated')
-                                ->count();
+        // Type breakdown (from the filtered data)
+        $new = clone $query;
+        $new = $new->where('type', 'New Customer')->count();
         
-        // Get customers with orders this month
-        $currentMonthCustomers = Customer::where('tenant_id', $tenantId)
-                                    ->whereYear('last_order_date', $year)
-                                    ->whereMonth('last_order_date', $month)
-                                    ->count();
+        $repeated = clone $query;
+        $repeated = $repeated->where('type', 'Repeated')->count();
         
         return response()->json([
-            'total' => $totalCustomers,
-            'new' => $newCustomers,
-            'repeated' => $repeatedCustomers,
-            'currentMonth' => $currentMonthCustomers,
+            'total' => $total,
+            'new' => $new,
+            'repeated' => $repeated
         ]);
     }
 
