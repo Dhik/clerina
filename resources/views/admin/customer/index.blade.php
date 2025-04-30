@@ -23,19 +23,9 @@
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label>{{ trans('labels.order_date') }}</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="dateFilter" id="currentMonthOnly" value="currentMonth" checked>
-                                    <label class="form-check-label" for="currentMonthOnly">
-                                        {{ trans('labels.current_month_only') }}
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="dateFilter" id="showAllDates" value="allDates">
-                                    <label class="form-check-label" for="showAllDates">
-                                        {{ trans('labels.show_all_dates') }}
-                                    </label>
-                                </div>
+                                <label for="filterMonth">{{ trans('labels.order_date') }}</label>
+                                <input type="month" class="form-control" id="filterMonth" placeholder="{{ trans('placeholder.select_month') }}" autocomplete="off">
+                                <small class="form-text text-muted">{{ trans('labels.leave_empty_for_all_dates') }}</small>
                             </div>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
@@ -137,8 +127,7 @@
                     url: "{{ route('customer.get') }}",
                     data: function (d) {
                         d.filterCountOrders = filterCountOrders.val();
-                        d.currentMonthOnly = $('#currentMonthOnly').prop('checked');
-                        d.showAllDates = $('#showAllDates').prop('checked');
+                        d.filterMonth = $('#filterMonth').val();
                     }
                 },
                 columns: [
@@ -159,20 +148,16 @@
             // Reset filters button
             $('#resetFilterBtn').click(function () {
                 filterCountOrders.val('');
-                $('#currentMonthOnly').prop('checked', true);
-                $('#showAllDates').prop('checked', false);
+                $('#filterMonth').val('');
                 customerTable.draw();
             });
-
-            // For radio buttons
-            $('input[name="dateFilter"]').change(function() {
-                if ($(this).val() === 'currentMonth') {
-                    $('#currentMonthOnly').prop('checked', true);
-                    $('#showAllDates').prop('checked', false);
-                } else {
-                    $('#currentMonthOnly').prop('checked', false);
-                    $('#showAllDates').prop('checked', true);
-                }
+            
+            // Set default month value to current month
+            $(document).ready(function() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                $('#filterMonth').val(`${year}-${month}`);
             });
             
             $('.small-box').click(function() {
