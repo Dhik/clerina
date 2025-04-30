@@ -55,6 +55,17 @@ class ProductController extends Controller
                 date('Y', strtotime($selectedMonth)), 
                 date('m', strtotime($selectedMonth))
             ])
+            ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
             ->selectRaw('sku, SUM(qty) as total_qty')
             ->groupBy('sku')
             ->pluck('total_qty', 'sku');
