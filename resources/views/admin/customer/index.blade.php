@@ -340,33 +340,32 @@
                 }, 1000);
             });
             
-            // Function to load KPI data
             function loadKPIData() {
-                // Normally you would load this via AJAX from the server
-                // For now, we'll just simulate with fixed data
+                // Get current filter month value
+                const filterMonthValue = $('#filterMonth').val();
                 
-                // In a real implementation, you would do something like:
-                /*
+                // Show loading state
+                $('.small-box h3').text('...');
+                
+                // Make AJAX request to get current stats
                 $.ajax({
-                    url: '{{ route("customer.stats") }}',
+                    url: '{{ route("customer.kpi") }}',
                     method: 'GET',
                     data: {
-                        month: filterMonth.val()
+                        filterMonth: filterMonthValue
                     },
                     success: function(response) {
-                        $('#totalCustomersKPI').text(response.total);
-                        $('#newCustomersKPI').text(response.new);
-                        $('#repeatedCustomersKPI').text(response.repeated);
-                        $('#currentMonthCustomersKPI').text(response.currentMonth);
+                        // Update KPI values with animation
+                        animateCounter($('#totalCustomersKPI'), 0, response.total);
+                        animateCounter($('#newCustomersKPI'), 0, response.new);
+                        animateCounter($('#repeatedCustomersKPI'), 0, response.repeated);
+                        animateCounter($('#currentMonthCustomersKPI'), 0, response.currentMonth);
+                    },
+                    error: function() {
+                        // In case of error, show error indicator
+                        $('.small-box h3').text('!');
                     }
                 });
-                */
-                
-                // Simulate stats with animation
-                animateCounter($('#totalCustomersKPI'), 0, 1250);
-                animateCounter($('#newCustomersKPI'), 0, 485);
-                animateCounter($('#repeatedCustomersKPI'), 0, 765);
-                animateCounter($('#currentMonthCustomersKPI'), 0, 125);
             }
             
             // Function to animate counter

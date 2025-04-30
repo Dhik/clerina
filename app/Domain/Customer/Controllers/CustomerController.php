@@ -69,7 +69,49 @@ class CustomerController extends Controller
             ->toJson();
     }
 
-
+    public function getCustomerKPI(Request $request): JsonResponse
+    {
+        $this->authorize('viewCustomer', Customer::class);
+        
+        $tenantId = Auth::user()->current_tenant_id;
+        
+        // Get filter month
+        $filterMonth = $request->input('filterMonth');
+        if (!empty($filterMonth)) {
+            $date = explode('-', $filterMonth);
+            $year = $date[0];
+            $month = $date[1];
+        } else {
+            $year = now()->year;
+            $month = now()->month;
+        }
+        
+        // Get total customers for tenant
+        $totalCustomers = Customer::where('tenant_id', $tenantId)->count();
+        
+        // Get new customers count
+        $newCustomers = Customer::where('tenant_id', $tenantId)
+                            ->where('type', 'New Customer')
+                            ->count();
+        
+        // Get repeated customers count
+        $repeatedCustomers = Customer::where('tenant_id', $tenantId)
+                                ->where('type', 'Repeated')
+                                ->count();
+        
+        // Get customers with orders this month
+        $currentMonthCustomers = Customer::where('tenant_id', $tenantId)
+                                    ->whereYear('last_order_date', $year)
+                                    ->whereMonth('last_order_date', $month)
+                                    ->count();
+        
+        return response()->json([
+            'total' => $totalCustomers,
+            'new' => $newCustomers,
+            'repeated' => $repeatedCustomers,
+            'currentMonth' => $currentMonthCustomers,
+        ]);
+    }
 
     /**
      * Return customer index page
