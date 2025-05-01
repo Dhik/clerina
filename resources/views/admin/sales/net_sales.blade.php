@@ -456,7 +456,6 @@
         filterDate.change(function () {
             netProfitsTable.draw();
             fetchSummary();
-            renderWaterfallChart();
             loadNetProfitsChart();
             loadCorrelationChart();
         });
