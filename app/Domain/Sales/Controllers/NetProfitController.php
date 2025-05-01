@@ -560,18 +560,22 @@ class NetProfitController extends Controller
     public function updateMarketing()
     {
         try {
+            // Set specific date - April 30, 2025
+            $specificDate = Carbon::parse('2025-04-30');
+            
             DB::statement("
                 UPDATE net_profits
                 INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
                 SET net_profits.marketing = sales.ad_spent_total, 
                     net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
+                WHERE net_profits.date = ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 1]);
+            ", [now(), $specificDate->format('Y-m-d'), 1]);
 
             return response()->json([
                 'success' => true,
+                'message' => 'Marketing data updated for April 30, 2025',
+                'date' => $specificDate->format('Y-m-d')
             ]);
 
         } catch (\Exception $e) {

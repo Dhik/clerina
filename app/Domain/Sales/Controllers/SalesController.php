@@ -1312,83 +1312,79 @@ SUM(COALESCE(sales, 0)) as total_sales,
 
 
     public function importFromGoogleSheet()
-{
-    $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
-    $range = 'Import Sales!A2:Q';
-    $sheetData = $this->googleSheetService->getSheetData($range);
+    {
+        $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
+        $range = 'Import Sales!A2:Q';
+        $sheetData = $this->googleSheetService->getSheetData($range);
 
-    $tenant_id = 1;
-    $specificDate = '2025-04-30'; // April 30, 2025
+        $tenant_id = 1;
+        $currentMonth = Carbon::now()->format('Y-m');
 
-    foreach ($sheetData as $row) {
-        if (empty($row) || empty($row[0])) {
-            continue;
-        }
-        
-        $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-        
-        // Skip if not the specific date we're looking for
-        if ($date !== $specificDate) {
-            continue;
-        }
-        
-        $salesChannelData = [
-            4 => $row[8] ?? null,  // Tiktok Shop (sales_channel_id == 4)
-            1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
-            3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
-            2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
-            8 => $row[13] ?? null, // Lazada (sales_channel_id == 8)
-            9 => $row[14] ?? null, // Lazada (sales_channel_id == 9)
-        ];
-
-        foreach ($salesChannelData as $salesChannelId => $amountValue) {
-            if (!isset($amountValue)) {
+        foreach ($sheetData as $row) {
+            if (empty($row) || empty($row[0])) {
                 continue;
             }
-            $amount = $this->parseCurrencyToInt($amountValue);
-
-            AdSpentMarketPlace::updateOrCreate(
-                [
-                    'date'             => $date,
-                    'sales_channel_id' => $salesChannelId,
-                    'tenant_id'        => $tenant_id,
-                ],
-                [
-                    'amount'           => $amount,
-                ]
-            );
-        }
-
-        // Social Media data
-        $socialMediaData = [
-            1 => $row[9] ?? null,   // Facebook (social_media_id == 1)
-            9 => $row[15] ?? null,  // Facebook (social_media_id == 9)
-            10 => $row[16] ?? null, // Facebook (social_media_id == 10)
-            // 2 => $row[6] ?? null,  // Snack Video (social_media_id == 2)
-            // 5 => $row[7] ?? null,  // Google Ads (social_media_id == 5)
-        ];
-
-        foreach ($socialMediaData as $socialMediaId => $amountValue) {
-            if (!isset($amountValue)) {
+            $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
                 continue;
             }
-            $amount = $this->parseCurrencyToInt($amountValue);
+            $salesChannelData = [
+                4 => $row[8] ?? null, // Tiktok Shop (sales_channel_id == 4)
+                1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
+                3 => $row[11] ?? null, // Tokopedia (sales_channel_id == 3)
+                2 => $row[12] ?? null, // Lazada (sales_channel_id == 2)
+                8 => $row[13] ?? null, // Lazada (sales_channel_id == 2)
+                9 => $row[14] ?? null, // Lazada (sales_channel_id == 2)
+            ];
 
-            AdSpentSocialMedia::updateOrCreate(
-                [
-                    'date'            => $date,
-                    'social_media_id' => $socialMediaId,
-                    'tenant_id'       => $tenant_id,
-                ],
-                [
-                    'amount'          => $amount,
-                ]
-            );
+            foreach ($salesChannelData as $salesChannelId => $amountValue) {
+                if (!isset($amountValue)) {
+                    continue;
+                }
+                $amount = $this->parseCurrencyToInt($amountValue);
+
+                AdSpentMarketPlace::updateOrCreate(
+                    [
+                        'date'             => $date,
+                        'sales_channel_id' => $salesChannelId,
+                        'tenant_id'        => $tenant_id,
+                    ],
+                    [
+                        'amount'           => $amount,
+                    ]
+                );
+            }
+
+            // Social Media data
+            $socialMediaData = [
+                1 => $row[9] ?? null, // Facebook (social_media_id == 1)
+                9 => $row[15] ?? null, // Facebook (social_media_id == 1)
+                10 => $row[16] ?? null, // Facebook (social_media_id == 1)
+                // 2 => $row[6] ?? null, // Snack Video (social_media_id == 2)
+                // 5 => $row[7] ?? null, // Google Ads (social_media_id == 5)
+            ];
+
+            foreach ($socialMediaData as $socialMediaId => $amountValue) {
+                if (!isset($amountValue)) {
+                    continue;
+                }
+                $amount = $this->parseCurrencyToInt($amountValue);
+
+                AdSpentSocialMedia::updateOrCreate(
+                    [
+                        'date'            => $date,
+                        'social_media_id' => $socialMediaId,
+                        'tenant_id'       => $tenant_id,
+                    ],
+                    [
+                        'amount'          => $amount,
+                    ]
+                );
+            }
         }
+
+        return response()->json(['message' => 'Data imported successfully']);
     }
-
-    return response()->json(['message' => 'Data imported successfully for April 30, 2025']);
-}
 
     public function importAdsAzrina()
     {
@@ -1590,88 +1586,45 @@ SUM(COALESCE(sales, 0)) as total_sales,
     public function updateMonthlyAdSpentData()
     {
         try {
-            // Set specific date - April 30, 2025
-            $specificDate = Carbon::parse('2025-04-30')->format('Y-m-d');
-            
-            $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
-                ->where('date', $specificDate)
-                ->sum('amount');
-    
-            $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
-                ->where('date', $specificDate)
-                ->sum('amount');
-    
-            $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
-    
-            $turnover = Sales::where('tenant_id', 1)
-                ->where('date', $specificDate)
-                ->value('turnover');
-    
-            $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
-            
-            $dataToUpdate = [
-                'ad_spent_social_media' => $sumSpentSocialMedia,
-                'ad_spent_market_place' => $sumSpentMarketPlace,
-                'ad_spent_total' => $totalAdSpent,
-                'roas' => $roas,
-            ];
-            
-            Sales::where('tenant_id', 1)
-                ->where('date', $specificDate)
-                ->update($dataToUpdate);
-    
-            return response()->json([
-                'status' => 'success', 
-                'message' => 'Ad spent data updated for April 30, 2025.',
-                'date' => $specificDate
-            ]);
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+                $formattedDate = $date->format('Y-m-d');
+
+                $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+
+                $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->sum('amount');
+
+                $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
+
+                $turnover = Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->value('turnover');
+
+                $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
+                
+                $dataToUpdate = [
+                    'ad_spent_social_media' => $sumSpentSocialMedia,
+                    'ad_spent_market_place' => $sumSpentMarketPlace,
+                    'ad_spent_total' => $totalAdSpent,
+                    'roas' => $roas,
+                ];
+                
+                Sales::where('tenant_id', 1)
+                    ->where('date', $formattedDate)
+                    ->update($dataToUpdate);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-
-    // public function updateMonthlyAdSpentData()
-    // {
-    //     try {
-    //         $startOfMonth = Carbon::now()->startOfMonth();
-    //         $endOfMonth = Carbon::now()->endOfMonth();
-
-    //         for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
-    //             $formattedDate = $date->format('Y-m-d');
-
-    //             $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
-    //                 ->where('date', $formattedDate)
-    //                 ->sum('amount');
-
-    //             $sumSpentMarketPlace = AdSpentMarketPlace::where('tenant_id', 1)
-    //                 ->where('date', $formattedDate)
-    //                 ->sum('amount');
-
-    //             $totalAdSpent = $sumSpentSocialMedia + $sumSpentMarketPlace;
-
-    //             $turnover = Sales::where('tenant_id', 1)
-    //                 ->where('date', $formattedDate)
-    //                 ->value('turnover');
-
-    //             $roas = $totalAdSpent > 0 ? $turnover / $totalAdSpent : 0;
-                
-    //             $dataToUpdate = [
-    //                 'ad_spent_social_media' => $sumSpentSocialMedia,
-    //                 'ad_spent_market_place' => $sumSpentMarketPlace,
-    //                 'ad_spent_total' => $totalAdSpent,
-    //                 'roas' => $roas,
-    //             ];
-                
-    //             Sales::where('tenant_id', 1)
-    //                 ->where('date', $formattedDate)
-    //                 ->update($dataToUpdate);
-    //         }
-
-    //         return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
-    //     } catch (Exception $e) {
-    //         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-    //     }
-    // }
 
     public function updateMonthlyAdSpentDataAzrina()
     {
