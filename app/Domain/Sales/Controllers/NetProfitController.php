@@ -398,73 +398,74 @@ class NetProfitController extends Controller
         }
     }
     public function updateHpp()
-{
-    try {
-        // Set specific date - April 30, 2025
-        $specificDate = Carbon::parse('2025-04-30')->format('Y-m-d');
-        $tenant_id = Auth::user()->current_tenant_id;
-        
-        $hppPerDate = Order::query()
-            ->where('orders.date', $specificDate) // Only for April 30, 2025
-            ->where('orders.tenant_id', $tenant_id)
-            ->whereNotIn('orders.status', 
-            [
-                'pending', 
-                'cancelled', 
-                'request_cancel', 
-                'request_return',
-                'Batal', 
-                'Canceled', 
-                'Pembatalan diajukan', 
-                'Dibatalkan Sistem'
-            ])
-            ->leftJoin('products', function($join) {
-                $join->on(DB::raw("TRIM(
-                    CASE 
-                        WHEN orders.sku REGEXP '^[0-9]+\\s+' 
-                        THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
-                        ELSE orders.sku 
-                    END
-                )"), '=', 'products.sku');
-            })
-            ->select(DB::raw('DATE(orders.date) as date'))
-            ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp')
-            ->groupBy('date');
-
-        $hppResults = $hppPerDate->get();
-        
-        // Reset the HPP value for the specific date only
-        $resetCount = NetProfit::query()
-            ->where('date', $specificDate)
-            ->where('tenant_id', $tenant_id)
-            ->update(['hpp' => 0]);
-
-        $updatedCount = 0;
-        foreach ($hppResults as $hpp) {
-            // Convert date to Y-m-d format explicitly
-            $formattedDate = date('Y-m-d', strtotime($hpp->date));
+    {
+        try {
+            $startDate = now()->startOfMonth();
+            $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID instead of hardcoded value
             
-            $updated = NetProfit::where('date', $formattedDate)
+            $dates = collect();
+            for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
+                $dates->push($date->format('Y-m-d'));
+            }
+
+            $hppPerDate = Order::query()
+                ->whereBetween('orders.date', [$startDate, now()])
+                ->where('orders.tenant_id', $tenant_id)
+                ->whereNotIn('orders.status', 
+                [
+                    'pending', 
+                    'cancelled', 
+                    'request_cancel', 
+                    'request_return',
+                    'Batal', 
+                    'Canceled', 
+                    'Pembatalan diajukan', 
+                    'Dibatalkan Sistem'
+                ])
+                ->leftJoin('products', function($join) {
+                    $join->on(DB::raw("TRIM(
+                        CASE 
+                            WHEN orders.sku REGEXP '^[0-9]+\\s+' 
+                            THEN SUBSTRING(orders.sku, LOCATE(' ', orders.sku) + 1)
+                            ELSE orders.sku 
+                        END
+                    )"), '=', 'products.sku');
+                })
+                ->select(DB::raw('DATE(orders.date) as date'))
+                ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp') // Simplified calculation
+                ->groupBy('date');
+
+            $hppResults = $hppPerDate->get();
+            $resetCount = NetProfit::query()
+                ->whereBetween('date', [$startDate, now()])
                 ->where('tenant_id', $tenant_id)
-                ->update(['hpp' => $hpp->total_hpp]);
+                ->update(['hpp' => 0]);
+
+            $updatedCount = 0;
+            foreach ($hppResults as $hpp) {
+                // Convert date to Y-m-d format explicitly
+                $formattedDate = date('Y-m-d', strtotime($hpp->date));
                 
-            $updatedCount += $updated;
+                $updated = NetProfit::where('date', $formattedDate)
+                    ->where('tenant_id', $tenant_id)
+                    ->update(['hpp' => $hpp->total_hpp]);
+                    
+                $updatedCount += $updated;
+            }
+            
+            return response()->json([
+                'success' => true,
+                'reset_count' => $resetCount,
+                'updated_count' => $updatedCount
+            ]);
+        } catch(\Exception $e) {
+            \Log::error('Update HPP Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'reset_count' => $resetCount,
-            'updated_count' => $updatedCount,
-            'date' => $specificDate
-        ]);
-    } catch(\Exception $e) {
-        \Log::error('Update HPP Error for April 30, 2025: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
     public function updateHppAzrina()
     {
         try {
