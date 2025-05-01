@@ -290,67 +290,67 @@ class OrderController extends Controller
     }
 
     public function updateSalesTurnover()
-{
-    // Set specific date - April 30, 2025
-    $specificDate = Carbon::parse('2025-04-30')->format('Y-m-d');
-    
-    $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
-                    ->where('tenant_id', 1)
-                    ->where('date', $specificDate) // Only for April 30, 2025
-                    ->whereNotIn('status', [
-                        'Batal', 
-                        'cancelled', 
-                        'Canceled', 
-                        'Pembatalan diajukan', 
-                        'Dibatalkan Sistem'
-                    ])
-                    ->groupBy('date')
-                    ->get();
-    
-    foreach ($totals as $total) {
-        $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
-            
-        // Get the current sales record
-        $salesRecord = DB::table('sales')
-            ->where('date', $formattedDate)
-            ->where('tenant_id', 1)
-            ->first();
+    {
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->format('Y-m-d');
         
-        if ($salesRecord) {
-            // Calculate new ROAS if ad_spent_total exists and is not zero
-            $newRoas = 0;
-            if ($salesRecord->ad_spent_total > 0) {
-                $newRoas = $total->total_amount / $salesRecord->ad_spent_total;
-            }
+        $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
+                        ->where('tenant_id', 1)
+                        ->whereBetween('date', [$startDate, $endDate])
+                        ->whereNotIn('status', [
+                            'Batal', 
+                            'cancelled', 
+                            'Canceled', 
+                            'Pembatalan diajukan', 
+                            'Dibatalkan Sistem'
+                        ])
+                        ->groupBy('date')
+                        ->get();
+        
+        foreach ($totals as $total) {
+            $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
+                
+                // Get the current sales record
+                $salesRecord = DB::table('sales')
+                    ->where('date', $formattedDate)
+                    ->where('tenant_id', 1)
+                    ->first();
+                
+                if ($salesRecord) {
+                    // Calculate new ROAS if ad_spent_total exists and is not zero
+                    $newRoas = 0;
+                    if ($salesRecord->ad_spent_total > 0) {
+                        $newRoas = $total->total_amount / $salesRecord->ad_spent_total;
+                    }
+                    
+                    // Update sales record with new turnover and ROAS
+                    DB::table('sales')
+                        ->where('date', $formattedDate)
+                        ->where('tenant_id', 1)
+                        ->update([
+                            'turnover' => $total->total_amount,
+                            'roas' => $newRoas
+                        ]);
+                } else {
+                    // Create new sales record if it doesn't exist
+                    DB::table('sales')->insert([
+                        'date' => $formattedDate,
+                        'tenant_id' => 1,
+                        'turnover' => $total->total_amount,
+                        'roas' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
             
-            // Update sales record with new turnover and ROAS
-            DB::table('sales')
+            DB::table('net_profits')
                 ->where('date', $formattedDate)
                 ->where('tenant_id', 1)
-                ->update([
-                    'turnover' => $total->total_amount,
-                    'roas' => $newRoas
-                ]);
-        } else {
-            // Create new sales record if it doesn't exist
-            DB::table('sales')->insert([
-                'date' => $formattedDate,
-                'tenant_id' => 1,
-                'turnover' => $total->total_amount,
-                'roas' => 0,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+                ->update(['sales' => $total->total_amount]);
         }
         
-        DB::table('net_profits')
-            ->where('date', $formattedDate)
-            ->where('tenant_id', 1)
-            ->update(['sales' => $total->total_amount]);
+        return response()->json(['message' => 'Net profits sales updated successfully']);
     }
-    
-    return response()->json(['message' => 'Net profits sales updated successfully for April 30, 2025']);
-}
     public function updateSalesTurnover2()
     {
         $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
