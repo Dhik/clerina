@@ -1796,7 +1796,6 @@ class NetProfitController extends Controller
         }
         $currentTenantId = 1;
         
-        // Set specific month to April 2025 instead of current month
         $now = Carbon::create(2025, 4, 1);
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
@@ -1822,10 +1821,7 @@ class NetProfitController extends Controller
         $data[] = [
             'Date', 
             'Net Profit',
-            'Sales', 
-            'B2B Sales', 
-            'CRM Sales', 
-            'Total Sales',
+            'Total Sales', 
             'Estimasi Cancel (6%)',
             'Estimasi Retur (2%)',
             'Net Sales',
@@ -1871,9 +1867,9 @@ class NetProfitController extends Controller
                 Carbon::parse($row->date)->format('Y-m-d'),
                 $netProfit,
                 $ensureNumber($row->sales ?? 0),
-                $ensureNumber($row->b2b_sales ?? 0),
-                $ensureNumber($row->crm_sales ?? 0),
-                $totalSales,
+                // $ensureNumber($row->b2b_sales ?? 0),
+                // $ensureNumber($row->crm_sales ?? 0),
+                // $totalSales,
                 $ensureNumber(($row->sales * 0.06) ?? 0),
                 $ensureNumber(($row->sales * 0.02) ?? 0),
                 $ensureNumber(($row->sales * 0.715) ?? 0),
