@@ -74,7 +74,7 @@ class AdSpentSocialMediaController extends Controller
             ->where('pic', '!=', '')
             ->pluck('pic');
             
-        return view('admin.adSpentMarketPlace.ads_cpas_index', compact('kategoriProdukList', 'picList'));
+        return view('admin.adSpentMarketPlace.ads_cpas_index_new', compact('kategoriProdukList', 'picList'));
     }
     public function get_ads_cpas(Request $request) {
         $query = AdsMeta::query()
