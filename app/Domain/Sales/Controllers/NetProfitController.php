@@ -1860,7 +1860,7 @@ class NetProfitController extends Controller
             $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
             $netProfit = ($ensureNumber($row->sales ?? 0) * 0.715) - 
-            ($ensureNumber($row->marketing ?? 0) * 1.05) - 
+            ($ensureNumber($row->marketing ?? 0)) - 
             $ensureNumber($row->spent_kol ?? 0) - 
             $ensureNumber($row->affiliate ?? 0) - 
             $ensureNumber($row->operasional ?? 0) - 

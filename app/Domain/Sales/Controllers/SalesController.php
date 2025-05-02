@@ -200,7 +200,7 @@ class SalesController extends Controller
             })
             ->addColumn('net_profit', function ($row) {
                 return ($row->sales * 0.715) - 
-                    ($row->marketing * 1.05) - 
+                    ($row->marketing) - 
                     $row->spent_kol - 
                     ($row->affiliate ?? 0) - 
                     $row->operasional - 
@@ -290,7 +290,7 @@ SUM(COALESCE(sales, 0)) as total_sales,
     SUM(hpp) * 0.94 as total_hpp,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-    SUM((sales * 0.715) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94)) as total_net_profit,
+    SUM((sales * 0.715) - marketing - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94)) as total_net_profit,
     SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
     SUM(sales * 0.715) as total_net_sales,
     SUM((COALESCE(sales, 0) * 0.715) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
@@ -451,7 +451,7 @@ SUM(COALESCE(sales, 0)) as total_sales,
                     'marketing' => $row->marketing,
                     'hpp' => $row->hpp,
                     'netProfit' => ($row->sales * 0.78) - 
-                        ($row->marketing * 1.05) - 
+                        ($row->marketing) - 
                         $row->spent_kol - 
                         ($row->affiliate ?? 0) - 
                         $row->operasional - 
@@ -840,7 +840,7 @@ SUM(COALESCE(sales, 0)) as total_sales,
         
         $netProfit = $yesterdayNetProfit ? 
             (($yesterdayNetProfit->sales * 0.78) - 
-            ($yesterdayNetProfit->marketing * 1.05) - 
+            ($yesterdayNetProfit->marketing) - 
             $yesterdayNetProfit->spent_kol - 
             ($yesterdayNetProfit->affiliate ?? 0) - 
             $yesterdayNetProfit->operasional - 
@@ -893,7 +893,7 @@ SUM(COALESCE(sales, 0)) as total_sales,
         $formattedMonthSales = number_format($thisMonthSales, 0, ',', '.');
         
         $thisMonthNetProfit = ($thisMonthSales * 0.78) - 
-                            (($thisMonthData->total_marketing ?? 0) * 1.05) - 
+                            (($thisMonthData->total_marketing ?? 0)) - 
                             ($thisMonthData->total_spent_kol ?? 0) - 
                             ($thisMonthData->total_affiliate ?? 0) - 
                             ($thisMonthData->total_operasional ?? 0) - 
@@ -2372,7 +2372,7 @@ SUM(COALESCE(sales, 0)) as total_sales,
         $query = NetProfit::query()
             ->select([
                 'date',
-                DB::raw('CAST((sales * 0.78) - (marketing * 1.05) - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
+                DB::raw('CAST((sales * 0.78) - marketing - spent_kol - COALESCE(affiliate, 0) - operasional - hpp AS DECIMAL(15,2)) as net_profit_margin')
             ]);
 
         if (! is_null($request->input('filterDates'))) {
