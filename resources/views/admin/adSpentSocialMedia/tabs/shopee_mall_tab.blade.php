@@ -1,5 +1,5 @@
 <!-- Tab 1: Meta Ads Content -->
-<div class="tab-pane fade show active" id="meta-content" role="tabpanel" aria-labelledby="meta-tab">
+<div class="tab-pane fade show active" id="shopee-mall-content" role="tabpanel" aria-labelledby="meta-tab">
     <div class="row">
         <div class="col-12">
             <div class="card">

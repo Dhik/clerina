@@ -1,5 +1,5 @@
 <!-- Tab 2: Google Ads Content -->
-<div class="tab-pane fade" id="google-content" role="tabpanel" aria-labelledby="google-tab">
+<div class="tab-pane fade" id="shopee2-content" role="tabpanel" aria-labelledby="google-tab">
     <div class="row">
         <div class="col-12">
             <div class="card">
