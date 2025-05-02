@@ -1825,6 +1825,8 @@ class NetProfitController extends Controller
             'B2B Sales', 
             'CRM Sales', 
             'Total Sales',
+            'Estimasi Cancel (6%)',
+            'Estimasi Retur (2%)',
             'Net Sales',
             'Marketing', 
             'KOL Spending', 
@@ -1851,13 +1853,13 @@ class NetProfitController extends Controller
         
         foreach ($records as $row) {
             $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
-            $netSales = $totalSales * 0.713;
+            $netSales = $totalSales * 0.715;
             $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
             $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
             $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
             $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
-            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.713) - 
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.715) - 
             ($ensureNumber($row->marketing ?? 0) * 1.05) - 
             $ensureNumber($row->spent_kol ?? 0) - 
             $ensureNumber($row->affiliate ?? 0) - 
@@ -1871,6 +1873,8 @@ class NetProfitController extends Controller
                 $ensureNumber($row->b2b_sales ?? 0),
                 $ensureNumber($row->crm_sales ?? 0),
                 $totalSales,
+                $ensureNumber(($row->sales * 0.06) ?? 0),
+                $ensureNumber(($row->sales * 0.02) ?? 0),
                 $ensureNumber(($row->sales * 0.715) ?? 0),
                 $ensureNumber($row->marketing ?? 0),
                 $ensureNumber($row->spent_kol ?? 0),
