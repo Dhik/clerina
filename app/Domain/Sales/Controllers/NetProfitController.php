@@ -1796,7 +1796,8 @@ class NetProfitController extends Controller
         }
         $currentTenantId = 1;
         
-        $now = Carbon::now();
+        // Set specific month to April 2025 instead of current month
+        $now = Carbon::create(2025, 4, 1);
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
         
@@ -1811,8 +1812,8 @@ class NetProfitController extends Controller
                     ->where('s.tenant_id', '=', $currentTenantId);
             })
             ->where('np.tenant_id', '=', $currentTenantId)
-            ->whereMonth('np.date', $now->month)
-            ->whereYear('np.date', $now->year)
+            ->whereMonth('np.date', $now->month)  // Will be April (4)
+            ->whereYear('np.date', $now->year)    // Will be 2025
             ->orderBy('np.date');
         
         $records = $baseQuery->get();
@@ -1896,7 +1897,8 @@ class NetProfitController extends Controller
             ];
         }
         
-        $sheetName = 'SalesReport';
+        // Update sheet name to April 2025
+        $sheetName = 'Daily Count April 2025';
         
         $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
@@ -1904,7 +1906,7 @@ class NetProfitController extends Controller
         return response()->json([
             'success' => true, 
             'message' => 'Current month data exported successfully to Google Sheets',
-            'month' => $now->format('F Y'),
+            'month' => $now->format('F Y'), // Will output April 2025
             'count' => count($data) - 1
         ]);
     }
