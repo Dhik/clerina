@@ -219,60 +219,43 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
-                // Add these new count fields
                 DB::raw('COUNT(last_updated) as last_updated_count'),
                 DB::raw('COUNT(new_created) as new_created_count'),
                 'kategori_produk',
                 'account_name'
             ]);
-        
-        // Apply date filter with support for both single date and date range
         if ($request->has('date_start') && $request->has('date_end')) {
-            // Handle date range
             try {
                 $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
                 $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
                 $query->whereBetween('date', [$dateStart, $dateEnd]);
             } catch (\Exception $e) {
-                // If date parsing fails, log the error
                 Log::error('Date parsing error: ' . $e->getMessage());
             }
         } elseif ($request->has('date')) {
-            // Handle single date (existing functionality)
             try {
                 $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
                 $query->where('date', $parsedDate);
             } catch (\Exception $e) {
-                // If date parsing fails, try to use it as is
                 $query->where('date', $request->input('date'));
             }
         }
-        
-        // Changed grouping to only include account_name and kategori_produk
         $query->groupBy('account_name', 'kategori_produk');
-        
-        // Apply tenant filter if using multi-tenancy
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
-        
-        // Apply product category filter if provided
         if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
             $query->where('kategori_produk', $request->kategori_produk);
         }
-        
-        // Apply PIC filter if provided
         if ($request->has('pic') && $request->pic !== '') {
             $query->where('pic', $request->pic);
         }
-
         return DataTables::of($query)
             ->addIndexColumn()
             ->editColumn('account_name', function ($row) {
                 return $row->account_name ?: '-';
             })
             ->editColumn('date', function ($row) {
-                // Show date range instead of single date
                 if ($row->start_date == $row->end_date) {
                     return $row->start_date;
                 }
@@ -302,11 +285,9 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
-            // Add MOFU spent column
             ->addColumn('mofu_spent', function ($row) {
                 return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
             })
-            // Add MOFU percentage column
             ->addColumn('mofu_percentage', function ($row) {
                 if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
                     $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
@@ -314,11 +295,9 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
-            // Add BOFU spent column
             ->addColumn('bofu_spent', function ($row) {
                 return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
             })
-            // Add BOFU percentage column
             ->addColumn('bofu_percentage', function ($row) {
                 if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
                     $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
