@@ -1796,7 +1796,7 @@ class NetProfitController extends Controller
         }
         $currentTenantId = 1;
         
-        $now = Carbon::create(2025, 4, 1);
+        $now = Carbon::create(2025, 5, 1);
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
         
