@@ -1858,7 +1858,8 @@ class NetProfitController extends Controller
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
             $netProfit = ($ensureNumber($row->sales ?? 0) * 0.716) - 
             ($ensureNumber($row->marketing ?? 0)) - 
-            $ensureNumber($row->spent_kol ?? 0) - 
+            $ensureNumber($row->spent_kol ?? 0) -
+            $ensureNumber($row->fee_packing ?? 0) - 
             $ensureNumber($row->affiliate ?? 0) - 
             $ensureNumber($row->operasional ?? 0) - 
             ($ensureNumber($row->hpp ?? 0) * 0.94);
