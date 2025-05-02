@@ -1800,7 +1800,6 @@ class NetProfitController extends Controller
         $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
         
-        // Use the same query structure as your getNetProfit method
         $baseQuery = DB::table('net_profits as np')
             ->select(
                 'np.*', 
@@ -1818,10 +1817,7 @@ class NetProfitController extends Controller
         
         $records = $baseQuery->get();
         
-        // Prepare data for Google Sheets
         $data = [];
-        
-        // Add headers with all the columns
         $data[] = [
             'Date', 
             'Net Profit',
@@ -1849,16 +1845,11 @@ class NetProfitController extends Controller
             'Ad Spent (Marketplace)'
         ];
         
-        // Helper function to ensure number format
         $ensureNumber = function($value) {
-            // Cast to float to ensure it's a number
-            // This will handle both string and numeric inputs
             return (float)$value;
         };
         
-        // Add rows
         foreach ($records as $row) {
-            // Calculate all the derived fields (similar to your DataTables method)
             $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
             $netSales = $totalSales * 0.713;
             $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
@@ -1880,7 +1871,7 @@ class NetProfitController extends Controller
                 $ensureNumber($row->b2b_sales ?? 0),
                 $ensureNumber($row->crm_sales ?? 0),
                 $totalSales,
-                $ensureNumber(($row->sales * 0.713) ?? 0),
+                $ensureNumber(($row->sales * 0.715) ?? 0),
                 $ensureNumber($row->marketing ?? 0),
                 $ensureNumber($row->spent_kol ?? 0),
                 $ensureNumber($row->affiliate ?? 0),
@@ -1888,14 +1879,14 @@ class NetProfitController extends Controller
                 $ensureNumber($row->operasional ?? 0),
                 $ensureNumber(($row->hpp * 0.94) ?? 0),
                 $ensureNumber(($row->sales * 0.01) ?? 0),
-                $ensureNumber(($row->sales * 0.167) ?? 0),
+                $ensureNumber(($row->sales * 0.165) ?? 0),
                 $ensureNumber(($row->sales * 0.03) ?? 0),
                 $ensureNumber($row->roas ?? 0),
                 $romi,
                 (int)($row->visit ?? 0),
                 (int)($row->qty ?? 0),
                 (int)($row->order ?? 0),
-                $ensureNumber($row->closing_rate ?? 0) / 100, // Convert percentage to decimal
+                $ensureNumber($row->closing_rate ?? 0) / 100,
                 $ensureNumber($row->ad_spent_social_media ?? 0),
                 $ensureNumber($row->ad_spent_market_place ?? 0)
             ];
@@ -1903,7 +1894,6 @@ class NetProfitController extends Controller
         
         $sheetName = 'SalesReport';
         
-        // Export to Google Sheets - using a wider range to accommodate all columns
         $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
@@ -1911,7 +1901,7 @@ class NetProfitController extends Controller
             'success' => true, 
             'message' => 'Current month data exported successfully to Google Sheets',
             'month' => $now->format('F Y'),
-            'count' => count($data) - 1 // Subtract 1 for header row
+            'count' => count($data) - 1
         ]);
     }
     public function exportProductReport()

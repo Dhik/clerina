@@ -178,7 +178,7 @@ class SalesController extends Controller
                 return ($row->sales ?? 0);
             })
             ->addColumn('estimasi_cancel', function ($row) {
-                return ($row->sales * 0.07?? 0);
+                return ($row->sales * 0.06?? 0);
             })
             ->addColumn('estimasi_retur', function ($row) {
                 return ($row->sales * 0.02 ?? 0);
@@ -188,7 +188,7 @@ class SalesController extends Controller
             })
             ->addColumn('penjualan_bersih', function ($row) {
                 $totalSales = ($row->sales ?? 0);
-                return $totalSales * 0.743;
+                return $totalSales * 0.745;
             })
             ->addColumn('romi', function ($row) {
                 $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
@@ -199,7 +199,7 @@ class SalesController extends Controller
                 return $row->sales / $totalMarketingSpend;
             })
             ->addColumn('net_profit', function ($row) {
-                return ($row->sales * 0.713) - 
+                return ($row->sales * 0.715) - 
                     ($row->marketing * 1.05) - 
                     $row->spent_kol - 
                     ($row->affiliate ?? 0) - 
@@ -208,29 +208,19 @@ class SalesController extends Controller
             })
             ->addColumn('estimasi_fee_admin', function ($row) {
                 // 16.7% from sales
-                return $row->sales * 0.167;
+                return $row->sales * 0.165;
             })
 	        ->addColumn('estimasi_cancelation', function ($row) {
                 // 4% from sales
                 return $row->sales * 0.06;
             })
-            ->addColumn('estimasi_retur', function ($row) {
-                // 1% from sales
-                return $row->sales * 0.02;
-            })
             ->addColumn('ppn', function ($row) {
-                // 3% from sales
                 return $row->sales * 0.03;
-            })
-            ->addColumn('fee_ads', function ($row) {
-                // 2% from marketing
-                return $row->marketing * 0.02;
             })
             ->addColumn('total_marketing_spend', function ($row) {
                 return $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
             })
             ->editColumn('fee_packing', function ($row) {
-                // Return fee_packing from database
                 return $row->fee_packing ?? 0;
             })
             ->editColumn('date', function ($row) {
@@ -300,10 +290,10 @@ SUM(COALESCE(sales, 0)) as total_sales,
     SUM(hpp) * 0.94 as total_hpp,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
     SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-    SUM((sales * 0.713) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94)) as total_net_profit,
+    SUM((sales * 0.715) - (marketing * 1.05) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94)) as total_net_profit,
     SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
-    SUM(sales * 0.713) as total_net_sales,
-    SUM((COALESCE(sales, 0) * 0.713) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
+    SUM(sales * 0.715) as total_net_sales,
+    SUM((COALESCE(sales, 0) * 0.715) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
         ')
         ->first();
 
