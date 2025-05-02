@@ -1850,13 +1850,13 @@ class NetProfitController extends Controller
         
         foreach ($records as $row) {
             $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
-            $netSales = $totalSales * 0.715;
+            $netSales = $totalSales * 0.716 - ($row->fee_packing ?? 0);
             $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
             $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
             $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
-            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.16;
+            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.165;
             $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
-            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.715) - 
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.716) - 
             ($ensureNumber($row->marketing ?? 0)) - 
             $ensureNumber($row->spent_kol ?? 0) - 
             $ensureNumber($row->affiliate ?? 0) - 
