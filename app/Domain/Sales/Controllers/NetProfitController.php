@@ -1293,7 +1293,7 @@ class NetProfitController extends Controller
                 })
                 ->update([
                     'order' => DB::raw('do.total_orders'),
-                    'fee_packing' => DB::raw('do.total_orders * 1000')
+                    'fee_packing' => DB::raw('do.total_orders * 2000')
                 ]);
 
             return response()->json([
@@ -1352,7 +1352,7 @@ class NetProfitController extends Controller
                 })
                 ->update([
                     'order' => DB::raw('do.total_orders'),
-                    'fee_packing' => DB::raw('do.total_orders * 1000')
+                    'fee_packing' => DB::raw('do.total_orders * 2000')
                 ]);
 
             return response()->json([
