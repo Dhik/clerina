@@ -75,7 +75,7 @@
                     }
                     $pphAmount = $harga_setelah_diskon * $pphPercentage;
                     $final_tf = $harga_setelah_diskon - $pphAmount;
-                    $dp = $final_tf / 2; // DP 50%
+                    $dp = $final_tf / 2;
                 @endphp
                 <tr>
                     <td>{{ $content->done_payment }}</td>
@@ -105,8 +105,13 @@
                             $displayValue = $content->amount_tf;
                         }
                         
-                        // Round up to 2 decimal places using ceil function with proper precision
+                        // Round up to 2 decimal places first
                         $displayValue = ceil($displayValue * 100) / 100;
+                        
+                        // Then convert to integer by rounding up again if necessary
+                        if ($displayValue > (int)$displayValue) {
+                            $displayValue = ceil($displayValue);
+                        }
                         
                         // Add to total with the rounded up value
                         $totalTransfer += $displayValue;
