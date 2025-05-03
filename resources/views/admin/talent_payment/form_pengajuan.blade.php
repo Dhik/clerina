@@ -75,7 +75,7 @@
                     }
                     $pphAmount = $harga_setelah_diskon * $pphPercentage;
                     $final_tf = $harga_setelah_diskon - $pphAmount;
-                    $dp = $final_tf / 2;
+                    $dp = $final_tf / 2; // DP 50%
                 @endphp
                 <tr>
                     <td>{{ $content->done_payment }}</td>
@@ -91,29 +91,22 @@
                     <td>{{ number_format($final_tf, 0) }}</td>
                     <td>
                     @php
-                        if ($content->amount_tf === null || $content->amount_tf == 0) {
-                            // If amount_tf is null or 0, calculate displayValue based on status_payment
-                            if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
-                                $displayValue = $final_tf / 3;
-                            } elseif ($content->status_payment === "DP 50%" || $content->status_payment === "Pelunasan 50%") {
-                                $displayValue = $final_tf / 2;
-                            } elseif ($content->status_payment === "Full Payment") {
-                                $displayValue = $final_tf;
-                            }
+                        // Calculate displayValue based on status_payment
+                        if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
+                            $displayValue = $final_tf / 3;
+                        } elseif ($content->status_payment === "DP 50%" || $content->status_payment === "Pelunasan 50%") {
+                            $displayValue = $final_tf / 2;
+                        } elseif ($content->status_payment === "Full Payment") {
+                            $displayValue = $final_tf;
                         } else {
-                            // If amount_tf is not null, use it directly as the displayValue
-                            $displayValue = $content->amount_tf;
+                            // Default case if status_payment doesn't match any condition
+                            $displayValue = $final_tf;
                         }
                         
-                        // Round up to 2 decimal places first
-                        $displayValue = ceil($displayValue * 100) / 100;
+                        // Always round up to the next whole number
+                        $displayValue = ceil($displayValue);
                         
-                        // Then convert to integer by rounding up again if necessary
-                        if ($displayValue > (int)$displayValue) {
-                            $displayValue = ceil($displayValue);
-                        }
-                        
-                        // Add to total with the rounded up value
+                        // Add the rounded value to the total
                         $totalTransfer += $displayValue;
                     @endphp
                     {{ number_format($displayValue, 0) }}
