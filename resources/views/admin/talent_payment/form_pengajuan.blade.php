@@ -90,7 +90,7 @@
                     <td>{{ number_format($pphAmount, 0) }}</td>
                     <td>{{ number_format($final_tf, 0) }}</td>
                     <td>
-                        @php
+                    @php
                         if ($content->amount_tf === null || $content->amount_tf == 0) {
                             // If amount_tf is null or 0, calculate displayValue based on status_payment
                             if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
@@ -104,9 +104,11 @@
                             // If amount_tf is not null, use it directly as the displayValue
                             $displayValue = $content->amount_tf;
                         }
-                            $totalTransfer += $displayValue;
-                        @endphp
-                        {{ number_format($displayValue, 0) }}
+                        // Round up to 2 decimal places using ceil function
+                        $displayValue = ceil($displayValue * 100) / 100;
+                        $totalTransfer += $displayValue;
+                    @endphp
+                    {{ number_format($displayValue, 0) }}
                     </td>
                     <td>{{ $content->status_payment }}</td>
                     <td>{{ $content->talent->pic }}</td>
