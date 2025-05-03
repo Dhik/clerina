@@ -104,8 +104,11 @@
                             // If amount_tf is not null, use it directly as the displayValue
                             $displayValue = $content->amount_tf;
                         }
-                        // Round up to 2 decimal places using ceil function
+                        
+                        // Round up to 2 decimal places using ceil function with proper precision
                         $displayValue = ceil($displayValue * 100) / 100;
+                        
+                        // Add to total with the rounded up value
                         $totalTransfer += $displayValue;
                     @endphp
                     {{ number_format($displayValue, 0) }}
