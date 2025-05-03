@@ -428,7 +428,6 @@ $(document).ready(function() {
         $('#dailyDetailsModal').modal('show');
     });
 
-    // Click event handler for delete account
     $('#campaignDetailsTable').on('click', '.delete-account', function() {
         const accountName = $(this).data('account');
         const date = $(this).data('date');
