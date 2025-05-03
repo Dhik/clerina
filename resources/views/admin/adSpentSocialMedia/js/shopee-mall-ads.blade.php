@@ -430,14 +430,20 @@ $(document).ready(function() {
 
     $('#campaignDetailsTable').on('click', '.delete-account', function() {
         const accountName = $(this).data('account');
-        const date = $(this).data('date');
+        let modalDate = $('#dailyDetailsModal').data('date');
         
-        // Format date to ensure it's in Y-m-d format
-        const formattedDate = moment(date).format('YYYY-MM-DD');
+        console.log('Delete button clicked:', {
+            accountName: accountName,
+            modalDate: modalDate
+        });
+        
+        let formattedDate = moment(modalDate).format('YYYY-MM-DD');
+        
+        console.log('Formatted date:', formattedDate);
         
         Swal.fire({
             title: 'Are you sure?',
-            text: `This will delete all data for "${accountName}" on ${moment(date).format('D MMM YYYY')}!`,
+            text: `This will delete all data for "${accountName}" on ${moment(modalDate).format('D MMM YYYY')}!`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -446,10 +452,8 @@ $(document).ready(function() {
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Show loading state
                 showLoadingSwal('Deleting...');
                 
-                // Send delete request with properly formatted date
                 $.ajax({
                     url: "{{ route('adSpentSocialMedia.delete_by_account') }}",
                     type: 'DELETE',
@@ -474,10 +478,25 @@ $(document).ready(function() {
                         });
                     },
                     error: function(xhr) {
+                        let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data';
+                        let debugInfo = '';
+                        
+                        // Show debug info if available
+                        if (xhr.responseJSON && xhr.responseJSON.debug_info) {
+                            console.log('Debug info:', xhr.responseJSON.debug_info);
+                            const info = xhr.responseJSON.debug_info;
+                            debugInfo = `\n\nRequested: ${info.requested_account} (${info.requested_date})`;
+                            if (info.available_accounts && info.available_accounts.length > 0) {
+                                debugInfo += `\nAvailable accounts: ${info.available_accounts.join(', ')}`;
+                            } else {
+                                debugInfo += '\nNo accounts available for this date.';
+                            }
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
-                            text: xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data',
+                            text: errorMsg + debugInfo,
                             confirmButtonColor: '#3085d6'
                         });
                     }
