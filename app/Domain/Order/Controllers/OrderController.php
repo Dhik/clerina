@@ -2930,14 +2930,26 @@ class OrderController extends Controller
         $totalRows = count($sheetData);
         $processedRows = 0;
         $skippedRows = 0;
-        $duplicateRows = 0; // Track duplicates separately
-        $orderCountMap = []; // To keep track of order numbers per employee per month
+        $duplicateRows = 0;
+        $orderCountMap = [];
 
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
+        // Add arrays to store details about skipped rows
+        $skippedRowsDetails = [];
+        $duplicateRowsDetails = [];
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunkIndex => $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                // Calculate the actual row number in the spreadsheet (adding 3 because data starts at A3)
+                $actualRowNumber = $chunkIndex * $chunkSize + $rowIndex + 3;
+                
                 // Skip if essential data is missing
                 if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
                     $skippedRows++;
+                    $skippedRowsDetails[] = [
+                        'row' => $actualRowNumber,
+                        'reason' => 'Missing essential data (date, employee name, or product)',
+                        'data' => $row
+                    ];
                     continue;
                 }
                 
@@ -2958,6 +2970,11 @@ class OrderController extends Controller
                     }
                 } catch (\Exception $e) {
                     $skippedRows++;
+                    $skippedRowsDetails[] = [
+                        'row' => $actualRowNumber,
+                        'reason' => 'Invalid date format: ' . $row[0] . ' - ' . $e->getMessage(),
+                        'data' => $row
+                    ];
                     continue; // Skip if date is invalid
                 }
                 
@@ -2969,6 +2986,11 @@ class OrderController extends Controller
                     $employeeId = 'CLEOAZ103';
                 } else {
                     $skippedRows++;
+                    $skippedRowsDetails[] = [
+                        'row' => $actualRowNumber,
+                        'reason' => 'Unrecognized employee name: ' . $row[1],
+                        'data' => $row
+                    ];
                     continue; // Skip if employee name is not recognized
                 }
                 
@@ -2988,6 +3010,12 @@ class OrderController extends Controller
 
                 if ($existingOrder) {
                     $duplicateRows++;
+                    $duplicateRowsDetails[] = [
+                        'row' => $actualRowNumber,
+                        'reason' => 'Duplicate entry: Order already exists with same details',
+                        'data' => $row,
+                        'existing_order_id' => $existingOrder->id_order
+                    ];
                     continue;
                 }
                 
@@ -3053,12 +3081,57 @@ class OrderController extends Controller
             usleep(100000);
         }
 
+        // Generate detailed log of skipped rows
+        $skippedRowsLog = [];
+        foreach ($skippedRowsDetails as $detail) {
+            $rowData = array_map(function($value) {
+                return $value ?? 'NULL'; 
+            }, $detail['data']);
+            
+            $skippedRowsLog[] = [
+                'row_number' => $detail['row'],
+                'reason' => $detail['reason'],
+                'date' => $rowData[0] ?? 'NULL',
+                'employee' => $rowData[1] ?? 'NULL',
+                'product' => $rowData[2] ?? 'NULL',
+                'sku' => $rowData[3] ?? 'NULL',
+                'price' => $rowData[4] ?? 'NULL',
+                'qty' => $rowData[5] ?? 'NULL',
+                'amount' => $rowData[6] ?? 'NULL',
+                'customer' => $rowData[7] ?? 'NULL'
+            ];
+        }
+
+        // Generate detailed log of duplicate rows
+        $duplicateRowsLog = [];
+        foreach ($duplicateRowsDetails as $detail) {
+            $rowData = array_map(function($value) {
+                return $value ?? 'NULL'; 
+            }, $detail['data']);
+            
+            $duplicateRowsLog[] = [
+                'row_number' => $detail['row'],
+                'reason' => $detail['reason'],
+                'existing_order_id' => $detail['existing_order_id'],
+                'date' => $rowData[0] ?? 'NULL',
+                'employee' => $rowData[1] ?? 'NULL',
+                'product' => $rowData[2] ?? 'NULL',
+                'sku' => $rowData[3] ?? 'NULL',
+                'price' => $rowData[4] ?? 'NULL',
+                'qty' => $rowData[5] ?? 'NULL',
+                'amount' => $rowData[6] ?? 'NULL',
+                'customer' => $rowData[7] ?? 'NULL'
+            ];
+        }
+
         return response()->json([
             'message' => 'B2B Cleora orders imported successfully', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
-            'duplicate_rows' => $duplicateRows
+            'duplicate_rows' => $duplicateRows,
+            'skipped_rows_details' => $skippedRowsLog,
+            'duplicate_rows_details' => $duplicateRowsLog
         ]);
     }
     public function importAzrinaB2B()
