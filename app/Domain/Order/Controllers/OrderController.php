@@ -353,9 +353,8 @@ class OrderController extends Controller
     }
     public function updateSalesTurnover2()
     {
-        // Set specific date range for April 2025
-        $startDate = Carbon::createFromDate(2025, 4, 1)->format('Y-m-d'); // April 1, 2025
-        $endDate = Carbon::createFromDate(2025, 4, 30)->format('Y-m-d');  // April 30, 2025
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->format('Y-m-d');
         
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
                         ->where('tenant_id', 2)
@@ -373,61 +372,46 @@ class OrderController extends Controller
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
                 
-            // Get the current sales record
-            $salesRecord = DB::table('sales')
-                ->where('date', $formattedDate)
-                ->where('tenant_id', 2)
-                ->first();
-            
-            if ($salesRecord) {
-                // Calculate new ROAS if ad_spent_total exists and is not zero
-                $newRoas = 0;
-                if (isset($salesRecord->ad_spent_total) && $salesRecord->ad_spent_total > 0) {
-                    $newRoas = $total->total_amount / $salesRecord->ad_spent_total;
-                }
-                
-                // Update sales record with new turnover and ROAS
-                DB::table('sales')
+                // Get the current sales record
+                $salesRecord = DB::table('sales')
                     ->where('date', $formattedDate)
                     ->where('tenant_id', 2)
-                    ->update([
+                    ->first();
+                
+                if ($salesRecord) {
+                    // Calculate new ROAS if ad_spent_total exists and is not zero
+                    $newRoas = 0;
+                    if ($salesRecord->ad_spent_total > 0) {
+                        $newRoas = $total->total_amount / $salesRecord->ad_spent_total;
+                    }
+                    
+                    // Update sales record with new turnover and ROAS
+                    DB::table('sales')
+                        ->where('date', $formattedDate)
+                        ->where('tenant_id', 2)
+                        ->update([
+                            'turnover' => $total->total_amount,
+                            'roas' => $newRoas
+                        ]);
+                } else {
+                    // Create new sales record if it doesn't exist
+                    DB::table('sales')->insert([
+                        'date' => $formattedDate,
+                        'tenant_id' => 2,
                         'turnover' => $total->total_amount,
-                        'roas' => $newRoas,
+                        'roas' => 0,
+                        'created_at' => now(),
                         'updated_at' => now()
                     ]);
-            } else {
-                // Create new sales record if it doesn't exist
-                DB::table('sales')->insert([
-                    'date' => $formattedDate,
-                    'tenant_id' => 2,
-                    'turnover' => $total->total_amount,
-                    'roas' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
+                }
             
-            // Update net_profits table with the sales amount
             DB::table('net_profits')
                 ->where('date', $formattedDate)
                 ->where('tenant_id', 2)
-                ->update([
-                    'sales' => $total->total_amount,
-                    'updated_at' => now()
-                ]);
+                ->update(['sales' => $total->total_amount]);
         }
         
-        // Add logging for debugging
-        \Log::info('Sales turnover updated for April 2025', [
-            'date_range' => [$startDate, $endDate],
-            'records_updated' => count($totals)
-        ]);
-        
-        return response()->json([
-            'message' => 'Net profits sales updated successfully for April 2025',
-            'date_range' => [$startDate, $endDate],
-            'records_updated' => count($totals)
-        ]);
+        return response()->json(['message' => 'Net profits sales updated successfully']);
     }
     public function updateSalesTurnoverAzrina()
     {
@@ -1798,7 +1782,7 @@ class OrderController extends Controller
         $updatedRows = 0;
         $skippedCount = 0;
         $nullDateCount = 0;
-        $rowIndex = 2;
+        $rowIndex = 2; // Starting from A2 in the sheet
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
