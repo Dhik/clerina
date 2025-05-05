@@ -287,16 +287,25 @@ class SalesController extends Controller
         }
 
         $data = $query->selectRaw('
-SUM(COALESCE(sales, 0)) as total_sales,
-    SUM(hpp) * 0.94 as total_hpp,
-    SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
-    SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
-    SUM((sales * 0.725) - marketing - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - operasional - (hpp * 0.94) - fee_packing) as total_net_profit,
-    SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_romi,
-    SUM(sales * 0.725) as total_net_sales,
-    SUM((COALESCE(sales, 0) * 0.725) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / NULLIF(SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)), 0) as avg_net_romi
-        ')
-        ->first();
+    SUM(COALESCE(sales, 0)) as total_sales,
+        SUM(COALESCE(hpp, 0)) * 0.94 as total_hpp,
+        SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0) + COALESCE(operasional, 0)) as total_spent,
+        SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) as total_marketing_spent,
+        SUM((COALESCE(sales, 0) * 0.725) - COALESCE(marketing, 0) - COALESCE(spent_kol, 0) - COALESCE(affiliate, 0) - COALESCE(operasional, 0) - (COALESCE(hpp, 0) * 0.94) - COALESCE(fee_packing, 0)) as total_net_profit,
+        CASE 
+            WHEN SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) = 0 THEN 0
+            ELSE SUM(COALESCE(sales, 0) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0))
+        END as avg_romi,
+        SUM(COALESCE(sales, 0) * 0.725) as total_net_sales,
+        CASE 
+            WHEN SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0)) = 0 THEN 0
+            ELSE SUM((COALESCE(sales, 0) * 0.725) + COALESCE(b2b_sales, 0) + COALESCE(crm_sales, 0)) / SUM(COALESCE(marketing, 0) + COALESCE(spent_kol, 0) + COALESCE(affiliate, 0))
+        END as avg_net_romi
+            ')
+            ->first();
+        
+        // Add logging for debugging if needed
+        // \Log::info('Net Profit Data:', ['data' => $data]);
 
         return response()->json([
             'total_sales' => $data->total_sales ?? 0,
