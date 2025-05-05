@@ -91,24 +91,21 @@
                     <td>{{ number_format($final_tf, 0) }}</td>
                     <td>
                     @php
-                        // Calculate displayValue based on status_payment
-                        if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
-                            $displayValue = $final_tf / 3;
-                        } elseif ($content->status_payment === "DP 50%" || $content->status_payment === "Pelunasan 50%") {
-                            $displayValue = $final_tf / 2;
-                        } elseif ($content->status_payment === "Full Payment") {
-                            $displayValue = $final_tf;
+                        if ($content->amount_tf === null || $content->amount_tf == 0) {
+                            // If amount_tf is null or 0, calculate displayValue based on status_payment
+                            if (in_array($content->status_payment, ["Termin 1", "Termin 2", "Termin 3"])) {
+                                $displayValue = $final_tf / 3;
+                            } elseif ($content->status_payment === "DP 50%" || $content->status_payment === "Pelunasan 50%") {
+                                $displayValue = $final_tf / 2;
+                            } elseif ($content->status_payment === "Full Payment") {
+                                $displayValue = $final_tf;
+                            }
                         } else {
-                            // Default case if status_payment doesn't match any condition
-                            $displayValue = $final_tf;
+                            // If amount_tf is not null, use it directly as the displayValue
+                            $displayValue = $content->amount_tf;
                         }
-                        
-                        // Always round up to the next whole number
-                        $displayValue = ceil($displayValue);
-                        
-                        // Add the rounded value to the total
-                        $totalTransfer += $displayValue;
-                    @endphp
+                            $totalTransfer += $displayValue;
+                        @endphp
                     {{ number_format($displayValue, 0) }}
                     </td>
                     <td>{{ $content->status_payment }}</td>
