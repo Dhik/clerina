@@ -1782,7 +1782,7 @@ class OrderController extends Controller
         $updatedRows = 0;
         $skippedCount = 0;
         $nullDateCount = 0;
-        $rowIndex = 2; // Starting from A2 in the sheet
+        $rowIndex = 2;
 
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
