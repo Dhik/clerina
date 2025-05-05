@@ -2027,6 +2027,126 @@ class NetProfitController extends Controller
             'count' => count($data) - 1
         ]);
     }
+    public function exportHPPLastMonth()
+    {
+        $newSpreadsheetId = '1SSdZTupgguBggAJy0QkvOx6hqtVs8A8Rb2tcimAIRa8';
+
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
+        $currentTenantId = 1;
+        
+        $now = Carbon::create(2025, 4, 1);
+        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
+        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        
+        $baseQuery = DB::table('net_profits as np')
+            ->select(
+                'np.*', 
+                's.ad_spent_social_media',
+                's.ad_spent_market_place'
+            )
+            ->leftJoin('sales as s', function($join) use ($currentTenantId) {
+                $join->on('np.date', '=', 's.date')
+                    ->where('s.tenant_id', '=', $currentTenantId);
+            })
+            ->where('np.tenant_id', '=', $currentTenantId)
+            ->whereMonth('np.date', $now->month)  // Will be April (4)
+            ->whereYear('np.date', $now->year)    // Will be 2025
+            ->orderBy('np.date');
+        
+        $records = $baseQuery->get();
+        
+        $data = [];
+        $data[] = [
+            'Date', 
+            'Net Profit',
+            'Total Sales', 
+            'Estimasi Cancel (6%)',
+            'Estimasi Retur (2%)',
+            'Net Sales',
+            'Marketing', 
+            'KOL Spending', 
+            'Affiliate',
+            'Total Marketing',
+            'Operasional', 
+            'HPP', 
+            'Fee Packing',
+            'Admin Fee',
+            'PPN',
+            'ROAS',
+            'ROMI',
+            'Visits',
+            'Quantity',
+            'Orders',
+            'Closing Rate',
+            'Ad Spent (Social)',
+            'Ad Spent (Marketplace)'
+        ];
+        
+        $ensureNumber = function($value) {
+            return (float)$value;
+        };
+        
+        foreach ($records as $row) {
+            $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
+            $netSales = $totalSales * 0.725 - ($row->fee_packing ?? 0);
+            $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
+            $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
+            $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
+            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.165;
+            $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
+            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.725) - 
+            ($ensureNumber($row->marketing ?? 0)) - 
+            $ensureNumber($row->spent_kol ?? 0) -
+            $ensureNumber($row->fee_packing ?? 0) - 
+            $ensureNumber($row->affiliate ?? 0) - 
+            $ensureNumber($row->operasional ?? 0) - 
+            ($ensureNumber($row->hpp ?? 0) * 0.94);
+            
+            $data[] = [
+                Carbon::parse($row->date)->format('Y-m-d'),
+                $netProfit,
+                $ensureNumber($row->sales ?? 0),
+                // $ensureNumber($row->b2b_sales ?? 0),
+                // $ensureNumber($row->crm_sales ?? 0),
+                // $totalSales,
+                $ensureNumber(($row->sales * 0.06) ?? 0),
+                $ensureNumber(($row->sales * 0.02) ?? 0),
+                $ensureNumber(($row->sales * 0.725) ?? 0),
+                $ensureNumber($row->marketing ?? 0),
+                $ensureNumber($row->spent_kol ?? 0),
+                $ensureNumber($row->affiliate ?? 0),
+                $totalMarketingSpend,
+                $ensureNumber($row->operasional ?? 0),
+                $ensureNumber(($row->hpp * 0.94) ?? 0),
+                $ensureNumber(($row->fee_packing) ?? 0),
+                $ensureNumber(($row->sales * 0.165) ?? 0),
+                $ensureNumber(($row->sales * 0.03) ?? 0),
+                $ensureNumber($row->roas ?? 0),
+                $romi,
+                (int)($row->visit ?? 0),
+                (int)($row->qty ?? 0),
+                (int)($row->order ?? 0),
+                $ensureNumber($row->closing_rate ?? 0) / 100,
+                $ensureNumber($row->ad_spent_social_media ?? 0),
+                $ensureNumber($row->ad_spent_market_place ?? 0)
+            ];
+        }
+        
+        // Update sheet name to April 2025
+        $sheetName = 'Sheet1';
+        
+        $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Current month data exported successfully to Google Sheets',
+            'month' => $now->format('F Y'),
+            'count' => count($data) - 1
+        ]);
+    }
     public function exportProductReport()
     {
         $newSpreadsheetId = '1iM61qRxDgjSj6fVnhXrYRA-pY2RtH8XTJqSfvWVYoGs';
