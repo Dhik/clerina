@@ -280,6 +280,7 @@ class CampaignController extends Controller
         $currentMonth = now()->format('Y-m'); // Get the current month in 'YYYY-MM' format
         $lastMonth = now()->subMonth()->format('Y-m'); // Get the last month in 'YYYY-MM' format
         
+        // Query campaigns from both current month and last month
         $campaigns = Campaign::where(function($query) use ($currentMonth, $lastMonth) {
             $query->where('created_at', 'like', "$currentMonth%")
                 ->orWhere('created_at', 'like', "$lastMonth%");
