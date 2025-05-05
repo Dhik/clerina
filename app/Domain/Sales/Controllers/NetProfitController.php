@@ -1077,64 +1077,81 @@ class NetProfitController extends Controller
         }
     }
     public function updateSalesAzrina()
-    {
-        try {
-            $tenant_id = 2;
-            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::now()->format('Y-m-d');
+{
+    try {
+        $tenant_id = 2;
+        // Set specific date range for April 2025
+        $startDate = Carbon::createFromDate(2025, 4, 1)->format('Y-m-d'); // April 1, 2025
+        $endDate = Carbon::createFromDate(2025, 4, 30)->format('Y-m-d');  // April 30, 2025
 
-            $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
+        $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
+            ->where('tenant_id', $tenant_id)
+            ->pluck('date');
+        
+        $excludedStatuses = [
+            'pending', 
+            'cancelled', 
+            'request_cancel', 
+            'request_return',
+            'Batal', 
+            'cancelled', 
+            'Canceled', 
+            'Pembatalan diajukan', 
+            'Dibatalkan Sistem'
+        ];
+        
+        // Counter for updated records
+        $updatedCount = 0;
+
+        // Process each net_profit record by date
+        foreach ($netProfitDates as $date) {
+            // Calculate total sales amount for this date and tenant
+            $totalSales = DB::table('orders')
+                ->where('date', $date)
                 ->where('tenant_id', $tenant_id)
-                ->pluck('date');
-            
-            $excludedStatuses = [
-                'pending', 
-                'cancelled', 
-                'request_cancel', 
-                'request_return',
-                'Batal', 
-                'cancelled', 
-                'Canceled', 
-                'Pembatalan diajukan', 
-                'Dibatalkan Sistem'
-            ];
-            
-            // Counter for updated records
-            $updatedCount = 0;
+                ->whereNotIn('status', $excludedStatuses)
+                ->sum('amount');
 
-            // Process each net_profit record by date
-            foreach ($netProfitDates as $date) {
-                // Calculate total sales amount for this date and tenant
-                $totalSales = DB::table('orders')
-                    ->where('date', $date)
-                    ->where('tenant_id', $tenant_id)
-                    ->whereNotIn('status', $excludedStatuses)
-                    ->sum('amount');
-
-                // Update the net_profit record for this date and tenant
-                $updated = NetProfit::where('date', $date)
-                    ->where('tenant_id', $tenant_id)
-                    ->update(['sales' => $totalSales]);
-                
-                if ($updated) {
-                    $updatedCount++;
-                }
+            // Update the net_profit record for this date and tenant
+            $updated = NetProfit::where('date', $date)
+                ->where('tenant_id', $tenant_id)
+                ->update([
+                    'sales' => $totalSales,
+                    'updated_at' => now()
+                ]);
+            
+            if ($updated) {
+                $updatedCount++;
             }
-
-            return response()->json([
-                'success' => true,
-                'message' => "Successfully updated $updatedCount net profit records with sales data",
-                'date_range' => "$startDate to $endDate"
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating net profit sales data',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        // Add logging for tracking
+        \Log::info('Sales data updated for April 2025', [
+            'date_range' => [$startDate, $endDate],
+            'tenant_id' => $tenant_id,
+            'updated_count' => $updatedCount
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully updated $updatedCount net profit records with sales data for April 2025",
+            'date_range' => "$startDate to $endDate"
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error updating net profit sales data', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'date_range' => 'April 2025'
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating net profit sales data for April 2025',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     public function updateQty()
     {
         try {
@@ -1194,63 +1211,83 @@ class NetProfitController extends Controller
         }
     }
     public function updateQtyAzrina()
-    {
-        try {
-            $tenant_id = 2;
+{
+    try {
+        $tenant_id = 2;
+        $month = 4; // April
+        $year = 2025;
 
-            $dailyQty = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
-                ->where('orders.tenant_id', $tenant_id)
-                ->whereNotIn('orders.status', 
-                [
-                    'pending', 
-                    'cancelled', 
-                    'request_cancel', 
-                    'request_return',
-                    'Batal', 
-                    'cancelled', 
-                    'Canceled', 
-                    'Pembatalan diajukan', 
-                    'Dibatalkan Sistem'
-                ])
-                ->select('date')
-                ->selectRaw('SUM(qty) as total_qty')
-                ->groupBy('date');
+        $dailyQty = Order::query()
+            ->whereMonth('orders.date', $month)
+            ->whereYear('orders.date', $year)
+            ->where('orders.tenant_id', $tenant_id)
+            ->whereNotIn('orders.status', 
+            [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
+            ->select('date')
+            ->selectRaw('SUM(qty) as total_qty')
+            ->groupBy('date');
 
-            // Reset the quantity only for the current tenant
-            NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
-                ->where('tenant_id', $tenant_id)
-                ->update(['qty' => 0]);
+        // Reset the quantity only for the specified tenant and time period
+        $resetCount = NetProfit::query()
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->where('tenant_id', $tenant_id)
+            ->update(['qty' => 0, 'updated_at' => now()]);
 
-            // Update quantities only for the current tenant
-            NetProfit::query()
-                ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
-                ->joinSub($dailyQty, 'dq', function($join) {
-                    $join->on('net_profits.date', '=', 'dq.date');
-                })
-                ->update([
-                    'qty' => DB::raw('dq.total_qty')
-                ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Quantity updated successfully.'
+        // Update quantities for the specified tenant and time period
+        $updateCount = NetProfit::query()
+            ->where('net_profits.tenant_id', $tenant_id)
+            ->whereMonth('net_profits.date', $month)
+            ->whereYear('net_profits.date', $year)
+            ->joinSub($dailyQty, 'dq', function($join) {
+                $join->on('net_profits.date', '=', 'dq.date');
+            })
+            ->update([
+                'qty' => DB::raw('dq.total_qty'),
+                'updated_at' => now()
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error('Update Qty Error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update quantity.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        // Add logging for tracking
+        \Log::info('Quantity data updated for April 2025', [
+            'tenant_id' => $tenant_id,
+            'reset_count' => $resetCount,
+            'update_count' => $updateCount,
+            'month' => $month,
+            'year' => $year
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quantity updated successfully for April 2025',
+            'reset_count' => $resetCount,
+            'update_count' => $updateCount
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Update Qty Error for April 2025: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'tenant_id' => 2,
+            'month' => 4,
+            'year' => 2025
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update quantity for April 2025',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     public function updateOrderCount()
     {
         try {
@@ -1311,64 +1348,88 @@ class NetProfitController extends Controller
         }
     }
     public function updateOrderCountAzrina()
-    {
-        try {
-            $tenant_id = 2;
+{
+    try {
+        $tenant_id = 2;
+        $month = 4; // April
+        $year = 2025;
 
-            $dailyOrders = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
-                ->where('orders.tenant_id', $tenant_id)
-                ->whereNotIn('orders.status', 
-                [
-                    'pending', 
-                    'cancelled', 
-                    'request_cancel', 
-                    'request_return',
-                    'Batal', 
-                    'cancelled', 
-                    'Canceled', 
-                    'Pembatalan diajukan', 
-                    'Dibatalkan Sistem'
-                ])
-                ->select('date')
-                ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
-                ->groupBy('date');
+        $dailyOrders = Order::query()
+            ->whereMonth('orders.date', $month)
+            ->whereYear('orders.date', $year)
+            ->where('orders.tenant_id', $tenant_id)
+            ->whereNotIn('orders.status', 
+            [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
+            ->select('date')
+            ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
+            ->groupBy('date');
 
-            // Reset order count and packing fee only for the current tenant
-            NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
-                ->where('tenant_id', $tenant_id)
-                ->update(['order' => 0, 'fee_packing' => 0]);
-                
-            // Update order count and packing fee only for the current tenant
-            NetProfit::query()
-                ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
-                ->joinSub($dailyOrders, 'do', function($join) {
-                    $join->on('net_profits.date', '=', 'do.date');
-                })
-                ->update([
-                    'order' => DB::raw('do.total_orders'),
-                    'fee_packing' => DB::raw('do.total_orders * 2000')
-                ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Order count and packing fee updated successfully.'
+        // Reset order count and packing fee for the specified tenant and time period
+        $resetCount = NetProfit::query()
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->where('tenant_id', $tenant_id)
+            ->update([
+                'order' => 0, 
+                'fee_packing' => 0,
+                'updated_at' => now()
+            ]);
+            
+        // Update order count and packing fee for the specified tenant and time period
+        $updateCount = NetProfit::query()
+            ->where('net_profits.tenant_id', $tenant_id)
+            ->whereMonth('net_profits.date', $month)
+            ->whereYear('net_profits.date', $year)
+            ->joinSub($dailyOrders, 'do', function($join) {
+                $join->on('net_profits.date', '=', 'do.date');
+            })
+            ->update([
+                'order' => DB::raw('do.total_orders'),
+                'fee_packing' => DB::raw('do.total_orders * 2000'),
+                'updated_at' => now()
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error('Update Order Count Error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update order count and packing fee.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        // Add logging for tracking
+        \Log::info('Order count and packing fee updated for April 2025', [
+            'tenant_id' => $tenant_id,
+            'reset_count' => $resetCount,
+            'update_count' => $updateCount,
+            'month' => $month,
+            'year' => $year
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order count and packing fee updated successfully for April 2025',
+            'reset_count' => $resetCount,
+            'update_count' => $updateCount
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Update Order Count Error for April 2025: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'tenant_id' => 2,
+            'month' => 4,
+            'year' => 2025
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update order count and packing fee for April 2025',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
     public function getCurrentMonthCorrelation(Request $request)
     {
         try {
