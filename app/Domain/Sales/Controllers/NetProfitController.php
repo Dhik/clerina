@@ -467,96 +467,126 @@ class NetProfitController extends Controller
         }
     }
     public function updateHppAzrina()
-    {
-        try {
-            $startDate = now()->startOfMonth()->format('Y-m-d');
-            $endDate = now()->format('Y-m-d');
-            $tenant_id = 2;
+{
+    try {
+        // Set specific date range for April 2025
+        $startDate = Carbon::createFromDate(2025, 4, 1)->format('Y-m-d'); // April 1, 2025
+        $endDate = Carbon::createFromDate(2025, 4, 30)->format('Y-m-d');  // April 30, 2025
+        $tenant_id = 2;
+        
+        // Get order quantities and SKUs for each day in the range
+        $dailyOrders = DB::table('orders')
+            ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('SUM(qty) as total_qty'))
+            ->where('tenant_id', $tenant_id)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereNotIn('status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ])
+            ->groupBy('order_date', 'sku')
+            ->get();
             
-            // Get order quantities and SKUs for each day in the range
-            $dailyOrders = DB::table('orders')
-                ->select(DB::raw('DATE(date) as order_date'), 'sku', DB::raw('SUM(qty) as total_qty'))
-                ->where('tenant_id', $tenant_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->whereNotIn('status', [
-                    'pending', 
-                    'cancelled', 
-                    'request_cancel', 
-                    'request_return',
-                    'Batal', 
-                    'Canceled', 
-                    'Pembatalan diajukan', 
-                    'Dibatalkan Sistem'
-                ])
-                ->groupBy('order_date', 'sku')
-                ->get();
-                
-            $products = DB::table('products')
-                ->select('sku', 'harga_satuan')
-                ->where('tenant_id', $tenant_id)
-                ->get()
-                ->keyBy('sku');
+        $products = DB::table('products')
+            ->select('sku', 'harga_satuan')
+            ->where('tenant_id', $tenant_id)
+            ->get()
+            ->keyBy('sku');
+        
+        // Calculate HPP per day
+        $dailyHpp = [];
+        $skusNotFound = [];
+        
+        foreach ($dailyOrders as $order) {
+            $orderDate = $order->order_date;
+            $orderSku = $order->sku;
+            $orderQty = $order->total_qty;
             
-            // Calculate HPP per day
-            $dailyHpp = [];
+            // Extract the base SKU for cases like "2 AZ-MC50ML-001"
+            $baseSku = $orderSku;
             
-            foreach ($dailyOrders as $order) {
-                $orderDate = $order->order_date;
-                $orderSku = $order->sku;
-                $orderQty = $order->total_qty;
-                
-                // Extract the base SKU for cases like "2 AZ-MC50ML-001"
-                $baseSku = $orderSku;
-                
-                if (preg_match('/^(\d+)\s+(.+)$/', $orderSku, $matches)) {
-                    $baseSku = $matches[2];
-                }
-                
-                // Get the product price
-                $productPrice = 0;
-                if (isset($products[$baseSku])) {
-                    $productPrice = $products[$baseSku]->harga_satuan;
-                }
-                
-                // Calculate total HPP for this order entry
-                $orderHpp = $orderQty * $productPrice;
-                
-                // Add to daily total
-                if (!isset($dailyHpp[$orderDate])) {
-                    $dailyHpp[$orderDate] = 0;
-                }
-                $dailyHpp[$orderDate] += $orderHpp;
+            if (preg_match('/^(\d+)\s+(.+)$/', $orderSku, $matches)) {
+                $baseSku = $matches[2];
             }
             
-            $resetCount = DB::table('net_profits')
-                ->where('tenant_id', $tenant_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->update(['hpp' => 0, 'updated_at' => now()]);
-            
-            $updatedCount = 0;
-            foreach ($dailyHpp as $date => $hppValue) {
-                $updated = DB::table('net_profits')
-                    ->where('tenant_id', $tenant_id)
-                    ->where('date', $date)
-                    ->update(['hpp' => $hppValue, 'updated_at' => now()]);
-                    
-                $updatedCount += $updated;
+            // Get the product price
+            $productPrice = 0;
+            if (isset($products[$baseSku])) {
+                $productPrice = $products[$baseSku]->harga_satuan;
+            } else {
+                // Track SKUs that weren't found for debugging
+                if (!in_array($baseSku, $skusNotFound)) {
+                    $skusNotFound[] = $baseSku;
+                }
             }
             
-            return response()->json([
-                'success' => true,
-                'reset_count' => $resetCount,
-                'updated_count' => $updatedCount,
-                'total_hpp_days' => count($dailyHpp),
-                'message' => "HPP values updated successfully for tenant_id {$tenant_id}"
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            // Calculate total HPP for this order entry
+            $orderHpp = $orderQty * $productPrice;
+            
+            // Add to daily total
+            if (!isset($dailyHpp[$orderDate])) {
+                $dailyHpp[$orderDate] = 0;
+            }
+            $dailyHpp[$orderDate] += $orderHpp;
         }
+        
+        // First reset all HPP values in the date range
+        $resetCount = DB::table('net_profits')
+            ->where('tenant_id', $tenant_id)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->update(['hpp' => 0, 'updated_at' => now()]);
+        
+        // Then update with the calculated values
+        $updatedCount = 0;
+        foreach ($dailyHpp as $date => $hppValue) {
+            $updated = DB::table('net_profits')
+                ->where('tenant_id', $tenant_id)
+                ->where('date', $date)
+                ->update(['hpp' => $hppValue, 'updated_at' => now()]);
+                
+            $updatedCount += $updated;
+        }
+        
+        // Add logging for tracking
+        \Log::info('HPP values updated for April 2025', [
+            'date_range' => [$startDate, $endDate],
+            'tenant_id' => $tenant_id,
+            'updated_count' => $updatedCount,
+            'skus_not_found_count' => count($skusNotFound)
+        ]);
+        
+        if (count($skusNotFound) > 0) {
+            \Log::warning('Some SKUs were not found during HPP calculation', [
+                'missing_skus' => $skusNotFound
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'date_range' => [$startDate, $endDate],
+            'reset_count' => $resetCount,
+            'updated_count' => $updatedCount,
+            'total_hpp_days' => count($dailyHpp),
+            'skus_not_found' => count($skusNotFound),
+            'message' => "HPP values updated successfully for April 2025, tenant_id {$tenant_id}"
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error updating HPP values', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
     public function updateMarketing()
     {
         try {
@@ -630,29 +660,57 @@ class NetProfitController extends Controller
         }
     }
     public function updateMarketingAzrina()
-    {
-        try {
-            DB::statement("
-                UPDATE net_profits
-                INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
-                SET net_profits.marketing = sales.ad_spent_total, 
-                    net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
-                AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 2]);
+{
+    try {
+        // Explicitly set month and year for April 2025
+        $month = 4;
+        $year = 2025;
+        $tenant_id = 2;
+        
+        // Use DB::statement for a direct SQL update
+        $affectedRows = DB::statement("
+            UPDATE net_profits
+            INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
+            SET net_profits.marketing = sales.ad_spent_total, 
+                net_profits.updated_at = ?
+            WHERE MONTH(net_profits.date) = ?
+            AND YEAR(net_profits.date) = ?
+            AND sales.tenant_id = ?
+        ", [now(), $month, $year, $tenant_id]);
+        
+        // Add logging for tracking
+        \Log::info('Marketing values updated for April 2025', [
+            'month' => $month,
+            'year' => $year,
+            'tenant_id' => $tenant_id,
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Marketing values updated for April 2025',
+            'month' => $month,
+            'year' => $year,
+            'tenant_id' => $tenant_id,
+            'timestamp' => now()->toDateTimeString()
+        ]);
 
-            return response()->json([
-                'success' => true,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        \Log::error('Error updating marketing values', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'month' => 4,
+            'year' => 2025
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'month' => 4,
+            'year' => 2025
+        ], 500);
     }
+}
     public function importSalesData()
     {
         $startDate = '2025-01-01';
