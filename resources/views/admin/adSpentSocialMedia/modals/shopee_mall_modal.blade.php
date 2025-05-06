@@ -27,6 +27,7 @@
                             <option value="Red Saviour">Red Saviour</option>
                             <option value="3 Minutes">3 Minutes</option>
                             <option value="Calendula">Calendula</option>
+                            <option value="Natural Exfo">Natural Exfo</option>
                             <option value="Lain-lain">Lain-lain</option>
                         </select>
                     </div>
