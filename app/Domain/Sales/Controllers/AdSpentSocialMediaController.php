@@ -22,13 +22,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 class AdSpentSocialMediaController extends Controller
 {
+    protected $googleSheetService;
     public function __construct(
         protected AdSpentSocialMediaBLLInterface $adSpentSocialMediaBLL,
-        protected SocialMediaBLLInterface $socialMediaBLL
-    ) {}
+        protected SocialMediaBLLInterface $socialMediaBLL,
+        GoogleSheetService $googleSheetService
+    ) {
+        $this->googleSheetService = $googleSheetService;
+    }
 
     /**
      * @throws Exception
