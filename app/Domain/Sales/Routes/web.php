@@ -70,6 +70,7 @@ Route::prefix('admin')
                 Route::get('/show', [AdSpentSocialMediaController::class, 'get_ads_details_by_date'])->name('adSpentSocialMedia.get_details_by_date');
                 Route::get('/campaign-summary', [AdSpentSocialMediaController::class, 'get_campaign_summary'])->name('adSpentSocialMedia.get_campaign_summary');
                 Route::delete('/delete-by-account', [AdSpentSocialMediaController::class, 'deleteByAccountAndDate'])->name('adSpentSocialMedia.delete_by_account');
+                Route::get('/export-data', [AdSpentSocialMediaController::class, 'exportAdsMetaStats'])->name('adSpentSocialMedia.export-data');
 
                 Route::get('/shopee2/get', [AdSpentSocialMediaController::class, 'get_shopee2_ads_cpas'])->name('adSpentSocialMedia.get_shopee2_ads_cpas');
                 Route::post('/shopee2/import', [AdSpentSocialMediaController::class, 'import_shopee2_ads'])->name('adSpentSocialMedia.import_shopee2');
@@ -118,7 +119,6 @@ Route::prefix('admin')
             Route::get('/import-data', [NetProfitController::class, 'importNetProfits'])->name('net-profit.import-data');
             Route::get('/import-data-azrina', [NetProfitController::class, 'importNetProfitsAzrina'])->name('net-profit.import-data-azrina');
             Route::get('/export-data', [NetProfitController::class, 'exportCurrentMonthData'])->name('net-profit.export-data');
-            Route::get('/export-data-', [NetProfitController::class, 'exportAdsMeta'])->name('net-profit.export-data-');
             Route::get('/export-lastmonth-azrina', [NetProfitController::class, 'exportLastMonthDataAzrina'])->name('net-profit.export-lastmonth-azrina');
             Route::get('/export-hpp', [NetProfitController::class, 'exportHPPLastMonth'])->name('net-profit.export-hpp');
             Route::get('/export-data-azrina', [NetProfitController::class, 'exportCurrentMonthDataAzrina'])->name('net-profit.export-data-azrina');
