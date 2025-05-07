@@ -13,7 +13,6 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Filter Section -->
                 <div class="row mb-3">
                     <div class="col-md-4 offset-md-8">
                         <div class="input-group">
@@ -202,7 +201,6 @@
     </div>
 </div>
 
-<!-- Platform Comparison Modal -->
 <div class="modal fade" id="platformComparisonModal" tabindex="-1" role="dialog" aria-labelledby="platformComparisonModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
