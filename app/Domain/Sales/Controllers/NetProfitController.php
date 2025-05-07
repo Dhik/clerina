@@ -2255,7 +2255,7 @@ class NetProfitController extends Controller
         }
         
         // Update sheet name to April 2025
-        $sheetName = 'SalesReport Cleora';
+        $sheetName = 'Ads Meta';
         
         $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
