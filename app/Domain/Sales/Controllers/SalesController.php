@@ -161,7 +161,18 @@ class SalesController extends Controller
                 'date',
                 DB::raw('SUM(amount) as total_amount')
             )
-            ->where('tenant_id', '=', $currentTenantId);
+            ->where('tenant_id', '=', $currentTenantId)
+            ->whereNotIn('status', [
+                'pending', 
+                'cancelled', 
+                'request_cancel', 
+                'request_return',
+                'Batal', 
+                'cancelled', 
+                'Canceled', 
+                'Pembatalan diajukan', 
+                'Dibatalkan Sistem'
+            ]);
         
         // Apply sales channel filter if selected
         if (!is_null($selectedChannel)) {
@@ -266,7 +277,6 @@ class SalesController extends Controller
                 $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
                 return $totalSales * 0.03;
             })
-            // Rest of the code remains the same...
             ->addColumn('total_marketing_spend', function ($row) {
                 return $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
             })
