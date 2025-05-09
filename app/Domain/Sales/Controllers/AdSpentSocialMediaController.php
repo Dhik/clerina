@@ -2992,41 +2992,60 @@ class AdSpentSocialMediaController extends Controller
             $data = $query->first();
 
             // Find the date with minimum amount spent
-            $minSpentQuery = AdsMeta::select('date', 'amount_spent')
+            $dailySpendQuery = AdsMeta::select(
+                    'date', 
+                    DB::raw('SUM(amount_spent) as daily_spent')
+                )
                 ->where('tenant_id', auth()->user()->current_tenant_id)
                 ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                 ->whereNotNull('amount_spent')
                 ->where('amount_spent', '>', 0) // Only consider days with some spending
-                ->orderBy('amount_spent', 'asc');
+                ->groupBy('date');
                 
             // Apply the same filters
             if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $minSpentQuery->where('kategori_produk', $request->kategori_produk);
+                $dailySpendQuery->where('kategori_produk', $request->kategori_produk);
             }
 
             if ($request->has('pic') && $request->pic !== '') {
-                $minSpentQuery->where('pic', $request->pic);
+                $dailySpendQuery->where('pic', $request->pic);
             }
             
-            $minSpent = $minSpentQuery->first();
+            $dailySpends = $dailySpendQuery->get();
+            
+            // Find the minimum spending day (if data exists)
+            $minSpent = null;
+            if ($dailySpends->count() > 0) {
+                $minSpent = $dailySpends->sortBy('daily_spent')->first();
+            }
 
             // Find the date with maximum adds to cart
-            $maxAtcQuery = AdsMeta::select('date', 'adds_to_cart_shared_items')
+            $dailyAtcQuery = AdsMeta::select(
+                    'date',
+                    DB::raw('SUM(adds_to_cart_shared_items) as daily_atc')
+                )
                 ->where('tenant_id', auth()->user()->current_tenant_id)
                 ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
                 ->whereNotNull('adds_to_cart_shared_items')
-                ->orderBy('adds_to_cart_shared_items', 'desc');
+                ->where('adds_to_cart_shared_items', '>', 0)
+                ->groupBy('date');
                 
             // Apply the same filters
             if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $maxAtcQuery->where('kategori_produk', $request->kategori_produk);
+                $dailyAtcQuery->where('kategori_produk', $request->kategori_produk);
             }
 
             if ($request->has('pic') && $request->pic !== '') {
-                $maxAtcQuery->where('pic', $request->pic);
+                $dailyAtcQuery->where('pic', $request->pic);
             }
             
-            $maxAtc = $maxAtcQuery->first();
+            $dailyAtcs = $dailyAtcQuery->get();
+            
+            // Find the maximum ATC day (if data exists)
+            $maxAtc = null;
+            if ($dailyAtcs->count() > 0) {
+                $maxAtc = $dailyAtcs->sortByDesc('daily_atc')->first();
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -3050,11 +3069,11 @@ class AdSpentSocialMediaController extends Controller
                 ],
                 'min_spent' => [
                     'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
-                    'value' => $minSpent ? (int)$minSpent->amount_spent : 0
+                    'value' => $minSpent ? (int)$minSpent->daily_spent : 0
                 ],
                 'max_atc' => [
                     'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
-                    'value' => $maxAtc ? (float)$maxAtc->adds_to_cart_shared_items : 0
+                    'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
                 ]
             ]);
         } catch (\Exception $e) {
