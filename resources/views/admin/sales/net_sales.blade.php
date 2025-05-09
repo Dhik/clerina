@@ -588,10 +588,25 @@
         //     processNextEndpoint();
         // });
 
-        let salesChannelFilter = $('<div class="col-md-3 mb-2 ml-2"><select class="form-control" id="salesChannelFilter"><option value="">All Sales Channels</option></select></div>');
-
-        // Insert the filter after the date range in the existing filters row
-        $('#filterDates').closest('.col-md-3').after(salesChannelFilter);
+        $('#netProfitsTable').closest('.card').before(`
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">Filter by Sales Channel</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="salesChannelFilter">Sales Channel:</label>
+                                <select class="form-control" id="salesChannelFilter">
+                                    <option value="">All Sales Channels</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
 
         // Load sales channels via AJAX
         $.ajax({
@@ -606,9 +621,6 @@
 
         $('#salesChannelFilter').on('change', function() {
             netProfitsTable.draw();
-            fetchSummary(); // Update summary data with the new filter
-            loadNetProfitsChart(); // Refresh charts
-            loadCorrelationChart(); // Refresh correlation chart
         });
 
         function refreshData() {
