@@ -2970,7 +2970,7 @@ class AdSpentSocialMediaController extends Controller
                 }
             }
 
-            // Build the query
+            // Build the query for funnel totals
             $query = AdsMeta::select(
                 DB::raw('SUM(impressions) as total_impressions'),
                 DB::raw('SUM(content_views_shared_items) as total_content_views'),
@@ -2980,7 +2980,7 @@ class AdSpentSocialMediaController extends Controller
             ->where('tenant_id', auth()->user()->current_tenant_id)
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
             
-            // Apply product category filter if provided
+            // Apply filters if provided
             if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
                 $query->where('kategori_produk', $request->kategori_produk);
             }
@@ -2990,6 +2990,43 @@ class AdSpentSocialMediaController extends Controller
             }
             
             $data = $query->first();
+
+            // Find the date with minimum amount spent
+            $minSpentQuery = AdsMeta::select('date', 'amount_spent')
+                ->where('tenant_id', auth()->user()->current_tenant_id)
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                ->whereNotNull('amount_spent')
+                ->where('amount_spent', '>', 0) // Only consider days with some spending
+                ->orderBy('amount_spent', 'asc');
+                
+            // Apply the same filters
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $minSpentQuery->where('kategori_produk', $request->kategori_produk);
+            }
+
+            if ($request->has('pic') && $request->pic !== '') {
+                $minSpentQuery->where('pic', $request->pic);
+            }
+            
+            $minSpent = $minSpentQuery->first();
+
+            // Find the date with maximum adds to cart
+            $maxAtcQuery = AdsMeta::select('date', 'adds_to_cart_shared_items')
+                ->where('tenant_id', auth()->user()->current_tenant_id)
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                ->whereNotNull('adds_to_cart_shared_items')
+                ->orderBy('adds_to_cart_shared_items', 'desc');
+                
+            // Apply the same filters
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $maxAtcQuery->where('kategori_produk', $request->kategori_produk);
+            }
+
+            if ($request->has('pic') && $request->pic !== '') {
+                $maxAtcQuery->where('pic', $request->pic);
+            }
+            
+            $maxAtc = $maxAtcQuery->first();
 
             return response()->json([
                 'status' => 'success',
@@ -3010,6 +3047,14 @@ class AdSpentSocialMediaController extends Controller
                         'name' => 'Purchases',
                         'value' => (int)($data->total_purchases ?? 0)
                     ]
+                ],
+                'min_spent' => [
+                    'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
+                    'value' => $minSpent ? (int)$minSpent->amount_spent : 0
+                ],
+                'max_atc' => [
+                    'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
+                    'value' => $maxAtc ? (float)$maxAtc->adds_to_cart_shared_items : 0
                 ]
             ]);
         } catch (\Exception $e) {

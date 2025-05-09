@@ -561,14 +561,13 @@ $(document).ready(function() {
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success') {
-                    createFunnelChart('funnelChart', result.data, 'funnelMetrics');
+                    createFunnelChart('funnelChart', result.data, 'funnelMetrics', result);
                 }
             })
             .catch(error => {
                 console.error('Error fetching funnel data:', error);
             });
     }
-
     // Initialize when Shopee Mall tab is shown
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         if (e.target.id === 'shopee-mall-tab') {

@@ -166,7 +166,7 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
  * @param {string} metricsElementId - The element ID to display metrics
  * @returns {object} - The ApexCharts instance
  */
-function createFunnelChart(elementId, data, metricsElementId) {
+function createFunnelChart(elementId, data, metricsElementId, result) {
     // Destroy existing chart if it exists
     if (window[elementId + 'Chart']) {
         window[elementId + 'Chart'].destroy();
@@ -247,7 +247,8 @@ function createFunnelChart(elementId, data, metricsElementId) {
 
     // Update metrics display
     if (metricsElementId) {
-        const metricsHtml = data.map((item, index) => `
+        // Generate the standard metrics HTML
+        const standardMetricsHtml = data.map((item, index) => `
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span>${item.name}</span>
                 <span class="font-weight-bold">
@@ -260,8 +261,57 @@ function createFunnelChart(elementId, data, metricsElementId) {
                 </span>
             </div>
         `).join('');
+        
+        // Add the min spend and max ATC information if available
+        let additionalInsightsHtml = '';
+        if (result && result.min_spent && result.max_atc) {
+            additionalInsightsHtml = `
+                <div class="mt-4">
+                    <h6 class="font-weight-bold">Interesting Insights</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-left-success shadow py-2 mb-3">
+                                <div class="card-body p-3">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Date with Min Spent
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        ${result.min_spent.date || 'N/A'}
+                                    </div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mt-2">
+                                        Min Spent Amount
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        Rp ${(result.min_spent.value || 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-left-info shadow py-2 mb-3">
+                                <div class="card-body p-3">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Date with Max ATC
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        ${result.max_atc.date || 'N/A'}
+                                    </div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mt-2">
+                                        Max ATC Value
+                                    </div>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        ${(result.max_atc.value || 0).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-        document.querySelector('#' + metricsElementId).innerHTML = metricsHtml;
+        // Combine the standard metrics and additional insights
+        document.querySelector('#' + metricsElementId).innerHTML = standardMetricsHtml + additionalInsightsHtml;
     }
     
     return window[elementId + 'Chart'];
