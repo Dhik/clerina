@@ -2944,146 +2944,142 @@ class AdSpentSocialMediaController extends Controller
 
         
     public function getFunnelData(Request $request)
-    {
-        try {
-            // Check if filterDates is set and has the expected format
-            if (!$request->has('filterDates') || !$request->filterDates) {
-                // Use default date range (e.g., this month)
-                $startDate = Carbon::now()->startOfMonth();
-                $endDate = Carbon::now()->endOfMonth();
-            } else {
-                // Try to parse the date range
-                try {
-                    $dates = explode(' - ', $request->filterDates);
-                    
-                    // Make sure we have two date parts
-                    if (count($dates) != 2) {
-                        throw new \Exception("Invalid date range format");
-                    }
-                    
-                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
-                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
-                } catch (\Exception $e) {
-                    // Log the actual input for debugging
-                    \Log::error("Date parse error with input: " . $request->filterDates);
-                    throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
+{
+    try {
+        // Check if filterDates is set and has the expected format
+        if (!$request->has('filterDates') || !$request->filterDates) {
+            // Use default date range (e.g., this month)
+            $startDate = Carbon::now()->startOfMonth();
+            $endDate = Carbon::now()->endOfMonth();
+        } else {
+            // Try to parse the date range
+            try {
+                $dates = explode(' - ', $request->filterDates);
+                
+                // Make sure we have two date parts
+                if (count($dates) != 2) {
+                    throw new \Exception("Invalid date range format");
                 }
+                
+                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+            } catch (\Exception $e) {
+                // Log the actual input for debugging
+                \Log::error("Date parse error with input: " . $request->filterDates);
+                throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
             }
-
-            $tenant_id = auth()->user()->current_tenant_id;
-            
-            // Build the query for funnel totals
-            $funnelQuery = AdsMeta::where('tenant_id', $tenant_id)
-                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
-                ->whereNull('twindate'); // Exclude twindate as requested
-            
-            // Apply filters if provided
-            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $funnelQuery->where('kategori_produk', $request->kategori_produk);
-            }
-
-            if ($request->has('pic') && $request->pic !== '') {
-                $funnelQuery->where('pic', $request->pic);
-            }
-            
-            // Get funnel data
-            $data = $funnelQuery->select(
-                DB::raw('SUM(impressions) as total_impressions'),
-                DB::raw('SUM(content_views_shared_items) as total_content_views'),
-                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
-                DB::raw('SUM(purchases_shared_items) as total_purchases')
-            )->first();
-
-            // Get daily spend directly with Raw SQL for better debugging
-            $spendSql = "SELECT date, SUM(amount_spent) as daily_spent 
-                        FROM ads_meta 
-                        WHERE tenant_id = ? 
-                        AND date BETWEEN ? AND ? 
-                        AND amount_spent IS NOT NULL 
-                        AND amount_spent > 0
-                        AND twindate IS NULL";
-            
-            $params = [$tenant_id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
-            
-            // Add additional filters if they exist
-            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $spendSql .= " AND kategori_produk = ?";
-                $params[] = $request->kategori_produk;
-            }
-
-            if ($request->has('pic') && $request->pic !== '') {
-                $spendSql .= " AND pic = ?";
-                $params[] = $request->pic;
-            }
-            
-            $spendSql .= " GROUP BY date ORDER BY daily_spent ASC LIMIT 1";
-            
-            $minSpentResult = DB::select($spendSql, $params);
-            $minSpent = !empty($minSpentResult) ? $minSpentResult[0] : null;
-
-            // Same approach for max ATC
-            $atcSql = "SELECT date, SUM(adds_to_cart_shared_items) as daily_atc 
-                    FROM ads_meta 
-                    WHERE tenant_id = ? 
-                    AND date BETWEEN ? AND ? 
-                    AND adds_to_cart_shared_items IS NOT NULL 
-                    AND adds_to_cart_shared_items > 0
-                    AND twindate IS NULL";
-            
-            $atcParams = [$tenant_id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
-            
-            // Add additional filters if they exist
-            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $atcSql .= " AND kategori_produk = ?";
-                $atcParams[] = $request->kategori_produk;
-            }
-
-            if ($request->has('pic') && $request->pic !== '') {
-                $atcSql .= " AND pic = ?";
-                $atcParams[] = $request->pic;
-            }
-            
-            $atcSql .= " GROUP BY date ORDER BY daily_atc DESC LIMIT 1";
-            
-            $maxAtcResult = DB::select($atcSql, $atcParams);
-            $maxAtc = !empty($maxAtcResult) ? $maxAtcResult[0] : null;
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    [
-                        'name' => 'Impressions',
-                        'value' => (int)($data->total_impressions ?? 0)
-                    ],
-                    [
-                        'name' => 'Content Views',
-                        'value' => (int)($data->total_content_views ?? 0)
-                    ],
-                    [
-                        'name' => 'Adds to Cart',
-                        'value' => (int)($data->total_adds_to_cart ?? 0)
-                    ],
-                    [
-                        'name' => 'Purchases',
-                        'value' => (int)($data->total_purchases ?? 0)
-                    ]
-                ],
-                'min_spent' => [
-                    'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
-                    'value' => $minSpent ? (int)$minSpent->daily_spent : 0
-                ],
-                'max_atc' => [
-                    'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
-                    'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error fetching funnel data: ' . $e->getMessage()
-            ], 422);
         }
+
+        $tenant_id = auth()->user()->current_tenant_id;
+        
+        // Define twin dates to exclude (where day and month are the same)
+        $excludeDates = [];
+        
+        // Get all dates in the range
+        $currentDate = clone $startDate;
+        while ($currentDate <= $endDate) {
+            $day = $currentDate->format('d');
+            $month = $currentDate->format('m');
+            
+            // If day equals month, it's a twin date (e.g., 05-05, 04-04)
+            if ($day == $month) {
+                $excludeDates[] = $currentDate->format('Y-m-d');
+            }
+            
+            $currentDate->addDay();
+        }
+        
+        // Build the query for funnel totals
+        $funnelQuery = AdsMeta::where('tenant_id', $tenant_id)
+            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+            
+        // Exclude twin dates if any exist in our range
+        if (!empty($excludeDates)) {
+            $funnelQuery->whereNotIn('date', $excludeDates);
+        }
+        
+        // Apply filters if provided
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $funnelQuery->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic !== '') {
+            $funnelQuery->where('pic', $request->pic);
+        }
+        
+        // Get funnel data
+        $data = $funnelQuery->select(
+            DB::raw('SUM(impressions) as total_impressions'),
+            DB::raw('SUM(content_views_shared_items) as total_content_views'),
+            DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+            DB::raw('SUM(purchases_shared_items) as total_purchases')
+        )->first();
+
+        // Find the date with minimum amount spent
+        $dailySpendQuery = clone $funnelQuery;
+        $dailySpends = $dailySpendQuery
+            ->select('date', DB::raw('SUM(amount_spent) as daily_spent'))
+            ->whereNotNull('amount_spent')
+            ->where('amount_spent', '>', 0)
+            ->groupBy('date')
+            ->orderBy('daily_spent', 'asc') // Sort by ascending spent to get min
+            ->limit(1)
+            ->get();
+        
+        // Find min spent day
+        $minSpent = $dailySpends->first();
+
+        // Find the date with maximum adds to cart
+        $dailyAtcQuery = clone $funnelQuery;
+        $dailyAtcs = $dailyAtcQuery
+            ->select('date', DB::raw('SUM(adds_to_cart_shared_items) as daily_atc'))
+            ->whereNotNull('adds_to_cart_shared_items')
+            ->where('adds_to_cart_shared_items', '>', 0)
+            ->groupBy('date')
+            ->orderBy('daily_atc', 'desc') // Sort by descending ATC to get max
+            ->limit(1)
+            ->get();
+        
+        // Find max ATC day
+        $maxAtc = $dailyAtcs->first();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                [
+                    'name' => 'Impressions',
+                    'value' => (int)($data->total_impressions ?? 0)
+                ],
+                [
+                    'name' => 'Content Views',
+                    'value' => (int)($data->total_content_views ?? 0)
+                ],
+                [
+                    'name' => 'Adds to Cart',
+                    'value' => (int)($data->total_adds_to_cart ?? 0)
+                ],
+                [
+                    'name' => 'Purchases',
+                    'value' => (int)($data->total_purchases ?? 0)
+                ]
+            ],
+            'min_spent' => [
+                'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
+                'value' => $minSpent ? (int)$minSpent->daily_spent : 0
+            ],
+            'max_atc' => [
+                'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
+                'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
+            ],
+            'excluded_twin_dates' => $excludeDates
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error fetching funnel data: ' . $e->getMessage()
+        ], 422);
     }
+}
     public function getImpressionChartData(Request $request)
     {
         try {
