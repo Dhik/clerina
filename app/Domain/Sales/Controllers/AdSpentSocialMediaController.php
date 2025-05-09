@@ -500,24 +500,24 @@ class AdSpentSocialMediaController extends Controller
         \Log::info('Delete Request:', [
             'account_name' => $request->account_name,
             'date' => $request->date,
-            'tenant_id' => auth()->user()->current_tenant_id ?? auth()->user()->tenant_id
+            // 'tenant_id' => auth()->user()->current_tenant_id ?? auth()->user()->tenant_id
         ]);
 
         // Ensure we have a tenant ID
-        $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
-        if (!$tenantId) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No tenant ID found for the current user.'
-            ], 400);
-        }
+        // $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
+        // if (!$tenantId) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'No tenant ID found for the current user.'
+        //     ], 400);
+        // }
 
         $date = Carbon::parse($request->date)->format('Y-m-d');
         
         // Check if records exist before attempting to delete
         $records = AdsMeta::where('account_name', $request->account_name)
             ->where('date', $date)
-            ->where('tenant_id', $tenantId)
+            // ->where('tenant_id', $tenantId)
             ->get();
             
         \Log::info('Found records:', ['count' => $records->count()]);
@@ -525,7 +525,7 @@ class AdSpentSocialMediaController extends Controller
         if ($records->count() > 0) {
             $deleted = AdsMeta::where('account_name', $request->account_name)
                 ->where('date', $date)
-                ->where('tenant_id', $tenantId)
+                // ->where('tenant_id', $tenantId)
                 ->delete();
                 
             DB::commit();
@@ -537,7 +537,7 @@ class AdSpentSocialMediaController extends Controller
         } else {
             // Try a more lenient query to see what might be available
             $possibleRecords = AdsMeta::where('date', $date)
-                ->where('tenant_id', $tenantId)
+                // ->where('tenant_id', $tenantId)
                 ->get();
                 
             $availableAccounts = $possibleRecords->pluck('account_name')->unique()->toArray();
