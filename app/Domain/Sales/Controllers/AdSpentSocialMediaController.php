@@ -9,6 +9,7 @@ use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\AdsMeta;
 use App\Domain\Sales\Models\AdsMeta2;
 use App\Domain\Sales\Models\AdsMeta3;
+use Illuminate\Support\Facades\Validator;
 use App\Domain\Sales\Models\AdsTiktok;
 use App\Domain\Sales\Requests\AdSpentSocialMediaRequest;
 use App\Http\Controllers\Controller;
