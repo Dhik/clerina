@@ -278,12 +278,6 @@ function createFunnelChart(elementId, data, metricsElementId, result) {
                                     <div class="h6 mb-0 font-weight-bold text-gray-800">
                                         ${result.min_spent.date || 'N/A'}
                                     </div>
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mt-2">
-                                        Min Spent Amount
-                                    </div>
-                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
-                                        Rp ${(result.min_spent.value || 0).toLocaleString()}
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -295,12 +289,6 @@ function createFunnelChart(elementId, data, metricsElementId, result) {
                                     </div>
                                     <div class="h6 mb-0 font-weight-bold text-gray-800">
                                         ${result.max_atc.date || 'N/A'}
-                                    </div>
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mt-2">
-                                        Max ATC Value
-                                    </div>
-                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
-                                        ${(result.max_atc.value || 0).toLocaleString()}
                                     </div>
                                 </div>
                             </div>
