@@ -479,106 +479,104 @@ class AdSpentSocialMediaController extends Controller
         ]);
     }
     public function deleteByAccountAndDate(Request $request)
-    {
-        try {
-            $request->validate([
-                'account_name' => 'required|string',
-                'date' => 'required|date_format:Y-m-d',
-            ]);
-            if (!auth()->check()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User not authenticated'
-                ], 401);
-            }
+{
+    DB::beginTransaction();
+    try {
+        $validator = Validator::make($request->all(), [
+            'account_name' => 'required|string',
+            'date' => 'required|date_format:Y-m-d',
+        ]);
 
-            // Get tenant ID safely
-            $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Debug output to check the incoming data
+        \Log::info('Delete Request:', [
+            'account_name' => $request->account_name,
+            'date' => $request->date,
+            'tenant_id' => auth()->user()->current_tenant_id ?? auth()->user()->tenant_id
+        ]);
+
+        // Ensure we have a tenant ID
+        $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
+        if (!$tenantId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No tenant ID found for the current user.'
+            ], 400);
+        }
+
+        $date = Carbon::parse($request->date)->format('Y-m-d');
+        
+        // Check if records exist before attempting to delete
+        $records = AdsMeta::where('account_name', $request->account_name)
+            ->where('date', $date)
+            ->where('tenant_id', $tenantId)
+            ->get();
             
-            if (!$tenantId) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Tenant ID not found'
-                ], 400);
-            }
-
-            // Parse date safely
-            try {
-                $date = Carbon::parse($request->date)->format('Y-m-d');
-            } catch (\Exception $e) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Invalid date format: ' . $e->getMessage()
-                ], 400);
-            }
-            
-            // Debug output to check the incoming data
-            \Log::info('Delete Request:', [
-                'account_name' => $request->account_name,
-                'date' => $date,
-                'tenant_id' => $tenantId
-            ]);
-
-            // Check if records exist before attempting to delete
-            $records = AdsMeta::where('account_name', $request->account_name)
+        \Log::info('Found records:', ['count' => $records->count()]);
+        
+        if ($records->count() > 0) {
+            $deleted = AdsMeta::where('account_name', $request->account_name)
                 ->where('date', $date)
+                ->where('tenant_id', $tenantId)
+                ->delete();
+                
+            DB::commit();
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Account data deleted successfully for the specified date.',
+                'deleted_count' => $deleted
+            ]);
+        } else {
+            // Try a more lenient query to see what might be available
+            $possibleRecords = AdsMeta::where('date', $date)
                 ->where('tenant_id', $tenantId)
                 ->get();
                 
-            \Log::info('Found records:', ['count' => $records->count()]);
+            $availableAccounts = $possibleRecords->pluck('account_name')->unique()->toArray();
             
-            if ($records->count() > 0) {
-                $deleted = AdsMeta::where('account_name', $request->account_name)
-                    ->where('date', $date)
-                    ->where('tenant_id', $tenantId)
-                    ->delete();
-                    
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Account data deleted successfully for the specified date.'
-                ]);
-            } else {
-                // Try a more lenient query to see what might be available
-                $possibleRecords = AdsMeta::where('date', $date)
-                    ->where('tenant_id', $tenantId)
-                    ->get();
-                    
-                $availableAccounts = $possibleRecords->pluck('account_name')->unique();
-                
-                \Log::info('Available accounts for date:', [
-                    'date' => $date,
-                    'accounts' => $availableAccounts
-                ]);
-                
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No records found to delete. Please check the account name and date.',
-                    'debug_info' => [
-                        'requested_account' => $request->account_name,
-                        'requested_date' => $date,
-                        'available_accounts' => $availableAccounts->toArray(),
-                    ]
-                ], 404);
-            }
+            \Log::info('Available accounts for date:', [
+                'date' => $date,
+                'accounts' => $availableAccounts
+            ]);
             
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error: ' . $e->getMessage());
+            DB::rollBack();
             return response()->json([
                 'status' => 'error',
-                'message' => 'Validation error: ' . $e->getMessage(),
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            \Log::error('Delete error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error deleting data: ' . $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+                'message' => 'No records found to delete. Please check the account name and date.',
+                'debug_info' => [
+                    'requested_account' => $request->account_name,
+                    'requested_date' => $date,
+                    'available_accounts' => $availableAccounts,
+                ]
+            ], 404);
         }
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Delete error: ' . $e->getMessage(), [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error deleting data: ' . $e->getMessage(),
+            'debug_info' => [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'exception_class' => get_class($e)
+            ]
+        ], 500);
     }
+}
 
 
     public function get_shopee2_ads_cpas(Request $request)
