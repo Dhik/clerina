@@ -483,22 +483,46 @@ class AdSpentSocialMediaController extends Controller
         try {
             $request->validate([
                 'account_name' => 'required|string',
-                'date' => 'required|date',
+                'date' => 'required|date_format:Y-m-d',
             ]);
+            if (!auth()->check()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
+            // Get tenant ID safely
+            $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
+            
+            if (!$tenantId) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tenant ID not found'
+                ], 400);
+            }
+
+            // Parse date safely
+            try {
+                $date = Carbon::parse($request->date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid date format: ' . $e->getMessage()
+                ], 400);
+            }
+            
             // Debug output to check the incoming data
             \Log::info('Delete Request:', [
                 'account_name' => $request->account_name,
-                'date' => $request->date,
-                'tenant_id' => auth()->user()->current_tenant_id
+                'date' => $date,
+                'tenant_id' => $tenantId
             ]);
 
-            $date = Carbon::parse($request->date)->format('Y-m-d');
-            
             // Check if records exist before attempting to delete
             $records = AdsMeta::where('account_name', $request->account_name)
                 ->where('date', $date)
-                ->where('tenant_id', auth()->user()->current_tenant_id)
+                ->where('tenant_id', $tenantId)
                 ->get();
                 
             \Log::info('Found records:', ['count' => $records->count()]);
@@ -506,7 +530,7 @@ class AdSpentSocialMediaController extends Controller
             if ($records->count() > 0) {
                 $deleted = AdsMeta::where('account_name', $request->account_name)
                     ->where('date', $date)
-                    ->where('tenant_id', auth()->user()->current_tenant_id)
+                    ->where('tenant_id', $tenantId)
                     ->delete();
                     
                 return response()->json([
@@ -516,7 +540,7 @@ class AdSpentSocialMediaController extends Controller
             } else {
                 // Try a more lenient query to see what might be available
                 $possibleRecords = AdsMeta::where('date', $date)
-                    ->where('tenant_id', auth()->user()->current_tenant_id)
+                    ->where('tenant_id', $tenantId)
                     ->get();
                     
                 $availableAccounts = $possibleRecords->pluck('account_name')->unique();
@@ -532,17 +556,27 @@ class AdSpentSocialMediaController extends Controller
                     'debug_info' => [
                         'requested_account' => $request->account_name,
                         'requested_date' => $date,
-                        'available_accounts' => $availableAccounts,
+                        'available_accounts' => $availableAccounts->toArray(),
                     ]
                 ], 404);
             }
             
-        } catch (\Exception $e) {
-            \Log::error('Delete error: ' . $e->getMessage());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error deleting data: ' . $e->getMessage()
+                'message' => 'Validation error: ' . $e->getMessage(),
+                'errors' => $e->errors()
             ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Delete error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting data: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
         }
     }
 
