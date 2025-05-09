@@ -2972,21 +2972,19 @@ class AdSpentSocialMediaController extends Controller
 
             $tenant_id = auth()->user()->current_tenant_id;
             
-            // Build the base query for all calculations with common filters
-            $baseQuery = AdsMeta::where('tenant_id', $tenant_id)
-                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+            // Build the query for funnel totals
+            $funnelQuery = AdsMeta::where('tenant_id', $tenant_id)
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+                ->whereNull('twindate'); // Exclude twindate as requested
             
-            // Apply other filters if provided
+            // Apply filters if provided
             if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-                $baseQuery->where('kategori_produk', $request->kategori_produk);
+                $funnelQuery->where('kategori_produk', $request->kategori_produk);
             }
 
             if ($request->has('pic') && $request->pic !== '') {
-                $baseQuery->where('pic', $request->pic);
+                $funnelQuery->where('pic', $request->pic);
             }
-            
-            // Clone the base query for different uses
-            $funnelQuery = clone $baseQuery;
             
             // Get funnel data
             $data = $funnelQuery->select(
@@ -2996,51 +2994,59 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_shared_items) as total_purchases')
             )->first();
 
-            // Get daily spend data - grouped by date
-            $dailySpendQuery = clone $baseQuery;
-            $dailySpends = $dailySpendQuery
-                ->select('date', DB::raw('SUM(amount_spent) as daily_spent'))
-                ->whereNotNull('amount_spent')
-                ->where('amount_spent', '>', 0)
-                ->groupBy('date')
-                ->orderBy('daily_spent', 'asc') // Sort by ascending spent to get min
-                ->get();
+            // Get daily spend directly with Raw SQL for better debugging
+            $spendSql = "SELECT date, SUM(amount_spent) as daily_spent 
+                        FROM ads_meta 
+                        WHERE tenant_id = ? 
+                        AND date BETWEEN ? AND ? 
+                        AND amount_spent IS NOT NULL 
+                        AND amount_spent > 0
+                        AND twindate IS NULL";
             
-            // Find min spent day
-            $minSpent = null;
-            if ($dailySpends->count() > 0) {
-                $minSpent = $dailySpends->first(); // Already sorted ASC
+            $params = [$tenant_id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
+            
+            // Add additional filters if they exist
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $spendSql .= " AND kategori_produk = ?";
+                $params[] = $request->kategori_produk;
             }
 
-            // Get daily ATC data - grouped by date
-            $dailyAtcQuery = clone $baseQuery;
-            $dailyAtcs = $dailyAtcQuery
-                ->select('date', DB::raw('SUM(adds_to_cart_shared_items) as daily_atc'))
-                ->whereNotNull('adds_to_cart_shared_items')
-                ->where('adds_to_cart_shared_items', '>', 0)
-                ->groupBy('date')
-                ->orderBy('daily_atc', 'desc') // Sort by descending ATC to get max
-                ->get();
+            if ($request->has('pic') && $request->pic !== '') {
+                $spendSql .= " AND pic = ?";
+                $params[] = $request->pic;
+            }
             
-            // Find max ATC day
-            $maxAtc = null;
-            if ($dailyAtcs->count() > 0) {
-                $maxAtc = $dailyAtcs->first(); // Already sorted DESC
+            $spendSql .= " GROUP BY date ORDER BY daily_spent ASC LIMIT 1";
+            
+            $minSpentResult = DB::select($spendSql, $params);
+            $minSpent = !empty($minSpentResult) ? $minSpentResult[0] : null;
+
+            // Same approach for max ATC
+            $atcSql = "SELECT date, SUM(adds_to_cart_shared_items) as daily_atc 
+                    FROM ads_meta 
+                    WHERE tenant_id = ? 
+                    AND date BETWEEN ? AND ? 
+                    AND adds_to_cart_shared_items IS NOT NULL 
+                    AND adds_to_cart_shared_items > 0
+                    AND twindate IS NULL";
+            
+            $atcParams = [$tenant_id, $startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
+            
+            // Add additional filters if they exist
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $atcSql .= " AND kategori_produk = ?";
+                $atcParams[] = $request->kategori_produk;
             }
 
-            // Get all daily spend data for debugging
-            $allDailySpends = clone $baseQuery;
-            $allSpendData = $allDailySpends
-                ->select('date', DB::raw('SUM(amount_spent) as daily_spent'))
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'date' => $item->date,
-                        'spend' => (int)$item->daily_spent
-                    ];
-                });
+            if ($request->has('pic') && $request->pic !== '') {
+                $atcSql .= " AND pic = ?";
+                $atcParams[] = $request->pic;
+            }
+            
+            $atcSql .= " GROUP BY date ORDER BY daily_atc DESC LIMIT 1";
+            
+            $maxAtcResult = DB::select($atcSql, $atcParams);
+            $maxAtc = !empty($maxAtcResult) ? $maxAtcResult[0] : null;
 
             return response()->json([
                 'status' => 'success',
@@ -3069,22 +3075,12 @@ class AdSpentSocialMediaController extends Controller
                 'max_atc' => [
                     'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
                     'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
-                ],
-                'debug' => [
-                    'all_daily_spends' => $allSpendData,
-                    'filters' => [
-                        'tenant_id' => $tenant_id,
-                        'date_range' => [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')],
-                        'kategori_produk' => $request->has('kategori_produk') ? $request->kategori_produk : null,
-                        'pic' => $request->has('pic') ? $request->pic : null
-                    ]
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error fetching funnel data: ' . $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'message' => 'Error fetching funnel data: ' . $e->getMessage()
             ], 422);
         }
     }
