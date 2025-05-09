@@ -588,6 +588,29 @@
         //     processNextEndpoint();
         // });
 
+        let salesChannelFilter = $('<div class="col-md-3 mb-2 ml-2"><select class="form-control" id="salesChannelFilter"><option value="">All Sales Channels</option></select></div>');
+
+        // Insert the filter after the date range in the existing filters row
+        $('#filterDates').closest('.col-md-3').after(salesChannelFilter);
+
+        // Load sales channels via AJAX
+        $.ajax({
+            url: "{{ route('sales.get_sales_channels') }}",
+            method: "GET",
+            success: function(data) {
+                data.forEach(function(channel) {
+                    $('#salesChannelFilter').append('<option value="' + channel.id + '">' + channel.name + '</option>');
+                });
+            }
+        });
+
+        $('#salesChannelFilter').on('change', function() {
+            netProfitsTable.draw();
+            fetchSummary(); // Update summary data with the new filter
+            loadNetProfitsChart(); // Refresh charts
+            loadCorrelationChart(); // Refresh correlation chart
+        });
+
         function refreshData() {
             Swal.fire({
                 title: 'Refreshing Data',
@@ -756,7 +779,8 @@
                 ajax: {
                     url: "{{ route('sales.get_net_sales') }}",
                     data: function (d) {
-                        d.filterDates = filterDate.val()
+                        d.filterDates = filterDate.val();
+                        d.sales_channel_id = $('#salesChannelFilter').val(); // Add sales channel filter
                     }
                 },
                 columns: [
@@ -983,9 +1007,13 @@
 
             function fetchSummary() {
     const filterDates = document.getElementById('filterDates').value;
+    const salesChannelId = document.getElementById('salesChannelFilter').value;
     const url = new URL("{{ route('sales.get_net_sales_summary') }}");
     if (filterDates) {
         url.searchParams.append('filterDates', filterDates);
+    }
+    if (salesChannelId) {
+        url.searchParams.append('sales_channel_id', salesChannelId);
     }
 
     fetch(url)

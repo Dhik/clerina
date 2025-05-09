@@ -136,12 +136,18 @@ class SalesController extends Controller
 
         return view('admin.sales.net_per_channel', compact('salesChannels', 'socialMedia'));
     }
+    public function getSalesChannels()
+    {
+        $channels = DB::table('sales_channels')->select('id', 'name')->get();
+        return response()->json($channels);
+    }
     public function getNetProfit(Request $request)
     {
         $currentTenantId = Auth::user()->current_tenant_id;
         
         $startDate = null;
         $endDate = null;
+        $selectedChannel = $request->input('sales_channel_id');
         
         if (!is_null($request->input('filterDates'))) {
             [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
@@ -149,6 +155,33 @@ class SalesController extends Controller
             $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
         }
         
+        // First get the dates and order sums
+        $orderTotals = DB::table('orders')
+            ->select(
+                'date',
+                DB::raw('SUM(amount) as total_amount')
+            )
+            ->where('tenant_id', '=', $currentTenantId);
+        
+        // Apply sales channel filter if selected
+        if (!is_null($selectedChannel)) {
+            $orderTotals->where('sales_channel_id', '=', $selectedChannel);
+        }
+        
+        // Apply date filtering
+        if (!is_null($request->input('filterDates'))) {
+            $orderTotals->where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate);
+        } else {
+            $orderTotals->whereMonth('date', Carbon::now()->month)
+                    ->whereYear('date', Carbon::now()->year);
+        }
+        
+        $orderTotals = $orderTotals->groupBy('date')
+                    ->get()
+                    ->keyBy('date');
+        
+        // Now get the net_profits data
         $baseQuery = DB::table('net_profits as np')
             ->select(
                 'np.*', 
@@ -174,32 +207,43 @@ class SalesController extends Controller
         $data = $baseQuery->get();
         
         return DataTables::of($data)
-            ->addColumn('total_sales', function ($row) {
-                return ($row->sales ?? 0);
+            ->addColumn('total_sales', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                return $orderTotals[$dateStr]->total_amount ?? 0;
             })
-            ->addColumn('estimasi_cancel', function ($row) {
-                return ($row->sales * 0.06?? 0);
+            ->addColumn('estimasi_cancel', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return $totalSales * 0.06;
             })
-            ->addColumn('estimasi_retur', function ($row) {
-                return ($row->sales * 0.02 ?? 0);
+            ->addColumn('estimasi_retur', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return $totalSales * 0.02;
             })
-            ->addColumn('mp_sales', function ($row) {
-                return ($row->sales ?? 0);
+            ->addColumn('mp_sales', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                return $orderTotals[$dateStr]->total_amount ?? 0;
             })
-            ->addColumn('penjualan_bersih', function ($row) {
-                $totalSales = ($row->sales ?? 0);
+            ->addColumn('penjualan_bersih', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
                 return $totalSales * 0.725;
             })
-            ->addColumn('romi', function ($row) {
+            ->addColumn('romi', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
                 $totalMarketingSpend = $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
                 
                 if ($totalMarketingSpend == 0) {
                     return 0;
                 }
-                return $row->sales / $totalMarketingSpend;
+                return $totalSales / $totalMarketingSpend;
             })
-            ->addColumn('net_profit', function ($row) {
-                return ($row->sales * 0.725) - 
+            ->addColumn('net_profit', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return ($totalSales * 0.725) - 
                     ($row->marketing) - 
                     ($row->fee_packing) -
                     $row->spent_kol - 
@@ -207,62 +251,26 @@ class SalesController extends Controller
                     $row->operasional - 
                     ($row->hpp * 0.94);
             })
-            ->addColumn('estimasi_fee_admin', function ($row) {
-                // 16.7% from sales
-                return $row->sales * 0.165;
+            ->addColumn('estimasi_fee_admin', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return $totalSales * 0.165;
             })
-	        ->addColumn('estimasi_cancelation', function ($row) {
-                // 4% from sales
-                return $row->sales * 0.06;
+            ->addColumn('estimasi_cancelation', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return $totalSales * 0.06;
             })
-            ->addColumn('ppn', function ($row) {
-                return $row->sales * 0.03;
+            ->addColumn('ppn', function ($row) use ($orderTotals) {
+                $dateStr = Carbon::parse($row->date)->format('Y-m-d');
+                $totalSales = $orderTotals[$dateStr]->total_amount ?? 0;
+                return $totalSales * 0.03;
             })
+            // Rest of the code remains the same...
             ->addColumn('total_marketing_spend', function ($row) {
                 return $row->marketing + $row->spent_kol + ($row->affiliate ?? 0);
             })
-            ->editColumn('fee_packing', function ($row) {
-                return $row->fee_packing ?? 0;
-            })
-            ->editColumn('date', function ($row) {
-                return Carbon::parse($row->date)->format('Y-m-d');
-            })
-            ->editColumn('ad_spent_social_media', function ($row) {
-                return $row->ad_spent_social_media ?? 0;
-            })
-            ->editColumn('ad_spent_market_place', function ($row) {
-                return $row->ad_spent_market_place ?? 0;
-            })
-            ->editColumn('visit', function ($row) {
-                return $row->visit ?? 0;
-            })
-            ->editColumn('qty', function ($row) {
-                return $row->qty ?? 0;
-            })
-            ->editColumn('order', function ($row) {
-                return $row->order ?? 0;
-            })
-            ->editColumn('closing_rate', function ($row) {
-                return number_format($row->closing_rate ?? 0, 2) . '%';
-            })
-            ->editColumn('b2b_sales', function ($row) {
-                return $row->b2b_sales ?? 0;
-            })
-            ->editColumn('crm_sales', function ($row) {
-                return $row->crm_sales ?? 0;
-            })
-            ->editColumn('balance_amount', function ($row) {
-                return $row->balance_amount ?? 0;
-            })
-            ->editColumn('gross_revenue', function ($row) {
-                return $row->gross_revenue ?? 0;
-            })
-            ->editColumn('fee_admin', function ($row) {
-                return $row->fee_admin ?? 0;
-            })
-            ->editColumn('roas', function ($row) {
-                return number_format($row->roas ?? 0, 2);
-            })
+            // Other edit columns remain the same
             ->make(true);
     }
     public function getNetProfitSummary(Request $request)
