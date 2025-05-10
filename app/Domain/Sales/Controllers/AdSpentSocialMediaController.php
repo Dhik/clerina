@@ -2258,11 +2258,15 @@ class AdSpentSocialMediaController extends Controller
         $this->googleSheetService->clearRange("$sheetName!A1:I1000");
         $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
         
+        // Calculate total conversion value across all records
+        $totalConversionValueSum = $records->sum('total_conversion_value');
+        
         return response()->json([
             'success' => true, 
             'message' => 'Ads Meta Stats exported successfully to Google Sheets',
             'date_range' => "$startDate to $endDate",
-            'count' => count($data) - 1
+            'count' => count($data) - 1,
+            'total_conversion_value_sum' => $totalConversionValueSum
         ]);
     }
 
