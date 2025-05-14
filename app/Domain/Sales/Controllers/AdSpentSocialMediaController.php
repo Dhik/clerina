@@ -1732,12 +1732,12 @@ class AdSpentSocialMediaController extends Controller
                     'value' => (int)$aggregates->impressions
                 ],
                 [
-                    'name' => 'Link Clicks',
-                    'value' => (int)$aggregates->link_clicks
-                ],
-                [
                     'name' => 'Content Views',
                     'value' => (int)$aggregates->content_views
+                ],
+                [
+                    'name' => 'Link Clicks',
+                    'value' => (int)$aggregates->link_clicks
                 ],
                 [
                     'name' => 'Add to Cart',

@@ -223,6 +223,7 @@ $(document).ready(function() {
                         showConfirmButton: false,
                         timer: 1500
                     }).then(() => {
+                        localStorage.setItem('activeTab', 'tiktok-tab');
                         window.location.reload();
                     });
                 } else {

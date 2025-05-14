@@ -34,6 +34,17 @@ function initDateRangePicker(elementId) {
         }
     });
 
+    $(document).ready(function() {
+        // Check if there's a stored active tab
+        const activeTab = localStorage.getItem('activeTab');
+        if (activeTab) {
+            // Activate the stored tab
+            $('#' + activeTab).tab('show');
+            // Clear the storage to prevent unexpected tab switching on future page loads
+            localStorage.removeItem('activeTab');
+        }
+    });
+
     // Apply and Cancel event handlers for daterangepicker
     element.on('apply.daterangepicker', function(ev, picker) {
         $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
