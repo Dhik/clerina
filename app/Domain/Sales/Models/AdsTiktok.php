@@ -25,6 +25,17 @@ class AdsTiktok extends Model
         'pic',
         'last_updated',
         'new_created',
+        'primary_status',
+                'campaign_budget',
+                'product_page_views',
+                'items_purchased',
+                'cpm',
+                'cpc',
+                'cost_per_purchase',
+                'ctr',
+                'purchase_rate',
+                'average_order_value',
+                'live_views',
     ];
 
     protected $casts = [
