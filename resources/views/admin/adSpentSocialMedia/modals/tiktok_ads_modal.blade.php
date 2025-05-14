@@ -37,9 +37,9 @@
                         <label for="pic">PIC</label>
                         <select class="form-control" id="tiktokPIC" name="pic" required>
                             <option value="" selected disabled>Choose PIC</option>
-                            <option value="Nabila">Nabila</option>
-                            <option value="Reza">Reza</option>
-                            <option value="Febry">Febry</option>
+                            <option value="NABILA">Nabila</option>
+                            <option value="REZA">Reza</option>
+                            <option value="FEBRY">Febry</option>
                         </select>
                     </div>
                     <div class="form-group d-none" id="errorImportTiktokAdsSpent"></div>
