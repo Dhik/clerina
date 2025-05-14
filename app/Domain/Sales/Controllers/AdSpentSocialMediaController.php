@@ -23,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Domain\Sales\Services\GoogleSheetService;
 
 class AdSpentSocialMediaController extends Controller
@@ -2739,7 +2740,7 @@ class AdSpentSocialMediaController extends Controller
         
         // Use Laravel Excel to read the XLSX file
         try {
-            $data = \Maatwebsite\Excel\Facades\Excel::toArray(new class {}, $filePath)[0];
+            $data = Excel::toArray(new class {}, $filePath)[0];
             \Log::info("Excel file loaded successfully with " . count($data) . " rows");
             
             // For debugging, log the first few rows
