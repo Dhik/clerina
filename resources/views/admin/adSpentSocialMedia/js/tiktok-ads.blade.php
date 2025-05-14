@@ -7,6 +7,7 @@ $(document).ready(function() {
     let tiktokFilterDate = initDateRangePicker('tiktokFilterDates');
     let tiktokFilterCategory = $('#tiktokKategoriProdukFilter');
     let tiktokFilterPic = $('#tiktokPicFilter');
+    let modalFilterDate = initDateRangePicker('modalFilterDates');
     let tiktokFunnelChart = null;
     let tiktokImpressionChart = null;
 
@@ -180,6 +181,285 @@ $(document).ready(function() {
         deferRender: true,
         scroller: true
     });
+
+    $('#adsTiktokTable').on('click', '.date-details', function() {
+        let date = $(this).data('date');
+        let formattedDate = $(this).text();
+        
+        $('#dailyDetailsModalLabel').text('TikTok Campaign Details for ' + formattedDate);
+        $('#dailyDetailsModal').data('date', date);
+
+        modalFilterDate.val('');
+        
+        campaignDetailsTable.draw();
+        $('#dailyDetailsModal').modal('show');
+    });
+
+    let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
+        responsive: false, // Set to false for horizontal scrolling
+        scrollX: true,     // Enable horizontal scrolling
+        processing: true,
+        serverSide: true,
+        pageLength: 10,
+        ajax: {
+            url: "{{ route('adSpentSocialMedia.get_tiktok_details_by_date') }}",
+            data: function(d) {
+                // Add the date from the modal to the request
+                if (modalFilterDate.val()) {
+                    let dates = modalFilterDate.val().split(' - ');
+                    d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                    d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else {
+                    // If no date range is selected, use the single date
+                    d.date = $('#dailyDetailsModal').data('date');
+                }
+                if (tiktokFilterPic.val()) {
+                    d.pic = tiktokFilterPic.val();
+                }
+                if (tiktokFilterCategory.val()) {
+                    d.kategori_produk = tiktokFilterCategory.val();
+                }
+            }
+        },
+        columns: [
+            {data: 'account_name', name: 'account_name'},
+            {data: 'kategori_produk', name: 'kategori_produk'},
+            // New TOFU/MOFU/BOFU columns
+            {data: 'tofu_spent', name: 'tofu_spent'},
+            {data: 'tofu_percentage', name: 'tofu_percentage'},
+            {data: 'mofu_spent', name: 'mofu_spent'},
+            {data: 'mofu_percentage', name: 'mofu_percentage'},
+            {data: 'bofu_spent', name: 'bofu_spent'},
+            {data: 'bofu_percentage', name: 'bofu_percentage'},
+            {data: 'last_updated_count', name: 'last_updated_count'},
+            {data: 'new_created_count', name: 'new_created_count'},
+            // Original columns
+            {data: 'amount_spent', name: 'amount_spent'},
+            {data: 'impressions', name: 'impressions'},
+            {
+                data: 'link_clicks', 
+                name: 'link_clicks',
+                render: function(data) {
+                    // Handle string formatted numbers with comma as decimal separator
+                    if (typeof data === 'string') {
+                        // Extract the whole number part before the comma
+                        return data.split(',')[0];
+                    }
+                    return Math.floor(data);
+                }
+            },
+            {
+                data: 'content_views_shared_items', 
+                name: 'content_views_shared_items',
+                render: function(data) {
+                    // Handle string formatted numbers with comma as decimal separator
+                    if (typeof data === 'string') {
+                        // Extract the whole number part before the comma
+                        return data.split(',')[0];
+                    }
+                    return Math.floor(data);
+                }
+            },
+            {
+                data: 'adds_to_cart_shared_items', 
+                name: 'adds_to_cart_shared_items',
+                render: function(data) {
+                    // Handle string formatted numbers with comma as decimal separator
+                    if (typeof data === 'string') {
+                        // Extract the whole number part before the comma
+                        return data.split(',')[0];
+                    }
+                    return Math.floor(data);
+                }
+            },
+            {
+                data: 'purchases_shared_items', 
+                name: 'purchases_shared_items',
+                render: function(data) {
+                    // Handle string formatted numbers with comma as decimal separator
+                    if (typeof data === 'string') {
+                        // Extract the whole number part before the comma
+                        return data.split(',')[0];
+                    }
+                    return Math.floor(data);
+                }
+            },
+            {data: 'purchases_conversion_value_shared_items', name: 'purchases_conversion_value_shared_items'},
+            {data: 'cost_per_view', name: 'cost_per_view'},
+            {data: 'cost_per_atc', name: 'cost_per_atc'},
+            {data: 'cost_per_purchase', name: 'cost_per_purchase'},
+            {data: 'roas', name: 'roas'},
+            {data: 'cpm', name: 'cpm'},
+            {data: 'ctr', name: 'ctr'},
+            {data: 'performance', name: 'performance', searchable: false},
+            {data: 'action', name: 'action', orderable: false, searchable: false}
+        ],
+        columnDefs: [
+            // Update the targets for right alignment to include the new columns
+            { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], "className": "text-right" },
+            // Update the targets for center alignment to include the new columns
+            { "targets": [1, 3, 5, 7, 23], "className": "text-center" },
+            { "targets": [24], "className": "text-center" }
+        ],
+        order: [[0, 'asc']],
+        fixedHeader: true,
+        scrollCollapse: true,
+        deferRender: true,
+        scroller: true
+    });
+
+    function updateTiktokCampaignSummary() {
+        const filterValue = modalFilterDate.val();
+        const date = $('#dailyDetailsModal').data('date');
+        const kategoriProduk = tiktokFilterCategory.val();
+        const picValue = tiktokFilterPic.val();
+        
+        const url = new URL("{{ route('adSpentSocialMedia.get_tiktok_campaign_summary') }}", window.location.origin);
+        
+        if (filterValue) {
+            let dates = filterValue.split(' - ');
+            url.searchParams.append('date_start', moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD'));
+            url.searchParams.append('date_end', moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD'));
+        } else if (date) {
+            url.searchParams.append('date', date);
+        }
+        
+        if (kategoriProduk) {
+            url.searchParams.append('kategori_produk', kategoriProduk);
+        }
+        
+        if (picValue) {
+            url.searchParams.append('pic', picValue);
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // Update summary cards
+                    $('#summaryAccountsCount').text(data.accounts_count);
+                    $('#summaryTotalSpent').text('Rp ' + formatNumber(data.total_amount_spent));
+                    $('#summaryTotalPurchases').text(formatNumber(data.total_purchases));
+                    $('#summaryConversionValue').text('Rp ' + formatNumber(data.total_conversion_value));
+                    $('#summaryRoas').text(formatNumber(data.roas));
+                    $('#summaryCostPerPurchase').text('Rp ' + formatNumber(data.cost_per_purchase));
+                    $('#summaryImpressions').text(formatNumber(data.total_impressions));
+                    $('#summaryCtr').text(formatNumber(data.ctr) + '%');
+                    
+                    // Update funnel stage cards
+                    $('#summaryTofuSpent').text('Rp ' + formatNumber(data.tofu_spent));
+                    $('#summaryTofuPercentage').text(formatNumber(data.tofu_percentage) + '%');
+                    $('#summaryMofuSpent').text('Rp ' + formatNumber(data.mofu_spent));
+                    $('#summaryMofuPercentage').text(formatNumber(data.mofu_percentage) + '%');
+                    $('#summaryBofuSpent').text('Rp ' + formatNumber(data.bofu_spent));
+                    $('#summaryBofuPercentage').text(formatNumber(data.bofu_percentage) + '%');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching TikTok campaign summary:', error);
+            });
+    }
+
+    // Format number for display
+    function formatNumber(value) {
+        if (value === null || value === undefined) return '-';
+        return Number(value).toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    }
+
+    $('#dailyDetailsModal').on('shown.bs.modal', function() {
+        // If no date range is set, initialize with the clicked date
+        if (!modalFilterDate.val()) {
+            const clickedDate = $('#dailyDetailsModal').data('date');
+            const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
+            modalFilterDate.val(formattedDate + ' - ' + formattedDate);
+        }
+        updateTiktokCampaignSummary();
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+    });
+
+    $('#dailyDetailsModal').on('hidden.bs.modal', function() {
+        modalFilterDate.val('');
+    });
+
+    $('#campaignDetailsTable').on('click', '.delete-account', function() {
+    const accountName = $(this).data('account');
+    let modalDate = $('#dailyDetailsModal').data('date');
+    
+    console.log('Delete button clicked:', {
+        accountName: accountName,
+        modalDate: modalDate
+    });
+    
+    let formattedDate = moment(modalDate).format('YYYY-MM-DD');
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `This will delete all data for "${accountName}" on ${moment(modalDate).format('D MMM YYYY')}!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoadingSwal('Deleting...');
+            
+            $.ajax({
+                url: "{{ route('adSpentSocialMedia.delete_tiktok_by_account') }}",
+                type: 'DELETE',
+                data: {
+                    account_name: accountName,
+                    date: formattedDate,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        // Refresh the tables and charts
+                        campaignDetailsTable.draw();
+                        adsTiktokTable.draw();
+                        fetchTiktokImpressionData();
+                        initTiktokFunnelChart();
+                    });
+                },
+                error: function(xhr) {
+                    let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data';
+                    let debugInfo = '';
+                    
+                    // Show debug info if available
+                    if (xhr.responseJSON && xhr.responseJSON.debug_info) {
+                        console.log('Debug info:', xhr.responseJSON.debug_info);
+                        const info = xhr.responseJSON.debug_info;
+                        debugInfo = `\n\nRequested: ${info.requested_account} (${info.requested_date})`;
+                        if (info.available_accounts && info.available_accounts.length > 0) {
+                            debugInfo += `\nAvailable accounts: ${info.available_accounts.join(', ')}`;
+                        } else {
+                            debugInfo += '\nNo accounts available for this date.';
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMsg + debugInfo,
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            });
+        }
+    });
+});
 
     // Button click handlers
     $('#tiktokResetFilterBtn').click(function() {

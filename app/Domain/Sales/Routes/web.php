@@ -85,6 +85,9 @@ Route::prefix('admin')
                 
                 // New routes for TikTok
                 Route::get('/tiktok/get', [AdSpentSocialMediaController::class, 'get_tiktok_ads_cpas'])->name('adSpentSocialMedia.get_tiktok_ads_cpas');
+                Route::get('/tiktok/show', [AdSpentSocialMediaController::class, 'get_tiktok_details_by_date'])->name('adSpentSocialMedia.get_tiktok_details_by_date');
+                Route::get('/tiktok/campaign-summary', [AdSpentSocialMediaController::class, 'get_tiktok_campaign_summary'])->name('adSpentSocialMedia.get_tiktok_campaign_summary');
+                Route::delete('/tiktok/delete-by-account', [AdSpentSocialMediaController::class, 'deleteTiktokByAccountAndDate'])->name('adSpentSocialMedia.delete_tiktok_by_account');
                 Route::post('/tiktok/import', [AdSpentSocialMediaController::class, 'import_tiktok_ads'])->name('adSpentSocialMedia.import_tiktok');
                 Route::get('/tiktok/line-data', [AdSpentSocialMediaController::class, 'get_tiktok_line_data'])->name('adSpentSocialMedia.tiktok-line-data');
                 Route::get('/tiktok/funnel-data', [AdSpentSocialMediaController::class, 'get_tiktok_funnel_data'])->name('adSpentSocialMedia.tiktok-funnel-data');

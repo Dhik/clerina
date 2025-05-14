@@ -394,6 +394,315 @@ class AdSpentSocialMediaController extends Controller
             ->rawColumns(['action', 'performance'])
             ->make(true);
     }
+    public function get_tiktok_details_by_date(Request $request) 
+{
+    $query = AdsTiktok::query()
+        ->select([
+            DB::raw('ANY_VALUE(id) as id'),
+            DB::raw('MIN(date) as start_date'),
+            DB::raw('MAX(date) as end_date'),
+            DB::raw('SUM(amount_spent) as amount_spent'),
+            DB::raw('SUM(impressions) as impressions'),
+            DB::raw('SUM(link_clicks) as link_clicks'),
+            DB::raw('SUM(content_views_shared_items) as content_views_shared_items'),
+            DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
+            DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
+            DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
+            DB::raw('COUNT(last_updated) as last_updated_count'),
+            DB::raw('COUNT(new_created) as new_created_count'),
+            'kategori_produk',
+            'account_name'
+        ]);
+    
+    if ($request->has('date_start') && $request->has('date_end')) {
+        try {
+            $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+            $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+            $query->whereBetween('date', [$dateStart, $dateEnd]);
+        } catch (\Exception $e) {
+            Log::error('Date parsing error: ' . $e->getMessage());
+        }
+    } elseif ($request->has('date')) {
+        try {
+            $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+            $query->where('date', $parsedDate);
+        } catch (\Exception $e) {
+            $query->where('date', $request->input('date'));
+        }
+    }
+    
+    $query->groupBy('account_name', 'kategori_produk');
+    
+    if (auth()->user()->tenant_id) {
+        $query->where('tenant_id', auth()->user()->tenant_id);
+    }
+    
+    if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+        $query->where('kategori_produk', $request->kategori_produk);
+    }
+    
+    if ($request->has('pic') && $request->pic !== '') {
+        $query->where('pic', $request->pic);
+    }
+    
+    return DataTables::of($query)
+        ->addIndexColumn()
+        ->editColumn('account_name', function ($row) {
+            return $row->account_name ?: '-';
+        })
+        ->editColumn('date', function ($row) {
+            if ($row->start_date == $row->end_date) {
+                return $row->start_date;
+            }
+            return $row->start_date . ' to ' . $row->end_date;
+        })
+        ->editColumn('amount_spent', function ($row) {
+            return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
+        })
+        ->editColumn('impressions', function ($row) {
+            return $row->impressions ? number_format($row->impressions, 0, ',', '.') : '-';
+        })
+        ->editColumn('link_clicks', function ($row) {
+            return $row->link_clicks ? number_format($row->link_clicks, 2, ',', '.') : '-';
+        })
+        ->editColumn('content_views_shared_items', function ($row) {
+            return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
+        })
+        ->addColumn('tofu_spent', function ($row) {
+            return $row->tofu_spent ? 'Rp ' . number_format($row->tofu_spent, 0, ',', '.') : '-';
+        })
+        ->addColumn('tofu_percentage', function ($row) {
+            if ($row->amount_spent > 0 && $row->tofu_spent > 0) {
+                $percentage = ($row->tofu_spent / $row->amount_spent) * 100;
+                return number_format($percentage, 2, ',', '.') . '%';
+            }
+            return '-';
+        })
+        ->addColumn('mofu_spent', function ($row) {
+            return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
+        })
+        ->addColumn('mofu_percentage', function ($row) {
+            if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
+                $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
+                return number_format($percentage, 2, ',', '.') . '%';
+            }
+            return '-';
+        })
+        ->addColumn('bofu_spent', function ($row) {
+            return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
+        })
+        ->addColumn('bofu_percentage', function ($row) {
+            if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
+                $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
+                return number_format($percentage, 2, ',', '.') . '%';
+            }
+            return '-';
+        })
+        ->addColumn('last_updated_count', function ($row) {
+            return $row->last_updated_count ?: '0';
+        })
+        ->addColumn('new_created_count', function ($row) {
+            return $row->new_created_count ?: '0';
+        })
+        ->addColumn('cost_per_view', function ($row) {
+            if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
+                $costPerView = $row->amount_spent / $row->content_views_shared_items;
+                return 'Rp ' . number_format(floor($costPerView), 0, ',', '.');
+            }
+            return '-';
+        })
+        ->editColumn('adds_to_cart_shared_items', function ($row) {
+            return $row->adds_to_cart_shared_items ? number_format(floor($row->adds_to_cart_shared_items), 0, ',', '.') : '-';
+        })
+        ->addColumn('cost_per_atc', function ($row) {
+            if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
+                $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
+                return 'Rp ' . number_format(floor($costPerATC), 0, ',', '.');
+            }
+            return '-';
+        })
+        ->editColumn('purchases_shared_items', function ($row) {
+            return $row->purchases_shared_items ? number_format($row->purchases_shared_items, 2, ',', '.') : '-';
+        })
+        ->addColumn('cost_per_purchase', function ($row) {
+            if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
+                $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
+                return 'Rp ' . number_format(floor($costPerPurchase), 0, ',', '.');
+            }
+            return '-';
+        })
+        ->editColumn('purchases_conversion_value_shared_items', function ($row) {
+            return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 0, ',', '.') : '-';
+        })
+        ->addColumn('roas', function ($row) {
+            if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                return number_format($roas, 2, ',', '.');
+            }
+            return '-';
+        })
+        ->addColumn('cpm', function ($row) {
+            if ($row->impressions > 0 && $row->amount_spent > 0) {
+                $cpm = ($row->amount_spent / $row->impressions) * 1000;
+                return 'Rp ' . number_format(floor($cpm), 0, ',', '.');
+            }
+            return '-';
+        })
+        ->addColumn('ctr', function ($row) {
+            if ($row->impressions > 0 && $row->link_clicks > 0) {
+                $ctr = ($row->link_clicks / $row->impressions) * 100;
+                return number_format($ctr, 2, ',', '.') . '%';
+            }
+            return '-';
+        })
+        ->addColumn('performance', function ($row) {
+            if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                
+                if ($roas >= 2.5) {
+                    return '<span class="badge badge-success">Winning</span>';
+                } elseif ($roas >= 2.01) {
+                    return '<span class="badge badge-primary">Bagus</span>';
+                } elseif ($roas >= 1.75) {
+                    return '<span class="badge badge-info">Potensi</span>';
+                } else {
+                    return '<span class="badge badge-danger">Bad</span>';
+                }
+            }
+            return '<span class="badge badge-secondary">N/A</span>';
+        })
+        ->addColumn('action', function ($row) {
+            return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-kategori="'.$row->kategori_produk.'">
+                <i class="fas fa-trash"></i> Delete
+            </button>';
+        })
+        ->rawColumns(['action', 'performance'])
+        ->make(true);
+}
+public function get_tiktok_campaign_summary(Request $request)
+{
+    $query = AdsTiktok::query()
+        ->select([
+            DB::raw('SUM(amount_spent) as total_amount_spent'),
+            DB::raw('SUM(impressions) as total_impressions'),
+            DB::raw('SUM(link_clicks) as total_link_clicks'),
+            DB::raw('SUM(content_views_shared_items) as total_content_views'),
+            DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+            DB::raw('SUM(purchases_shared_items) as total_purchases'),
+            DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+            DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
+            
+            // TOFU/MOFU/BOFU metrics
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+            DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
+        ]);
+    
+    // Apply date filter with support for both single date and date range
+    if ($request->has('date_start') && $request->has('date_end')) {
+        try {
+            $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+            $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+            $query->whereBetween('date', [$dateStart, $dateEnd]);
+        } catch (\Exception $e) {
+            Log::error('Date parsing error: ' . $e->getMessage());
+        }
+    } elseif ($request->has('date')) {
+        try {
+            $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+            $query->where('date', $parsedDate);
+        } catch (\Exception $e) {
+            $query->where('date', $request->input('date'));
+        }
+    }
+    
+    // Apply product category filter if provided
+    if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+        $query->where('kategori_produk', $request->kategori_produk);
+    }
+    
+    // Apply PIC filter if provided
+    if ($request->has('pic') && $request->pic !== '') {
+        $query->where('pic', $request->pic);
+    }
+    
+    $summary = $query->first();
+    
+    // Calculate derived metrics
+    $result = [
+        'total_amount_spent' => $summary->total_amount_spent,
+        'total_impressions' => $summary->total_impressions,
+        'total_link_clicks' => $summary->total_link_clicks,
+        'total_content_views' => $summary->total_content_views,
+        'total_adds_to_cart' => $summary->total_adds_to_cart,
+        'total_purchases' => $summary->total_purchases,
+        'total_conversion_value' => $summary->total_conversion_value,
+        'accounts_count' => $summary->accounts_count,
+        
+        // Derived metrics
+        'cost_per_purchase' => $summary->total_purchases > 0 ? $summary->total_amount_spent / $summary->total_purchases : 0,
+        'cost_per_view' => $summary->total_content_views > 0 ? $summary->total_amount_spent / $summary->total_content_views : 0,
+        'cost_per_atc' => $summary->total_adds_to_cart > 0 ? $summary->total_amount_spent / $summary->total_adds_to_cart : 0,
+        'cpm' => $summary->total_impressions > 0 ? ($summary->total_amount_spent / $summary->total_impressions) * 1000 : 0,
+        'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
+        'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0,
+        
+        // Funnel stage metrics with percentages
+        'tofu_spent' => $summary->tofu_spent,
+        'mofu_spent' => $summary->mofu_spent, 
+        'bofu_spent' => $summary->bofu_spent,
+        'tofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->tofu_spent / $summary->total_amount_spent) * 100 : 0,
+        'mofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->mofu_spent / $summary->total_amount_spent) * 100 : 0,
+        'bofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->bofu_spent / $summary->total_amount_spent) * 100 : 0
+    ];
+    
+    return response()->json([
+        'success' => true,
+        'data' => $result
+    ]);
+}
+
+public function deleteTiktokByAccountAndDate(Request $request)
+{
+    $accountName = $request->input('account_name');
+    $date = $request->input('date');
+    
+    try {
+        $deleted = AdsTiktok::where('account_name', $accountName)
+            ->where('date', $date)
+            ->delete();
+        
+        if ($deleted) {
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully deleted data for '{$accountName}' on {$date}"
+            ]);
+        } else {
+            // Collect debug info for troubleshooting
+            $availableAccounts = AdsTiktok::where('date', $date)
+                ->pluck('account_name')
+                ->toArray();
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => "No data found for '{$accountName}' on {$date}",
+                'debug_info' => [
+                    'requested_account' => $accountName,
+                    'requested_date' => $date,
+                    'available_accounts' => $availableAccounts
+                ]
+            ], 404);
+        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => "Error deleting data: " . $e->getMessage()
+        ], 500);
+    }
+}
 
     public function get_campaign_summary(Request $request)
     {
