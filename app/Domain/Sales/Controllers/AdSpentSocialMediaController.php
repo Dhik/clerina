@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use App\Domain\Sales\Services\GoogleSheetService;
 
 class AdSpentSocialMediaController extends Controller
@@ -2601,120 +2602,112 @@ class AdSpentSocialMediaController extends Controller
         return $count;
     }
     public function import_tiktok_ads(Request $request)
-    {
+{
+    try {
+        $request->validate([
+            'tiktokAdsFile' => 'required|file|mimes:xlsx,zip|max:5120',
+            'kategori_produk' => 'required|string',
+            'pic' => 'required|string'
+        ]);
+
+        $file = $request->file('tiktokAdsFile');
+        $kategoriProduk = $request->input('kategori_produk');
+        $pic = $request->input('pic');
+        $dateAmountMap = [];
+        $importCount = 0;
+        
+        \Log::info("Starting TikTok ads import process");
+        \Log::info("File name: " . $file->getClientOriginalName());
+        \Log::info("Kategori produk: " . $kategoriProduk);
+        \Log::info("PIC: " . $pic);
+
+        // Capturing tenant ID early to ensure it's available
+        $tenantId = Auth::user()->current_tenant_id;
+        \Log::info("Using tenant ID: " . $tenantId);
+
+        DB::beginTransaction();
         try {
-            $request->validate([
-                'tiktokAdsFile' => 'required|file|mimes:xlsx,zip|max:5120',
-                'kategori_produk' => 'required|string',
-                'pic' => 'required|string'
-            ]);
-
-            $file = $request->file('tiktokAdsFile');
-            $kategoriProduk = $request->input('kategori_produk');
-            $pic = $request->input('pic');
-            $dateAmountMap = [];
-            $importCount = 0;
-            
-            \Log::info("Starting TikTok ads import process");
-            \Log::info("File name: " . $file->getClientOriginalName());
-            \Log::info("Kategori produk: " . $kategoriProduk);
-            \Log::info("PIC: " . $pic);
-
-            // Capturing tenant ID early to ensure it's available
-            $tenantId = Auth::user()->current_tenant_id;
-            \Log::info("Using tenant ID: " . $tenantId);
-
-            // Test database connection and model
-            try {
-                $totalRecords = DB::table('ads_tiktok')->count();
-                \Log::info("Current total records in ads_tiktok: " . $totalRecords);
-            } catch (\Exception $e) {
-                \Log::error("Error checking database: " . $e->getMessage());
-            }
-
-            DB::beginTransaction();
-            try {
-                // Check if the file is a ZIP file
-                if ($file->getClientOriginalExtension() == 'zip') {
-                    \Log::info("Processing ZIP file");
-                    // Process ZIP file
-                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
-                    if (!file_exists($tempDir)) {
-                        mkdir($tempDir, 0755, true);
+            // Check if the file is a ZIP file
+            if ($file->getClientOriginalExtension() == 'zip') {
+                \Log::info("Processing ZIP file");
+                // Process ZIP file
+                $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                if (!file_exists($tempDir)) {
+                    mkdir($tempDir, 0755, true);
+                }
+                
+                $zip = new \ZipArchive;
+                if ($zip->open($file->getPathname()) === TRUE) {
+                    $zip->extractTo($tempDir);
+                    $zip->close();
+                    
+                    $xlsxFiles = glob($tempDir . '/*.xlsx');
+                    \Log::info("Found " . count($xlsxFiles) . " XLSX files in ZIP");
+                    
+                    foreach ($xlsxFiles as $xlsxFile) {
+                        $xlsxFilename = basename($xlsxFile);
+                        \Log::info("Processing XLSX file from ZIP: " . $xlsxFilename);
+                        $importCount += $this->processTiktokXlsxFile($xlsxFile, $kategoriProduk, $pic, $dateAmountMap, $xlsxFilename, $tenantId);
                     }
                     
-                    $zip = new \ZipArchive;
-                    if ($zip->open($file->getPathname()) === TRUE) {
-                        $zip->extractTo($tempDir);
-                        $zip->close();
-                        
-                        $xlsxFiles = glob($tempDir . '/*.xlsx');
-                        \Log::info("Found " . count($xlsxFiles) . " XLSX files in ZIP");
-                        
-                        foreach ($xlsxFiles as $xlsxFile) {
-                            $xlsxFilename = basename($xlsxFile);
-                            \Log::info("Processing XLSX file from ZIP: " . $xlsxFilename);
-                            $importCount += $this->processTiktokXlsxFile($xlsxFile, $kategoriProduk, $pic, $dateAmountMap, $xlsxFilename, $tenantId);
-                        }
-                        
-                        array_map('unlink', glob($tempDir . '/*'));
-                        rmdir($tempDir);
-                    } else {
-                        throw new \Exception("Could not open ZIP file");
-                    }
+                    array_map('unlink', glob($tempDir . '/*'));
+                    rmdir($tempDir);
                 } else {
-                    // Process a single XLSX file
-                    $originalFilename = $file->getClientOriginalName();
-                    \Log::info("Processing single XLSX file: " . $originalFilename);
-                    $importCount = $this->processTiktokXlsxFile($file->getPathname(), $kategoriProduk, $pic, $dateAmountMap, $originalFilename, $tenantId);
+                    throw new \Exception("Could not open ZIP file");
                 }
-
-                // Update AdSpentSocialMedia with aggregated totals
-                foreach ($dateAmountMap as $date => $totalAmount) {
-                    \Log::info("Updating AdSpentSocialMedia for date: " . $date . " with amount: " . $totalAmount);
-                    
-                    try {
-                        AdSpentSocialMedia::updateOrCreate(
-                            [
-                                'date' => $date,
-                                'social_media_id' => 4, // Assuming 4 is for TikTok
-                                'tenant_id' => $tenantId
-                            ],
-                            [
-                                'amount' => $totalAmount
-                            ]
-                        );
-                        \Log::info("AdSpentSocialMedia updated successfully for date: " . $date);
-                    } catch (\Exception $e) {
-                        \Log::error("Error updating AdSpentSocialMedia: " . $e->getMessage());
-                    }
-                }
-                
-                DB::commit();
-                \Log::info("Transaction committed, total imported: " . $importCount);
-                
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'TikTok ads data imported successfully. ' . $importCount . ' records imported.'
-                ]);
-                
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error("Import failed with error: " . $e->getMessage());
-                \Log::error("Stack trace: " . $e->getTraceAsString());
-                throw $e;
+            } else {
+                // Process a single XLSX file
+                $originalFilename = $file->getClientOriginalName();
+                \Log::info("Processing single XLSX file: " . $originalFilename);
+                $importCount = $this->processTiktokXlsxFile($file->getPathname(), $kategoriProduk, $pic, $dateAmountMap, $originalFilename, $tenantId);
             }
+
+            // Update AdSpentSocialMedia with aggregated totals
+            foreach ($dateAmountMap as $date => $totalAmount) {
+                \Log::info("Updating AdSpentSocialMedia for date: " . $date . " with amount: " . $totalAmount);
+                
+                try {
+                    AdSpentSocialMedia::updateOrCreate(
+                        [
+                            'date' => $date,
+                            'social_media_id' => 4, // Assuming 4 is for TikTok
+                            'tenant_id' => $tenantId
+                        ],
+                        [
+                            'amount' => $totalAmount
+                        ]
+                    );
+                    \Log::info("AdSpentSocialMedia updated successfully for date: " . $date);
+                } catch (\Exception $e) {
+                    \Log::error("Error updating AdSpentSocialMedia: " . $e->getMessage());
+                }
+            }
+            
+            DB::commit();
+            \Log::info("Transaction committed, total imported: " . $importCount);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'TikTok ads data imported successfully. ' . $importCount . ' records imported.'
+            ]);
             
         } catch (\Exception $e) {
-            \Log::error("Error in import_tiktok_ads: " . $e->getMessage());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error importing data: ' . $e->getMessage()
-            ], 422);
+            DB::rollBack();
+            \Log::error("Import failed with error: " . $e->getMessage());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
+            throw $e;
         }
+        
+    } catch (\Exception $e) {
+        \Log::error("Error in import_tiktok_ads: " . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error importing data: ' . $e->getMessage()
+        ], 422);
     }
+}
 
-    private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateAmountMap, $originalFilename = null, $tenantId = null)
+private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateAmountMap, $originalFilename = null, $tenantId = null)
 {
     // Get account_name from filename
     $filename = $originalFilename ?? basename($filePath);
@@ -2737,42 +2730,10 @@ class AdSpentSocialMediaController extends Controller
         \Log::info("Using default date: " . $reportDate . " and account name: " . $accountName);
     }
     
-    // Use Excel facade with a different approach to handle type detection
+    // Use Excel to read the file with fallback options
     try {
-        // First check file extension to make sure we're dealing with XLSX
-        $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
-        if (strtolower($fileExtension) !== 'xlsx') {
-            \Log::warning("File doesn't have .xlsx extension. Actual extension: " . $fileExtension);
-            
-            // If it's a temp file without extension, create a copy with correct extension
-            if (empty($fileExtension)) {
-                $newPath = $filePath . '.xlsx';
-                copy($filePath, $newPath);
-                $filePath = $newPath;
-                \Log::info("Created copy with .xlsx extension: " . $newPath);
-            }
-        }
-        
-        // Use Excel facade to read the file
-        $import = new class implements \Maatwebsite\Excel\Concerns\ToArray {
-            public function array(array $rows)
-            {
-                return $rows;
-            }
-        };
-        
-        $data = Excel::import($import, $filePath, null, \Maatwebsite\Excel\Excel::XLSX);
-        
-        // If import doesn't return data array directly, try a different approach
-        if (!is_array($data)) {
-            \Log::info("Import didn't return data directly, using alternative approach");
-            
-            // Use PhpSpreadsheet directly as fallback
-            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-            $spreadsheet = $reader->load($filePath);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $data = $worksheet->toArray();
-        }
+        // Try simple Excel read first
+        $data = Excel::toArray(new class {} , $filePath)[0];
         
         \Log::info("Excel file loaded successfully with " . count($data) . " rows");
         
@@ -2782,11 +2743,10 @@ class AdSpentSocialMediaController extends Controller
         }
     } catch (\Exception $e) {
         \Log::error("Error loading Excel file: " . $e->getMessage());
-        \Log::error("Stack trace: " . $e->getTraceAsString());
         
-        // Try PhpSpreadsheet directly as fallback
+        // Try another approach with PhpSpreadsheet directly
         try {
-            \Log::info("Trying PhpSpreadsheet as fallback");
+            \Log::info("Trying PhpSpreadsheet directly as fallback");
             $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
             $spreadsheet = $reader->load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
@@ -2862,13 +2822,6 @@ class AdSpentSocialMediaController extends Controller
             : $default;
     };
     
-    // Check if new columns exist in the database
-    $hasNewColumns = Schema::hasColumn('ads_tiktok', 'primary_status');
-    
-    if (!$hasNewColumns) {
-        \Log::warning("New columns are not yet in the database. Please run the migration.");
-    }
-    
     foreach ($dataRows as $rowIndex => $row) {
         // Skip empty rows
         $campaignName = $getColumnValue($row, 'Campaign name');
@@ -2916,7 +2869,7 @@ class AdSpentSocialMediaController extends Controller
             $contentViewsSharedItems = $this->cleanNumericValue($contentViewsSharedItems);
             $liveViews = $this->cleanNumericValue($liveViews);
 
-            // Prepare data for saving (only existing columns)
+            // Prepare data for saving with all columns
             $saveData = [
                 'amount_spent' => (int)$amountSpent,
                 'impressions' => (int)$impressions,
@@ -2927,45 +2880,43 @@ class AdSpentSocialMediaController extends Controller
                 'purchases_conversion_value_shared_items' => (float)$purchasesConversionValueSharedItems,
                 'account_name' => $accountName,
                 'kategori_produk' => $kategoriProduk,
-                'pic' => $pic
+                'pic' => $pic,
+                'primary_status' => $primaryStatus,
+                'campaign_budget' => (float)$campaignBudget,
+                'product_page_views' => (int)$productPageViews,
+                'items_purchased' => (int)$itemsPurchased,
+                'cpm' => (float)$cpm,
+                'cpc' => (float)$cpc,
+                'cost_per_purchase' => (float)$costPerPurchase,
+                'ctr' => (float)$ctr,
+                'purchase_rate' => (float)$purchaseRate,
+                'average_order_value' => (float)$averageOrderValue,
+                'live_views' => (int)$liveViews
             ];
-            
-            // Add new columns if they exist in the database
-            if ($hasNewColumns) {
-                $saveData['primary_status'] = $primaryStatus;
-                $saveData['campaign_budget'] = (float)$campaignBudget;
-                $saveData['product_page_views'] = (int)$productPageViews;
-                $saveData['items_purchased'] = (int)$itemsPurchased;
-                $saveData['cpm'] = (float)$cpm;
-                $saveData['cpc'] = (float)$cpc;
-                $saveData['cost_per_purchase'] = (float)$costPerPurchase;
-                $saveData['ctr'] = (float)$ctr;
-                $saveData['purchase_rate'] = (float)$purchaseRate;
-                $saveData['average_order_value'] = (float)$averageOrderValue;
-                $saveData['live_views'] = (int)$liveViews;
-            }
             
             \Log::info("Data to be saved: " . json_encode(array_slice($saveData, 0, 5)) . "...");
             
-            // Try to save the data
-            $result = AdsTiktok::updateOrCreate(
-                [
-                    'date' => $reportDate,
-                    'campaign_name' => $campaignName,
-                    'tenant_id' => $tenantId
-                ],
-                $saveData
-            );
-            
-            \Log::info("Record saved with ID: " . $result->id);
-            
-            // Update date amount map for totals
-            if (!isset($dateAmountMap[$reportDate])) {
-                $dateAmountMap[$reportDate] = 0;
+            try {
+                $result = AdsTiktok::updateOrCreate(
+                    [
+                        'date' => $reportDate,
+                        'campaign_name' => $campaignName,
+                        'tenant_id' => $tenantId
+                    ],
+                    $saveData
+                );
+                
+                \Log::info("Record saved with ID: " . $result->id);
+                
+                if (!isset($dateAmountMap[$reportDate])) {
+                    $dateAmountMap[$reportDate] = 0;
+                }
+                $dateAmountMap[$reportDate] += (int)$amountSpent;
+                
+                $count++;
+            } catch (\Exception $e) {
+                \Log::error("Error saving record: " . $e->getMessage());
             }
-            $dateAmountMap[$reportDate] += (int)$amountSpent;
-            
-            $count++;
         } catch (\Exception $e) {
             \Log::warning("Error processing row in XLSX: Row " . ($rowIndex + $headerRow + 2) . " - " . $e->getMessage());
             // Continue processing other rows
@@ -2976,48 +2927,48 @@ class AdSpentSocialMediaController extends Controller
     return $count;
 }
 
-    /**
-     * Parse percentage string to decimal
-     * 
-     * @param string $percentStr
-     * @return float
-     */
-    private function parsePercentage($percentStr)
-    {
-        if (is_numeric($percentStr)) {
-            return $percentStr;
-        }
-        
-        // Remove % symbol and convert comma to dot
-        $percentStr = str_replace('%', '', $percentStr);
-        $percentStr = str_replace(',', '.', $percentStr);
-        
-        // Convert to float and divide by 100
-        $result = floatval($percentStr) / 100;
-        
-        return $result;
+/**
+ * Parse percentage string to decimal
+ * 
+ * @param string $percentStr
+ * @return float
+ */
+private function parsePercentage($percentStr)
+{
+    if (is_numeric($percentStr)) {
+        return $percentStr;
     }
+    
+    // Remove % symbol and convert comma to dot
+    $percentStr = str_replace('%', '', $percentStr);
+    $percentStr = str_replace(',', '.', $percentStr);
+    
+    // Convert to float and divide by 100
+    $result = floatval($percentStr) / 100;
+    
+    return $result;
+}
 
-    /**
-     * Clean numeric value by removing currency symbols and formatting
-     * 
-     * @param mixed $value
-     * @return string
-     */
-    private function cleanNumericValue($value)
-    {
-        if (is_numeric($value)) {
-            return $value;
-        }
-        
-        // Convert to string
-        $value = (string)$value;
-        
-        // Remove currency symbols, commas, spaces
-        $value = preg_replace('/[^\d.-]/', '', $value);
-        
-        return $value ?: '0';
+/**
+ * Clean numeric value by removing currency symbols and formatting
+ * 
+ * @param mixed $value
+ * @return string
+ */
+private function cleanNumericValue($value)
+{
+    if (is_numeric($value)) {
+        return $value;
     }
+    
+    // Convert to string
+    $value = (string)$value;
+    
+    // Remove currency symbols, commas, spaces
+    $value = preg_replace('/[^\d.-]/', '', $value);
+    
+    return $value ?: '0';
+}
 
 
 
