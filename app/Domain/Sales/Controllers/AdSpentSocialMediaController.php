@@ -2740,7 +2740,14 @@ class AdSpentSocialMediaController extends Controller
         
         // Use Laravel Excel to read the XLSX file
         try {
-            $data = Excel::toArray(new class {}, $filePath)[0];
+            // Specify the reader type explicitly as Excel
+            $data = Excel::toArray(
+                new class {}, 
+                $filePath, 
+                null, 
+                Excel::XLSX  // Explicitly specify XLSX format
+            )[0];
+            
             \Log::info("Excel file loaded successfully with " . count($data) . " rows");
             
             // For debugging, log the first few rows
