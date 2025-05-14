@@ -15,7 +15,7 @@
                         <i class="fas fa-store"></i> Shopee Mall
                     </a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" id="shopee2-tab" data-toggle="tab" href="#shopee2-content" role="tab" aria-controls="shopee2-content" aria-selected="false">
                         <i class="fas fa-shopping-bag"></i> Shopee 2
                     </a>
@@ -24,7 +24,7 @@
                     <a class="nav-link" id="shopee3-tab" data-toggle="tab" href="#shopee3-content" role="tab" aria-controls="shopee3-content" aria-selected="false">
                         <i class="fas fa-shopping-cart"></i> Shopee 3
                     </a>
-                </li>
+                </li> -->
                 <li class="nav-item">
                     <a class="nav-link" id="tiktok-tab" data-toggle="tab" href="#tiktok-content" role="tab" aria-controls="tiktok-content" aria-selected="false">
                         <i class="fab fa-tiktok"></i> TikTok Ads

@@ -11,12 +11,12 @@
                 <form id="importTiktokAdsSpentForm" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
-                        <label for="tiktokAdsFile">Import CSV or ZIP File</label>
+                        <label for="tiktokAdsFile">Import XLSX or ZIP File</label>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="tiktokAdsFile" name="tiktokAdsFile" accept=".csv,.zip" required>
+                            <input type="file" class="custom-file-input" id="tiktokAdsFile" name="tiktokAdsFile" accept=".xlsx,.zip" required>
                             <label class="custom-file-label" for="tiktokAdsFile">Choose file</label>
                         </div>
-                        <small class="form-text text-muted">Please upload a CSV file or a ZIP file containing multiple CSV files with TikTok ads data</small>
+                        <small class="form-text text-muted">Please upload an XLSX file or a ZIP file containing multiple XLSX files with TikTok ads data</small>
                     </div>
                     <div class="form-group">
                         <label for="kategoriProduk">Kategori Produk</label>
@@ -28,7 +28,18 @@
                             <option value="3 Minutes">3 Minutes</option>
                             <option value="Calendula">Calendula</option>
                             <option value="Natural Exfo">Natural Exfo</option>
+                            <option value="Pore Glow">Pore Glow</option>
+                            <option value="8X Hyalu">8X Hyalu</option>
                             <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pic">PIC</label>
+                        <select class="form-control" id="tiktokPIC" name="pic" required>
+                            <option value="" selected disabled>Choose PIC</option>
+                            <option value="Nabila">Nabila</option>
+                            <option value="Reza">Reza</option>
+                            <option value="Febry">Febry</option>
                         </select>
                     </div>
                     <div class="form-group d-none" id="errorImportTiktokAdsSpent"></div>

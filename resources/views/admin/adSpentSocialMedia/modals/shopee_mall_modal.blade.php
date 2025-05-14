@@ -28,6 +28,8 @@
                             <option value="3 Minutes">3 Minutes</option>
                             <option value="Calendula">Calendula</option>
                             <option value="Natural Exfo">Natural Exfo</option>
+                            <option value="Pore Glow">Pore Glow</option>
+                            <option value="8X Hyalu">8X Hyalu</option>
                             <option value="Lain-lain">Lain-lain</option>
                         </select>
                     </div>

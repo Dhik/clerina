@@ -45,6 +45,17 @@ class AdsTiktok extends Model
         'content_views_shared_items' => 'float',
         'adds_to_cart_shared_items' => 'float',
         'purchases_shared_items' => 'float',
-        'purchases_conversion_value_shared_items' => 'float'
+        'purchases_conversion_value_shared_items' => 'float',
+        'link_clicks' => 'float',
+        'campaign_budget' => 'float',
+        'product_page_views' => 'integer',
+        'items_purchased' => 'integer',
+        'cpm' => 'float',
+        'cpc' => 'float',
+        'cost_per_purchase' => 'float',
+        'ctr' => 'float',
+        'purchase_rate' => 'float',
+        'average_order_value' => 'float',
+        'live_views' => 'integer',
     ];
 }
