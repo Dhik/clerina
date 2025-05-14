@@ -2715,293 +2715,266 @@ class AdSpentSocialMediaController extends Controller
     }
 
     private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateAmountMap, $originalFilename = null, $tenantId = null)
-    {
-        // Get account_name from filename
-        $filename = $originalFilename ?? basename($filePath);
-        $filename = pathinfo($filename, PATHINFO_FILENAME);
-        
-        \Log::info("Processing file: " . $filename);
-        
-        // Extract account_name and date from filename pattern
-        // More flexible pattern matching
-        $reportDate = null;
-        $accountName = null;
-        
-        if (preg_match('/Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
-            $accountName = preg_replace('/_Campaign_Report.*$/', '', $filename);
-            $reportDate = $matches[1] . '-' . $matches[2] . '-' . $matches[3];
-            \Log::info("Extracted date from filename: " . $reportDate);
-            \Log::info("Extracted account name: " . $accountName);
-        } else {
-            $accountName = $filename;
-            $reportDate = Carbon::now()->format('Y-m-d');
-            \Log::info("Using default date: " . $reportDate . " and account name: " . $accountName);
+{
+    // Get account_name from filename
+    $filename = $originalFilename ?? basename($filePath);
+    $filename = pathinfo($filename, PATHINFO_FILENAME);
+    
+    \Log::info("Processing file: " . $filename);
+    
+    // Extract account_name and date from filename pattern
+    $reportDate = null;
+    $accountName = null;
+    
+    if (preg_match('/Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
+        $accountName = preg_replace('/_Campaign_Report.*$/', '', $filename);
+        $reportDate = $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+        \Log::info("Extracted date from filename: " . $reportDate);
+        \Log::info("Extracted account name: " . $accountName);
+    } else {
+        $accountName = $filename;
+        $reportDate = Carbon::now()->format('Y-m-d');
+        \Log::info("Using default date: " . $reportDate . " and account name: " . $accountName);
+    }
+    
+    // Use Excel facade with a different approach to handle type detection
+    try {
+        // First check file extension to make sure we're dealing with XLSX
+        $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+        if (strtolower($fileExtension) !== 'xlsx') {
+            \Log::warning("File doesn't have .xlsx extension. Actual extension: " . $fileExtension);
+            
+            // If it's a temp file without extension, create a copy with correct extension
+            if (empty($fileExtension)) {
+                $newPath = $filePath . '.xlsx';
+                copy($filePath, $newPath);
+                $filePath = $newPath;
+                \Log::info("Created copy with .xlsx extension: " . $newPath);
+            }
         }
         
-        // Use Laravel Excel to read the XLSX file
-        try {
-            // Specify the reader type explicitly as Excel
-            $data = Excel::toArray(
-                new class {}, 
-                $filePath, 
-                null, 
-                Excel::XLSX  // Explicitly specify XLSX format
-            )[0];
-            
-            \Log::info("Excel file loaded successfully with " . count($data) . " rows");
-            
-            // For debugging, log the first few rows
-            for ($i = 0; $i < min(3, count($data)); $i++) {
-                \Log::info("Row $i: " . json_encode(array_slice($data[$i], 0, 5)) . "...");
+        // Use Excel facade to read the file
+        $import = new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $rows)
+            {
+                return $rows;
             }
-        } catch (\Exception $e) {
-            \Log::error("Error loading Excel file: " . $e->getMessage());
+        };
+        
+        $data = Excel::import($import, $filePath, null, \Maatwebsite\Excel\Excel::XLSX);
+        
+        // If import doesn't return data array directly, try a different approach
+        if (!is_array($data)) {
+            \Log::info("Import didn't return data directly, using alternative approach");
+            
+            // Use PhpSpreadsheet directly as fallback
+            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+            $spreadsheet = $reader->load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+        }
+        
+        \Log::info("Excel file loaded successfully with " . count($data) . " rows");
+        
+        // For debugging, log the first few rows
+        for ($i = 0; $i < min(3, count($data)); $i++) {
+            \Log::info("Row $i: " . json_encode(array_slice($data[$i], 0, 5)) . "...");
+        }
+    } catch (\Exception $e) {
+        \Log::error("Error loading Excel file: " . $e->getMessage());
+        \Log::error("Stack trace: " . $e->getTraceAsString());
+        
+        // Try PhpSpreadsheet directly as fallback
+        try {
+            \Log::info("Trying PhpSpreadsheet as fallback");
+            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+            $spreadsheet = $reader->load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+            \Log::info("PhpSpreadsheet fallback successful with " . count($data) . " rows");
+        } catch (\Exception $e2) {
+            \Log::error("PhpSpreadsheet fallback also failed: " . $e2->getMessage());
             return 0;
         }
+    }
+    
+    // Find the header row and map column indices
+    $headerRow = null;
+    $columnMap = [];
+    
+    foreach ($data as $index => $row) {
+        // Look for common headers that should exist in the file
+        $campaignNameFound = false;
+        $costFound = false;
         
-        // Find the header row with more flexible matching
-        $headerRow = null;
-        $columnMap = [];
-        
-        foreach ($data as $index => $row) {
-            // Look for common headers that should exist in the file
-            $campaignNameFound = false;
-            $costFound = false;
-            
-            foreach ($row as $colIndex => $value) {
-                if (is_string($value)) {
-                    if (stripos($value, 'Campaign name') !== false || stripos($value, 'Campaign') !== false) {
-                        $campaignNameFound = true;
-                    }
-                    if (stripos($value, 'Cost') !== false) {
-                        $costFound = true;
-                    }
+        foreach ($row as $colIndex => $value) {
+            if (is_string($value)) {
+                if (stripos($value, 'Campaign name') !== false || stripos($value, 'Campaign') !== false) {
+                    $campaignNameFound = true;
                 }
-            }
-            
-            if ($campaignNameFound && $costFound) {
-                $headerRow = $index;
-                
-                // Create column mapping
-                foreach ($row as $colIndex => $colName) {
-                    if (!empty($colName)) {
-                        $columnMap[$colName] = $colIndex;
-                    }
+                if (stripos($value, 'Cost') !== false) {
+                    $costFound = true;
                 }
-                
-                \Log::info("Found header row at index " . $index . " with columns: " . implode(", ", array_keys($columnMap)));
-                break;
             }
         }
         
-        // If header row not found, try a simpler approach
-        if ($headerRow === null) {
-            \Log::warning("Header row not found using standard detection. Using first row as header.");
-            $headerRow = 0;
+        if ($campaignNameFound && $costFound) {
+            $headerRow = $index;
             
-            foreach ($data[0] as $colIndex => $colName) {
+            // Create column mapping
+            foreach ($row as $colIndex => $colName) {
                 if (!empty($colName)) {
                     $columnMap[$colName] = $colIndex;
                 }
             }
+            
+            \Log::info("Found header row at index " . $index . " with columns: " . implode(", ", array_keys($columnMap)));
+            break;
         }
+    }
+    
+    // If header row not found, try a simpler approach
+    if ($headerRow === null) {
+        \Log::warning("Header row not found using standard detection. Using first row as header.");
+        $headerRow = 0;
         
-        // If still no header found, log error and return
-        if (empty($columnMap)) {
-            \Log::error("Could not find any headers in the Excel file");
-            return 0;
-        }
-        
-        // Skip header row
-        $dataRows = array_slice($data, $headerRow + 1);
-        $count = 0;
-        
-        // Check for key columns
-        $requiredColumns = ['Campaign name', 'Cost', 'Impressions'];
-        $missingColumns = [];
-        
-        foreach ($requiredColumns as $column) {
-            if (!isset($columnMap[$column])) {
-                $missingColumns[] = $column;
+        foreach ($data[0] as $colIndex => $colName) {
+            if (!empty($colName)) {
+                $columnMap[$colName] = $colIndex;
             }
         }
-        
-        if (!empty($missingColumns)) {
-            \Log::warning("Missing required columns: " . implode(", ", $missingColumns));
-            // Try to find similar column names
-            foreach ($missingColumns as $missing) {
-                foreach (array_keys($columnMap) as $existingColumn) {
-                    if (similar_text($missing, $existingColumn) / strlen($missing) > 0.7) {
-                        \Log::info("Using '$existingColumn' as a substitute for '$missing'");
-                        $columnMap[$missing] = $columnMap[$existingColumn];
-                        break;
-                    }
-                }
-            }
+    }
+    
+    // If still no header found, log error and return
+    if (empty($columnMap)) {
+        \Log::error("Could not find any headers in the Excel file");
+        return 0;
+    }
+    
+    // Skip header row
+    $dataRows = array_slice($data, $headerRow + 1);
+    $count = 0;
+    
+    // Create a function to safely get column values
+    $getColumnValue = function($row, $columnName, $default = null) use ($columnMap) {
+        return isset($columnMap[$columnName]) && isset($row[$columnMap[$columnName]]) 
+            ? $row[$columnMap[$columnName]] 
+            : $default;
+    };
+    
+    // Check if new columns exist in the database
+    $hasNewColumns = Schema::hasColumn('ads_tiktok', 'primary_status');
+    
+    if (!$hasNewColumns) {
+        \Log::warning("New columns are not yet in the database. Please run the migration.");
+    }
+    
+    foreach ($dataRows as $rowIndex => $row) {
+        // Skip empty rows
+        $campaignName = $getColumnValue($row, 'Campaign name');
+        if (empty($campaignName)) {
+            continue;
         }
         
-        // Create a function to safely get column values
-        $getColumnValue = function($row, $columnName, $default = null) use ($columnMap) {
-            return isset($columnMap[$columnName]) && isset($row[$columnMap[$columnName]]) 
-                ? $row[$columnMap[$columnName]] 
-                : $default;
-        };
-        
-        // Insert a test record to verify database connection
         try {
-            $testRecord = new AdsTiktok();
-            $testRecord->date = $reportDate;
-            $testRecord->campaign_name = "TEST_" . time();
-            $testRecord->tenant_id = $tenantId;
-            $testRecord->amount_spent = 1;
-            $testRecord->account_name = $accountName;
-            $testRecord->kategori_produk = $kategoriProduk;
-            $testRecord->pic = $pic;
+            \Log::info("Processing row " . ($rowIndex + $headerRow + 2) . " with campaign: " . $campaignName);
             
-            $saved = $testRecord->save();
-            \Log::info("Test record saved: " . ($saved ? 'yes' : 'no') . " with ID: " . $testRecord->id);
+            // Map columns according to the provided sample data using the safe getter
+            $primaryStatus = $getColumnValue($row, 'Primary status');
+            $campaignBudget = $getColumnValue($row, 'Campaign Budget', 0);
+            $amountSpent = $getColumnValue($row, 'Cost', 0);
+            $impressions = $getColumnValue($row, 'Impressions', 0);
+            $linkClicks = $getColumnValue($row, 'Clicks (destination)', 0);
+            $productPageViews = $getColumnValue($row, 'Product page views (Shop)', 0);
+            $addsToCartSharedItems = $getColumnValue($row, 'Checkouts initiated (Shop)', 0);
+            $purchasesSharedItems = $getColumnValue($row, 'Purchases (Shop)', 0);
+            $itemsPurchased = $getColumnValue($row, 'Items purchased (Shop)', 0);
+            $purchasesConversionValueSharedItems = $getColumnValue($row, 'Gross revenue (Shop)', 0);
+            $cpm = $getColumnValue($row, 'CPM', 0);
+            $cpc = $getColumnValue($row, 'CPC (destination)', 0);
+            $costPerPurchase = $getColumnValue($row, 'Cost per purchase (Shop)', 0);
+            $ctr = $this->parsePercentage($getColumnValue($row, 'CTR (destination)', '0%'));
+            $purchaseRate = $this->parsePercentage($getColumnValue($row, 'Purchase rate (Shop)', '0%'));
+            $averageOrderValue = $getColumnValue($row, 'Average order value (Shop)', 0);
+            $contentViewsSharedItems = $getColumnValue($row, 'Video views', 0);
+            $liveViews = $getColumnValue($row, 'LIVE views', 0);
             
-            // Delete the test record
-            $testRecord->delete();
-            \Log::info("Test record deleted");
-        } catch (\Exception $e) {
-            \Log::error("Error saving test record: " . $e->getMessage());
-            // Continue with the import despite the test error
-        }
-        
-        foreach ($dataRows as $rowIndex => $row) {
-            // Skip empty rows
-            $campaignName = $getColumnValue($row, 'Campaign name');
-            if (empty($campaignName)) {
-                continue;
+            // Remove currency symbols and commas from numeric values
+            $amountSpent = $this->cleanNumericValue($amountSpent);
+            $campaignBudget = $this->cleanNumericValue($campaignBudget);
+            $impressions = $this->cleanNumericValue($impressions);
+            $linkClicks = $this->cleanNumericValue($linkClicks);
+            $productPageViews = $this->cleanNumericValue($productPageViews);
+            $addsToCartSharedItems = $this->cleanNumericValue($addsToCartSharedItems);
+            $purchasesSharedItems = $this->cleanNumericValue($purchasesSharedItems);
+            $itemsPurchased = $this->cleanNumericValue($itemsPurchased);
+            $purchasesConversionValueSharedItems = $this->cleanNumericValue($purchasesConversionValueSharedItems);
+            $cpm = $this->cleanNumericValue($cpm);
+            $cpc = $this->cleanNumericValue($cpc);
+            $costPerPurchase = $this->cleanNumericValue($costPerPurchase);
+            $averageOrderValue = $this->cleanNumericValue($averageOrderValue);
+            $contentViewsSharedItems = $this->cleanNumericValue($contentViewsSharedItems);
+            $liveViews = $this->cleanNumericValue($liveViews);
+
+            // Prepare data for saving (only existing columns)
+            $saveData = [
+                'amount_spent' => (int)$amountSpent,
+                'impressions' => (int)$impressions,
+                'link_clicks' => (float)$linkClicks,
+                'content_views_shared_items' => (float)$contentViewsSharedItems,
+                'adds_to_cart_shared_items' => (float)$addsToCartSharedItems,
+                'purchases_shared_items' => (float)$purchasesSharedItems,
+                'purchases_conversion_value_shared_items' => (float)$purchasesConversionValueSharedItems,
+                'account_name' => $accountName,
+                'kategori_produk' => $kategoriProduk,
+                'pic' => $pic
+            ];
+            
+            // Add new columns if they exist in the database
+            if ($hasNewColumns) {
+                $saveData['primary_status'] = $primaryStatus;
+                $saveData['campaign_budget'] = (float)$campaignBudget;
+                $saveData['product_page_views'] = (int)$productPageViews;
+                $saveData['items_purchased'] = (int)$itemsPurchased;
+                $saveData['cpm'] = (float)$cpm;
+                $saveData['cpc'] = (float)$cpc;
+                $saveData['cost_per_purchase'] = (float)$costPerPurchase;
+                $saveData['ctr'] = (float)$ctr;
+                $saveData['purchase_rate'] = (float)$purchaseRate;
+                $saveData['average_order_value'] = (float)$averageOrderValue;
+                $saveData['live_views'] = (int)$liveViews;
             }
             
-            try {
-                \Log::info("Processing row " . ($rowIndex + $headerRow + 2) . " with campaign: " . $campaignName);
-                
-                // Map columns according to the provided sample data using the safe getter
-                $primaryStatus = $getColumnValue($row, 'Primary status');
-                $campaignBudget = $getColumnValue($row, 'Campaign Budget', 0);
-                $amountSpent = $getColumnValue($row, 'Cost', 0);
-                $impressions = $getColumnValue($row, 'Impressions', 0);
-                $linkClicks = $getColumnValue($row, 'Clicks (destination)', 0);
-                $productPageViews = $getColumnValue($row, 'Product page views (Shop)', 0);
-                $addsToCartSharedItems = $getColumnValue($row, 'Checkouts initiated (Shop)', 0);
-                $purchasesSharedItems = $getColumnValue($row, 'Purchases (Shop)', 0);
-                $itemsPurchased = $getColumnValue($row, 'Items purchased (Shop)', 0);
-                $purchasesConversionValueSharedItems = $getColumnValue($row, 'Gross revenue (Shop)', 0);
-                $cpm = $getColumnValue($row, 'CPM', 0);
-                $cpc = $getColumnValue($row, 'CPC (destination)', 0);
-                $costPerPurchase = $getColumnValue($row, 'Cost per purchase (Shop)', 0);
-                $ctr = $this->parsePercentage($getColumnValue($row, 'CTR (destination)', '0%'));
-                $purchaseRate = $this->parsePercentage($getColumnValue($row, 'Purchase rate (Shop)', '0%'));
-                $averageOrderValue = $getColumnValue($row, 'Average order value (Shop)', 0);
-                $contentViewsSharedItems = $getColumnValue($row, 'Video views', 0);
-                $liveViews = $getColumnValue($row, 'LIVE views', 0);
-                
-                // Remove currency symbols and commas from numeric values
-                $amountSpent = $this->cleanNumericValue($amountSpent);
-                $campaignBudget = $this->cleanNumericValue($campaignBudget);
-                $impressions = $this->cleanNumericValue($impressions);
-                $linkClicks = $this->cleanNumericValue($linkClicks);
-                $productPageViews = $this->cleanNumericValue($productPageViews);
-                $addsToCartSharedItems = $this->cleanNumericValue($addsToCartSharedItems);
-                $purchasesSharedItems = $this->cleanNumericValue($purchasesSharedItems);
-                $itemsPurchased = $this->cleanNumericValue($itemsPurchased);
-                $purchasesConversionValueSharedItems = $this->cleanNumericValue($purchasesConversionValueSharedItems);
-                $cpm = $this->cleanNumericValue($cpm);
-                $cpc = $this->cleanNumericValue($cpc);
-                $costPerPurchase = $this->cleanNumericValue($costPerPurchase);
-                $averageOrderValue = $this->cleanNumericValue($averageOrderValue);
-                $contentViewsSharedItems = $this->cleanNumericValue($contentViewsSharedItems);
-                $liveViews = $this->cleanNumericValue($liveViews);
-
-                // Check if record already exists
-                $existingRecord = AdsTiktok::where([
+            \Log::info("Data to be saved: " . json_encode(array_slice($saveData, 0, 5)) . "...");
+            
+            // Try to save the data
+            $result = AdsTiktok::updateOrCreate(
+                [
                     'date' => $reportDate,
                     'campaign_name' => $campaignName,
                     'tenant_id' => $tenantId
-                ])->first();
-                
-                if ($existingRecord) {
-                    \Log::info("Record already exists with ID: " . $existingRecord->id . ", updating...");
-                }
-                
-                // Prepare data for saving
-                $saveData = [
-                    'amount_spent' => (int)$amountSpent,
-                    'impressions' => (int)$impressions,
-                    'link_clicks' => (float)$linkClicks,
-                    'content_views_shared_items' => (float)$contentViewsSharedItems,
-                    'adds_to_cart_shared_items' => (float)$addsToCartSharedItems,
-                    'purchases_shared_items' => (float)$purchasesSharedItems,
-                    'purchases_conversion_value_shared_items' => (float)$purchasesConversionValueSharedItems,
-                    'account_name' => $accountName,
-                    'kategori_produk' => $kategoriProduk,
-                    'pic' => $pic,
-                    'primary_status' => $primaryStatus,
-                    'campaign_budget' => (float)$campaignBudget,
-                    'product_page_views' => (int)$productPageViews,
-                    'items_purchased' => (int)$itemsPurchased,
-                    'cpm' => (float)$cpm,
-                    'cpc' => (float)$cpc,
-                    'cost_per_purchase' => (float)$costPerPurchase,
-                    'ctr' => (float)$ctr,
-                    'purchase_rate' => (float)$purchaseRate,
-                    'average_order_value' => (float)$averageOrderValue,
-                    'live_views' => (int)$liveViews
-                ];
-                
-                \Log::info("Data to be saved: " . json_encode(array_slice($saveData, 0, 5)) . "...");
-                
-                // Try direct insert instead of updateOrCreate for testing
-                try {
-                    $model = new AdsTiktok();
-                    $model->date = $reportDate;
-                    $model->campaign_name = $campaignName;
-                    $model->tenant_id = $tenantId;
-                    
-                    foreach ($saveData as $key => $value) {
-                        $model->$key = $value;
-                    }
-                    
-                    $saved = $model->save();
-                    \Log::info("Direct insert result: " . ($saved ? 'success' : 'failed') . " for ID: " . $model->id);
-                } catch (\Exception $e) {
-                    \Log::error("Error with direct insert: " . $e->getMessage());
-                    
-                    // Fall back to updateOrCreate
-                    try {
-                        $result = AdsTiktok::updateOrCreate(
-                            [
-                                'date' => $reportDate,
-                                'campaign_name' => $campaignName,
-                                'tenant_id' => $tenantId
-                            ],
-                            $saveData
-                        );
-                        \Log::info("updateOrCreate result ID: " . $result->id);
-                    } catch (\Exception $e2) {
-                        \Log::error("Error with updateOrCreate: " . $e2->getMessage());
-                        throw $e2;
-                    }
-                }
-                
-                if (!isset($dateAmountMap[$reportDate])) {
-                    $dateAmountMap[$reportDate] = 0;
-                }
-                $dateAmountMap[$reportDate] += (int)$amountSpent;
-                
-                $count++;
-            } catch (\Exception $e) {
-                \Log::warning("Error processing row in XLSX: Row " . ($rowIndex + $headerRow + 2) . " - " . $e->getMessage());
-                // Continue processing other rows
+                ],
+                $saveData
+            );
+            
+            \Log::info("Record saved with ID: " . $result->id);
+            
+            // Update date amount map for totals
+            if (!isset($dateAmountMap[$reportDate])) {
+                $dateAmountMap[$reportDate] = 0;
             }
+            $dateAmountMap[$reportDate] += (int)$amountSpent;
+            
+            $count++;
+        } catch (\Exception $e) {
+            \Log::warning("Error processing row in XLSX: Row " . ($rowIndex + $headerRow + 2) . " - " . $e->getMessage());
+            // Continue processing other rows
         }
-        
-        \Log::info("Finished processing file. Imported " . $count . " records.");
-        return $count;
     }
+    
+    \Log::info("Finished processing file. Imported " . $count . " records.");
+    return $count;
+}
 
     /**
      * Parse percentage string to decimal
