@@ -32,7 +32,7 @@
                                 <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importTiktokAdsSpentModal" id="btnImportTiktokAdsSpent">
-                                            <i class="fas fa-file-upload"></i> Import TikTok Ads Spent (csv or zip)
+                                            <i class="fas fa-file-upload"></i> Import TikTok Ads Spent (xlsx or zip)
                                         </button>
                                     </div>
                                 </div>
