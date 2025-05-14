@@ -7,7 +7,7 @@ $(document).ready(function() {
     let tiktokFilterDate = initDateRangePicker('tiktokFilterDates');
     let tiktokFilterCategory = $('#tiktokKategoriProdukFilter');
     let tiktokFilterPic = $('#tiktokPicFilter');
-    let modalFilterDate = initDateRangePicker('modalFilterDates');
+    let tiktokModalFilterDate = initDateRangePicker('tiktokModalFilterDates'); // New variable
     let tiktokFunnelChart = null;
     let tiktokImpressionChart = null;
 
@@ -186,18 +186,18 @@ $(document).ready(function() {
         let date = $(this).data('date');
         let formattedDate = $(this).text();
         
-        $('#dailyDetailsModalLabel').text('TikTok Campaign Details for ' + formattedDate);
-        $('#dailyDetailsModal').data('date', date);
+        $('#tiktokDailyDetailsModalLabel').text('TikTok Campaign Details for ' + formattedDate);
+        $('#tiktokDailyDetailsModal').data('date', date);
 
-        modalFilterDate.val('');
+        tiktokModalFilterDate.val('');
         
-        campaignDetailsTable.draw();
-        $('#dailyDetailsModal').modal('show');
+        tiktokCampaignDetailsTable.draw();
+        $('#tiktokDailyDetailsModal').modal('show');
     });
 
-    let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
-        responsive: false, // Set to false for horizontal scrolling
-        scrollX: true,     // Enable horizontal scrolling
+    let tiktokCampaignDetailsTable = $('#tiktokCampaignDetailsTable').DataTable({
+        responsive: false,
+        scrollX: true,
         processing: true,
         serverSide: true,
         pageLength: 10,
@@ -205,13 +205,13 @@ $(document).ready(function() {
             url: "{{ route('adSpentSocialMedia.get_tiktok_details_by_date') }}",
             data: function(d) {
                 // Add the date from the modal to the request
-                if (modalFilterDate.val()) {
-                    let dates = modalFilterDate.val().split(' - ');
+                if (tiktokModalFilterDate.val()) {
+                    let dates = tiktokModalFilterDate.val().split(' - ');
                     d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                 } else {
                     // If no date range is selected, use the single date
-                    d.date = $('#dailyDetailsModal').data('date');
+                    d.date = $('#tiktokDailyDetailsModal').data('date');
                 }
                 if (tiktokFilterPic.val()) {
                     d.pic = tiktokFilterPic.val();
@@ -309,8 +309,8 @@ $(document).ready(function() {
     });
 
     function updateTiktokCampaignSummary() {
-        const filterValue = modalFilterDate.val();
-        const date = $('#dailyDetailsModal').data('date');
+        const filterValue = tiktokModalFilterDate.val();
+        const date = $('#tiktokDailyDetailsModal').data('date');
         const kategoriProduk = tiktokFilterCategory.val();
         const picValue = tiktokFilterPic.val();
         
@@ -338,23 +338,23 @@ $(document).ready(function() {
                 if (result.success) {
                     const data = result.data;
                     
-                    // Update summary cards
-                    $('#summaryAccountsCount').text(data.accounts_count);
-                    $('#summaryTotalSpent').text('Rp ' + formatNumber(data.total_amount_spent));
-                    $('#summaryTotalPurchases').text(formatNumber(data.total_purchases));
-                    $('#summaryConversionValue').text('Rp ' + formatNumber(data.total_conversion_value));
-                    $('#summaryRoas').text(formatNumber(data.roas));
-                    $('#summaryCostPerPurchase').text('Rp ' + formatNumber(data.cost_per_purchase));
-                    $('#summaryImpressions').text(formatNumber(data.total_impressions));
-                    $('#summaryCtr').text(formatNumber(data.ctr) + '%');
+                    // Update summary cards with tiktok prefix
+                    $('#tiktokSummaryAccountsCount').text(data.accounts_count);
+                    $('#tiktokSummaryTotalSpent').text('Rp ' + formatNumber(data.total_amount_spent));
+                    $('#tiktokSummaryTotalPurchases').text(formatNumber(data.total_purchases));
+                    $('#tiktokSummaryConversionValue').text('Rp ' + formatNumber(data.total_conversion_value));
+                    $('#tiktokSummaryRoas').text(formatNumber(data.roas));
+                    $('#tiktokSummaryCostPerPurchase').text('Rp ' + formatNumber(data.cost_per_purchase));
+                    $('#tiktokSummaryImpressions').text(formatNumber(data.total_impressions));
+                    $('#tiktokSummaryCtr').text(formatNumber(data.ctr) + '%');
                     
-                    // Update funnel stage cards
-                    $('#summaryTofuSpent').text('Rp ' + formatNumber(data.tofu_spent));
-                    $('#summaryTofuPercentage').text(formatNumber(data.tofu_percentage) + '%');
-                    $('#summaryMofuSpent').text('Rp ' + formatNumber(data.mofu_spent));
-                    $('#summaryMofuPercentage').text(formatNumber(data.mofu_percentage) + '%');
-                    $('#summaryBofuSpent').text('Rp ' + formatNumber(data.bofu_spent));
-                    $('#summaryBofuPercentage').text(formatNumber(data.bofu_percentage) + '%');
+                    // Update funnel stage cards with tiktok prefix
+                    $('#tiktokSummaryTofuSpent').text('Rp ' + formatNumber(data.tofu_spent));
+                    $('#tiktokSummaryTofuPercentage').text(formatNumber(data.tofu_percentage) + '%');
+                    $('#tiktokSummaryMofuSpent').text('Rp ' + formatNumber(data.mofu_spent));
+                    $('#tiktokSummaryMofuPercentage').text(formatNumber(data.mofu_percentage) + '%');
+                    $('#tiktokSummaryBofuSpent').text('Rp ' + formatNumber(data.bofu_spent));
+                    $('#tiktokSummaryBofuPercentage').text(formatNumber(data.bofu_percentage) + '%');
                 }
             })
             .catch(error => {
@@ -371,95 +371,99 @@ $(document).ready(function() {
         });
     }
 
-    $('#dailyDetailsModal').on('shown.bs.modal', function() {
+    $('#tiktokDailyDetailsModal').on('shown.bs.modal', function() {
         // If no date range is set, initialize with the clicked date
-        if (!modalFilterDate.val()) {
-            const clickedDate = $('#dailyDetailsModal').data('date');
+        if (!tiktokModalFilterDate.val()) {
+            const clickedDate = $('#tiktokDailyDetailsModal').data('date');
             const formattedDate = moment(clickedDate).format('DD/MM/YYYY');
-            modalFilterDate.val(formattedDate + ' - ' + formattedDate);
+            tiktokModalFilterDate.val(formattedDate + ' - ' + formattedDate);
         }
         updateTiktokCampaignSummary();
         $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
     });
 
-    $('#dailyDetailsModal').on('hidden.bs.modal', function() {
-        modalFilterDate.val('');
+    $('#tiktokDailyDetailsModal').on('hidden.bs.modal', function() {
+        tiktokModalFilterDate.val('');
+    });
+    tiktokModalFilterDate.change(function() {
+        tiktokCampaignDetailsTable.draw();
+        updateTiktokCampaignSummary();
     });
 
-    $('#campaignDetailsTable').on('click', '.delete-account', function() {
-    const accountName = $(this).data('account');
-    let modalDate = $('#dailyDetailsModal').data('date');
-    
-    console.log('Delete button clicked:', {
-        accountName: accountName,
-        modalDate: modalDate
-    });
-    
-    let formattedDate = moment(modalDate).format('YYYY-MM-DD');
-    
-    Swal.fire({
-        title: 'Are you sure?',
-        text: `This will delete all data for "${accountName}" on ${moment(modalDate).format('D MMM YYYY')}!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            showLoadingSwal('Deleting...');
-            
-            $.ajax({
-                url: "{{ route('adSpentSocialMedia.delete_tiktok_by_account') }}",
-                type: 'DELETE',
-                data: {
-                    account_name: accountName,
-                    date: formattedDate,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted!',
-                        text: response.message,
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        // Refresh the tables and charts
-                        campaignDetailsTable.draw();
-                        adsTiktokTable.draw();
-                        fetchTiktokImpressionData();
-                        initTiktokFunnelChart();
-                    });
-                },
-                error: function(xhr) {
-                    let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data';
-                    let debugInfo = '';
-                    
-                    // Show debug info if available
-                    if (xhr.responseJSON && xhr.responseJSON.debug_info) {
-                        console.log('Debug info:', xhr.responseJSON.debug_info);
-                        const info = xhr.responseJSON.debug_info;
-                        debugInfo = `\n\nRequested: ${info.requested_account} (${info.requested_date})`;
-                        if (info.available_accounts && info.available_accounts.length > 0) {
-                            debugInfo += `\nAvailable accounts: ${info.available_accounts.join(', ')}`;
-                        } else {
-                            debugInfo += '\nNo accounts available for this date.';
+    $('#tiktokCampaignDetailsTable').on('click', '.delete-account', function() {
+        const accountName = $(this).data('account');
+        let modalDate = $('#tiktokDailyDetailsModal').data('date');
+        
+        console.log('Delete button clicked:', {
+            accountName: accountName,
+            modalDate: modalDate
+        });
+        
+        let formattedDate = moment(modalDate).format('YYYY-MM-DD');
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `This will delete all data for "${accountName}" on ${moment(modalDate).format('D MMM YYYY')}!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                showLoadingSwal('Deleting...');
+                
+                $.ajax({
+                    url: "{{ route('adSpentSocialMedia.delete_tiktok_by_account') }}",
+                    type: 'DELETE',
+                    data: {
+                        account_name: accountName,
+                        date: formattedDate,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            // Refresh the tables and charts
+                            tiktokCampaignDetailsTable.draw();
+                            adsTiktokTable.draw();
+                            fetchTiktokImpressionData();
+                            initTiktokFunnelChart();
+                        });
+                    },
+                    error: function(xhr) {
+                        let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to delete data';
+                        let debugInfo = '';
+                        
+                        // Show debug info if available
+                        if (xhr.responseJSON && xhr.responseJSON.debug_info) {
+                            console.log('Debug info:', xhr.responseJSON.debug_info);
+                            const info = xhr.responseJSON.debug_info;
+                            debugInfo = `\n\nRequested: ${info.requested_account} (${info.requested_date})`;
+                            if (info.available_accounts && info.available_accounts.length > 0) {
+                                debugInfo += `\nAvailable accounts: ${info.available_accounts.join(', ')}`;
+                            } else {
+                                debugInfo += '\nNo accounts available for this date.';
+                            }
                         }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg + debugInfo,
+                            confirmButtonColor: '#3085d6'
+                        });
                     }
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: errorMsg + debugInfo,
-                        confirmButtonColor: '#3085d6'
-                    });
-                }
-            });
-        }
+                });
+            }
+        });
     });
-});
 
     // Button click handlers
     $('#tiktokResetFilterBtn').click(function() {

@@ -55,6 +55,7 @@
     @include('admin.adSpentSocialMedia.modals.shopee3_modal')
     @include('admin.adSpentSocialMedia.modals.tiktok_ads_modal')
     @include('admin.adSpentSocialMedia.modals.details_modals')
+    @include('admin.adSpentSocialMedia.modals.details_tiktok_modals')
 @stop
 
 @section('css')
