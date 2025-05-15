@@ -137,6 +137,51 @@
             </div>
         </div>
     </div>
+
+    <!-- AI Recommendation Button -->
+    <div class="row mt-4 mb-2">
+        <div class="col-12 text-center">
+            <button id="show-ai-recommendation" class="btn btn-lg btn-primary">
+                <i class="fas fa-robot mr-2"></i> Show AI Recommendation
+            </button>
+        </div>
+    </div>
+
+    <!-- AI Recommendation Card - Initially Hidden -->
+    <div id="ai-recommendation-card" class="row mt-2" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h3 class="card-title">
+                        <i class="fas fa-brain mr-2"></i> Analisis & Rekomendasi AI
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus text-white"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool" id="close-ai-recommendation">
+                            <i class="fas fa-times text-white"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Loading Animation -->
+                    <div id="ai-loading" class="text-center p-5" style="display: none;">
+                        <div class="robot-animation mb-4">
+                            <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_wFZ1zr.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: 0 auto;" loop autoplay></lottie-player>
+                        </div>
+                        <h4 class="text-muted">Sedang Menganalisis Data Cohort...</h4>
+                        <p class="text-muted">Mohon tunggu sementara AI memproses data dan menghasilkan rekomendasi.</p>
+                    </div>
+                    
+                    <!-- AI Result Content -->
+                    <div id="ai-content" class="p-4" style="display: none;">
+                        <!-- AI content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -185,12 +230,79 @@
     .second-col {
         left: 120px;
     }
+    
+    /* AI Content Styling */
+    #ai-content {
+        line-height: 1.6;
+    }
+    
+    #ai-content h2 {
+        color: #007bff;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.5rem;
+    }
+    
+    #ai-content h3 {
+        color: #4a5568;
+        margin-top: 1.2rem;
+        margin-bottom: 0.8rem;
+        font-size: 1.25rem;
+    }
+    
+    #ai-content ul, #ai-content ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+    
+    #ai-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    #ai-content p {
+        margin-bottom: 1rem;
+    }
+    
+    #ai-content strong {
+        color: #2d3748;
+    }
+    
+    .conclusion-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .recommendation-box {
+        background-color: #f0f9ff;
+        border-left: 4px solid #28a745;
+        padding: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    /* Animated show/hide */
+    .fade-in {
+        animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 </style>
 @stop
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 <script>
+    let cohortDataGlobal = null; // To store the cohort data globally
+    let analysisPeriodGlobal = null; // To store the analysis period
+    let aiGenerated = false; // Flag to track if AI has already been generated
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Fetch cohort data from API
         fetch('{{ route("net-profit.cohort-data") }}')
@@ -201,6 +313,10 @@
                 return response.json();
             })
             .then(data => {
+                // Store data globally for AI analysis
+                cohortDataGlobal = data.cohort_data;
+                analysisPeriodGlobal = data.analysis_period;
+                
                 // Update analysis period
                 document.getElementById('analysis-period').textContent = 
                     `${data.analysis_period.start_date} to ${data.analysis_period.end_date}`;
@@ -239,7 +355,145 @@
                     class: 'bg-danger'
                 });
             });
+            
+        // Set up AI recommendation button
+        document.getElementById('show-ai-recommendation').addEventListener('click', showAIRecommendation);
+        
+        // Set up close button for AI recommendation
+        document.getElementById('close-ai-recommendation').addEventListener('click', function() {
+            document.getElementById('ai-recommendation-card').style.display = 'none';
+        });
     });
+    
+    // Function to show AI recommendation
+    function showAIRecommendation() {
+        // Show the card
+        document.getElementById('ai-recommendation-card').style.display = 'block';
+        
+        // If AI has already been generated, just show the content
+        if (aiGenerated) {
+            document.getElementById('ai-content').style.display = 'block';
+            return;
+        }
+        
+        // Show loading animation
+        document.getElementById('ai-loading').style.display = 'block';
+        document.getElementById('ai-content').style.display = 'none';
+        
+        // Generate AI analysis
+        generateAIAnalysis();
+    }
+    
+    // Function to generate AI analysis
+    function generateAIAnalysis() {
+        // Make sure we have data
+        if (!cohortDataGlobal || !analysisPeriodGlobal) {
+            document.getElementById('ai-loading').style.display = 'none';
+            
+            $(document).Toasts('create', {
+                title: 'Error',
+                body: 'Tidak ada data cohort untuk dianalisis.',
+                autohide: true,
+                delay: 5000,
+                class: 'bg-danger'
+            });
+            return;
+        }
+        
+        // Call the AI analysis endpoint
+        fetch('{{ route("cohort-analysis.ai") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                cohort_data: cohortDataGlobal,
+                analysis_period: analysisPeriodGlobal
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading animation
+            document.getElementById('ai-loading').style.display = 'none';
+            
+            if (data.success) {
+                // Show the result
+                const contentDiv = document.getElementById('ai-content');
+                contentDiv.innerHTML = formatAIResponse(data.analysis);
+                contentDiv.style.display = 'block';
+                contentDiv.classList.add('fade-in');
+                
+                // Mark AI as generated
+                aiGenerated = true;
+            } else {
+                // Show error message
+                $(document).Toasts('create', {
+                    title: 'Error',
+                    body: data.message || 'Gagal menghasilkan analisis AI.',
+                    autohide: true,
+                    delay: 5000,
+                    class: 'bg-danger'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error generating AI analysis:', error);
+            
+            // Hide loading animation
+            document.getElementById('ai-loading').style.display = 'none';
+            
+            // Show error message
+            $(document).Toasts('create', {
+                title: 'Error',
+                body: 'Gagal menghasilkan analisis. Silakan coba lagi nanti.',
+                autohide: true,
+                delay: 5000,
+                class: 'bg-danger'
+            });
+        });
+    }
+    
+    // Function to format the AI response with Markdown-like styling
+    function formatAIResponse(analysis) {
+        // Convert markdown-like syntax to HTML
+        let formatted = analysis
+            // Convert headlines
+            .replace(/^# (.*?)$/gm, '<h2>$1</h2>')
+            .replace(/^## (.*?)$/gm, '<h3>$1</h3>')
+            
+            // Convert bold
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            
+            // Convert lists
+            .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
+            .replace(/^- (.*?)$/gm, '<li>$1</li>')
+            
+            // Wrap lists
+            .replace(/<li>(.*?)<\/li>(?:\n<li>)/g, '<li>$1</li>\n<li>')
+            .replace(/(<li>.*?<\/li>\n)+/g, function(match) {
+                return match.includes('1. ') || match.includes('2. ') ? '<ol>' + match + '</ol>' : '<ul>' + match + '</ul>';
+            })
+            
+            // Apply special styling to sections
+            .replace(/<h2>Kesimpulan(.*?)<\/h2>/g, '<h2>Kesimpulan$1</h2><div class="conclusion-box">')
+            .replace(/<h2>Rekomendasi(.*?)<\/h2>/g, '</div><h2>Rekomendasi$1</h2><div class="recommendation-box">')
+            
+            // Convert paragraphs (any line that doesn't start with a special character)
+            .replace(/^(?!<h|<ul|<ol|<li|<div)(.*?)$/gm, '<p>$1</p>')
+            
+            // Remove empty paragraphs
+            .replace(/<p><\/p>/g, '');
+            
+        // Close any open recommendation box
+        if (formatted.includes('<div class="recommendation-box">')) {
+            formatted += '</div>';
+        } else if (formatted.includes('<div class="conclusion-box">')) {
+            formatted += '</div>';
+        }
+        
+        return formatted;
+    }
     
     // Function to determine the maximum number of months across all cohorts
     function determineMaxMonths(cohortData) {

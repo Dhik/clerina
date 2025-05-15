@@ -5285,4 +5285,132 @@ class OrderController extends Controller
         // Return JSON response
         return response()->json($response);
     }
+    public function generateAnalysis(Request $request)
+    {
+        try {
+            // Get cohort data from request
+            $cohortData = $request->input('cohort_data');
+            $analysisPeriod = $request->input('analysis_period');
+            
+            if (empty($cohortData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No cohort data provided'
+                ], 400);
+            }
+            
+            // Prepare the prompt for the AI
+            $prompt = $this->preparePrompt($cohortData, $analysisPeriod);
+            
+            // Call the AI service (assuming you're using OpenAI API)
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . config('services.openai.api_key'),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-4o',
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are a helpful business analyst who specializes in cohort analysis. Provide valuable insights and actionable recommendations based on cohort data. Your response should be in Bahasa Indonesia with proper formatting.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt
+                    ]
+                ],
+                'temperature' => 0.7,
+                'max_tokens' => 1000,
+            ]);
+            
+            // Check if the response is successful
+            if ($response->successful()) {
+                $result = $response->json();
+                $analysis = $result['choices'][0]['message']['content'] ?? 'Tidak dapat menghasilkan analisis.';
+                
+                return response()->json([
+                    'success' => true,
+                    'analysis' => $analysis
+                ]);
+            } else {
+                Log::error('AI API Error: ' . $response->body());
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to generate analysis: ' . ($response->json()['error']['message'] ?? 'Unknown error')
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('AI Analysis Error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating analysis: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Prepare the prompt for the AI based on cohort data
+     * 
+     * @param array $cohortData
+     * @param array $analysisPeriod
+     * @return string
+     */
+    private function preparePrompt($cohortData, $analysisPeriod)
+    {
+        // Extract key metrics for the prompt
+        $cohortSummary = [];
+        
+        foreach ($cohortData as $cohortMonth => $data) {
+            // Get initial cohort size
+            $initialSize = $data['total_customers'];
+            
+            // Get retention rates for months 1, 2, 3 if available
+            $retentionRates = [];
+            foreach ([1, 2, 3] as $month) {
+                if (isset($data['months'][$month])) {
+                    $retentionRates[$month] = $data['months'][$month]['retention_rate'];
+                }
+            }
+            
+            $cohortSummary[] = [
+                'cohort' => $cohortMonth,
+                'initial_size' => $initialSize,
+                'retention_rates' => $retentionRates
+            ];
+        }
+        
+        // Build the prompt
+        $prompt = <<<EOT
+Analisis data cohort berikut dan berikan kesimpulan serta rekomendasi dalam Bahasa Indonesia:
+
+Periode Analisis: {$analysisPeriod['start_date']} hingga {$analysisPeriod['end_date']}
+
+Data Cohort:
+EOT;
+
+        foreach ($cohortSummary as $cohort) {
+            $prompt .= "\nCohort {$cohort['cohort']}:";
+            $prompt .= "\n- Jumlah Customer: {$cohort['initial_size']}";
+            $prompt .= "\n- Retention Rate:";
+            
+            foreach ($cohort['retention_rates'] as $month => $rate) {
+                $prompt .= "\n  - Bulan {$month}: {$rate}%";
+            }
+        }
+        
+        // Add specific instructions for the analysis
+        $prompt .= <<<EOT
+\n\nBerdasarkan data di atas, harap berikan:
+1. Ringkasan umum tentang kinerja cohort
+2. Tren utama yang terlihat dari data (misalnya: perubahan retention rate antar bulan)
+3. Cohort mana yang menunjukkan performa terbaik dan terburuk
+4. Rekomendasi spesifik untuk meningkatkan retensi pelanggan
+5. Strategi yang dapat diimplementasikan untuk meningkatkan retensi pada bulan 1-3
+
+Format jawaban dalam paragraf dengan judul yang jelas, dan gunakan bahasa yang profesional namun mudah dimengerti. Sertakan juga temuanmu dari data numerik dengan interpretasi yang bermakna untuk bisnis.
+EOT;
+
+        return $prompt;
+    }
 }
