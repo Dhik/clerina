@@ -7,17 +7,18 @@
     </div>
 @stop
 @section('content')
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="d-flex justify-content-center align-items-center" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.8); z-index: 9999;">
-        <div class="text-center">
-            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
-                <span class="sr-only">Loading...</span>
+    <!-- Page Content -->
+    <div id="content-container">
+        <!-- Loading Spinner Overlay -->
+        <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <h4 class="mt-3">Loading Cohort Data...</h4>
             </div>
-            <h4>Loading Cohort Data...</h4>
         </div>
-    </div>
 
-    <div id="content-container" style="display: none;">
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -32,7 +33,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-4">
                             <div>
-                                <h5>Analysis Period: <span id="analysis-period"></span></h5>
+                                <h5>Analysis Period: <span id="analysis-period">...</span></h5>
                                 <p class="text-muted">Filters: Tenant ID: 1, Sales Channel ID: 1</p>
                             </div>
                             <div class="btn-group">
@@ -55,7 +56,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="retention-table-body">
-                                    <!-- Populated by JavaScript -->
+                                    <!-- Table rows will be inserted here -->
                                 </tbody>
                             </table>
                         </div>
@@ -74,7 +75,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="revenue-table-body">
-                                    <!-- Populated by JavaScript -->
+                                    <!-- Table rows will be inserted here -->
                                 </tbody>
                             </table>
                         </div>
@@ -147,22 +148,6 @@
         background-color: #28a745 !important;
         color: white;
     }
-    
-    /* Shimmer effect for loading state */
-    @keyframes shimmer {
-        0% {
-            background-position: -1000px 0;
-        }
-        100% {
-            background-position: 1000px 0;
-        }
-    }
-    
-    .loading {
-        animation: shimmer 2s infinite linear;
-        background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
-        background-size: 1000px 100%;
-    }
 </style>
 @stop
 
@@ -172,7 +157,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Show loading overlay
         const loadingOverlay = document.getElementById('loading-overlay');
-        const contentContainer = document.getElementById('content-container');
         
         // Fetch cohort data from API
         fetch('{{ route("net-profit.cohort-data") }}')
@@ -183,9 +167,8 @@
                 return response.json();
             })
             .then(data => {
-                // Hide loading overlay and show content
+                // Hide loading overlay once data is loaded
                 loadingOverlay.style.display = 'none';
-                contentContainer.style.display = 'block';
                 
                 // Update analysis period
                 document.getElementById('analysis-period').textContent = 
@@ -205,11 +188,10 @@
             .catch(error => {
                 console.error('Error fetching cohort data:', error);
                 
-                // Hide loading overlay and show error message
+                // Hide loading overlay
                 loadingOverlay.style.display = 'none';
-                contentContainer.style.display = 'block';
                 
-                // Display error notification
+                // Display error notification using AdminLTE's toast
                 $(document).Toasts('create', {
                     title: 'Error',
                     body: 'Failed to load cohort data. Please try again later.',
@@ -223,6 +205,10 @@
     function renderCohortTables(cohortData) {
         const retentionTableBody = document.getElementById('retention-table-body');
         const revenueTableBody = document.getElementById('revenue-table-body');
+        
+        // Clear existing content
+        retentionTableBody.innerHTML = '';
+        revenueTableBody.innerHTML = '';
         
         // Sort cohorts chronologically
         const sortedCohorts = Object.keys(cohortData).sort();
@@ -265,7 +251,6 @@
                         retentionCell.classList.add('month-0');
                     } else {
                         // Color based on retention rate
-                        const blueIntensity = Math.min(255, Math.max(0, Math.round(retentionRate * 2.55)));
                         retentionCell.style.backgroundColor = `rgba(0, 123, 255, ${retentionRate / 100})`;
                     }
                 } else {
