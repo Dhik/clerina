@@ -178,7 +178,7 @@
     </div>
     
     <!-- Business Implications Card -->
-    <div class="col-md-6 mb-4" id="implications-card" style="display: none;">
+    <div class="col-md-5 mb-4" id="implications-card" style="display: none;">
         <div class="card card-info">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-briefcase mr-2"></i> Implikasi Bisnis</h3>
@@ -197,7 +197,7 @@
     </div>
     
     <!-- Recommendations Card -->
-    <div class="col-md-6 mb-4" id="recommendations-card" style="display: none;">
+    <div class="col-md-5 mb-4" id="recommendations-card" style="display: none;">
         <div class="card card-success">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-lightbulb mr-2"></i> Rekomendasi</h3>
