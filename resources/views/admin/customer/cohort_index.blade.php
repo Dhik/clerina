@@ -7,121 +7,102 @@
     </div>
 @stop
 @section('content')
-    <!-- Page Content -->
-    <div id="content-container">
-        <!-- Loading Spinner Overlay -->
-        <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
-            <div class="text-center">
-                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                    <span class="sr-only">Loading...</span>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Cohort Analysis Dashboard</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
                 </div>
-                <h4 class="mt-3">Loading Cohort Data...</h4>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Cohort Analysis Dashboard</h3>
-                        <div class="card-tools">
-                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                <i class="fas fa-minus"></i>
-                            </button>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-4">
+                        <div>
+                            <h5>Analysis Period: <span id="analysis-period"></span></h5>
+                            <p class="text-muted">Filters: Tenant ID: 1, Sales Channel ID: 1</p>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" id="retention-tab-btn" class="btn btn-primary active">Retention Rate</button>
+                            <button type="button" id="revenue-tab-btn" class="btn btn-outline-primary">Average Order Value</button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-4">
-                            <div>
-                                <h5>Analysis Period: <span id="analysis-period">...</span></h5>
-                                <p class="text-muted">Filters: Tenant ID: 1, Sales Channel ID: 1</p>
-                            </div>
-                            <div class="btn-group">
-                                <button type="button" id="retention-tab-btn" class="btn btn-primary active">Retention Rate</button>
-                                <button type="button" id="revenue-tab-btn" class="btn btn-outline-primary">Average Order Value</button>
-                            </div>
-                        </div>
 
-                        <!-- Retention Rate Table -->
-                        <div id="retention-table-container" class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 140px;">Cohort</th>
-                                        <th style="width: 100px;">Customers</th>
-                                        <th style="width: 120px;">Month 0</th>
-                                        <th style="width: 120px;">Month 1</th>
-                                        <th style="width: 120px;">Month 2</th>
-                                        <th style="width: 120px;">Month 3</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="retention-table-body">
-                                    <!-- Table rows will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- Retention Rate Table -->
+                    <div id="retention-table-container" class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 140px;">Cohort</th>
+                                    <th style="width: 100px;">Customers</th>
+                                    <th style="width: 120px;">Month 0</th>
+                                    <th style="width: 120px;">Month 1</th>
+                                    <th style="width: 120px;">Month 2</th>
+                                    <th style="width: 120px;">Month 3</th>
+                                </tr>
+                            </thead>
+                            <tbody id="retention-table-body">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <!-- Revenue Table -->
-                        <div id="revenue-table-container" class="table-responsive" style="display: none;">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 140px;">Cohort</th>
-                                        <th style="width: 100px;">Customers</th>
-                                        <th style="width: 120px;">Month 0</th>
-                                        <th style="width: 120px;">Month 1</th>
-                                        <th style="width: 120px;">Month 2</th>
-                                        <th style="width: 120px;">Month 3</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="revenue-table-body">
-                                    <!-- Table rows will be inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- Revenue Table -->
+                    <div id="revenue-table-container" class="table-responsive" style="display: none;">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 140px;">Cohort</th>
+                                    <th style="width: 100px;">Customers</th>
+                                    <th style="width: 120px;">Month 0</th>
+                                    <th style="width: 120px;">Month 1</th>
+                                    <th style="width: 120px;">Month 2</th>
+                                    <th style="width: 120px;">Month 3</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenue-table-body">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Retention Over Time</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 250px;">
-                            <canvas id="retentionChart"></canvas>
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Retention Over Time</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="retentionChart" height="300"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Cohort Size Distribution</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 200px;">
-                            <canvas id="cohortSizeChart"></canvas>
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Cohort Size Distribution</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="cohortSizeChart" height="300"></canvas>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Average Order Value by Cohort</h3>
-                    </div>
-                    <div class="card-body">
-                        <div style="height: 200px;">
-                            <canvas id="aovChart"></canvas>
-                        </div>
-                    </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Average Order Value by Cohort</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="aovChart" height="300"></canvas>
                 </div>
             </div>
         </div>
@@ -155,21 +136,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Show loading overlay
-        const loadingOverlay = document.getElementById('loading-overlay');
-        
         // Fetch cohort data from API
         fetch('{{ route("net-profit.cohort-data") }}')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                // Hide loading overlay once data is loaded
-                loadingOverlay.style.display = 'none';
-                
                 // Update analysis period
                 document.getElementById('analysis-period').textContent = 
                     `${data.analysis_period.start_date} to ${data.analysis_period.end_date}`;
@@ -187,28 +157,13 @@
             })
             .catch(error => {
                 console.error('Error fetching cohort data:', error);
-                
-                // Hide loading overlay
-                loadingOverlay.style.display = 'none';
-                
-                // Display error notification using AdminLTE's toast
-                $(document).Toasts('create', {
-                    title: 'Error',
-                    body: 'Failed to load cohort data. Please try again later.',
-                    autohide: true,
-                    delay: 5000,
-                    class: 'bg-danger'
-                });
+                alert('Failed to load cohort data. Please try again later.');
             });
     });
 
     function renderCohortTables(cohortData) {
         const retentionTableBody = document.getElementById('retention-table-body');
         const revenueTableBody = document.getElementById('revenue-table-body');
-        
-        // Clear existing content
-        retentionTableBody.innerHTML = '';
-        revenueTableBody.innerHTML = '';
         
         // Sort cohorts chronologically
         const sortedCohorts = Object.keys(cohortData).sort();
@@ -251,6 +206,7 @@
                         retentionCell.classList.add('month-0');
                     } else {
                         // Color based on retention rate
+                        const blueIntensity = Math.min(255, Math.max(0, Math.round(retentionRate * 2.55)));
                         retentionCell.style.backgroundColor = `rgba(0, 123, 255, ${retentionRate / 100})`;
                     }
                 } else {
@@ -342,8 +298,6 @@
                 datasets: datasets
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -356,7 +310,8 @@
                 },
                 plugins: {
                     title: {
-                        display: false
+                        display: true,
+                        text: 'Retention Rate by Cohort'
                     },
                     tooltip: {
                         callbacks: {
@@ -394,8 +349,6 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -403,14 +356,6 @@
                             display: true,
                             text: 'Customer Count'
                         }
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: false
-                    },
-                    legend: {
-                        display: false
                     }
                 }
             }
@@ -436,7 +381,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Average Order Value',
+                    label: 'Average Order Value (Initial Purchase)',
                     data: data,
                     backgroundColor: 'rgba(75, 192, 192, 0.8)',
                     borderColor: 'rgba(75, 192, 192, 1)',
@@ -444,8 +389,6 @@
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -461,16 +404,10 @@
                     }
                 },
                 plugins: {
-                    title: {
-                        display: false
-                    },
-                    legend: {
-                        display: false
-                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return 'Average Order Value: ' + formatCurrency(context.parsed.y);
+                                return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
                             }
                         }
                     }
