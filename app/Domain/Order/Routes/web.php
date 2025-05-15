@@ -38,7 +38,7 @@ Route::prefix('admin')
                 Route::get('/daily_hpp', [OrderController::class, 'getDailyHPP'])->name('order.daily_hpp');
                 Route::get('/get_hpp', [OrderController::class, 'getHPPChannel'])->name('order.get_hpp');
                 Route::get('/get_daily_hpp_summary', [OrderController::class, 'getHPPSummary'])->name('order.get_daily_hpp_summary');
-                Route::get('/export-cohort-data', [OrderController::class, 'exportCohortData'])->name('net-profit.export-cohort-data');
+                Route::get('/cohort-data', [OrderController::class, 'getCohortData'])->name('net-profit.cohort-data');
 
                 Route::get('/generate_hpp', [OrderController::class, 'generateDailyHpp'])->name('order.generate_hpp');
                 Route::get('/sku_qty/export', [OrderController::class, 'exportSkuQuantities'])->name('order.sku_qty_export');

@@ -5134,124 +5134,133 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
-    public function exportCohortData()
+    public function getCohortData()
     {
-        $newSpreadsheetId = '1NElYIGGVDftYbsMfrAYdru78aEJaCMQYTHr48mtOeLw';
-
-        if ($newSpreadsheetId) {
-            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        // Get data for cohort analysis (past 12 months)
+        $endDate = Carbon::now();
+        $startDate = Carbon::now()->subMonths(12);
+        
+        // Step 1: Get the first purchase date for each customer
+        $firstPurchases = DB::table('orders')
+            ->select('customer_phone_number', DB::raw('MIN(date) as first_purchase_date'))
+            ->where('date', '>=', $startDate)
+            ->where('date', '<=', $endDate)
+            ->whereNotNull('customer_phone_number')
+            ->groupBy('customer_phone_number')
+            ->get();
+            
+        // Step 2: Get all purchases
+        $purchases = DB::table('orders')
+            ->select('customer_phone_number', 'date', 'amount')
+            ->where('date', '>=', $startDate)
+            ->where('date', '<=', $endDate)
+            ->whereNotNull('customer_phone_number')
+            ->get();
+            
+        // Create cohorts array - group by month of first purchase
+        $cohorts = [];
+        foreach ($firstPurchases as $firstPurchase) {
+            $yearMonth = Carbon::parse($firstPurchase->first_purchase_date)->format('Y-m');
+            if (!isset($cohorts[$yearMonth])) {
+                $cohorts[$yearMonth] = [
+                    'customers' => [],
+                    'total_customers' => 0,
+                ];
+            }
+            $cohorts[$yearMonth]['customers'][] = $firstPurchase->customer_phone_number;
+            $cohorts[$yearMonth]['total_customers']++;
         }
-        $currentTenantId = 2;
         
-        $now = Carbon::create(2025, 5, 1);
-        $startDate = $now->copy()->startOfMonth()->format('Y-m-d');
-        $endDate = $now->copy()->endOfMonth()->format('Y-m-d');
+        // Calculate retention and revenue for each cohort
+        $cohortData = [];
+        $monthsList = [];
         
-        $baseQuery = DB::table('net_profits as np')
-            ->select(
-                'np.*', 
-                's.ad_spent_social_media',
-                's.ad_spent_market_place'
-            )
-            ->leftJoin('sales as s', function($join) use ($currentTenantId) {
-                $join->on('np.date', '=', 's.date')
-                    ->where('s.tenant_id', '=', $currentTenantId);
-            })
-            ->where('np.tenant_id', '=', $currentTenantId)
-            ->whereMonth('np.date', $now->month)  // Will be April (4)
-            ->whereYear('np.date', $now->year)    // Will be 2025
-            ->orderBy('np.date');
+        // Get unique months for our analysis period
+        $currentMonth = clone $startDate;
+        while ($currentMonth <= $endDate) {
+            $monthsList[] = $currentMonth->format('Y-m');
+            $currentMonth->addMonth();
+        }
         
-        $records = $baseQuery->get();
+        // Initialize the cohort data structure
+        foreach ($cohorts as $cohortMonth => $cohortInfo) {
+            $cohortData[$cohortMonth] = [
+                'total_customers' => $cohortInfo['total_customers'],
+                'months' => []
+            ];
+            
+            $cohortMonthCarbon = Carbon::createFromFormat('Y-m', $cohortMonth);
+            
+            foreach ($monthsList as $month) {
+                $monthCarbon = Carbon::createFromFormat('Y-m', $month);
+                
+                // Only analyze months from the cohort's start month onwards
+                if ($monthCarbon >= $cohortMonthCarbon) {
+                    $periodIndex = $cohortMonthCarbon->diffInMonths($monthCarbon);
+                    
+                    $cohortData[$cohortMonth]['months'][$periodIndex] = [
+                        'month' => $month,
+                        'active_customers' => 0,
+                        'retention_rate' => 0,
+                        'revenue' => 0,
+                        'average_order_value' => 0
+                    ];
+                }
+            }
+        }
         
-        $data = [];
-        $data[] = [
-            'Date', 
-            'Net Profit',
-            'Total Sales', 
-            'Estimasi Cancel (6%)',
-            'Estimasi Retur (2%)',
-            'Net Sales',
-            'Marketing', 
-            'KOL Spending', 
-            'Affiliate',
-            'Total Marketing',
-            'Operasional', 
-            'HPP', 
-            'Fee Packing',
-            'Admin Fee',
-            'PPN',
-            'ROAS',
-            'ROMI',
-            'Visits',
-            'Quantity',
-            'Orders',
-            'Closing Rate',
-            'Ad Spent (Social)',
-            'Ad Spent (Marketplace)'
+        // Fill in retention and revenue data
+        foreach ($purchases as $purchase) {
+            $purchaseMonth = Carbon::parse($purchase->date)->format('Y-m');
+            
+            // Find this customer's cohort
+            foreach ($cohorts as $cohortMonth => $cohortInfo) {
+                if (in_array($purchase->customer_phone_number, $cohortInfo['customers'])) {
+                    // Calculate period index (0 is the first month)
+                    $cohortMonthCarbon = Carbon::createFromFormat('Y-m', $cohortMonth);
+                    $purchaseMonthCarbon = Carbon::createFromFormat('Y-m', $purchaseMonth);
+                    $periodIndex = $cohortMonthCarbon->diffInMonths($purchaseMonthCarbon);
+                    
+                    // Only count if the purchase month is from the cohort's start month onwards
+                    if ($purchaseMonthCarbon >= $cohortMonthCarbon && isset($cohortData[$cohortMonth]['months'][$periodIndex])) {
+                        // Mark customer as active in this period if not already counted
+                        if (!isset($cohortData[$cohortMonth]['active_in_period'][$periodIndex][$purchase->customer_phone_number])) {
+                            $cohortData[$cohortMonth]['active_in_period'][$periodIndex][$purchase->customer_phone_number] = true;
+                            $cohortData[$cohortMonth]['months'][$periodIndex]['active_customers']++;
+                        }
+                        
+                        // Add revenue
+                        $cohortData[$cohortMonth]['months'][$periodIndex]['revenue'] += $purchase->amount;
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Calculate final metrics
+        foreach ($cohortData as $cohortMonth => &$data) {
+            foreach ($data['months'] as $periodIndex => &$periodData) {
+                // Calculate retention rate
+                $periodData['retention_rate'] = round(($periodData['active_customers'] / $data['total_customers']) * 100, 2);
+                
+                // Calculate average order value (if there are active customers)
+                if ($periodData['active_customers'] > 0) {
+                    $periodData['average_order_value'] = round($periodData['revenue'] / $periodData['active_customers']);
+                }
+            }
+        }
+        
+        // Prepare response data
+        $response = [
+            'cohort_data' => $cohortData,
+            'months_list' => $monthsList,
+            'analysis_period' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ]
         ];
         
-        $ensureNumber = function($value) {
-            return (float)$value;
-        };
-        
-        foreach ($records as $row) {
-            $totalSales = $ensureNumber($row->sales ?? 0) + $ensureNumber($row->b2b_sales ?? 0) + $ensureNumber($row->crm_sales ?? 0);
-            $netSales = $totalSales * 0.725 - ($row->fee_packing ?? 0);
-            $totalMarketingSpend = $ensureNumber($row->marketing ?? 0) + $ensureNumber($row->spent_kol ?? 0) + $ensureNumber($row->affiliate ?? 0);
-            $romi = ($totalMarketingSpend == 0) ? 0 : ($ensureNumber($row->sales ?? 0) / $totalMarketingSpend);
-            $feeAds = $ensureNumber($row->marketing ?? 0) * 0.02;
-            $estimasiFeeAdmin = $ensureNumber($row->sales ?? 0) * 0.165;
-            $ppn = $ensureNumber($row->sales ?? 0) * 0.03;
-            $netProfit = ($ensureNumber($row->sales ?? 0) * 0.725) - 
-            ($ensureNumber($row->marketing ?? 0)) - 
-            $ensureNumber($row->spent_kol ?? 0) -
-            $ensureNumber($row->fee_packing ?? 0) - 
-            $ensureNumber($row->affiliate ?? 0) - 
-            $ensureNumber($row->operasional ?? 0) - 
-            ($ensureNumber($row->hpp ?? 0) * 0.94);
-            
-            $data[] = [
-                Carbon::parse($row->date)->format('Y-m-d'),
-                $netProfit,
-                $ensureNumber($row->sales ?? 0),
-                // $ensureNumber($row->b2b_sales ?? 0),
-                // $ensureNumber($row->crm_sales ?? 0),
-                // $totalSales,
-                $ensureNumber(($row->sales * 0.06) ?? 0),
-                $ensureNumber(($row->sales * 0.02) ?? 0),
-                $ensureNumber(($row->sales * 0.725) ?? 0),
-                $ensureNumber($row->marketing ?? 0),
-                $ensureNumber($row->spent_kol ?? 0),
-                $ensureNumber($row->affiliate ?? 0),
-                $totalMarketingSpend,
-                $ensureNumber($row->operasional ?? 0),
-                $ensureNumber(($row->hpp * 0.94) ?? 0),
-                $ensureNumber(($row->fee_packing) ?? 0),
-                $ensureNumber(($row->sales * 0.165) ?? 0),
-                $ensureNumber(($row->sales * 0.03) ?? 0),
-                $ensureNumber($row->roas ?? 0),
-                $romi,
-                (int)($row->visit ?? 0),
-                (int)($row->qty ?? 0),
-                (int)($row->order ?? 0),
-                $ensureNumber($row->closing_rate ?? 0) / 100,
-                $ensureNumber($row->ad_spent_social_media ?? 0),
-                $ensureNumber($row->ad_spent_market_place ?? 0)
-            ];
-        }
-        
-        // Update sheet name to April 2025
-        $sheetName = '1_1_cohort_work_ltv';
-        
-        $this->googleSheetService->clearRange("$sheetName!A1:Z1000");
-        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
-        
-        return response()->json([
-            'success' => true, 
-            'message' => 'Current month data exported successfully to Google Sheets',
-            'month' => $now->format('F Y'), // Will output April 2025
-            'count' => count($data) - 1
-        ]);
+        // Return JSON response
+        return response()->json($response);
     }
 }
