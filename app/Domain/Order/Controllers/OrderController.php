@@ -5357,31 +5357,92 @@ class OrderController extends Controller
      * @param array $analysisPeriod
      * @return string
      */
-    private function preparePrompt($cohortData, $analysisPeriod)
-    {
-        // Extract key metrics for the prompt
-        $cohortSummary = [];
+    /**
+ * Prepare the prompt for the AI based on cohort data
+ * 
+ * @param array $cohortData
+ * @param array $analysisPeriod
+ * @param string $format
+ * @return string
+ */
+private function preparePrompt($cohortData, $analysisPeriod, $format = 'detailed')
+{
+    // Extract key metrics for the prompt
+    $cohortSummary = [];
+    
+    foreach ($cohortData as $cohortMonth => $data) {
+        // Get initial cohort size
+        $initialSize = $data['total_customers'];
         
-        foreach ($cohortData as $cohortMonth => $data) {
-            // Get initial cohort size
-            $initialSize = $data['total_customers'];
-            
-            // Get retention rates for months 1, 2, 3 if available
-            $retentionRates = [];
-            foreach ([1, 2, 3] as $month) {
-                if (isset($data['months'][$month])) {
-                    $retentionRates[$month] = $data['months'][$month]['retention_rate'];
-                }
+        // Get retention rates for months 1, 2, 3 if available
+        $retentionRates = [];
+        foreach ([1, 2, 3] as $month) {
+            if (isset($data['months'][$month])) {
+                $retentionRates[$month] = $data['months'][$month]['retention_rate'];
             }
-            
-            $cohortSummary[] = [
-                'cohort' => $cohortMonth,
-                'initial_size' => $initialSize,
-                'retention_rates' => $retentionRates
-            ];
         }
         
-        // Build the prompt
+        // Get average order values if available
+        $aovValues = [];
+        foreach ([0, 1, 2, 3] as $month) {
+            if (isset($data['months'][$month]) && isset($data['months'][$month]['average_order_value'])) {
+                $aovValues[$month] = $data['months'][$month]['average_order_value'];
+            }
+        }
+        
+        $cohortSummary[] = [
+            'cohort' => $cohortMonth,
+            'initial_size' => $initialSize,
+            'retention_rates' => $retentionRates,
+            'aov_values' => $aovValues
+        ];
+    }
+    
+    // Build the prompt based on format
+    if ($format === 'executive') {
+        // Executive format for management
+        $prompt = <<<EOT
+Analisis data cohort berikut dan berikan ringkasan eksekutif dalam Bahasa Indonesia:
+
+Periode Analisis: {$analysisPeriod['start_date']} hingga {$analysisPeriod['end_date']}
+
+Data Cohort:
+EOT;
+
+        foreach ($cohortSummary as $cohort) {
+            $prompt .= "\nCohort {$cohort['cohort']}:";
+            $prompt .= "\n- Jumlah Customer: {$cohort['initial_size']}";
+            $prompt .= "\n- Retention Rate:";
+            
+            foreach ($cohort['retention_rates'] as $month => $rate) {
+                $prompt .= "\n  - Bulan {$month}: {$rate}%";
+            }
+            
+            if (!empty($cohort['aov_values'])) {
+                $prompt .= "\n- Average Order Value:";
+                foreach ($cohort['aov_values'] as $month => $aov) {
+                    $prompt .= "\n  - Bulan {$month}: Rp " . number_format($aov, 0, ',', '.');
+                }
+            }
+        }
+        
+        // Add specific instructions for executive summary
+        $prompt .= <<<EOT
+\n\nBerikan analisis dalam format berikut:
+
+# Kesimpulan Umum
+Berikan ringkasan singkat dan jelas tentang tren utama dari data cohort. Fokus pada 2-3 temuan paling penting yang perlu diketahui oleh tim manajemen. Gunakan bahasa yang sederhana dan langsung.
+
+# Implikasi Bisnis
+Jelaskan 2-3 implikasi bisnis paling signifikan dari temuan ini. Bagaimana hal ini mempengaruhi pendapatan, pertumbuhan, dan kesehatan bisnis secara keseluruhan?
+
+# Rekomendasi
+Berikan 3-4 rekomendasi spesifik dan actionable yang dapat segera diimplementasikan. Untuk setiap rekomendasi, jelaskan secara singkat bagaimana hal tersebut dapat meningkatkan retensi pelanggan.
+
+Gunakan bahasa yang profesional namun mudah dimengerti. Hindari jargon teknis. Cantumkan angka-angka penting untuk mendukung temuan. Format jawaban dalam paragraf pendek dengan poin-poin yang jelas.
+EOT;
+    } else {
+        // Original detailed format
         $prompt = <<<EOT
 Analisis data cohort berikut dan berikan kesimpulan serta rekomendasi dalam Bahasa Indonesia:
 
@@ -5398,9 +5459,16 @@ EOT;
             foreach ($cohort['retention_rates'] as $month => $rate) {
                 $prompt .= "\n  - Bulan {$month}: {$rate}%";
             }
+            
+            if (!empty($cohort['aov_values'])) {
+                $prompt .= "\n- Average Order Value:";
+                foreach ($cohort['aov_values'] as $month => $aov) {
+                    $prompt .= "\n  - Bulan {$month}: Rp " . number_format($aov, 0, ',', '.');
+                }
+            }
         }
         
-        // Add specific instructions for the analysis
+        // Add specific instructions for the detailed analysis
         $prompt .= <<<EOT
 \n\nBerdasarkan data di atas, harap berikan:
 1. Ringkasan umum tentang kinerja cohort
@@ -5411,7 +5479,8 @@ EOT;
 
 Format jawaban dalam paragraf dengan judul yang jelas, dan gunakan bahasa yang profesional namun mudah dimengerti. Sertakan juga temuanmu dari data numerik dengan interpretasi yang bermakna untuk bisnis.
 EOT;
-
-        return $prompt;
     }
+
+    return $prompt;
+}
 }

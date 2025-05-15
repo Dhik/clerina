@@ -139,49 +139,89 @@
     </div>
 
     <!-- AI Recommendation Button -->
-    <div class="row mt-4 mb-2">
-        <div class="col-12 text-center">
-            <button id="show-ai-recommendation" class="btn btn-lg btn-primary">
-                <i class="fas fa-robot mr-2"></i> Show AI Recommendation
-            </button>
-        </div>
+<div class="row mt-4 mb-2">
+    <div class="col-12 text-center">
+        <button id="show-ai-recommendation" class="btn btn-lg btn-primary">
+            <i class="fas fa-robot mr-2"></i> Show AI Recommendation
+        </button>
     </div>
+</div>
 
     <!-- AI Recommendation Card - Initially Hidden -->
-    <div id="ai-recommendation-card" class="row mt-2" style="display: none;">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h3 class="card-title">
-                        <i class="fas fa-brain mr-2"></i> Analisis & Rekomendasi AI
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus text-white"></i>
-                        </button>
-                        <button type="button" class="btn btn-tool" id="close-ai-recommendation">
-                            <i class="fas fa-times text-white"></i>
-                        </button>
-                    </div>
+    <div id="ai-recommendation-cards" class="row mt-3" style="display: none;">
+    <!-- Loading Animation -->
+    <div id="ai-loading" class="col-12 text-center p-5">
+        <div class="robot-animation mb-4">
+            <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_wFZ1zr.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: 0 auto;" loop autoplay></lottie-player>
+        </div>
+        <h4 class="text-muted">Sedang Menganalisis Data Cohort...</h4>
+        <p class="text-muted">Mohon tunggu sementara AI memproses data dan menghasilkan rekomendasi.</p>
+    </div>
+    
+    <!-- General Conclusion Card -->
+    <div class="col-12 mb-4" id="conclusion-card" style="display: none;">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i> Kesimpulan Umum</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
                 </div>
-                <div class="card-body p-0">
-                    <!-- Loading Animation -->
-                    <div id="ai-loading" class="text-center p-5" style="display: none;">
-                        <div class="robot-animation mb-4">
-                            <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_wFZ1zr.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: 0 auto;" loop autoplay></lottie-player>
-                        </div>
-                        <h4 class="text-muted">Sedang Menganalisis Data Cohort...</h4>
-                        <p class="text-muted">Mohon tunggu sementara AI memproses data dan menghasilkan rekomendasi.</p>
-                    </div>
-                    
-                    <!-- AI Result Content -->
-                    <div id="ai-content" class="p-4" style="display: none;">
-                        <!-- AI content will be inserted here -->
-                    </div>
+            </div>
+            <div class="card-body">
+                <div id="conclusion-content" class="ai-content large-text">
+                    <!-- AI conclusion will be inserted here -->
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Business Implications Card -->
+    <div class="col-md-6 mb-4" id="implications-card" style="display: none;">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-briefcase mr-2"></i> Implikasi Bisnis</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="implications-content" class="ai-content large-text">
+                    <!-- AI implications will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommendations Card -->
+    <div class="col-md-6 mb-4" id="recommendations-card" style="display: none;">
+        <div class="card card-success">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-lightbulb mr-2"></i> Rekomendasi</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="recommendations-content" class="ai-content large-text">
+                    <!-- AI recommendations will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Close Button -->
+    <div class="col-12 text-center mb-4">
+        <button id="close-ai-recommendation" class="btn btn-secondary">
+            <i class="fas fa-times mr-2"></i> Close Recommendations
+        </button>
+    </div>
+</div>
 @stop
 
 @section('css')
@@ -232,66 +272,71 @@
     }
     
     /* AI Content Styling */
-    #ai-content {
-        line-height: 1.6;
-    }
-    
-    #ai-content h2 {
-        color: #007bff;
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.5rem;
-    }
-    
-    #ai-content h3 {
-        color: #4a5568;
-        margin-top: 1.2rem;
-        margin-bottom: 0.8rem;
-        font-size: 1.25rem;
-    }
-    
-    #ai-content ul, #ai-content ol {
-        margin-bottom: 1rem;
-        padding-left: 1.5rem;
-    }
-    
-    #ai-content li {
-        margin-bottom: 0.5rem;
-    }
-    
-    #ai-content p {
-        margin-bottom: 1rem;
-    }
-    
-    #ai-content strong {
-        color: #2d3748;
-    }
-    
-    .conclusion-box {
-        background-color: #f8f9fa;
-        border-left: 4px solid #007bff;
-        padding: 1rem;
-        margin: 1.5rem 0;
-    }
-    
-    .recommendation-box {
-        background-color: #f0f9ff;
-        border-left: 4px solid #28a745;
-        padding: 1rem;
-        margin: 1.5rem 0;
-    }
-    
-    /* Animated show/hide */
-    .fade-in {
-        animation: fadeIn 0.5s;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+.ai-content {
+    line-height: 1.8;
+}
+
+.large-text {
+    font-size: 16px; /* Larger base font size */
+}
+
+.ai-content h2 {
+    color: #007bff;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.75rem; /* Larger heading */
+    padding-bottom: 0.5rem;
+}
+
+.ai-content h3 {
+    color: #4a5568;
+    margin-top: 1.2rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.5rem; /* Larger subheading */
+}
+
+.ai-content ul, .ai-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.ai-content li {
+    margin-bottom: 0.75rem;
+}
+
+.ai-content p {
+    margin-bottom: 1.2rem;
+}
+
+.ai-content strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+/* Key metrics highlighting */
+.metric-highlight {
+    font-size: 110%;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.positive-trend {
+    color: #28a745;
+}
+
+.negative-trend {
+    color: #dc3545;
+}
+
+/* Animated show/hide */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 </style>
 @stop
 
@@ -361,30 +406,61 @@
         
         // Set up close button for AI recommendation
         document.getElementById('close-ai-recommendation').addEventListener('click', function() {
-            document.getElementById('ai-recommendation-card').style.display = 'none';
+            document.getElementById('ai-recommendation-cards').style.display = 'none';
         });
     });
     
     // Function to show AI recommendation
     function showAIRecommendation() {
-        // Show the card
-        document.getElementById('ai-recommendation-card').style.display = 'block';
+        // Show the cards container
+        document.getElementById('ai-recommendation-cards').style.display = 'block';
         
         // If AI has already been generated, just show the content
         if (aiGenerated) {
-            document.getElementById('ai-content').style.display = 'block';
+            document.getElementById('ai-loading').style.display = 'none';
+            document.getElementById('conclusion-card').style.display = 'block';
+            document.getElementById('implications-card').style.display = 'block';
+            document.getElementById('recommendations-card').style.display = 'block';
             return;
         }
         
         // Show loading animation
         document.getElementById('ai-loading').style.display = 'block';
-        document.getElementById('ai-content').style.display = 'none';
+        document.getElementById('conclusion-card').style.display = 'none';
+        document.getElementById('implications-card').style.display = 'none';
+        document.getElementById('recommendations-card').style.display = 'none';
         
         // Generate AI analysis
         generateAIAnalysis();
     }
+    function parseAIResponseSections(analysis) {
+    // Default sections
+    const sections = {
+        conclusion: '<p>Tidak ada kesimpulan yang tersedia.</p>',
+        implications: '<p>Tidak ada implikasi bisnis yang tersedia.</p>',
+        recommendations: '<p>Tidak ada rekomendasi yang tersedia.</p>'
+    };
     
-    // Function to generate AI analysis
+    // Extract conclusion section
+    const conclusionMatch = analysis.match(/# Kesimpulan Umum([\s\S]*?)(?=# Implikasi Bisnis|# Rekomendasi|$)/i);
+    if (conclusionMatch && conclusionMatch[1]) {
+        sections.conclusion = formatAIResponseSection(conclusionMatch[1]);
+    }
+    
+    // Extract implications section
+    const implicationsMatch = analysis.match(/# Implikasi Bisnis([\s\S]*?)(?=# Kesimpulan|# Rekomendasi|$)/i);
+    if (implicationsMatch && implicationsMatch[1]) {
+        sections.implications = formatAIResponseSection(implicationsMatch[1]);
+    }
+    
+    // Extract recommendations section
+    const recommendationsMatch = analysis.match(/# Rekomendasi([\s\S]*?)(?=# Kesimpulan|# Implikasi|$)/i);
+    if (recommendationsMatch && recommendationsMatch[1]) {
+        sections.recommendations = formatAIResponseSection(recommendationsMatch[1]);
+    }
+    
+    return sections;
+}
     function generateAIAnalysis() {
         // Make sure we have data
         if (!cohortDataGlobal || !analysisPeriodGlobal) {
@@ -400,7 +476,7 @@
             return;
         }
         
-        // Call the AI analysis endpoint
+        // Call the AI analysis endpoint with a simplified prompt
         fetch('{{ route("cohort-analysis.ai") }}', {
             method: 'POST',
             headers: {
@@ -409,7 +485,8 @@
             },
             body: JSON.stringify({
                 cohort_data: cohortDataGlobal,
-                analysis_period: analysisPeriodGlobal
+                analysis_period: analysisPeriodGlobal,
+                format: 'executive' // Signal that we want an executive summary format
             })
         })
         .then(response => response.json())
@@ -418,11 +495,23 @@
             document.getElementById('ai-loading').style.display = 'none';
             
             if (data.success) {
-                // Show the result
-                const contentDiv = document.getElementById('ai-content');
-                contentDiv.innerHTML = formatAIResponse(data.analysis);
-                contentDiv.style.display = 'block';
-                contentDiv.classList.add('fade-in');
+                // Parse sections from the AI response
+                const sections = parseAIResponseSections(data.analysis);
+                
+                // Populate the cards
+                document.getElementById('conclusion-content').innerHTML = sections.conclusion;
+                document.getElementById('implications-content').innerHTML = sections.implications;
+                document.getElementById('recommendations-content').innerHTML = sections.recommendations;
+                
+                // Show the cards
+                document.getElementById('conclusion-card').style.display = 'block';
+                document.getElementById('implications-card').style.display = 'block';
+                document.getElementById('recommendations-card').style.display = 'block';
+                
+                // Add fade-in effect
+                document.querySelectorAll('.ai-content').forEach(el => {
+                    el.classList.add('fade-in');
+                });
                 
                 // Mark AI as generated
                 aiGenerated = true;
@@ -454,6 +543,38 @@
         });
     }
     
+    function formatAIResponseSection(section) {
+    return section
+        // Trim whitespace
+        .trim()
+        
+        // Convert markdown headings
+        .replace(/^## (.*?)$/gm, '<h3>$1</h3>')
+        
+        // Convert bold text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        
+        // Convert lists
+        .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
+        .replace(/^- (.*?)$/gm, '<li>$1</li>')
+        
+        // Wrap lists
+        .replace(/<li>(.*?)<\/li>(?:\n<li>)/g, '<li>$1</li>\n<li>')
+        .replace(/(<li>.*?<\/li>\n)+/g, function(match) {
+            return match.includes('1. ') || match.includes('2. ') ? '<ol>' + match + '</ol>' : '<ul>' + match + '</ul>';
+        })
+        
+        // Highlight key metrics
+        .replace(/(\d+([,.]\d+)?%)/g, '<span class="metric-highlight">$1</span>')
+        .replace(/(meningkat|naik|lebih tinggi|positif)/gi, '<span class="positive-trend">$1</span>')
+        .replace(/(menurun|turun|lebih rendah|negatif)/gi, '<span class="negative-trend">$1</span>')
+        
+        // Convert paragraphs (any line that doesn't start with a special character)
+        .replace(/^(?!<h|<ul|<ol|<li|<div)(.*?)$/gm, '<p>$1</p>')
+        
+        // Remove empty paragraphs
+        .replace(/<p><\/p>/g, '');
+}
     // Function to format the AI response with Markdown-like styling
     function formatAIResponse(analysis) {
         // Convert markdown-like syntax to HTML
