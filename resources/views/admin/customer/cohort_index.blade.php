@@ -434,33 +434,71 @@
         generateAIAnalysis();
     }
     function parseAIResponseSections(analysis) {
-    // Default sections
-    const sections = {
-        conclusion: '<p>Tidak ada kesimpulan yang tersedia.</p>',
-        implications: '<p>Tidak ada implikasi bisnis yang tersedia.</p>',
-        recommendations: '<p>Tidak ada rekomendasi yang tersedia.</p>'
-    };
-    
-    // Extract conclusion section
-    const conclusionMatch = analysis.match(/# Kesimpulan Umum([\s\S]*?)(?=# Implikasi Bisnis|# Rekomendasi|$)/i);
-    if (conclusionMatch && conclusionMatch[1]) {
-        sections.conclusion = formatAIResponseSection(conclusionMatch[1]);
+        // Default sections
+        const sections = {
+            conclusion: '<p>Tidak ada kesimpulan yang tersedia.</p>',
+            implications: '<p>Tidak ada implikasi bisnis yang tersedia.</p>',
+            recommendations: '<p>Tidak ada rekomendasi yang tersedia.</p>'
+        };
+        
+        // Add debugging
+        console.log("Raw AI response:", analysis);
+        
+        // Check if any response exists
+        if (!analysis || analysis.trim() === '') {
+            return sections;
+        }
+        
+        // Try more flexible pattern matching
+        // Extract conclusion section - try multiple patterns
+        let conclusionMatch = analysis.match(/# Kesimpulan Umum([\s\S]*?)(?=# Implikasi|# Rekomendasi|$)/i);
+        if (!conclusionMatch) {
+            conclusionMatch = analysis.match(/Kesimpulan Umum:?([\s\S]*?)(?=Implikasi|Rekomendasi|$)/i);
+        }
+        if (conclusionMatch && conclusionMatch[1] && conclusionMatch[1].trim()) {
+            sections.conclusion = formatAIResponseSection(conclusionMatch[1]);
+        }
+        
+        // Extract implications section - try multiple patterns
+        let implicationsMatch = analysis.match(/# Implikasi Bisnis([\s\S]*?)(?=# Kesimpulan|# Rekomendasi|$)/i);
+        if (!implicationsMatch) {
+            implicationsMatch = analysis.match(/Implikasi Bisnis:?([\s\S]*?)(?=Kesimpulan|Rekomendasi|$)/i);
+        }
+        if (implicationsMatch && implicationsMatch[1] && implicationsMatch[1].trim()) {
+            sections.implications = formatAIResponseSection(implicationsMatch[1]);
+        }
+        
+        // Extract recommendations section - try multiple patterns
+        let recommendationsMatch = analysis.match(/# Rekomendasi([\s\S]*?)(?=# Kesimpulan|# Implikasi|$)/i);
+        if (!recommendationsMatch) {
+            recommendationsMatch = analysis.match(/Rekomendasi:?([\s\S]*?)(?=Kesimpulan|Implikasi|$)/i);
+        }
+        if (recommendationsMatch && recommendationsMatch[1] && recommendationsMatch[1].trim()) {
+            sections.recommendations = formatAIResponseSection(recommendationsMatch[1]);
+        }
+        
+        // If still no sections matched, use a fallback approach
+        if (sections.conclusion === '<p>Tidak ada kesimpulan yang tersedia.</p>' &&
+            sections.implications === '<p>Tidak ada implikasi bisnis yang tersedia.</p>' &&
+            sections.recommendations === '<p>Tidak ada rekomendasi yang tersedia.</p>') {
+                
+            // Split the text by common separators
+            const parts = analysis.split(/\n\s*\n|\r\n\s*\r\n/);
+            
+            if (parts.length >= 3) {
+                sections.conclusion = formatAIResponseSection(parts[0]);
+                sections.implications = formatAIResponseSection(parts[1]);
+                sections.recommendations = formatAIResponseSection(parts[2]);
+            } else if (parts.length === 2) {
+                sections.conclusion = formatAIResponseSection(parts[0]);
+                sections.recommendations = formatAIResponseSection(parts[1]);
+            } else if (parts.length === 1) {
+                sections.conclusion = formatAIResponseSection(parts[0]);
+            }
+        }
+        
+        return sections;
     }
-    
-    // Extract implications section
-    const implicationsMatch = analysis.match(/# Implikasi Bisnis([\s\S]*?)(?=# Kesimpulan|# Rekomendasi|$)/i);
-    if (implicationsMatch && implicationsMatch[1]) {
-        sections.implications = formatAIResponseSection(implicationsMatch[1]);
-    }
-    
-    // Extract recommendations section
-    const recommendationsMatch = analysis.match(/# Rekomendasi([\s\S]*?)(?=# Kesimpulan|# Implikasi|$)/i);
-    if (recommendationsMatch && recommendationsMatch[1]) {
-        sections.recommendations = formatAIResponseSection(recommendationsMatch[1]);
-    }
-    
-    return sections;
-}
     function generateAIAnalysis() {
         // Make sure we have data
         if (!cohortDataGlobal || !analysisPeriodGlobal) {
@@ -496,7 +534,9 @@
             
             if (data.success) {
                 // Parse sections from the AI response
+                console.log("AI Response:", data.analysis);
                 const sections = parseAIResponseSections(data.analysis);
+                console.log("Parsed sections:", sections);
                 
                 // Populate the cards
                 document.getElementById('conclusion-content').innerHTML = sections.conclusion;

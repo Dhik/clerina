@@ -5287,84 +5287,155 @@ class OrderController extends Controller
         return response()->json($response);
     }
     public function generateAnalysis(Request $request)
-    {
-        try {
-            // Get cohort data from request
-            $cohortData = $request->input('cohort_data');
-            $analysisPeriod = $request->input('analysis_period');
+{
+    try {
+        // Get cohort data and parameters from request
+        $cohortData = $request->input('cohort_data');
+        $analysisPeriod = $request->input('analysis_period');
+        $format = $request->input('format', 'detailed'); // Get format with default 'detailed'
+        
+        // Validate input data
+        if (empty($cohortData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No cohort data provided'
+            ], 400);
+        }
+        
+        // Log request parameters for debugging
+        Log::info('Generating AI analysis', [
+            'format' => $format,
+            'period' => $analysisPeriod,
+            'cohort_count' => count($cohortData)
+        ]);
+        
+        // Prepare the prompt with the specified format
+        $prompt = $this->preparePrompt($cohortData, $analysisPeriod, $format);
+        
+        // Call the OpenAI API
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.openai.api_key'),
+            'Content-Type' => 'application/json',
+        ])->post('https://api.openai.com/v1/chat/completions', [
+            'model' => 'gpt-4o', // Using the latest model
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'You are a helpful business analyst who specializes in cohort analysis. Provide valuable insights and actionable recommendations based on cohort data. Your response should be in Bahasa Indonesia with proper formatting. IMPORTANT: Always include clear section headers for "# Kesimpulan Umum", "# Implikasi Bisnis", and "# Rekomendasi" in your response.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ],
+            'temperature' => 0.7,
+            'max_tokens' => 1000,
+        ]);
+        
+        // Check if the response is successful
+        if ($response->successful()) {
+            $result = $response->json();
+            $analysis = $result['choices'][0]['message']['content'] ?? 'Tidak dapat menghasilkan analisis.';
             
-            if (empty($cohortData)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No cohort data provided'
-                ], 400);
+            // Verify that the analysis contains the required sections
+            $requiredSections = [
+                'Kesimpulan Umum',
+                'Implikasi Bisnis',
+                'Rekomendasi'
+            ];
+            
+            $missingSection = false;
+            foreach ($requiredSections as $section) {
+                if (strpos($analysis, $section) === false && strpos($analysis, strtolower($section)) === false) {
+                    $missingSection = true;
+                    break;
+                }
             }
             
-            // Prepare the prompt for the AI
-            $prompt = $this->preparePrompt($cohortData, $analysisPeriod);
+            // If any section is missing, fix the response structure
+            if ($missingSection) {
+                $analysis = $this->restructureResponse($analysis);
+            }
             
-            // Call the AI service (assuming you're using OpenAI API)
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.openai.api_key'),
-                'Content-Type' => 'application/json',
-            ])->post('https://api.openai.com/v1/chat/completions', [
-                'model' => 'gpt-4o',
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'You are a helpful business analyst who specializes in cohort analysis. Provide valuable insights and actionable recommendations based on cohort data. Your response should be in Bahasa Indonesia with proper formatting.'
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $prompt
-                    ]
-                ],
-                'temperature' => 0.7,
-                'max_tokens' => 1000,
+            // Log successful completion
+            Log::info('AI analysis generated successfully', [
+                'length' => strlen($analysis),
+                'format' => $format
             ]);
             
-            // Check if the response is successful
-            if ($response->successful()) {
-                $result = $response->json();
-                $analysis = $result['choices'][0]['message']['content'] ?? 'Tidak dapat menghasilkan analisis.';
-                
-                return response()->json([
-                    'success' => true,
-                    'analysis' => $analysis
-                ]);
-            } else {
-                Log::error('AI API Error: ' . $response->body());
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to generate analysis: ' . ($response->json()['error']['message'] ?? 'Unknown error')
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            Log::error('AI Analysis Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => true,
+                'analysis' => $analysis,
+                'format' => $format // Include format in response for client reference
+            ]);
+        } else {
+            // Log API error details
+            Log::error('OpenAI API Error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'headers' => $response->headers()
+            ]);
             
             return response()->json([
                 'success' => false,
-                'message' => 'Error generating analysis: ' . $e->getMessage()
+                'message' => 'Failed to generate analysis: ' . ($response->json()['error']['message'] ?? 'Unknown API error')
             ], 500);
         }
+    } catch (\Exception $e) {
+        Log::error('AI Analysis Error', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error generating analysis: ' . $e->getMessage()
+        ], 500);
     }
-    
-    /**
-     * Prepare the prompt for the AI based on cohort data
-     * 
-     * @param array $cohortData
-     * @param array $analysisPeriod
-     * @return string
-     */
-    /**
- * Prepare the prompt for the AI based on cohort data
+}
+
+/**
+ * Restructure the AI response to ensure it has all the required sections
  * 
- * @param array $cohortData
- * @param array $analysisPeriod
- * @param string $format
+ * @param string $analysis
  * @return string
  */
+private function restructureResponse($analysis)
+{
+    // Split the response into paragraphs
+    $paragraphs = preg_split('/\n\s*\n|\r\n\s*\r\n/', $analysis);
+    
+    // Default structure
+    $structuredResponse = "# Kesimpulan Umum\n";
+    
+    // Determine if there are enough paragraphs to distribute
+    if (count($paragraphs) >= 3) {
+        // Distribute paragraphs to appropriate sections
+        $structuredResponse .= implode("\n\n", array_slice($paragraphs, 0, ceil(count($paragraphs) / 3)));
+        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+        $structuredResponse .= implode("\n\n", array_slice($paragraphs, ceil(count($paragraphs) / 3), ceil(count($paragraphs) / 3)));
+        $structuredResponse .= "\n\n# Rekomendasi\n";
+        $structuredResponse .= implode("\n\n", array_slice($paragraphs, 2 * ceil(count($paragraphs) / 3)));
+    } else if (count($paragraphs) == 2) {
+        // Just two paragraphs, use first for conclusion, second for recommendations
+        $structuredResponse .= $paragraphs[0];
+        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+        $structuredResponse .= "Berdasarkan kesimpulan di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
+        $structuredResponse .= "\n\n# Rekomendasi\n";
+        $structuredResponse .= $paragraphs[1];
+    } else {
+        // Just one paragraph, use it as conclusion and add generic sections
+        $structuredResponse .= $paragraphs[0];
+        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+        $structuredResponse .= "Berdasarkan analisis di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
+        $structuredResponse .= "\n\n# Rekomendasi\n";
+        $structuredResponse .= "1. Lakukan program retensi khusus untuk pelanggan pada bulan kedua dan ketiga.\n";
+        $structuredResponse .= "2. Tingkatkan pengalaman pelanggan pada transaksi pertama untuk mendorong pembelian berulang.\n";
+        $structuredResponse .= "3. Implementasikan program loyalitas untuk meningkatkan retensi jangka panjang.";
+    }
+    
+    return $structuredResponse;
+}
 private function preparePrompt($cohortData, $analysisPeriod, $format = 'detailed')
 {
     // Extract key metrics for the prompt
