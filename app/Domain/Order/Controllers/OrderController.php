@@ -5138,7 +5138,7 @@ class OrderController extends Controller
     {
         // Get data for cohort analysis (past 3 months)
         $endDate = Carbon::now();
-        $startDate = Carbon::now()->subMonths(3);
+        $startDate = Carbon::now()->subMonths(12);
         
         // Direct SQL query using the customers table - much more efficient
         $cohortData = DB::select('
