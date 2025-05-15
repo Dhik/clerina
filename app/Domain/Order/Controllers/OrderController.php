@@ -5140,28 +5140,13 @@ class OrderController extends Controller
         $endDate = Carbon::now();
         $startDate = Carbon::now()->subMonths(3);
         
-        // Optimize: Use SQL to group and aggregate data rather than PHP loops
-        // This reduces data transfer and leverages the database for heavy computation
-        
-        // Step 1: Get cohort sizes (first purchase month for each customer and count)
-        $cohortSizes = DB::table('orders as o1')
-            ->select(DB::raw('DATE_FORMAT(MIN(o1.date), "%Y-%m") as cohort_month'), DB::raw('COUNT(DISTINCT o1.customer_phone_number) as total_customers'))
-            ->where('o1.date', '>=', $startDate)
-            ->where('o1.date', '<=', $endDate)
-            ->where('o1.tenant_id', 1)
-            ->where('o1.sales_channel_id', 1)
-            ->whereNotNull('o1.customer_phone_number')
-            ->groupBy(DB::raw('DATE_FORMAT(MIN(o1.date), "%Y-%m")'))
-            ->get()
-            ->keyBy('cohort_month');
-            
-        // Step 2: Precompute first purchase date for each customer (for use in subsequent query)
+        // Step 1: Create a temporary table with first purchase dates for each customer
         DB::statement('
-            CREATE TEMPORARY TABLE customer_first_purchase AS
+            CREATE TEMPORARY TABLE IF NOT EXISTS customer_first_purchase AS
             SELECT 
                 customer_phone_number, 
-                DATE_FORMAT(MIN(date), "%Y-%m") as cohort_month,
-                MIN(date) as first_purchase_date
+                MIN(date) as first_purchase_date,
+                DATE_FORMAT(MIN(date), "%Y-%m") as cohort_month
             FROM orders
             WHERE 
                 date >= ? AND 
@@ -5175,7 +5160,14 @@ class OrderController extends Controller
         // Create index for performance
         DB::statement('CREATE INDEX idx_cfp_customer ON customer_first_purchase(customer_phone_number)');
         
-        // Step 3: Calculate retention and revenue metrics directly with SQL
+        // Step 2: Get cohort sizes
+        $cohortSizes = DB::table('customer_first_purchase')
+            ->select('cohort_month', DB::raw('COUNT(*) as total_customers'))
+            ->groupBy('cohort_month')
+            ->get()
+            ->keyBy('cohort_month');
+        
+        // Step 3: Calculate retention and revenue metrics
         $retentionData = DB::select('
             SELECT
                 cfp.cohort_month,
@@ -5192,14 +5184,11 @@ class OrderController extends Controller
                 o.sales_channel_id = 1
             GROUP BY
                 cfp.cohort_month,
-                TIMESTAMPDIFF(MONTH, cfp.first_purchase_date, o.date)
+                period_index
             ORDER BY
                 cfp.cohort_month,
                 period_index
         ', [$endDate]);
-        
-        // Drop temporary table
-        DB::statement('DROP TEMPORARY TABLE IF EXISTS customer_first_purchase');
         
         // Get unique months for our analysis period
         $monthsList = [];
@@ -5242,6 +5231,9 @@ class OrderController extends Controller
                 'average_order_value' => $avgOrderValue
             ];
         }
+        
+        // Drop temporary table
+        DB::statement('DROP TEMPORARY TABLE IF EXISTS customer_first_purchase');
         
         // Prepare response data
         $response = [
