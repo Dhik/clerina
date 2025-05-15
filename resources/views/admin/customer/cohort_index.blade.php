@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- <div class="row">
+    <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -136,7 +136,7 @@
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <!-- AI Recommendation Button -->
 <div class="row mt-4 mb-2">
