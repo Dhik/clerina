@@ -5136,122 +5136,111 @@ class OrderController extends Controller
     }
     public function getCohortData()
     {
-        // Get data for cohort analysis (past 12 months)
+        // Get data for cohort analysis (past 3 months)
         $endDate = Carbon::now();
         $startDate = Carbon::now()->subMonths(3);
         
-        // Step 1: Get the first purchase date for each customer
-        $firstPurchases = DB::table('orders')
-            ->select('customer_phone_number', DB::raw('MIN(date) as first_purchase_date'))
-            ->where('date', '>=', $startDate)
-            ->where('date', '<=', $endDate)
-            ->where('tenant_id', 1)
-            ->where('sales_channel_id', 1)
-            ->whereNotNull('customer_phone_number')
-            ->groupBy('customer_phone_number')
-            ->get();
-            
-        // Step 2: Get all purchases
-        $purchases = DB::table('orders')
-            ->select('customer_phone_number', 'date', 'amount')
-            ->where('date', '>=', $startDate)
-            ->where('date', '<=', $endDate)
-            ->where('tenant_id', 1)
-            ->where('sales_channel_id', 1)
-            ->whereNotNull('customer_phone_number')
-            ->get();
-            
-        // Create cohorts array - group by month of first purchase
-        $cohorts = [];
-        foreach ($firstPurchases as $firstPurchase) {
-            $yearMonth = Carbon::parse($firstPurchase->first_purchase_date)->format('Y-m');
-            if (!isset($cohorts[$yearMonth])) {
-                $cohorts[$yearMonth] = [
-                    'customers' => [],
-                    'total_customers' => 0,
-                ];
-            }
-            $cohorts[$yearMonth]['customers'][] = $firstPurchase->customer_phone_number;
-            $cohorts[$yearMonth]['total_customers']++;
-        }
+        // Optimize: Use SQL to group and aggregate data rather than PHP loops
+        // This reduces data transfer and leverages the database for heavy computation
         
-        // Calculate retention and revenue for each cohort
-        $cohortData = [];
-        $monthsList = [];
+        // Step 1: Get cohort sizes (first purchase month for each customer and count)
+        $cohortSizes = DB::table('orders as o1')
+            ->select(DB::raw('DATE_FORMAT(MIN(o1.date), "%Y-%m") as cohort_month'), DB::raw('COUNT(DISTINCT o1.customer_phone_number) as total_customers'))
+            ->where('o1.date', '>=', $startDate)
+            ->where('o1.date', '<=', $endDate)
+            ->where('o1.tenant_id', 1)
+            ->where('o1.sales_channel_id', 1)
+            ->whereNotNull('o1.customer_phone_number')
+            ->groupBy(DB::raw('DATE_FORMAT(MIN(o1.date), "%Y-%m")'))
+            ->get()
+            ->keyBy('cohort_month');
+            
+        // Step 2: Precompute first purchase date for each customer (for use in subsequent query)
+        DB::statement('
+            CREATE TEMPORARY TABLE customer_first_purchase AS
+            SELECT 
+                customer_phone_number, 
+                DATE_FORMAT(MIN(date), "%Y-%m") as cohort_month,
+                MIN(date) as first_purchase_date
+            FROM orders
+            WHERE 
+                date >= ? AND 
+                date <= ? AND
+                tenant_id = 1 AND
+                sales_channel_id = 1 AND
+                customer_phone_number IS NOT NULL
+            GROUP BY customer_phone_number
+        ', [$startDate, $endDate]);
+        
+        // Create index for performance
+        DB::statement('CREATE INDEX idx_cfp_customer ON customer_first_purchase(customer_phone_number)');
+        
+        // Step 3: Calculate retention and revenue metrics directly with SQL
+        $retentionData = DB::select('
+            SELECT
+                cfp.cohort_month,
+                TIMESTAMPDIFF(MONTH, cfp.first_purchase_date, o.date) as period_index,
+                COUNT(DISTINCT o.customer_phone_number) as active_customers,
+                SUM(o.amount) as revenue
+            FROM
+                customer_first_purchase cfp
+                JOIN orders o ON cfp.customer_phone_number = o.customer_phone_number
+            WHERE
+                o.date >= cfp.first_purchase_date AND
+                o.date <= ? AND
+                o.tenant_id = 1 AND
+                o.sales_channel_id = 1
+            GROUP BY
+                cfp.cohort_month,
+                TIMESTAMPDIFF(MONTH, cfp.first_purchase_date, o.date)
+            ORDER BY
+                cfp.cohort_month,
+                period_index
+        ', [$endDate]);
+        
+        // Drop temporary table
+        DB::statement('DROP TEMPORARY TABLE IF EXISTS customer_first_purchase');
         
         // Get unique months for our analysis period
+        $monthsList = [];
         $currentMonth = clone $startDate;
         while ($currentMonth <= $endDate) {
             $monthsList[] = $currentMonth->format('Y-m');
             $currentMonth->addMonth();
         }
         
-        // Initialize the cohort data structure
-        foreach ($cohorts as $cohortMonth => $cohortInfo) {
+        // Format the data for the response
+        $cohortData = [];
+        
+        // Initialize cohort data structure
+        foreach ($cohortSizes as $cohortMonth => $sizeData) {
             $cohortData[$cohortMonth] = [
-                'total_customers' => $cohortInfo['total_customers'],
+                'total_customers' => $sizeData->total_customers,
                 'months' => []
             ];
-            
-            $cohortMonthCarbon = Carbon::createFromFormat('Y-m', $cohortMonth);
-            
-            foreach ($monthsList as $month) {
-                $monthCarbon = Carbon::createFromFormat('Y-m', $month);
-                
-                // Only analyze months from the cohort's start month onwards
-                if ($monthCarbon >= $cohortMonthCarbon) {
-                    $periodIndex = $cohortMonthCarbon->diffInMonths($monthCarbon);
-                    
-                    $cohortData[$cohortMonth]['months'][$periodIndex] = [
-                        'month' => $month,
-                        'active_customers' => 0,
-                        'retention_rate' => 0,
-                        'revenue' => 0,
-                        'average_order_value' => 0
-                    ];
-                }
-            }
         }
         
         // Fill in retention and revenue data
-        foreach ($purchases as $purchase) {
-            $purchaseMonth = Carbon::parse($purchase->date)->format('Y-m');
+        foreach ($retentionData as $data) {
+            $cohortMonth = $data->cohort_month;
+            $periodIndex = $data->period_index;
             
-            // Find this customer's cohort
-            foreach ($cohorts as $cohortMonth => $cohortInfo) {
-                if (in_array($purchase->customer_phone_number, $cohortInfo['customers'])) {
-                    // Calculate period index (0 is the first month)
-                    $cohortMonthCarbon = Carbon::createFromFormat('Y-m', $cohortMonth);
-                    $purchaseMonthCarbon = Carbon::createFromFormat('Y-m', $purchaseMonth);
-                    $periodIndex = $cohortMonthCarbon->diffInMonths($purchaseMonthCarbon);
-                    
-                    // Only count if the purchase month is from the cohort's start month onwards
-                    if ($purchaseMonthCarbon >= $cohortMonthCarbon && isset($cohortData[$cohortMonth]['months'][$periodIndex])) {
-                        // Mark customer as active in this period if not already counted
-                        if (!isset($cohortData[$cohortMonth]['active_in_period'][$periodIndex][$purchase->customer_phone_number])) {
-                            $cohortData[$cohortMonth]['active_in_period'][$periodIndex][$purchase->customer_phone_number] = true;
-                            $cohortData[$cohortMonth]['months'][$periodIndex]['active_customers']++;
-                        }
-                        
-                        // Add revenue
-                        $cohortData[$cohortMonth]['months'][$periodIndex]['revenue'] += $purchase->amount;
-                    }
-                    break;
-                }
+            // Skip if we don't have this cohort or period index is negative
+            if (!isset($cohortData[$cohortMonth]) || $periodIndex < 0) {
+                continue;
             }
-        }
-        
-        // Calculate final metrics
-        foreach ($cohortData as $cohortMonth => &$data) {
-            foreach ($data['months'] as $periodIndex => &$periodData) {
-                // Calculate retention rate
-                $periodData['retention_rate'] = round(($periodData['active_customers'] / $data['total_customers']) * 100, 2);
-                
-                // Calculate average order value (if there are active customers)
-                if ($periodData['active_customers'] > 0) {
-                    $periodData['average_order_value'] = round($periodData['revenue'] / $periodData['active_customers']);
-                }
-            }
+            
+            $totalCustomers = $cohortData[$cohortMonth]['total_customers'];
+            $retentionRate = $totalCustomers > 0 ? round(($data->active_customers / $totalCustomers) * 100, 2) : 0;
+            $avgOrderValue = $data->active_customers > 0 ? round($data->revenue / $data->active_customers) : 0;
+            
+            $cohortData[$cohortMonth]['months'][$periodIndex] = [
+                'month' => date('Y-m', strtotime($cohortMonth . '-01 +' . $periodIndex . ' months')),
+                'active_customers' => $data->active_customers,
+                'retention_rate' => $retentionRate,
+                'revenue' => $data->revenue,
+                'average_order_value' => $avgOrderValue
+            ];
         }
         
         // Prepare response data
