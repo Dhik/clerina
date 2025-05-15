@@ -5145,6 +5145,8 @@ class OrderController extends Controller
             ->select('customer_phone_number', DB::raw('MIN(date) as first_purchase_date'))
             ->where('date', '>=', $startDate)
             ->where('date', '<=', $endDate)
+            ->where('tenant_id', 1)
+            ->where('sales_channel_id', 1)
             ->whereNotNull('customer_phone_number')
             ->groupBy('customer_phone_number')
             ->get();
@@ -5154,6 +5156,8 @@ class OrderController extends Controller
             ->select('customer_phone_number', 'date', 'amount')
             ->where('date', '>=', $startDate)
             ->where('date', '<=', $endDate)
+            ->where('tenant_id', 1)
+            ->where('sales_channel_id', 1)
             ->whereNotNull('customer_phone_number')
             ->get();
             
@@ -5257,6 +5261,10 @@ class OrderController extends Controller
             'analysis_period' => [
                 'start_date' => $startDate->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d')
+            ],
+            'filters' => [
+                'tenant_id' => 1,
+                'sales_channel_id' => 1
             ]
         ];
         
