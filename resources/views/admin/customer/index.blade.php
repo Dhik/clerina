@@ -5,9 +5,7 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1>{{ trans('labels.customer') }}</h1>
-        <button class="btn btn-primary" id="refreshStats">
-            <i class="fas fa-sync-alt mr-1"></i> {{ trans('labels.refresh') }}
-        </button>
+        <a href="{{ route('customer.cohort-index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Cohort Analysis</a>
     </div>
 @stop
 

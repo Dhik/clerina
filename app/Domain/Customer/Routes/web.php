@@ -24,6 +24,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [CustomerController::class, 'index'])->name('customer.index');
                 Route::get('/get', [CustomerController::class, 'getCustomer'])->name('customer.get');
+                Route::get('/cohort-index', [CustomerController::class, 'cohort_index'])->name('customer.cohort-index');
                 Route::get('/kpi', [CustomerController::class, 'getCustomerKPI'])->name('customer.kpi');
                 Route::get('/daily-count', [CustomerController::class, 'getCustomerCount'])->name('customer.daily-count');
                 Route::get('/daily-order', [CustomerController::class, 'getCustomerOrders'])->name('customer.daily-order-stats');

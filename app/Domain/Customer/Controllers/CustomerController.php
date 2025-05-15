@@ -127,6 +127,16 @@ class CustomerController extends Controller
         return view('admin.customer.index', compact('tenants'));
     }
 
+    public function cohort_index(): View|Factory|ApplicationAlias
+    {
+        $this->authorize('viewCustomer', Customer::class);
+
+        // Fetch active tenants
+        $tenants = Tenant::select('id', 'name')->where('status', 'active')->orderBy('name')->get();
+
+        return view('admin.customer.cohort_index', compact('tenants'));
+    }
+
     /**
      * Return detail customer
      */
