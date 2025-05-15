@@ -5138,7 +5138,7 @@ class OrderController extends Controller
     {
         // Get data for cohort analysis (past 12 months)
         $endDate = Carbon::now();
-        $startDate = Carbon::now()->subMonths(6);
+        $startDate = Carbon::now()->subMonths(3);
         
         // Step 1: Get the first purchase date for each customer
         $firstPurchases = DB::table('orders')
