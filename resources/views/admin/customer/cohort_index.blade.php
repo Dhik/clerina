@@ -21,7 +21,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-4">
                         <div>
-                            <h5>Analysis Period: <span id="analysis-period"></span></h5>
+                            <h5>Analysis Period: <span id="analysis-period">...</span></h5>
                             <p class="text-muted">Filters: Tenant ID: 1, Sales Channel ID: 1</p>
                         </div>
                         <div class="btn-group">
@@ -30,42 +30,51 @@
                         </div>
                     </div>
 
-                    <!-- Retention Rate Table -->
-                    <div id="retention-table-container" class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th style="width: 140px;">Cohort</th>
-                                    <th style="width: 100px;">Customers</th>
-                                    <th style="width: 120px;">Month 0</th>
-                                    <th style="width: 120px;">Month 1</th>
-                                    <th style="width: 120px;">Month 2</th>
-                                    <th style="width: 120px;">Month 3</th>
-                                </tr>
-                            </thead>
-                            <tbody id="retention-table-body">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <!-- Tables Container with Loading Spinner -->
+                    <div class="position-relative">
+                        <div id="tables-loading" class="loading-spinner-container">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Retention Rate Table -->
+                        <div id="retention-table-container" class="table-responsive" style="display: none;">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;">Cohort</th>
+                                        <th style="width: 100px;">Customers</th>
+                                        <th style="width: 120px;">Month 0</th>
+                                        <th style="width: 120px;">Month 1</th>
+                                        <th style="width: 120px;">Month 2</th>
+                                        <th style="width: 120px;">Month 3</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="retention-table-body">
+                                    <!-- Table rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <!-- Revenue Table -->
-                    <div id="revenue-table-container" class="table-responsive" style="display: none;">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th style="width: 140px;">Cohort</th>
-                                    <th style="width: 100px;">Customers</th>
-                                    <th style="width: 120px;">Month 0</th>
-                                    <th style="width: 120px;">Month 1</th>
-                                    <th style="width: 120px;">Month 2</th>
-                                    <th style="width: 120px;">Month 3</th>
-                                </tr>
-                            </thead>
-                            <tbody id="revenue-table-body">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
+                        <!-- Revenue Table -->
+                        <div id="revenue-table-container" class="table-responsive" style="display: none;">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;">Cohort</th>
+                                        <th style="width: 100px;">Customers</th>
+                                        <th style="width: 120px;">Month 0</th>
+                                        <th style="width: 120px;">Month 1</th>
+                                        <th style="width: 120px;">Month 2</th>
+                                        <th style="width: 120px;">Month 3</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="revenue-table-body">
+                                    <!-- Table rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -79,7 +88,16 @@
                     <h3 class="card-title">Retention Over Time</h3>
                 </div>
                 <div class="card-body">
-                    <canvas id="retentionChart" height="300"></canvas>
+                    <div class="position-relative">
+                        <div id="retention-chart-loading" class="loading-spinner-container">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        <div style="height: 250px;">
+                            <canvas id="retentionChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -92,7 +110,16 @@
                     <h3 class="card-title">Cohort Size Distribution</h3>
                 </div>
                 <div class="card-body">
-                    <canvas id="cohortSizeChart" height="300"></canvas>
+                    <div class="position-relative">
+                        <div id="cohort-size-chart-loading" class="loading-spinner-container">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        <div style="height: 200px;">
+                            <canvas id="cohortSizeChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -102,7 +129,16 @@
                     <h3 class="card-title">Average Order Value by Cohort</h3>
                 </div>
                 <div class="card-body">
-                    <canvas id="aovChart" height="300"></canvas>
+                    <div class="position-relative">
+                        <div id="aov-chart-loading" class="loading-spinner-container">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        <div style="height: 200px;">
+                            <canvas id="aovChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -129,6 +165,19 @@
         background-color: #28a745 !important;
         color: white;
     }
+    
+    .loading-spinner-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+    }
 </style>
 @stop
 
@@ -138,7 +187,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Fetch cohort data from API
         fetch('{{ route("net-profit.cohort-data") }}')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 // Update analysis period
                 document.getElementById('analysis-period').textContent = 
@@ -147,7 +201,7 @@
                 // Render cohort tables
                 renderCohortTables(data.cohort_data);
                 
-                // Render charts
+                // Render charts (each with its own loading state)
                 renderRetentionChart(data.cohort_data);
                 renderCohortSizeChart(data.cohort_data);
                 renderAOVChart(data.cohort_data);
@@ -157,13 +211,33 @@
             })
             .catch(error => {
                 console.error('Error fetching cohort data:', error);
-                alert('Failed to load cohort data. Please try again later.');
+                
+                // Hide all loading indicators
+                document.querySelectorAll('.loading-spinner-container').forEach(loader => {
+                    loader.style.display = 'none';
+                });
+                
+                // Display error notification using AdminLTE's toast
+                $(document).Toasts('create', {
+                    title: 'Error',
+                    body: 'Failed to load cohort data. Please try again later.',
+                    autohide: true,
+                    delay: 5000,
+                    class: 'bg-danger'
+                });
             });
     });
 
     function renderCohortTables(cohortData) {
+        const tablesLoading = document.getElementById('tables-loading');
         const retentionTableBody = document.getElementById('retention-table-body');
         const revenueTableBody = document.getElementById('revenue-table-body');
+        const retentionTableContainer = document.getElementById('retention-table-container');
+        const revenueTableContainer = document.getElementById('revenue-table-container');
+        
+        // Clear existing content
+        retentionTableBody.innerHTML = '';
+        revenueTableBody.innerHTML = '';
         
         // Sort cohorts chronologically
         const sortedCohorts = Object.keys(cohortData).sort();
@@ -206,7 +280,6 @@
                         retentionCell.classList.add('month-0');
                     } else {
                         // Color based on retention rate
-                        const blueIntensity = Math.min(255, Math.max(0, Math.round(retentionRate * 2.55)));
                         retentionCell.style.backgroundColor = `rgba(0, 123, 255, ${retentionRate / 100})`;
                     }
                 } else {
@@ -249,9 +322,14 @@
             retentionTableBody.appendChild(retentionRow);
             revenueTableBody.appendChild(revenueRow);
         });
+        
+        // Hide loading indicator and show tables
+        tablesLoading.style.display = 'none';
+        retentionTableContainer.style.display = 'block';
     }
 
     function renderRetentionChart(cohortData) {
+        const loadingSpinner = document.getElementById('retention-chart-loading');
         const ctx = document.getElementById('retentionChart').getContext('2d');
         
         // Sort cohorts chronologically
@@ -298,6 +376,8 @@
                 datasets: datasets
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -310,8 +390,7 @@
                 },
                 plugins: {
                     title: {
-                        display: true,
-                        text: 'Retention Rate by Cohort'
+                        display: false
                     },
                     tooltip: {
                         callbacks: {
@@ -323,9 +402,13 @@
                 }
             }
         });
+        
+        // Hide loading spinner once chart is rendered
+        loadingSpinner.style.display = 'none';
     }
 
     function renderCohortSizeChart(cohortData) {
+        const loadingSpinner = document.getElementById('cohort-size-chart-loading');
         const ctx = document.getElementById('cohortSizeChart').getContext('2d');
         
         // Sort cohorts chronologically
@@ -349,6 +432,8 @@
                 }]
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -357,12 +442,24 @@
                             text: 'Customer Count'
                         }
                     }
+                },
+                plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        display: false
+                    }
                 }
             }
         });
+        
+        // Hide loading spinner once chart is rendered
+        loadingSpinner.style.display = 'none';
     }
 
     function renderAOVChart(cohortData) {
+        const loadingSpinner = document.getElementById('aov-chart-loading');
         const ctx = document.getElementById('aovChart').getContext('2d');
         
         // Sort cohorts chronologically
@@ -381,7 +478,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Average Order Value (Initial Purchase)',
+                    label: 'Average Order Value',
                     data: data,
                     backgroundColor: 'rgba(75, 192, 192, 0.8)',
                     borderColor: 'rgba(75, 192, 192, 1)',
@@ -389,6 +486,8 @@
                 }]
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -404,16 +503,25 @@
                     }
                 },
                 plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                return 'Average Order Value: ' + formatCurrency(context.parsed.y);
                             }
                         }
                     }
                 }
             }
         });
+        
+        // Hide loading spinner once chart is rendered
+        loadingSpinner.style.display = 'none';
     }
 
     function setupTabSwitching() {
