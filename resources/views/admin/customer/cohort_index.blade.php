@@ -150,13 +150,30 @@
     <!-- AI Recommendation Card - Initially Hidden -->
     <div id="ai-recommendation-cards" class="row mt-3" style="display: none;">
     <!-- Loading Animation -->
-    <div id="ai-loading" class="col-12 text-center p-5">
-        <div class="robot-animation mb-4">
-            <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_wFZ1zr.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: 0 auto;" loop autoplay></lottie-player>
+    <!-- Loading Animation -->
+<div id="ai-loading" class="col-12 text-center p-5" style="display: none;">
+    <div class="robot-loading-animation mb-4">
+        <div class="robot-container">
+            <div class="robot-head"></div>
+            <div class="robot-body">
+                <div class="robot-eye robot-eye-left"></div>
+                <div class="robot-eye robot-eye-right"></div>
+                <div class="robot-mouth"></div>
+            </div>
+            <div class="robot-arms">
+                <div class="robot-arm robot-arm-left"></div>
+                <div class="robot-arm robot-arm-right"></div>
+            </div>
         </div>
-        <h4 class="text-muted">Sedang Menganalisis Data Cohort...</h4>
-        <p class="text-muted">Mohon tunggu sementara AI memproses data dan menghasilkan rekomendasi.</p>
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
     </div>
+    <h4 class="text-muted">Sedang Menganalisis Data Cohort...</h4>
+    <p class="text-muted">Mohon tunggu sementara AI memproses data dan menghasilkan rekomendasi.</p>
+</div>
     <div class="row">
         <!-- General Conclusion Card -->
     <div class="col-12 mb-4" id="conclusion-card" style="display: none;">
@@ -227,6 +244,150 @@
 
 @section('css')
 <style>
+    /* Robot Loading Animation */
+.robot-loading-animation {
+    position: relative;
+    width: 150px;
+    height: 200px;
+    margin: 0 auto;
+}
+
+.robot-container {
+    width: 100px;
+    height: 120px;
+    position: relative;
+    margin: 0 auto;
+    animation: float 3s ease-in-out infinite;
+}
+
+.robot-head {
+    width: 60px;
+    height: 40px;
+    background-color: #4e73df;
+    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.robot-body {
+    width: 100px;
+    height: 60px;
+    background-color: #4e73df;
+    border-radius: 10px;
+    position: absolute;
+    top: 50px;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.robot-eye {
+    width: 12px;
+    height: 12px;
+    background-color: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 15px;
+}
+
+.robot-eye-left {
+    left: 30px;
+    animation: blink 2s infinite;
+}
+
+.robot-eye-right {
+    right: 30px;
+    animation: blink 2s 0.2s infinite;
+}
+
+.robot-mouth {
+    width: 30px;
+    height: 5px;
+    background-color: white;
+    position: absolute;
+    bottom: 15px;
+    border-radius: 3px;
+    animation: speak 1s infinite;
+}
+
+.robot-arms {
+    width: 100%;
+    position: absolute;
+    top: 70px;
+}
+
+.robot-arm {
+    width: 10px;
+    height: 40px;
+    background-color: #4e73df;
+    position: absolute;
+    border-radius: 5px;
+}
+
+.robot-arm-left {
+    left: -5px;
+    animation: wave 2s infinite;
+    transform-origin: top center;
+}
+
+.robot-arm-right {
+    right: -5px;
+    animation: wave 2s 0.5s infinite;
+    transform-origin: top center;
+}
+
+.loading-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: #4e73df;
+    border-radius: 50%;
+    margin: 0 5px;
+    opacity: 0;
+    animation: fadeInOut 1.5s infinite;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 1s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes blink {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.8); }
+}
+
+@keyframes speak {
+    0%, 100% { width: 30px; }
+    50% { width: 20px; }
+}
+
+@keyframes wave {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(20deg); }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
     .retention-cell, .revenue-cell {
         text-align: center;
     }
@@ -343,7 +504,6 @@
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 <script>
     let cohortDataGlobal = null; // To store the cohort data globally
     let analysisPeriodGlobal = null; // To store the analysis period
