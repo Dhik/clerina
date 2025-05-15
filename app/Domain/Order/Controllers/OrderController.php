@@ -32,6 +32,7 @@ use Yajra\DataTables\Utilities\Request;
 use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\GoogleSheetService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
