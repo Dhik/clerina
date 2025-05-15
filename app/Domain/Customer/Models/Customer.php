@@ -19,6 +19,8 @@ class Customer extends Model
         'city',
         'province',
         'last_order_date',
+        'first_order_date',
+        'aov'
     ];
 
     protected $appends = [
