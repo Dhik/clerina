@@ -5136,14 +5136,15 @@ class OrderController extends Controller
     }
     public function getCohortData()
     {
-        // Get data for cohort analysis (past 3 months)
+        // Get data for cohort analysis (past 12 months)
         $endDate = Carbon::now();
         $startDate = Carbon::now()->subMonths(12);
         
         // Direct SQL query using the customers table - much more efficient
+        // CHANGED: Using first_order_date instead of created_at
         $cohortData = DB::select('
             SELECT
-                DATE_FORMAT(created_at, "%Y-%m") AS cohort_month,
+                DATE_FORMAT(first_order_date, "%Y-%m") AS cohort_month,
                 COUNT(*) AS new_customers,
                 SUM(CASE WHEN last_order_date >= ? THEN 1 ELSE 0 END) AS active_in_current_month,
                 SUM(count_orders) AS total_orders,
@@ -5151,10 +5152,10 @@ class OrderController extends Controller
             FROM
                 customers
             WHERE
-                created_at BETWEEN ? AND ?
+                first_order_date BETWEEN ? AND ?
                 AND tenant_id = 1
             GROUP BY
-                DATE_FORMAT(created_at, "%Y-%m")
+                DATE_FORMAT(first_order_date, "%Y-%m")
             ORDER BY
                 cohort_month
         ', [$endDate, $startDate, $endDate]);
@@ -5179,10 +5180,9 @@ class OrderController extends Controller
                 ? round(($row->active_in_current_month / $row->new_customers) * 100, 2) 
                 : 0;
                 
-            // Get average revenue per customer - this would need order data
-            // If we want actual revenue data, we'd need to join with orders table
-            // For this example, we'll use a placeholder value based on avg orders
-            $avgOrderValue = 100000; // Placeholder
+            // Get average revenue per customer
+            // Now we'll use a more realistic value based on your data
+            $avgOrderValue = 143871; // Based on your previous data, average order value
             $avgRevenue = $row->avg_orders_per_customer * $avgOrderValue;
             
             // Initial month (100% retention by definition)
@@ -5212,9 +5212,62 @@ class OrderController extends Controller
             }
         }
         
-        // To get more detailed month-by-month retention, we'd need a more complex query
-        // that calculates activity for each month since cohort start
-        // This would require order data, but could still be optimized
+        // Get intermediate months for each cohort (for a more complete analysis)
+        foreach ($formattedCohortData as $cohortMonth => &$cohortInfo) {
+            $cohortStartDate = Carbon::createFromFormat('Y-m', $cohortMonth)->startOfMonth();
+            $months = $cohortInfo['months'];
+            
+            // Only process if we don't already have full data (just month 0 and current month)
+            if (count($months) <= 2) {
+                // For each month between cohort start and now
+                $currentDate = clone $cohortStartDate;
+                $monthIndex = 0;
+                
+                while ($currentDate < Carbon::now()) {
+                    $monthFormatted = $currentDate->format('Y-m');
+                    $monthEnd = (clone $currentDate)->endOfMonth();
+                    
+                    // Skip if we already have this month
+                    if (!isset($months[$monthIndex])) {
+                        // Get active customers for this specific month
+                        $monthData = DB::select('
+                            SELECT
+                                COUNT(*) as active_customers
+                            FROM
+                                customers
+                            WHERE
+                                tenant_id = 1
+                                AND DATE_FORMAT(first_order_date, "%Y-%m") = ?
+                                AND last_order_date <= ?
+                                AND last_order_date >= ?
+                        ', [$cohortMonth, $monthEnd, $currentDate->startOfMonth()]);
+                        
+                        $activeCustomers = $monthData[0]->active_customers;
+                        $retentionRate = $cohortInfo['total_customers'] > 0 
+                            ? round(($activeCustomers / $cohortInfo['total_customers']) * 100, 2) 
+                            : 0;
+                        
+                        // Month 0 is special - always 100% retention
+                        if ($monthIndex === 0) {
+                            $retentionRate = 100;
+                            $activeCustomers = $cohortInfo['total_customers'];
+                        }
+                        
+                        $cohortInfo['months'][$monthIndex] = [
+                            'month' => $monthFormatted,
+                            'active_customers' => $activeCustomers,
+                            'retention_rate' => $retentionRate,
+                            'revenue' => $activeCustomers * $avgOrderValue,
+                            'average_order_value' => $avgOrderValue
+                        ];
+                    }
+                    
+                    // Move to next month
+                    $currentDate->addMonth();
+                    $monthIndex++;
+                }
+            }
+        }
         
         // Prepare response data
         $response = [
