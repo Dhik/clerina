@@ -41,14 +41,11 @@
                         <!-- Retention Rate Table -->
                         <div id="retention-table-container" class="table-responsive" style="display: none;">
                             <table class="table table-bordered">
-                                <thead>
+                                <thead id="retention-table-header">
                                     <tr>
-                                        <th style="width: 140px;">Cohort</th>
+                                        <th style="width: 120px;">Cohort</th>
                                         <th style="width: 100px;">Customers</th>
-                                        <th style="width: 120px;">Month 0</th>
-                                        <th style="width: 120px;">Month 1</th>
-                                        <th style="width: 120px;">Month 2</th>
-                                        <th style="width: 120px;">Month 3</th>
+                                        <!-- Month headers will be dynamically inserted here -->
                                     </tr>
                                 </thead>
                                 <tbody id="retention-table-body">
@@ -60,14 +57,11 @@
                         <!-- Revenue Table -->
                         <div id="revenue-table-container" class="table-responsive" style="display: none;">
                             <table class="table table-bordered">
-                                <thead>
+                                <thead id="revenue-table-header">
                                     <tr>
-                                        <th style="width: 140px;">Cohort</th>
+                                        <th style="width: 120px;">Cohort</th>
                                         <th style="width: 100px;">Customers</th>
-                                        <th style="width: 120px;">Month 0</th>
-                                        <th style="width: 120px;">Month 1</th>
-                                        <th style="width: 120px;">Month 2</th>
-                                        <th style="width: 120px;">Month 3</th>
+                                        <!-- Month headers will be dynamically inserted here -->
                                     </tr>
                                 </thead>
                                 <tbody id="revenue-table-body">
@@ -178,6 +172,19 @@
         align-items: center;
         z-index: 5;
     }
+    
+    /* Fixed first two columns for horizontal scrolling */
+    .sticky-col {
+        position: sticky;
+        background-color: white;
+        z-index: 1;
+    }
+    .first-col {
+        left: 0;
+    }
+    .second-col {
+        left: 120px;
+    }
 </style>
 @stop
 
@@ -198,11 +205,17 @@
                 document.getElementById('analysis-period').textContent = 
                     `${data.analysis_period.start_date} to ${data.analysis_period.end_date}`;
 
+                // Determine the maximum number of months to display
+                const maxMonths = determineMaxMonths(data.cohort_data);
+                
+                // Create table headers for all months
+                createTableHeaders(maxMonths);
+                
                 // Render cohort tables
-                renderCohortTables(data.cohort_data);
+                renderCohortTables(data.cohort_data, maxMonths);
                 
                 // Render charts (each with its own loading state)
-                renderRetentionChart(data.cohort_data);
+                renderRetentionChart(data.cohort_data, maxMonths);
                 renderCohortSizeChart(data.cohort_data);
                 renderAOVChart(data.cohort_data);
                 
@@ -227,8 +240,62 @@
                 });
             });
     });
+    
+    // Function to determine the maximum number of months across all cohorts
+    function determineMaxMonths(cohortData) {
+        let maxMonths = 0;
+        
+        // Find the maximum month index across all cohorts
+        Object.values(cohortData).forEach(cohort => {
+            const monthIndices = Object.keys(cohort.months).map(Number);
+            if (monthIndices.length > 0) {
+                const cohortMax = Math.max(...monthIndices);
+                maxMonths = Math.max(maxMonths, cohortMax);
+            }
+        });
+        
+        // Add 1 because we're 0-indexed (months 0-11 = 12 months)
+        return maxMonths + 1;
+    }
+    
+    // Function to create table headers for all months
+    function createTableHeaders(maxMonths) {
+        const retentionHeader = document.querySelector('#retention-table-header tr');
+        const revenueHeader = document.querySelector('#revenue-table-header tr');
+        
+        // Clear existing month headers (after cohort and customers columns)
+        while (retentionHeader.children.length > 2) {
+            retentionHeader.removeChild(retentionHeader.lastChild);
+        }
+        
+        while (revenueHeader.children.length > 2) {
+            revenueHeader.removeChild(revenueHeader.lastChild);
+        }
+        
+        // Add headers for each month
+        for (let i = 0; i < maxMonths; i++) {
+            // Retention header
+            const retentionTh = document.createElement('th');
+            retentionTh.style.width = '90px';
+            retentionTh.textContent = `Month ${i}`;
+            retentionHeader.appendChild(retentionTh);
+            
+            // Revenue header
+            const revenueTh = document.createElement('th');
+            revenueTh.style.width = '90px';
+            revenueTh.textContent = `Month ${i}`;
+            revenueHeader.appendChild(revenueTh);
+        }
+        
+        // Make the first two columns sticky for better horizontal scrolling
+        retentionHeader.children[0].className = 'sticky-col first-col';
+        retentionHeader.children[1].className = 'sticky-col second-col';
+        
+        revenueHeader.children[0].className = 'sticky-col first-col';
+        revenueHeader.children[1].className = 'sticky-col second-col';
+    }
 
-    function renderCohortTables(cohortData) {
+    function renderCohortTables(cohortData, maxMonths) {
         const tablesLoading = document.getElementById('tables-loading');
         const retentionTableBody = document.getElementById('retention-table-body');
         const revenueTableBody = document.getElementById('revenue-table-body');
@@ -250,8 +317,8 @@
             
             // Add cohort month and size
             retentionRow.innerHTML = `
-                <td>${formatMonthYear(cohortMonth)}</td>
-                <td>${formatNumber(cohort.total_customers)}</td>
+                <td class="sticky-col first-col">${formatMonthYear(cohortMonth)}</td>
+                <td class="sticky-col second-col">${formatNumber(cohort.total_customers)}</td>
             `;
             
             // Create revenue row
@@ -259,12 +326,12 @@
             
             // Add cohort month and size
             revenueRow.innerHTML = `
-                <td>${formatMonthYear(cohortMonth)}</td>
-                <td>${formatNumber(cohort.total_customers)}</td>
+                <td class="sticky-col first-col">${formatMonthYear(cohortMonth)}</td>
+                <td class="sticky-col second-col">${formatNumber(cohort.total_customers)}</td>
             `;
             
-            // Add cells for each month (0-3)
-            for (let i = 0; i < 4; i++) {
+            // Add cells for each month (0 to maxMonths-1)
+            for (let i = 0; i < maxMonths; i++) {
                 const monthData = cohort.months[i];
                 
                 // Retention cell
@@ -328,12 +395,18 @@
         retentionTableContainer.style.display = 'block';
     }
 
-    function renderRetentionChart(cohortData) {
+    function renderRetentionChart(cohortData, maxMonths) {
         const loadingSpinner = document.getElementById('retention-chart-loading');
         const ctx = document.getElementById('retentionChart').getContext('2d');
         
         // Sort cohorts chronologically
         const sortedCohorts = Object.keys(cohortData).sort();
+        
+        // Create labels for all months
+        const labels = [];
+        for (let i = 0; i < maxMonths; i++) {
+            labels.push(`Month ${i}`);
+        }
         
         // Prepare datasets
         const datasets = sortedCohorts.map((cohortMonth, index) => {
@@ -341,7 +414,7 @@
             const data = [];
             
             // Get retention rates for each period
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < maxMonths; i++) {
                 if (cohort.months[i]) {
                     data.push(cohort.months[i].retention_rate);
                 } else {
@@ -356,7 +429,13 @@
                 'rgba(255, 206, 86, 1)',   // Yellow
                 'rgba(75, 192, 192, 1)',   // Teal
                 'rgba(153, 102, 255, 1)',  // Purple
-                'rgba(255, 159, 64, 1)'    // Orange
+                'rgba(255, 159, 64, 1)',   // Orange
+                'rgba(201, 203, 207, 1)',  // Grey
+                'rgba(0, 204, 150, 1)',    // Seafoam
+                'rgba(215, 119, 0, 1)',    // Orange-brown
+                'rgba(118, 17, 195, 1)',   // Purple
+                'rgba(0, 139, 139, 1)',    // Teal-dark
+                'rgba(205, 92, 92, 1)'     // Indian red
             ];
             
             return {
@@ -372,7 +451,7 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Month 0', 'Month 1', 'Month 2', 'Month 3'],
+                labels: labels,
                 datasets: datasets
             },
             options: {
@@ -397,6 +476,12 @@
                             label: function(context) {
                                 return context.dataset.label + ': ' + context.parsed.y + '%';
                             }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12
                         }
                     }
                 }
