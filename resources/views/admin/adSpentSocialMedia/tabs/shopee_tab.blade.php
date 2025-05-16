@@ -24,7 +24,10 @@
                                 <div class="col-auto">
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importShopeeAdsModal" id="btnImportShopeeAds">
-                                            <i class="fas fa-file-upload"></i> Import Shopee Ads (csv)
+                                            <i class="fas fa-file-upload"></i> Import Ads Data (CSV)
+                                        </button>
+                                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importShopeeSkuModal" id="btnImportShopeeSku">
+                                            <i class="fas fa-file-excel"></i> Import SKU Details (Excel)
                                         </button>
                                     </div>
                                 </div>
@@ -66,25 +69,24 @@
             </div>
             <div class="card">
                 <div class="card-body">
-                <table id="adsShopeeTable" class="table table-bordered table-striped dataTable responsive" width="100%">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Product Code</th>
-                            <th>Impressions</th>
-                            <th>Clicks</th>
-                            <th>CTR</th>
-                            <th>Conversions</th>
-                            <th>Conv. Rate</th>
-                            <th>Products Sold</th>
-                            <th>Cost</th>
-                            <th>Cost Per Click</th>
-                            <th>Revenue</th>
-                            <th>ROAS</th>
-                            <th>Performance</th>
-                        </tr>
-                    </thead>
-                </table>
+                    <table id="adsShopeeTable" class="table table-bordered table-striped dataTable responsive" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>CTR</th>
+                                <th>Conversions</th>
+                                <th>Conv. Rate</th>
+                                <th>Products Sold</th>
+                                <th>Cost</th>
+                                <th>Cost Per Click</th>
+                                <th>Revenue</th>
+                                <th>ROAS</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>

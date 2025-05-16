@@ -138,28 +138,25 @@
                     </div>
                 </div>
                 
-                <!-- Details Table -->
                 <div class="table-responsive">
                     <table id="shopeeDetailsTable" class="table table-bordered table-striped dataTable" width="100%">
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Product Code</th>
-                                <th>Ad Name</th>
-                                <th>Status</th>
-                                <th>Ad Display</th>
-                                <th>Bidding Mode</th>
-                                <th>Ad Placement</th>
-                                <th>Start Date</th>
-                                <th>Impressions</th>
-                                <th>Clicks</th>
+                                <th>SKU Induk</th>
+                                <th>Dilihat</th>
+                                <th>Suka</th>
+                                <th>Jumlah Klik</th>
                                 <th>CTR</th>
-                                <th>Conversions</th>
-                                <th>Products Sold</th>
-                                <th>Cost</th>
-                                <th>Revenue</th>
+                                <th>Keranjang</th>
+                                <th>Pesanan Dibuat</th>
+                                <th>Pesanan Siap</th>
+                                <th>Terjual</th>
+                                <th>CR</th>
+                                <th>Biaya</th>
+                                <th>Omzet</th>
                                 <th>ROAS</th>
-                                <th>Ad Effectiveness</th>
+                                <th>Efektivitas</th>
                                 <th>Performance</th>
                                 <th>Action</th>
                             </tr>

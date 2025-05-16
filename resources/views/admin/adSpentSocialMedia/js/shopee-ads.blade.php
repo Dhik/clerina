@@ -13,142 +13,141 @@ $(document).ready(function() {
 
     // Initialize Shopee Ads DataTable
     let adsShopeeTable = $('#adsShopeeTable').DataTable({
-        responsive: true,
-        processing: true,
-        serverSide: true,
-        pageLength: 25,
-        ajax: {
-            url: "{{ route('adSpentSocialMedia.get_ads_shopee') }}",
-            data: function (d) {
-                if (filterDate.val()) {
-                    let dates = filterDate.val().split(' - ');
-                    d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
-                    d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
-                }
-                if (filterKodeProduk.val()) {
-                    d.kode_produk = filterKodeProduk.val();
-                }
+    responsive: true,
+    processing: true,
+    serverSide: true,
+    pageLength: 25,
+    ajax: {
+        url: "{{ route('adSpentSocialMedia.get_ads_shopee') }}",
+        data: function (d) {
+            if (filterDate.val()) {
+                let dates = filterDate.val().split(' - ');
+                d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
+                d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
+            }
+            if (filterKodeProduk.val()) {
+                d.kode_produk = filterKodeProduk.val();
+            }
+        }
+    },
+    columns: [
+        {data: 'date', name: 'date'},
+        {
+            data: 'total_dilihat',
+            name: 'total_dilihat',
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
             }
         },
-        columns: [
-            {data: 'date', name: 'date'},
-            {data: 'kode_produk', name: 'kode_produk'},
-            {
-                data: 'total_dilihat',
-                name: 'total_dilihat',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'total_jumlah_klik', 
-                name: 'total_jumlah_klik',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'ctr', 
-                name: 'ctr',
-                searchable: false,
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }) + '%';
-                }
-            },
-            {
-                data: 'total_konversi', 
-                name: 'total_konversi',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'conversion_rate', 
-                name: 'conversion_rate',
-                searchable: false,
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }) + '%';
-                }
-            },
-            {
-                data: 'total_produk_terjual', 
-                name: 'total_produk_terjual',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'total_biaya', 
-                name: 'total_biaya',
-                render: function(data) {
-                    return 'Rp ' + Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'cost_per_click', 
-                name: 'cost_per_click',
-                searchable: false,
-                render: function(data) {
-                    return 'Rp ' + Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
-            },
-            {
-                data: 'total_omzet_penjualan', 
-                name: 'total_omzet_penjualan',
-                render: function(data) {
-                    return 'Rp ' + Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'roas', 
-                name: 'roas', 
-                searchable: false,
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
-            },
-            {data: 'performance', name: 'performance', searchable: false}
-        ],
-        columnDefs: [
-            { "targets": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "className": "text-right" },
-            { "targets": [1, 12], "className": "text-center" }
-        ],
-        order: [[0, 'desc']],
-        fixedHeader: true,
-        scrollCollapse: true,
-        deferRender: true,
-        scroller: true
-    });
+        {
+            data: 'total_jumlah_klik', 
+            name: 'total_jumlah_klik',
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        },
+        {
+            data: 'ctr', 
+            name: 'ctr',
+            searchable: false,
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + '%';
+            }
+        },
+        {
+            data: 'total_konversi', 
+            name: 'total_konversi',
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        },
+        {
+            data: 'conversion_rate', 
+            name: 'conversion_rate',
+            searchable: false,
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + '%';
+            }
+        },
+        {
+            data: 'total_produk_terjual', 
+            name: 'total_produk_terjual',
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        },
+        {
+            data: 'total_biaya', 
+            name: 'total_biaya',
+            render: function(data) {
+                return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        },
+        {
+            data: 'cost_per_click', 
+            name: 'cost_per_click',
+            searchable: false,
+            render: function(data) {
+                return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+        },
+        {
+            data: 'total_omzet_penjualan', 
+            name: 'total_omzet_penjualan',
+            render: function(data) {
+                return 'Rp ' + Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+        },
+        {
+            data: 'roas', 
+            name: 'roas', 
+            searchable: false,
+            render: function(data) {
+                return Number(data).toLocaleString('id-ID', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+        },
+        {data: 'performance', name: 'performance', searchable: false}
+    ],
+    columnDefs: [
+        { "targets": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "className": "text-right" },
+        { "targets": [11], "className": "text-center" }
+    ],
+    order: [[0, 'desc']],
+    fixedHeader: true,
+    scrollCollapse: true,
+    deferRender: true,
+    scroller: true
+});
 
     // Campaign details table
     let shopeeDetailsTable = $('#shopeeDetailsTable').DataTable({
@@ -176,73 +175,26 @@ $(document).ready(function() {
         },
         columns: [
             {data: 'date', name: 'date'},
-            {data: 'kode_produk', name: 'kode_produk'},
-            {data: 'nama_iklan', name: 'nama_iklan'},
-            {data: 'status', name: 'status'},
-            {data: 'tampilan_iklan', name: 'tampilan_iklan'},
-            {data: 'mode_bidding', name: 'mode_bidding'},
-            {data: 'penempatan_iklan', name: 'penempatan_iklan'},
-            {data: 'tanggal_mulai', name: 'tanggal_mulai'},
-            {
-                data: 'dilihat', 
-                name: 'dilihat',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'jumlah_klik', 
-                name: 'jumlah_klik',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {data: 'ctr', name: 'ctr'},
-            {
-                data: 'konversi', 
-                name: 'konversi',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
-            {
-                data: 'produk_terjual', 
-                name: 'produk_terjual',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    });
-                }
-            },
+            {data: 'sku_induk', name: 'sku_induk'},
+            {data: 'dilihat', name: 'dilihat'},
+            {data: 'suka', name: 'suka'},
+            {data: 'jumlah_klik', name: 'jumlah_klik'},
+            {data: 'ctr', name: 'ctr', searchable: false},
+            {data: 'dimasukan_ke_keranjang_produk', name: 'dimasukan_ke_keranjang_produk'},
+            {data: 'produk_pesanan_dibuat', name: 'produk_pesanan_dibuat'},
+            {data: 'produk_pesanan_siap_dikirim', name: 'produk_pesanan_siap_dikirim'},
+            {data: 'produk_terjual', name: 'produk_terjual'},
+            {data: 'cr', name: 'cr', searchable: false},
             {data: 'biaya', name: 'biaya'},
             {data: 'omzet_penjualan', name: 'omzet_penjualan'},
-            {data: 'roas', name: 'roas'},
-            {
-                data: 'efektivitas_iklan', 
-                name: 'efektivitas_iklan',
-                render: function(data) {
-                    return Number(data).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
-            },
+            {data: 'roas', name: 'roas', searchable: false},
+            {data: 'efektivitas_iklan', name: 'efektivitas_iklan'},
             {data: 'performance', name: 'performance', searchable: false},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
         columnDefs: [
-            { "targets": [8, 9, 10, 11, 12, 13, 14, 15, 16], "className": "text-right" },
-            { "targets": [1, 2, 3, 4, 5, 6, 7, 17, 18], "className": "text-center" }
+            { "targets": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "className": "text-right" },
+            { "targets": [1, 15, 16], "className": "text-center" }
         ],
         order: [[0, 'asc']],
         fixedHeader: true,
@@ -263,7 +215,6 @@ $(document).ready(function() {
     // File input handler
     handleFileInputChange('shopeeAdsCsvFile');
 
-    // Form submit handler for import
     $('#importShopeeAdsForm').on('submit', function(e) {
         e.preventDefault();
         
@@ -542,57 +493,57 @@ $(document).ready(function() {
         funnelContainer.innerHTML = html;
         
         // Display metrics
-        let metricsHtml = `
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">CTR</span>
-                            <span class="info-box-number">${metrics.ctr.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Conversion Rate</span>
-                            <span class="info-box-number">${metrics.conversion_rate.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">ROAS</span>
-                            <span class="info-box-number">${metrics.roas.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                    </div>
+let metricsHtml = `
+    <div class="row">
+        <div class="col-md-4">
+            <div class="info-box">
+                <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">CTR</span>
+                    <span class="info-box-number">${metrics.ctr.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Total Cost</span>
-                            <span class="info-box-number">Rp ${metrics.cost.toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="info-box">
-                        <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">Total Revenue</span>
-                            <span class="info-box-number">Rp ${metrics.revenue.toLocaleString('id-ID', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
-                        </div>
-                    </div>
+        </div>
+        <div class="col-md-4">
+            <div class="info-box">
+                <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Conversion Rate</span>
+                    <span class="info-box-number">${metrics.conversion_rate.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
                 </div>
             </div>
-        `;
+        </div>
+        <div class="col-md-4">
+            <div class="info-box">
+                <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">ROAS</span>
+                    <span class="info-box-number">${metrics.roas.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-box">
+                <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Total Cost</span>
+                    <span class="info-box-number">Rp ${Number(metrics.cost).toLocaleString('id-ID')}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-box">
+                <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Total Revenue</span>
+                    <span class="info-box-number">Rp ${Number(metrics.revenue).toLocaleString('id-ID')}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
         
         metricsContainer.innerHTML = metricsHtml;
     }
@@ -657,6 +608,72 @@ $(document).ready(function() {
             fetchShopeeImpressionData();
             initShopeeFunnelChart();
             $('[data-toggle="tooltip"]').tooltip();
+        }
+    });
+});
+handleFileInputChange('shopeeSkuExcelFile');
+
+// Form submit handler for importing SKU details
+$('#importShopeeSkuForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading state
+    showLoadingSwal('Processing...');
+    
+    let formData = new FormData(this);
+    $.ajax({
+        url: "{{ route('adSpentSocialMedia.import_shopee_sku') }}",
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.status === 'success') {
+                $('#importShopeeSkuModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: response.message,
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    // Reset the form
+                    $('#importShopeeSkuForm')[0].reset();
+                    $('.custom-file-label').text('Choose file');
+                    
+                    // Refresh the data
+                    adsShopeeTable.draw();
+                    fetchShopeeImpressionData();
+                    initShopeeFunnelChart();
+                });
+            } else {
+                // Handle unexpected success response without success status
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Warning',
+                    text: response.message || 'Unknown error occurred',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Ajax error:", xhr, status, error);
+            
+            let errorMessage = 'An error occurred during import';
+            
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: errorMessage,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
         }
     });
 });

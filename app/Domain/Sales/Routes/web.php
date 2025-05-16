@@ -73,6 +73,7 @@ Route::prefix('admin')
                 Route::get('/export-data', [AdSpentSocialMediaController::class, 'exportAdsMetaStats'])->name('adSpentSocialMedia.export-data');
 
                 Route::get('/get-shopee', [AdSpentSocialMediaController::class, 'get_ads_shopee'])->name('adSpentSocialMedia.get_ads_shopee');
+                Route::post('/import-shopee-sku', [AdSpentSocialMediaController::class, 'importShopeeSkuDetails'])->name('adSpentSocialMedia.import_shopee_sku');
                 Route::get('/show-shopee', [AdSpentSocialMediaController::class, 'get_shopee_details_by_date'])->name('adSpentSocialMedia.get_shopee_details_by_date');
                 Route::get('/shopee-summary', [AdSpentSocialMediaController::class, 'get_shopee_summary'])->name('adSpentSocialMedia.get_shopee_summary');
                 Route::post('/import-shopee', [AdSpentSocialMediaController::class, 'importShopeeAds'])->name('adSpentSocialMedia.import_shopee');
