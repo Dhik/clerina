@@ -11,6 +11,12 @@ $(document).ready(function() {
     let tiktokFunnelChart = null;
     let tiktokImpressionChart = null;
 
+    // $('#btnImportTiktokAdsSpent').on('click', function() {
+    //     console.log('Button clicked');
+    //     console.log('Modal exists:', $('#importTiktokAdsSpentModal').length > 0);
+    //     $('#importTiktokAdsSpentModal').modal('show');
+    // });
+
     // Initialize TikTok Ads DataTable
     let adsTiktokTable = $('#adsTiktokTable').DataTable({
         responsive: true,
