@@ -461,20 +461,24 @@ $(document).ready(function() {
 
     // Function to create Shopee funnel chart
     function createShopeeFunnelChart(data, metrics) {
-        const funnelContainer = document.getElementById('shopeeFunnelChart');
-        const metricsContainer = document.getElementById('shopeeFunnelMetrics');
-        
-        // Clear previous chart
-        funnelContainer.innerHTML = '';
-        
-        // Create the funnel chart
-        const height = 300;
-        const maxValue = data[0].value;
-        
-        let html = `<div class="funnel-chart" style="width:100%; height:${height}px; position:relative;">`;
-        
+    const funnelContainer = document.getElementById('shopeeFunnelChart');
+    const metricsContainer = document.getElementById('shopeeFunnelMetrics');
+    
+    // Clear previous chart
+    funnelContainer.innerHTML = '';
+    
+    // Create the funnel chart
+    const height = 300;
+    const maxValue = data && data.length > 0 && data[0].value ? Number(data[0].value) : 0;
+    
+    let html = `<div class="funnel-chart" style="width:100%; height:${height}px; position:relative;">`;
+    
+    // Check if data is available
+    if (data && data.length > 0 && maxValue > 0) {
         data.forEach((item, index) => {
-            const percentage = (item.value / maxValue) * 100;
+            // Ensure value is a number and not null
+            const itemValue = item.value ? Number(item.value) : 0;
+            const percentage = (itemValue / maxValue) * 100;
             const barWidth = Math.max(20, percentage);
             const barHeight = height / data.length;
             const leftMargin = (100 - barWidth) / 2;
@@ -482,71 +486,86 @@ $(document).ready(function() {
             html += `
                 <div class="funnel-level" style="position:absolute; top:${index * barHeight}px; left:${leftMargin}%; width:${barWidth}%; height:${barHeight}px; display:flex; align-items:center; justify-content:center; background-color:rgba(60, 141, 188, ${1 - index * 0.2}); color:#fff; border-radius:5px;">
                     <div>
-                        <div style="font-weight:bold;">${item.name}</div>
-                        <div>${item.value.toLocaleString('id-ID')}</div>
+                        <div style="font-weight:bold;">${item.name || 'Unknown'}</div>
+                        <div>${itemValue.toLocaleString('id-ID')}</div>
                     </div>
                 </div>
             `;
         });
-        
-        html += `</div>`;
-        funnelContainer.innerHTML = html;
-        
-        // Display metrics
-let metricsHtml = `
-    <div class="row">
-        <div class="col-md-4">
-            <div class="info-box">
-                <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">CTR</span>
-                    <span class="info-box-number">${metrics.ctr.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-box">
-                <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Conversion Rate</span>
-                    <span class="info-box-number">${metrics.conversion_rate.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="info-box">
-                <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">ROAS</span>
-                    <span class="info-box-number">${metrics.roas.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="info-box">
-                <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Total Cost</span>
-                    <span class="info-box-number">Rp ${Number(metrics.cost).toLocaleString('id-ID')}</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="info-box">
-                <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
-                <div class="info-box-content">
-                    <span class="info-box-text">Total Revenue</span>
-                    <span class="info-box-number">Rp ${Number(metrics.revenue).toLocaleString('id-ID')}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-`;
-        
-        metricsContainer.innerHTML = metricsHtml;
+    } else {
+        // Display a message if no data is available
+        html += `<div class="text-center p-5">No data available</div>`;
     }
+    
+    html += `</div>`;
+    funnelContainer.innerHTML = html;
+    
+    // Helper function to safely format numbers
+    function formatNumber(value, options = {}) {
+        if (value === null || value === undefined) return '0';
+        try {
+            return Number(value).toLocaleString('id-ID', options);
+        } catch (e) {
+            console.error('Error formatting number:', e);
+            return '0';
+        }
+    }
+    
+    // Display metrics with safe number formatting
+    let metricsHtml = `
+        <div class="row">
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">CTR</span>
+                        <span class="info-box-number">${formatNumber(metrics?.ctr, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Conversion Rate</span>
+                        <span class="info-box-number">${formatNumber(metrics?.conversion_rate, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">ROAS</span>
+                        <span class="info-box-number">${formatNumber(metrics?.roas, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Cost</span>
+                        <span class="info-box-number">Rp ${formatNumber(metrics?.cost)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Revenue</span>
+                        <span class="info-box-number">Rp ${formatNumber(metrics?.revenue)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    metricsContainer.innerHTML = metricsHtml;
+}
 
     // Function to update summary in the details modal
     function updateShopeeSummary() {
