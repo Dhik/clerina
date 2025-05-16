@@ -7,6 +7,7 @@ use App\Domain\Sales\BLL\AdSpentSocialMedia\AdSpentSocialMediaBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\AdsMeta;
+use App\Domain\Sales\Models\AdsShopee;
 use App\Domain\Sales\Models\AdsMeta2;
 use App\Domain\Sales\Models\AdsMeta3;
 use Illuminate\Support\Facades\Validator;
@@ -26,6 +27,8 @@ use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use App\Domain\Sales\Services\GoogleSheetService;
+use Illuminate\Support\Facades\Storage;
+
 
 class AdSpentSocialMediaController extends Controller
 {
@@ -395,193 +398,193 @@ class AdSpentSocialMediaController extends Controller
             ->make(true);
     }
     public function get_tiktok_details_by_date(Request $request) 
-{
-    $query = AdsTiktok::query()
-        ->select([
-            DB::raw('ANY_VALUE(id) as id'),
-            DB::raw('MIN(date) as start_date'),
-            DB::raw('MAX(date) as end_date'),
-            DB::raw('SUM(amount_spent) as amount_spent'),
-            DB::raw('SUM(impressions) as impressions'),
-            DB::raw('SUM(link_clicks) as link_clicks'),
-            DB::raw('SUM(content_views_shared_items) as content_views_shared_items'),
-            DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
-            DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
-            DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
-            DB::raw('COUNT(last_updated) as last_updated_count'),
-            DB::raw('COUNT(new_created) as new_created_count'),
-            'kategori_produk',
-            'account_name'
-        ]);
-    
-    if ($request->has('date_start') && $request->has('date_end')) {
-        try {
-            $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
-            $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
-            $query->whereBetween('date', [$dateStart, $dateEnd]);
-        } catch (\Exception $e) {
-            Log::error('Date parsing error: ' . $e->getMessage());
+    {
+        $query = AdsTiktok::query()
+            ->select([
+                DB::raw('ANY_VALUE(id) as id'),
+                DB::raw('MIN(date) as start_date'),
+                DB::raw('MAX(date) as end_date'),
+                DB::raw('SUM(amount_spent) as amount_spent'),
+                DB::raw('SUM(impressions) as impressions'),
+                DB::raw('SUM(link_clicks) as link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as content_views_shared_items'),
+                DB::raw('SUM(adds_to_cart_shared_items) as adds_to_cart_shared_items'),
+                DB::raw('SUM(purchases_shared_items) as purchases_shared_items'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as purchases_conversion_value_shared_items'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
+                DB::raw('COUNT(last_updated) as last_updated_count'),
+                DB::raw('COUNT(new_created) as new_created_count'),
+                'kategori_produk',
+                'account_name'
+            ]);
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            try {
+                $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+                $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+                $query->whereBetween('date', [$dateStart, $dateEnd]);
+            } catch (\Exception $e) {
+                Log::error('Date parsing error: ' . $e->getMessage());
+            }
+        } elseif ($request->has('date')) {
+            try {
+                $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+                $query->where('date', $parsedDate);
+            } catch (\Exception $e) {
+                $query->where('date', $request->input('date'));
+            }
         }
-    } elseif ($request->has('date')) {
-        try {
-            $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
-            $query->where('date', $parsedDate);
-        } catch (\Exception $e) {
-            $query->where('date', $request->input('date'));
+        
+        $query->groupBy('account_name', 'kategori_produk');
+        
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
         }
-    }
-    
-    $query->groupBy('account_name', 'kategori_produk');
-    
-    if (auth()->user()->tenant_id) {
-        $query->where('tenant_id', auth()->user()->tenant_id);
-    }
-    
-    if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-        $query->where('kategori_produk', $request->kategori_produk);
-    }
-    
-    if ($request->has('pic') && $request->pic !== '') {
-        $query->where('pic', $request->pic);
-    }
-    
-    return DataTables::of($query)
-        ->addIndexColumn()
-        ->editColumn('account_name', function ($row) {
-            return $row->account_name ?: '-';
-        })
-        ->editColumn('date', function ($row) {
-            if ($row->start_date == $row->end_date) {
-                return $row->start_date;
-            }
-            return $row->start_date . ' to ' . $row->end_date;
-        })
-        ->editColumn('amount_spent', function ($row) {
-            return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
-        })
-        ->editColumn('impressions', function ($row) {
-            return $row->impressions ? number_format($row->impressions, 0, ',', '.') : '-';
-        })
-        ->editColumn('link_clicks', function ($row) {
-            return $row->link_clicks ? number_format($row->link_clicks, 2, ',', '.') : '-';
-        })
-        ->editColumn('content_views_shared_items', function ($row) {
-            return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
-        })
-        ->addColumn('tofu_spent', function ($row) {
-            return $row->tofu_spent ? 'Rp ' . number_format($row->tofu_spent, 0, ',', '.') : '-';
-        })
-        ->addColumn('tofu_percentage', function ($row) {
-            if ($row->amount_spent > 0 && $row->tofu_spent > 0) {
-                $percentage = ($row->tofu_spent / $row->amount_spent) * 100;
-                return number_format($percentage, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('mofu_spent', function ($row) {
-            return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
-        })
-        ->addColumn('mofu_percentage', function ($row) {
-            if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
-                $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
-                return number_format($percentage, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('bofu_spent', function ($row) {
-            return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
-        })
-        ->addColumn('bofu_percentage', function ($row) {
-            if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
-                $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
-                return number_format($percentage, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('last_updated_count', function ($row) {
-            return $row->last_updated_count ?: '0';
-        })
-        ->addColumn('new_created_count', function ($row) {
-            return $row->new_created_count ?: '0';
-        })
-        ->addColumn('cost_per_view', function ($row) {
-            if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
-                $costPerView = $row->amount_spent / $row->content_views_shared_items;
-                return 'Rp ' . number_format(floor($costPerView), 0, ',', '.');
-            }
-            return '-';
-        })
-        ->editColumn('adds_to_cart_shared_items', function ($row) {
-            return $row->adds_to_cart_shared_items ? number_format(floor($row->adds_to_cart_shared_items), 0, ',', '.') : '-';
-        })
-        ->addColumn('cost_per_atc', function ($row) {
-            if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
-                $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
-                return 'Rp ' . number_format(floor($costPerATC), 0, ',', '.');
-            }
-            return '-';
-        })
-        ->editColumn('purchases_shared_items', function ($row) {
-            return $row->purchases_shared_items ? number_format($row->purchases_shared_items, 2, ',', '.') : '-';
-        })
-        ->addColumn('cost_per_purchase', function ($row) {
-            if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
-                $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
-                return 'Rp ' . number_format(floor($costPerPurchase), 0, ',', '.');
-            }
-            return '-';
-        })
-        ->editColumn('purchases_conversion_value_shared_items', function ($row) {
-            return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 0, ',', '.') : '-';
-        })
-        ->addColumn('roas', function ($row) {
-            if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
-                $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
-                return number_format($roas, 2, ',', '.');
-            }
-            return '-';
-        })
-        ->addColumn('cpm', function ($row) {
-            if ($row->impressions > 0 && $row->amount_spent > 0) {
-                $cpm = ($row->amount_spent / $row->impressions) * 1000;
-                return 'Rp ' . number_format(floor($cpm), 0, ',', '.');
-            }
-            return '-';
-        })
-        ->addColumn('ctr', function ($row) {
-            if ($row->impressions > 0 && $row->link_clicks > 0) {
-                $ctr = ($row->link_clicks / $row->impressions) * 100;
-                return number_format($ctr, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('performance', function ($row) {
-            if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
-                $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
-                
-                if ($roas >= 2.5) {
-                    return '<span class="badge badge-success">Winning</span>';
-                } elseif ($roas >= 2.01) {
-                    return '<span class="badge badge-primary">Bagus</span>';
-                } elseif ($roas >= 1.75) {
-                    return '<span class="badge badge-info">Potensi</span>';
-                } else {
-                    return '<span class="badge badge-danger">Bad</span>';
+        
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+        
+        if ($request->has('pic') && $request->pic !== '') {
+            $query->where('pic', $request->pic);
+        }
+        
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('account_name', function ($row) {
+                return $row->account_name ?: '-';
+            })
+            ->editColumn('date', function ($row) {
+                if ($row->start_date == $row->end_date) {
+                    return $row->start_date;
                 }
-            }
-            return '<span class="badge badge-secondary">N/A</span>';
-        })
-        ->addColumn('action', function ($row) {
-            return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-kategori="'.$row->kategori_produk.'">
-                <i class="fas fa-trash"></i> Delete
-            </button>';
-        })
-        ->rawColumns(['action', 'performance'])
-        ->make(true);
-}
+                return $row->start_date . ' to ' . $row->end_date;
+            })
+            ->editColumn('amount_spent', function ($row) {
+                return $row->amount_spent ? 'Rp ' . number_format($row->amount_spent, 0, ',', '.') : '-';
+            })
+            ->editColumn('impressions', function ($row) {
+                return $row->impressions ? number_format($row->impressions, 0, ',', '.') : '-';
+            })
+            ->editColumn('link_clicks', function ($row) {
+                return $row->link_clicks ? number_format($row->link_clicks, 2, ',', '.') : '-';
+            })
+            ->editColumn('content_views_shared_items', function ($row) {
+                return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('tofu_spent', function ($row) {
+                return $row->tofu_spent ? 'Rp ' . number_format($row->tofu_spent, 0, ',', '.') : '-';
+            })
+            ->addColumn('tofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->tofu_spent > 0) {
+                    $percentage = ($row->tofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('mofu_spent', function ($row) {
+                return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
+            })
+            ->addColumn('mofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
+                    $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('bofu_spent', function ($row) {
+                return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
+            })
+            ->addColumn('bofu_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
+                    $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('last_updated_count', function ($row) {
+                return $row->last_updated_count ?: '0';
+            })
+            ->addColumn('new_created_count', function ($row) {
+                return $row->new_created_count ?: '0';
+            })
+            ->addColumn('cost_per_view', function ($row) {
+                if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerView = $row->amount_spent / $row->content_views_shared_items;
+                    return 'Rp ' . number_format(floor($costPerView), 0, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('adds_to_cart_shared_items', function ($row) {
+                return $row->adds_to_cart_shared_items ? number_format(floor($row->adds_to_cart_shared_items), 0, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_atc', function ($row) {
+                if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
+                    return 'Rp ' . number_format(floor($costPerATC), 0, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('purchases_shared_items', function ($row) {
+                return $row->purchases_shared_items ? number_format($row->purchases_shared_items, 2, ',', '.') : '-';
+            })
+            ->addColumn('cost_per_purchase', function ($row) {
+                if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
+                    $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
+                    return 'Rp ' . number_format(floor($costPerPurchase), 0, ',', '.');
+                }
+                return '-';
+            })
+            ->editColumn('purchases_conversion_value_shared_items', function ($row) {
+                return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 0, ',', '.') : '-';
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                    $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                    return number_format($roas, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('cpm', function ($row) {
+                if ($row->impressions > 0 && $row->amount_spent > 0) {
+                    $cpm = ($row->amount_spent / $row->impressions) * 1000;
+                    return 'Rp ' . number_format(floor($cpm), 0, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->impressions > 0 && $row->link_clicks > 0) {
+                    $ctr = ($row->link_clicks / $row->impressions) * 100;
+                    return number_format($ctr, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
+                    $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Bad</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->addColumn('action', function ($row) {
+                return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-kategori="'.$row->kategori_produk.'">
+                    <i class="fas fa-trash"></i> Delete
+                </button>';
+            })
+            ->rawColumns(['action', 'performance'])
+            ->make(true);
+    }
 public function get_tiktok_campaign_summary(Request $request)
 {
     $query = AdsTiktok::query()
@@ -3672,4 +3675,580 @@ private function cleanNumericValue($value)
             ], 422);
         }
     }
+    /**
+ * Get Shopee Ads data for DataTables
+ */
+public function get_ads_shopee(Request $request)
+{
+    $query = AdsShopee::query()
+        ->select([
+            'date',
+            'kode_produk',
+            DB::raw('SUM(dilihat) as total_dilihat'),
+            DB::raw('SUM(jumlah_klik) as total_jumlah_klik'),
+            DB::raw('SUM(konversi) as total_konversi'),
+            DB::raw('SUM(produk_terjual) as total_produk_terjual'),
+            DB::raw('SUM(omzet_penjualan) as total_omzet_penjualan'),
+            DB::raw('SUM(biaya) as total_biaya'),
+            DB::raw('AVG(efektivitas_iklan) as avg_efektivitas_iklan'),
+        ])
+        ->groupBy('date', 'kode_produk');
+    
+    // Apply filters
+    if (auth()->user()->tenant_id) {
+        $query->where('tenant_id', auth()->user()->tenant_id);
+    }
+    
+    if ($request->has('date_start') && $request->has('date_end')) {
+        $query->whereBetween('date', [$request->date_start, $request->date_end]);
+    } else {
+        $query->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year);
+    }
+    
+    if ($request->has('kode_produk') && $request->kode_produk) {
+        $query->where('kode_produk', $request->kode_produk);
+    }
+    
+    return DataTables::of($query)
+        ->addIndexColumn()
+        ->editColumn('date', function ($row) {
+            return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">' . 
+                    Carbon::parse($row->date)->format('d M Y') . '</a>';
+        })
+        ->addColumn('ctr', function ($row) {
+            if ($row->total_dilihat > 0 && $row->total_jumlah_klik > 0) {
+                return ($row->total_jumlah_klik / $row->total_dilihat) * 100;
+            }
+            return 0;
+        })
+        ->addColumn('conversion_rate', function ($row) {
+            if ($row->total_jumlah_klik > 0 && $row->total_konversi > 0) {
+                return ($row->total_konversi / $row->total_jumlah_klik) * 100;
+            }
+            return 0;
+        })
+        ->addColumn('cost_per_click', function ($row) {
+            if ($row->total_jumlah_klik > 0 && $row->total_biaya > 0) {
+                return $row->total_biaya / $row->total_jumlah_klik;
+            }
+            return 0;
+        })
+        ->addColumn('roas', function ($row) {
+            if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
+                return $row->total_omzet_penjualan / $row->total_biaya;
+            }
+            return 0;
+        })
+        ->addColumn('performance', function ($row) {
+            if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
+                $roas = $row->total_omzet_penjualan / $row->total_biaya;
+                
+                if ($roas >= 2.5) {
+                    return '<span class="badge badge-success">Winning</span>';
+                } elseif ($roas >= 2.01) {
+                    return '<span class="badge badge-primary">Bagus</span>';
+                } elseif ($roas >= 1.75) {
+                    return '<span class="badge badge-info">Potensi</span>';
+                } else {
+                    return '<span class="badge badge-danger">Buruk</span>';
+                }
+            }
+            return '<span class="badge badge-secondary">N/A</span>';
+        })
+        ->rawColumns(['date', 'performance'])
+        ->make(true);
+}
+
+/**
+ * Get Shopee Ads details by date
+ */
+public function get_shopee_details_by_date(Request $request)
+{
+    $query = AdsShopee::query();
+    
+    if ($request->has('date_start') && $request->has('date_end')) {
+        $query->whereBetween('date', [$request->date_start, $request->date_end]);
+    } elseif ($request->has('date')) {
+        $query->where('date', $request->date);
+    }
+    
+    if ($request->has('kode_produk') && $request->kode_produk) {
+        $query->where('kode_produk', $request->kode_produk);
+    }
+    
+    if (auth()->user()->tenant_id) {
+        $query->where('tenant_id', auth()->user()->tenant_id);
+    }
+    
+    return DataTables::of($query)
+        ->addIndexColumn()
+        ->editColumn('date', function ($row) {
+            return Carbon::parse($row->date)->format('d M Y');
+        })
+        ->editColumn('tanggal_mulai', function ($row) {
+            return $row->tanggal_mulai ? Carbon::parse($row->tanggal_mulai)->format('d M Y') : '-';
+        })
+        ->editColumn('biaya', function ($row) {
+            return 'Rp ' . number_format($row->biaya, 0, ',', '.');
+        })
+        ->editColumn('omzet_penjualan', function ($row) {
+            return 'Rp ' . number_format($row->omzet_penjualan, 0, ',', '.');
+        })
+        ->addColumn('ctr', function ($row) {
+            if ($row->dilihat > 0 && $row->jumlah_klik > 0) {
+                $ctr = ($row->jumlah_klik / $row->dilihat) * 100;
+                return number_format($ctr, 2, ',', '.') . '%';
+            }
+            return '-';
+        })
+        ->addColumn('roas', function ($row) {
+            if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
+                $roas = $row->omzet_penjualan / $row->biaya;
+                return number_format($roas, 2, ',', '.');
+            }
+            return '-';
+        })
+        ->addColumn('performance', function ($row) {
+            if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
+                $roas = $row->omzet_penjualan / $row->biaya;
+                
+                if ($roas >= 2.5) {
+                    return '<span class="badge badge-success">Winning</span>';
+                } elseif ($roas >= 2.01) {
+                    return '<span class="badge badge-primary">Bagus</span>';
+                } elseif ($roas >= 1.75) {
+                    return '<span class="badge badge-info">Potensi</span>';
+                } else {
+                    return '<span class="badge badge-danger">Buruk</span>';
+                }
+            }
+            return '<span class="badge badge-secondary">N/A</span>';
+        })
+        ->addColumn('action', function ($row) {
+            return '<button type="button" class="btn btn-danger btn-sm delete-record" data-id="'.$row->id.'">
+                <i class="fas fa-trash"></i> Delete
+            </button>';
+        })
+        ->rawColumns(['performance', 'action'])
+        ->make(true);
+}
+
+/**
+ * Get Shopee summary
+ */
+public function get_shopee_summary(Request $request)
+{
+    try {
+        $query = AdsShopee::query();
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } elseif ($request->has('date')) {
+            $query->where('date', $request->date);
+        }
+        
+        if ($request->has('kode_produk') && $request->kode_produk) {
+            $query->where('kode_produk', $request->kode_produk);
+        }
+        
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        $summary = [
+            'total_ads' => $query->count(),
+            'total_impressions' => $query->sum('dilihat'),
+            'total_clicks' => $query->sum('jumlah_klik'),
+            'total_conversions' => $query->sum('konversi'),
+            'total_cost' => $query->sum('biaya'),
+            'total_revenue' => $query->sum('omzet_penjualan'),
+            'avg_ctr' => 0,
+            'avg_conversion_rate' => 0,
+            'avg_roas' => 0
+        ];
+        
+        if ($summary['total_impressions'] > 0 && $summary['total_clicks'] > 0) {
+            $summary['avg_ctr'] = ($summary['total_clicks'] / $summary['total_impressions']) * 100;
+        }
+        
+        if ($summary['total_clicks'] > 0 && $summary['total_conversions'] > 0) {
+            $summary['avg_conversion_rate'] = ($summary['total_conversions'] / $summary['total_clicks']) * 100;
+        }
+        
+        if ($summary['total_cost'] > 0 && $summary['total_revenue'] > 0) {
+            $summary['avg_roas'] = $summary['total_revenue'] / $summary['total_cost'];
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'summary' => $summary
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to get summary: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Import Shopee Ads from CSV
+ */
+public function importShopeeAds(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+        'kode_produk' => 'required|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $validator->errors()->first(),
+        ], 422);
+    }
+
+    try {
+        // Get the original filename
+        $file = $request->file('csv_file');
+        $originalFilename = $file->getClientOriginalName();
+        
+        // Extract date from filename (expected format: Data-+Semua-Iklan-Produk-DD_MM_YYYY-DD_MM_YYYY.csv)
+        $date = $this->extractDateFromFilename($originalFilename);
+        
+        // Store the file temporarily
+        $path = $file->storeAs('temp', 'shopee_ads_import.csv');
+        $filePath = Storage::path($path);
+        
+        // Process the CSV data, passing the extracted date
+        $processedData = $this->processShopeeCSV($filePath, $request->kode_produk, $date);
+        
+        // Save processed data to database
+        $inserted = $this->saveShopeeToDatabase($processedData);
+        
+        // Delete the temporary file
+        Storage::delete($path);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => "Successfully imported {$inserted} records from the CSV file for date {$date}.",
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error importing Shopee Ads CSV: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error importing CSV: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+private function extractDateFromFilename($filename)
+{
+    // Default to today if no date found
+    $defaultDate = Carbon::now()->format('Y-m-d');
+    
+    // Try to match the pattern
+    if (preg_match('/\d{2}_\d{2}_\d{4}/', $filename, $matches)) {
+        $dateString = $matches[0]; // This will be DD_MM_YYYY
+        $parts = explode('_', $dateString);
+        
+        if (count($parts) === 3) {
+            $day = $parts[0];
+            $month = $parts[1];
+            $year = $parts[2];
+            
+            // Format the date as Y-m-d
+            try {
+                return Carbon::createFromFormat('d_m_Y', $dateString)->format('Y-m-d');
+            } catch (\Exception $e) {
+                Log::warning("Failed to parse date from filename: {$filename}. Using default date instead.");
+                return $defaultDate;
+            }
+        }
+    }
+    
+    Log::warning("No date pattern found in filename: {$filename}. Using default date instead.");
+    return $defaultDate;
+}
+/**
+ * Process Shopee CSV data
+ */
+private function processShopeeCSV($filePath, $defaultKodeProduct, $fileDate = null)
+{
+    $data = [];
+    $headers = [];
+    $row = 0;
+    
+    if (($handle = fopen($filePath, "r")) !== false) {
+        while (($rowData = fgetcsv($handle, 1000, ",")) !== false) {
+            // Skip header row
+            if ($row === 0) {
+                $headers = $rowData;
+                $row++;
+                continue;
+            }
+            
+            // Make sure we have enough columns
+            if (count($rowData) >= 28) {
+                $kodeProduct = !empty($rowData[3]) ? $rowData[3] : $defaultKodeProduct;
+                
+                // Use the date from the filename if provided, otherwise try to extract from column 27
+                $date = $fileDate ?: $this->parseDate($rowData[27]);
+                
+                if (empty($date)) {
+                    continue;
+                }
+                
+                $key = $date . '_' . $kodeProduct . '_' . md5($rowData[1]); // Add ad name (column 1) to make it unique
+                
+                if (!isset($data[$key])) {
+                    // Initialize with first row data
+                    $data[$key] = [
+                        'date' => $date,
+                        'kode_produk' => $kodeProduct,
+                        'urutan' => $this->parseNumeric($rowData[0]), // Urutan (column 0)
+                        'nama_iklan' => $rowData[1], // Nama Iklan (column 1)
+                        'status' => $rowData[2], // Status (column 2)
+                        'tampilan_iklan' => $rowData[4], // Tampilan Iklan (column 4)
+                        'mode_bidding' => $rowData[5], // Mode Bidding (column 5)
+                        'penempatan_iklan' => $rowData[6], // Penempatan Iklan (column 6)
+                        'tanggal_mulai' => $this->parseDate($rowData[7]), // Tanggal Mulai (column 7)
+                        'tanggal_selesai' => $rowData[8], // Tanggal Selesai (column 8)
+                        'dilihat' => $this->parseNumeric($rowData[9]), // Dilihat (column 9)
+                        'jumlah_klik' => $this->parseNumeric($rowData[10]), // Jumlah klik (column 10)
+                        'konversi' => $this->parseNumeric($rowData[12]), // Konversi (column 12)
+                        'produk_terjual' => $this->parseNumeric($rowData[18]), // Produk Terjual (column 18)
+                        'omzet_penjualan' => $this->parseNumeric($rowData[20]), // Omzet Penjualan (column 20)
+                        'biaya' => $this->parseNumeric($rowData[22]), // Biaya (column 22)
+                        'efektivitas_iklan' => (float) str_replace(',', '.', $rowData[23]), // Efektivitas Iklan (column 23)
+                        'count' => 1, // For calculating averages
+                    ];
+                } else {
+                    // For existing groups, update numeric values for sum
+                    $data[$key]['dilihat'] += $this->parseNumeric($rowData[9]);
+                    $data[$key]['jumlah_klik'] += $this->parseNumeric($rowData[10]);
+                    $data[$key]['konversi'] += $this->parseNumeric($rowData[12]);
+                    $data[$key]['produk_terjual'] += $this->parseNumeric($rowData[18]);
+                    $data[$key]['omzet_penjualan'] += $this->parseNumeric($rowData[20]);
+                    $data[$key]['biaya'] += $this->parseNumeric($rowData[22]);
+                    $data[$key]['efektivitas_iklan'] += (float) str_replace(',', '.', $rowData[23]);
+                    $data[$key]['count']++;
+                    
+                    // Update min urutan
+                    $currentUrutan = $this->parseNumeric($rowData[0]);
+                    if ($currentUrutan < $data[$key]['urutan']) {
+                        $data[$key]['urutan'] = $currentUrutan;
+                    }
+                }
+            }
+            
+            $row++;
+        }
+        fclose($handle);
+    }
+    
+    // Calculate average for efektivitas_iklan
+    foreach ($data as $key => $value) {
+        if ($value['count'] > 0) {
+            $data[$key]['efektivitas_iklan'] = $value['efektivitas_iklan'] / $value['count'];
+        }
+        // Remove count field as it's not in the database
+        unset($data[$key]['count']);
+        
+        // Set tenant_id if user is authenticated
+        if (auth()->check()) {
+            $data[$key]['tenant_id'] = auth()->user()->tenant_id;
+        }
+    }
+    
+    return array_values($data);
+}
+
+/**
+ * Save processed Shopee data to database
+ */
+private function saveShopeeToDatabase($data)
+{
+    $count = 0;
+    
+    foreach ($data as $row) {
+        // Check if a record already exists for this date and kode_produk
+        $existingRecord = AdsShopee::where('date', $row['date'])
+            ->where('kode_produk', $row['kode_produk'])
+            ->where('nama_iklan', $row['nama_iklan'])
+            ->first();
+        
+        if ($existingRecord) {
+            // Update existing record
+            $existingRecord->update($row);
+        } else {
+            // Create new record
+            AdsShopee::create($row);
+            $count++;
+        }
+    }
+    
+    return $count;
+}
+
+/**
+ * Delete Shopee Ads record
+ */
+public function deleteShopeeRecord(Request $request)
+{
+    try {
+        $record = AdsShopee::findOrFail($request->id);
+        $record->delete();
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Record deleted successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to delete record: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Get Shopee Ads line chart data
+ */
+public function getShopeeLineData(Request $request)
+{
+    try {
+        $query = AdsShopee::query()
+            ->select([
+                'date',
+                DB::raw('SUM(dilihat) as impressions'),
+                DB::raw('SUM(jumlah_klik) as clicks'),
+                DB::raw('SUM(biaya) as spent'),
+                DB::raw('SUM(omzet_penjualan) as revenue')
+            ])
+            ->groupBy('date')
+            ->orderBy('date');
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kode_produk') && $request->kode_produk) {
+            $query->where('kode_produk', $request->kode_produk);
+        }
+        
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        $data = $query->get();
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to get chart data: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Get Shopee Ads funnel data
+ */
+public function getShopeeFunnelData(Request $request)
+{
+    try {
+        $query = AdsShopee::query();
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kode_produk') && $request->kode_produk) {
+            $query->where('kode_produk', $request->kode_produk);
+        }
+        
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        
+        $totals = $query->selectRaw('
+            SUM(dilihat) as impressions,
+            SUM(jumlah_klik) as clicks,
+            SUM(konversi) as conversions,
+            SUM(produk_terjual) as purchases,
+            SUM(biaya) as cost,
+            SUM(omzet_penjualan) as revenue
+        ')->first();
+        
+        // Calculate funnel metrics
+        $ctr = $totals->impressions > 0 ? ($totals->clicks / $totals->impressions) * 100 : 0;
+        $conversionRate = $totals->clicks > 0 ? ($totals->conversions / $totals->clicks) * 100 : 0;
+        $purchaseRate = $totals->conversions > 0 ? ($totals->purchases / $totals->conversions) * 100 : 0;
+        $roas = $totals->cost > 0 ? $totals->revenue / $totals->cost : 0;
+        
+        $funnelData = [
+            ['name' => 'Impressions', 'value' => $totals->impressions],
+            ['name' => 'Clicks', 'value' => $totals->clicks],
+            ['name' => 'Conversions', 'value' => $totals->conversions],
+            ['name' => 'Purchases', 'value' => $totals->purchases]
+        ];
+        
+        $metrics = [
+            'ctr' => $ctr,
+            'conversion_rate' => $conversionRate,
+            'purchase_rate' => $purchaseRate,
+            'cost' => $totals->cost,
+            'revenue' => $totals->revenue,
+            'roas' => $roas
+        ];
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $funnelData,
+            'metrics' => $metrics
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to get funnel data: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Parse numeric value from string
+ */
+private function parseNumeric($value)
+{
+    // Remove any non-numeric characters except decimal point
+    $value = preg_replace('/[^0-9.]/', '', $value);
+    return $value === '' ? 0 : (int) $value;
+}
+
+/**
+ * Parse date from string
+ */
+private function parseDate($date)
+{
+    if (empty($date)) {
+        return null;
+    }
+    
+    try {
+        return Carbon::parse($date)->format('Y-m-d');
+    } catch (\Exception $e) {
+        return null;
+    }
+}
 }

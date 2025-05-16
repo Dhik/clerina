@@ -72,6 +72,14 @@ Route::prefix('admin')
                 Route::delete('/delete-by-account', [AdSpentSocialMediaController::class, 'deleteByAccountAndDate'])->name('adSpentSocialMedia.delete_by_account');
                 Route::get('/export-data', [AdSpentSocialMediaController::class, 'exportAdsMetaStats'])->name('adSpentSocialMedia.export-data');
 
+                Route::get('/get-shopee', [AdSpentSocialMediaController::class, 'get_ads_shopee'])->name('adSpentSocialMedia.get_ads_shopee');
+                Route::get('/show-shopee', [AdSpentSocialMediaController::class, 'get_shopee_details_by_date'])->name('adSpentSocialMedia.get_shopee_details_by_date');
+                Route::get('/shopee-summary', [AdSpentSocialMediaController::class, 'get_shopee_summary'])->name('adSpentSocialMedia.get_shopee_summary');
+                Route::post('/import-shopee', [AdSpentSocialMediaController::class, 'importShopeeAds'])->name('adSpentSocialMedia.import_shopee');
+                Route::delete('/delete-shopee', [AdSpentSocialMediaController::class, 'deleteShopeeRecord'])->name('adSpentSocialMedia.delete_shopee');
+                Route::get('/shopee-line-data', [AdSpentSocialMediaController::class, 'getShopeeLineData'])->name('adSpentSocialMedia.shopee_line_data');
+                Route::get('/shopee-funnel-data', [AdSpentSocialMediaController::class, 'getShopeeFunnelData'])->name('adSpentSocialMedia.shopee_funnel_data');
+
                 Route::get('/shopee2/get', [AdSpentSocialMediaController::class, 'get_shopee2_ads_cpas'])->name('adSpentSocialMedia.get_shopee2_ads_cpas');
                 Route::post('/shopee2/import', [AdSpentSocialMediaController::class, 'import_shopee2_ads'])->name('adSpentSocialMedia.import_shopee2');
                 Route::get('/shopee2/line-data', [AdSpentSocialMediaController::class, 'get_shopee2_line_data'])->name('adSpentSocialMedia.shopee2-line-data');
