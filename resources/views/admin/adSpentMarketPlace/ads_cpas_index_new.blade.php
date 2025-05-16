@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Ads CPAS Monitor')
+@section('title', 'Ads Monitor')
 
 @section('content_header')
-    <h1>Ads CPAS Monitor</h1>
+    <h1>Ads Monitor</h1>
 @stop
 
 @section('content')
