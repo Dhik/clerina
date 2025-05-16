@@ -3028,15 +3028,23 @@ private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateA
     $reportDate = null;
     $accountName = null;
     
-    if (preg_match('/Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
-        $accountName = preg_replace('/_Campaign_Report.*$/', '', $filename);
-        $reportDate = $matches[1] . '-' . $matches[2] . '-' . $matches[3];
-        \Log::info("Extracted date from filename: " . $reportDate);
-        \Log::info("Extracted account name: " . $accountName);
+    // Pattern 1: "Cleora 10 - VSA - Labib-Campaign Report(2025-04-01 to 2025-04-01)"
+    if (preg_match('/(.+)-Campaign Report\((\d{4})-(\d{2})-(\d{2}) to/', $filename, $matches)) {
+        $accountName = trim($matches[1]);
+        $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
+        \Log::info("Pattern 1: Extracted date from filename: " . $reportDate);
+        \Log::info("Pattern 1: Extracted account name: " . $accountName);
+    }
+    // Pattern 2: "Cleora_8_Mofu_Bofu_Nabilah_Campaign_Report2025_05_13_to_2025_05"
+    else if (preg_match('/(.+)_Campaign_Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
+        $accountName = $matches[1];
+        $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
+        \Log::info("Pattern 2: Extracted date from filename: " . $reportDate);
+        \Log::info("Pattern 2: Extracted account name: " . $accountName);
     } else {
         $accountName = $filename;
         $reportDate = Carbon::now()->format('Y-m-d');
-        \Log::info("Using default date: " . $reportDate . " and account name: " . $accountName);
+        \Log::info("No pattern matched. Using default date: " . $reportDate . " and account name: " . $accountName);
     }
     
     // Use Excel to read the file with fallback options
