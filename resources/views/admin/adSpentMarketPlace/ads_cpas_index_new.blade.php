@@ -15,11 +15,11 @@
                         <i class="fas fa-store"></i> Meta Ads
                     </a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" id="shopee-ads-tab" data-toggle="tab" href="#shopee-ads-content" role="tab" aria-controls="shopee-ads-content" aria-selected="false">
                         <i class="fas fa-shopping-bag"></i> Shopee Ads
                     </a>
-                </li>
+                </li> -->
                 <!-- <li class="nav-item">
                     <a class="nav-link" id="shopee3-tab" data-toggle="tab" href="#shopee3-content" role="tab" aria-controls="shopee3-content" aria-selected="false">
                         <i class="fas fa-shopping-cart"></i> Shopee 3
