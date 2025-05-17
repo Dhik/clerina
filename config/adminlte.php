@@ -506,6 +506,12 @@ return [
             ]
         ],
         [
+            'text' => 'Live Data',
+            'url' => 'admin/live_data',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewKOL],
+        ],
+        [
             'text' => 'KOL',
             'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
             'icon'    => 'fas fa-fw fa-play',

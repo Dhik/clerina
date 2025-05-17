@@ -65,6 +65,18 @@ Route::prefix('admin')
                 Route::get('/{id}/kpi', [BriefContentController::class, 'getKPI'])->name('brief_contents.get-kpi');
                 Route::delete('/{id}', [BriefContentController::class, 'destroy'])->name('brief_contents.destroy');
             });
+
+        Route::prefix('live_data')->group(function () {
+            Route::get('/', [LiveDataController::class, 'index'])->name('live_data.index');
+            Route::get('/create', [LiveDataController::class, 'create'])->name('live_data.create');
+            Route::post('/', [LiveDataController::class, 'store'])->name('live_data.store');
+            Route::get('/data', [LiveDataController::class, 'data'])->name('live_data.data');
+            Route::get('/chart', [LiveDataController::class, 'chartData'])->name('live_data.chart');
+            Route::get('/{liveData}', [LiveDataController::class, 'show'])->name('live_data.show');
+            Route::get('/{liveData}/edit', [LiveDataController::class, 'edit'])->name('live_data.edit');
+            Route::put('/{liveData}', [LiveDataController::class, 'update'])->name('live_data.update');
+            Route::delete('/{liveData}', [LiveDataController::class, 'destroy'])->name('live_data.destroy');
+        });
         
         Route::prefix('products')
             ->group(function () {
