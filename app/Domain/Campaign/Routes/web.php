@@ -8,7 +8,7 @@ use App\Domain\Campaign\Controllers\StatisticController;
 use App\Domain\Campaign\Controllers\BudgetController;
 use App\Domain\Campaign\Controllers\BriefController;
 use App\Domain\Campaign\Controllers\BriefContentController;
-use App\Domain\Campaign\Controllers\LiveDataContentController;
+use App\Domain\Campaign\Controllers\LiveDataController;
 use Illuminate\Support\Facades\Route;
 
 /*
