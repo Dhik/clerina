@@ -509,7 +509,7 @@ return [
             'text' => 'Live Data',
             'url' => 'admin/live_data',
             'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewKOL],
+            'can' => [PermissionEnum::ChangeOwnPassword],
         ],
         [
             'text' => 'KOL',
