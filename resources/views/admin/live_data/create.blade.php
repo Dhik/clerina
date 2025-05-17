@@ -18,13 +18,19 @@
                         <input type="date" class="form-control" id="date" name="date" required>
                     </div>
                     <div class="form-group">
-                        <label for="shift">Shift</label>
-                        <select class="form-control" id="shift" name="shift" required>
-                            <option value="Pagi">Pagi</option>
-                            <option value="Siang">Siang</option>
-                            <option value="Sore">Sore</option>
-                            <option value="Malam">Malam</option>
-                        </select>
+                        <label for="shift">Time Range (Shift)</label>
+                        <div class="row">
+                            <div class="col-5">
+                                <input type="time" class="form-control" id="shift_start" required>
+                            </div>
+                            <div class="col-2 text-center pt-2">
+                                to
+                            </div>
+                            <div class="col-5">
+                                <input type="time" class="form-control" id="shift_end" required>
+                            </div>
+                        </div>
+                        <input type="hidden" name="shift" id="shift_hidden">
                     </div>
                     <div class="form-group">
                         <label for="dilihat">Dilihat</label>
@@ -57,4 +63,23 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('js')
+<script>
+    $(function() {
+        // Handle form submission
+        $('form').on('submit', function(e) {
+            const startTime = $('#shift_start').val();
+            const endTime = $('#shift_end').val();
+            
+            if (startTime && endTime) {
+                $('#shift_hidden').val(startTime + ' - ' + endTime);
+            } else {
+                e.preventDefault();
+                alert('Please specify both start and end times for the shift.');
+            }
+        });
+    });
+</script>
 @stop
