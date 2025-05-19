@@ -40,6 +40,7 @@
                             <option value="NABILA">Nabila</option>
                             <option value="REZA">Reza</option>
                             <option value="FEBRY">Febry</option>
+                            <option value="LAIN-LAIN">Lain-lain</option>
                         </select>
                     </div>
                     <div class="form-group d-none" id="errorImportTiktokAdsSpent"></div>
