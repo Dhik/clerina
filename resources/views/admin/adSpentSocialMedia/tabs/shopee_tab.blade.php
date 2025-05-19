@@ -10,12 +10,22 @@
                                 <div class="col-md-3 mb-2">
                                     <input type="text" id="shopeeFilterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                                 </div>
-                                <div class="col-auto">
+                                <!-- <div class="col-auto">
                                     <select class="form-control" id="shopeeKodeProdukFilter">
                                         <option value="">All Products</option>
                                         @foreach($kategoriProdukList as $kategori)
                                             <option value="{{ $kategori }}">{{ $kategori }}</option>
                                         @endforeach
+                                    </select>
+                                </div> -->
+                                <!-- Add this after the existing kategori produk filter -->
+                                <div class="col-auto">
+                                    <select class="form-control" id="shopeeBiddingModeFilter">
+                                        <option value="">All Bidding Modes</option>
+                                        <option value="GMV Max ROAS">GMV Max ROAS</option>
+                                        <option value="Bidding Manual">Bidding Manual</option>
+                                        <option value="GMV Max Auto">GMV Max Auto</option>
+                                        <option value="Bidding Otomatis">Bidding Otomatis</option>
                                     </select>
                                 </div>
                                 <div class="col-auto">

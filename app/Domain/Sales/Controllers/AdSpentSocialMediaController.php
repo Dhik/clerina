@@ -586,127 +586,127 @@ class AdSpentSocialMediaController extends Controller
             ->rawColumns(['action', 'performance'])
             ->make(true);
     }
-public function get_tiktok_campaign_summary(Request $request)
-{
-    $query = AdsTiktok::query()
-        ->select([
-            DB::raw('SUM(amount_spent) as total_amount_spent'),
-            DB::raw('SUM(impressions) as total_impressions'),
-            DB::raw('SUM(link_clicks) as total_link_clicks'),
-            DB::raw('SUM(content_views_shared_items) as total_content_views'),
-            DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
-            DB::raw('SUM(purchases_shared_items) as total_purchases'),
-            DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
-            DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
-            
-            // TOFU/MOFU/BOFU metrics
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
-            DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
-        ]);
-    
-    // Apply date filter with support for both single date and date range
-    if ($request->has('date_start') && $request->has('date_end')) {
-        try {
-            $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
-            $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
-            $query->whereBetween('date', [$dateStart, $dateEnd]);
-        } catch (\Exception $e) {
-            Log::error('Date parsing error: ' . $e->getMessage());
-        }
-    } elseif ($request->has('date')) {
-        try {
-            $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
-            $query->where('date', $parsedDate);
-        } catch (\Exception $e) {
-            $query->where('date', $request->input('date'));
-        }
-    }
-    
-    // Apply product category filter if provided
-    if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-        $query->where('kategori_produk', $request->kategori_produk);
-    }
-    
-    // Apply PIC filter if provided
-    if ($request->has('pic') && $request->pic !== '') {
-        $query->where('pic', $request->pic);
-    }
-    
-    $summary = $query->first();
-    
-    // Calculate derived metrics
-    $result = [
-        'total_amount_spent' => $summary->total_amount_spent,
-        'total_impressions' => $summary->total_impressions,
-        'total_link_clicks' => $summary->total_link_clicks,
-        'total_content_views' => $summary->total_content_views,
-        'total_adds_to_cart' => $summary->total_adds_to_cart,
-        'total_purchases' => $summary->total_purchases,
-        'total_conversion_value' => $summary->total_conversion_value,
-        'accounts_count' => $summary->accounts_count,
-        
-        // Derived metrics
-        'cost_per_purchase' => $summary->total_purchases > 0 ? $summary->total_amount_spent / $summary->total_purchases : 0,
-        'cost_per_view' => $summary->total_content_views > 0 ? $summary->total_amount_spent / $summary->total_content_views : 0,
-        'cost_per_atc' => $summary->total_adds_to_cart > 0 ? $summary->total_amount_spent / $summary->total_adds_to_cart : 0,
-        'cpm' => $summary->total_impressions > 0 ? ($summary->total_amount_spent / $summary->total_impressions) * 1000 : 0,
-        'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
-        'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0,
-        
-        // Funnel stage metrics with percentages
-        'tofu_spent' => $summary->tofu_spent,
-        'mofu_spent' => $summary->mofu_spent, 
-        'bofu_spent' => $summary->bofu_spent,
-        'tofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->tofu_spent / $summary->total_amount_spent) * 100 : 0,
-        'mofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->mofu_spent / $summary->total_amount_spent) * 100 : 0,
-        'bofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->bofu_spent / $summary->total_amount_spent) * 100 : 0
-    ];
-    
-    return response()->json([
-        'success' => true,
-        'data' => $result
-    ]);
-}
-
-public function deleteTiktokByAccountAndDate(Request $request)
-{
-    $accountName = $request->input('account_name');
-    $date = $request->input('date');
-    
-    try {
-        $deleted = AdsTiktok::where('account_name', $accountName)
-            ->where('date', $date)
-            ->delete();
-        
-        if ($deleted) {
-            return response()->json([
-                'status' => 'success',
-                'message' => "Successfully deleted data for '{$accountName}' on {$date}"
+    public function get_tiktok_campaign_summary(Request $request)
+    {
+        $query = AdsTiktok::query()
+            ->select([
+                DB::raw('SUM(amount_spent) as total_amount_spent'),
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(link_clicks) as total_link_clicks'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases'),
+                DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
+                DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
+                
+                // TOFU/MOFU/BOFU metrics
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent')
             ]);
-        } else {
-            // Collect debug info for troubleshooting
-            $availableAccounts = AdsTiktok::where('date', $date)
-                ->pluck('account_name')
-                ->toArray();
+        
+        // Apply date filter with support for both single date and date range
+        if ($request->has('date_start') && $request->has('date_end')) {
+            try {
+                $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+                $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+                $query->whereBetween('date', [$dateStart, $dateEnd]);
+            } catch (\Exception $e) {
+                Log::error('Date parsing error: ' . $e->getMessage());
+            }
+        } elseif ($request->has('date')) {
+            try {
+                $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+                $query->where('date', $parsedDate);
+            } catch (\Exception $e) {
+                $query->where('date', $request->input('date'));
+            }
+        }
+        
+        // Apply product category filter if provided
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+        
+        // Apply PIC filter if provided
+        if ($request->has('pic') && $request->pic !== '') {
+            $query->where('pic', $request->pic);
+        }
+        
+        $summary = $query->first();
+        
+        // Calculate derived metrics
+        $result = [
+            'total_amount_spent' => $summary->total_amount_spent,
+            'total_impressions' => $summary->total_impressions,
+            'total_link_clicks' => $summary->total_link_clicks,
+            'total_content_views' => $summary->total_content_views,
+            'total_adds_to_cart' => $summary->total_adds_to_cart,
+            'total_purchases' => $summary->total_purchases,
+            'total_conversion_value' => $summary->total_conversion_value,
+            'accounts_count' => $summary->accounts_count,
             
+            // Derived metrics
+            'cost_per_purchase' => $summary->total_purchases > 0 ? $summary->total_amount_spent / $summary->total_purchases : 0,
+            'cost_per_view' => $summary->total_content_views > 0 ? $summary->total_amount_spent / $summary->total_content_views : 0,
+            'cost_per_atc' => $summary->total_adds_to_cart > 0 ? $summary->total_amount_spent / $summary->total_adds_to_cart : 0,
+            'cpm' => $summary->total_impressions > 0 ? ($summary->total_amount_spent / $summary->total_impressions) * 1000 : 0,
+            'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
+            'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0,
+            
+            // Funnel stage metrics with percentages
+            'tofu_spent' => $summary->tofu_spent,
+            'mofu_spent' => $summary->mofu_spent, 
+            'bofu_spent' => $summary->bofu_spent,
+            'tofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->tofu_spent / $summary->total_amount_spent) * 100 : 0,
+            'mofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->mofu_spent / $summary->total_amount_spent) * 100 : 0,
+            'bofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->bofu_spent / $summary->total_amount_spent) * 100 : 0
+        ];
+        
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+
+    public function deleteTiktokByAccountAndDate(Request $request)
+    {
+        $accountName = $request->input('account_name');
+        $date = $request->input('date');
+        
+        try {
+            $deleted = AdsTiktok::where('account_name', $accountName)
+                ->where('date', $date)
+                ->delete();
+            
+            if ($deleted) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => "Successfully deleted data for '{$accountName}' on {$date}"
+                ]);
+            } else {
+                // Collect debug info for troubleshooting
+                $availableAccounts = AdsTiktok::where('date', $date)
+                    ->pluck('account_name')
+                    ->toArray();
+                
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "No data found for '{$accountName}' on {$date}",
+                    'debug_info' => [
+                        'requested_account' => $accountName,
+                        'requested_date' => $date,
+                        'available_accounts' => $availableAccounts
+                    ]
+                ], 404);
+            }
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => "No data found for '{$accountName}' on {$date}",
-                'debug_info' => [
-                    'requested_account' => $accountName,
-                    'requested_date' => $date,
-                    'available_accounts' => $availableAccounts
-                ]
-            ], 404);
+                'message' => "Error deleting data: " . $e->getMessage()
+            ], 500);
         }
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => "Error deleting data: " . $e->getMessage()
-        ], 500);
     }
-}
 
     public function get_campaign_summary(Request $request)
     {
@@ -795,104 +795,104 @@ public function deleteTiktokByAccountAndDate(Request $request)
         ]);
     }
     public function deleteByAccountAndDate(Request $request)
-{
-    DB::beginTransaction();
-    try {
-        $validator = Validator::make($request->all(), [
-            'account_name' => 'required|string',
-            'date' => 'required|date_format:Y-m-d',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Debug output to check the incoming data
-        \Log::info('Delete Request:', [
-            'account_name' => $request->account_name,
-            'date' => $request->date,
-            // 'tenant_id' => auth()->user()->current_tenant_id ?? auth()->user()->tenant_id
-        ]);
-
-        // Ensure we have a tenant ID
-        // $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
-        // if (!$tenantId) {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => 'No tenant ID found for the current user.'
-        //     ], 400);
-        // }
-
-        $date = Carbon::parse($request->date)->format('Y-m-d');
-        
-        // Check if records exist before attempting to delete
-        $records = AdsMeta::where('account_name', $request->account_name)
-            ->where('date', $date)
-            // ->where('tenant_id', $tenantId)
-            ->get();
-            
-        \Log::info('Found records:', ['count' => $records->count()]);
-        
-        if ($records->count() > 0) {
-            $deleted = AdsMeta::where('account_name', $request->account_name)
-                ->where('date', $date)
-                // ->where('tenant_id', $tenantId)
-                ->delete();
-                
-            DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Account data deleted successfully for the specified date.',
-                'deleted_count' => $deleted
+    {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make($request->all(), [
+                'account_name' => 'required|string',
+                'date' => 'required|date_format:Y-m-d',
             ]);
-        } else {
-            // Try a more lenient query to see what might be available
-            $possibleRecords = AdsMeta::where('date', $date)
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Debug output to check the incoming data
+            \Log::info('Delete Request:', [
+                'account_name' => $request->account_name,
+                'date' => $request->date,
+                // 'tenant_id' => auth()->user()->current_tenant_id ?? auth()->user()->tenant_id
+            ]);
+
+            // Ensure we have a tenant ID
+            // $tenantId = auth()->user()->current_tenant_id ?? auth()->user()->tenant_id;
+            // if (!$tenantId) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'No tenant ID found for the current user.'
+            //     ], 400);
+            // }
+
+            $date = Carbon::parse($request->date)->format('Y-m-d');
+            
+            // Check if records exist before attempting to delete
+            $records = AdsMeta::where('account_name', $request->account_name)
+                ->where('date', $date)
                 // ->where('tenant_id', $tenantId)
                 ->get();
                 
-            $availableAccounts = $possibleRecords->pluck('account_name')->unique()->toArray();
+            \Log::info('Found records:', ['count' => $records->count()]);
             
-            \Log::info('Available accounts for date:', [
-                'date' => $date,
-                'accounts' => $availableAccounts
-            ]);
+            if ($records->count() > 0) {
+                $deleted = AdsMeta::where('account_name', $request->account_name)
+                    ->where('date', $date)
+                    // ->where('tenant_id', $tenantId)
+                    ->delete();
+                    
+                DB::commit();
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Account data deleted successfully for the specified date.',
+                    'deleted_count' => $deleted
+                ]);
+            } else {
+                // Try a more lenient query to see what might be available
+                $possibleRecords = AdsMeta::where('date', $date)
+                    // ->where('tenant_id', $tenantId)
+                    ->get();
+                    
+                $availableAccounts = $possibleRecords->pluck('account_name')->unique()->toArray();
+                
+                \Log::info('Available accounts for date:', [
+                    'date' => $date,
+                    'accounts' => $availableAccounts
+                ]);
+                
+                DB::rollBack();
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No records found to delete. Please check the account name and date.',
+                    'debug_info' => [
+                        'requested_account' => $request->account_name,
+                        'requested_date' => $date,
+                        'available_accounts' => $availableAccounts,
+                    ]
+                ], 404);
+            }
             
+        } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No records found to delete. Please check the account name and date.',
-                'debug_info' => [
-                    'requested_account' => $request->account_name,
-                    'requested_date' => $date,
-                    'available_accounts' => $availableAccounts,
-                ]
-            ], 404);
-        }
-        
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Delete error: ' . $e->getMessage(), [
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error deleting data: ' . $e->getMessage(),
-            'debug_info' => [
+            \Log::error('Delete error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'exception_class' => get_class($e)
-            ]
-        ], 500);
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error deleting data: ' . $e->getMessage(),
+                'debug_info' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'exception_class' => get_class($e)
+                ]
+            ], 500);
+        }
     }
-}
 
 
     public function get_shopee2_ads_cpas(Request $request)
@@ -2915,381 +2915,381 @@ public function deleteTiktokByAccountAndDate(Request $request)
         return $count;
     }
     public function import_tiktok_ads(Request $request)
-{
-    try {
-        $request->validate([
-            'tiktokAdsFile' => 'required|file|mimes:xlsx,zip|max:5120',
-            'kategori_produk' => 'required|string',
-            'pic' => 'required|string'
-        ]);
-
-        $file = $request->file('tiktokAdsFile');
-        $kategoriProduk = $request->input('kategori_produk');
-        $pic = $request->input('pic');
-        $dateAmountMap = [];
-        $importCount = 0;
-        
-        \Log::info("Starting TikTok ads import process");
-        \Log::info("File name: " . $file->getClientOriginalName());
-        \Log::info("Kategori produk: " . $kategoriProduk);
-        \Log::info("PIC: " . $pic);
-
-        // Capturing tenant ID early to ensure it's available
-        $tenantId = Auth::user()->current_tenant_id;
-        \Log::info("Using tenant ID: " . $tenantId);
-
-        DB::beginTransaction();
+    {
         try {
-            // Check if the file is a ZIP file
-            if ($file->getClientOriginalExtension() == 'zip') {
-                \Log::info("Processing ZIP file");
-                // Process ZIP file
-                $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
-                if (!file_exists($tempDir)) {
-                    mkdir($tempDir, 0755, true);
-                }
-                
-                $zip = new \ZipArchive;
-                if ($zip->open($file->getPathname()) === TRUE) {
-                    $zip->extractTo($tempDir);
-                    $zip->close();
-                    
-                    $xlsxFiles = glob($tempDir . '/*.xlsx');
-                    \Log::info("Found " . count($xlsxFiles) . " XLSX files in ZIP");
-                    
-                    foreach ($xlsxFiles as $xlsxFile) {
-                        $xlsxFilename = basename($xlsxFile);
-                        \Log::info("Processing XLSX file from ZIP: " . $xlsxFilename);
-                        $importCount += $this->processTiktokXlsxFile($xlsxFile, $kategoriProduk, $pic, $dateAmountMap, $xlsxFilename, $tenantId);
+            $request->validate([
+                'tiktokAdsFile' => 'required|file|mimes:xlsx,zip|max:5120',
+                'kategori_produk' => 'required|string',
+                'pic' => 'required|string'
+            ]);
+
+            $file = $request->file('tiktokAdsFile');
+            $kategoriProduk = $request->input('kategori_produk');
+            $pic = $request->input('pic');
+            $dateAmountMap = [];
+            $importCount = 0;
+            
+            \Log::info("Starting TikTok ads import process");
+            \Log::info("File name: " . $file->getClientOriginalName());
+            \Log::info("Kategori produk: " . $kategoriProduk);
+            \Log::info("PIC: " . $pic);
+
+            // Capturing tenant ID early to ensure it's available
+            $tenantId = Auth::user()->current_tenant_id;
+            \Log::info("Using tenant ID: " . $tenantId);
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    \Log::info("Processing ZIP file");
+                    // Process ZIP file
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
                     }
                     
-                    array_map('unlink', glob($tempDir . '/*'));
-                    rmdir($tempDir);
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        $xlsxFiles = glob($tempDir . '/*.xlsx');
+                        \Log::info("Found " . count($xlsxFiles) . " XLSX files in ZIP");
+                        
+                        foreach ($xlsxFiles as $xlsxFile) {
+                            $xlsxFilename = basename($xlsxFile);
+                            \Log::info("Processing XLSX file from ZIP: " . $xlsxFilename);
+                            $importCount += $this->processTiktokXlsxFile($xlsxFile, $kategoriProduk, $pic, $dateAmountMap, $xlsxFilename, $tenantId);
+                        }
+                        
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
                 } else {
-                    throw new \Exception("Could not open ZIP file");
+                    // Process a single XLSX file
+                    $originalFilename = $file->getClientOriginalName();
+                    \Log::info("Processing single XLSX file: " . $originalFilename);
+                    $importCount = $this->processTiktokXlsxFile($file->getPathname(), $kategoriProduk, $pic, $dateAmountMap, $originalFilename, $tenantId);
                 }
-            } else {
-                // Process a single XLSX file
-                $originalFilename = $file->getClientOriginalName();
-                \Log::info("Processing single XLSX file: " . $originalFilename);
-                $importCount = $this->processTiktokXlsxFile($file->getPathname(), $kategoriProduk, $pic, $dateAmountMap, $originalFilename, $tenantId);
-            }
 
-            // Update AdSpentSocialMedia with aggregated totals
-            foreach ($dateAmountMap as $date => $totalAmount) {
-                \Log::info("Updating AdSpentSocialMedia for date: " . $date . " with amount: " . $totalAmount);
-                
-                try {
-                    AdSpentSocialMedia::updateOrCreate(
-                        [
-                            'date' => $date,
-                            'social_media_id' => 4, // Assuming 4 is for TikTok
-                            'tenant_id' => $tenantId
-                        ],
-                        [
-                            'amount' => $totalAmount
-                        ]
-                    );
-                    \Log::info("AdSpentSocialMedia updated successfully for date: " . $date);
-                } catch (\Exception $e) {
-                    \Log::error("Error updating AdSpentSocialMedia: " . $e->getMessage());
+                // Update AdSpentSocialMedia with aggregated totals
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    \Log::info("Updating AdSpentSocialMedia for date: " . $date . " with amount: " . $totalAmount);
+                    
+                    try {
+                        AdSpentSocialMedia::updateOrCreate(
+                            [
+                                'date' => $date,
+                                'social_media_id' => 4, // Assuming 4 is for TikTok
+                                'tenant_id' => $tenantId
+                            ],
+                            [
+                                'amount' => $totalAmount
+                            ]
+                        );
+                        \Log::info("AdSpentSocialMedia updated successfully for date: " . $date);
+                    } catch (\Exception $e) {
+                        \Log::error("Error updating AdSpentSocialMedia: " . $e->getMessage());
+                    }
                 }
+                
+                DB::commit();
+                \Log::info("Transaction committed, total imported: " . $importCount);
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'TikTok ads data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error("Import failed with error: " . $e->getMessage());
+                \Log::error("Stack trace: " . $e->getTraceAsString());
+                throw $e;
             }
-            
-            DB::commit();
-            \Log::info("Transaction committed, total imported: " . $importCount);
-            
-            return response()->json([
-                'status' => 'success',
-                'message' => 'TikTok ads data imported successfully. ' . $importCount . ' records imported.'
-            ]);
             
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error("Import failed with error: " . $e->getMessage());
-            \Log::error("Stack trace: " . $e->getTraceAsString());
-            throw $e;
+            \Log::error("Error in import_tiktok_ads: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
         }
-        
-    } catch (\Exception $e) {
-        \Log::error("Error in import_tiktok_ads: " . $e->getMessage());
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error importing data: ' . $e->getMessage()
-        ], 422);
     }
-}
 
-private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateAmountMap, $originalFilename = null, $tenantId = null)
-{
-    // Get account_name from filename
-    $filename = $originalFilename ?? basename($filePath);
-    $filename = pathinfo($filename, PATHINFO_FILENAME);
-    
-    \Log::info("Processing file: " . $filename);
-    
-    // Extract account_name and date from filename pattern
-    $reportDate = null;
-    $accountName = null;
-    
-    // Pattern 1: "Cleora 10 - VSA - Labib-Campaign Report(2025-04-01 to 2025-04-01)"
-    if (preg_match('/(.+)-Campaign Report\((\d{4})-(\d{2})-(\d{2}) to/', $filename, $matches)) {
-        $accountName = trim($matches[1]);
-        $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
-        \Log::info("Pattern 1: Extracted date from filename: " . $reportDate);
-        \Log::info("Pattern 1: Extracted account name: " . $accountName);
-    }
-    // Pattern 2: "Cleora_8_Mofu_Bofu_Nabilah_Campaign_Report2025_05_13_to_2025_05"
-    else if (preg_match('/(.+)_Campaign_Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
-        $accountName = $matches[1];
-        $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
-        \Log::info("Pattern 2: Extracted date from filename: " . $reportDate);
-        \Log::info("Pattern 2: Extracted account name: " . $accountName);
-    } else {
-        $accountName = $filename;
-        $reportDate = Carbon::now()->format('Y-m-d');
-        \Log::info("No pattern matched. Using default date: " . $reportDate . " and account name: " . $accountName);
-    }
-    
-    // Use Excel to read the file with fallback options
-    try {
-        // Try simple Excel read first
-        $data = Excel::toArray(new class {} , $filePath)[0];
+    private function processTiktokXlsxFile($filePath, $kategoriProduk, $pic, &$dateAmountMap, $originalFilename = null, $tenantId = null)
+    {
+        // Get account_name from filename
+        $filename = $originalFilename ?? basename($filePath);
+        $filename = pathinfo($filename, PATHINFO_FILENAME);
         
-        \Log::info("Excel file loaded successfully with " . count($data) . " rows");
+        \Log::info("Processing file: " . $filename);
         
-        // For debugging, log the first few rows
-        for ($i = 0; $i < min(3, count($data)); $i++) {
-            \Log::info("Row $i: " . json_encode(array_slice($data[$i], 0, 5)) . "...");
+        // Extract account_name and date from filename pattern
+        $reportDate = null;
+        $accountName = null;
+        
+        // Pattern 1: "Cleora 10 - VSA - Labib-Campaign Report(2025-04-01 to 2025-04-01)"
+        if (preg_match('/(.+)-Campaign Report\((\d{4})-(\d{2})-(\d{2}) to/', $filename, $matches)) {
+            $accountName = trim($matches[1]);
+            $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
+            \Log::info("Pattern 1: Extracted date from filename: " . $reportDate);
+            \Log::info("Pattern 1: Extracted account name: " . $accountName);
         }
-    } catch (\Exception $e) {
-        \Log::error("Error loading Excel file: " . $e->getMessage());
+        // Pattern 2: "Cleora_8_Mofu_Bofu_Nabilah_Campaign_Report2025_05_13_to_2025_05"
+        else if (preg_match('/(.+)_Campaign_Report(\d{4})_(\d{2})_(\d{2})/', $filename, $matches)) {
+            $accountName = $matches[1];
+            $reportDate = $matches[2] . '-' . $matches[3] . '-' . $matches[4];
+            \Log::info("Pattern 2: Extracted date from filename: " . $reportDate);
+            \Log::info("Pattern 2: Extracted account name: " . $accountName);
+        } else {
+            $accountName = $filename;
+            $reportDate = Carbon::now()->format('Y-m-d');
+            \Log::info("No pattern matched. Using default date: " . $reportDate . " and account name: " . $accountName);
+        }
         
-        // Try another approach with PhpSpreadsheet directly
+        // Use Excel to read the file with fallback options
         try {
-            \Log::info("Trying PhpSpreadsheet directly as fallback");
-            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-            $spreadsheet = $reader->load($filePath);
-            $worksheet = $spreadsheet->getActiveSheet();
-            $data = $worksheet->toArray();
-            \Log::info("PhpSpreadsheet fallback successful with " . count($data) . " rows");
-        } catch (\Exception $e2) {
-            \Log::error("PhpSpreadsheet fallback also failed: " . $e2->getMessage());
-            return 0;
-        }
-    }
-    
-    // Find the header row and map column indices
-    $headerRow = null;
-    $columnMap = [];
-    
-    foreach ($data as $index => $row) {
-        // Look for common headers that should exist in the file
-        $campaignNameFound = false;
-        $costFound = false;
-        
-        foreach ($row as $colIndex => $value) {
-            if (is_string($value)) {
-                if (stripos($value, 'Campaign name') !== false || stripos($value, 'Campaign') !== false) {
-                    $campaignNameFound = true;
-                }
-                if (stripos($value, 'Cost') !== false) {
-                    $costFound = true;
-                }
+            // Try simple Excel read first
+            $data = Excel::toArray(new class {} , $filePath)[0];
+            
+            \Log::info("Excel file loaded successfully with " . count($data) . " rows");
+            
+            // For debugging, log the first few rows
+            for ($i = 0; $i < min(3, count($data)); $i++) {
+                \Log::info("Row $i: " . json_encode(array_slice($data[$i], 0, 5)) . "...");
+            }
+        } catch (\Exception $e) {
+            \Log::error("Error loading Excel file: " . $e->getMessage());
+            
+            // Try another approach with PhpSpreadsheet directly
+            try {
+                \Log::info("Trying PhpSpreadsheet directly as fallback");
+                $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+                $spreadsheet = $reader->load($filePath);
+                $worksheet = $spreadsheet->getActiveSheet();
+                $data = $worksheet->toArray();
+                \Log::info("PhpSpreadsheet fallback successful with " . count($data) . " rows");
+            } catch (\Exception $e2) {
+                \Log::error("PhpSpreadsheet fallback also failed: " . $e2->getMessage());
+                return 0;
             }
         }
         
-        if ($campaignNameFound && $costFound) {
-            $headerRow = $index;
+        // Find the header row and map column indices
+        $headerRow = null;
+        $columnMap = [];
+        
+        foreach ($data as $index => $row) {
+            // Look for common headers that should exist in the file
+            $campaignNameFound = false;
+            $costFound = false;
             
-            // Create column mapping
-            foreach ($row as $colIndex => $colName) {
+            foreach ($row as $colIndex => $value) {
+                if (is_string($value)) {
+                    if (stripos($value, 'Campaign name') !== false || stripos($value, 'Campaign') !== false) {
+                        $campaignNameFound = true;
+                    }
+                    if (stripos($value, 'Cost') !== false) {
+                        $costFound = true;
+                    }
+                }
+            }
+            
+            if ($campaignNameFound && $costFound) {
+                $headerRow = $index;
+                
+                // Create column mapping
+                foreach ($row as $colIndex => $colName) {
+                    if (!empty($colName)) {
+                        $columnMap[$colName] = $colIndex;
+                    }
+                }
+                
+                \Log::info("Found header row at index " . $index . " with columns: " . implode(", ", array_keys($columnMap)));
+                break;
+            }
+        }
+        
+        // If header row not found, try a simpler approach
+        if ($headerRow === null) {
+            \Log::warning("Header row not found using standard detection. Using first row as header.");
+            $headerRow = 0;
+            
+            foreach ($data[0] as $colIndex => $colName) {
                 if (!empty($colName)) {
                     $columnMap[$colName] = $colIndex;
                 }
             }
-            
-            \Log::info("Found header row at index " . $index . " with columns: " . implode(", ", array_keys($columnMap)));
-            break;
         }
-    }
-    
-    // If header row not found, try a simpler approach
-    if ($headerRow === null) {
-        \Log::warning("Header row not found using standard detection. Using first row as header.");
-        $headerRow = 0;
         
-        foreach ($data[0] as $colIndex => $colName) {
-            if (!empty($colName)) {
-                $columnMap[$colName] = $colIndex;
+        // If still no header found, log error and return
+        if (empty($columnMap)) {
+            \Log::error("Could not find any headers in the Excel file");
+            return 0;
+        }
+        
+        // Skip header row
+        $dataRows = array_slice($data, $headerRow + 1);
+        $count = 0;
+        
+        // Create a function to safely get column values
+        $getColumnValue = function($row, $columnName, $default = null) use ($columnMap) {
+            return isset($columnMap[$columnName]) && isset($row[$columnMap[$columnName]]) 
+                ? $row[$columnMap[$columnName]] 
+                : $default;
+        };
+        
+        foreach ($dataRows as $rowIndex => $row) {
+            // Skip empty rows
+            $campaignName = $getColumnValue($row, 'Campaign name');
+            if (empty($campaignName)) {
+                continue;
             }
-        }
-    }
-    
-    // If still no header found, log error and return
-    if (empty($columnMap)) {
-        \Log::error("Could not find any headers in the Excel file");
-        return 0;
-    }
-    
-    // Skip header row
-    $dataRows = array_slice($data, $headerRow + 1);
-    $count = 0;
-    
-    // Create a function to safely get column values
-    $getColumnValue = function($row, $columnName, $default = null) use ($columnMap) {
-        return isset($columnMap[$columnName]) && isset($row[$columnMap[$columnName]]) 
-            ? $row[$columnMap[$columnName]] 
-            : $default;
-    };
-    
-    foreach ($dataRows as $rowIndex => $row) {
-        // Skip empty rows
-        $campaignName = $getColumnValue($row, 'Campaign name');
-        if (empty($campaignName)) {
-            continue;
-        }
-        
-        try {
-            \Log::info("Processing row " . ($rowIndex + $headerRow + 2) . " with campaign: " . $campaignName);
-            
-            // Map columns according to the provided sample data using the safe getter
-            $primaryStatus = $getColumnValue($row, 'Primary status');
-            $campaignBudget = $getColumnValue($row, 'Campaign Budget', 0);
-            $amountSpent = $getColumnValue($row, 'Cost', 0);
-            $impressions = $getColumnValue($row, 'Impressions', 0);
-            $linkClicks = $getColumnValue($row, 'Clicks (destination)', 0);
-            $productPageViews = $getColumnValue($row, 'Product page views (Shop)', 0);
-            $addsToCartSharedItems = $getColumnValue($row, 'Checkouts initiated (Shop)', 0);
-            $purchasesSharedItems = $getColumnValue($row, 'Purchases (Shop)', 0);
-            $itemsPurchased = $getColumnValue($row, 'Items purchased (Shop)', 0);
-            $purchasesConversionValueSharedItems = $getColumnValue($row, 'Gross revenue (Shop)', 0);
-            $cpm = $getColumnValue($row, 'CPM', 0);
-            $cpc = $getColumnValue($row, 'CPC (destination)', 0);
-            $costPerPurchase = $getColumnValue($row, 'Cost per purchase (Shop)', 0);
-            $ctr = $this->parsePercentage($getColumnValue($row, 'CTR (destination)', '0%'));
-            $purchaseRate = $this->parsePercentage($getColumnValue($row, 'Purchase rate (Shop)', '0%'));
-            $averageOrderValue = $getColumnValue($row, 'Average order value (Shop)', 0);
-            $contentViewsSharedItems = $getColumnValue($row, 'Video views', 0);
-            $liveViews = $getColumnValue($row, 'LIVE views', 0);
-            
-            // Remove currency symbols and commas from numeric values
-            $amountSpent = $this->cleanNumericValue($amountSpent);
-            $campaignBudget = $this->cleanNumericValue($campaignBudget);
-            $impressions = $this->cleanNumericValue($impressions);
-            $linkClicks = $this->cleanNumericValue($linkClicks);
-            $productPageViews = $this->cleanNumericValue($productPageViews);
-            $addsToCartSharedItems = $this->cleanNumericValue($addsToCartSharedItems);
-            $purchasesSharedItems = $this->cleanNumericValue($purchasesSharedItems);
-            $itemsPurchased = $this->cleanNumericValue($itemsPurchased);
-            $purchasesConversionValueSharedItems = $this->cleanNumericValue($purchasesConversionValueSharedItems);
-            $cpm = $this->cleanNumericValue($cpm);
-            $cpc = $this->cleanNumericValue($cpc);
-            $costPerPurchase = $this->cleanNumericValue($costPerPurchase);
-            $averageOrderValue = $this->cleanNumericValue($averageOrderValue);
-            $contentViewsSharedItems = $this->cleanNumericValue($contentViewsSharedItems);
-            $liveViews = $this->cleanNumericValue($liveViews);
-
-            // Prepare data for saving with all columns
-            $saveData = [
-                'amount_spent' => (int)$amountSpent,
-                'impressions' => (int)$impressions,
-                'link_clicks' => (float)$linkClicks,
-                'content_views_shared_items' => (float)$contentViewsSharedItems,
-                'adds_to_cart_shared_items' => (float)$addsToCartSharedItems,
-                'purchases_shared_items' => (float)$purchasesSharedItems,
-                'purchases_conversion_value_shared_items' => (float)$purchasesConversionValueSharedItems,
-                'account_name' => $accountName,
-                'kategori_produk' => $kategoriProduk,
-                'pic' => $pic,
-                'primary_status' => $primaryStatus,
-                'campaign_budget' => (float)$campaignBudget,
-                'product_page_views' => (int)$productPageViews,
-                'items_purchased' => (int)$itemsPurchased,
-                'cpm' => (float)$cpm,
-                'cpc' => (float)$cpc,
-                'cost_per_purchase' => (float)$costPerPurchase,
-                'ctr' => (float)$ctr,
-                'purchase_rate' => (float)$purchaseRate,
-                'average_order_value' => (float)$averageOrderValue,
-                'live_views' => (int)$liveViews
-            ];
-            
-            \Log::info("Data to be saved: " . json_encode(array_slice($saveData, 0, 5)) . "...");
             
             try {
-                $result = AdsTiktok::updateOrCreate(
-                    [
-                        'date' => $reportDate,
-                        'campaign_name' => $campaignName,
-                        'tenant_id' => $tenantId
-                    ],
-                    $saveData
-                );
+                \Log::info("Processing row " . ($rowIndex + $headerRow + 2) . " with campaign: " . $campaignName);
                 
-                \Log::info("Record saved with ID: " . $result->id);
+                // Map columns according to the provided sample data using the safe getter
+                $primaryStatus = $getColumnValue($row, 'Primary status');
+                $campaignBudget = $getColumnValue($row, 'Campaign Budget', 0);
+                $amountSpent = $getColumnValue($row, 'Cost', 0);
+                $impressions = $getColumnValue($row, 'Impressions', 0);
+                $linkClicks = $getColumnValue($row, 'Clicks (destination)', 0);
+                $productPageViews = $getColumnValue($row, 'Product page views (Shop)', 0);
+                $addsToCartSharedItems = $getColumnValue($row, 'Checkouts initiated (Shop)', 0);
+                $purchasesSharedItems = $getColumnValue($row, 'Purchases (Shop)', 0);
+                $itemsPurchased = $getColumnValue($row, 'Items purchased (Shop)', 0);
+                $purchasesConversionValueSharedItems = $getColumnValue($row, 'Gross revenue (Shop)', 0);
+                $cpm = $getColumnValue($row, 'CPM', 0);
+                $cpc = $getColumnValue($row, 'CPC (destination)', 0);
+                $costPerPurchase = $getColumnValue($row, 'Cost per purchase (Shop)', 0);
+                $ctr = $this->parsePercentage($getColumnValue($row, 'CTR (destination)', '0%'));
+                $purchaseRate = $this->parsePercentage($getColumnValue($row, 'Purchase rate (Shop)', '0%'));
+                $averageOrderValue = $getColumnValue($row, 'Average order value (Shop)', 0);
+                $contentViewsSharedItems = $getColumnValue($row, 'Video views', 0);
+                $liveViews = $getColumnValue($row, 'LIVE views', 0);
                 
-                if (!isset($dateAmountMap[$reportDate])) {
-                    $dateAmountMap[$reportDate] = 0;
+                // Remove currency symbols and commas from numeric values
+                $amountSpent = $this->cleanNumericValue($amountSpent);
+                $campaignBudget = $this->cleanNumericValue($campaignBudget);
+                $impressions = $this->cleanNumericValue($impressions);
+                $linkClicks = $this->cleanNumericValue($linkClicks);
+                $productPageViews = $this->cleanNumericValue($productPageViews);
+                $addsToCartSharedItems = $this->cleanNumericValue($addsToCartSharedItems);
+                $purchasesSharedItems = $this->cleanNumericValue($purchasesSharedItems);
+                $itemsPurchased = $this->cleanNumericValue($itemsPurchased);
+                $purchasesConversionValueSharedItems = $this->cleanNumericValue($purchasesConversionValueSharedItems);
+                $cpm = $this->cleanNumericValue($cpm);
+                $cpc = $this->cleanNumericValue($cpc);
+                $costPerPurchase = $this->cleanNumericValue($costPerPurchase);
+                $averageOrderValue = $this->cleanNumericValue($averageOrderValue);
+                $contentViewsSharedItems = $this->cleanNumericValue($contentViewsSharedItems);
+                $liveViews = $this->cleanNumericValue($liveViews);
+
+                // Prepare data for saving with all columns
+                $saveData = [
+                    'amount_spent' => (int)$amountSpent,
+                    'impressions' => (int)$impressions,
+                    'link_clicks' => (float)$linkClicks,
+                    'content_views_shared_items' => (float)$contentViewsSharedItems,
+                    'adds_to_cart_shared_items' => (float)$addsToCartSharedItems,
+                    'purchases_shared_items' => (float)$purchasesSharedItems,
+                    'purchases_conversion_value_shared_items' => (float)$purchasesConversionValueSharedItems,
+                    'account_name' => $accountName,
+                    'kategori_produk' => $kategoriProduk,
+                    'pic' => $pic,
+                    'primary_status' => $primaryStatus,
+                    'campaign_budget' => (float)$campaignBudget,
+                    'product_page_views' => (int)$productPageViews,
+                    'items_purchased' => (int)$itemsPurchased,
+                    'cpm' => (float)$cpm,
+                    'cpc' => (float)$cpc,
+                    'cost_per_purchase' => (float)$costPerPurchase,
+                    'ctr' => (float)$ctr,
+                    'purchase_rate' => (float)$purchaseRate,
+                    'average_order_value' => (float)$averageOrderValue,
+                    'live_views' => (int)$liveViews
+                ];
+                
+                \Log::info("Data to be saved: " . json_encode(array_slice($saveData, 0, 5)) . "...");
+                
+                try {
+                    $result = AdsTiktok::updateOrCreate(
+                        [
+                            'date' => $reportDate,
+                            'campaign_name' => $campaignName,
+                            'tenant_id' => $tenantId
+                        ],
+                        $saveData
+                    );
+                    
+                    \Log::info("Record saved with ID: " . $result->id);
+                    
+                    if (!isset($dateAmountMap[$reportDate])) {
+                        $dateAmountMap[$reportDate] = 0;
+                    }
+                    $dateAmountMap[$reportDate] += (int)$amountSpent;
+                    
+                    $count++;
+                } catch (\Exception $e) {
+                    \Log::error("Error saving record: " . $e->getMessage());
                 }
-                $dateAmountMap[$reportDate] += (int)$amountSpent;
-                
-                $count++;
             } catch (\Exception $e) {
-                \Log::error("Error saving record: " . $e->getMessage());
+                \Log::warning("Error processing row in XLSX: Row " . ($rowIndex + $headerRow + 2) . " - " . $e->getMessage());
+                // Continue processing other rows
             }
-        } catch (\Exception $e) {
-            \Log::warning("Error processing row in XLSX: Row " . ($rowIndex + $headerRow + 2) . " - " . $e->getMessage());
-            // Continue processing other rows
         }
+        
+        \Log::info("Finished processing file. Imported " . $count . " records.");
+        return $count;
     }
-    
-    \Log::info("Finished processing file. Imported " . $count . " records.");
-    return $count;
-}
 
-/**
- * Parse percentage string to decimal
- * 
- * @param string $percentStr
- * @return float
- */
-private function parsePercentage($percentStr)
-{
-    if (is_numeric($percentStr)) {
-        return $percentStr;
+    /**
+     * Parse percentage string to decimal
+     * 
+     * @param string $percentStr
+     * @return float
+     */
+    private function parsePercentage($percentStr)
+    {
+        if (is_numeric($percentStr)) {
+            return $percentStr;
+        }
+        
+        // Remove % symbol and convert comma to dot
+        $percentStr = str_replace('%', '', $percentStr);
+        $percentStr = str_replace(',', '.', $percentStr);
+        
+        // Convert to float and divide by 100
+        $result = floatval($percentStr) / 100;
+        
+        return $result;
     }
-    
-    // Remove % symbol and convert comma to dot
-    $percentStr = str_replace('%', '', $percentStr);
-    $percentStr = str_replace(',', '.', $percentStr);
-    
-    // Convert to float and divide by 100
-    $result = floatval($percentStr) / 100;
-    
-    return $result;
-}
 
-/**
- * Clean numeric value by removing currency symbols and formatting
- * 
- * @param mixed $value
- * @return string
- */
-private function cleanNumericValue($value)
-{
-    if (is_numeric($value)) {
-        return $value;
+    /**
+     * Clean numeric value by removing currency symbols and formatting
+     * 
+     * @param mixed $value
+     * @return string
+     */
+    private function cleanNumericValue($value)
+    {
+        if (is_numeric($value)) {
+            return $value;
+        }
+        
+        // Convert to string
+        $value = (string)$value;
+        
+        // Remove currency symbols, commas, spaces
+        $value = preg_replace('/[^\d.-]/', '', $value);
+        
+        return $value ?: '0';
     }
-    
-    // Convert to string
-    $value = (string)$value;
-    
-    // Remove currency symbols, commas, spaces
-    $value = preg_replace('/[^\d.-]/', '', $value);
-    
-    return $value ?: '0';
-}
 
 
 
@@ -3698,6 +3698,9 @@ public function get_ads_shopee(Request $request)
     if (auth()->user()->tenant_id) {
         $query->where('tenant_id', auth()->user()->tenant_id);
     }
+    if ($request->has('mode_bidding') && $request->mode_bidding) {
+        $query->where('mode_bidding', $request->mode_bidding);
+    }
     
     if ($request->has('date_start') && $request->has('date_end')) {
         $query->whereBetween('date', [$request->date_start, $request->date_end]);
@@ -3787,6 +3790,9 @@ public function get_shopee_details_by_date(Request $request)
     
     if ($request->has('kode_produk') && $request->kode_produk) {
         $query->where('kode_produk', $request->kode_produk);
+    }
+    if ($request->has('mode_bidding') && $request->mode_bidding) {
+        $query->where('mode_bidding', $request->mode_bidding);
     }
     
     if (auth()->user()->tenant_id) {
@@ -3890,6 +3896,9 @@ public function get_shopee_summary(Request $request)
         
         if ($request->has('kode_produk') && $request->kode_produk) {
             $query->where('kode_produk', $request->kode_produk);
+        }
+        if ($request->has('mode_bidding') && $request->mode_bidding) {
+            $query->where('mode_bidding', $request->mode_bidding);
         }
         
         if (auth()->user()->tenant_id) {
@@ -4258,6 +4267,9 @@ public function getShopeeLineData(Request $request)
         if ($request->has('kode_produk') && $request->kode_produk) {
             $query->where('kode_produk', $request->kode_produk);
         }
+        if ($request->has('mode_bidding') && $request->mode_bidding) {
+            $query->where('mode_bidding', $request->mode_bidding);
+        }
         
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
@@ -4294,6 +4306,9 @@ public function getShopeeFunnelData(Request $request)
         
         if ($request->has('kode_produk') && $request->kode_produk) {
             $query->where('kode_produk', $request->kode_produk);
+        }
+        if ($request->has('mode_bidding') && $request->mode_bidding) {
+            $query->where('mode_bidding', $request->mode_bidding);
         }
         
         if (auth()->user()->tenant_id) {

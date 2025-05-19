@@ -18,12 +18,21 @@
                             <input type="text" id="shopeeModalFilterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <!-- <div class="col-md-4">
                         <select class="form-control" id="shopeeModalKodeProdukFilter">
                             <option value="">All Products</option>
                             @foreach($kategoriProdukList as $produk)
                                 <option value="{{ $produk }}">{{ $produk }}</option>
                             @endforeach
+                        </select>
+                    </div> -->
+                    <div class="col-md-4">
+                        <select class="form-control" id="shopeeModalBiddingModeFilter">
+                            <option value="">All Bidding Modes</option>
+                            <option value="GMV Max ROAS">GMV Max ROAS</option>
+                            <option value="Bidding Manual">Bidding Manual</option>
+                            <option value="GMV Max Auto">GMV Max Auto</option>
+                            <option value="Bidding Otomatis">Bidding Otomatis</option>
                         </select>
                     </div>
                 </div>

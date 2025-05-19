@@ -10,6 +10,8 @@ $(document).ready(function() {
     let modalKodeProdukFilter = $('#shopeeModalKodeProdukFilter');
     let funnelChart = null;
     let impressionChart = null;
+    let filterBiddingMode = $('#shopeeBiddingModeFilter');
+    let modalBiddingModeFilter = $('#shopeeModalBiddingModeFilter');
 
     // Initialize Shopee Ads DataTable
     let adsShopeeTable = $('#adsShopeeTable').DataTable({
@@ -27,6 +29,10 @@ $(document).ready(function() {
             }
             if (filterKodeProduk.val()) {
                 d.kode_produk = filterKodeProduk.val();
+            }
+            // Add the bidding mode filter
+            if (filterBiddingMode.val()) {
+                d.mode_bidding = filterBiddingMode.val();
             }
         }
     },
@@ -149,6 +155,17 @@ $(document).ready(function() {
     scroller: true
 });
 
+filterBiddingMode.change(function() {
+    adsShopeeTable.draw();
+    fetchShopeeImpressionData();
+    initShopeeFunnelChart();
+});
+
+modalBiddingModeFilter.change(function() {
+    shopeeDetailsTable.draw();
+    updateShopeeSummary();
+});
+
     // Campaign details table
     let shopeeDetailsTable = $('#shopeeDetailsTable').DataTable({
         responsive: false, // Set to false for horizontal scrolling
@@ -170,6 +187,9 @@ $(document).ready(function() {
                 }
                 if (modalKodeProdukFilter.val()) {
                     d.kode_produk = modalKodeProdukFilter.val();
+                }
+                if (modalBiddingModeFilter.val()) {
+                    d.mode_bidding = modalBiddingModeFilter.val();
                 }
             }
         },
@@ -207,6 +227,7 @@ $(document).ready(function() {
     $('#shopeeResetFilterBtn').click(function() {
         filterDate.val('');
         filterKodeProduk.val('');
+        filterBiddingMode.val('');
         adsShopeeTable.draw();
         fetchShopeeImpressionData();
         initShopeeFunnelChart();
@@ -315,6 +336,9 @@ $(document).ready(function() {
         if (filterKodeProduk.val()) {
             modalKodeProdukFilter.val(filterKodeProduk.val());
         }
+        if (filterBiddingMode.val()) {
+            modalBiddingModeFilter.val(filterBiddingMode.val());
+        }
         
         updateShopeeSummary();
         
@@ -325,6 +349,7 @@ $(document).ready(function() {
     $('#shopeeDetailsModal').on('hidden.bs.modal', function() {
         modalFilterDate.val('');
         modalKodeProdukFilter.val('');
+        modalBiddingModeFilter.val('');
     });
 
     // Click event handler for date details
@@ -401,6 +426,7 @@ $(document).ready(function() {
     function fetchShopeeImpressionData() {
         const filterValue = filterDate.val();
         const kodeProduk = filterKodeProduk.val();
+        const modeBidding = filterBiddingMode.val();
         
         const url = new URL("{{ route('adSpentSocialMedia.shopee_line_data') }}", window.location.origin);
         
@@ -412,6 +438,9 @@ $(document).ready(function() {
         
         if (kodeProduk) {
             url.searchParams.append('kode_produk', kodeProduk);
+        }
+        if (modeBidding) { 
+            url.searchParams.append('mode_bidding', modeBidding);
         }
         
         fetch(url)
@@ -434,6 +463,7 @@ $(document).ready(function() {
     function initShopeeFunnelChart() {
         const filterValue = filterDate.val();
         const kodeProduk = filterKodeProduk.val();
+        const modeBidding = filterBiddingMode.val();
 
         const url = new URL("{{ route('adSpentSocialMedia.shopee_funnel_data') }}", window.location.origin);
         
@@ -445,6 +475,10 @@ $(document).ready(function() {
         
         if (kodeProduk) {
             url.searchParams.append('kode_produk', kodeProduk);
+        }
+
+        if (modeBidding) {
+            url.searchParams.append('mode_bidding', modeBidding);
         }
 
         fetch(url)
@@ -461,111 +495,111 @@ $(document).ready(function() {
 
     // Function to create Shopee funnel chart
     function createShopeeFunnelChart(data, metrics) {
-    const funnelContainer = document.getElementById('shopeeFunnelChart');
-    const metricsContainer = document.getElementById('shopeeFunnelMetrics');
-    
-    // Clear previous chart
-    funnelContainer.innerHTML = '';
-    
-    // Create the funnel chart
-    const height = 300;
-    const maxValue = data && data.length > 0 && data[0].value ? Number(data[0].value) : 0;
-    
-    let html = `<div class="funnel-chart" style="width:100%; height:${height}px; position:relative;">`;
-    
-    // Check if data is available
-    if (data && data.length > 0 && maxValue > 0) {
-        data.forEach((item, index) => {
-            // Ensure value is a number and not null
-            const itemValue = item.value ? Number(item.value) : 0;
-            const percentage = (itemValue / maxValue) * 100;
-            const barWidth = Math.max(20, percentage);
-            const barHeight = height / data.length;
-            const leftMargin = (100 - barWidth) / 2;
-            
-            html += `
-                <div class="funnel-level" style="position:absolute; top:${index * barHeight}px; left:${leftMargin}%; width:${barWidth}%; height:${barHeight}px; display:flex; align-items:center; justify-content:center; background-color:rgba(60, 141, 188, ${1 - index * 0.2}); color:#fff; border-radius:5px;">
-                    <div>
-                        <div style="font-weight:bold;">${item.name || 'Unknown'}</div>
-                        <div>${itemValue.toLocaleString('id-ID')}</div>
+        const funnelContainer = document.getElementById('shopeeFunnelChart');
+        const metricsContainer = document.getElementById('shopeeFunnelMetrics');
+        
+        // Clear previous chart
+        funnelContainer.innerHTML = '';
+        
+        // Create the funnel chart
+        const height = 300;
+        const maxValue = data && data.length > 0 && data[0].value ? Number(data[0].value) : 0;
+        
+        let html = `<div class="funnel-chart" style="width:100%; height:${height}px; position:relative;">`;
+        
+        // Check if data is available
+        if (data && data.length > 0 && maxValue > 0) {
+            data.forEach((item, index) => {
+                // Ensure value is a number and not null
+                const itemValue = item.value ? Number(item.value) : 0;
+                const percentage = (itemValue / maxValue) * 100;
+                const barWidth = Math.max(20, percentage);
+                const barHeight = height / data.length;
+                const leftMargin = (100 - barWidth) / 2;
+                
+                html += `
+                    <div class="funnel-level" style="position:absolute; top:${index * barHeight}px; left:${leftMargin}%; width:${barWidth}%; height:${barHeight}px; display:flex; align-items:center; justify-content:center; background-color:rgba(60, 141, 188, ${1 - index * 0.2}); color:#fff; border-radius:5px;">
+                        <div>
+                            <div style="font-weight:bold;">${item.name || 'Unknown'}</div>
+                            <div>${itemValue.toLocaleString('id-ID')}</div>
+                        </div>
                     </div>
-                </div>
-            `;
-        });
-    } else {
-        // Display a message if no data is available
-        html += `<div class="text-center p-5">No data available</div>`;
-    }
-    
-    html += `</div>`;
-    funnelContainer.innerHTML = html;
-    
-    // Helper function to safely format numbers
-    function formatNumber(value, options = {}) {
-        if (value === null || value === undefined) return '0';
-        try {
-            return Number(value).toLocaleString('id-ID', options);
-        } catch (e) {
-            console.error('Error formatting number:', e);
-            return '0';
+                `;
+            });
+        } else {
+            // Display a message if no data is available
+            html += `<div class="text-center p-5">No data available</div>`;
         }
+        
+        html += `</div>`;
+        funnelContainer.innerHTML = html;
+        
+        // Helper function to safely format numbers
+        function formatNumber(value, options = {}) {
+            if (value === null || value === undefined) return '0';
+            try {
+                return Number(value).toLocaleString('id-ID', options);
+            } catch (e) {
+                console.error('Error formatting number:', e);
+                return '0';
+            }
+        }
+        
+        // Display metrics with safe number formatting
+        let metricsHtml = `
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">CTR</span>
+                            <span class="info-box-number">${formatNumber(metrics?.ctr, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Conversion Rate</span>
+                            <span class="info-box-number">${formatNumber(metrics?.conversion_rate, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">ROAS</span>
+                            <span class="info-box-number">${formatNumber(metrics?.roas, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Cost</span>
+                            <span class="info-box-number">Rp ${formatNumber(metrics?.cost)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Revenue</span>
+                            <span class="info-box-number">Rp ${formatNumber(metrics?.revenue)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        metricsContainer.innerHTML = metricsHtml;
     }
-    
-    // Display metrics with safe number formatting
-    let metricsHtml = `
-        <div class="row">
-            <div class="col-md-4">
-                <div class="info-box">
-                    <span class="info-box-icon bg-info"><i class="fas fa-mouse-pointer"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">CTR</span>
-                        <span class="info-box-number">${formatNumber(metrics?.ctr, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="info-box">
-                    <span class="info-box-icon bg-success"><i class="fas fa-shopping-cart"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Conversion Rate</span>
-                        <span class="info-box-number">${formatNumber(metrics?.conversion_rate, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="info-box">
-                    <span class="info-box-icon bg-warning"><i class="fas fa-chart-line"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">ROAS</span>
-                        <span class="info-box-number">${formatNumber(metrics?.roas, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="info-box">
-                    <span class="info-box-icon bg-danger"><i class="fas fa-money-bill"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Total Cost</span>
-                        <span class="info-box-number">Rp ${formatNumber(metrics?.cost)}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-box">
-                    <span class="info-box-icon bg-primary"><i class="fas fa-hand-holding-usd"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Total Revenue</span>
-                        <span class="info-box-number">Rp ${formatNumber(metrics?.revenue)}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    metricsContainer.innerHTML = metricsHtml;
-}
 
     // Function to update summary in the details modal
     function updateShopeeSummary() {
