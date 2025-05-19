@@ -20,6 +20,9 @@ class LiveData extends Model
         'komentar',
         'pesanan',
         'penjualan',
+        'employee_id',
+        'sales_channel_id',
+
     ];
 
     protected $casts = [
@@ -30,5 +33,6 @@ class LiveData extends Model
         'komentar' => 'integer',
         'pesanan' => 'integer',
         'penjualan' => 'decimal:2',
+        'sales_channel_id' => 'integer',
     ];
 }

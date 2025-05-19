@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
+use Auth;
 
 class LiveDataController extends Controller
 {
@@ -48,9 +49,15 @@ class LiveDataController extends Controller
             'pesanan' => 'required|integer',
             'penjualan' => 'required|numeric',
         ]);
-
-        LiveData::create($request->all());
-
+        
+        // Get validated data
+        $data = $request->all();
+        
+        // Assign the current authenticated user's employee_id to the live_data entry
+        $data['employee_id'] = auth()->user()->employee_id;
+        
+        LiveData::create($data);
+        
         return redirect()->route('live_data.index')
             ->with('success', 'Live data created successfully.');
     }
