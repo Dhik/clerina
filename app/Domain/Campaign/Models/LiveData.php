@@ -4,6 +4,7 @@ namespace App\Domain\Campaign\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Domain\Sales\Models\SalesChannel;
 
 class LiveData extends Model
 {
