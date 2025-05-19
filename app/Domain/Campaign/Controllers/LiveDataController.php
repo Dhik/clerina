@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
+use App\Domain\Sales\Models\SalesChannel;
 use Auth;
 
 class LiveDataController extends Controller
@@ -28,7 +29,8 @@ class LiveDataController extends Controller
      */
     public function create()
     {
-        return view('admin.live_data.create');
+        $salesChannels = SalesChannel::all();
+        return view('admin.live_data.create', compact('salesChannels'));
     }
 
     /**
@@ -48,6 +50,7 @@ class LiveDataController extends Controller
             'komentar' => 'required|integer',
             'pesanan' => 'required|integer',
             'penjualan' => 'required|numeric',
+            'sales_channel_id' => 'nullable|exists:sales_channels,id',
         ]);
         
         // Get validated data
@@ -81,7 +84,8 @@ class LiveDataController extends Controller
      */
     public function edit(LiveData $liveData)
     {
-        return view('admin.live_data.edit', compact('liveData'));
+        $salesChannels = SalesChannel::all();
+        return view('admin.live_data.edit', compact('liveData', 'salesChannels'));
     }
 
     /**
@@ -102,6 +106,7 @@ class LiveDataController extends Controller
             'komentar' => 'required|integer',
             'pesanan' => 'required|integer',
             'penjualan' => 'required|numeric',
+            'sales_channel_id' => 'nullable|exists:sales_channels,id',
         ]);
 
         $liveData->update($request->all());
@@ -131,7 +136,7 @@ class LiveDataController extends Controller
      */
     public function data()
     {
-        $liveData = LiveData::all();
+        $liveData = LiveData::with('salesChannel')->get();
 
         return DataTables::of($liveData)
             ->addColumn('actions', function ($data) {
@@ -150,6 +155,9 @@ class LiveDataController extends Controller
             })
             ->editColumn('penjualan', function ($data) {
                 return number_format($data->penjualan, 2);
+            })
+            ->addColumn('sales_channel', function ($data) {
+                return $data->salesChannel ? $data->salesChannel->name : 'N/A';
             })
             ->rawColumns(['actions'])
             ->make(true);

@@ -36,6 +36,15 @@
                         <input type="hidden" name="shift" id="shift_hidden" value="{{ $liveData->shift }}">
                     </div>
                     <div class="form-group">
+                        <label for="sales_channel_id">Sales Channel</label>
+                        <select class="form-control" id="sales_channel_id" name="sales_channel_id">
+                            <option value="">-- Select Sales Channel --</option>
+                            @foreach($salesChannels as $channel)
+                                <option value="{{ $channel->id }}" {{ $liveData->sales_channel_id == $channel->id ? 'selected' : '' }}>{{ $channel->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="dilihat">Dilihat</label>
                         <input type="number" class="form-control" id="dilihat" name="dilihat" value="{{ $liveData->dilihat }}" required min="0">
                     </div>

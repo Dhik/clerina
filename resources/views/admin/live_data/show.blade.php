@@ -108,6 +108,10 @@
                                             <td>{{ $liveData->shift }}</td>
                                         </tr>
                                         <tr>
+                                            <th>Sales Channel</th>
+                                            <td>{{ $liveData->salesChannel ? $liveData->salesChannel->name : 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
                                             <th>Dilihat</th>
                                             <td>{{ number_format($liveData->dilihat) }}</td>
                                         </tr>

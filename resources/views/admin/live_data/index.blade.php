@@ -18,6 +18,7 @@
                             <th>ID</th>
                             <th>Date</th>
                             <th>Shift</th>
+                            <th>Sales Channel</th>
                             <th>Dilihat</th>
                             <th>Penonton Tertinggi</th>
                             <th>Rata-rata Durasi</th>
@@ -47,6 +48,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'date', name: 'date' },
                 { data: 'shift', name: 'shift' },
+                { data: 'sales_channel', name: 'sales_channel' },
                 { data: 'dilihat', name: 'dilihat' },
                 { data: 'penonton_tertinggi', name: 'penonton_tertinggi' },
                 { data: 'rata_rata_durasi', name: 'rata_rata_durasi' },
