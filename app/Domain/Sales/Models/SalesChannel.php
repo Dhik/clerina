@@ -20,6 +20,11 @@ class SalesChannel extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function liveData()
+    {
+        return $this->hasMany(LiveData::class);
+    }
+
     /**
      * Relations to AdSpentMarketPlaceDAL
      */

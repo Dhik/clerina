@@ -35,4 +35,9 @@ class LiveData extends Model
         'penjualan' => 'decimal:2',
         'sales_channel_id' => 'integer',
     ];
+
+    public function salesChannel()
+    {
+        return $this->belongsTo(SalesChannel::class);
+    }
 }
