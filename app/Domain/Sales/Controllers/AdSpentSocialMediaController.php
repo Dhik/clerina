@@ -2520,8 +2520,8 @@ public function deleteTiktokByAccountAndDate(Request $request)
             $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
         }
         
-        $startDate = '2025-03-01';
-        $endDate = '2025-04-30';
+        $startDate = '2025-05-01';
+        $endDate = '2025-05-18';
         
         $records = AdsMeta::selectRaw(
             'kategori_produk, 
