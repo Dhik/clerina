@@ -70,6 +70,8 @@ Route::prefix('admin')
         Route::prefix('live_data')->group(function () {
             Route::get('/', [LiveDataController::class, 'index'])->name('live_data.index');
             Route::get('/create', [LiveDataController::class, 'create'])->name('live_data.create');
+            Route::get('/dashboard', [LiveDataController::class, 'dashboard'])->name('live_data.dashboard');
+            Route::get('/chart-data', [LiveDataController::class, 'chartData'])->name('live_data.chart-data');
             Route::post('/', [LiveDataController::class, 'store'])->name('live_data.store');
             Route::get('/data', [LiveDataController::class, 'data'])->name('live_data.data');
             Route::get('/chart', [LiveDataController::class, 'chartData'])->name('live_data.chart');
@@ -77,8 +79,7 @@ Route::prefix('admin')
             Route::get('/{liveData}/edit', [LiveDataController::class, 'edit'])->name('live_data.edit');
             Route::put('/{liveData}', [LiveDataController::class, 'update'])->name('live_data.update');
             Route::delete('/{liveData}', [LiveDataController::class, 'destroy'])->name('live_data.destroy');
-            Route::get('/dashboard', [LiveDataController::class, 'dashboard'])->name('live_data.dashboard');
-    Route::get('/chart-data', [LiveDataController::class, 'chartData'])->name('live_data.chart-data');
+            
         });
         
         Route::prefix('products')
