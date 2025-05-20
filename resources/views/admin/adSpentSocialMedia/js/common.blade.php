@@ -201,7 +201,7 @@ function createFunnelChart(elementId, data, metricsElementId, result) {
                 },
             }
         },
-        colors: ['#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8'],
+        colors: ['#60A5FA', '#3B82F6', '#34D399', '#2563EB', '#1D4ED8'],
         dataLabels: {
             enabled: true,
             formatter: function(val) {
