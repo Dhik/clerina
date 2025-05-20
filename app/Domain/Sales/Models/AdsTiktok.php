@@ -26,16 +26,20 @@ class AdsTiktok extends Model
         'last_updated',
         'new_created',
         'primary_status',
-                'campaign_budget',
-                'product_page_views',
-                'items_purchased',
-                'cpm',
-                'cpc',
-                'cost_per_purchase',
-                'ctr',
-                'purchase_rate',
-                'average_order_value',
-                'live_views',
+        'campaign_budget',
+        'product_page_views',
+        'items_purchased',
+        'cpm',
+        'cpc',
+        'cost_per_purchase',
+        'ctr',
+        'purchase_rate',
+        'average_order_value',
+        'live_views',
+        'biaya_bersih',
+        'roi',
+        'mata_uang',
+        'type',
     ];
 
     protected $casts = [
@@ -57,5 +61,7 @@ class AdsTiktok extends Model
         'purchase_rate' => 'float',
         'average_order_value' => 'float',
         'live_views' => 'integer',
+        'biaya_bersih' => 'decimal:2',
+        'roi' => 'decimal:2',
     ];
 }

@@ -24,7 +24,6 @@ class LiveData extends Model
         'penjualan',
         'employee_id',
         'sales_channel_id',
-
     ];
 
     protected $casts = [
