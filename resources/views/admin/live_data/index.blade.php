@@ -18,7 +18,7 @@
                             <th>ID</th>
                             <th>Date</th>
                             <th>Shift</th>
-                            <th>Karyawan</th>
+                            <th>Live Host</th>
                             <th>Sales Channel</th>
                             <th>Dilihat</th>
                             <th>Penonton Tertinggi</th>
