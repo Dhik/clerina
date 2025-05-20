@@ -15,6 +15,7 @@ return new class extends Migration
             $table->float('biaya_bersih')->nullable()->after('amount_spent');
             $table->float('roi')->nullable()->after('cost_per_purchase');
             $table->string('mata_uang')->nullable()->after('account_name');
+            $table->string('id_campaign')->nullable()->after('mata_uang');
             $table->string('type')->nullable()->after('mata_uang');
         });
     }
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->dropColumn('roi');
             $table->dropColumn('mata_uang');
             $table->dropColumn('type');
+            $table->dropColumn('id_campaign');
         });
     }
 };

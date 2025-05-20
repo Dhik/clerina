@@ -40,6 +40,7 @@ class AdsTiktok extends Model
         'roi',
         'mata_uang',
         'type',
+        'id_campaign',
     ];
 
     protected $casts = [
