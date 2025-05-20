@@ -31,8 +31,11 @@
                                 </div>
                                 <div class="col-auto">
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importTiktokAdsSpentModal" id="btnImportTiktokAdsSpent">
+                                        <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#importTiktokAdsSpentModal" id="btnImportTiktokAdsSpent">
                                             <i class="fas fa-file-upload"></i> Import TikTok Ads Spent (xlsx or zip)
+                                        </button>
+                                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importTiktokGmvMaxModal" id="btnImportTiktokGmvMax">
+                                            <i class="fas fa-file-import"></i> Import GMV Max Data
                                         </button>
                                     </div>
                                 </div>

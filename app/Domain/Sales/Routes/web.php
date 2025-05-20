@@ -100,6 +100,7 @@ Route::prefix('admin')
                 Route::post('/tiktok/import', [AdSpentSocialMediaController::class, 'import_tiktok_ads'])->name('adSpentSocialMedia.import_tiktok');
                 Route::get('/tiktok/line-data', [AdSpentSocialMediaController::class, 'get_tiktok_line_data'])->name('adSpentSocialMedia.tiktok-line-data');
                 Route::get('/tiktok/funnel-data', [AdSpentSocialMediaController::class, 'get_tiktok_funnel_data'])->name('adSpentSocialMedia.tiktok-funnel-data');
+                Route::post('/tiktok/import-gmv-max', [AdSpentSocialMediaController::class, 'import_tiktok_gmv_max'])->name('adSpentSocialMedia.import_tiktok_gmv_max');
                 
                 // New routes for Overall Performance
                 Route::get('/overall/get', [AdSpentSocialMediaController::class, 'get_overall_performance'])->name('adSpentSocialMedia.get_overall_performance');

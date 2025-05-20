@@ -188,6 +188,66 @@ $(document).ready(function() {
         scroller: true
     });
 
+    handleFileInputChange('tiktokGmvMaxFile');
+
+    // GMV Max form submit handler
+    $('#importTiktokGmvMaxForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        showLoadingSwal('Processing GMV Max data...');
+        
+        let formData = new FormData(this);
+        $.ajax({
+            url: "{{ route('adSpentSocialMedia.import_tiktok_gmv_max') }}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#importTiktokGmvMaxModal').modal('hide');
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        localStorage.setItem('activeTab', 'tiktok-tab');
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Warning',
+                        text: response.message || 'Unknown error occurred',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Ajax error:", xhr, status, error);
+                
+                let errorMessage = 'An error occurred during import';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: errorMessage,
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    });
+
     $('#adsTiktokTable').on('click', '.date-details', function() {
         let date = $(this).data('date');
         let formattedDate = $(this).text();

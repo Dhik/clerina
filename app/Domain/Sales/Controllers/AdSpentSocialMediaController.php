@@ -3248,6 +3248,272 @@ class AdSpentSocialMediaController extends Controller
         return $count;
     }
 
+    public function import_tiktok_gmv_max(Request $request)
+    {
+        try {
+            $request->validate([
+                'tiktokGmvMaxFile' => 'required|file|mimes:xlsx,csv,zip|max:5120',
+                'kategori_produk' => 'required|string',
+                'pic' => 'required|string'
+            ]);
+
+            $file = $request->file('tiktokGmvMaxFile');
+            $kategoriProduk = $request->input('kategori_produk');
+            $pic = $request->input('pic');
+            $importCount = 0;
+            $dateAmountMap = [];
+            
+            \Log::info("Starting TikTok GMV Max import process");
+            \Log::info("File name: " . $file->getClientOriginalName());
+            \Log::info("Kategori produk: " . $kategoriProduk);
+            \Log::info("PIC: " . $pic);
+
+            // Capturing tenant ID early to ensure it's available
+            $tenantId = Auth::user()->current_tenant_id;
+            \Log::info("Using tenant ID: " . $tenantId);
+
+            DB::beginTransaction();
+            try {
+                // Check if the file is a ZIP file
+                if ($file->getClientOriginalExtension() == 'zip') {
+                    \Log::info("Processing ZIP file");
+                    // Process ZIP file
+                    $tempDir = storage_path('app/temp/') . uniqid('zip_extract_');
+                    if (!file_exists($tempDir)) {
+                        mkdir($tempDir, 0755, true);
+                    }
+                    
+                    $zip = new \ZipArchive;
+                    if ($zip->open($file->getPathname()) === TRUE) {
+                        $zip->extractTo($tempDir);
+                        $zip->close();
+                        
+                        $xlsxFiles = glob($tempDir . '/*.xlsx');
+                        \Log::info("Found " . count($xlsxFiles) . " XLSX files in ZIP");
+                        
+                        foreach ($xlsxFiles as $xlsxFile) {
+                            $xlsxFilename = basename($xlsxFile);
+                            \Log::info("Processing XLSX file from ZIP: " . $xlsxFilename);
+                            $processResult = $this->processGmvMaxExcelFile($xlsxFile, $xlsxFilename, $kategoriProduk, $pic, $tenantId);
+                            $importCount += $processResult['count'];
+                            
+                            // Merge date-amount maps
+                            foreach ($processResult['dateAmountMap'] as $date => $amount) {
+                                if (isset($dateAmountMap[$date])) {
+                                    $dateAmountMap[$date] += $amount;
+                                } else {
+                                    $dateAmountMap[$date] = $amount;
+                                }
+                            }
+                        }
+                        
+                        array_map('unlink', glob($tempDir . '/*'));
+                        rmdir($tempDir);
+                    } else {
+                        throw new \Exception("Could not open ZIP file");
+                    }
+                } else {
+                    // Process a single XLSX file
+                    $originalFilename = $file->getClientOriginalName();
+                    \Log::info("Processing single XLSX file: " . $originalFilename);
+                    $processResult = $this->processGmvMaxExcelFile($file->getPathname(), $originalFilename, $kategoriProduk, $pic, $tenantId);
+                    $importCount = $processResult['count'];
+                    $dateAmountMap = $processResult['dateAmountMap'];
+                }
+
+                // Update AdSpentSocialMedia with aggregated totals
+                foreach ($dateAmountMap as $date => $totalAmount) {
+                    \Log::info("Updating AdSpentSocialMedia for date: " . $date . " with amount: " . $totalAmount);
+                    
+                    try {
+                        // Get all existing amount for this date
+                        $existingAmount = AdSpentSocialMedia::where('date', $date)
+                            ->where('social_media_id', 4) // Assuming 4 is for TikTok
+                            ->where('tenant_id', $tenantId)
+                            ->value('amount') ?? 0;
+                        
+                        AdSpentSocialMedia::updateOrCreate(
+                            [
+                                'date' => $date,
+                                'social_media_id' => 4, // Assuming 4 is for TikTok
+                                'tenant_id' => $tenantId
+                            ],
+                            [
+                                'amount' => $existingAmount + $totalAmount
+                            ]
+                        );
+                        \Log::info("AdSpentSocialMedia updated successfully for date: " . $date);
+                    } catch (\Exception $e) {
+                        \Log::error("Error updating AdSpentSocialMedia: " . $e->getMessage());
+                    }
+                }
+                
+                DB::commit();
+                \Log::info("Transaction committed, total imported: " . $importCount);
+                
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'TikTok GMV Max data imported successfully. ' . $importCount . ' records imported.'
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error("Import failed with error: " . $e->getMessage());
+                \Log::error("Stack trace: " . $e->getTraceAsString());
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error("Error in import_tiktok_gmv_max: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    /**
+     * Process a single GMV Max Excel file
+     * 
+     * @param string $filePath The path to the Excel file
+     * @param string $filename The original filename
+     * @param string $kategoriProduk The product category
+     * @param string $pic The person in charge
+     * @param int $tenantId The tenant ID
+     * @return array Returns an array with count of imported records and date-amount map
+     */
+    private function processGmvMaxExcelFile($filePath, $filename, $kategoriProduk, $pic, $tenantId)
+    {
+        $importCount = 0;
+        $dateAmountMap = [];
+        
+        // Extract date from filename
+        $importDate = null;
+        
+        // Pattern to match date formats like "2025-05-12" in the filename
+        if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $matches)) {
+            $importDate = $matches[1];
+            // Validate the extracted date
+            if (!$this->validateDate($importDate)) {
+                throw new \Exception("Invalid date format extracted from filename: $importDate");
+            }
+        } else {
+            throw new \Exception("Unable to extract date from filename '$filename'. Please ensure filename contains date in YYYY-MM-DD format.");
+        }
+        
+        \Log::info("Extracted date from filename: " . $importDate);
+        
+        $spreadsheet = IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+        $rows = $worksheet->toArray();
+        
+        // Skip header row
+        array_shift($rows);
+        
+        $totalAmountForDate = 0;
+        
+        foreach ($rows as $row) {
+            // Check if we have the minimum required fields
+            if (count($row) < 9 || empty($row[0])) {
+                continue;
+            }
+            
+            $idCampaign = $row[0]; // Column A
+            $campaignName = $row[1]; // Column B
+            $amountSpent = !empty($row[2]) ? $row[2] : 0; // Column C
+            $biayaBersih = !empty($row[3]) ? $row[3] : 0; // Column D
+            $itemsPurchased = !empty($row[4]) ? $row[4] : 0; // Column E
+            $costPerPurchase = !empty($row[5]) ? $row[5] : 0; // Column F
+            $conversionValue = !empty($row[6]) ? $row[6] : 0; // Column G
+            $roi = !empty($row[7]) ? $row[7] : 0; // Column H
+            $mataUang = !empty($row[8]) ? $row[8] : 'IDR'; // Column I
+            
+            // Additional default fields
+            $accountName = "GMV Max";
+            $type = "GMV Max";
+            
+            // Calculate purchases_shared_items based on items_purchased or cost_per_purchase
+            $purchasesSharedItems = 0;
+            if ($costPerPurchase > 0 && $amountSpent > 0) {
+                $purchasesSharedItems = $amountSpent / $costPerPurchase;
+            } elseif ($itemsPurchased > 0) {
+                $purchasesSharedItems = $itemsPurchased;
+            }
+            
+            \Log::info("Importing record: $idCampaign - $campaignName");
+            
+            // Check if record already exists
+            $existingRecord = AdsTiktok::where('date', $importDate)
+                ->where('id_campaign', $idCampaign)
+                ->where('account_name', $accountName)
+                ->where('tenant_id', $tenantId)
+                ->first();
+            
+            if ($existingRecord) {
+                // Update existing record
+                $existingRecord->update([
+                    'campaign_name' => $campaignName,
+                    'amount_spent' => $amountSpent,
+                    'biaya_bersih' => $biayaBersih,
+                    'items_purchased' => $itemsPurchased,
+                    'cost_per_purchase' => $costPerPurchase,
+                    'purchases_conversion_value_shared_items' => $conversionValue,
+                    'purchases_shared_items' => $purchasesSharedItems,
+                    'roi' => $roi,
+                    'mata_uang' => $mataUang,
+                    'type' => $type,
+                    'kategori_produk' => $kategoriProduk,
+                    'pic' => $pic,
+                    'updated_at' => now()
+                ]);
+                
+                \Log::info("Updated existing record for campaign: $idCampaign");
+            } else {
+                // Create new record
+                AdsTiktok::create([
+                    'date' => $importDate,
+                    'id_campaign' => $idCampaign,
+                    'campaign_name' => $campaignName,
+                    'account_name' => $accountName,
+                    'amount_spent' => $amountSpent,
+                    'biaya_bersih' => $biayaBersih,
+                    'items_purchased' => $itemsPurchased,
+                    'cost_per_purchase' => $costPerPurchase,
+                    'purchases_conversion_value_shared_items' => $conversionValue,
+                    'purchases_shared_items' => $purchasesSharedItems,
+                    'roi' => $roi,
+                    'mata_uang' => $mataUang,
+                    'type' => $type,
+                    'kategori_produk' => $kategoriProduk,
+                    'pic' => $pic,
+                    'tenant_id' => $tenantId,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                
+                \Log::info("Created new record for campaign: $idCampaign");
+            }
+            
+            $importCount++;
+            $totalAmountForDate += $amountSpent;
+        }
+        
+        if ($importCount > 0) {
+            $dateAmountMap[$importDate] = $totalAmountForDate;
+        }
+        
+        return [
+            'count' => $importCount,
+            'dateAmountMap' => $dateAmountMap
+        ];
+    }
+
+    // Helper method to validate date format
+    private function validateDate($date, $format = 'Y-m-d')
+    {
+        $d = \DateTime::createFromFormat($format, $date);
+        return $d && $d->format($format) === $date;
+    }
     /**
      * Parse percentage string to decimal
      * 
