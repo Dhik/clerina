@@ -3523,27 +3523,28 @@ class AdSpentSocialMediaController extends Controller
             $currentDate->addDay();
         }
         
-        // Build the query for funnel totals
-        $funnelQuery = AdsMeta::where('tenant_id', $tenant_id)
+        // Build the base query with all common filters
+        $baseQuery = AdsMeta::where('tenant_id', $tenant_id)
             ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
             
-        // Exclude twin dates if any exist in our range
+        // Apply common filters
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $baseQuery->where('kategori_produk', $request->kategori_produk);
+        }
+
+        if ($request->has('pic') && $request->pic !== '') {
+            $baseQuery->where('pic', $request->pic);
+        }
+
+        // Clone the base query for metrics that exclude twin dates
+        $funnelQuery = clone $baseQuery;
+        
+        // Exclude twin dates if any exist in our range (only for the funnel metrics)
         if (!empty($excludeDates)) {
             $funnelQuery->whereNotIn('date', $excludeDates);
         }
         
-        // Apply filters if provided
-        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-            $funnelQuery->where('kategori_produk', $request->kategori_produk);
-        }
-
-        if ($request->has('pic') && $request->pic !== '') {
-            $funnelQuery->where('pic', $request->pic);
-        }
-
-        $funnelQuery = clone $baseQuery;
-        
-        // Get funnel data
+        // Get funnel data (excluding twin dates)
         $data = $funnelQuery->select(
             DB::raw('SUM(impressions) as total_impressions'),
             DB::raw('SUM(content_views_shared_items) as total_content_views'),
@@ -3551,6 +3552,7 @@ class AdSpentSocialMediaController extends Controller
             DB::raw('SUM(purchases_shared_items) as total_purchases')
         )->first();
 
+        // Get link clicks data (including twin dates)
         $linkClicksData = $baseQuery->select(
             DB::raw('SUM(link_clicks) as total_link_clicks')
         )->first();
