@@ -4878,6 +4878,125 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
+    public function updateSuccessDateLazadaAzrina()
+    {
+        $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
+        $range = 'Lazada Balance Processed!A:G';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $newOrdersCreated = 0;
+        $ordersUpdated = 0;
+
+        if (count($sheetData) > 0) {
+            array_shift($sheetData);
+            $totalRows--;
+        }
+        DB::beginTransaction();
+        
+        try {
+            foreach ($sheetData as $row) {
+                // Skip if order ID (Column A) is empty or success date (Column B) is empty or order date (Column D) is empty or SKU (Column E) is empty
+                if (empty($row[0]) || empty($row[1]) || empty($row[3]) || empty($row[4])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                try {
+                    $idOrder = $row[0]; // Column A = orders.id_order
+                    $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
+                    $inAmount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                    
+                    // Parse the date in format "06 Mar 2025"
+                    $orderDate = Carbon::createFromFormat('d M Y', $row[3])->format('Y-m-d'); // Column D = orders.date
+                    
+                    $sku = $row[4]; // Column E = orders.sku
+                    $feeAdmin = isset($row[5]) ? intval($row[5]) : 0; // Column F = orders.fee_admin
+                    
+                    // Try to find existing order with the same id_order and sku
+                    $existingOrder = Order::where('id_order', $idOrder)
+                        ->where('sku', $sku)
+                        ->where('tenant_id', $tenant_id)
+                        ->first();
+                    
+                    if ($existingOrder) {
+                        // Update existing order
+                        $existingOrder->success_date = $successDate;
+                        $existingOrder->in_amount = $inAmount;
+                        $existingOrder->fee_admin = $feeAdmin;
+                        $existingOrder->updated_at = now();
+                        $existingOrder->save();
+                        
+                        $ordersUpdated++;
+                    } else {
+                        // Create new order
+                        $orderData = [
+                            'date'                  => $orderDate,
+                            'process_at'            => null,
+                            'id_order'              => $idOrder,
+                            'sales_channel_id'      => 2,
+                            'customer_name'         => "unknown",
+                            'customer_phone_number' => "unknown",
+                            'product'               => "unknown",
+                            'qty'                   => 1,
+                            'receipt_number'        => "unknown",
+                            'shipment'              => "unknown",
+                            'payment_method'        => "unknown",
+                            'sku'                   => $sku,
+                            'variant'               => null,
+                            'price'                 => $inAmount,
+                            'username'              => "unknown",
+                            'shipping_address'      => "unknown",
+                            'city'                  => null,
+                            'province'              => null,
+                            'amount'                => $inAmount,
+                            'in_amount'             => $inAmount,
+                            'fee_admin'             => $feeAdmin,
+                            'tenant_id'             => $tenant_id,
+                            'is_booking'            => 0,
+                            'status'                => "Selesai",
+                            'success_date'          => $successDate,
+                            'created_at'            => now(),
+                            'updated_at'            => now(),
+                        ];
+                        
+                        Order::create($orderData);
+                        $newOrdersCreated++;
+                    }
+                    
+                    $processedRows++;
+                    
+                } catch (\Exception $e) {
+                    \Log::warning("Error processing row: " . json_encode($row) . " - " . $e->getMessage());
+                    $skippedRows++;
+                }
+            }
+            
+            // Commit all changes
+            DB::commit();
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error processing Lazada data: " . $e->getMessage());
+            
+            return response()->json([
+                'message' => 'Error processing Lazada data', 
+                'error' => $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Lazada success dates processed successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'new_orders_created' => $newOrdersCreated,
+            'orders_updated' => $ordersUpdated,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
     public function updateSuccessDateTokopedia()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
