@@ -1556,6 +1556,253 @@ class NetProfitController extends Controller
             ], 500);
         }
     }
+    public function getDetailCorrelation(Request $request)
+    {
+        try {
+            // Get SKU from request
+            $sku = $request->input('sku', 'all');
+            
+            // Build query
+            $query = \DB::table('relation_ads_sales')
+                ->whereNotNull('sales')
+                ->whereNotNull('marketing')
+                ->where('marketing', '>', 0)
+                ->where('tenant_id', 1)
+                ->where('sales_channel_id', 1);
+
+            // Apply SKU filter if not 'all'
+            if ($sku !== 'all') {
+                $query->where('sku', $sku);
+            }
+
+            // Handle date filtering
+            if ($request->filled('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                if (count($dates) == 2) {
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->endOfDay();
+                    $query->whereBetween('date', [$startDate, $endDate]);
+                }
+            } else {
+                $query->whereMonth('date', now()->month)
+                    ->whereYear('date', now()->year);
+            }
+
+            $data = $query->select([
+                'date',
+                'sku',
+                'sales',
+                'marketing',
+                \DB::raw("ROUND(sales/marketing, 2) as ratio")
+            ])->get();
+
+            $n = $data->count();
+            if ($n < 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Not enough data points for correlation analysis',
+                ], 400);
+            }
+
+            $sumX = $data->sum('marketing');
+            $sumY = $data->sum('sales');
+            $sumXY = $data->sum(function($item) {
+                return $item->marketing * $item->sales;
+            });
+            $sumX2 = $data->sum(function($item) {
+                return $item->marketing * $item->marketing;
+            });
+            $sumY2 = $data->sum(function($item) {
+                return $item->sales * $item->sales;
+            });
+
+            // Check for division by zero conditions
+            $denominatorX = ($n * $sumX2 - $sumX * $sumX);
+            $denominatorY = ($n * $sumY2 - $sumY * $sumY);
+
+            if ($denominatorX <= 0 || $denominatorY <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot calculate correlation - insufficient variance in the data',
+                ], 400);
+            }
+
+            $correlation = $n * $sumXY - $sumX * $sumY;
+            $correlation /= sqrt($denominatorX * $denominatorY);
+
+            // Additional validation for correlation result
+            if (is_nan($correlation) || is_infinite($correlation)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid correlation result - please check your data',
+                ], 400);
+            }
+
+            // Calculate regression line
+            $xMean = $sumX / $n;
+            $yMean = $sumY / $n;
+            $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+            $intercept = $yMean - $slope * $xMean;
+
+            // Map SKU codes to product names
+            $skuLabels = [
+                'CLE-RS-047' => 'Red Saviour',
+                'CLE-JB30-001' => 'Jelly Booster',
+                'CL-GS' => 'Glowsmooth',
+                'CLE-XFO-008' => '3 Minutes',
+                'CLE-CLNDLA-025' => 'Calendula',
+                'CLE-NEG-071' => 'Natural Exfo',
+                'CL-TNR' => 'Pore Glow',
+                'CL-8XHL' => '8X Hyalu',
+                '-' => 'Lain-lain'
+            ];
+
+            // Define title based on selected SKU
+            $skuTitle = ($sku === 'all') ? 'All Products' : $skuLabels[$sku] . ' (' . $sku . ')';
+            
+            // Prepare date range for title
+            $titleDate = $request->filled('filterDates') 
+                ? " (" . $request->filterDates . ")"
+                : " (" . now()->format('F Y') . ")";
+
+            // Define colors for different SKUs
+            $colors = [
+                'CLE-RS-047' => '#FF6384',
+                'CLE-JB30-001' => '#36A2EB',
+                'CL-GS' => '#FFCE56',
+                'CLE-XFO-008' => '#4BC0C0',
+                'CLE-CLNDLA-025' => '#9966FF',
+                'CLE-NEG-071' => '#FF9F40',
+                'CL-TNR' => '#C9CBCF',
+                'CL-8XHL' => '#7BC8A4',
+                '-' => '#BDBDBD'
+            ];
+
+            // Prepare data for Plotly
+            if ($sku === 'all') {
+                // Group data by SKU for all products view
+                $traces = [];
+                foreach ($skuLabels as $skuCode => $skuName) {
+                    $skuData = $data->where('sku', $skuCode);
+                    if ($skuData->count() > 0) {
+                        $traces[] = [
+                            'type' => 'scatter',
+                            'mode' => 'markers',
+                            'name' => $skuName,
+                            'x' => $skuData->pluck('marketing')->values(),
+                            'y' => $skuData->pluck('sales')->values(),
+                            'text' => $skuData->map(function($item) use ($skuLabels) {
+                                return 'Date: ' . $item->date . '<br>' .
+                                    'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                    'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                    'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                    'Ratio: ' . $item->ratio;
+                            }),
+                            'hoverinfo' => 'text',
+                            'marker' => [
+                                'size' => 10,
+                                'color' => $colors[$skuCode],
+                                'opacity' => 0.7
+                            ]
+                        ];
+                    }
+                }
+                
+                $plotlyData = $traces;
+            } else {
+                // Single product view with trend line
+                $plotlyData = [
+                    [
+                        'type' => 'scatter',
+                        'mode' => 'markers',
+                        'name' => 'Sales vs Marketing',
+                        'x' => $data->pluck('marketing')->values(),
+                        'y' => $data->pluck('sales')->values(),
+                        'text' => $data->map(function($item) use ($skuLabels) {
+                            return 'Date: ' . $item->date . '<br>' .
+                                'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                'Ratio: ' . $item->ratio;
+                        }),
+                        'hoverinfo' => 'text',
+                        'marker' => [
+                            'size' => 10,
+                            'color' => $colors[$sku],
+                            'opacity' => 0.7
+                        ]
+                    ],
+                    [
+                        'type' => 'scatter',
+                        'mode' => 'lines',
+                        'name' => 'Trend Line',
+                        'x' => [$data->min('marketing'), $data->max('marketing')],
+                        'y' => [
+                            $slope * $data->min('marketing') + $intercept,
+                            $slope * $data->max('marketing') + $intercept
+                        ],
+                        'line' => [
+                            'color' => '#ff7300',
+                            'width' => 2
+                        ]
+                    ]
+                ];
+            }
+
+            // Define layout
+            $layout = [
+                'title' => 'Sales vs Marketing: ' . $skuTitle . $titleDate,
+                'xaxis' => [
+                    'title' => 'Marketing Spend (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'yaxis' => [
+                    'title' => 'Sales (Rp)',
+                    'tickformat' => ',.0f',
+                    'hoverformat' => ',.0f'
+                ],
+                'showlegend' => true,
+                'annotations' => [
+                    [
+                        'x' => 0.05,
+                        'y' => 0.95,
+                        'xref' => 'paper',
+                        'yref' => 'paper',
+                        'text' => sprintf(
+                            'Correlation (r): %.4f<br>R²: %.4f',
+                            $correlation,
+                            $correlation * $correlation
+                        ),
+                        'showarrow' => false,
+                        'bgcolor' => '#ffffff',
+                        'bordercolor' => '#000000',
+                        'borderwidth' => 1
+                    ]
+                ]
+            ];
+
+            // Return JSON response
+            return response()->json([
+                'data' => $plotlyData,
+                'layout' => $layout,
+                'statistics' => [
+                    'correlation' => round($correlation, 4),
+                    'r_squared' => round($correlation * $correlation, 4),
+                    'slope' => round($slope, 4),
+                    'intercept' => round($intercept, 4),
+                    'data_points' => $n
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Detail Correlation Analysis Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to analyze correlation.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function getAdSpentDetail(Request $request)
     {
         $date = $request->input('date');

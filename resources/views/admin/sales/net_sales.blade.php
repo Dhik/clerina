@@ -1344,8 +1344,49 @@ fetchSummary();
                     }
                 });
         }
+
+        function loadDetailCorrelationChart() {
+            const filterDates = document.getElementById('filterDates').value;
+            const selectedSku = document.getElementById('skuFilter').value;
+            
+            fetch(`{{ route('net-profit.detail-sales-vs-marketing') }}?sku=${selectedSku}${filterDates ? `&filterDates=${filterDates}` : ''}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.data && result.layout) {
+                        Plotly.newPlot('detailCorrelationChart', result.data, result.layout, {
+                            responsive: true,
+                            displayModeBar: true
+                        });
+                    }
+
+                    if (result.statistics) {
+                        document.getElementById('detailCorrelationCoefficient').textContent = 
+                            (result.statistics.correlation || 0).toFixed(4);
+                        document.getElementById('detailRSquared').textContent = 
+                            (result.statistics.r_squared || 0).toFixed(4);
+                        document.getElementById('detailDataPoints').textContent = 
+                            result.statistics.data_points || 0;
+                    } else {
+                        document.getElementById('detailCorrelationCoefficient').textContent = '0.0000';
+                        document.getElementById('detailRSquared').textContent = '0.0000';
+                        document.getElementById('detailDataPoints').textContent = '0';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching detail correlation data:', error);
+
+                    document.getElementById('detailCorrelationCoefficient').textContent = '0.0000';
+                    document.getElementById('detailRSquared').textContent = '0.0000';
+                    document.getElementById('detailDataPoints').textContent = '0';
+                    
+                    if (document.getElementById('detailCorrelationChart')) {
+                        Plotly.purge('detailCorrelationChart');
+                    }
+                });
+        }
         loadNetProfitsChart();
         loadCorrelationChart();
+        loadDetailCorrelationChart();
 
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
@@ -1354,7 +1395,12 @@ fetchSummary();
                 loadNetProfitsChart();
             } else if (e.target.getAttribute('href') === '#correlationTab') {
                 loadCorrelationChart();
+            } else if (e.target.getAttribute('href') === '#detailCorrelationTab') {
+                loadDetailCorrelationChart();
             }
+        });
+        $('#skuFilter').on('change', function() {
+            loadDetailCorrelationChart();
         });
 
         document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
