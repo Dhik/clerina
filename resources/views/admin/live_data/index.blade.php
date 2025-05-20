@@ -3,7 +3,10 @@
 @section('title', 'Live Data')
 
 @section('content_header')
-    <h1>Live Data</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Live Data</h1>
+        <a href="{{ route('live_data.dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard Live Data</a>
+    </div>
 @stop
 
 @section('content')

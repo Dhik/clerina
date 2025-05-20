@@ -166,21 +166,49 @@ class LiveDataController extends Controller
             ->make(true);
     }
 
-    /**
-     * Get chart data for live data.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
+
+
+    // Add these functions to your LiveDataController
+
+    public function dashboard()
+    {
+        // KPI summary data
+        $totalViews = LiveData::sum('dilihat');
+        $totalOrders = LiveData::sum('pesanan');
+        $totalSales = LiveData::sum('penjualan');
+        $averageConversionRate = $totalViews > 0 ? ($totalOrders / $totalViews) * 100 : 0;
+        
+        return view('live_data.dashboard', compact('totalViews', 'totalOrders', 'totalSales', 'averageConversionRate'));
+    }
+
     public function chartData()
     {
-        $chartData = LiveData::select('date', 
-                'dilihat as total_view', 
-                'komentar as total_comment',
-                'penonton_tertinggi as peak_viewers',
-                'pesanan as orders')
-            ->orderBy('date', 'asc')
-            ->get();
-
-        return response()->json($chartData);
+        // Data for line chart
+        $lineChartData = LiveData::orderBy('date', 'asc')
+            ->orderBy('shift', 'asc')
+            ->get()
+            ->map(function ($data) {
+                $shiftLabel = $data->date->format('d/m') . ' ' . $data->shift;
+                return [
+                    'label' => $shiftLabel,
+                    'dilihat' => $data->dilihat,
+                    'penonton_tertinggi' => $data->penonton_tertinggi,
+                    'komentar' => $data->komentar,
+                    'pesanan' => $data->pesanan,
+                    'penjualan' => $data->penjualan
+                ];
+            });
+        
+        // Data for funnel chart
+        $funnelData = [
+            ['stage' => 'Dilihat', 'value' => LiveData::sum('dilihat')],
+            ['stage' => 'Komentar', 'value' => LiveData::sum('komentar')],
+            ['stage' => 'Pesanan', 'value' => LiveData::sum('pesanan')],
+        ];
+        
+        return response()->json([
+            'lineChartData' => $lineChartData,
+            'funnelData' => $funnelData
+        ]);
     }
 }

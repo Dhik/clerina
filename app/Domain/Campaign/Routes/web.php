@@ -77,6 +77,8 @@ Route::prefix('admin')
             Route::get('/{liveData}/edit', [LiveDataController::class, 'edit'])->name('live_data.edit');
             Route::put('/{liveData}', [LiveDataController::class, 'update'])->name('live_data.update');
             Route::delete('/{liveData}', [LiveDataController::class, 'destroy'])->name('live_data.destroy');
+            Route::get('/dashboard', [LiveDataController::class, 'dashboard'])->name('live_data.dashboard');
+    Route::get('/chart-data', [LiveDataController::class, 'chartData'])->name('live_data.chart-data');
         });
         
         Route::prefix('products')
