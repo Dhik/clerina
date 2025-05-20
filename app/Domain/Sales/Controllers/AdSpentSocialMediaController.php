@@ -2449,6 +2449,9 @@ class AdSpentSocialMediaController extends Controller
         
         $pic = $this->determinePIC($accountName);
         
+        // Determine sku_induk based on kategori_produk
+        $skuInduk = $this->determineSkuInduk($kategoriProduk);
+        
         foreach ($csvData as $row) {
             if (empty($row[0])) {
                 continue;
@@ -2496,7 +2499,8 @@ class AdSpentSocialMediaController extends Controller
                         'purchases_conversion_value_shared_items' => (float)($row[8] ?? 0),
                         'link_clicks' => (float)($row[9] ?? 0),
                         'account_name' => $accountName,
-                        'pic' => $pic
+                        'pic' => $pic,
+                        'sku_induk' => $skuInduk
                     ]
                 );
                 
@@ -2512,6 +2516,31 @@ class AdSpentSocialMediaController extends Controller
         }
         
         return $count;
+    }
+    private function determineSkuInduk($kategoriProduk)
+    {
+        switch ($kategoriProduk) {
+            case 'Red Saviour':
+                return 'CLE-RS-047';
+            case 'Jelly Booster':
+                return 'CLE-JB30-001';
+            case 'Glowsmooth':
+                return 'CL-GS';
+            case '3 Minutes':
+                return 'CLE-XFO-008';
+            case 'Calendula':
+                return 'CLE-CLNDLA-025';
+            case 'Natural Exfo':
+                return 'CLE-NEG-071';
+            case 'Pore Glow':
+                return 'CL-TNR';
+            case '8X Hyalu':
+                return 'CL-8XHL';
+            case 'Lain-lain':
+                return '-';
+            default:
+                return null;
+        }
     }
     public function exportAdsMetaStats()
     {

@@ -25,6 +25,7 @@ class AdsMeta extends Model
         'pic',
         'last_updated',
         'new_created',
+        'sku_induk',
     ];
 
     protected $casts = [
