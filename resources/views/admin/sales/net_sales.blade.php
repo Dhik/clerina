@@ -458,6 +458,7 @@
             fetchSummary();
             loadNetProfitsChart();
             loadCorrelationChart();
+            loadDetailCorrelationChart();
         });
         function showAdSpentDetail(date) {
             // Open modal
