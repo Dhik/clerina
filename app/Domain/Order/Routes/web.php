@@ -57,6 +57,7 @@ Route::prefix('admin')
                 Route::get('/import_cleora_crm4', [OrderController::class, 'importClosingZalsa'])->name('order.import_cleora_crm4');
                 Route::get('/import_cleora_crm5', [OrderController::class, 'importClosingRina'])->name('order.import_cleora_crm5');
                 Route::get('/import_balance_shopee', [OrderController::class, 'updateSuccessDateShopee'])->name('order.import_balance_shopee');
+                Route::get('/azrina_balance_shopee', [OrderController::class, 'updateSuccessDateShopeeAzrina'])->name('order.import_balance_shopee_azrina');
                 Route::get('/import_missing_data', [OrderController::class, 'importMissingData'])->name('order.import_missing_data');
                 Route::get('/import_balance_shopee2', [OrderController::class, 'updateSuccessDateShopee2'])->name('order.import_balance_shopee2');
                 Route::get('/import_balance_shopee3', [OrderController::class, 'updateSuccessDateShopee3'])->name('order.import_balance_shopee3');
