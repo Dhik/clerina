@@ -136,7 +136,7 @@ class LiveDataController extends Controller
      */
     public function data()
     {
-        $liveData = LiveData::with('salesChannel')->get();
+        $liveData = LiveData::with(['salesChannel', 'user'])->get();
 
         return DataTables::of($liveData)
             ->addColumn('actions', function ($data) {
@@ -158,6 +158,9 @@ class LiveDataController extends Controller
             })
             ->addColumn('sales_channel', function ($data) {
                 return $data->salesChannel ? $data->salesChannel->name : 'N/A';
+            })
+            ->addColumn('employee_name', function ($data) {
+                return $data->user ? $data->user->name : 'N/A';
             })
             ->rawColumns(['actions'])
             ->make(true);

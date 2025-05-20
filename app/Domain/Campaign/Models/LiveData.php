@@ -5,6 +5,7 @@ namespace App\Domain\Campaign\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Sales\Models\SalesChannel;
+use App\Domain\User\Models\User;
 
 class LiveData extends Model
 {
@@ -40,5 +41,9 @@ class LiveData extends Model
     public function salesChannel()
     {
         return $this->belongsTo(SalesChannel::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'employee_id', 'employee_id');
     }
 }

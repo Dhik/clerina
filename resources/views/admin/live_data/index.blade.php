@@ -18,6 +18,7 @@
                             <th>ID</th>
                             <th>Date</th>
                             <th>Shift</th>
+                            <th>Karyawan</th>
                             <th>Sales Channel</th>
                             <th>Dilihat</th>
                             <th>Penonton Tertinggi</th>
@@ -48,6 +49,7 @@
                 { data: 'id', name: 'id' },
                 { data: 'date', name: 'date' },
                 { data: 'shift', name: 'shift' },
+                { data: 'employee_name', name: 'employee_name' },
                 { data: 'sales_channel', name: 'sales_channel' },
                 { data: 'dilihat', name: 'dilihat' },
                 { data: 'penonton_tertinggi', name: 'penonton_tertinggi' },
