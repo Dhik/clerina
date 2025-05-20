@@ -4665,6 +4665,100 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
+    public function updateSuccessDateTiktokAzrina()
+    {
+        $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
+        $range = 'Tiktok Processed!A:G';
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $tenant_id = 2;
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+        $newOrdersCreated = 0;
+        $errorRows = 0;
+
+        // Always assume the first row is a header and skip it
+        if (count($sheetData) > 0) {
+            array_shift($sheetData);
+            $totalRows--;
+        }
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $rowIndex => $row) {
+                // Skip if order ID (Column A) is empty or success date (Column B) is empty or "-"
+                if (empty($row[0]) || empty($row[1]) || $row[1] === "-") {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                $idOrder = $row[0]; // Column A = orders.id_order
+                $successDate = Carbon::parse($row[1])->format('Y-m-d'); // Column B = orders.success_date
+                $amount = isset($row[2]) ? intval($row[2]) : 0; // Column C = orders.in_amount
+                $feeAdmin = isset($row[3]) ? intval($row[3]) : 0; // Column D = orders.fee_admin
+                
+                // Check if order exists
+                $order = Order::where('id_order', $idOrder)->first();
+                
+                if ($order) {
+                    $order->success_date = $successDate;
+                    $order->status = "Selesai";
+                    $order->in_amount = $amount;
+                    $order->fee_admin = $feeAdmin;
+                    $order->updated_at = now();
+                    $order->save();
+                    $updatedRows++;
+                } else {
+                    $orderData = [
+                        'date'                  => $successDate,
+                        'process_at'            => null,
+                        'id_order'              => $idOrder,
+                        'sales_channel_id'      => 4,
+                        'customer_name'         => "unknown",
+                        'customer_phone_number' => "unknown",
+                        'product'               => "unknown",
+                        'qty'                   => 1,
+                        'receipt_number'        => "unknown",
+                        'shipment'              => "unknown",
+                        'payment_method'        => "unknown", 
+                        'sku'                   => "unknown",
+                        'variant'               => null,
+                        'price'                 => $amount,
+                        'username'              => "unknown",
+                        'shipping_address'      => "unknown",
+                        'city'                  => null,
+                        'province'              => null,
+                        'amount'                => $amount,
+                        'in_amount'             => $amount,
+                        'fee_admin'             => $feeAdmin,
+                        'tenant_id'             => $tenant_id,
+                        'is_booking'            => 0,
+                        'status'                => "Selesai",
+                        'updated_at'            => now(),
+                        'created_at'            => now(),
+                        'success_date'          => $successDate,
+                    ];
+                    
+                    Order::create($orderData);
+                    $newOrdersCreated++;
+                }
+                
+                $processedRows++;
+            }
+            usleep(100000);
+        }
+
+        return response()->json([
+            'message' => 'Success dates updated successfully', 
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'new_orders_created' => $newOrdersCreated,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
     public function updateSuccessDateLazada()
     {
         $this->googleSheetService->setSpreadsheetId('1RDC3Afs4wzaO3S36rvX35xB_D_zuqVs5vfMe7TI8vRY');
