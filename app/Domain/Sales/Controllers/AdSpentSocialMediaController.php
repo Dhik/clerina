@@ -3213,6 +3213,7 @@ class AdSpentSocialMediaController extends Controller
                     'ctr' => (float)$ctr,
                     'purchase_rate' => (float)$purchaseRate,
                     'average_order_value' => (float)$averageOrderValue,
+                    'type' => 'Ads Manager',
                     'live_views' => (int)$liveViews
                 ];
                 
@@ -3223,7 +3224,8 @@ class AdSpentSocialMediaController extends Controller
                         [
                             'date' => $reportDate,
                             'campaign_name' => $campaignName,
-                            'tenant_id' => $tenantId
+                            'tenant_id' => $tenantId,
+                            'amount_spent' => (int)$amountSpent,
                         ],
                         $saveData
                     );
@@ -3448,6 +3450,7 @@ class AdSpentSocialMediaController extends Controller
                 ->where('id_campaign', $idCampaign)
                 ->where('account_name', $accountName)
                 ->where('tenant_id', $tenantId)
+                ->where('amount_spent', $amountSpent)
                 ->first();
             
             if ($existingRecord) {
