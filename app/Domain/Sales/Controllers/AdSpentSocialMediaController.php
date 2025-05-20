@@ -3540,14 +3540,19 @@ class AdSpentSocialMediaController extends Controller
         if ($request->has('pic') && $request->pic !== '') {
             $funnelQuery->where('pic', $request->pic);
         }
+
+        $funnelQuery = clone $baseQuery;
         
         // Get funnel data
         $data = $funnelQuery->select(
             DB::raw('SUM(impressions) as total_impressions'),
             DB::raw('SUM(content_views_shared_items) as total_content_views'),
-            DB::raw('SUM(link_clicks) as total_link_clicks'), // Add this line
             DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
             DB::raw('SUM(purchases_shared_items) as total_purchases')
+        )->first();
+
+        $linkClicksData = $baseQuery->select(
+            DB::raw('SUM(link_clicks) as total_link_clicks')
         )->first();
 
         // Find the date with minimum amount spent
@@ -3590,8 +3595,8 @@ class AdSpentSocialMediaController extends Controller
                     'value' => (int)($data->total_content_views ?? 0)
                 ],
                 [
-                    'name' => 'Link Clicks', // Add this element
-                    'value' => (float)($data->total_link_clicks ?? 0)
+                    'name' => 'Link Clicks',
+                    'value' => (float)($linkClicksData->total_link_clicks ?? 0)
                 ],
                 [
                     'name' => 'Adds to Cart',
