@@ -178,7 +178,7 @@ class LiveDataController extends Controller
         $totalSales = LiveData::sum('penjualan');
         $averageConversionRate = $totalViews > 0 ? ($totalOrders / $totalViews) * 100 : 0;
         
-        return view('live_data.dashboard', compact('totalViews', 'totalOrders', 'totalSales', 'averageConversionRate'));
+        return view('admin.live_data.dashboard', compact('totalViews', 'totalOrders', 'totalSales', 'averageConversionRate'));
     }
 
     public function chartData()
