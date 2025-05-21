@@ -400,16 +400,11 @@ class NetProfitController extends Controller
     public function updateHpp()
     {
         try {
-            $startDate = now()->startOfMonth();
-            $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID instead of hardcoded value
+            $yesterday = now()->subDay()->startOfDay();
+            $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID
             
-            $dates = collect();
-            for($date = clone $startDate; $date->lte(now()); $date->addDay()) {
-                $dates->push($date->format('Y-m-d'));
-            }
-
             $hppPerDate = Order::query()
-                ->whereBetween('orders.date', [$startDate, now()])
+                ->whereDate('orders.date', $yesterday)
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -432,15 +427,17 @@ class NetProfitController extends Controller
                     )"), '=', 'products.sku');
                 })
                 ->select(DB::raw('DATE(orders.date) as date'))
-                ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp') // Simplified calculation
+                ->selectRaw('COALESCE(SUM(orders.qty * products.harga_satuan), 0) as total_hpp')
                 ->groupBy('date');
-
+            
             $hppResults = $hppPerDate->get();
+            
+            // Reset only yesterday's HPP
             $resetCount = NetProfit::query()
-                ->whereBetween('date', [$startDate, now()])
+                ->whereDate('date', $yesterday)
                 ->where('tenant_id', $tenant_id)
                 ->update(['hpp' => 0]);
-
+                
             $updatedCount = 0;
             foreach ($hppResults as $hpp) {
                 // Convert date to Y-m-d format explicitly
