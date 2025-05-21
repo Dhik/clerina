@@ -1380,6 +1380,9 @@ class NetProfitController extends Controller
                 ->whereNotNull('sales')
                 ->whereNotNull($columnName)
                 ->where($columnName, '>', 0);
+                
+            // Exclude twin dates (where day equals month)
+            $query->whereRaw('DAY(date) != MONTH(date)');
 
             // Handle date filtering
             if ($request->filled('filterDates')) {
