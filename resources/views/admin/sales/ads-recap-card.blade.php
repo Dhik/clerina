@@ -13,7 +13,10 @@
                     <!-- <div class="tab-pane active" id="recapChartTab">
                         <div id="waterfallChart"></div>
                     </div> -->
-    
+                    
+                    <div class="tab-pane active" id="netProfitsTab">
+                        <canvas id="netProfitsChart" style="height: 400px;"></canvas>
+                    </div>
                     
                     <div class="tab-pane" id="correlationTab">
                         <div class="row">
