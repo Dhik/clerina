@@ -462,7 +462,7 @@ return [
                     'active' => ['admin/campaign*']
                 ],
                 [
-                    'text' => 'Account',
+                    'text' => 'Account Affiliate',
                     'url' => 'admin/kol',
                     'can' => [PermissionEnum::ViewOffer],
                     'icon' => 'nav-icon far fa-circle',
