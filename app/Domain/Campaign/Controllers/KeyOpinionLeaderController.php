@@ -24,15 +24,21 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use LaravelLang\Publisher\Services\Filesystem\Json;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Domain\Sales\Services\GoogleSheetService;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\Utilities\Request;
 
 class KeyOpinionLeaderController extends Controller
 {
+    protected $googleSheetService;
+
     public function __construct(
         protected KeyOpinionLeaderBLLInterface $kolBLL,
-        protected UserBLLInterface $userBLL
-    ) {}
+        protected UserBLLInterface $userBLL,
+        GoogleSheetService $googleSheetService
+    ) {
+        $this->googleSheetService = $googleSheetService;
+    }
 
     /**
      * Get common data
@@ -408,5 +414,110 @@ class KeyOpinionLeaderController extends Controller
         } catch (Exception $e) {
             return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
         }
+    }
+    public function importKeyOpinionLeaders()
+    {
+        $this->googleSheetService->setSpreadsheetId('11ob241Vwz7EuvhT0V9mBo7u_GDLSIkiVZ_sgKpQ4GfA');
+        set_time_limit(0);
+        $range = 'Form Responses 1!A2:H'; // Adjust range based on your data
+        $sheetData = $this->googleSheetService->getSheetData($range);
+
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $updatedRows = 0;
+        $skippedRows = 0;
+
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if username (column C) is empty
+                if (empty($row[2])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                // Process username from column C
+                $username = $this->processUsername($row[2]);
+                
+                // Skip if username processing failed
+                if (!$username) {
+                    $skippedRows++;
+                    continue;
+                }
+
+                $kolData = [
+                    'username'         => $username,
+                    'name'             => $row[3] ?? null, // Column D
+                    'phone_number'     => $row[4] ?? null, // Column E
+                    'address'          => $row[5] ?? null, // Column F
+                    'niche'            => $row[6] ?? null, // Column G
+                    'content_type'     => $row[7] ?? null, // Column H
+                    'channel'          => 'tiktok_video',
+                    'type'             => 'affiliate',
+                    'cpm'              => 0,
+                    'followers'        => 0,
+                    'following'        => 0,
+                    'average_view'     => 0,
+                    'skin_type'        => '', // Set default or adjust as needed
+                    'skin_concern'     => '', // Set default or adjust as needed
+                    'rate'             => 0,
+                    'updated_at'       => now(),
+                ];
+
+                // Check for duplicate by username
+                $existingKol = KeyOpinionLeader::where('username', $username)->first();
+
+                if ($existingKol) {
+                    // Update existing record
+                    $existingKol->update($kolData);
+                    $updatedRows++;
+                } else {
+                    // Create new record
+                    $kolData['created_at'] = now();
+                    KeyOpinionLeader::create($kolData);
+                    $processedRows++;
+                }
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+
+        return response()->json([
+            'message' => 'Key Opinion Leaders imported successfully',
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'updated_rows' => $updatedRows,
+            'skipped_rows' => $skippedRows
+        ]);
+    }
+
+    /**
+     * Process username from column C
+     * Handle TikTok URLs, @ prefixed usernames, and plain usernames
+     */
+    private function processUsername($rawUsername)
+    {
+        if (empty($rawUsername)) {
+            return null;
+        }
+
+        $username = trim($rawUsername);
+
+        // Case 1: TikTok URL - extract username from URL
+        if (strpos($username, 'tiktok.com/@') !== false) {
+            preg_match('/tiktok\.com\/@([^?&\/]+)/', $username, $matches);
+            if (isset($matches[1])) {
+                return $matches[1];
+            }
+            return null;
+        }
+
+        // Case 2: Username with @ prefix - remove the @
+        if (strpos($username, '@') === 0) {
+            return substr($username, 1);
+        }
+
+        // Case 3: Plain username (like user2724318011378) - return as is
+        // This handles usernames that don't have @ at first or are not URL type
+        return $username;
     }
 }
