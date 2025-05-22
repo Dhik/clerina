@@ -377,18 +377,18 @@ return [
             ],
             'icon'    => 'fas fa-fw fa-book',
             'submenu' => [
-                [
-                    'text' => 'Main Report',
-                    'url' => 'admin/main-report',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
-                [
-                    'text' => 'Demography',
-                    'url' => 'admin/demography',
-                    'can' => [PermissionEnum::ViewAdSpentMarketPlace],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
+                // [
+                //     'text' => 'Main Report',
+                //     'url' => 'admin/main-report',
+                //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                //     'icon' => 'nav-icon far fa-circle',
+                // ],
+                // [
+                //     'text' => 'Demography',
+                //     'url' => 'admin/demography',
+                //     'can' => [PermissionEnum::ViewAdSpentMarketPlace],
+                //     'icon' => 'nav-icon far fa-circle',
+                // ],
                 [
                     'text' => 'Dashboard Analysis',
                     'url' => 'admin/report',
@@ -482,13 +482,13 @@ return [
                 //     'icon' => 'nav-icon far fa-circle',
                 //     'active' => ['admin/products*']
                 // ],
-                [
-                    'text' => 'Brief',
-                    'url' => 'admin/brief',
-                    'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
-                    'active' => ['admin/brief*']
-                ],
+                // [
+                //     'text' => 'Brief',
+                //     'url' => 'admin/brief',
+                //     'can' => [PermissionEnum::ViewOffer],
+                //     'icon' => 'nav-icon far fa-circle',
+                //     'active' => ['admin/brief*']
+                // ],
                 // [
                 //     'text' => 'Influencer',
                 //     'url' => 'admin/budgets',
