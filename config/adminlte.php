@@ -369,6 +369,12 @@ return [
             'can' => [PermissionEnum::ViewSales],
         ],
         [
+            'text' => 'Ads Relation',
+            'url' => 'admin/sales/ads_relation',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewSales],
+        ],
+        [
             'text' => 'Report',
             'can' => [
                 PermissionEnum::ViewAdSpentMarketPlace,

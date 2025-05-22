@@ -1,9 +1,99 @@
+@extends('adminlte::page')
+
+@section('title', trans('labels.sales'))
+
+@section('content_header')
+    <h1>Ads Relation</h1>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+
+
+            @include('admin.sales.net-recap-card')
+        </div>
+    </div>
+</div>
+
+@stop
+
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+<style>
+    #salesPieChart {
+        height: 400px !important;
+        width: 100% !important;
+    }
+    .modal-content {
+        border-radius: 8px;
+    }
+
+    .modal-header {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .table th, .table td {
+        padding: 12px;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    #salesDetailTable td {
+        border-top: 1px solid #dee2e6;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+    .dataTables_wrapper {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    #netProfitsTable {
+        width: 100% !important;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .dt-button-collection {
+        padding: 8px !important;
+    }
+    
+    .dt-button-collection .dt-button {
+        margin: 2px !important;
+    }
+    
+    .dt-button.buttons-columnVisibility {
+        display: block;
+        padding: 8px;
+        margin: 2px;
+        text-align: left;
+    }
+    
+    .dt-button.buttons-columnVisibility.active {
+        background: #e9ecef;
+    }
+</style>
+@stop
+
+@section('js')
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
@@ -1000,3 +1090,4 @@ fetchSummary();
 
         document.getElementById('correlationVariable').addEventListener('change', loadCorrelationChart);
     </script>
+@stop

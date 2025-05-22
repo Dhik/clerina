@@ -169,6 +169,7 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [SalesController::class, 'index'])->name('sales.index');
                 Route::get('/net_sales', [SalesController::class, 'net_sales'])->name('sales.net_sales');
+                Route::get('/ads_relation', [SalesController::class, 'ads_relation'])->name('sales.ads_relation');
                 Route::get('/net_per_channel', [SalesController::class, 'net_per_channel'])->name('sales.net_per_channel');
                 Route::get('/get_net_sales', [SalesController::class, 'getNetProfit'])->name('sales.get_net_sales');
                 Route::get('/get_sales_channels', [SalesController::class, 'getSalesChannels'])->name('sales.get_sales_channels');

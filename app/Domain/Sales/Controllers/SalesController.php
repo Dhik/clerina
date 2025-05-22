@@ -127,6 +127,15 @@ class SalesController extends Controller
 
         return view('admin.sales.net_sales', compact('salesChannels', 'socialMedia'));
     }
+    public function ads_relation(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        $this->authorize('viewAnySales', Sales::class);
+
+        $salesChannels = $this->salesChannelBLL->getSalesChannel();
+        $socialMedia = $this->socialMediaBLL->getSocialMedia();
+
+        return view('admin.sales.ads_relation', compact('salesChannels', 'socialMedia'));
+    }
     public function net_per_channel(): View|\Illuminate\Foundation\Application|Factory|Application
     {
         $this->authorize('viewAnySales', Sales::class);
