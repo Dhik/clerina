@@ -1720,47 +1720,144 @@ class NetProfitController extends Controller
             $platformColors = [
                 'Meta Ads' => '#1877F2',
                 'Shopee Ads' => '#EE4D2D',
-                'Meta + Shopee Ads' => '#8B4A90'
+                'Meta and Shopee Ads' => '#8B4A90'
             ];
 
-            // Single product and platform view with trend line
-            $color = $platformColors[$platform] ?? $skuColors[$sku] ?? '#999999';
-            $plotlyData = [
-                [
-                    'type' => 'scatter',
-                    'mode' => 'markers',
-                    'name' => 'Sales vs Marketing',
-                    'x' => $data->pluck('marketing')->values(),
-                    'y' => $data->pluck('sales')->values(),
-                    'text' => $data->map(function($item) use ($skuLabels) {
-                        return 'Date: ' . $item->date . '<br>' .
-                            'Platform: ' . $item->platform . '<br>' .
-                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                            'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
-                            'Ratio: ' . $item->ratio;
-                    }),
-                    'hoverinfo' => 'text',
-                    'marker' => [
-                        'size' => 10,
-                        'color' => $color,
-                        'opacity' => 0.7
-                    ]
-                ],
-                [
-                    'type' => 'scatter',
-                    'mode' => 'lines',
-                    'name' => 'Trend Line',
-                    'x' => [$data->min('marketing'), $data->max('marketing')],
-                    'y' => [
-                        $slope * $data->min('marketing') + $intercept,
-                        $slope * $data->max('marketing') + $intercept
+            // Prepare data for Plotly based on filter combinations
+            if ($sku === 'all' && $platform === 'all') {
+                // Group data by both SKU and Platform for all view
+                $traces = [];
+                foreach ($skuLabels as $skuCode => $skuName) {
+                    $platforms = $data->where('sku', $skuCode)->pluck('platform')->unique();
+                    foreach ($platforms as $plt) {
+                        $filteredData = $data->where('sku', $skuCode)->where('platform', $plt);
+                        if ($filteredData->count() > 0) {
+                            $traces[] = [
+                                'type' => 'scatter',
+                                'mode' => 'markers',
+                                'name' => $skuName . ' (' . $plt . ')',
+                                'x' => $filteredData->pluck('marketing')->values(),
+                                'y' => $filteredData->pluck('sales')->values(),
+                                'text' => $filteredData->map(function($item) use ($skuLabels) {
+                                    return 'Date: ' . $item->date . '<br>' .
+                                        'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                        'Platform: ' . $item->platform . '<br>' .
+                                        'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                        'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                        'Ratio: ' . $item->ratio;
+                                }),
+                                'hoverinfo' => 'text',
+                                'marker' => [
+                                    'size' => 10,
+                                    'color' => $platformColors[$plt] ?? $skuColors[$skuCode],
+                                    'opacity' => 0.7
+                                ]
+                            ];
+                        }
+                    }
+                }
+                $plotlyData = $traces;
+            } else if ($sku === 'all' && $platform !== 'all') {
+                // Group by SKU for single platform
+                $traces = [];
+                foreach ($skuLabels as $skuCode => $skuName) {
+                    $filteredData = $data->where('sku', $skuCode);
+                    if ($filteredData->count() > 0) {
+                        $traces[] = [
+                            'type' => 'scatter',
+                            'mode' => 'markers',
+                            'name' => $skuName,
+                            'x' => $filteredData->pluck('marketing')->values(),
+                            'y' => $filteredData->pluck('sales')->values(),
+                            'text' => $filteredData->map(function($item) use ($skuLabels) {
+                                return 'Date: ' . $item->date . '<br>' .
+                                    'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                    'Platform: ' . $item->platform . '<br>' .
+                                    'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                    'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                    'Ratio: ' . $item->ratio;
+                            }),
+                            'hoverinfo' => 'text',
+                            'marker' => [
+                                'size' => 10,
+                                'color' => $skuColors[$skuCode],
+                                'opacity' => 0.7
+                            ]
+                        ];
+                    }
+                }
+                $plotlyData = $traces;
+            } else if ($sku !== 'all' && $platform === 'all') {
+                // Group by platform for single SKU
+                $traces = [];
+                $platforms = $data->pluck('platform')->unique();
+                foreach ($platforms as $plt) {
+                    $filteredData = $data->where('platform', $plt);
+                    if ($filteredData->count() > 0) {
+                        $traces[] = [
+                            'type' => 'scatter',
+                            'mode' => 'markers',
+                            'name' => $plt,
+                            'x' => $filteredData->pluck('marketing')->values(),
+                            'y' => $filteredData->pluck('sales')->values(),
+                            'text' => $filteredData->map(function($item) use ($skuLabels) {
+                                return 'Date: ' . $item->date . '<br>' .
+                                    'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                    'Platform: ' . $item->platform . '<br>' .
+                                    'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                    'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                    'Ratio: ' . $item->ratio;
+                            }),
+                            'hoverinfo' => 'text',
+                            'marker' => [
+                                'size' => 10,
+                                'color' => $platformColors[$plt] ?? '#999999',
+                                'opacity' => 0.7
+                            ]
+                        ];
+                    }
+                }
+                $plotlyData = $traces;
+            } else {
+                // Single product and platform view with trend line
+                $color = $platformColors[$platform] ?? $skuColors[$sku] ?? '#999999';
+                $plotlyData = [
+                    [
+                        'type' => 'scatter',
+                        'mode' => 'markers',
+                        'name' => 'Sales vs Marketing',
+                        'x' => $data->pluck('marketing')->values(),
+                        'y' => $data->pluck('sales')->values(),
+                        'text' => $data->map(function($item) use ($skuLabels) {
+                            return 'Date: ' . $item->date . '<br>' .
+                                'Platform: ' . $item->platform . '<br>' .
+                                'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                'Ratio: ' . $item->ratio;
+                        }),
+                        'hoverinfo' => 'text',
+                        'marker' => [
+                            'size' => 10,
+                            'color' => $color,
+                            'opacity' => 0.7
+                        ]
                     ],
-                    'line' => [
-                        'color' => '#ff7300',
-                        'width' => 2
+                    [
+                        'type' => 'scatter',
+                        'mode' => 'lines',
+                        'name' => 'Trend Line',
+                        'x' => [$data->min('marketing'), $data->max('marketing')],
+                        'y' => [
+                            $slope * $data->min('marketing') + $intercept,
+                            $slope * $data->max('marketing') + $intercept
+                        ],
+                        'line' => [
+                            'color' => '#ff7300',
+                            'width' => 2
+                        ]
                     ]
-                ]
-            ];
+                ];
+            }
 
             // Define layout
             $layout = [

@@ -88,7 +88,7 @@
                                             <option value="all">All Platforms</option>
                                             <option value="Meta Ads">Meta Ads</option>
                                             <option value="Shopee Ads">Shopee Ads</option>
-                                            <option value="Meta + Shopee Ads">Meta + Shopee Ads</option>
+                                            <option value="Meta and Shopee Ads">Meta and Shopee Ads</option>
                                         </select>
                                     </div>
                                 </div>
