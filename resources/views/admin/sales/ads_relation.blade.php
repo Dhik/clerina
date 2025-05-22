@@ -362,9 +362,6 @@
     if (filterDates) {
         url.searchParams.append('filterDates', filterDates);
     }
-    if (salesChannelId) {
-        url.searchParams.append('sales_channel_id', salesChannelId);
-    }
 
     fetch(url)
         .then(response => response.json())
