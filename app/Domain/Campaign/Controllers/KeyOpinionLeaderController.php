@@ -419,7 +419,7 @@ class KeyOpinionLeaderController extends Controller
     {
         $this->googleSheetService->setSpreadsheetId('11ob241Vwz7EuvhT0V9mBo7u_GDLSIkiVZ_sgKpQ4GfA');
         set_time_limit(0);
-        $range = 'Form Responses 1!A2:H'; // Adjust range based on your data
+        $range = 'Sheet1!A2:H'; // Adjust range based on your data
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $chunkSize = 50;
