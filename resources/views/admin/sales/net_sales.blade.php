@@ -1349,8 +1349,14 @@ fetchSummary();
         function loadDetailCorrelationChart() {
             const filterDates = document.getElementById('filterDates').value;
             const selectedSku = document.getElementById('skuFilter').value;
+            const selectedPlatform = document.getElementById('platformFilter').value;
             
-            fetch(`{{ route('net-profit.detail-sales-vs-marketing') }}?sku=${selectedSku}${filterDates ? `&filterDates=${filterDates}` : ''}`)
+            let url = `{{ route('net-profit.detail-sales-vs-marketing') }}?sku=${selectedSku}&platform=${selectedPlatform}`;
+            if (filterDates) {
+                url += `&filterDates=${filterDates}`;
+            }
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(result => {
                     if (result.data && result.layout) {
@@ -1401,6 +1407,9 @@ fetchSummary();
             }
         });
         $('#skuFilter').on('change', function() {
+            loadDetailCorrelationChart();
+        });
+        $('#platformFilter').on('change', function() {
             loadDetailCorrelationChart();
         });
 

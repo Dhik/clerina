@@ -83,6 +83,14 @@
                                             <option value="CL-8XHL">8X Hyalu (CL-8XHL)</option>
                                         </select>
                                     </div>
+                                    <div class="col-md-3">
+                                        <select class="form-control" id="platformFilter">
+                                            <option value="all">All Platforms</option>
+                                            <option value="Meta Ads">Meta Ads</option>
+                                            <option value="Shopee Ads">Shopee Ads</option>
+                                            <option value="Meta + Shopee Ads">Meta + Shopee Ads</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div id="detailCorrelationChart" style="height: 600px;"></div>
                             </div>

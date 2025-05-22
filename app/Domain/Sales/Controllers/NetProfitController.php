@@ -1559,21 +1559,29 @@ class NetProfitController extends Controller
     public function getDetailCorrelation(Request $request)
     {
         try {
-            // Get SKU from request
+            // Get SKU and Platform from request
             $sku = $request->input('sku', 'all');
+            $platform = $request->input('platform', 'all');
             
             // Build query
             $query = \DB::table('relation_ads_sales')
                 ->whereNotNull('sales')
                 ->whereNotNull('marketing')
                 ->where('marketing', '>', 0)
-                ->where('tenant_id', 1)
-                ->where('sales_channel_id', 1);
+                ->where('tenant_id', 1);
 
             // Apply SKU filter if not 'all'
             if ($sku !== 'all') {
                 $query->where('sku', $sku);
             }
+
+            // Apply Platform filter if not 'all'
+            if ($platform !== 'all') {
+                $query->where('platform', $platform);
+            }
+
+            // Remove the hardcoded sales_channel_id filter since platforms can have different channel IDs
+            // ->where('sales_channel_id', 1);
 
             // Handle date filtering
             if ($request->filled('filterDates')) {
@@ -1591,6 +1599,7 @@ class NetProfitController extends Controller
             $data = $query->select([
                 'date',
                 'sku',
+                'platform',
                 'sales',
                 'marketing',
                 \DB::raw("ROUND(sales/marketing, 2) as ratio")
@@ -1657,16 +1666,17 @@ class NetProfitController extends Controller
                 '-' => 'Lain-lain'
             ];
 
-            // Define title based on selected SKU
+            // Define title based on selected SKU and Platform
             $skuTitle = ($sku === 'all') ? 'All Products' : $skuLabels[$sku] . ' (' . $sku . ')';
+            $platformTitle = ($platform === 'all') ? 'All Platforms' : $platform;
             
             // Prepare date range for title
             $titleDate = $request->filled('filterDates') 
                 ? " (" . $request->filterDates . ")"
                 : " (" . now()->format('F Y') . ")";
 
-            // Define colors for different SKUs
-            $colors = [
+            // Define colors for different SKUs and platforms
+            $skuColors = [
                 'CLE-RS-047' => '#FF6384',
                 'CLE-JB30-001' => '#36A2EB',
                 'CL-GS' => '#FFCE56',
@@ -1678,22 +1688,63 @@ class NetProfitController extends Controller
                 '-' => '#BDBDBD'
             ];
 
+            $platformColors = [
+                'Meta Ads' => '#1877F2',
+                'Shopee Ads' => '#EE4D2D',
+                'Meta + Shopee Ads' => '#8B4A90'
+            ];
+
             // Prepare data for Plotly
-            if ($sku === 'all') {
-                // Group data by SKU for all products view
+            if ($sku === 'all' && $platform === 'all') {
+                // Group data by both SKU and Platform for all view
                 $traces = [];
                 foreach ($skuLabels as $skuCode => $skuName) {
-                    $skuData = $data->where('sku', $skuCode);
-                    if ($skuData->count() > 0) {
+                    $platforms = $data->where('sku', $skuCode)->pluck('platform')->unique();
+                    foreach ($platforms as $plt) {
+                        $filteredData = $data->where('sku', $skuCode)->where('platform', $plt);
+                        if ($filteredData->count() > 0) {
+                            $traces[] = [
+                                'type' => 'scatter',
+                                'mode' => 'markers',
+                                'name' => $skuName . ' (' . $plt . ')',
+                                'x' => $filteredData->pluck('marketing')->values(),
+                                'y' => $filteredData->pluck('sales')->values(),
+                                'text' => $filteredData->map(function($item) use ($skuLabels) {
+                                    return 'Date: ' . $item->date . '<br>' .
+                                        'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                        'Platform: ' . $item->platform . '<br>' .
+                                        'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                                        'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                                        'Ratio: ' . $item->ratio;
+                                }),
+                                'hoverinfo' => 'text',
+                                'marker' => [
+                                    'size' => 10,
+                                    'color' => $platformColors[$plt] ?? $skuColors[$skuCode],
+                                    'opacity' => 0.7
+                                ]
+                            ];
+                        }
+                    }
+                }
+                $plotlyData = $traces;
+            } else if ($platform === 'all') {
+                // Group by platform for single SKU
+                $traces = [];
+                $platforms = $data->pluck('platform')->unique();
+                foreach ($platforms as $plt) {
+                    $filteredData = $data->where('platform', $plt);
+                    if ($filteredData->count() > 0) {
                         $traces[] = [
                             'type' => 'scatter',
                             'mode' => 'markers',
-                            'name' => $skuName,
-                            'x' => $skuData->pluck('marketing')->values(),
-                            'y' => $skuData->pluck('sales')->values(),
-                            'text' => $skuData->map(function($item) use ($skuLabels) {
+                            'name' => $plt,
+                            'x' => $filteredData->pluck('marketing')->values(),
+                            'y' => $filteredData->pluck('sales')->values(),
+                            'text' => $filteredData->map(function($item) use ($skuLabels) {
                                 return 'Date: ' . $item->date . '<br>' .
                                     'Product: ' . $skuLabels[$item->sku] . '<br>' .
+                                    'Platform: ' . $item->platform . '<br>' .
                                     'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
                                     'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
                                     'Ratio: ' . $item->ratio;
@@ -1701,16 +1752,16 @@ class NetProfitController extends Controller
                             'hoverinfo' => 'text',
                             'marker' => [
                                 'size' => 10,
-                                'color' => $colors[$skuCode],
+                                'color' => $platformColors[$plt] ?? '#999999',
                                 'opacity' => 0.7
                             ]
                         ];
                     }
                 }
-                
                 $plotlyData = $traces;
             } else {
-                // Single product view with trend line
+                // Single product and platform view with trend line
+                $color = $platformColors[$platform] ?? $skuColors[$sku] ?? '#999999';
                 $plotlyData = [
                     [
                         'type' => 'scatter',
@@ -1720,6 +1771,7 @@ class NetProfitController extends Controller
                         'y' => $data->pluck('sales')->values(),
                         'text' => $data->map(function($item) use ($skuLabels) {
                             return 'Date: ' . $item->date . '<br>' .
+                                'Platform: ' . $item->platform . '<br>' .
                                 'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
                                 'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
                                 'Ratio: ' . $item->ratio;
@@ -1727,7 +1779,7 @@ class NetProfitController extends Controller
                         'hoverinfo' => 'text',
                         'marker' => [
                             'size' => 10,
-                            'color' => $colors[$sku],
+                            'color' => $color,
                             'opacity' => 0.7
                         ]
                     ],
@@ -1750,7 +1802,7 @@ class NetProfitController extends Controller
 
             // Define layout
             $layout = [
-                'title' => 'Sales vs Marketing: ' . $skuTitle . $titleDate,
+                'title' => 'Sales vs Marketing: ' . $skuTitle . ' - ' . $platformTitle . $titleDate,
                 'xaxis' => [
                     'title' => 'Marketing Spend (Rp)',
                     'tickformat' => ',.0f',
