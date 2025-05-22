@@ -9,9 +9,26 @@
 @section('content')
     <div class="row">
         <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    <input type="text" id="filterDates" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
+                                </div>
+                                <!-- <div class="col-auto">
+                                    <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
             @include('admin.sales.net-recap-card')
+
         </div>
     </div>
 </div>
