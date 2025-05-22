@@ -27,7 +27,7 @@
             </div>
 
 
-            @include('admin.sales.net-recap-card')
+            @include('admin.sales.ads-recap-card')
 
         </div>
     </div>
