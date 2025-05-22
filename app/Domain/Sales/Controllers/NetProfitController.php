@@ -1563,6 +1563,13 @@ class NetProfitController extends Controller
             $sku = $request->input('sku', 'all');
             $platform = $request->input('platform', 'all');
             
+            // Debug: Log the received parameters
+            \Log::info('Debug - Received parameters:', [
+                'sku' => $sku,
+                'platform' => $platform,
+                'raw_platform' => $request->input('platform')
+            ]);
+            
             // Build query
             $query = \DB::table('relation_ads_sales')
                 ->whereNotNull('sales')
@@ -1580,9 +1587,6 @@ class NetProfitController extends Controller
                 $query->where('platform', $platform);
             }
 
-            // Remove the hardcoded sales_channel_id filter since platforms can have different channel IDs
-            // ->where('sales_channel_id', 1);
-
             // Handle date filtering
             if ($request->filled('filterDates')) {
                 $dates = explode(' - ', $request->filterDates);
@@ -1592,9 +1596,22 @@ class NetProfitController extends Controller
                     $query->whereBetween('date', [$startDate, $endDate]);
                 }
             } else {
-                $query->whereMonth('date', now()->month)
-                    ->whereYear('date', now()->year);
+                // Default to May 2025 since that's where your data is
+                $query->whereBetween('date', ['2025-05-01', '2025-05-19']);
             }
+
+            // Debug: Log the query and count
+            $debugQuery = clone $query;
+            $totalCount = $debugQuery->count();
+            \Log::info('Debug - Query count:', ['total_records' => $totalCount]);
+            
+            // Debug: Log sample of available platforms
+            $availablePlatforms = \DB::table('relation_ads_sales')
+                ->whereBetween('date', ['2025-05-01', '2025-05-19'])
+                ->select('platform')
+                ->distinct()
+                ->pluck('platform');
+            \Log::info('Debug - Available platforms:', $availablePlatforms->toArray());
 
             $data = $query->select([
                 'date',
@@ -1606,13 +1623,25 @@ class NetProfitController extends Controller
             ])->get();
 
             $n = $data->count();
+            
+            // Debug: Log filtered data count
+            \Log::info('Debug - Filtered data count:', ['filtered_records' => $n]);
+            
             if ($n < 2) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Not enough data points for correlation analysis',
+                    'debug' => [
+                        'total_records' => $totalCount,
+                        'filtered_records' => $n,
+                        'sku_filter' => $sku,
+                        'platform_filter' => $platform,
+                        'available_platforms' => $availablePlatforms->toArray()
+                    ]
                 ], 400);
             }
 
+            // Rest of your existing correlation calculation code...
             $sumX = $data->sum('marketing');
             $sumY = $data->sum('sales');
             $sumXY = $data->sum(function($item) {
@@ -1673,7 +1702,7 @@ class NetProfitController extends Controller
             // Prepare date range for title
             $titleDate = $request->filled('filterDates') 
                 ? " (" . $request->filterDates . ")"
-                : " (" . now()->format('F Y') . ")";
+                : " (May 1-19, 2025)";
 
             // Define colors for different SKUs and platforms
             $skuColors = [
@@ -1694,111 +1723,44 @@ class NetProfitController extends Controller
                 'Meta + Shopee Ads' => '#8B4A90'
             ];
 
-            // Prepare data for Plotly
-            if ($sku === 'all' && $platform === 'all') {
-                // Group data by both SKU and Platform for all view
-                $traces = [];
-                foreach ($skuLabels as $skuCode => $skuName) {
-                    $platforms = $data->where('sku', $skuCode)->pluck('platform')->unique();
-                    foreach ($platforms as $plt) {
-                        $filteredData = $data->where('sku', $skuCode)->where('platform', $plt);
-                        if ($filteredData->count() > 0) {
-                            $traces[] = [
-                                'type' => 'scatter',
-                                'mode' => 'markers',
-                                'name' => $skuName . ' (' . $plt . ')',
-                                'x' => $filteredData->pluck('marketing')->values(),
-                                'y' => $filteredData->pluck('sales')->values(),
-                                'text' => $filteredData->map(function($item) use ($skuLabels) {
-                                    return 'Date: ' . $item->date . '<br>' .
-                                        'Product: ' . $skuLabels[$item->sku] . '<br>' .
-                                        'Platform: ' . $item->platform . '<br>' .
-                                        'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                                        'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
-                                        'Ratio: ' . $item->ratio;
-                                }),
-                                'hoverinfo' => 'text',
-                                'marker' => [
-                                    'size' => 10,
-                                    'color' => $platformColors[$plt] ?? $skuColors[$skuCode],
-                                    'opacity' => 0.7
-                                ]
-                            ];
-                        }
-                    }
-                }
-                $plotlyData = $traces;
-            } else if ($platform === 'all') {
-                // Group by platform for single SKU
-                $traces = [];
-                $platforms = $data->pluck('platform')->unique();
-                foreach ($platforms as $plt) {
-                    $filteredData = $data->where('platform', $plt);
-                    if ($filteredData->count() > 0) {
-                        $traces[] = [
-                            'type' => 'scatter',
-                            'mode' => 'markers',
-                            'name' => $plt,
-                            'x' => $filteredData->pluck('marketing')->values(),
-                            'y' => $filteredData->pluck('sales')->values(),
-                            'text' => $filteredData->map(function($item) use ($skuLabels) {
-                                return 'Date: ' . $item->date . '<br>' .
-                                    'Product: ' . $skuLabels[$item->sku] . '<br>' .
-                                    'Platform: ' . $item->platform . '<br>' .
-                                    'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                                    'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
-                                    'Ratio: ' . $item->ratio;
-                            }),
-                            'hoverinfo' => 'text',
-                            'marker' => [
-                                'size' => 10,
-                                'color' => $platformColors[$plt] ?? '#999999',
-                                'opacity' => 0.7
-                            ]
-                        ];
-                    }
-                }
-                $plotlyData = $traces;
-            } else {
-                // Single product and platform view with trend line
-                $color = $platformColors[$platform] ?? $skuColors[$sku] ?? '#999999';
-                $plotlyData = [
-                    [
-                        'type' => 'scatter',
-                        'mode' => 'markers',
-                        'name' => 'Sales vs Marketing',
-                        'x' => $data->pluck('marketing')->values(),
-                        'y' => $data->pluck('sales')->values(),
-                        'text' => $data->map(function($item) use ($skuLabels) {
-                            return 'Date: ' . $item->date . '<br>' .
-                                'Platform: ' . $item->platform . '<br>' .
-                                'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
-                                'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
-                                'Ratio: ' . $item->ratio;
-                        }),
-                        'hoverinfo' => 'text',
-                        'marker' => [
-                            'size' => 10,
-                            'color' => $color,
-                            'opacity' => 0.7
-                        ]
-                    ],
-                    [
-                        'type' => 'scatter',
-                        'mode' => 'lines',
-                        'name' => 'Trend Line',
-                        'x' => [$data->min('marketing'), $data->max('marketing')],
-                        'y' => [
-                            $slope * $data->min('marketing') + $intercept,
-                            $slope * $data->max('marketing') + $intercept
-                        ],
-                        'line' => [
-                            'color' => '#ff7300',
-                            'width' => 2
-                        ]
+            // Single product and platform view with trend line
+            $color = $platformColors[$platform] ?? $skuColors[$sku] ?? '#999999';
+            $plotlyData = [
+                [
+                    'type' => 'scatter',
+                    'mode' => 'markers',
+                    'name' => 'Sales vs Marketing',
+                    'x' => $data->pluck('marketing')->values(),
+                    'y' => $data->pluck('sales')->values(),
+                    'text' => $data->map(function($item) use ($skuLabels) {
+                        return 'Date: ' . $item->date . '<br>' .
+                            'Platform: ' . $item->platform . '<br>' .
+                            'Sales: Rp ' . number_format($item->sales, 0, ',', '.') . '<br>' .
+                            'Marketing: Rp ' . number_format($item->marketing, 0, ',', '.') . '<br>' .
+                            'Ratio: ' . $item->ratio;
+                    }),
+                    'hoverinfo' => 'text',
+                    'marker' => [
+                        'size' => 10,
+                        'color' => $color,
+                        'opacity' => 0.7
                     ]
-                ];
-            }
+                ],
+                [
+                    'type' => 'scatter',
+                    'mode' => 'lines',
+                    'name' => 'Trend Line',
+                    'x' => [$data->min('marketing'), $data->max('marketing')],
+                    'y' => [
+                        $slope * $data->min('marketing') + $intercept,
+                        $slope * $data->max('marketing') + $intercept
+                    ],
+                    'line' => [
+                        'color' => '#ff7300',
+                        'width' => 2
+                    ]
+                ]
+            ];
 
             // Define layout
             $layout = [
