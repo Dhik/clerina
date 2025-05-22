@@ -4,6 +4,7 @@
             <div class="card-header p-2">
                 <ul class="nav nav-pills">
                     <!-- <li class="nav-item"><a class="nav-link active" href="#recapChartTab" data-toggle="tab">Recap</a></li> -->
+                    <!-- <li class="nav-item"><a class="nav-link active" href="#netProfitsTab" data-toggle="tab">Net Profits</a></li> -->
                     <li class="nav-item"><a class="nav-link active" href="#correlationTab" data-toggle="tab">Sales vs Marketing</a></li>
                     <li class="nav-item"><a class="nav-link" href="#detailCorrelationTab" data-toggle="tab">Detail Sales vs Marketing</a></li>
                 </ul>
@@ -14,11 +15,11 @@
                         <div id="waterfallChart"></div>
                     </div> -->
                     
-                    <div class="tab-pane active" id="netProfitsTab">
+                    <!-- <div class="tab-pane active" id="netProfitsTab">
                         <canvas id="netProfitsChart" style="height: 400px;"></canvas>
-                    </div>
+                    </div> -->
                     
-                    <div class="tab-pane" id="correlationTab">
+                    <div class="tab-pane active" id="correlationTab">
                         <div class="row">
                             <div class="col-10">
                                 <div class="row mb-3">
