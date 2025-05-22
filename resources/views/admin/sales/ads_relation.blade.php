@@ -358,7 +358,6 @@
 
             function fetchSummary() {
     const filterDates = document.getElementById('filterDates').value;
-    const salesChannelId = document.getElementById('salesChannelFilter').value;
     const url = new URL("{{ route('sales.get_net_sales_summary') }}");
     if (filterDates) {
         url.searchParams.append('filterDates', filterDates);
