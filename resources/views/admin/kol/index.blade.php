@@ -29,6 +29,17 @@
             </div>
         </div>
     </div> -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <button id="btnBulkRefresh" class="btn btn-warning">
+                        <i class="fas fa-sync-alt"></i> Bulk Refresh Followers
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -50,6 +61,45 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="bulkRefreshModal" tabindex="-1" role="dialog" aria-labelledby="bulkRefreshModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkRefreshModalLabel">Bulk Refresh Progress</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="progress mb-3">
+                        <div id="bulkRefreshProgress" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    <div id="bulkRefreshStatus" class="mb-3">
+                        <strong>Status:</strong> <span id="statusText">Preparing...</span>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Status</th>
+                                    <th>Followers</th>
+                                    <th>Following</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulkRefreshResults">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnCloseBulkModal" class="btn btn-secondary" data-dismiss="modal" disabled>Close</button>
+                    <button type="button" id="btnStopBulkRefresh" class="btn btn-danger" style="display: none;">Stop Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -62,6 +112,174 @@
         const contentTypeSelector = $('#filterContentType');
         const picSelector = $('#filterPIC');
         const btnExportKol = $('#btnExportKol');
+        let bulkRefreshInProgress = false;
+        let bulkRefreshStopped = false;
+
+        $('#btnBulkRefresh').click(function() {
+            if (bulkRefreshInProgress) {
+                return;
+            }
+
+            // Show confirmation
+            Swal.fire({
+                title: 'Bulk Refresh Confirmation',
+                text: 'This will refresh followers/following for all KOLs. This may take several minutes. Continue?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, start refresh!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    startBulkRefresh();
+                }
+            });
+        });
+
+        $('#btnStopBulkRefresh').click(function() {
+            bulkRefreshStopped = true;
+            $('#btnStopBulkRefresh').hide();
+            $('#statusText').text('Stopping refresh...');
+        });
+
+        // Start bulk refresh process
+        function startBulkRefresh() {
+            bulkRefreshInProgress = true;
+            bulkRefreshStopped = false;
+            
+            // Reset modal
+            $('#bulkRefreshProgress').css('width', '0%').attr('aria-valuenow', 0).text('0%');
+            $('#bulkRefreshResults').empty();
+            $('#statusText').text('Fetching KOL usernames...');
+            $('#btnCloseBulkModal').prop('disabled', true);
+            $('#btnStopBulkRefresh').show();
+            
+            // Show modal
+            $('#bulkRefreshModal').modal('show');
+
+            // Get all usernames first
+            $.ajax({
+                url: "{{ route('kol.bulk-usernames') }}",
+                type: "GET",
+                data: {
+                    channel: channelSelector.val(),
+                    niche: nicheSelector.val(),
+                    skinType: skinTypeSelector.val(),
+                    skinConcern: skinConcernSelector.val(),
+                    contentType: contentTypeSelector.val(),
+                    pic: picSelector.val()
+                },
+                success: function(response) {
+                    if (response.usernames && response.usernames.length > 0) {
+                        processBulkRefresh(response.usernames);
+                    } else {
+                        $('#statusText').text('No KOLs found');
+                        finishBulkRefresh();
+                    }
+                },
+                error: function() {
+                    $('#statusText').text('Error fetching KOL list');
+                    finishBulkRefresh();
+                }
+            });
+        }
+
+        // Process bulk refresh
+        async function processBulkRefresh(usernames) {
+            const total = usernames.length;
+            let processed = 0;
+            let successful = 0;
+            let failed = 0;
+
+            $('#statusText').text(`Processing ${total} KOLs...`);
+
+            for (let i = 0; i < usernames.length; i++) {
+                if (bulkRefreshStopped) {
+                    $('#statusText').text('Refresh stopped by user');
+                    break;
+                }
+
+                const username = usernames[i];
+                const url = `{{ route('kol.refresh_follow', ['username' => ':username']) }}`.replace(':username', username);
+
+                // Add row to results table
+                const row = `
+                    <tr id="refresh-row-${i}">
+                        <td>${username}</td>
+                        <td><span class="badge badge-warning">Processing...</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+                $('#bulkRefreshResults').append(row);
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.error) {
+                        // Error case
+                        $(`#refresh-row-${i}`).html(`
+                            <td>${username}</td>
+                            <td><span class="badge badge-danger">Failed</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>${data.error}</td>
+                        `);
+                        failed++;
+                    } else {
+                        // Success case
+                        $(`#refresh-row-${i}`).html(`
+                            <td>${username}</td>
+                            <td><span class="badge badge-success">Success</span></td>
+                            <td>${data.followers || 0}</td>
+                            <td>${data.following || 0}</td>
+                            <td>${data.message || 'Updated successfully'}</td>
+                        `);
+                        successful++;
+                    }
+                } catch (error) {
+                    // Network or other error
+                    $(`#refresh-row-${i}`).html(`
+                        <td>${username}</td>
+                        <td><span class="badge badge-danger">Failed</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Network error</td>
+                    `);
+                    failed++;
+                }
+
+                processed++;
+                const percentage = Math.round((processed / total) * 100);
+                $('#bulkRefreshProgress').css('width', `${percentage}%`).attr('aria-valuenow', percentage).text(`${percentage}%`);
+                $('#statusText').text(`Processed: ${processed}/${total} | Success: ${successful} | Failed: ${failed}`);
+
+                // Scroll to bottom of results
+                const resultsDiv = $('#bulkRefreshResults').parent().parent();
+                resultsDiv.scrollTop(resultsDiv[0].scrollHeight);
+
+                // Add delay to prevent API rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+            }
+
+            finishBulkRefresh();
+        }
+
+        // Finish bulk refresh
+        function finishBulkRefresh() {
+            bulkRefreshInProgress = false;
+            $('#btnCloseBulkModal').prop('disabled', false);
+            $('#btnStopBulkRefresh').hide();
+            
+            if (!bulkRefreshStopped) {
+                $('#statusText').text('Bulk refresh completed!');
+            }
+
+            // Reload the main table
+            kolTable.ajax.reload(null, false);
+        }
 
         let kolTable = kolTableSelector.DataTable({
             responsive: true,

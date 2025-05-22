@@ -139,6 +139,7 @@ Route::prefix('admin')
                 Route::get('/create', [KeyOpinionLeaderController::class, 'create'])->name('kol.create');
                 Route::get('/create-excel', [KeyOpinionLeaderController::class, 'createExcelForm'])->name('kol.create-excel');
                 Route::get('/export', [KeyOpinionLeaderController::class, 'export'])->name('kol.export');
+                Route::get('/bulk-usernames', [KeyOpinionLeaderController::class, 'getBulkUsernames'])->name('kol.bulk-usernames');
                 Route::get('/import', [KeyOpinionLeaderController::class, 'importKeyOpinionLeaders'])->name('kol.import');
                 Route::post('/store', [KeyOpinionLeaderController::class, 'store'])->name('kol.store');
                 Route::post('/storeExcel', [KeyOpinionLeaderController::class, 'storeExcel'])->name('kol.store-excel');

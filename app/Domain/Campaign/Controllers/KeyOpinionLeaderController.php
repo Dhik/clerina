@@ -520,4 +520,17 @@ class KeyOpinionLeaderController extends Controller
         // This handles usernames that don't have @ at first or are not URL type
         return $username;
     }
+    public function getBulkUsernames(Request $request): JsonResponse
+    {
+        $query = $this->kolBLL->getKOLDatatable($request);
+        $usernames = $query->whereIn('channel', ['tiktok_video'])
+                        ->where('type', 'affiliate')
+                        ->pluck('username')
+                        ->toArray();
+
+        return response()->json([
+            'usernames' => $usernames,
+            'count' => count($usernames)
+        ]);
+    }
 }
