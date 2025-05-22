@@ -25,6 +25,7 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
     public function getKOLDatatable(Request $request): Builder
     {
         $query = $this->kolDAL->getKOLDatatable();
+        $query->where('type', 'affiliate');
 
        if (!is_null($request->channel)) {
            $query->where('channel', $request->channel);

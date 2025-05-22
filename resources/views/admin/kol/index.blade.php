@@ -3,17 +3,17 @@
 @section('title', trans('labels.key_opinion_leader'))
 
 @section('content_header')
-    <h1>Account</h1>
+    <h1>Account Affiliate</h1>
 @stop
 
 @section('content')
-<div class="row">
+<!-- <div class="row">
         <div class="col-4">
             <div class="card">
                 <div class="card-body">
                     <h5>Channel Distribution</h5>
                     <div style="height: 350px;">
-                        <canvas id="channelPieChart"></canvas> <!-- Removed fixed width and height -->
+                        <canvas id="channelPieChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -23,12 +23,12 @@
                 <div class="card-body">
                     <h5>Average Rate Card per Channel</h5>
                     <div style="height: 350px;">
-                        <canvas id="channelBarChart"></canvas> <!-- Removed fixed width and height -->
+                        <canvas id="channelBarChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
     <div class="row">
         <div class="col-12">
             <div class="card">
