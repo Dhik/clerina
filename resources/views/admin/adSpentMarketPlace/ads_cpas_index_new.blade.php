@@ -76,6 +76,7 @@
     @include('admin.adSpentSocialMedia.js.shopee-ads')
     @include('admin.adSpentSocialMedia.js.tiktok-ads')
     @include('admin.adSpentSocialMedia.js.overall-performance')
+    @include('admin.adSpentSocialMedia.js.relation')
     
     @include('admin.adSpentMarketPlace.script-line-chart')
 @stop
