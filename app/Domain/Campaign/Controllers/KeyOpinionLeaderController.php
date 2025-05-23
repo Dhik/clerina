@@ -443,10 +443,10 @@ class KeyOpinionLeaderController extends Controller
     public function refreshFollowersFollowingSingle(string $username): JsonResponse
     {
         $keyOpinionLeader = KeyOpinionLeader::where('username', $username)->first();
-
         if (!$keyOpinionLeader) {
             return response()->json(['error' => 'Key Opinion Leader not found'], 404);
         }
+        
         try {
             if ($keyOpinionLeader->channel === 'tiktok_video') {
                 $url = "https://tokapi-mobile-version.p.rapidapi.com/v1/user/@{$username}";
@@ -463,29 +463,66 @@ class KeyOpinionLeaderController extends Controller
             } else {
                 return response()->json(['error' => 'Unsupported channel type'], 400);
             }
+            
             $response = Http::withHeaders($headers)->get($url);
+            
             if ($response->successful()) {
                 $data = $response->json();
+                
                 if ($keyOpinionLeader->channel === 'tiktok_video') {
                     $followers = $data['user']['follower_count'] ?? 0;
                     $following = $data['user']['following_count'] ?? 0;
+                    $totalLikes = $data['user']['total_favorited'] ?? 0;
+                    $videoCount = $data['user']['aweme_count'] ?? 0;
+                    
+                    // Calculate engagement rate (likes-based)
+                    $engagementRate = null;
+                    if ($followers > 0 && $videoCount > 0) {
+                        $avgLikesPerVideo = $totalLikes / $videoCount;
+                        $engagementRate = round(($avgLikesPerVideo / $followers) * 100, 2);
+                    }
+                    
                 } elseif ($keyOpinionLeader->channel === 'instagram_feed') {
                     $followers = $data['data']['follower_count'] ?? 0;
                     $following = $data['data']['following_count'] ?? 0;
+                    $totalLikes = $data['data']['total_likes'] ?? 0; // Adjust field name as needed for Instagram
+                    $videoCount = $data['data']['media_count'] ?? 0; // Adjust field name as needed for Instagram
+                    
+                    // Calculate engagement rate for Instagram (if applicable)
+                    $engagementRate = null;
+                    if ($followers > 0 && $videoCount > 0) {
+                        $avgLikesPerPost = $totalLikes / $videoCount;
+                        $engagementRate = round(($avgLikesPerPost / $followers) * 100, 2);
+                    }
                 }
-                $keyOpinionLeader->update([
+                
+                $updateData = [
                     'followers' => $followers,
                     'following' => $following,
-                ]);
-
+                    'total_likes' => $totalLikes,
+                    'video_count' => $videoCount,
+                ];
+                
+                // Only update engagement rate if we calculated it
+                if ($engagementRate !== null) {
+                    $updateData['engagement_rate'] = $engagementRate;
+                }
+                
+                $keyOpinionLeader->update($updateData);
+                
                 return response()->json([
                     'followers' => $followers,
                     'following' => $following,
-                    'message' => 'Followers and Following counts updated successfully.',
+                    'total_likes' => $totalLikes,
+                    'video_count' => $videoCount,
+                    'engagement_rate' => $engagementRate,
+                    'message' => 'Profile data updated successfully.',
                 ]);
+                
             } else {
                 return response()->json(['error' => 'Failed to fetch data from API'], $response->status());
             }
+            
         } catch (Exception $e) {
             return response()->json(['error' => 'An error occurred while refreshing data', 'details' => $e->getMessage()], 500);
         }
