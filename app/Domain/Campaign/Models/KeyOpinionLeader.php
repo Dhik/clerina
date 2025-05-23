@@ -37,6 +37,17 @@ class KeyOpinionLeader extends Model
         'product',
         'followers',
         'following',
+        'engagement_rate',
+        'program',
+        'views_last_9_post',
+        'activity_posting',
+        'status_affiliate',
+    ];
+
+    protected $casts = [
+        'views_last_9_post' => 'boolean',
+        'activity_posting' => 'boolean',
+        'engagement_rate' => 'float',
     ];
 
     protected $appends = [

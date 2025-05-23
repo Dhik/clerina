@@ -9,14 +9,10 @@
 @section('content')
     <div class="container-fluid">
         <div class="row justify-content-center">
-            <div class="col-md-8">
+            <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Edit KOL Information</h3>
-                    </div>
                     <div class="card-body">
                         <form method="post" action="{{ route('kol.update', $keyOpinionLeader->id) }}">
-                            @csrf
                             @method('put')
                             @include('admin.kol._form', ['edit' => true])
                         </form>
@@ -30,10 +26,11 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            // Initialize Select2 for status_affiliate only
-            $('#status_affiliate').select2({
-                theme: 'bootstrap4',
-                placeholder: '{{ trans('placeholder.select_status') }}'
+            $(document).ready(function () {
+                $('#channel, #niche, #contentType, #skinConcern, #skinType, #picContact').select2({
+                    theme: 'bootstrap4',
+                    placeholder: '{{ trans('placeholder.select_channel') }}'
+                });
             });
         });
     </script>

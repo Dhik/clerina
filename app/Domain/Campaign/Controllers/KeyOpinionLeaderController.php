@@ -81,8 +81,47 @@ class KeyOpinionLeaderController extends Controller
                             <i class="fas fa-sync-alt"></i>
                         </button>';
             })
-            ->rawColumns(['actions', 'refresh_follower'])
+            ->addColumn('engagement_rate_display', function ($row) {
+                return $row->engagement_rate ? number_format($row->engagement_rate, 2) . '%' : '-';
+            })
+            ->addColumn('views_last_9_post_display', function ($row) {
+                if ($row->views_last_9_post === null) return '-';
+                return $row->views_last_9_post ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>';
+            })
+            ->addColumn('activity_posting_display', function ($row) {
+                if ($row->activity_posting === null) return '-';
+                return $row->activity_posting ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
+            })
+            ->addColumn('status_affiliate_display', function ($row) {
+                if (!$row->status_affiliate) return '-';
+                $badgeClass = match($row->status_affiliate) {
+                    'active' => 'badge-success',
+                    'inactive' => 'badge-danger',
+                    'pending' => 'badge-warning',
+                    default => 'badge-secondary'
+                };
+                return '<span class="badge ' . $badgeClass . '">' . ucfirst($row->status_affiliate) . '</span>';
+            })
+            ->rawColumns(['actions', 'refresh_follower', 'views_last_9_post_display', 'activity_posting_display', 'status_affiliate_display'])
             ->toJson();
+    }
+
+    public function getKpiData(): JsonResponse
+    {
+        $totalKol = KeyOpinionLeader::count();
+        $totalAffiliate = KeyOpinionLeader::whereNotNull('status_affiliate')->count();
+        $activeAffiliate = KeyOpinionLeader::where('status_affiliate', 'active')->count();
+        $activePosting = KeyOpinionLeader::where('activity_posting', true)->count();
+        $hasViews = KeyOpinionLeader::where('views_last_9_post', true)->count();
+        
+        return response()->json([
+            'total_kol' => $totalKol,
+            'total_affiliate' => $totalAffiliate,
+            'active_affiliate' => $activeAffiliate,
+            'active_posting' => $activePosting,
+            'has_views' => $hasViews,
+            'avg_engagement' => KeyOpinionLeader::whereNotNull('engagement_rate')->avg('engagement_rate')
+        ]);
     }
 
 
