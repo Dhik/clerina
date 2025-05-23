@@ -41,7 +41,7 @@
 
 <!-- Views Last 9 Posts -->
 <div class="form-group row">
-    <label class="col-md-4 col-form-label text-md-right">{{ trans('labels.views_last_9_post') }}</label>
+    <label class="col-md-4 col-form-label text-md-right">Views Last 10 Posts</label>
     <div class="col-md-6">
         <div class="form-check form-check-inline">
             <input class="form-check-input" 
@@ -73,7 +73,7 @@
                    value="" 
                    {{ old('views_last_9_post', $keyOpinionLeader->views_last_9_post ?? '') === '' ? 'checked' : '' }}>
             <label class="form-check-label" for="views_last_9_post_null">
-                {{ trans('labels.not_set') }}
+                Not Set
             </label>
         </div>
         @error('views_last_9_post')
@@ -86,7 +86,7 @@
 
 <!-- Activity Posting -->
 <div class="form-group row">
-    <label class="col-md-4 col-form-label text-md-right">{{ trans('labels.activity_posting') }}</label>
+    <label class="col-md-4 col-form-label text-md-right">Activity Posting</label>
     <div class="col-md-6">
         <div class="form-check form-check-inline">
             <input class="form-check-input" 
@@ -96,7 +96,7 @@
                    value="1" 
                    {{ old('activity_posting', $keyOpinionLeader->activity_posting ?? '') == '1' ? 'checked' : '' }}>
             <label class="form-check-label" for="activity_posting_active">
-                {{ trans('labels.active') }}
+                Active
             </label>
         </div>
         <div class="form-check form-check-inline">
@@ -107,7 +107,7 @@
                    value="0" 
                    {{ old('activity_posting', $keyOpinionLeader->activity_posting ?? '') == '0' ? 'checked' : '' }}>
             <label class="form-check-label" for="activity_posting_inactive">
-                {{ trans('labels.inactive') }}
+                Inactive
             </label>
         </div>
         <div class="form-check form-check-inline">
@@ -118,7 +118,7 @@
                    value="" 
                    {{ old('activity_posting', $keyOpinionLeader->activity_posting ?? '') === '' ? 'checked' : '' }}>
             <label class="form-check-label" for="activity_posting_null">
-                {{ trans('labels.not_set') }}
+                Not Set
             </label>
         </div>
         @error('activity_posting')
@@ -138,7 +138,7 @@
             {{ trans('labels.update') }}
         </button>
         <a href="{{ route('kol.index') }}" class="btn btn-secondary ml-2">
-            {{ trans('labels.cancel') }}
+            Cancel
         </a>
     </div>
 </div>
