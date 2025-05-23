@@ -3164,13 +3164,15 @@ class NetProfitController extends Controller
             '-' => 'Other Products'
         ];
         
+        // Calculate total spent for proportion calculation
+        $totalSpent = $historicalData->sum('marketing');
+        
         // Group historical data by SKU and platform
-        $skuData = $historicalData->groupBy('sku')->map(function ($skuItems, $sku) use ($logisticData, $skuLabels) {
+        $skuData = $historicalData->groupBy('sku')->map(function ($skuItems, $sku) use ($logisticData, $skuLabels, $totalSpent) {
             $platformData = $skuItems->groupBy('platform');
             
             // Calculate proportion of this SKU relative to total spending
             $skuTotalSpent = $skuItems->sum('marketing');
-            $totalSpent = $historicalData->sum('marketing');
             $skuProportion = $totalSpent > 0 ? $skuTotalSpent / $totalSpent : 0;
             
             // Calculate platform distribution for this SKU
@@ -3182,7 +3184,9 @@ class NetProfitController extends Controller
             $shopeeProportion = $skuTotal > 0 ? $shopeeSpent / $skuTotal : 0.5;
             
             // Apply proportions to ideal spending
-            $totalIdealSpent = end($logisticData['meta_forecast']) + end($logisticData['shopee_forecast']);
+            $metaForecastTotal = end($logisticData['meta_forecast']) ?: 0;
+            $shopeeForecastTotal = end($logisticData['shopee_forecast']) ?: 0;
+            $totalIdealSpent = $metaForecastTotal + $shopeeForecastTotal;
             $skuIdealSpent = $totalIdealSpent * $skuProportion;
             
             $metaIdealSpent = $skuIdealSpent * $metaProportion;
