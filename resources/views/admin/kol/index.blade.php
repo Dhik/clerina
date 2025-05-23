@@ -40,6 +40,74 @@
             </div>
         </div>
     </div>
+    <div class="row mb-4" id="kpiCards">
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="totalKol">0</h3>
+                    <p>Total KOL</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="totalAffiliate">0</h3>
+                    <p>Total Affiliate</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3 id="activeAffiliate">0</h3>
+                    <p>Active Affiliate</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-primary">
+                <div class="inner">
+                    <h3 id="activePosting">0</h3>
+                    <p>Active Posting</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-secondary">
+                <div class="inner">
+                    <h3 id="hasViews">0</h3>
+                    <p>Has Recent Views</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-6">
+            <div class="small-box bg-gradient-purple">
+                <div class="inner">
+                    <h3 id="avgEngagement">0%</h3>
+                    <p>Avg Engagement</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-12">
             <div class="card">
