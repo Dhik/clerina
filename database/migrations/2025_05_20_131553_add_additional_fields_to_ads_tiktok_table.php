@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ads_tiktok', function (Blueprint $table) {
-            $table->float('biaya_bersih')->nullable()->after('amount_spent');
-            $table->float('roi')->nullable()->after('cost_per_purchase');
+            $table->decimal('biaya_bersih', 15, 2)->nullable()->change();
+            $table->decimal('roi', 8, 2)->nullable()->change();
             $table->string('mata_uang')->nullable()->after('account_name');
             $table->string('id_campaign')->nullable()->after('mata_uang');
             $table->string('type')->nullable()->after('mata_uang');
