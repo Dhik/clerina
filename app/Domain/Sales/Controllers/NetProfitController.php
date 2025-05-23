@@ -2995,67 +2995,146 @@ class NetProfitController extends Controller
     private function calculateLogisticRegression($data, $endDate)
     {
         // Group data by date and platform
-        $dailyData = $data->groupBy(['date', 'platform'])->map(function ($platformData) {
-            return $platformData->map(function ($items) {
-                return $items->sum('marketing');
-            });
-        });
+        $dailyData = $data->groupBy('date')->map(function ($dayItems) {
+            $platforms = $dayItems->groupBy('platform');
+            return [
+                'meta' => $platforms->get('Meta Ads', collect())->sum('marketing'),
+                'shopee' => $platforms->get('Shopee Ads', collect())->sum('marketing'),
+                'total' => $dayItems->sum('marketing')
+            ];
+        })->sortKeys();
         
-        // Separate Meta and Shopee data
-        $metaData = [];
-        $shopeeData = [];
-        $dates = [];
+        $dates = $dailyData->keys()->toArray();
+        $metaData = $dailyData->pluck('meta')->toArray();
+        $shopeeData = $dailyData->pluck('shopee')->toArray();
         
-        foreach ($dailyData as $date => $platforms) {
-            $dates[] = $date;
-            $metaData[] = $platforms->get('Meta Ads', 0);
-            $shopeeData[] = $platforms->get('Shopee Ads', 0);
-        }
+        // Use moving average + linear trend instead of logistic regression
+        $metaForecast = $this->calculateMovingAverageForecast($metaData, 3);
+        $shopeeForecast = $this->calculateMovingAverageForecast($shopeeData, 3);
         
-        // Calculate logistic regression parameters
-        $metaParams = $this->fitLogisticCurve($dates, $metaData);
-        $shopeeParams = $this->fitLogisticCurve($dates, $shopeeData);
-        
-        // Generate full date range (historical + forecast)
-        $allDates = [];
-        $currentDate = Carbon::parse($dates[0]);
-        $forecastEndDate = $endDate->copy()->addDays(3);
-        
-        while ($currentDate <= $forecastEndDate) {
-            $allDates[] = $currentDate->format('Y-m-d');
+        // Generate forecast dates
+        $forecastDates = [];
+        $currentDate = Carbon::parse(end($dates))->addDay();
+        for ($i = 0; $i < 3; $i++) {
+            $forecastDates[] = $currentDate->format('Y-m-d');
             $currentDate->addDay();
         }
         
-        // Calculate regression curves
-        $metaRegression = [];
-        $shopeeRegression = [];
+        // Generate smooth trend lines for visualization
+        $metaTrend = $this->generateSmoothTrend($metaData, count($dates) + 3);
+        $shopeeTrend = $this->generateSmoothTrend($shopeeData, count($dates) + 3);
         
-        foreach ($allDates as $index => $date) {
-            $metaRegression[] = $this->logisticFunction($index, $metaParams);
-            $shopeeRegression[] = $this->logisticFunction($index, $shopeeParams);
-        }
-        
-        // Separate historical and forecast dates
-        $historicalDates = array_slice($allDates, 0, count($dates));
-        $forecastDates = array_slice($allDates, count($dates));
-        
-        // Forecast values
-        $metaForecast = array_slice($metaRegression, count($dates));
-        $shopeeForecast = array_slice($shopeeRegression, count($dates));
+        // Create full date range
+        $allDates = array_merge($dates, $forecastDates);
         
         return [
             'dates' => $allDates,
-            'historical_dates' => $historicalDates,
+            'historical_dates' => $dates,
             'forecast_dates' => $forecastDates,
             'meta_historical' => $metaData,
             'shopee_historical' => $shopeeData,
-            'meta_regression' => $metaRegression,
-            'shopee_regression' => $shopeeRegression,
+            'meta_regression' => $metaTrend,
+            'shopee_regression' => $shopeeTrend,
             'meta_forecast' => $metaForecast,
-            'shopee_forecast' => $shopeeForecast,
-            'meta_params' => $metaParams,
-            'shopee_params' => $shopeeParams
+            'shopee_forecast' => $shopeeForecast
         ];
+    }
+
+    private function generateSmoothTrend($data, $totalPoints)
+    {
+        $n = count($data);
+        if ($n < 3) {
+            return array_fill(0, $totalPoints, array_sum($data) / $n);
+        }
+        
+        // Use exponential smoothing for trend line
+        $alpha = 0.3; // Smoothing factor
+        $smoothed = [$data[0]];
+        
+        for ($i = 1; $i < $n; $i++) {
+            $smoothed[$i] = $alpha * $data[$i] + (1 - $alpha) * $smoothed[$i - 1];
+        }
+        
+        // Extend trend for forecast period
+        $lastValue = end($smoothed);
+        $secondLastValue = $smoothed[$n - 2];
+        $trendSlope = $lastValue - $secondLastValue;
+        
+        // Generate full trend line
+        $trend = $smoothed;
+        for ($i = $n; $i < $totalPoints; $i++) {
+            $trend[$i] = $trend[$i - 1] + $trendSlope * 0.5; // Dampen the trend
+        }
+        
+        return $trend;
+    }
+
+    private function calculateMovingAverageForecast($data, $days)
+    {
+        $n = count($data);
+        if ($n < 7) {
+            // Not enough data, use simple average
+            $avg = array_sum($data) / $n;
+            return array_fill(0, $days, $avg);
+        }
+        
+        // Calculate trend from last 14 days (or available data)
+        $trendDays = min(14, $n);
+        $recentData = array_slice($data, -$trendDays);
+        
+        // Simple linear trend calculation
+        $x = range(0, $trendDays - 1);
+        $y = $recentData;
+        
+        $trend = $this->calculateLinearTrend($x, $y);
+        
+        // Calculate baseline from last 7 days average
+        $baseline = array_sum(array_slice($data, -7)) / 7;
+        
+        // Generate forecast
+        $forecast = [];
+        for ($i = 1; $i <= $days; $i++) {
+            $trendValue = $trend['slope'] * ($trendDays + $i - 1) + $trend['intercept'];
+            
+            // Blend trend with baseline (60% baseline, 40% trend)
+            $forecastValue = $baseline * 0.6 + $trendValue * 0.4;
+            
+            // Ensure positive values and reasonable bounds
+            $forecastValue = max(0, $forecastValue);
+            $forecastValue = min($forecastValue, max($data) * 1.5); // Cap at 150% of historical max
+            
+            $forecast[] = $forecastValue;
+        }
+        
+        return $forecast;
+    }
+
+    private function calculateLinearTrend($x, $y)
+    {
+        $n = count($x);
+        if ($n < 2) {
+            return ['slope' => 0, 'intercept' => array_sum($y) / count($y)];
+        }
+        
+        $sumX = array_sum($x);
+        $sumY = array_sum($y);
+        $sumXY = 0;
+        $sumX2 = 0;
+        
+        for ($i = 0; $i < $n; $i++) {
+            $sumXY += $x[$i] * $y[$i];
+            $sumX2 += $x[$i] * $x[$i];
+        }
+        
+        $denominator = ($n * $sumX2 - $sumX * $sumX);
+        if ($denominator == 0) {
+            return ['slope' => 0, 'intercept' => $sumY / $n];
+        }
+        
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
+        $intercept = ($sumY - $slope * $sumX) / $n;
+        
+        return ['slope' => $slope, 'intercept' => $intercept];
     }
 
     private function fitLogisticCurve($dates, $values)
@@ -3118,9 +3197,9 @@ class NetProfitController extends Controller
 
     private function calculateTodayKPI($logisticData)
     {
-        // Get today's forecast values (last forecast day represents "today's ideal")
-        $metaIdeal = end($logisticData['meta_forecast']) ?: 0;
-        $shopeeIdeal = end($logisticData['shopee_forecast']) ?: 0;
+        // Use the first forecast day as "today's ideal"
+        $metaIdeal = $logisticData['meta_forecast'][0] ?? 0;
+        $shopeeIdeal = $logisticData['shopee_forecast'][0] ?? 0;
         $totalIdeal = $metaIdeal + $shopeeIdeal;
         
         // Calculate ratio
