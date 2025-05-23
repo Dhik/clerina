@@ -45,21 +45,10 @@
             <div class="small-box bg-info">
                 <div class="inner">
                     <h3 id="totalKol">0</h3>
-                    <p>Total KOL</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-users"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3 id="totalAffiliate">0</h3>
                     <p>Total Affiliate</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-handshake"></i>
+                    <i class="fas fa-users"></i>
                 </div>
             </div>
         </div>
