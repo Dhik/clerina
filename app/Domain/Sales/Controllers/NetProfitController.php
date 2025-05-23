@@ -2994,23 +2994,39 @@ class NetProfitController extends Controller
 
     private function calculateLogisticRegression($data, $endDate)
     {
-        // Group data by date and platform
+        // Group data by date and platform with ROAS calculation
         $dailyData = $data->groupBy('date')->map(function ($dayItems) {
             $platforms = $dayItems->groupBy('platform');
+            
+            $metaItems = $platforms->get('Meta Ads', collect());
+            $shopeeItems = $platforms->get('Shopee Ads', collect());
+            
+            $metaSpent = $metaItems->sum('marketing');
+            $metaSales = $metaItems->sum('sales');
+            $metaRoas = $metaSpent > 0 ? $metaSales / $metaSpent : 0;
+            
+            $shopeeSpent = $shopeeItems->sum('marketing');
+            $shopeeSales = $shopeeItems->sum('sales');
+            $shopeeRoas = $shopeeSpent > 0 ? $shopeeSales / $shopeeSpent : 0;
+            
             return [
-                'meta' => $platforms->get('Meta Ads', collect())->sum('marketing'),
-                'shopee' => $platforms->get('Shopee Ads', collect())->sum('marketing'),
-                'total' => $dayItems->sum('marketing')
+                'meta_spent' => $metaSpent,
+                'meta_sales' => $metaSales,
+                'meta_roas' => $metaRoas,
+                'shopee_spent' => $shopeeSpent,
+                'shopee_sales' => $shopeeSales,
+                'shopee_roas' => $shopeeRoas,
+                'total_spent' => $metaSpent + $shopeeSpent,
+                'total_sales' => $metaSales + $shopeeSales
             ];
         })->sortKeys();
         
         $dates = $dailyData->keys()->toArray();
-        $metaData = $dailyData->pluck('meta')->toArray();
-        $shopeeData = $dailyData->pluck('shopee')->toArray();
+        $metaData = $dailyData->pluck('meta_spent')->toArray();
+        $shopeeData = $dailyData->pluck('shopee_spent')->toArray();
         
-        // Use moving average + linear trend instead of logistic regression
-        $metaForecast = $this->calculateMovingAverageForecast($metaData, 3);
-        $shopeeForecast = $this->calculateMovingAverageForecast($shopeeData, 3);
+        // Calculate optimal spending based on ROAS performance
+        $optimalSpending = $this->calculateOptimalSpending($dailyData);
         
         // Generate forecast dates
         $forecastDates = [];
@@ -3020,9 +3036,13 @@ class NetProfitController extends Controller
             $currentDate->addDay();
         }
         
-        // Generate smooth trend lines for visualization
-        $metaTrend = $this->generateSmoothTrend($metaData, count($dates) + 3);
-        $shopeeTrend = $this->generateSmoothTrend($shopeeData, count($dates) + 3);
+        // Generate optimized trend lines
+        $metaTrend = $this->generateOptimizedTrend($metaData, $optimalSpending['meta_optimal'], count($dates) + 3);
+        $shopeeTrend = $this->generateOptimizedTrend($shopeeData, $optimalSpending['shopee_optimal'], count($dates) + 3);
+        
+        // Create optimized forecasts
+        $metaForecast = array_fill(0, 3, $optimalSpending['meta_optimal']);
+        $shopeeForecast = array_fill(0, 3, $optimalSpending['shopee_optimal']);
         
         // Create full date range
         $allDates = array_merge($dates, $forecastDates);
@@ -3036,7 +3056,8 @@ class NetProfitController extends Controller
             'meta_regression' => $metaTrend,
             'shopee_regression' => $shopeeTrend,
             'meta_forecast' => $metaForecast,
-            'shopee_forecast' => $shopeeForecast
+            'shopee_forecast' => $shopeeForecast,
+            'optimization_data' => $optimalSpending
         ];
     }
 
@@ -3068,6 +3089,138 @@ class NetProfitController extends Controller
         
         return $trend;
     }
+
+    private function calculateOptimalSpending($dailyData)
+    {
+        // Calculate performance metrics for each platform
+        $metaPerformance = $this->analyzeplatformPerformance($dailyData, 'meta');
+        $shopeePerformance = $this->analyzeplatformPerformance($dailyData, 'shopee');
+        
+        // Find optimal spending levels based on ROAS
+        $metaOptimal = $this->findOptimalSpendingLevel($metaPerformance);
+        $shopeeOptimal = $this->findOptimalSpendingLevel($shopeePerformance);
+        
+        // Calculate total budget and allocation
+        $totalOptimal = $metaOptimal + $shopeeOptimal;
+        $metaAllocation = $totalOptimal > 0 ? ($metaOptimal / $totalOptimal) * 100 : 50;
+        $shopeeAllocation = $totalOptimal > 0 ? ($shopeeOptimal / $totalOptimal) * 100 : 50;
+        
+        return [
+            'meta_optimal' => $metaOptimal,
+            'shopee_optimal' => $shopeeOptimal,
+            'total_optimal' => $totalOptimal,
+            'meta_allocation' => round($metaAllocation, 1),
+            'shopee_allocation' => round($shopeeAllocation, 1),
+            'meta_performance' => $metaPerformance,
+            'shopee_performance' => $shopeePerformance
+        ];
+    }
+
+    private function generateOptimizedTrend($historicalData, $optimalValue, $totalPoints)
+    {
+        $n = count($historicalData);
+        
+        // Create trend that gradually moves toward optimal spending
+        $trend = [];
+        
+        // Copy historical data
+        for ($i = 0; $i < $n; $i++) {
+            $trend[$i] = $historicalData[$i];
+        }
+        
+        // Generate forward trend toward optimal value
+        $lastValue = end($historicalData);
+        $stepSize = ($optimalValue - $lastValue) / 10; // Gradual transition over 10 steps
+        
+        for ($i = $n; $i < $totalPoints; $i++) {
+            $progress = ($i - $n + 1) / 4; // Progress over forecast period
+            $newValue = $lastValue + ($stepSize * $progress * 4);
+            
+            // Ensure we don't overshoot the optimal value
+            if ($stepSize > 0) {
+                $newValue = min($newValue, $optimalValue);
+            } else {
+                $newValue = max($newValue, $optimalValue);
+            }
+            
+            $trend[$i] = $newValue;
+        }
+        
+        return $trend;
+    }
+
+    private function findOptimalSpendingLevel($performance)
+    {
+        // Strategy: Use the spending level that achieved the best ROAS
+        // But ensure it's not too low (minimum viable spending)
+        
+        $optimalSpent = $performance['best_spent_for_roas'];
+        $avgSpent = $performance['avg_spent'];
+        
+        // If best ROAS came from very low spending, use average instead
+        if ($optimalSpent < $avgSpent * 0.3) {
+            $optimalSpent = $avgSpent * 0.7; // Use 70% of average as conservative approach
+        }
+        
+        // If performance is good, consider scaling up slightly
+        if ($performance['best_roas'] > 3) {
+            $optimalSpent *= 1.2; // Scale up by 20% for high-performing platforms
+        } elseif ($performance['best_roas'] > 2) {
+            $optimalSpent *= 1.1; // Scale up by 10% for good-performing platforms
+        }
+        
+        // Ensure minimum spending level
+        $minSpending = 1000000; // 1M IDR minimum
+        $optimalSpent = max($optimalSpent, $minSpending);
+        
+        return round($optimalSpent, 0);
+    }
+
+    private function analyzeplatformPerformance($dailyData, $platform)
+    {
+        $spentKey = $platform . '_spent';
+        $roasKey = $platform . '_roas';
+        $salesKey = $platform . '_sales';
+        
+        // Filter out days with no spending
+        $validDays = $dailyData->filter(function($day) use ($spentKey) {
+            return $day[$spentKey] > 0;
+        });
+        
+        if ($validDays->isEmpty()) {
+            return [
+                'avg_roas' => 0,
+                'avg_spent' => 0,
+                'avg_sales' => 0,
+                'best_roas' => 0,
+                'best_spent_for_roas' => 0,
+                'efficiency_score' => 0
+            ];
+        }
+        
+        $avgRoas = $validDays->avg($roasKey);
+        $avgSpent = $validDays->avg($spentKey);
+        $avgSales = $validDays->avg($salesKey);
+        
+        // Find the spending level that gives best ROAS
+        $bestPerformance = $validDays->sortByDesc($roasKey)->first();
+        $bestRoas = $bestPerformance[$roasKey];
+        $bestSpentForRoas = $bestPerformance[$spentKey];
+        
+        // Calculate efficiency score (ROAS * spending volume normalized)
+        $maxSpent = $validDays->max($spentKey);
+        $efficiencyScore = $maxSpent > 0 ? ($avgRoas * ($avgSpent / $maxSpent)) : 0;
+        
+        return [
+            'avg_roas' => round($avgRoas, 2),
+            'avg_spent' => round($avgSpent, 0),
+            'avg_sales' => round($avgSales, 0),
+            'best_roas' => round($bestRoas, 2),
+            'best_spent_for_roas' => round($bestSpentForRoas, 0),
+            'efficiency_score' => round($efficiencyScore, 3)
+        ];
+    }
+
 
     private function calculateMovingAverageForecast($data, $days)
     {
