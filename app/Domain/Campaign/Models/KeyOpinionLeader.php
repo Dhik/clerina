@@ -42,6 +42,8 @@ class KeyOpinionLeader extends Model
         'views_last_9_post',
         'activity_posting',
         'status_affiliate',
+        'total_likes',
+        'video_count',
     ];
 
     protected $casts = [
