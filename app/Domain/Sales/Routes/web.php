@@ -153,6 +153,7 @@ Route::prefix('admin')
             Route::get('/update-order-count-azrina', [NetProfitController::class, 'updateOrderCountAzrina'])->name('net-profit.update-order-count-azrina');
             Route::get('/update-closing-rate', [NetProfitController::class, 'updateClosingRate'])->name('net-profit.update-closing-rate');
             Route::get('/sales-vs-marketing', [NetProfitController::class, 'getCurrentMonthCorrelation'])->name('net-profit.sales-vs-marketing');
+            Route::get('/sales-optimization', [NetProfitController::class, 'getSalesOptimization'])->name('net-profit.sales-optimization');
             Route::get('/detail-sales-vs-marketing', [NetProfitController::class, 'getDetailCorrelation'])->name('net-profit.detail-sales-vs-marketing');
         });
 

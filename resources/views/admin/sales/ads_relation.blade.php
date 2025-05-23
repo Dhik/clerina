@@ -17,9 +17,6 @@
                                 <div class="col-md-3 mb-2">
                                     <input type="text" id="filterDates" class="form-control daterange" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                                 </div>
-                                <!-- <div class="col-auto">
-                                    <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
-                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -102,6 +99,147 @@
     .dt-button.buttons-columnVisibility.active {
         background: #e9ecef;
     }
+    /* Add these styles to your existing CSS section */
+
+/* Optimization Tab Specific Styles */
+.recommendations-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.recommendations-list .alert {
+    font-size: 0.9em;
+    padding: 10px 15px;
+}
+
+.recommendations-list .alert strong {
+    font-size: 1em;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Small box styling for optimization metrics */
+.small-box .inner h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.small-box .inner p {
+    font-size: 0.85rem;
+    margin: 5px 0 0 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Optimization table styling */
+#optimizationTable {
+    font-size: 0.9rem;
+}
+
+#optimizationTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-top: none;
+}
+
+#optimizationTable td {
+    vertical-align: middle;
+}
+
+/* Badge styling for recommendations */
+.badge-success {
+    background-color: #28a745;
+}
+
+.badge-primary {
+    background-color: #007bff;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+}
+
+/* Chart container improvements */
+.card .card-body {
+    padding: 1rem;
+}
+
+.card-header .card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .small-box .inner h4 {
+        font-size: 1.2rem;
+    }
+    
+    .small-box .inner p {
+        font-size: 0.8rem;
+    }
+    
+    #optimizationTable {
+        font-size: 0.8rem;
+    }
+    
+    .recommendations-list {
+        max-height: 250px;
+    }
+}
+
+/* Loading states */
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.chart-loading i {
+    margin-right: 10px;
+}
+
+/* Hover effects for interactive elements */
+.nav-pills .nav-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for recommendations */
+.recommendations-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.recommendations-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.recommendations-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.recommendations-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 </style>
 @stop
 
@@ -151,407 +289,10 @@
             loadNetProfitsChart();
             loadCorrelationChart();
             loadDetailCorrelationChart();
-        });
-        function showAdSpentDetail(date) {
-            // Open modal
-            $('#adSpentDetailModal').modal('show');
-            $('#adSpentDetailModalTitle').text('Ads Spent Detail - ' + date);
-            
-            // Clear existing data
-            if ($.fn.DataTable.isDataTable('#adSpentDetailTable')) {
-                $('#adSpentDetailTable').DataTable().destroy();
+            if ($('.nav-link[href="#optimizationTab"]').hasClass('active')) {
+                loadOptimizationData();
             }
-            
-            // Initialize datatable
-            $('#adSpentDetailTable').DataTable({
-                processing: true,
-                serverSide: false, // We'll load all data at once for simplicity
-                ajax: {
-                    url: "{{ route('net-profit.get_ad_spent_detail') }}",
-                    data: { date: date }
-                },
-                columns: [
-                    { data: 'name', title: 'Channel/Platform' },
-                    { 
-                        data: 'amount', 
-                        title: 'Amount',
-                        render: function(data) {
-                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                        }
-                    }
-                ],
-                columnDefs: [
-                    { "targets": [1], "className": "text-right" }
-                ]
-            });
-        }
-
-        function showKolDetail(date) {
-            $('#kolDetailModal').modal('show');
-            $.get("{{ route('talent-content.getByDate') }}", { date: date }, function(data) {
-                let html = '';
-                data.forEach(function(item) {
-                    html += `<tr>
-                        <td>${item.talent_name || '-'}</td>
-                        <td>${item.username || '-'}</td>
-                        <td>${item.platform || '-'}</td>
-                        <td>${item.followers ? item.followers.toLocaleString('id-ID') : '-'}</td>
-                        <td>${item.product || '-'}</td>
-                        <td>Rp ${Math.round(item.rate).toLocaleString('id-ID')}</td>
-                        <td><a href="${item.upload_link}" target="_blank">View</a></td>
-                    </tr>`;
-                });
-                $('#kolDetailContent').html(html);
-            });
-        }
-
-        function refreshData() {
-            Swal.fire({
-                title: 'Refreshing Data',
-                html: 'Starting refresh process...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            const endpoints = [
-                { 
-                    name: 'KOL Spending', 
-                    url: "{{ route('net-profit.update-spent-kol') }}"
-                },
-                { 
-                    name: 'Azrina KOL Spending', 
-                    url: "{{ route('net-profit.update-spent-kol-azrina') }}"
-                },
-                { 
-                    name: 'HPP', 
-                    url: "{{ route('net-profit.update-hpp') }}"
-                },
-                { 
-                    name: 'HPP Azrina', 
-                    url: "{{ route('net-profit.update-hpp-azrina') }}"
-                },
-                { 
-                    name: 'Marketing', 
-                    url: "{{ route('net-profit.update-marketing') }}"
-                },
-                { 
-                    name: 'Marketing Azrina', 
-                    url: "{{ route('net-profit.update-marketing-azrina') }}"
-                },
-                { 
-                    name: 'Visit', 
-                    url: "{{ route('net-profit.update-visit') }}"
-                },
-                { 
-                    name: 'Visit Azrina', 
-                    url: "{{ route('net-profit.update-visit-azrina') }}"
-                },
-                { 
-                    name: 'Sales', 
-                    url: "{{ route('net-profit.update-sales') }}"
-                },
-                { 
-                    name: 'Sales Azrina', 
-                    url: "{{ route('net-profit.update-sales-azrina') }}"
-                },
-                { 
-                    name: 'ROAS', 
-                    url: "{{ route('net-profit.update-roas') }}"
-                },
-                { 
-                    name: 'ROAS Azrina', 
-                    url: "{{ route('net-profit.update-roas-azrina') }}"
-                },
-                { 
-                    name: 'Quantity', 
-                    url: "{{ route('net-profit.update-qty') }}"
-                },
-                { 
-                    name: 'Quantity Azrina', 
-                    url: "{{ route('net-profit.update-qty-azrina') }}"
-                },
-                { 
-                    name: 'Order Count', 
-                    url: "{{ route('net-profit.update-order-count') }}"
-                },
-                { 
-                    name: 'Order Count Azrina', 
-                    url: "{{ route('net-profit.update-order-count-azrina') }}"
-                },
-                { 
-                    name: 'B2B and CRM Sales', 
-                    url: "{{ route('net-profit.update-b2b-crm') }}"
-                },
-                { 
-                    name: 'B2B and CRM Sales Azrina', 
-                    url: "{{ route('net-profit.update-b2b-crm-azrina') }}"
-                },
-                { 
-                    name: 'Cleora Import Data', 
-                    url: "{{ route('net-profit.import-data') }}"
-                },
-                { 
-                    name: 'Azrina Import Data', 
-                    url: "{{ route('net-profit.import-data-azrina') }}"
-                }
-            ];
-
-            let completedEndpoints = 0;
-            let failedEndpoints = [];
-            let currentIndex = 0;
-
-            function processNextEndpoint() {
-                if (currentIndex >= endpoints.length) {
-                    // All endpoints processed
-                    if (failedEndpoints.length > 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Refresh Completed with Warnings',
-                            html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
-                            confirmButtonText: 'OK'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Data Refreshed Successfully!',
-                            html: `All ${endpoints.length} operations completed successfully!`,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-                    
-                    // Reload the table to show updated data
-                    table.ajax.reload();
-                    
-                    return;
-                }
-
-                const endpoint = endpoints[currentIndex];
-                Swal.update({
-                    html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
-                });
-
-                $.ajax({
-                    url: endpoint.url,
-                    method: 'GET',
-                    success: function(response) {
-                        completedEndpoints++;
-                        currentIndex++;
-                        processNextEndpoint();
-                    },
-                    error: function(xhr, status, error) {
-                        failedEndpoints.push(endpoint.name);
-                        currentIndex++;
-                        console.error(`Failed at ${endpoint.name}:`, error);
-                        processNextEndpoint();
-                    }
-                });
-            }
-            
-            processNextEndpoint();
-        }
-
-        $('#refreshDataBtn').click(refreshData);
-
-
-            function fetchSummary() {
-    const filterDates = document.getElementById('filterDates').value;
-    const url = new URL("{{ route('sales.get_net_sales_summary') }}");
-    if (filterDates) {
-        url.searchParams.append('filterDates', filterDates);
-    }
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            // Store total sales value for percentage calculations
-            const totalSalesValue = parseFloat(data.total_sales) || 0;
-            
-            // Format and display the main values
-            document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-            document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-            document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
-            document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
-            document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
-            
-            // Format and display the ROMI values
-            document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            // New fields from the updated HTML
-            document.getElementById('totalNetSales2').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
-            document.getElementById('avgNetROMI').textContent = Number(data.avg_net_romi).toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            // Calculate and display percentages relative to total sales
-            if (totalSalesValue > 0) {
-                const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
-                const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
-                const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
-                const netSalesPercentage = (parseFloat(data.total_net_sales) / totalSalesValue * 100);
-                const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
-                
-                document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
-                document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
-                document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
-                document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
-                document.getElementById('totalNetSalesPercentage').textContent = netSalesPercentage.toFixed(2) + '%';
-            } else {
-                // Handle case when total sales is zero
-                document.getElementById('totalHppPercentage').textContent = '0%';
-                document.getElementById('totalSpentPercentage').textContent = '0%';
-                document.getElementById('totalNetProfitPercentage').textContent = '0%';
-                document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
-            }
-        })
-        .catch(error => console.error('Error:', error));
-}
-fetchSummary();
-
-        $('#totalSpentCard').click(function() {
-            const campaignExpense = $('#newCampaignExpense').text().trim();
-            const adsSpentTotal = $('#newAdsSpentTotal').text().trim();
-            const totalSpent = $('#newAdSpentCount').text().trim();
-            console.log(campaignExpense);
-            console.log(adsSpentTotal);
-            console.log(totalSpent);
-
-            // Update modal content
-            $('#modalCampaignExpense').text('Campaign Expense: ' + campaignExpense);
-            $('#modalAdsSpentTotal').text('Total Ads Spent: ' + adsSpentTotal);
-            $('#modalTotalSpent').text('Total Spent: ' + totalSpent);
-
-            // Show the modal
-            $('#detailSpentModal').modal('show');
         });
-
-        let salesPieChart = null;
-
-        $('#totalSalesCard').click(function() {
-            $('#detailSalesModal').modal('show');
-        });
-
-        function showHppDetail(date) {
-            // Show modal with loading animation
-            $('#hppDetailModal').modal('show');
-            $('#loadingAnimation').show();
-            $('#modalContent').hide();
-            
-            $.get("{{ route('net-profit.getHppByDate') }}", { date: date }, function(data) {
-                // Product details table
-                let productHtml = '';
-                let totalProductQuantity = 0;
-                
-                data.productDetails.forEach(function(item) {
-                    let total = item.quantity * item.harga_satuan;
-                    productHtml += `<tr>
-                        <td>${item.sku}</td>
-                        <td>${item.product}</td>
-                        <td class="text-right">${parseInt(item.quantity).toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(item.harga_satuan).toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(total).toLocaleString('id-ID')}</td>
-                    </tr>`;
-                    totalProductQuantity += parseInt(item.quantity);
-                });
-                
-                $('#hppProductContent').html(productHtml);
-                
-                // Sales channel table
-                let channelHtml = '';
-                let totalChannelQuantity = 0;
-                
-                data.channelDetails.forEach(function(item) {
-                    channelHtml += `<tr>
-                        <td>${item.channel_name || 'Unknown'}</td>
-                        <td class="text-right">${parseInt(item.quantity).toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(parseFloat(item.total_hpp)).toLocaleString('id-ID')}</td>
-                    </tr>`;
-                    totalChannelQuantity += parseInt(item.quantity);
-                });
-                
-                $('#hppChannelContent').html(channelHtml);
-                
-                // Set totals
-                $('#totalQuantity').text(totalChannelQuantity.toLocaleString('id-ID'));
-                $('#totalHpp2').text('Rp ' + Math.round(parseFloat(data.totalHpp)).toLocaleString('id-ID'));
-                
-                // Hide loading animation and show content
-                $('#loadingAnimation').hide();
-                $('#modalContent').fadeIn(300);
-            })
-            .fail(function(error) {
-                console.error("Error fetching HPP data:", error);
-                $('#loadingAnimation').hide();
-                $('#modalContent').html('<div class="alert alert-danger">Failed to load data. Please try again.</div>').show();
-            });
-        }
-
-        function showSalesDetail(date) {
-            // Show modal
-            $('#salesDetailModal').modal('show');
-            
-            // Clear previous content and show loading
-            $('#salesDetailContent').html(`
-                <tr>
-                    <td colspan="3" class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </td>
-                </tr>
-            `);
-
-            // Fetch data
-            $.get("{{ route('net-profit.getSalesByChannel') }}", { date: date }, function(data) {
-                let html = '';
-                let totalSales = 0;
-                let totalOrders = 0;
-                
-                // Process salesByChannel data
-                data.salesByChannel.forEach(function(item) {
-                    totalSales += parseFloat(item.total_sales);
-                    totalOrders += parseInt(item.order_count);
-                    html += `<tr>
-                        <td>${item.sales_channel}</td>
-                        <td class="text-right">${parseInt(item.order_count).toLocaleString('id-ID')}</td>
-                        <td class="text-right">Rp ${Math.round(parseFloat(item.total_sales)).toLocaleString('id-ID')}</td>
-                    </tr>`;
-                });
-                
-                // Add normal total row
-                html += `<tr class="font-weight-bold">
-                    <td>Total</td>
-                    <td class="text-right">${totalOrders.toLocaleString('id-ID')}</td>
-                    <td class="text-right">Rp ${Math.round(totalSales).toLocaleString('id-ID')}</td>
-                </tr>`;
-                
-                // Calculate grand total including all sales types
-                const grandTotal = totalSales + parseFloat(data.b2b_sales || 0) + parseFloat(data.crm_sales || 0);
-                
-                html += `<tr class="font-weight-bold bg-success text-white">
-                    <td>Grand Total</td>
-                    <td></td>
-                    <td class="text-right">Rp ${Math.round(grandTotal).toLocaleString('id-ID')}</td>
-                </tr>`;
-                
-                $('#salesDetailContent').html(html);
-            }).fail(function() {
-                // Handle error case
-                $('#salesDetailContent').html(`
-                    <tr>
-                        <td colspan="3" class="text-center text-danger">
-                            Failed to load data. Please try again.
-                        </td>
-                    </tr>
-                `);
-            });
-        }
 
         function showLoadingSwal(message) {
             Swal.fire({
@@ -561,84 +302,6 @@ fetchSummary();
                     Swal.showLoading();
                 }
             });
-        }
-
-        let netProfitChart = null;
-
-        function loadNetProfitsChart() {
-            const existingChart = Chart.getChart('netProfitsChart');
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            if (netProfitChart) {
-                netProfitChart.destroy();
-            }
-            const filterDates = document.getElementById('filterDates').value;
-            fetch(`{{ route('sales.net_sales_line') }}${filterDates ? `?filterDates=${filterDates}` : ''}`)
-                .then(response => response.json())
-                .then(data => {
-                    const ctx = document.getElementById('netProfitsChart').getContext('2d');
-                    
-                    netProfitChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.map(item => item.date),
-                            datasets: [{
-                                label: 'Sales',
-                                data: data.map(item => item.sales),
-                                borderColor: '#4CAF50',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'Marketing',
-                                data: data.map(item => item.marketing),
-                                borderColor: '#2196F3',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'HPP',
-                                data: data.map(item => item.hpp),
-                                borderColor: '#FFC107',
-                                tension: 0.1,
-                                fill: false
-                            }, {
-                                label: 'Net Profit',
-                                data: data.map(item => item.netProfit),
-                                borderColor: '#F44336',
-                                tension: 0.1,
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.dataset.label + ': Rp ' + Math.round(context.raw).toLocaleString('id-ID');
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    grid: {
-                                        zeroLineColor: '#888',
-                                        zeroLineWidth: 1
-                                    },
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'Rp ' + Math.round(value).toLocaleString('id-ID');
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error:', error));
         }
         function loadCorrelationChart() {
             const filterDates = document.getElementById('filterDates').value;
@@ -725,19 +388,348 @@ fetchSummary();
                     }
                 });
         }
-        loadNetProfitsChart();
-        loadCorrelationChart();
         loadDetailCorrelationChart();
+
+        function loadOptimizationData() {
+            const selectedSku = document.getElementById('optimizationSku').value;
+            const filterDates = document.getElementById('filterDates').value;
+            
+            showLoadingSwal('Loading optimization analysis...');
+            
+            let url = `{{ route('net-profit.sales-optimization') }}?sku=${selectedSku}`;
+            if (filterDates) {
+                url += `&filterDates=${filterDates}`;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(result => {
+                    Swal.close();
+                    
+                    if (result.success) {
+                        updateOptimizationSummary(result.summary);
+                        renderHistoricalTrendChart(result.historical);
+                        renderPlatformComparisonChart(result.platforms);
+                        renderForecastChart(result.forecast);
+                        updateRecommendations(result.recommendations);
+                        updateOptimizationTable(result.breakdown);
+                    } else {
+                        Swal.fire('Error', result.message || 'Failed to load optimization data', 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.close();
+                    console.error('Error fetching optimization data:', error);
+                    Swal.fire('Error', 'Failed to load optimization data', 'error');
+                });
+        }
+
+        function updateOptimizationSummary(summary) {
+            document.getElementById('totalSpent').textContent = 'Rp ' + formatNumber(summary.total_spent);
+            document.getElementById('totalSales').textContent = 'Rp ' + formatNumber(summary.total_sales);
+            document.getElementById('avgRoas').textContent = summary.avg_roas + 'x';
+            document.getElementById('bestPlatform').textContent = summary.best_platform;
+        }
+
+        function renderHistoricalTrendChart(data) {
+            if (!data || !data.dates) return;
+            
+            const traces = [];
+            
+            // Sales trend
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Sales',
+                x: data.dates,
+                y: data.sales,
+                yaxis: 'y',
+                line: {color: '#28a745', width: 2},
+                marker: {size: 4}
+            });
+            
+            // Marketing spend trend
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Marketing Spend',
+                x: data.dates,
+                y: data.marketing,
+                yaxis: 'y2',
+                line: {color: '#dc3545', width: 2},
+                marker: {size: 4}
+            });
+            
+            // ROAS trend
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'ROAS',
+                x: data.dates,
+                y: data.roas,
+                yaxis: 'y3',
+                line: {color: '#ffc107', width: 2},
+                marker: {size: 4}
+            });
+            
+            const layout = {
+                title: 'Historical Performance Trends (60 Days)',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date'
+                },
+                yaxis: {
+                    title: 'Sales (Rp)',
+                    side: 'left',
+                    tickformat: ',.0f'
+                },
+                yaxis2: {
+                    title: 'Marketing Spend (Rp)',
+                    side: 'right',
+                    overlaying: 'y',
+                    tickformat: ',.0f'
+                },
+                yaxis3: {
+                    title: 'ROAS',
+                    side: 'right',
+                    overlaying: 'y',
+                    position: 0.85,
+                    tickformat: '.2f'
+                },
+                showlegend: true,
+                hovermode: 'x unified'
+            };
+            
+            Plotly.newPlot('historicalTrendChart', traces, layout, {responsive: true});
+        }
+        function renderPlatformComparisonChart(data) {
+            if (!data || !data.platforms) return;
+            
+            const traces = [
+                {
+                    type: 'bar',
+                    name: 'Total Spent',
+                    x: data.platforms,
+                    y: data.spent,
+                    yaxis: 'y',
+                    marker: {color: '#dc3545'}
+                },
+                {
+                    type: 'bar',
+                    name: 'Total Sales',
+                    x: data.platforms,
+                    y: data.sales,
+                    yaxis: 'y',
+                    marker: {color: '#28a745'}
+                },
+                {
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'ROAS',
+                    x: data.platforms,
+                    y: data.roas,
+                    yaxis: 'y2',
+                    line: {color: '#ffc107', width: 3},
+                    marker: {size: 8}
+                }
+            ];
+            
+            const layout = {
+                title: 'Platform Performance Comparison',
+                xaxis: {title: 'Platform'},
+                yaxis: {
+                    title: 'Amount (Rp)',
+                    side: 'left',
+                    tickformat: ',.0f'
+                },
+                yaxis2: {
+                    title: 'ROAS',
+                    side: 'right',
+                    overlaying: 'y',
+                    tickformat: '.2f'
+                },
+                showlegend: true,
+                barmode: 'group'
+            };
+            
+            Plotly.newPlot('platformComparisonChart', traces, layout, {responsive: true});
+        }
+
+        function renderForecastChart(data) {
+            if (!data || !data.historical_dates) return;
+            
+            const traces = [];
+            
+            // Historical data
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Historical Sales',
+                x: data.historical_dates,
+                y: data.historical_sales,
+                line: {color: '#007bff', width: 2},
+                marker: {size: 4}
+            });
+            
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Historical Marketing',
+                x: data.historical_dates,
+                y: data.historical_marketing,
+                yaxis: 'y2',
+                line: {color: '#6c757d', width: 2},
+                marker: {size: 4}
+            });
+            
+            // Forecast data
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Predicted Sales',
+                x: data.forecast_dates,
+                y: data.forecast_sales,
+                line: {color: '#28a745', width: 2, dash: 'dash'},
+                marker: {size: 6}
+            });
+            
+            traces.push({
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Recommended Marketing',
+                x: data.forecast_dates,
+                y: data.forecast_marketing,
+                yaxis: 'y2',
+                line: {color: '#dc3545', width: 2, dash: 'dash'},
+                marker: {size: 6}
+            });
+            
+            const layout = {
+                title: '3-Day Sales & Marketing Forecast',
+                xaxis: {
+                    title: 'Date',
+                    type: 'date'
+                },
+                yaxis: {
+                    title: 'Sales (Rp)',
+                    side: 'left',
+                    tickformat: ',.0f'
+                },
+                yaxis2: {
+                    title: 'Marketing Spend (Rp)',
+                    side: 'right',
+                    overlaying: 'y',
+                    tickformat: ',.0f'
+                },
+                showlegend: true,
+                hovermode: 'x unified',
+                shapes: [{
+                    type: 'line',
+                    x0: data.historical_dates[data.historical_dates.length - 1],
+                    x1: data.historical_dates[data.historical_dates.length - 1],
+                    y0: 0,
+                    y1: 1,
+                    yref: 'paper',
+                    line: {
+                        color: 'rgba(255, 0, 0, 0.5)',
+                        width: 2,
+                        dash: 'dot'
+                    }
+                }],
+                annotations: [{
+                    x: data.forecast_dates[0],
+                    y: 0.9,
+                    yref: 'paper',
+                    text: 'Forecast Period',
+                    showarrow: false,
+                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                    bordercolor: 'rgba(0, 0, 0, 0.5)',
+                    borderwidth: 1
+                }]
+            };
+            
+            Plotly.newPlot('forecastChart', traces, layout, {responsive: true});
+        }
+
+        function updateRecommendations(recommendations) {
+            const container = document.getElementById('recommendationsContent');
+            
+            if (!recommendations || recommendations.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No specific recommendations available.</div>';
+                return;
+            }
+            
+            let html = '<div class="recommendations-list">';
+            
+            recommendations.forEach((rec, index) => {
+                const alertType = rec.priority === 'high' ? 'danger' : 
+                                rec.priority === 'medium' ? 'warning' : 'info';
+                
+                html += `
+                    <div class="alert alert-${alertType} mb-2">
+                        <strong>${rec.title}</strong><br>
+                        ${rec.description}<br>
+                        <small class="text-muted">Expected Impact: ${rec.impact}</small>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function updateOptimizationTable(breakdown) {
+            const tbody = document.getElementById('optimizationTableBody');
+            
+            if (!breakdown || breakdown.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No data available</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            breakdown.forEach(item => {
+                const roasClass = item.roas >= 3 ? 'text-success' : 
+                                item.roas >= 2 ? 'text-warning' : 'text-danger';
+                
+                html += `
+                    <tr>
+                        <td>${item.sku_name}</td>
+                        <td>${item.platform}</td>
+                        <td>Rp ${formatNumber(item.total_spent)}</td>
+                        <td>Rp ${formatNumber(item.total_sales)}</td>
+                        <td class="${roasClass}">${item.roas}x</td>
+                        <td>Rp ${formatNumber(item.avg_daily_spent)}</td>
+                        <td>${item.conversion_rate}%</td>
+                        <td>
+                            <small class="badge badge-${item.recommendation_type}">
+                                ${item.recommendation}
+                            </small>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        // Event listeners for the optimization tab
+        document.getElementById('optimizationSku').addEventListener('change', loadOptimizationData);
+        document.getElementById('refreshOptimization').addEventListener('click', loadOptimizationData);
+
 
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             if (e.target.getAttribute('href') === '#recapChartTab') {
                 renderWaterfallChart();
-            } else if (e.target.getAttribute('href') === '#netProfitsTab') {
-                loadNetProfitsChart();
             } else if (e.target.getAttribute('href') === '#correlationTab') {
                 loadCorrelationChart();
             } else if (e.target.getAttribute('href') === '#detailCorrelationTab') {
                 loadDetailCorrelationChart();
+            } else if (e.target.getAttribute('href') === '#optimizationTab') {
+                loadOptimizationData();
             }
         });
         $('#skuFilter').on('change', function() {

@@ -2918,4 +2918,379 @@ class NetProfitController extends Controller
     //         'count' => count($data) - 1 // Subtract 1 for header row
     //     ]);
     // }
+    public function getSalesOptimization(Request $request)
+    {
+        try {
+            $sku = $request->input('sku', 'all');
+            $tenantId = 1; // Adjust based on your tenant logic
+            
+            // Calculate date range (60 days from now)
+            $endDate = now();
+            $startDate = now()->subDays(60);
+            
+            // Handle custom date filtering if provided
+            if ($request->filled('filterDates')) {
+                $dates = explode(' - ', $request->filterDates);
+                if (count($dates) == 2) {
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->startOfDay();
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->endOfDay();
+                }
+            }
+            
+            // Build base query
+            $query = \DB::table('relation_ads_sales')
+                ->whereNotNull('sales')
+                ->whereNotNull('marketing')
+                ->where('marketing', '>', 0)
+                ->where('tenant_id', $tenantId)
+                ->whereBetween('date', [$startDate, $endDate]);
+                
+            // Apply SKU filter if not 'all'
+            if ($sku !== 'all') {
+                $query->where('sku', $sku);
+            }
+            
+            // Get historical data
+            $historicalData = $query->select([
+                'date',
+                'sku',
+                'platform',
+                'sales',
+                'marketing',
+                \DB::raw('ROUND(sales/marketing, 2) as roas')
+            ])->orderBy('date')->get();
+            
+            if ($historicalData->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No data available for the selected criteria'
+                ]);
+            }
+            
+            // Calculate summary statistics
+            $summary = $this->calculateOptimizationSummary($historicalData);
+            
+            // Prepare historical trend data
+            $historical = $this->prepareHistoricalTrendData($historicalData);
+            
+            // Prepare platform comparison data
+            $platforms = $this->preparePlatformComparisonData($historicalData);
+            
+            // Generate forecast for next 3 days
+            $forecast = $this->generateSalesForecast($historicalData, $endDate);
+            
+            // Generate recommendations
+            $recommendations = $this->generateOptimizationRecommendations($historicalData, $summary);
+            
+            // Prepare detailed breakdown
+            $breakdown = $this->prepareDetailedBreakdown($historicalData);
+            
+            return response()->json([
+                'success' => true,
+                'summary' => $summary,
+                'historical' => $historical,
+                'platforms' => $platforms,
+                'forecast' => $forecast,
+                'recommendations' => $recommendations,
+                'breakdown' => $breakdown
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Sales Optimization Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to analyze sales optimization data.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function calculateOptimizationSummary($data)
+    {
+        $totalSpent = $data->sum('marketing');
+        $totalSales = $data->sum('sales');
+        $avgRoas = $totalSpent > 0 ? round($totalSales / $totalSpent, 2) : 0;
+        
+        // Find best performing platform
+        $platformPerformance = $data->groupBy('platform')->map(function ($items) {
+            $spent = $items->sum('marketing');
+            $sales = $items->sum('sales');
+            return $spent > 0 ? $sales / $spent : 0;
+        });
+        
+        $bestPlatform = $platformPerformance->sortDesc()->keys()->first() ?? 'N/A';
+        
+        return [
+            'total_spent' => $totalSpent,
+            'total_sales' => $totalSales,
+            'avg_roas' => $avgRoas,
+            'best_platform' => $bestPlatform
+        ];
+    }
+
+    private function prepareHistoricalTrendData($data)
+    {
+        // Group data by date and calculate daily totals
+        $dailyData = $data->groupBy('date')->map(function ($items) {
+            return [
+                'sales' => $items->sum('sales'),
+                'marketing' => $items->sum('marketing'),
+                'roas' => $items->sum('marketing') > 0 ? round($items->sum('sales') / $items->sum('marketing'), 2) : 0
+            ];
+        })->sortKeys();
+        
+        return [
+            'dates' => $dailyData->keys()->toArray(),
+            'sales' => $dailyData->pluck('sales')->toArray(),
+            'marketing' => $dailyData->pluck('marketing')->toArray(),
+            'roas' => $dailyData->pluck('roas')->toArray()
+        ];
+    }
+
+    private function preparePlatformComparisonData($data)
+    {
+        $platformData = $data->groupBy('platform')->map(function ($items) {
+            $spent = $items->sum('marketing');
+            $sales = $items->sum('sales');
+            return [
+                'spent' => $spent,
+                'sales' => $sales,
+                'roas' => $spent > 0 ? round($sales / $spent, 2) : 0
+            ];
+        });
+        
+        return [
+            'platforms' => $platformData->keys()->toArray(),
+            'spent' => $platformData->pluck('spent')->toArray(),
+            'sales' => $platformData->pluck('sales')->toArray(),
+            'roas' => $platformData->pluck('roas')->toArray()
+        ];
+    }
+
+    private function generateSalesForecast($data, $endDate)
+    {
+        // Simple linear regression for forecasting
+        $dailyData = $data->groupBy('date')->map(function ($items) {
+            return [
+                'sales' => $items->sum('sales'),
+                'marketing' => $items->sum('marketing')
+            ];
+        })->sortKeys();
+        
+        $dates = $dailyData->keys()->map(function($date) {
+            return strtotime($date);
+        })->toArray();
+        
+        $sales = $dailyData->pluck('sales')->toArray();
+        $marketing = $dailyData->pluck('marketing')->toArray();
+        
+        // Calculate trend for sales
+        $salesTrend = $this->calculateLinearTrend($dates, $sales);
+        $marketingTrend = $this->calculateLinearTrend($dates, $marketing);
+        
+        // Generate forecast for next 3 days
+        $forecastDates = [];
+        $forecastSales = [];
+        $forecastMarketing = [];
+        
+        for ($i = 1; $i <= 3; $i++) {
+            $forecastDate = $endDate->copy()->addDays($i);
+            $forecastTimestamp = $forecastDate->timestamp;
+            
+            $forecastDates[] = $forecastDate->format('Y-m-d');
+            $forecastSales[] = max(0, round($salesTrend['slope'] * $forecastTimestamp + $salesTrend['intercept']));
+            $forecastMarketing[] = max(0, round($marketingTrend['slope'] * $forecastTimestamp + $marketingTrend['intercept']));
+        }
+        
+        // Get last 7 days for context
+        $recentDates = array_slice($dailyData->keys()->toArray(), -7);
+        $recentSales = array_slice($sales, -7);
+        $recentMarketing = array_slice($marketing, -7);
+        
+        return [
+            'historical_dates' => $recentDates,
+            'historical_sales' => $recentSales,
+            'historical_marketing' => $recentMarketing,
+            'forecast_dates' => $forecastDates,
+            'forecast_sales' => $forecastSales,
+            'forecast_marketing' => $forecastMarketing
+        ];
+    }
+
+    private function calculateLinearTrend($x, $y)
+    {
+        $n = count($x);
+        if ($n < 2) {
+            return ['slope' => 0, 'intercept' => 0];
+        }
+        
+        $sumX = array_sum($x);
+        $sumY = array_sum($y);
+        $sumXY = 0;
+        $sumX2 = 0;
+        
+        for ($i = 0; $i < $n; $i++) {
+            $sumXY += $x[$i] * $y[$i];
+            $sumX2 += $x[$i] * $x[$i];
+        }
+        
+        $denominator = ($n * $sumX2 - $sumX * $sumX);
+        if ($denominator == 0) {
+            return ['slope' => 0, 'intercept' => $sumY / $n];
+        }
+        
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
+        $intercept = ($sumY - $slope * $sumX) / $n;
+        
+        return ['slope' => $slope, 'intercept' => $intercept];
+    }
+
+    private function generateOptimizationRecommendations($data, $summary)
+    {
+        $recommendations = [];
+        
+        // Analyze platform performance
+        $platformData = $data->groupBy('platform')->map(function ($items) {
+            $spent = $items->sum('marketing');
+            $sales = $items->sum('sales');
+            return [
+                'spent' => $spent,
+                'sales' => $sales,
+                'roas' => $spent > 0 ? $sales / $spent : 0,
+                'count' => $items->count()
+            ];
+        });
+        
+        // Recommendation 1: Platform allocation
+        $bestPlatform = $platformData->sortByDesc('roas')->first();
+        $worstPlatform = $platformData->sortBy('roas')->first();
+        
+        if ($bestPlatform && $worstPlatform && $bestPlatform['roas'] > $worstPlatform['roas'] * 1.5) {
+            $recommendations[] = [
+                'title' => 'Reallocate Budget to High-Performing Platform',
+                'description' => "Consider shifting more budget to {$platformData->sortByDesc('roas')->keys()->first()} (ROAS: " . round($bestPlatform['roas'], 2) . "x) from {$platformData->sortBy('roas')->keys()->first()} (ROAS: " . round($worstPlatform['roas'], 2) . "x)",
+                'priority' => 'high',
+                'impact' => 'Potential 15-25% improvement in overall ROAS'
+            ];
+        }
+        
+        // Recommendation 2: ROAS analysis
+        if ($summary['avg_roas'] < 2) {
+            $recommendations[] = [
+                'title' => 'Low ROAS Alert',
+                'description' => 'Current average ROAS is ' . $summary['avg_roas'] . 'x, which is below the recommended minimum of 2x. Consider optimizing ad targeting or reducing spend.',
+                'priority' => 'high',
+                'impact' => 'Prevent further losses and improve profitability'
+            ];
+        } elseif ($summary['avg_roas'] > 4) {
+            $recommendations[] = [
+                'title' => 'Scale Opportunity',
+                'description' => 'Excellent ROAS of ' . $summary['avg_roas'] . 'x indicates strong performance. Consider increasing budget to scale successful campaigns.',
+                'priority' => 'medium',
+                'impact' => 'Potential 20-40% increase in total sales'
+            ];
+        }
+        
+        // Recommendation 3: SKU-specific analysis
+        $skuData = $data->groupBy('sku')->map(function ($items) {
+            $spent = $items->sum('marketing');
+            $sales = $items->sum('sales');
+            return [
+                'roas' => $spent > 0 ? $sales / $spent : 0,
+                'volume' => $items->count()
+            ];
+        });
+        
+        $topSku = $skuData->sortByDesc('roas')->keys()->first();
+        if ($topSku && $skuData[$topSku]['roas'] > 3) {
+            $recommendations[] = [
+                'title' => 'Focus on Top Performing SKU',
+                'description' => "SKU {$topSku} shows excellent performance with " . round($skuData[$topSku]['roas'], 2) . "x ROAS. Consider increasing its marketing allocation.",
+                'priority' => 'medium',
+                'impact' => 'Optimize product mix for better overall performance'
+            ];
+        }
+        
+        // Recommendation 4: Spending consistency
+        $dailySpend = $data->groupBy('date')->map(function ($items) {
+            return $items->sum('marketing');
+        });
+        
+        $avgDailySpend = $dailySpend->avg();
+        $spendVariation = $dailySpend->map(function ($spend) use ($avgDailySpend) {
+            return abs($spend - $avgDailySpend) / $avgDailySpend;
+        })->avg();
+        
+        if ($spendVariation > 0.3) {
+            $recommendations[] = [
+                'title' => 'Stabilize Daily Spending',
+                'description' => 'High variation in daily spending detected. Consider implementing more consistent budget allocation for better performance tracking.',
+                'priority' => 'low',
+                'impact' => 'Improved campaign stability and predictable results'
+            ];
+        }
+        
+        return $recommendations;
+    }
+
+    private function prepareDetailedBreakdown($data)
+    {
+        // SKU name mapping
+        $skuLabels = [
+            'CLE-RS-047' => 'Red Saviour',
+            'CLE-JB30-001' => 'Jelly Booster',
+            'CL-GS' => 'Glowsmooth',
+            'CLE-XFO-008' => '3 Minutes',
+            'CLE-CLNDLA-025' => 'Calendula',
+            'CLE-NEG-071' => 'Natural Exfo',
+            'CL-TNR' => 'Pore Glow',
+            'CL-8XHL' => '8X Hyalu',
+            '-' => 'Other Products'
+        ];
+        
+        $breakdown = $data->groupBy(['sku', 'platform'])->map(function ($items, $key) use ($skuLabels) {
+            $keys = explode('.', $key);
+            $sku = $keys[0];
+            $platform = $keys[1] ?? 'Unknown';
+            
+            $totalSpent = $items->sum('marketing');
+            $totalSales = $items->sum('sales');
+            $roas = $totalSpent > 0 ? round($totalSales / $totalSpent, 2) : 0;
+            $avgDailySpent = $items->count() > 0 ? round($totalSpent / $items->count(), 0) : 0;
+            $conversionRate = $totalSpent > 0 ? round(($totalSales / $totalSpent) * 100, 2) : 0;
+            
+            // Generate recommendation based on performance
+            $recommendation = 'Maintain';
+            $recommendationType = 'secondary';
+            
+            if ($roas >= 4) {
+                $recommendation = 'Scale Up';
+                $recommendationType = 'success';
+            } elseif ($roas >= 2) {
+                $recommendation = 'Optimize';
+                $recommendationType = 'primary';
+            } elseif ($roas >= 1) {
+                $recommendation = 'Review';
+                $recommendationType = 'warning';
+            } else {
+                $recommendation = 'Pause/Reduce';
+                $recommendationType = 'danger';
+            }
+            
+            return [
+                'sku' => $sku,
+                'sku_name' => $skuLabels[$sku] ?? $sku,
+                'platform' => $platform,
+                'total_spent' => $totalSpent,
+                'total_sales' => $totalSales,
+                'roas' => $roas,
+                'avg_daily_spent' => $avgDailySpent,
+                'conversion_rate' => $conversionRate,
+                'recommendation' => $recommendation,
+                'recommendation_type' => $recommendationType
+            ];
+        })->values()->sortByDesc('roas')->toArray();
+        
+        return $breakdown;
+    }
 }
