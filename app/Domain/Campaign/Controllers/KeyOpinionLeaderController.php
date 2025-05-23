@@ -130,13 +130,25 @@ class KeyOpinionLeaderController extends Controller
             ->toJson();
     }
 
-    public function getKpiData(): JsonResponse
+    public function getKpiData(Request $request): JsonResponse
     {
-        $totalKol = KeyOpinionLeader::count();
-        $totalAffiliate = KeyOpinionLeader::whereNotNull('status_affiliate')->count();
-        $activeAffiliate = KeyOpinionLeader::where('status_affiliate', 'active')->count();
-        $activePosting = KeyOpinionLeader::where('activity_posting', true)->count();
-        $hasViews = KeyOpinionLeader::where('views_last_9_post', true)->count();
+        // Apply the same filters as your main datatable query
+        $query = $this->kolBLL->getKOLDatatable($request);
+        
+        // Get filtered results for KPI calculation
+        $filteredKols = $query->get();
+        
+        $totalKol = $filteredKols->count();
+        $totalAffiliate = $filteredKols->whereNotNull('status_affiliate')->count();
+        $activeAffiliate = $filteredKols->where('status_affiliate', 'active')->count();
+        $activePosting = $filteredKols->where('activity_posting', true)->count();
+        $hasViews = $filteredKols->where('views_last_9_post', true)->count();
+        
+        // Calculate average engagement rate (only for KOLs with engagement data)
+        $kolsWithEngagement = $filteredKols->whereNotNull('engagement_rate');
+        $avgEngagement = $kolsWithEngagement->count() > 0 
+            ? $kolsWithEngagement->avg('engagement_rate') 
+            : 0;
         
         return response()->json([
             'total_kol' => $totalKol,
@@ -144,7 +156,7 @@ class KeyOpinionLeaderController extends Controller
             'active_affiliate' => $activeAffiliate,
             'active_posting' => $activePosting,
             'has_views' => $hasViews,
-            'avg_engagement' => KeyOpinionLeader::whereNotNull('engagement_rate')->avg('engagement_rate')
+            'avg_engagement' => round($avgEngagement, 2)
         ]);
     }
 

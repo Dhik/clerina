@@ -209,6 +209,25 @@
             });
         });
 
+        function loadKpiData() {
+            $.get("{{ route('kol.kpi') }}", function(data) {
+                $('#totalKol').text(data.total_kol || 0);
+                $('#totalAffiliate').text(data.total_affiliate || 0);
+                $('#activeAffiliate').text(data.active_affiliate || 0);
+                $('#activePosting').text(data.active_posting || 0);
+                $('#hasViews').text(data.has_views || 0);
+                
+                // Format average engagement as percentage
+                const avgEngagement = data.avg_engagement ? parseFloat(data.avg_engagement).toFixed(2) + '%' : '0%';
+                $('#avgEngagement').text(avgEngagement);
+            }).fail(function() {
+                console.error('Failed to load KPI data');
+                // Set default values on error
+                $('#totalKol, #totalAffiliate, #activeAffiliate, #activePosting, #hasViews').text('0');
+                $('#avgEngagement').text('0%');
+            });
+        }
+
         $('#btnStopBulkRefresh').click(function() {
             bulkRefreshStopped = true;
             $('#btnStopBulkRefresh').hide();
@@ -403,7 +422,11 @@
                 {data: 'refresh_follower', sortable: false, orderable: false},
                 {data: 'actions', sortable: false, orderable: false}
             ],
-            order: [[0, 'desc']]
+            order: [[0, 'desc']],
+            drawCallback: function() {
+                // Refresh KPI data after table draw/filter
+                loadKpiData();
+            }
         });
 
         btnExportKol.click(function () {
