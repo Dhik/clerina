@@ -72,9 +72,9 @@ class KeyOpinionLeaderController extends Controller
                 return '<a href=' . route('kol.show', $row->id) . ' class="btn btn-success btn-xs">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <a href=' . route('kol.edit', $row->id) . ' class="btn btn-primary btn-xs">
+                        <button onclick="openEditModal(' . $row->id . ')" class="btn btn-primary btn-xs" title="Edit">
                             <i class="fas fa-pencil-alt"></i>
-                        </a>';
+                        </button>';
             })
             ->addColumn('refresh_follower', function ($row) {
                 return '<button class="btn btn-info btn-xs refresh-follower" data-id="' . $row->username . '">

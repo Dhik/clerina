@@ -162,6 +162,130 @@
             </div>
         </div>
     </div>
+    <!-- Add this modal to your index.blade.php -->
+    <div class="modal fade" id="editKolModal" tabindex="-1" role="dialog" aria-labelledby="editKolModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="editKolModalLabel">
+                        <i class="fas fa-edit"></i> Edit KOL Information
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="editKolForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <div id="editFormLoader" class="text-center" style="display: none;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p>Loading KOL data...</p>
+                        </div>
+                        
+                        <div id="editFormContent" style="display: none;">
+                            <!-- Username -->
+                            <div class="form-group row">
+                                <label for="edit_username" class="col-md-4 col-form-label text-md-right">Username</label>
+                                <div class="col-md-8">
+                                    <input type="text" 
+                                        class="form-control" 
+                                        name="username" 
+                                        id="edit_username" 
+                                        required>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="form-group row">
+                                <label for="edit_phone_number" class="col-md-4 col-form-label text-md-right">Phone Number</label>
+                                <div class="col-md-8">
+                                    <input type="text" 
+                                        class="form-control" 
+                                        name="phone_number" 
+                                        id="edit_phone_number">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <!-- Views Last 9 Posts -->
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label text-md-right">Recent Views</label>
+                                <div class="col-md-8">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="views_last_9_post" 
+                                            id="edit_views_yes" 
+                                            value="1">
+                                        <label class="form-check-label" for="edit_views_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="views_last_9_post" 
+                                            id="edit_views_no" 
+                                            value="0">
+                                        <label class="form-check-label" for="edit_views_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="views_last_9_post" 
+                                            id="edit_views_null" 
+                                            value="">
+                                        <label class="form-check-label" for="edit_views_null">Not Set</label>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
+                            <!-- Activity Posting -->
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label text-md-right">Activity Status</label>
+                                <div class="col-md-8">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="activity_posting" 
+                                            id="edit_activity_active" 
+                                            value="1">
+                                        <label class="form-check-label" for="edit_activity_active">Active</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="activity_posting" 
+                                            id="edit_activity_inactive" 
+                                            value="0">
+                                        <label class="form-check-label" for="edit_activity_inactive">Inactive</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                            type="radio" 
+                                            name="activity_posting" 
+                                            id="edit_activity_null" 
+                                            value="">
+                                        <label class="form-check-label" for="edit_activity_null">Not Set</label>
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="saveKolBtn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('js')
@@ -645,5 +769,145 @@
             fetchChannelData();
             fetchAverageRateData();
         });
+
+        let currentKolId = null;
+        function openEditModal(kolId) {
+            currentKolId = kolId;
+            
+            // Reset form and show loader
+            $('#editKolForm')[0].reset();
+            $('#editFormContent').hide();
+            $('#editFormLoader').show();
+            $('.form-control').removeClass('is-invalid');
+            $('.invalid-feedback').text('');
+            
+            // Open modal
+            $('#editKolModal').modal('show');
+
+            $('#editKolModal').on('hidden.bs.modal', function() {
+                currentKolId = null;
+                $('#editKolForm')[0].reset();
+                $('.form-control').removeClass('is-invalid');
+                $('.invalid-feedback').text('');
+            });
+            
+            // Load KOL data
+            $.get(`{{ url('/kol') }}/${kolId}/edit-data`)
+                .done(function(data) {
+                    populateEditForm(data);
+                    $('#editFormLoader').hide();
+                    $('#editFormContent').show();
+                })
+                .fail(function() {
+                    $('#editKolModal').modal('hide');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Failed to load KOL data. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                });
+        }
+
+        function populateEditForm(data) {
+            $('#edit_username').val(data.username || '');
+            $('#edit_phone_number').val(data.phone_number || '');
+            
+            // Set radio buttons for views_last_9_post
+            if (data.views_last_9_post === 1 || data.views_last_9_post === '1' || data.views_last_9_post === true) {
+                $('#edit_views_yes').prop('checked', true);
+            } else if (data.views_last_9_post === 0 || data.views_last_9_post === '0' || data.views_last_9_post === false) {
+                $('#edit_views_no').prop('checked', true);
+            } else {
+                $('#edit_views_null').prop('checked', true);
+            }
+            
+            // Set radio buttons for activity_posting
+            if (data.activity_posting === 1 || data.activity_posting === '1' || data.activity_posting === true) {
+                $('#edit_activity_active').prop('checked', true);
+            } else if (data.activity_posting === 0 || data.activity_posting === '0' || data.activity_posting === false) {
+                $('#edit_activity_inactive').prop('checked', true);
+            } else {
+                $('#edit_activity_null').prop('checked', true);
+            }
+            
+            // Set form action
+            $('#editKolForm').attr('action', `{{ url('/kol') }}/${data.id}/update`);
+        }
+
+        // Handle form submission
+        $('#editKolForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const form = $(this);
+            const submitBtn = $('#saveKolBtn');
+            const originalBtnText = submitBtn.html();
+            
+            // Show loading state
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            
+            // Clear previous errors
+            $('.form-control').removeClass('is-invalid');
+            $('.invalid-feedback').text('');
+            
+            // Submit form
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    // Close modal
+                    $('#editKolModal').modal('hide');
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'KOL information updated successfully.',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    
+                    // Refresh DataTable and KPI
+                    kolTable.ajax.reload(null, false); // false = stay on current page
+                    loadKpiData();
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        // Validation errors
+                        const errors = xhr.responseJSON.errors;
+                        
+                        Object.keys(errors).forEach(function(field) {
+                            const input = $(`[name="${field}"]`);
+                            input.addClass('is-invalid');
+                            input.siblings('.invalid-feedback').text(errors[field][0]);
+                        });
+                        
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validation Error',
+                            text: 'Please check the form and fix the errors.',
+                            confirmButtonColor: '#ffc107'
+                        });
+                    } else {
+                        // Other errors
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'Failed to update KOL information. Please try again.',
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                },
+                complete: function() {
+                    // Restore button state
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalBtnText);
+                }
+            });
+        });
+
     </script>
 @stop
