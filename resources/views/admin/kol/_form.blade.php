@@ -37,49 +37,7 @@
     </div>
 </div>
 
-<!-- Engagement Rate -->
-<div class="form-group row">
-    <label for="engagement_rate" class="col-md-4 col-form-label text-md-right">{{ trans('labels.engagement_rate') }}</label>
-    <div class="col-md-6">
-        <div class="input-group">
-            <input type="number" 
-                   step="0.01" 
-                   min="0" 
-                   max="100"
-                   class="form-control @error('engagement_rate') is-invalid @enderror" 
-                   name="engagement_rate" 
-                   id="engagement_rate" 
-                   value="{{ old('engagement_rate', $keyOpinionLeader->engagement_rate ?? '') }}" 
-                   placeholder="0.00">
-            <div class="input-group-append">
-                <span class="input-group-text">%</span>
-            </div>
-        </div>
-        @error('engagement_rate')
-        <span class="invalid-feedback" role="alert">
-            <strong>{{ $message }}</strong>
-        </span>
-        @enderror
-    </div>
-</div>
 
-<!-- Program -->
-<div class="form-group row">
-    <label for="program" class="col-md-4 col-form-label text-md-right">{{ trans('labels.program') }}</label>
-    <div class="col-md-6">
-        <input type="text" 
-               class="form-control @error('program') is-invalid @enderror" 
-               name="program" 
-               id="program" 
-               value="{{ old('program', $keyOpinionLeader->program ?? '') }}" 
-               placeholder="{{ trans('placeholder.enter_program') }}">
-        @error('program')
-        <span class="invalid-feedback" role="alert">
-            <strong>{{ $message }}</strong>
-        </span>
-        @enderror
-    </div>
-</div>
 
 <!-- Views Last 9 Posts -->
 <div class="form-group row">
@@ -171,31 +129,7 @@
     </div>
 </div>
 
-<!-- Status Affiliate -->
-<div class="form-group row">
-    <label for="status_affiliate" class="col-md-4 col-form-label text-md-right">{{ trans('labels.status_affiliate') }}</label>
-    <div class="col-md-6">
-        <select class="form-control @error('status_affiliate') is-invalid @enderror" 
-                name="status_affiliate" 
-                id="status_affiliate">
-            <option value="">{{ trans('placeholder.select_status') }}</option>
-            <option value="active" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') == 'active' ? 'selected' : '' }}>
-                {{ trans('labels.active') }}
-            </option>
-            <option value="inactive" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') == 'inactive' ? 'selected' : '' }}>
-                {{ trans('labels.inactive') }}
-            </option>
-            <option value="pending" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') == 'pending' ? 'selected' : '' }}>
-                {{ trans('labels.pending') }}
-            </option>
-        </select>
-        @error('status_affiliate')
-        <span class="invalid-feedback" role="alert">
-            <strong>{{ $message }}</strong>
-        </span>
-        @enderror
-    </div>
-</div>
+
 
 <!-- Submit Button -->
 <div class="form-group row mb-0">

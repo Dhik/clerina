@@ -30,11 +30,7 @@
 @section('js')
     <script>
         $(document).ready(function () {
-            // Initialize Select2 for status_affiliate only
-            $('#status_affiliate').select2({
-                theme: 'bootstrap4',
-                placeholder: '{{ trans('placeholder.select_status') }}'
-            });
+            // No Select2 initialization needed for this simple form
         });
     </script>
 @endsection
