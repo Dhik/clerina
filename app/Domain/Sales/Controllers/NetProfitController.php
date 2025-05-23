@@ -2922,13 +2922,11 @@ class NetProfitController extends Controller
     {
         try {
             $sku = $request->input('sku', 'all');
-            $tenantId = 1; // Adjust based on your tenant logic
+            $tenantId = 1;
             
-            // Calculate date range (60 days from now)
             $endDate = now();
             $startDate = now()->subDays(60);
             
-            // Handle custom date filtering if provided
             if ($request->filled('filterDates')) {
                 $dates = explode(' - ', $request->filterDates);
                 if (count($dates) == 2) {

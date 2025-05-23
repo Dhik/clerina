@@ -3165,6 +3165,7 @@ class AdSpentSocialMediaController extends Controller
         // Skip header row
         $dataRows = array_slice($data, $headerRow + 1);
         $count = 0;
+        $skippedCount = 0; // Track skipped rows
         
         // Create a function to safely get column values
         $getColumnValue = function($row, $columnName, $default = null) use ($columnMap) {
@@ -3177,6 +3178,13 @@ class AdSpentSocialMediaController extends Controller
             // Skip empty rows
             $campaignName = $getColumnValue($row, 'Campaign name');
             if (empty($campaignName)) {
+                continue;
+            }
+            
+            // EXCLUDE ROWS WHERE COLUMN B (index 1) HAS VALUE "-"
+            if (isset($row[1]) && trim($row[1]) === '-') {
+                \Log::info("Skipping row " . ($rowIndex + $headerRow + 2) . " because column B contains '-'");
+                $skippedCount++;
                 continue;
             }
             
@@ -3276,7 +3284,7 @@ class AdSpentSocialMediaController extends Controller
             }
         }
         
-        \Log::info("Finished processing file. Imported " . $count . " records.");
+        \Log::info("Finished processing file. Imported " . $count . " records. Skipped " . $skippedCount . " rows with '-' in column B.");
         return $count;
     }
 
@@ -3418,6 +3426,7 @@ class AdSpentSocialMediaController extends Controller
     {
         $importCount = 0;
         $dateAmountMap = [];
+        $skippedCount = 0;
         
         // Extract date from filename
         $importDate = null;
@@ -3439,26 +3448,114 @@ class AdSpentSocialMediaController extends Controller
         $worksheet = $spreadsheet->getActiveSheet();
         $rows = $worksheet->toArray();
         
-        // Skip header row
-        array_shift($rows);
+        // DEBUG: Log the first few rows to see what we're working with
+        \Log::info("Total rows in Excel: " . count($rows));
+        for ($i = 0; $i < min(3, count($rows)); $i++) {
+            \Log::info("Row $i: " . json_encode(array_slice($rows[$i], 0, 5)));
+        }
         
-        $totalAmountForDate = 0;
+        // Find the actual header row and remove everything above it
+        $headerRowIndex = null;
+        $dataStartIndex = 0;
         
-        foreach ($rows as $row) {
-            // Check if we have the minimum required fields
-            if (count($row) < 9 || empty($row[0])) {
+        // Look for header indicators (adjust these based on your actual headers)
+        $expectedHeaders = ['id', 'campaign', 'amount', 'biaya', 'spent', 'cost'];
+        
+        foreach ($rows as $index => $row) {
+            if (empty($row) || count(array_filter($row)) == 0) {
+                // Skip completely empty rows
                 continue;
             }
             
-            $idCampaign = $row[0]; // Column A
-            $campaignName = $row[1]; // Column B
-            $amountSpent = !empty($row[2]) ? $row[2] : 0; // Column C
-            $biayaBersih = !empty($row[3]) ? $row[3] : 0; // Column D
-            $itemsPurchased = !empty($row[4]) ? $row[4] : 0; // Column E
-            $costPerPurchase = !empty($row[5]) ? $row[5] : 0; // Column F
-            $conversionValue = !empty($row[6]) ? $row[6] : 0; // Column G
-            $roi = !empty($row[7]) ? $row[7] : 0; // Column H
-            $mataUang = !empty($row[8]) ? $row[8] : 'IDR'; // Column I
+            // Check if this row looks like a header
+            $isHeaderRow = false;
+            foreach ($row as $cell) {
+                if (is_string($cell)) {
+                    $cellLower = strtolower(trim($cell));
+                    foreach ($expectedHeaders as $header) {
+                        if (strpos($cellLower, $header) !== false) {
+                            $isHeaderRow = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+            
+            if ($isHeaderRow) {
+                $headerRowIndex = $index;
+                $dataStartIndex = $index + 1;
+                \Log::info("Found header row at index $index: " . json_encode(array_slice($row, 0, 5)));
+                break;
+            }
+            
+            // If we haven't found a header and this row has data, assume it's the first data row
+            if ($headerRowIndex === null && !empty($row[0])) {
+                $dataStartIndex = $index;
+                \Log::info("No clear header found, starting data from row $index");
+                break;
+            }
+        }
+        
+        // Get only the data rows
+        $dataRows = array_slice($rows, $dataStartIndex);
+        \Log::info("Processing " . count($dataRows) . " data rows starting from index $dataStartIndex");
+        
+        $totalAmountForDate = 0;
+        
+        foreach ($dataRows as $rowIndex => $row) {
+            $actualRowNumber = $dataStartIndex + $rowIndex + 1; // +1 for Excel row numbering
+            
+            \Log::info("=== PROCESSING ROW $actualRowNumber ===");
+            \Log::info("Raw row data: " . json_encode($row));
+            \Log::info("Row count: " . count($row));
+            \Log::info("Row[0] (id_campaign): '" . ($row[0] ?? 'NULL') . "'");
+            \Log::info("Row[1] (campaign_name): '" . ($row[1] ?? 'NULL') . "'");
+            \Log::info("Row[2] (amount_spent): '" . ($row[2] ?? 'NULL') . "'");
+            \Log::info("Row[3] (biaya_bersih): '" . ($row[3] ?? 'NULL') . "'");
+            
+            // Check if we have the minimum required fields
+            if (count($row) < 4) {
+                \Log::info("SKIPPED: Row $actualRowNumber has less than 4 columns (" . count($row) . " columns)");
+                continue;
+            }
+            
+            if (empty($row[0])) {
+                \Log::info("SKIPPED: Row $actualRowNumber has empty row[0] (id_campaign)");
+                continue;
+            }
+            
+            // EXCLUDE ROWS WHERE COLUMN B (campaign_name) HAS VALUE "-"
+            if (isset($row[1]) && trim($row[1]) === '-') {
+                \Log::info("SKIPPED: Row $actualRowNumber because column B (campaign_name) contains '-'");
+                $skippedCount++;
+                continue;
+            }
+            
+            // Map columns according to your specification:
+            $idCampaign = trim($row[0]);              // Column A -> id_campaign
+            $campaignName = trim($row[1]);            // Column B -> campaign_name  
+            $amountSpent = $this->cleanNumericValue($row[2]); // Column C -> amount_spent
+            $biayaBersih = $this->cleanNumericValue($row[3]); // Column D -> biaya_bersih
+            
+            \Log::info("Mapped values:");
+            \Log::info("- idCampaign: '$idCampaign'");
+            \Log::info("- campaignName: '$campaignName'");
+            \Log::info("- amountSpent: $amountSpent");
+            \Log::info("- biayaBersih: $biayaBersih");
+            
+            // Optional columns (if they exist in the file)
+            $itemsPurchased = isset($row[4]) ? $this->cleanNumericValue($row[4]) : 0;
+            $costPerPurchase = isset($row[5]) ? $this->cleanNumericValue($row[5]) : 0;
+            $conversionValue = isset($row[6]) ? $this->cleanNumericValue($row[6]) : 0;
+            $roi = isset($row[7]) ? $this->cleanNumericValue($row[7]) : 0;
+            $mataUang = isset($row[8]) && !empty($row[8]) ? trim($row[8]) : 'IDR';
+            
+            // Skip row if critical data is invalid
+            if (empty($campaignName)) {
+                \Log::warning("SKIPPED: Row $actualRowNumber due to empty campaign name after trim");
+                $skippedCount++;
+                continue;
+            }
             
             // Additional default fields
             $accountName = "GMV Max";
@@ -3472,68 +3569,76 @@ class AdSpentSocialMediaController extends Controller
                 $purchasesSharedItems = $itemsPurchased;
             }
             
-            \Log::info("Importing record: $idCampaign - $campaignName");
+            \Log::info("Processing row $actualRowNumber: $idCampaign - $campaignName (Amount: $amountSpent, Biaya Bersih: $biayaBersih)");
             
-            // Check if record already exists
-            $existingRecord = AdsTiktok::where('date', $importDate)
-                ->where('id_campaign', $idCampaign)
-                ->where('account_name', $accountName)
-                ->where('tenant_id', $tenantId)
-                ->where('amount_spent', $amountSpent)
-                ->first();
-            
-            if ($existingRecord) {
-                // Update existing record
-                $existingRecord->update([
-                    'campaign_name' => $campaignName,
-                    'amount_spent' => $amountSpent,
-                    'biaya_bersih' => $biayaBersih,
-                    'items_purchased' => $itemsPurchased,
-                    'cost_per_purchase' => $costPerPurchase,
-                    'purchases_conversion_value_shared_items' => $conversionValue,
-                    'purchases_shared_items' => $purchasesSharedItems,
-                    'roi' => $roi,
-                    'mata_uang' => $mataUang,
-                    'type' => $type,
-                    'kategori_produk' => $kategoriProduk,
-                    'pic' => $pic,
-                    'updated_at' => now()
-                ]);
+            try {
+                // Check if record already exists
+                $existingRecord = AdsTiktok::where('date', $importDate)
+                    ->where('id_campaign', $idCampaign)
+                    ->where('account_name', $accountName)
+                    ->where('tenant_id', $tenantId)
+                    ->first();
                 
-                \Log::info("Updated existing record for campaign: $idCampaign");
-            } else {
-                // Create new record
-                AdsTiktok::create([
-                    'date' => $importDate,
-                    'id_campaign' => $idCampaign,
-                    'campaign_name' => $campaignName,
-                    'account_name' => $accountName,
-                    'amount_spent' => $amountSpent,
-                    'biaya_bersih' => $biayaBersih,
-                    'items_purchased' => $itemsPurchased,
-                    'cost_per_purchase' => $costPerPurchase,
-                    'purchases_conversion_value_shared_items' => $conversionValue,
-                    'purchases_shared_items' => $purchasesSharedItems,
-                    'roi' => $roi,
-                    'mata_uang' => $mataUang,
-                    'type' => $type,
-                    'kategori_produk' => $kategoriProduk,
-                    'pic' => $pic,
-                    'tenant_id' => $tenantId,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                if ($existingRecord) {
+                    // Update existing record
+                    $existingRecord->update([
+                        'campaign_name' => $campaignName,
+                        'amount_spent' => $amountSpent,
+                        'biaya_bersih' => $biayaBersih,
+                        'items_purchased' => $itemsPurchased,
+                        'cost_per_purchase' => $costPerPurchase,
+                        'purchases_conversion_value_shared_items' => $conversionValue,
+                        'purchases_shared_items' => $purchasesSharedItems,
+                        'roi' => $roi,
+                        'mata_uang' => $mataUang,
+                        'type' => $type,
+                        'kategori_produk' => $kategoriProduk,
+                        'pic' => $pic,
+                        'updated_at' => now()
+                    ]);
+                    
+                    \Log::info("Updated existing record for campaign: $idCampaign");
+                } else {
+                    // Create new record
+                    AdsTiktok::create([
+                        'date' => $importDate,
+                        'id_campaign' => $idCampaign,
+                        'campaign_name' => $campaignName,
+                        'account_name' => $accountName,
+                        'amount_spent' => $amountSpent,
+                        'biaya_bersih' => $biayaBersih,
+                        'items_purchased' => $itemsPurchased,
+                        'cost_per_purchase' => $costPerPurchase,
+                        'purchases_conversion_value_shared_items' => $conversionValue,
+                        'purchases_shared_items' => $purchasesSharedItems,
+                        'roi' => $roi,
+                        'mata_uang' => $mataUang,
+                        'type' => $type,
+                        'kategori_produk' => $kategoriProduk,
+                        'pic' => $pic,
+                        'tenant_id' => $tenantId,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    
+                    \Log::info("Created new record for campaign: $idCampaign");
+                }
                 
-                \Log::info("Created new record for campaign: $idCampaign");
+                $importCount++;
+                $totalAmountForDate += $amountSpent;
+                
+            } catch (\Exception $e) {
+                \Log::error("Error processing row $actualRowNumber: " . $e->getMessage());
+                $skippedCount++;
+                continue;
             }
-            
-            $importCount++;
-            $totalAmountForDate += $amountSpent;
         }
         
         if ($importCount > 0) {
             $dateAmountMap[$importDate] = $totalAmountForDate;
         }
+        
+        \Log::info("Finished processing GMV Max file. Imported: $importCount, Skipped: $skippedCount records");
         
         return [
             'count' => $importCount,
