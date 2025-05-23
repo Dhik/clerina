@@ -2956,8 +2956,7 @@ class NetProfitController extends Controller
                 'sku',
                 'platform',
                 'sales',
-                'marketing',
-                \DB::raw('ROUND(sales/marketing, 2) as roas')
+                'marketing'
             ])->orderBy('date')->get();
             
             if ($historicalData->isEmpty()) {
@@ -2967,32 +2966,20 @@ class NetProfitController extends Controller
                 ]);
             }
             
-            // Calculate summary statistics
-            $summary = $this->calculateOptimizationSummary($historicalData);
+            // Calculate logistic regression data
+            $logisticData = $this->calculateLogisticRegression($historicalData, $endDate);
             
-            // Prepare historical trend data
-            $historical = $this->prepareHistoricalTrendData($historicalData);
+            // Calculate KPI cards
+            $kpi = $this->calculateTodayKPI($logisticData);
             
-            // Prepare platform comparison data
-            $platforms = $this->preparePlatformComparisonData($historicalData);
-            
-            // Generate forecast for next 3 days
-            $forecast = $this->generateSalesForecast($historicalData, $endDate);
-            
-            // Generate recommendations
-            $recommendations = $this->generateOptimizationRecommendations($historicalData, $summary);
-            
-            // Prepare detailed breakdown
-            $breakdown = $this->prepareDetailedBreakdown($historicalData);
+            // Prepare SKU breakdown
+            $skuBreakdown = $this->calculateSKUBreakdown($historicalData, $logisticData);
             
             return response()->json([
                 'success' => true,
-                'summary' => $summary,
-                'historical' => $historical,
-                'platforms' => $platforms,
-                'forecast' => $forecast,
-                'recommendations' => $recommendations,
-                'breakdown' => $breakdown
+                'logistic_data' => $logisticData,
+                'kpi' => $kpi,
+                'sku_breakdown' => $skuBreakdown
             ]);
             
         } catch (\Exception $e) {
@@ -3005,235 +2992,164 @@ class NetProfitController extends Controller
         }
     }
 
-    private function calculateOptimizationSummary($data)
+    private function calculateLogisticRegression($data, $endDate)
     {
-        $totalSpent = $data->sum('marketing');
-        $totalSales = $data->sum('sales');
-        $avgRoas = $totalSpent > 0 ? round($totalSales / $totalSpent, 2) : 0;
-        
-        // Find best performing platform
-        $platformPerformance = $data->groupBy('platform')->map(function ($items) {
-            $spent = $items->sum('marketing');
-            $sales = $items->sum('sales');
-            return $spent > 0 ? $sales / $spent : 0;
+        // Group data by date and platform
+        $dailyData = $data->groupBy(['date', 'platform'])->map(function ($platformData) {
+            return $platformData->map(function ($items) {
+                return $items->sum('marketing');
+            });
         });
         
-        $bestPlatform = $platformPerformance->sortDesc()->keys()->first() ?? 'N/A';
+        // Separate Meta and Shopee data
+        $metaData = [];
+        $shopeeData = [];
+        $dates = [];
         
-        return [
-            'total_spent' => $totalSpent,
-            'total_sales' => $totalSales,
-            'avg_roas' => $avgRoas,
-            'best_platform' => $bestPlatform
-        ];
-    }
-
-    private function prepareHistoricalTrendData($data)
-    {
-        // Group data by date and calculate daily totals
-        $dailyData = $data->groupBy('date')->map(function ($items) {
-            return [
-                'sales' => $items->sum('sales'),
-                'marketing' => $items->sum('marketing'),
-                'roas' => $items->sum('marketing') > 0 ? round($items->sum('sales') / $items->sum('marketing'), 2) : 0
-            ];
-        })->sortKeys();
-        
-        return [
-            'dates' => $dailyData->keys()->toArray(),
-            'sales' => $dailyData->pluck('sales')->toArray(),
-            'marketing' => $dailyData->pluck('marketing')->toArray(),
-            'roas' => $dailyData->pluck('roas')->toArray()
-        ];
-    }
-
-    private function preparePlatformComparisonData($data)
-    {
-        $platformData = $data->groupBy('platform')->map(function ($items) {
-            $spent = $items->sum('marketing');
-            $sales = $items->sum('sales');
-            return [
-                'spent' => $spent,
-                'sales' => $sales,
-                'roas' => $spent > 0 ? round($sales / $spent, 2) : 0
-            ];
-        });
-        
-        return [
-            'platforms' => $platformData->keys()->toArray(),
-            'spent' => $platformData->pluck('spent')->toArray(),
-            'sales' => $platformData->pluck('sales')->toArray(),
-            'roas' => $platformData->pluck('roas')->toArray()
-        ];
-    }
-
-    private function generateSalesForecast($data, $endDate)
-    {
-        // Simple linear regression for forecasting
-        $dailyData = $data->groupBy('date')->map(function ($items) {
-            return [
-                'sales' => $items->sum('sales'),
-                'marketing' => $items->sum('marketing')
-            ];
-        })->sortKeys();
-        
-        $dates = $dailyData->keys()->map(function($date) {
-            return strtotime($date);
-        })->toArray();
-        
-        $sales = $dailyData->pluck('sales')->toArray();
-        $marketing = $dailyData->pluck('marketing')->toArray();
-        
-        // Calculate trend for sales
-        $salesTrend = $this->calculateLinearTrend($dates, $sales);
-        $marketingTrend = $this->calculateLinearTrend($dates, $marketing);
-        
-        // Generate forecast for next 3 days
-        $forecastDates = [];
-        $forecastSales = [];
-        $forecastMarketing = [];
-        
-        for ($i = 1; $i <= 3; $i++) {
-            $forecastDate = $endDate->copy()->addDays($i);
-            $forecastTimestamp = $forecastDate->timestamp;
-            
-            $forecastDates[] = $forecastDate->format('Y-m-d');
-            $forecastSales[] = max(0, round($salesTrend['slope'] * $forecastTimestamp + $salesTrend['intercept']));
-            $forecastMarketing[] = max(0, round($marketingTrend['slope'] * $forecastTimestamp + $marketingTrend['intercept']));
+        foreach ($dailyData as $date => $platforms) {
+            $dates[] = $date;
+            $metaData[] = $platforms->get('Meta Ads', 0);
+            $shopeeData[] = $platforms->get('Shopee Ads', 0);
         }
         
-        // Get last 7 days for context
-        $recentDates = array_slice($dailyData->keys()->toArray(), -7);
-        $recentSales = array_slice($sales, -7);
-        $recentMarketing = array_slice($marketing, -7);
+        // Calculate logistic regression parameters
+        $metaParams = $this->fitLogisticCurve($dates, $metaData);
+        $shopeeParams = $this->fitLogisticCurve($dates, $shopeeData);
+        
+        // Generate full date range (historical + forecast)
+        $allDates = [];
+        $currentDate = Carbon::parse($dates[0]);
+        $forecastEndDate = $endDate->copy()->addDays(3);
+        
+        while ($currentDate <= $forecastEndDate) {
+            $allDates[] = $currentDate->format('Y-m-d');
+            $currentDate->addDay();
+        }
+        
+        // Calculate regression curves
+        $metaRegression = [];
+        $shopeeRegression = [];
+        
+        foreach ($allDates as $index => $date) {
+            $metaRegression[] = $this->logisticFunction($index, $metaParams);
+            $shopeeRegression[] = $this->logisticFunction($index, $shopeeParams);
+        }
+        
+        // Separate historical and forecast dates
+        $historicalDates = array_slice($allDates, 0, count($dates));
+        $forecastDates = array_slice($allDates, count($dates));
+        
+        // Forecast values
+        $metaForecast = array_slice($metaRegression, count($dates));
+        $shopeeForecast = array_slice($shopeeRegression, count($dates));
         
         return [
-            'historical_dates' => $recentDates,
-            'historical_sales' => $recentSales,
-            'historical_marketing' => $recentMarketing,
+            'dates' => $allDates,
+            'historical_dates' => $historicalDates,
             'forecast_dates' => $forecastDates,
-            'forecast_sales' => $forecastSales,
-            'forecast_marketing' => $forecastMarketing
+            'meta_historical' => $metaData,
+            'shopee_historical' => $shopeeData,
+            'meta_regression' => $metaRegression,
+            'shopee_regression' => $shopeeRegression,
+            'meta_forecast' => $metaForecast,
+            'shopee_forecast' => $shopeeForecast,
+            'meta_params' => $metaParams,
+            'shopee_params' => $shopeeParams
         ];
     }
 
-    private function calculateLinearTrend($x, $y)
+    private function fitLogisticCurve($dates, $values)
     {
-        $n = count($x);
-        if ($n < 2) {
-            return ['slope' => 0, 'intercept' => 0];
+        $n = count($values);
+        if ($n < 3) {
+            return ['L' => max($values), 'k' => 0.1, 'x0' => $n/2];
         }
         
-        $sumX = array_sum($x);
-        $sumY = array_sum($y);
-        $sumXY = 0;
-        $sumX2 = 0;
+        // Simple logistic curve fitting
+        // L = maximum value (carrying capacity)
+        // k = growth rate
+        // x0 = x-value of the sigmoid's midpoint
+        
+        $L = max($values) * 1.1; // Slightly above maximum
+        $minVal = min($values);
+        
+        // If all values are the same, return flat curve
+        if ($L - $minVal < 1) {
+            return ['L' => $L, 'k' => 0, 'x0' => $n/2];
+        }
+        
+        // Find midpoint
+        $midValue = ($L + $minVal) / 2;
+        $x0 = 0;
         
         for ($i = 0; $i < $n; $i++) {
-            $sumXY += $x[$i] * $y[$i];
-            $sumX2 += $x[$i] * $x[$i];
+            if ($values[$i] >= $midValue) {
+                $x0 = $i;
+                break;
+            }
         }
         
-        $denominator = ($n * $sumX2 - $sumX * $sumX);
-        if ($denominator == 0) {
-            return ['slope' => 0, 'intercept' => $sumY / $n];
+        // Estimate growth rate
+        $k = 0.1; // Default moderate growth rate
+        
+        // Try to fit based on the steepest part of the curve
+        for ($i = 1; $i < $n - 1; $i++) {
+            $slope = abs($values[$i + 1] - $values[$i - 1]) / 2;
+            if ($slope > 0) {
+                $k = max($k, $slope / ($L - $minVal) * 4);
+            }
         }
         
-        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
-        $intercept = ($sumY - $slope * $sumX) / $n;
-        
-        return ['slope' => $slope, 'intercept' => $intercept];
+        return ['L' => $L, 'k' => min($k, 1), 'x0' => $x0];
     }
 
-    private function generateOptimizationRecommendations($data, $summary)
+    private function logisticFunction($x, $params)
     {
-        $recommendations = [];
+        $L = $params['L'];
+        $k = $params['k'];
+        $x0 = $params['x0'];
         
-        // Analyze platform performance
-        $platformData = $data->groupBy('platform')->map(function ($items) {
-            $spent = $items->sum('marketing');
-            $sales = $items->sum('sales');
-            return [
-                'spent' => $spent,
-                'sales' => $sales,
-                'roas' => $spent > 0 ? $sales / $spent : 0,
-                'count' => $items->count()
-            ];
-        });
-        
-        // Recommendation 1: Platform allocation
-        $bestPlatform = $platformData->sortByDesc('roas')->first();
-        $worstPlatform = $platformData->sortBy('roas')->first();
-        
-        if ($bestPlatform && $worstPlatform && $bestPlatform['roas'] > $worstPlatform['roas'] * 1.5) {
-            $recommendations[] = [
-                'title' => 'Reallocate Budget to High-Performing Platform',
-                'description' => "Consider shifting more budget to {$platformData->sortByDesc('roas')->keys()->first()} (ROAS: " . round($bestPlatform['roas'], 2) . "x) from {$platformData->sortBy('roas')->keys()->first()} (ROAS: " . round($worstPlatform['roas'], 2) . "x)",
-                'priority' => 'high',
-                'impact' => 'Potential 15-25% improvement in overall ROAS'
-            ];
+        if ($k == 0) {
+            return $L / 2; // Return midpoint for flat curve
         }
         
-        // Recommendation 2: ROAS analysis
-        if ($summary['avg_roas'] < 2) {
-            $recommendations[] = [
-                'title' => 'Low ROAS Alert',
-                'description' => 'Current average ROAS is ' . $summary['avg_roas'] . 'x, which is below the recommended minimum of 2x. Consider optimizing ad targeting or reducing spend.',
-                'priority' => 'high',
-                'impact' => 'Prevent further losses and improve profitability'
-            ];
-        } elseif ($summary['avg_roas'] > 4) {
-            $recommendations[] = [
-                'title' => 'Scale Opportunity',
-                'description' => 'Excellent ROAS of ' . $summary['avg_roas'] . 'x indicates strong performance. Consider increasing budget to scale successful campaigns.',
-                'priority' => 'medium',
-                'impact' => 'Potential 20-40% increase in total sales'
-            ];
-        }
-        
-        // Recommendation 3: SKU-specific analysis
-        $skuData = $data->groupBy('sku')->map(function ($items) {
-            $spent = $items->sum('marketing');
-            $sales = $items->sum('sales');
-            return [
-                'roas' => $spent > 0 ? $sales / $spent : 0,
-                'volume' => $items->count()
-            ];
-        });
-        
-        $topSku = $skuData->sortByDesc('roas')->keys()->first();
-        if ($topSku && $skuData[$topSku]['roas'] > 3) {
-            $recommendations[] = [
-                'title' => 'Focus on Top Performing SKU',
-                'description' => "SKU {$topSku} shows excellent performance with " . round($skuData[$topSku]['roas'], 2) . "x ROAS. Consider increasing its marketing allocation.",
-                'priority' => 'medium',
-                'impact' => 'Optimize product mix for better overall performance'
-            ];
-        }
-        
-        // Recommendation 4: Spending consistency
-        $dailySpend = $data->groupBy('date')->map(function ($items) {
-            return $items->sum('marketing');
-        });
-        
-        $avgDailySpend = $dailySpend->avg();
-        $spendVariation = $dailySpend->map(function ($spend) use ($avgDailySpend) {
-            return abs($spend - $avgDailySpend) / $avgDailySpend;
-        })->avg();
-        
-        if ($spendVariation > 0.3) {
-            $recommendations[] = [
-                'title' => 'Stabilize Daily Spending',
-                'description' => 'High variation in daily spending detected. Consider implementing more consistent budget allocation for better performance tracking.',
-                'priority' => 'low',
-                'impact' => 'Improved campaign stability and predictable results'
-            ];
-        }
-        
-        return $recommendations;
+        return $L / (1 + exp(-$k * ($x - $x0)));
     }
 
-    private function prepareDetailedBreakdown($data)
+    private function calculateTodayKPI($logisticData)
+    {
+        // Get today's forecast values (last forecast day represents "today's ideal")
+        $metaIdeal = end($logisticData['meta_forecast']) ?: 0;
+        $shopeeIdeal = end($logisticData['shopee_forecast']) ?: 0;
+        $totalIdeal = $metaIdeal + $shopeeIdeal;
+        
+        // Calculate ratio
+        $ratio = '1:1';
+        if ($shopeeIdeal > 0 && $metaIdeal > 0) {
+            $metaRatio = round($metaIdeal / $shopeeIdeal, 1);
+            $shopeeRatio = 1;
+            
+            if ($metaRatio < 1) {
+                $shopeeRatio = round(1 / $metaRatio, 1);
+                $metaRatio = 1;
+            }
+            
+            $ratio = $metaRatio . ':' . $shopeeRatio;
+        } elseif ($metaIdeal > 0) {
+            $ratio = '1:0';
+        } elseif ($shopeeIdeal > 0) {
+            $ratio = '0:1';
+        }
+        
+        return [
+            'total_ideal_spent' => $totalIdeal,
+            'meta_ideal_spent' => $metaIdeal,
+            'shopee_ideal_spent' => $shopeeIdeal,
+            'platform_ratio' => $ratio
+        ];
+    }
+
+    private function calculateSKUBreakdown($historicalData, $logisticData)
     {
         // SKU name mapping
         $skuLabels = [
@@ -3248,49 +3164,60 @@ class NetProfitController extends Controller
             '-' => 'Other Products'
         ];
         
-        $breakdown = $data->groupBy(['sku', 'platform'])->map(function ($items, $key) use ($skuLabels) {
-            $keys = explode('.', $key);
-            $sku = $keys[0];
-            $platform = $keys[1] ?? 'Unknown';
+        // Group historical data by SKU and platform
+        $skuData = $historicalData->groupBy('sku')->map(function ($skuItems, $sku) use ($logisticData, $skuLabels) {
+            $platformData = $skuItems->groupBy('platform');
             
-            $totalSpent = $items->sum('marketing');
-            $totalSales = $items->sum('sales');
-            $roas = $totalSpent > 0 ? round($totalSales / $totalSpent, 2) : 0;
-            $avgDailySpent = $items->count() > 0 ? round($totalSpent / $items->count(), 0) : 0;
-            $conversionRate = $totalSpent > 0 ? round(($totalSales / $totalSpent) * 100, 2) : 0;
+            // Calculate proportion of this SKU relative to total spending
+            $skuTotalSpent = $skuItems->sum('marketing');
+            $totalSpent = $historicalData->sum('marketing');
+            $skuProportion = $totalSpent > 0 ? $skuTotalSpent / $totalSpent : 0;
             
-            // Generate recommendation based on performance
-            $recommendation = 'Maintain';
-            $recommendationType = 'secondary';
+            // Calculate platform distribution for this SKU
+            $metaSpent = $platformData->get('Meta Ads', collect())->sum('marketing');
+            $shopeeSpent = $platformData->get('Shopee Ads', collect())->sum('marketing');
+            $skuTotal = $metaSpent + $shopeeSpent;
             
-            if ($roas >= 4) {
-                $recommendation = 'Scale Up';
-                $recommendationType = 'success';
-            } elseif ($roas >= 2) {
-                $recommendation = 'Optimize';
-                $recommendationType = 'primary';
-            } elseif ($roas >= 1) {
-                $recommendation = 'Review';
-                $recommendationType = 'warning';
-            } else {
-                $recommendation = 'Pause/Reduce';
-                $recommendationType = 'danger';
+            $metaProportion = $skuTotal > 0 ? $metaSpent / $skuTotal : 0.5;
+            $shopeeProportion = $skuTotal > 0 ? $shopeeSpent / $skuTotal : 0.5;
+            
+            // Apply proportions to ideal spending
+            $totalIdealSpent = end($logisticData['meta_forecast']) + end($logisticData['shopee_forecast']);
+            $skuIdealSpent = $totalIdealSpent * $skuProportion;
+            
+            $metaIdealSpent = $skuIdealSpent * $metaProportion;
+            $shopeeIdealSpent = $skuIdealSpent * $shopeeProportion;
+            
+            // Calculate ratio
+            $ratio = '1:1';
+            if ($shopeeIdealSpent > 0 && $metaIdealSpent > 0) {
+                $metaRatio = round($metaIdealSpent / $shopeeIdealSpent, 1);
+                $shopeeRatio = 1;
+                
+                if ($metaRatio < 1) {
+                    $shopeeRatio = round(1 / $metaRatio, 1);
+                    $metaRatio = 1;
+                }
+                
+                $ratio = $metaRatio . ':' . $shopeeRatio;
+            } elseif ($metaIdealSpent > 0) {
+                $ratio = '1:0';
+            } elseif ($shopeeIdealSpent > 0) {
+                $ratio = '0:1';
             }
             
             return [
                 'sku' => $sku,
-                'sku_name' => $skuLabels[$sku] ?? $sku,
-                'platform' => $platform,
-                'total_spent' => $totalSpent,
-                'total_sales' => $totalSales,
-                'roas' => $roas,
-                'avg_daily_spent' => $avgDailySpent,
-                'conversion_rate' => $conversionRate,
-                'recommendation' => $recommendation,
-                'recommendation_type' => $recommendationType
+                'product_name' => $skuLabels[$sku] ?? $sku,
+                'total_ideal_spent' => $skuIdealSpent,
+                'meta_ideal_spent' => $metaIdealSpent,
+                'shopee_ideal_spent' => $shopeeIdealSpent,
+                'ratio' => $ratio,
+                'proportion' => $skuProportion
             ];
-        })->values()->sortByDesc('roas')->toArray();
+        });
         
-        return $breakdown;
+        // Sort by total ideal spent descending
+        return $skuData->sortByDesc('total_ideal_spent')->values()->toArray();
     }
 }
