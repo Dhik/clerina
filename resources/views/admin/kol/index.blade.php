@@ -49,11 +49,16 @@
                         <tr>
                             <th>{{ trans('labels.channel') }}</th>
                             <th>{{ trans('labels.username') }}</th>
-                            <th width="10%">Followers</th>
-                            <th width="10%">Following</th>
-                            <th width="10%">Rate Card</th>
-                            <th width="5%">Refresh Followers</th>
-                            <th width="10%">{{ trans('labels.action') }}</th>
+                            <th width="8%">Followers</th>
+                            <th width="8%">Following</th>
+                            <th width="8%">Engagement</th>
+                            <th width="8%">Program</th>
+                            <th width="8%">Recent Views</th>
+                            <th width="8%">Activity</th>
+                            <th width="8%">Affiliate Status</th>
+                            <th width="8%">Rate Card</th>
+                            <th width="5%">Refresh</th>
+                            <th width="8%">{{ trans('labels.action') }}</th>
                         </tr>
                         </thead>
                     </table>
@@ -301,6 +306,27 @@
                 {data: 'username', name: 'username'},
                 {data: 'followers', name: 'followers'},
                 {data: 'following', name: 'following'},
+                {
+                    data: 'engagement_rate_display', 
+                    name: 'engagement_rate', 
+                    orderable: true
+                },
+                {data: 'program', name: 'program'},
+                {
+                    data: 'views_last_9_post_display', 
+                    name: 'views_last_9_post', 
+                    orderable: false
+                },
+                {
+                    data: 'activity_posting_display', 
+                    name: 'activity_posting', 
+                    orderable: false
+                },
+                {
+                    data: 'status_affiliate_display', 
+                    name: 'status_affiliate', 
+                    orderable: false
+                },
                 {
                     data: 'rate',
                     name: 'rate',
