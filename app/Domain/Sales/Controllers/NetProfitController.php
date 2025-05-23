@@ -2926,7 +2926,7 @@ class NetProfitController extends Controller
             
             // Calculate date range (60 days from now)
             $endDate = now();
-            $startDate = now()->subDays(60);
+            $startDate = now()->subDays(90);
             
             // Handle custom date filtering if provided
             if ($request->filled('filterDates')) {
