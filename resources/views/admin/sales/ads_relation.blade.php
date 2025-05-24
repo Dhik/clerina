@@ -248,6 +248,7 @@
                 });
         }
         loadDetailCorrelationChart();
+        loadCorrelationChart();
 
         function loadOptimizationData() {
             const selectedSku = document.getElementById('optimizationSku').value;
