@@ -241,22 +241,57 @@ class KeyOpinionLeaderController extends Controller
 
         return view('admin.kol.edit', array_merge(['keyOpinionLeader' => $keyOpinionLeader], $this->getCommonData()));
     }
+    public function getEditData(KeyOpinionLeader $keyOpinionLeader): JsonResponse
+    {
+        $this->authorize('updateKOL', KeyOpinionLeader::class);
+        
+        return response()->json([
+            'id' => $keyOpinionLeader->id,
+            'username' => $keyOpinionLeader->username,
+            'phone_number' => $keyOpinionLeader->phone_number,
+            'views_last_9_post' => $keyOpinionLeader->views_last_9_post,
+            'activity_posting' => $keyOpinionLeader->activity_posting,
+        ]);
+    }
 
     /**
      * Update KOL
      */
-    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): RedirectResponse
-    {
-        $this->authorize('updateKOL', KeyOpinionLeader::class);
-
+    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): JsonResponse|RedirectResponse
+{
+    $this->authorize('updateKOL', KeyOpinionLeader::class);
+    
+    try {
         $kol = $this->kolBLL->updateKOL($keyOpinionLeader, $request);
+        
+        // Check if it's an AJAX request
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
+                'data' => $kol
+            ]);
+        }
+        
+        // Regular form submission (redirect)
         return redirect()
             ->route('kol.show', $kol->id)
             ->with([
                 'alert' => 'success',
                 'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
             ]);
+            
+    } catch (\Exception $e) {
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update KOL information.'
+            ], 500);
+        }
+        
+        return redirect()->back()->withErrors(['error' => 'Failed to update KOL information.']);
     }
+}
 
     /**
      * show KOL
