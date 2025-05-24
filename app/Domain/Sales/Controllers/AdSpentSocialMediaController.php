@@ -3261,6 +3261,8 @@ class AdSpentSocialMediaController extends Controller
                         [
                             'date' => $reportDate,
                             'campaign_name' => $campaignName,
+                            'account_name' => $accountName,
+                            'content_views_shared_items' => (float)$contentViewsSharedItems,
                             'tenant_id' => $tenantId,
                             'amount_spent' => (int)$amountSpent,
                         ],
