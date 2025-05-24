@@ -672,6 +672,8 @@ class KeyOpinionLeaderController extends Controller
         $query = $this->kolBLL->getKOLDatatable($request);
         $usernames = $query->whereIn('channel', ['tiktok_video'])
                         ->where('type', 'affiliate')
+                        ->where('followers', 0)
+                        ->where('following', 0)
                         ->pluck('username')
                         ->toArray();
 
