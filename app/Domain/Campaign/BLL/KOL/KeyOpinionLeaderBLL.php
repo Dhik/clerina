@@ -51,28 +51,12 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
             $query->where('pic_contact', $request->pic);
         }
 
-        // New filters
+        // Status affiliate filter
         if (!is_null($request->statusAffiliate)) {
             if ($request->statusAffiliate === 'null') {
                 $query->whereNull('status_affiliate');
             } else {
                 $query->where('status_affiliate', $request->statusAffiliate);
-            }
-        }
-
-        if (!is_null($request->activityPosting)) {
-            if ($request->activityPosting === 'null') {
-                $query->whereNull('activity_posting');
-            } else {
-                $query->where('activity_posting', $request->activityPosting);
-            }
-        }
-
-        if (!is_null($request->viewsLast9)) {
-            if ($request->viewsLast9 === 'null') {
-                $query->whereNull('views_last_9_post');
-            } else {
-                $query->where('views_last_9_post', $request->viewsLast9);
             }
         }
 
