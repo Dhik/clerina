@@ -184,7 +184,9 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
             $rate = $request->input('rate');
             $averageView = $request->input('average_view');
             $data['average_view'] = $averageView;
-            $data['cpm'] = ceil(($rate/$averageView) * 1000);
+            if ($rate) {
+                $data['cpm'] = ceil(($rate/$averageView) * 1000);
+            }
         }
         if ($request->filled('skin_type')) {
             $data['skin_type'] = $request->input('skin_type');
@@ -234,7 +236,67 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
         if ($request->filled('product')) {
             $data['product'] = $request->input('product');
         }
+        if ($request->filled('followers')) {
+            $data['followers'] = $request->input('followers');
+        }
 
-        return $this->kolDAL->updateKOL($keyOpinionLeader, $data);
+        // Update the KOL first
+        $updatedKol = $this->kolDAL->updateKOL($keyOpinionLeader, $data);
+        
+        // Check if we need to update status_affiliate based on the new criteria
+        $this->updateAffiliateStatus($updatedKol);
+        
+        return $updatedKol;
+    }
+
+    private function updateAffiliateStatus(KeyOpinionLeader $kol): void
+    {
+        // Check if this KOL meets the qualification criteria
+        $meetsQualification = $kol->views_last_9_post == 1 && 
+                            $kol->activity_posting == 1 && 
+                            $kol->followers > 1000;
+        
+        if ($meetsQualification) {
+            // Count current qualified KOLs
+            $qualifiedCount = KeyOpinionLeader::where('status_affiliate', 'Qualified')->count();
+            
+            if ($qualifiedCount < 1000) {
+                // Still room for more qualified KOLs
+                $kol->update(['status_affiliate' => 'Qualified']);
+            } else {
+                // Check if this KOL has more followers than the lowest qualified KOL
+                $lowestQualifiedKol = KeyOpinionLeader::where('status_affiliate', 'Qualified')
+                    ->orderBy('followers', 'asc')
+                    ->first();
+                
+                if ($kol->followers > $lowestQualifiedKol->followers) {
+                    // Promote this KOL to qualified and demote the lowest one
+                    $lowestQualifiedKol->update(['status_affiliate' => 'Waiting List']);
+                    $kol->update(['status_affiliate' => 'Qualified']);
+                } else {
+                    // This KOL goes to waiting list
+                    $kol->update(['status_affiliate' => 'Waiting List']);
+                }
+            }
+        } else {
+            // KOL doesn't meet qualification criteria
+            if ($kol->status_affiliate === 'Qualified' || $kol->status_affiliate === 'Waiting List') {
+                $kol->update(['status_affiliate' => 'Not Qualified']);
+                
+                // If this was a qualified KOL, promote the next best from waiting list
+                if ($kol->status_affiliate === 'Qualified') {
+                    $nextBestWaitingKol = KeyOpinionLeader::where('status_affiliate', 'Waiting List')
+                        ->where('views_last_9_post', 1)
+                        ->where('activity_posting', 1)
+                        ->where('followers', '>', 1000)
+                        ->orderBy('followers', 'desc')
+                        ->first();
+                        
+                    if ($nextBestWaitingKol) {
+                        $nextBestWaitingKol->update(['status_affiliate' => 'Qualified']);
+                    }
+                }
+            }
+        }
     }
 }
