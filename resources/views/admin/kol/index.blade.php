@@ -791,8 +791,8 @@
                 $('.invalid-feedback').text('');
             });
             
-            // Load KOL data
-            $.get(`{{ url('/kol') }}/${kolId}/edit-data`)
+            // Load KOL data using route name
+            $.get(`{{ route('kol.edit-data', ':kolId') }}`.replace(':kolId', kolId))
                 .done(function(data) {
                     populateEditForm(data);
                     $('#editFormLoader').hide();
