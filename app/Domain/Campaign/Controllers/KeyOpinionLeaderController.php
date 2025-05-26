@@ -251,6 +251,15 @@ class KeyOpinionLeaderController extends Controller
             'phone_number' => $keyOpinionLeader->phone_number,
             'views_last_9_post' => $keyOpinionLeader->views_last_9_post,
             'activity_posting' => $keyOpinionLeader->activity_posting,
+            // Add all required fields to preserve existing data
+            'channel' => $keyOpinionLeader->channel,
+            'niche' => $keyOpinionLeader->niche,
+            'average_view' => $keyOpinionLeader->average_view,
+            'skin_type' => $keyOpinionLeader->skin_type,
+            'skin_concern' => $keyOpinionLeader->skin_concern,
+            'content_type' => $keyOpinionLeader->content_type,
+            'rate' => $keyOpinionLeader->rate,
+            'pic_contact' => $keyOpinionLeader->pic_contact,
         ]);
     }
 
@@ -258,40 +267,37 @@ class KeyOpinionLeaderController extends Controller
      * Update KOL
      */
     public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): JsonResponse|RedirectResponse
-{
-    $this->authorize('updateKOL', KeyOpinionLeader::class);
-    
-    try {
-        $kol = $this->kolBLL->updateKOL($keyOpinionLeader, $request);
+    {
+        $this->authorize('updateKOL', KeyOpinionLeader::class);
         
-        // Check if it's an AJAX request
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
-                'data' => $kol
-            ]);
-        }
-        
-        // Regular form submission (redirect)
-        return redirect()
-            ->route('kol.show', $kol->id)
-            ->with([
-                'alert' => 'success',
-                'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
-            ]);
+        try {
+            $kol = $this->kolBLL->updateKOL($keyOpinionLeader, $request);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
+                    'data' => $kol
+                ]);
+            }
             
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update KOL information.'
-            ], 500);
+            return redirect()
+                ->route('kol.show', $kol->id)
+                ->with([
+                    'alert' => 'success',
+                    'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
+                ]);
+                
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update KOL information.'
+                ], 500);
+            }
+            
+            return redirect()->back()->withErrors(['error' => 'Failed to update KOL information.']);
         }
-        
-        return redirect()->back()->withErrors(['error' => 'Failed to update KOL information.']);
     }
-}
 
     /**
      * show KOL

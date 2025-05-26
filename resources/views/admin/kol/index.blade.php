@@ -177,6 +177,28 @@
                 <form id="editKolForm" method="POST">
                     @csrf
                     @method('PUT')
+                    
+                    <!-- Hidden fields to preserve existing required data -->
+                    <input type="hidden" name="channel" id="edit_channel">
+                    <input type="hidden" name="niche" id="edit_niche">
+                    <input type="hidden" name="average_view" id="edit_average_view">
+                    <input type="hidden" name="skin_type" id="edit_skin_type">
+                    <input type="hidden" name="skin_concern" id="edit_skin_concern">
+                    <input type="hidden" name="content_type" id="edit_content_type">
+                    <input type="hidden" name="rate" id="edit_rate">
+                    <input type="hidden" name="pic_contact" id="edit_pic_contact">
+                    <input type="hidden" name="name" id="edit_name">
+                    <input type="hidden" name="address" id="edit_address">
+                    <input type="hidden" name="bank_name" id="edit_bank_name">
+                    <input type="hidden" name="bank_account" id="edit_bank_account">
+                    <input type="hidden" name="bank_account_name" id="edit_bank_account_name">
+                    <input type="hidden" name="npwp" id="edit_npwp">
+                    <input type="hidden" name="npwp_number" id="edit_npwp_number">
+                    <input type="hidden" name="nik" id="edit_nik">
+                    <input type="hidden" name="notes" id="edit_notes">
+                    <input type="hidden" name="product_delivery" id="edit_product_delivery">
+                    <input type="hidden" name="product" id="edit_product">
+                    
                     <div class="modal-body">
                         <div id="editFormLoader" class="text-center" style="display: none;">
                             <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -812,6 +834,16 @@
         function populateEditForm(data) {
             $('#edit_username').val(data.username || '');
             $('#edit_phone_number').val(data.phone_number || '');
+            
+            // Hidden fields to preserve existing required data
+            $('#edit_channel').val(data.channel || '');
+            $('#edit_niche').val(data.niche || '');
+            $('#edit_average_view').val(data.average_view || '');
+            $('#edit_skin_type').val(data.skin_type || '');
+            $('#edit_skin_concern').val(data.skin_concern || '');
+            $('#edit_content_type').val(data.content_type || '');
+            $('#edit_rate').val(data.rate || '');
+            $('#edit_pic_contact').val(data.pic_contact || '');
             
             // Set radio buttons for views_last_9_post
             if (data.views_last_9_post === 1 || data.views_last_9_post === '1' || data.views_last_9_post === true) {
