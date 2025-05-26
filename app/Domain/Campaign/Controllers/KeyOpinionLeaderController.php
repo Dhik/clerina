@@ -691,6 +691,7 @@ class KeyOpinionLeaderController extends Controller
                         ->where('type', 'affiliate')
                         ->where('followers', 0)
                         ->where('following', 0)
+                        ->whereDate('created_at', '2025-05-26')
                         ->pluck('username')
                         ->toArray();
 
