@@ -260,28 +260,46 @@ class KeyOpinionLeaderController extends Controller
             'content_type' => $keyOpinionLeader->content_type,
             'rate' => $keyOpinionLeader->rate,
             'pic_contact' => $keyOpinionLeader->pic_contact,
+            'name' => $keyOpinionLeader->name,
+            'address' => $keyOpinionLeader->address,
+            'bank_name' => $keyOpinionLeader->bank_name,
+            'bank_account' => $keyOpinionLeader->bank_account,
+            'bank_account_name' => $keyOpinionLeader->bank_account_name,
+            'npwp' => $keyOpinionLeader->npwp,
+            'npwp_number' => $keyOpinionLeader->npwp_number,
+            'nik' => $keyOpinionLeader->nik,
+            'notes' => $keyOpinionLeader->notes,
+            'product_delivery' => $keyOpinionLeader->product_delivery,
+            'product' => $keyOpinionLeader->product,
         ]);
     }
 
     /**
      * Update KOL
      */
-    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): JsonResponse|RedirectResponse
+    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderEditRequest $request): JsonResponse|RedirectResponse
     {
         $this->authorize('updateKOL', KeyOpinionLeader::class);
         
         try {
-            $kol = $this->kolBLL->updateKOL($keyOpinionLeader, $request);
+            // Only update the specific fields from the edit form
+            $keyOpinionLeader->update([
+                'username' => $request->input('username'),
+                'phone_number' => $request->input('phone_number'),
+                'views_last_9_post' => $request->input('views_last_9_post'),
+                'activity_posting' => $request->input('activity_posting'),
+            ]);
+            
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
-                    'data' => $kol
+                    'data' => $keyOpinionLeader
                 ]);
             }
             
             return redirect()
-                ->route('kol.show', $kol->id)
+                ->route('kol.show', $keyOpinionLeader->id)
                 ->with([
                     'alert' => 'success',
                     'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),

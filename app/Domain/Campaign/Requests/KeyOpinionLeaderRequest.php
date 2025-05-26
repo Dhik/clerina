@@ -2,28 +2,24 @@
 
 namespace App\Domain\Campaign\Requests;
 
-use App\Domain\Campaign\Enums\KeyOpinionLeaderEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class KeyOpinionLeaderRequest extends FormRequest
+class KeyOpinionLeaderEditRequest extends FormRequest
 {
     public function rules(): array
     {
         $kolId = $this->route('keyOpinionLeader');
 
         return [
-            'channel' => ['required', Rule::in(KeyOpinionLeaderEnum::Channel)],
             'username' => ['required', 'regex:/^[a-zA-Z0-9_]+$/', Rule::unique('key_opinion_leaders')->where(function ($query) {
-                return $query->where('channel', $this->channel);
+                // Get the current KOL to check its channel for uniqueness
+                $kol = $this->route('keyOpinionLeader');
+                return $query->where('channel', $kol->channel);
             })->ignore($kolId)],
-            'niche' => ['required',Rule::in(KeyOpinionLeaderEnum::Niche)],
-            'average_view' => ['required', 'numeric', 'integer'],
-            'skin_type' => ['required', Rule::in(KeyOpinionLeaderEnum::SkinType)],
-            'skin_concern' => ['required', Rule::in(KeyOpinionLeaderEnum::SkinConcern)],
-            'content_type' => ['required', Rule::in(KeyOpinionLeaderEnum::ContentType)],
-            'rate' => ['required', 'numeric', 'integer'],
-            'pic_contact' => ['required', 'exists:users,id'],
+            'phone_number' => ['nullable', 'string'],
+            'views_last_9_post' => ['nullable', 'boolean'],
+            'activity_posting' => ['nullable', 'boolean'],
         ];
     }
 
