@@ -34,12 +34,12 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <button id="btnBulkRefresh" class="btn btn-warning mr-3">
+                    <div class="d-flex align-items-center flex-wrap">
+                        <button id="btnBulkRefresh" class="btn btn-warning mr-3 mb-2 mb-md-0">
                             <i class="fas fa-sync-alt"></i> Bulk Refresh Followers
                         </button>
                         
-                        <div class="form-group mb-0 mr-3">
+                        <div class="form-group mb-0 mr-3 mb-2 mb-md-0">
                             <label for="filterStatusAffiliate" class="sr-only">Filter by Status</label>
                             <select id="filterStatusAffiliate" class="form-control" style="width: 200px;">
                                 <option value="">All Affiliate Status</option>
@@ -48,6 +48,15 @@
                                 <option value="Not Qualified">Not Qualified</option>
                                 <option value="null">Not Set</option>
                             </select>
+                        </div>
+                        
+                        <div class="form-group mb-0 mr-3 mb-2 mb-md-0">
+                            <label class="sr-only">Followers Range</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" id="filterFollowersMin" class="form-control" placeholder="Min followers" style="width: 120px;" min="0">
+                                <span class="mx-2">-</span>
+                                <input type="number" id="filterFollowersMax" class="form-control" placeholder="Max followers" style="width: 120px;" min="0">
+                            </div>
                         </div>
                         
                         <button id="btnResetFilter" class="btn btn-secondary">
@@ -339,6 +348,8 @@
         const picSelector = $('#filterPIC');
         const btnExportKol = $('#btnExportKol');
         const statusAffiliateSelector = $('#filterStatusAffiliate');
+        const followersMinSelector = $('#filterFollowersMin');
+        const followersMaxSelector = $('#filterFollowersMax');
         let bulkRefreshInProgress = false;
         let bulkRefreshStopped = false;
 
@@ -542,6 +553,9 @@
                     d.pic = picSelector.val();
                     // Add status affiliate filter
                     d.statusAffiliate = statusAffiliateSelector.val();
+                    // Add followers range filter
+                    d.followersMin = followersMinSelector.val();
+                    d.followersMax = followersMaxSelector.val();
                 }
             },
             columns: [
@@ -589,9 +603,26 @@
             kolTable.draw();
         });
 
+        let followersFilterTimeout;
+        followersMinSelector.on('input', function() {
+            clearTimeout(followersFilterTimeout);
+            followersFilterTimeout = setTimeout(function() {
+                kolTable.draw();
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        followersMaxSelector.on('input', function() {
+            clearTimeout(followersFilterTimeout);
+            followersFilterTimeout = setTimeout(function() {
+                kolTable.draw();
+            }, 500); // Wait 500ms after user stops typing
+        });
+
         // Clear filters functionality
         $('#btnResetFilter').click(function() {
             statusAffiliateSelector.val('');
+            followersMinSelector.val('');
+            followersMaxSelector.val('');
             kolTable.draw();
         });
 

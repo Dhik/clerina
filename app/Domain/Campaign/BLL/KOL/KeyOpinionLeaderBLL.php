@@ -60,6 +60,15 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
             }
         }
 
+        // Followers range filter
+        if (!is_null($request->followersMin) && $request->followersMin !== '') {
+            $query->where('followers', '>=', (int)$request->followersMin);
+        }
+
+        if (!is_null($request->followersMax) && $request->followersMax !== '') {
+            $query->where('followers', '<=', (int)$request->followersMax);
+        }
+
         return $query;
     }
 
