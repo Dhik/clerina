@@ -106,13 +106,13 @@ class KeyOpinionLeaderController extends Controller
                 }
                 
                 $badgeClass = match($row->status_affiliate) {
-                    'active' => 'badge-success',
-                    'inactive' => 'badge-danger',
-                    'pending' => 'badge-warning',
+                    'Qualified' => 'badge-success',
+                    'Waiting List' => 'badge-warning', 
+                    'Not Qualified' => 'badge-danger',
                     default => 'badge-secondary'
                 };
                 
-                return '<span class="badge ' . $badgeClass . '">' . ucfirst($row->status_affiliate) . '</span>';
+                return '<span class="badge ' . $badgeClass . '">' . $row->status_affiliate . '</span>';
             })
             ->editColumn('program', function ($row) {
                 return $row->program ?? '-';
