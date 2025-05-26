@@ -831,8 +831,8 @@
                 $('#edit_activity_null').prop('checked', true);
             }
             
-            // Set form action
-            $('#editKolForm').attr('action', `{{ url('/kol') }}/${data.id}/update`);
+            // Set form action using route name
+            $('#editKolForm').attr('action', `{{ route('kol.update', ':kolId') }}`.replace(':kolId', data.id));
         }
 
         // Handle form submission
