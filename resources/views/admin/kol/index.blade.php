@@ -32,6 +32,75 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Filters</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Existing filters (if any) -->
+                        <div class="col-md-2">
+                            <label for="filterChannel">Channel</label>
+                            <select id="filterChannel" class="form-control">
+                                <option value="">All Channels</option>
+                                <!-- Add your channel options -->
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="filterNiche">Niche</label>
+                            <select id="filterNiche" class="form-control">
+                                <option value="">All Niches</option>
+                                <!-- Add your niche options -->
+                            </select>
+                        </div>
+                        
+                        <!-- New Status Affiliate Filter -->
+                        <div class="col-md-2">
+                            <label for="filterStatusAffiliate">Affiliate Status</label>
+                            <select id="filterStatusAffiliate" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Waiting List">Waiting List</option>
+                                <option value="Not Qualified">Not Qualified</option>
+                                <option value="null">Not Set</option>
+                            </select>
+                        </div>
+                        
+                        <!-- New Activity Posting Filter -->
+                        <div class="col-md-2">
+                            <label for="filterActivityPosting">Activity Status</label>
+                            <select id="filterActivityPosting" class="form-control">
+                                <option value="">All Activity</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                                <option value="null">Not Set</option>
+                            </select>
+                        </div>
+                        
+                        <!-- New Views Last 9 Posts Filter -->
+                        <div class="col-md-2">
+                            <label for="filterViewsLast9">Recent Views</label>
+                            <select id="filterViewsLast9" class="form-control">
+                                <option value="">All Views</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                                <option value="null">Not Set</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Clear Filters Button -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button id="btnClearFilters" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-body">
                     <button id="btnBulkRefresh" class="btn btn-warning">
                         <i class="fas fa-sync-alt"></i> Bulk Refresh Followers
@@ -320,6 +389,9 @@
         const contentTypeSelector = $('#filterContentType');
         const picSelector = $('#filterPIC');
         const btnExportKol = $('#btnExportKol');
+        const statusAffiliateSelector = $('#filterStatusAffiliate');
+        const activityPostingSelector = $('#filterActivityPosting');
+        const viewsLast9Selector = $('#filterViewsLast9');
         let bulkRefreshInProgress = false;
         let bulkRefreshStopped = false;
 
@@ -521,6 +593,10 @@
                     d.skinConcern = skinConcernSelector.val();
                     d.contentType = contentTypeSelector.val();
                     d.pic = picSelector.val();
+                    // Add new filter parameters
+                    d.statusAffiliate = statusAffiliateSelector.val();
+                    d.activityPosting = activityPostingSelector.val();
+                    d.viewsLast9 = viewsLast9Selector.val();
                 }
             },
             columns: [
@@ -562,6 +638,37 @@
                 // Refresh KPI data after table draw/filter
                 loadKpiData();
             }
+        });
+
+        statusAffiliateSelector.change(function() {
+            kolTable.draw();
+        });
+
+        activityPostingSelector.change(function() {
+            kolTable.draw();
+        });
+
+        viewsLast9Selector.change(function() {
+            kolTable.draw();
+        });
+
+        // Clear filters functionality
+        $('#btnClearFilters').click(function() {
+            // Clear existing filters
+            channelSelector.val('');
+            nicheSelector.val('');
+            skinTypeSelector.val('');
+            skinConcernSelector.val('');
+            contentTypeSelector.val('');
+            picSelector.val('');
+            
+            // Clear new filters
+            statusAffiliateSelector.val('');
+            activityPostingSelector.val('');
+            viewsLast9Selector.val('');
+            
+            // Redraw table
+            kolTable.draw();
         });
 
         btnExportKol.click(function () {
