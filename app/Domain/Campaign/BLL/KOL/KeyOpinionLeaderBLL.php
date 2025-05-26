@@ -156,33 +156,84 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
      */
     public function updateKOL(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): KeyOpinionLeader
     {
-        $rate = $request->input('rate');
-        $averageView = $request->input('average_view');
-
-        $data = [
-            'channel' => $request->input('channel'),
-            'username' => $request->input('username'),
-            'niche' => $request->input('niche'),
-            'average_view' => $averageView,
-            'skin_type' => $request->input('skin_type'),
-            'skin_concern' => $request->input('skin_concern'),
-            'content_type' => $request->input('content_type'),
-            'rate' => $rate,
-            'pic_contact' => $request->input('pic_contact'),
-            'cpm' => ceil(($rate/$averageView) * 1000),
-            'name' => $request->input('name'),
-            'address' => $request->input('address'),
-            'phone_number' => $request->input('phone_number'),
-            'bank_name' => $request->input('bank_name'),
-            'bank_account' => $request->input('bank_account'),
-            'bank_account_name' => $request->input('bank_account_name'),
-            'npwp' => (bool) $request->input('npwp'),
-            'npwp_number' => $request->input('npwp_number'),
-            'nik' => $request->input('nik'),
-            'notes' => $request->input('notes'),
-            'product_delivery' => (bool) $request->input('product_delivery'),
-            'product' => $request->input('product'),
-        ];
+        // Only include fields that are actually provided in the request
+        $data = [];
+        
+        // Always update these fields if provided
+        if ($request->has('username')) {
+            $data['username'] = $request->input('username');
+        }
+        if ($request->has('phone_number')) {
+            $data['phone_number'] = $request->input('phone_number');
+        }
+        if ($request->has('views_last_9_post')) {
+            $data['views_last_9_post'] = $request->input('views_last_9_post');
+        }
+        if ($request->has('activity_posting')) {
+            $data['activity_posting'] = $request->input('activity_posting');
+        }
+        
+        // Only update other fields if they're provided (for full updates)
+        if ($request->filled('channel')) {
+            $data['channel'] = $request->input('channel');
+        }
+        if ($request->filled('niche')) {
+            $data['niche'] = $request->input('niche');
+        }
+        if ($request->filled('average_view')) {
+            $rate = $request->input('rate');
+            $averageView = $request->input('average_view');
+            $data['average_view'] = $averageView;
+            $data['cpm'] = ceil(($rate/$averageView) * 1000);
+        }
+        if ($request->filled('skin_type')) {
+            $data['skin_type'] = $request->input('skin_type');
+        }
+        if ($request->filled('skin_concern')) {
+            $data['skin_concern'] = $request->input('skin_concern');
+        }
+        if ($request->filled('content_type')) {
+            $data['content_type'] = $request->input('content_type');
+        }
+        if ($request->filled('rate')) {
+            $data['rate'] = $request->input('rate');
+        }
+        if ($request->filled('pic_contact')) {
+            $data['pic_contact'] = $request->input('pic_contact');
+        }
+        if ($request->filled('name')) {
+            $data['name'] = $request->input('name');
+        }
+        if ($request->filled('address')) {
+            $data['address'] = $request->input('address');
+        }
+        if ($request->filled('bank_name')) {
+            $data['bank_name'] = $request->input('bank_name');
+        }
+        if ($request->filled('bank_account')) {
+            $data['bank_account'] = $request->input('bank_account');
+        }
+        if ($request->filled('bank_account_name')) {
+            $data['bank_account_name'] = $request->input('bank_account_name');
+        }
+        if ($request->has('npwp')) {
+            $data['npwp'] = (bool) $request->input('npwp');
+        }
+        if ($request->filled('npwp_number')) {
+            $data['npwp_number'] = $request->input('npwp_number');
+        }
+        if ($request->filled('nik')) {
+            $data['nik'] = $request->input('nik');
+        }
+        if ($request->filled('notes')) {
+            $data['notes'] = $request->input('notes');
+        }
+        if ($request->has('product_delivery')) {
+            $data['product_delivery'] = (bool) $request->input('product_delivery');
+        }
+        if ($request->filled('product')) {
+            $data['product'] = $request->input('product');
+        }
 
         return $this->kolDAL->updateKOL($keyOpinionLeader, $data);
     }

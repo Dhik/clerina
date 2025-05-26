@@ -9,7 +9,6 @@ use App\Domain\Campaign\Exports\KeyOpinionLeaderExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Requests\KeyOpinionLeaderRequest;
-use App\Domain\Campaign\Requests\KeyOpinionLeaderEditRequest;
 use App\Domain\Campaign\Requests\KolExcelRequest;
 use App\Domain\User\BLL\User\UserBLLInterface;
 use App\Http\Controllers\Controller;
@@ -278,29 +277,22 @@ class KeyOpinionLeaderController extends Controller
     /**
      * Update KOL
      */
-    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderEditRequest $request): JsonResponse|RedirectResponse
+    public function update(KeyOpinionLeader $keyOpinionLeader, KeyOpinionLeaderRequest $request): JsonResponse|RedirectResponse
     {
         $this->authorize('updateKOL', KeyOpinionLeader::class);
         
         try {
-            // Only update the specific fields from the edit form
-            $keyOpinionLeader->update([
-                'username' => $request->input('username'),
-                'phone_number' => $request->input('phone_number'),
-                'views_last_9_post' => $request->input('views_last_9_post'),
-                'activity_posting' => $request->input('activity_posting'),
-            ]);
-            
+            $kol = $this->kolBLL->updateKOL($keyOpinionLeader, $request);
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
-                    'data' => $keyOpinionLeader
+                    'data' => $kol
                 ]);
             }
             
             return redirect()
-                ->route('kol.show', $keyOpinionLeader->id)
+                ->route('kol.show', $kol->id)
                 ->with([
                     'alert' => 'success',
                     'message' => trans('messages.success_update', ['model' => trans('labels.key_opinion_leader')]),
