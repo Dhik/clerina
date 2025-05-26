@@ -133,8 +133,8 @@ Route::prefix('admin')
                 Route::get('/chart', [KeyOpinionLeaderController::class, 'chart'])->name('kol.chart');
                 Route::get('/average-rate', [KeyOpinionLeaderController::class, 'averageRate'])->name('kol.averageRate');
                 Route::get('/select', [KeyOpinionLeaderController::class, 'select'])->name('kol.select');
-                Route::get('/refreshFollowersFollowing/{username}', [KeyOpinionLeaderController::class, 'refreshFollowersFollowing'])
-    ->name('keyOpinionLeader.refreshFollowersFollowing');
+                Route::get('/refreshFollowersFollowing/{username}', [KeyOpinionLeaderController::class, 'refreshFollowersFollowing'])->name('keyOpinionLeader.refreshFollowersFollowing');
+                Route::get('/{keyOpinionLeader}/edit-data', [KeyOpinionLeaderController::class, 'getEditData'])->name('kol.edit-data');
 		        Route::get('{username}/refresh_follow', [KeyOpinionLeaderController::class, 'refreshFollowersFollowingSingle'])->name('kol.refresh_follow');
                 Route::get('/create', [KeyOpinionLeaderController::class, 'create'])->name('kol.create');
                 Route::get('/create-excel', [KeyOpinionLeaderController::class, 'createExcelForm'])->name('kol.create-excel');
@@ -146,7 +146,6 @@ Route::prefix('admin')
                 Route::get('/showJson/{keyOpinionLeader}', [KeyOpinionLeaderController::class, 'showJson'])->name('kol.show.json');
                 Route::get('/{keyOpinionLeader}/edit', [KeyOpinionLeaderController::class, 'edit'])->name('kol.edit');
                 Route::put('/{keyOpinionLeader}/update', [KeyOpinionLeaderController::class, 'update'])->name('kol.update');
-                Route::get('/{keyOpinionLeader}/edit-data', [KeyOpinionLeaderController::class, 'getEditData'])->name('kol.edit-data');
                 Route::get('/kpi', [KeyOpinionLeaderController::class, 'getKpiData'])->name('kol.kpi');
                 Route::get('/{keyOpinionLeader}/show', [KeyOpinionLeaderController::class, 'show'])->name('kol.show');
             });
