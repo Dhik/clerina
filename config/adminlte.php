@@ -592,13 +592,13 @@ return [
         //         ],
         //     ],
         // ],
-        [
-            'text' => 'Contest',
-            'url' => 'admin/contest',
-            'icon' => 'nav-icon fas fa-trophy',
-            'can' => [PermissionEnum::ViewSales],
-            'active' => ['admin/contest*']
-        ],
+        // [
+        //     'text' => 'Contest',
+        //     'url' => 'admin/contest',
+        //     'icon' => 'nav-icon fas fa-trophy',
+        //     'can' => [PermissionEnum::ViewSales],
+        //     'active' => ['admin/contest*']
+        // ],
         // [
         //     'text' => 'Competitor Analysis',
         //     'url' => 'admin/competitor_brands',
