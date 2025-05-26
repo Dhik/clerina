@@ -9,6 +9,7 @@ use App\Domain\Campaign\Exports\KeyOpinionLeaderExport;
 use App\Domain\Campaign\Models\KeyOpinionLeader;
 use App\Domain\Campaign\Models\Statistic;
 use App\Domain\Campaign\Requests\KeyOpinionLeaderRequest;
+use App\Domain\Campaign\Requests\KeyOpinionLeaderEditRequest;
 use App\Domain\Campaign\Requests\KolExcelRequest;
 use App\Domain\User\BLL\User\UserBLLInterface;
 use App\Http\Controllers\Controller;
