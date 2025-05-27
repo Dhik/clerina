@@ -69,7 +69,23 @@ class KeyOpinionLeaderController extends Controller
                 return $row->picContact->name ?? 'empty';
             })
             ->addColumn('actions', function ($row) {
-                return '<a href=' . route('kol.show', $row->id) . ' class="btn btn-success btn-xs">
+                $waButton = '';
+                if (!empty($row->phone_number)) {
+                    // Format phone number for WhatsApp (remove non-digits and ensure it starts with country code)
+                    $phoneNumber = preg_replace('/[^0-9]/', '', $row->phone_number);
+                    // If phone starts with 0, replace with 62 (Indonesia country code)
+                    if (substr($phoneNumber, 0, 1) === '0') {
+                        $phoneNumber = '62' . substr($phoneNumber, 1);
+                    }
+                    $waLink = 'https://wa.me/' . $phoneNumber;
+                    
+                    $waButton = '<a href="' . $waLink . '" class="btn btn-success btn-xs" target="_blank" title="WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a> ';
+                }
+                
+                return $waButton . 
+                    '<a href=' . route('kol.show', $row->id) . ' class="btn btn-success btn-xs" title="View">
                             <i class="fas fa-eye"></i>
                         </a>
                         <button onclick="openEditModal(' . $row->id . ')" class="btn btn-primary btn-xs" title="Edit">
