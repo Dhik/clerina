@@ -21,9 +21,6 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
     private ?string $skinConcern;
     private ?string $contentType;
     private ?int $pic;
-    private ?string $statusAffiliate;
-    private ?int $followersMin;
-    private ?int $followersMax;
 
     const CUSTOM_NUMBER = '#,##0';
 
@@ -67,22 +64,10 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
         return $this;
     }
 
-    public function forStatusAffiliate(?string $statusAffiliate): static
-    {
-        $this->statusAffiliate = $statusAffiliate;
-        return $this;
-    }
-
-    public function forFollowersRange(?int $followersMin, ?int $followersMax): static
-    {
-        $this->followersMin = $followersMin;
-        $this->followersMax = $followersMax;
-        return $this;
-    }
-
     public function query()
     {
         return KeyOpinionLeader::query()
+            ->with('picContact', 'createdBy')
             ->when(!empty($this->channel), function ($q) {
                 $q->where('channel', $this->channel);
             })
@@ -100,19 +85,6 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
             })
             ->when(!empty($this->pic), function ($q) {
                 $q->where('pic_contact', $this->pic);
-            })
-            ->when(!empty($this->statusAffiliate), function ($q) {
-                if ($this->statusAffiliate === 'null') {
-                    $q->whereNull('status_affiliate');
-                } else {
-                    $q->where('status_affiliate', $this->statusAffiliate);
-                }
-            })
-            ->when(!empty($this->followersMin), function ($q) {
-                $q->where('followers', '>=', $this->followersMin);
-            })
-            ->when(!empty($this->followersMax), function ($q) {
-                $q->where('followers', '<=', $this->followersMax);
             });
     }
 
@@ -121,24 +93,28 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
         return [
             $row->channel,
             $row->username,
+            $row->niche,
+            $row->average_view,
+            $row->skin_type,
+            $row->skin_concern,
+            $row->content_type,
+            $row->rate,
+            $row->picContact->name ?? '',
+            $row->createdBy->name ?? '',
+            $row->cpm,
+            $row->name,
+            $row->address,
             $row->phone_number,
-            $row->followers,
-            $row->following,
-            $row->total_likes,
-            $row->video_count,
-            $row->engagement_rate,
-            $this->formatBooleanField($row->views_last_9_post),
-            $this->formatBooleanField($row->activity_posting),
-            $row->status_affiliate
+            $row->bank_name,
+            $row->bank_account,
+            $row->bank_account_name,
+            $row->npwp ? trans('labels.yes') : trans('labels.no'),
+            $row->npwp_number,
+            $row->nik,
+            $row->notes,
+            $row->product_delivery ? trans('labels.yes') : trans('labels.no'),
+            $row->product
         ];
-    }
-
-    private function formatBooleanField($value): string
-    {
-        if ($value === null) {
-            return 'Not Set';
-        }
-        return $value ? trans('labels.yes') : trans('labels.no');
     }
 
     public function title(): string
@@ -151,27 +127,39 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
         return [
             trans('labels.channel'), // A
             trans('labels.username'), // B
-            trans('labels.phone_number'), // C
-            'Followers', // D
-            'Following', // E
-            'Total Likes', // F
-            'Video Count', // G
-            'Engagement Rate', // H
-            'Recent Views', // I
-            'Activity Status', // J
-            'Affiliate Status', // K
+            trans('labels.niche'), // C
+            trans('labels.average_view'), // D
+            trans('labels.skin_type'), // E
+            trans('labels.skin_concern'), // F
+            trans('labels.content_type'), // G
+            trans('labels.slot_rate'), // H
+            trans('labels.pic_contact'), // I
+            trans('labels.created_by'), // J
+            trans('labels.cpm_short'), // K
+            trans('labels.name'), // L
+            trans('labels.address'), // M
+            trans('labels.phone_number'), // N
+            trans('labels.bank_name'), //O
+            trans('labels.bank_account'), // P
+            trans('labels.bank_account_name'), // Q
+            trans('labels.npwp'), // R
+            trans('labels.npwp_number'), // S
+            trans('labels.nik'), // T
+            trans('labels.notes'), // U
+            trans('labels.product_delivery'), // V
+            trans('labels.product'), // W
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'C' => '#0', // Phone number
-            'D' => self::CUSTOM_NUMBER, // Followers
-            'E' => self::CUSTOM_NUMBER, // Following
-            'F' => self::CUSTOM_NUMBER, // Total likes
-            'G' => self::CUSTOM_NUMBER, // Video count
-            'H' => '0.00%', // Engagement rate as percentage
+            'D' => self::CUSTOM_NUMBER,
+            'H' => self::CUSTOM_NUMBER,
+            'K' => self::CUSTOM_NUMBER,
+            'N' => '#0',
+            'P' => '#0',
+            'S' => '#0',
         ];
     }
 }

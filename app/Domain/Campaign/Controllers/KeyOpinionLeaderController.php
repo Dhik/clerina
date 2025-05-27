@@ -438,7 +438,12 @@ class KeyOpinionLeaderController extends Controller
             ->forSkinConcern($request->input('skinConcern'))
             ->forContentType($request->input('contentType'))
             ->forPic($request->input('pic'))
-            ->download('kol.xlsx');
+            ->forStatusAffiliate($request->input('statusAffiliate'))
+            ->forFollowersRange(
+                $request->input('followersMin') ? (int) $request->input('followersMin') : null,
+                $request->input('followersMax') ? (int) $request->input('followersMax') : null
+            )
+            ->download('kol-affiliate-data.xlsx');
     }
     public function refreshFollowersFollowing(string $username): JsonResponse
     {

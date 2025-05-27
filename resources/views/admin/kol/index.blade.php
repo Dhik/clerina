@@ -62,6 +62,10 @@
                         <button id="btnResetFilter" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Reset
                         </button>
+
+                        <button id="btnExportKol" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> Export
+                        </button>
                     </div>
                 </div>
             </div>
@@ -332,6 +336,72 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="exportModalLabel">
+                        <i class="fas fa-file-excel"></i> Export Affiliate Data
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="exportStatusAffiliate">Filter by Affiliate Status</label>
+                                <select id="exportStatusAffiliate" class="form-control">
+                                    <option value="">All Affiliate Status</option>
+                                    <option value="Qualified">Qualified</option>
+                                    <option value="Waiting List">Waiting List</option>
+                                    <option value="Not Qualified">Not Qualified</option>
+                                    <option value="null">Not Set</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Followers Range</label>
+                            <div class="form-group">
+                                <div class="d-flex align-items-center">
+                                    <input type="number" id="exportFollowersMin" class="form-control" placeholder="Min followers" min="0">
+                                    <span class="mx-2">-</span>
+                                    <input type="number" id="exportFollowersMax" class="form-control" placeholder="Max followers" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Export Fields:</strong> Channel, Username, Phone Number, Followers, Following, Total Likes, Video Count, Engagement Rate, Recent Views, Activity Status, Affiliate Status
+                    </div>
+                    
+                    <div id="exportPreview" class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-chart-bar"></i> 
+                            <span id="exportCount">Click "Generate Export" to see the count of records</span>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" id="btnPreviewExport" class="btn btn-info">
+                        <i class="fas fa-search"></i> Preview Count
+                    </button>
+                    <button type="button" id="btnConfirmExport" class="btn btn-success">
+                        <i class="fas fa-download"></i> Generate Export
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -623,18 +693,135 @@
             kolTable.draw();
         });
 
-        btnExportKol.click(function () {
+        // btnExportKol.click(function () {
+        //     let data = {
+        //         channel: channelSelector.val(),
+        //         niche: nicheSelector.val(),
+        //         skinType: skinTypeSelector.val(),
+        //         skinConcern: skinConcernSelector.val(),
+        //         contentType: contentTypeSelector.val(),
+        //         pic: picSelector.val()
+        //     };
+
+        //     let spinner = $('<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>');
+        //     btnExportKol.prop('disabled', true).append(spinner);
+
+        //     let now = moment();
+        //     let formattedTime = now.format('YYYYMMDD-HHmmss');
+
+        //     $.ajax({
+        //         url: "{{ route('kol.export') }}",
+        //         type: "GET",
+        //         data: data,
+        //         xhrFields: {
+        //             responseType: 'blob'
+        //         },
+        //         success: function(response) {
+        //             let link = document.createElement('a');
+        //             link.href = window.URL.createObjectURL(response);
+        //             link.download = 'KOL-' + formattedTime + '.xlsx';
+        //             link.click();
+
+        //             btnExportKol.prop('disabled', false);
+        //             spinner.remove();
+        //         },
+        //         error: function(xhr, status, error) {
+        //             console.error(xhr, status, error);
+
+        //             btnExportKol.prop('disabled', false);
+        //             spinner.remove();
+        //         }
+        //     });
+        // });
+
+        $(function () {
+            kolTable.draw()
+        });
+
+        $('#btnExportKol').click(function() {
+            // Reset modal form
+            $('#exportStatusAffiliate').val('');
+            $('#exportFollowersMin').val('');
+            $('#exportFollowersMax').val('');
+            $('#exportCount').text('Click "Generate Export" to see the count of records');
+            
+            // Show modal
+            $('#exportModal').modal('show');
+        });
+
+        // Preview count functionality
+        $('#btnPreviewExport').click(function() {
+            const btn = $(this);
+            const originalText = btn.html();
+            
+            // Show loading state
+            btn.prop('disabled', true);
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+            
+            // Get count with current filters
+            $.ajax({
+                url: "{{ route('kol.get') }}", // Reuse existing endpoint
+                type: "GET",
+                data: {
+                    channel: channelSelector.val(),
+                    niche: nicheSelector.val(),
+                    skinType: skinTypeSelector.val(),
+                    skinConcern: skinConcernSelector.val(),
+                    contentType: contentTypeSelector.val(),
+                    pic: picSelector.val(),
+                    statusAffiliate: $('#exportStatusAffiliate').val(),
+                    followersMin: $('#exportFollowersMin').val(),
+                    followersMax: $('#exportFollowersMax').val(),
+                    length: 1, // Just get count, not actual data
+                    draw: 1,
+                    start: 0
+                },
+                success: function(response) {
+                    const totalRecords = response.recordsFiltered || 0;
+                    $('#exportCount').html(`
+                        <i class="fas fa-chart-bar"></i> 
+                        <strong>${totalRecords.toLocaleString()}</strong> records will be exported
+                    `);
+                    
+                    if (totalRecords === 0) {
+                        $('#exportCount').append('<br><small class="text-warning">No records match the current filters.</small>');
+                        $('#btnConfirmExport').prop('disabled', true);
+                    } else {
+                        $('#btnConfirmExport').prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    $('#exportCount').html('<i class="fas fa-exclamation-triangle text-danger"></i> Error getting record count');
+                    $('#btnConfirmExport').prop('disabled', false);
+                },
+                complete: function() {
+                    // Restore button state
+                    btn.prop('disabled', false);
+                    btn.html(originalText);
+                }
+            });
+        });
+
+        // Confirm export functionality
+        $('#btnConfirmExport').click(function() {
+            const btn = $(this);
+            const originalText = btn.html();
+            
+            // Show loading state
+            btn.prop('disabled', true);
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Generating...');
+            
             let data = {
                 channel: channelSelector.val(),
                 niche: nicheSelector.val(),
                 skinType: skinTypeSelector.val(),
                 skinConcern: skinConcernSelector.val(),
                 contentType: contentTypeSelector.val(),
-                pic: picSelector.val()
+                pic: picSelector.val(),
+                statusAffiliate: $('#exportStatusAffiliate').val(),
+                followersMin: $('#exportFollowersMin').val(),
+                followersMax: $('#exportFollowersMax').val()
             };
-
-            let spinner = $('<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>');
-            btnExportKol.prop('disabled', true).append(spinner);
 
             let now = moment();
             let formattedTime = now.format('YYYYMMDD-HHmmss');
@@ -649,23 +836,51 @@
                 success: function(response) {
                     let link = document.createElement('a');
                     link.href = window.URL.createObjectURL(response);
-                    link.download = 'KOL-' + formattedTime + '.xlsx';
+                    link.download = 'KOL-Affiliate-Data-' + formattedTime + '.xlsx';
                     link.click();
 
-                    btnExportKol.prop('disabled', false);
-                    spinner.remove();
+                    // Close modal and show success message
+                    $('#exportModal').modal('hide');
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Export Complete!',
+                        text: 'Affiliate data has been exported successfully.',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
                 },
                 error: function(xhr, status, error) {
                     console.error(xhr, status, error);
-
-                    btnExportKol.prop('disabled', false);
-                    spinner.remove();
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Export Failed',
+                        text: 'An error occurred while exporting data. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                },
+                complete: function() {
+                    // Restore button state
+                    btn.prop('disabled', false);
+                    btn.html(originalText);
                 }
             });
         });
 
-        $(function () {
-            kolTable.draw()
+        // Reset export modal when it's closed
+        $('#exportModal').on('hidden.bs.modal', function() {
+            $('#exportStatusAffiliate').val('');
+            $('#exportFollowersMin').val('');
+            $('#exportFollowersMax').val('');
+            $('#exportCount').text('Click "Generate Export" to see the count of records');
+            $('#btnConfirmExport').prop('disabled', false);
+        });
+
+        // Auto-update preview when filters change
+        $('#exportStatusAffiliate, #exportFollowersMin, #exportFollowersMax').on('change input', function() {
+            $('#exportCount').text('Click "Preview Count" to see updated count');
+            $('#btnConfirmExport').prop('disabled', false);
         });
 
         $(document).on('click', '.refresh-follower', function() {
