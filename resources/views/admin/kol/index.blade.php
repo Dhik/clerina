@@ -135,12 +135,12 @@
                             <th>{{ trans('labels.username') }}</th>
                             <th width="8%">Followers</th>
                             <th width="8%">Following</th>
+                            <th width="8%">Total Likes</th>
+                            <th width="8%">Video Count</th>
                             <th width="8%">Engagement</th>
-                            <th width="8%">Program</th>
                             <th width="8%">Recent Views</th>
                             <th width="8%">Activity</th>
                             <th width="8%">Affiliate Status</th>
-                            <th width="8%">Rate Card</th>
                             <th width="5%">Refresh</th>
                             <th width="8%">{{ trans('labels.action') }}</th>
                         </tr>
@@ -563,12 +563,14 @@
                 {data: 'username', name: 'username'},
                 {data: 'followers', name: 'followers'},
                 {data: 'following', name: 'following'},
+                {data: 'total_likes', name: 'total_likes'},
+                {data: 'video_count', name: 'video_count'},
                 {
                     data: 'engagement_rate_display', 
                     name: 'engagement_rate', 
                     orderable: true
                 },
-                {data: 'program', name: 'program'},
+                // {data: 'program', name: 'program'},
                 {
                     data: 'views_last_9_post_display', 
                     name: 'views_last_9_post', 
@@ -583,11 +585,6 @@
                     data: 'status_affiliate_display', 
                     name: 'status_affiliate', 
                     orderable: false
-                },
-                {
-                    data: 'rate',
-                    name: 'rate',
-                    render: $.fn.dataTable.render.number(',', '.', 0, '')
                 },
                 {data: 'refresh_follower', sortable: false, orderable: false},
                 {data: 'actions', sortable: false, orderable: false}
