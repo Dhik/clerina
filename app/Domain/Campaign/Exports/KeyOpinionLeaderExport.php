@@ -126,7 +126,7 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
             $row->following,
             $row->total_likes,
             $row->video_count,
-            $row->engagement_rate,
+            $this->formatEngagementRate($row->engagement_rate),
             $this->formatBooleanField($row->views_last_9_post),
             $this->formatBooleanField($row->activity_posting),
             $row->status_affiliate
@@ -139,6 +139,22 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
             return 'Not Set';
         }
         return $value ? trans('labels.yes') : trans('labels.no');
+    }
+
+    private function formatEngagementRate($value): string
+    {
+        if ($value === null) {
+            return 'N/A';
+        }
+        // If the value is already a percentage (e.g., 15.71), format it properly
+        // If it's a decimal (e.g., 0.1571), convert it to percentage
+        if ($value > 1) {
+            // Already a percentage, just add % symbol
+            return number_format($value, 2) . '%';
+        } else {
+            // Convert decimal to percentage
+            return number_format($value * 100, 2) . '%';
+        }
     }
 
     public function title(): string
@@ -171,7 +187,7 @@ class KeyOpinionLeaderExport implements FromQuery, ShouldAutoSize, WithColumnFor
             'E' => self::CUSTOM_NUMBER, // Following
             'F' => self::CUSTOM_NUMBER, // Total likes
             'G' => self::CUSTOM_NUMBER, // Video count
-            'H' => '0.00%', // Engagement rate as percentage
+            'H' => '@', // Engagement rate as text (since we're formatting it manually)
         ];
     }
 }
