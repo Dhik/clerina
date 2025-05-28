@@ -15,7 +15,7 @@ class KeyOpinionLeaderRequest extends FormRequest
 
         return [
             'channel' => $isUpdate ? ['nullable'] : ['required', Rule::in(KeyOpinionLeaderEnum::Channel)],
-            'username' => ['required', 'regex:/^[a-zA-Z0-9_]+$/', Rule::unique('key_opinion_leaders')->where(function ($query) {
+            'username' => ['required', 'regex:/^[a-zA-Z0-9_.-]+$/', Rule::unique('key_opinion_leaders')->where(function ($query) {
                 // For updates, get the current channel; for creates, use the input channel
                 if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
                     $kol = $this->route('keyOpinionLeader');
