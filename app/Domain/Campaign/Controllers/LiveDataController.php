@@ -6,6 +6,7 @@ use App\Domain\Campaign\Models\LiveData;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
+use App\Domain\User\Models\User;
 use Carbon\Carbon;
 use App\Domain\Sales\Models\SalesChannel;
 use Auth;
