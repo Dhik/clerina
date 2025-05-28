@@ -9,6 +9,7 @@ use App\Domain\Campaign\Controllers\BudgetController;
 use App\Domain\Campaign\Controllers\BriefController;
 use App\Domain\Campaign\Controllers\BriefContentController;
 use App\Domain\Campaign\Controllers\LiveDataController;
+use App\Domain\Campaign\Controllers\LiveShopeeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -79,7 +80,10 @@ Route::prefix('admin')
             Route::get('/{liveData}/edit', [LiveDataController::class, 'edit'])->name('live_data.edit');
             Route::put('/{liveData}', [LiveDataController::class, 'update'])->name('live_data.update');
             Route::delete('/{liveData}', [LiveDataController::class, 'destroy'])->name('live_data.destroy');
-            
+        });
+
+        Route::prefix('live_shopee')->group(function () {
+            Route::get('/', [LiveShopeeController::class, 'index'])->name('live_shopee.index');
         });
         
         Route::prefix('products')

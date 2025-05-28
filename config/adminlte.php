@@ -518,6 +518,27 @@ return [
             'can' => [PermissionEnum::ChangeOwnPassword],
         ],
         [
+            'text' => 'Live Data',
+            'can' => [
+                PermissionEnum::ChangeOwnPassword
+            ],
+            'icon'    => 'fas fa-fw fa-map',
+            'submenu' => [
+                [
+                    'text' => 'Live Tiktok',
+                    'url' => 'admin/live_data',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ChangeOwnPassword],
+                ],
+                [
+                    'text' => 'Live Shopee',
+                    'url' => 'admin/live_shopee',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
+            ]
+        ],
+        [
             'text' => 'KOL',
             'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
             'icon'    => 'fas fa-fw fa-play',

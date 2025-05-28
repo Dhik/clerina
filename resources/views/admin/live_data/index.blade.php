@@ -1,10 +1,10 @@
 @extends('adminlte::page')
 
-@section('title', 'Live Data')
+@section('title', 'Live Tiktok')
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
-        <h1>Live Data</h1>
+        <h1>Live Tiktok</h1>
         <a href="{{ route('live_data.dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard Live Data</a>
     </div>
 @stop
