@@ -183,35 +183,31 @@ class LiveDataController extends Controller
 
     public function chartData()
     {
-        // Data for line chart
-        $lineChartData = LiveData::orderBy('date', 'asc')
-            ->get()
-            ->map(function ($data) {
-                // Extract start hour from shift string for sorting
-                $startHour = $this->extractStartHour($data->shift);
+        // Data for line chart - Group by shift time and aggregate
+        $rawData = LiveData::all()
+            ->groupBy('shift')
+            ->map(function ($group, $shift) {
+                $startHour = $this->extractStartHour($shift);
                 
-                $shiftLabel = $data->date->format('d/m') . ' ' . $data->shift;
                 return [
-                    'label' => $shiftLabel,
-                    'date' => $data->date->format('Y-m-d'),
+                    'label' => $shift,
                     'start_hour' => $startHour,
-                    'dilihat' => $data->dilihat,
-                    'penonton_tertinggi' => $data->penonton_tertinggi,
-                    'komentar' => $data->komentar,
-                    'pesanan' => $data->pesanan,
-                    'penjualan' => $data->penjualan
+                    'dilihat' => $group->sum('dilihat'),
+                    'penonton_tertinggi' => $group->max('penonton_tertinggi'), // or avg() if you prefer
+                    'komentar' => $group->sum('komentar'),
+                    'pesanan' => $group->sum('pesanan'),
+                    'penjualan' => $group->sum('penjualan')
                 ];
             })
-            ->sortBy(function ($item) {
-                // Sort by date first, then by start hour
-                return $item['date'] . '_' . sprintf('%02d', $item['start_hour']);
-            })
-            ->values() // Reset array keys
+            ->sortBy('start_hour')
+            ->values()
             ->map(function ($item) {
-                // Remove sorting fields from final output
-                unset($item['date'], $item['start_hour']);
+                // Remove start_hour from final output
+                unset($item['start_hour']);
                 return $item;
             });
+        
+        $lineChartData = $rawData;
         
         // Data for funnel chart
         $funnelData = [
