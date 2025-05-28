@@ -185,18 +185,32 @@ class LiveDataController extends Controller
     {
         // Data for line chart
         $lineChartData = LiveData::orderBy('date', 'asc')
-            ->orderBy('shift', 'asc')
             ->get()
             ->map(function ($data) {
+                // Extract start hour from shift string for sorting
+                $startHour = $this->extractStartHour($data->shift);
+                
                 $shiftLabel = $data->date->format('d/m') . ' ' . $data->shift;
                 return [
                     'label' => $shiftLabel,
+                    'date' => $data->date->format('Y-m-d'),
+                    'start_hour' => $startHour,
                     'dilihat' => $data->dilihat,
                     'penonton_tertinggi' => $data->penonton_tertinggi,
                     'komentar' => $data->komentar,
                     'pesanan' => $data->pesanan,
                     'penjualan' => $data->penjualan
                 ];
+            })
+            ->sortBy(function ($item) {
+                // Sort by date first, then by start hour
+                return $item['date'] . '_' . sprintf('%02d', $item['start_hour']);
+            })
+            ->values() // Reset array keys
+            ->map(function ($item) {
+                // Remove sorting fields from final output
+                unset($item['date'], $item['start_hour']);
+                return $item;
             });
         
         // Data for funnel chart
@@ -210,5 +224,20 @@ class LiveDataController extends Controller
             'lineChartData' => $lineChartData,
             'funnelData' => $funnelData
         ]);
+    }
+
+    /**
+     * Extract start hour from shift string
+     * Examples: "06:00 - 08:00" -> 6, "21:00 - 01:00" -> 21
+     */
+    private function extractStartHour($shift)
+    {
+        // Match the first time in the shift string
+        if (preg_match('/(\d{1,2}):(\d{2})/', $shift, $matches)) {
+            return (int) $matches[1];
+        }
+        
+        // Fallback: return 0 if no match found
+        return 0;
     }
 }
