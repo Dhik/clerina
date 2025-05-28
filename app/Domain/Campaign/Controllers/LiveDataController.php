@@ -167,24 +167,50 @@ class LiveDataController extends Controller
     }
 
 
-
-    // Add these functions to your LiveDataController
-
-    public function dashboard()
+    // Updated Controller Methods
+    public function dashboard(Request $request)
     {
-        // KPI summary data
-        $totalViews = LiveData::sum('dilihat');
-        $totalOrders = LiveData::sum('pesanan');
-        $totalSales = LiveData::sum('penjualan');
+        // Get all users who have live data entries
+        $employees = User::whereIn('employee_id', 
+            LiveData::whereNotNull('employee_id')->pluck('employee_id')->unique()
+        )->get();
+        
+        // Build query with optional employee filter
+        $query = LiveData::query();
+        
+        $selectedEmployeeId = $request->get('employee_id');
+        if ($selectedEmployeeId && $selectedEmployeeId !== 'all') {
+            $query->where('employee_id', $selectedEmployeeId);
+        }
+        
+        // KPI summary data with filter applied
+        $totalViews = $query->sum('dilihat');
+        $totalOrders = $query->sum('pesanan');
+        $totalSales = $query->sum('penjualan');
         $averageConversionRate = $totalViews > 0 ? ($totalOrders / $totalViews) * 100 : 0;
         
-        return view('admin.live_data.dashboard', compact('totalViews', 'totalOrders', 'totalSales', 'averageConversionRate'));
+        return view('admin.live_data.dashboard', compact(
+            'totalViews', 
+            'totalOrders', 
+            'totalSales', 
+            'averageConversionRate',
+            'employees',
+            'selectedEmployeeId'
+        ));
     }
 
-    public function chartData()
+    public function chartData(Request $request)
     {
+        // Build query with optional employee filter
+        $query = LiveData::query();
+        
+        $selectedEmployeeId = $request->get('employee_id');
+        if ($selectedEmployeeId && $selectedEmployeeId !== 'all') {
+            $query->where('employee_id', $selectedEmployeeId);
+        }
+        
         // Data for line chart - Group by shift time and aggregate
-        $rawData = LiveData::all()
+        $rawData = $query->get()
             ->groupBy('shift')
             ->map(function ($group, $shift) {
                 $startHour = $this->extractStartHour($shift);
@@ -193,7 +219,7 @@ class LiveDataController extends Controller
                     'label' => $shift,
                     'start_hour' => $startHour,
                     'dilihat' => $group->sum('dilihat'),
-                    'penonton_tertinggi' => $group->max('penonton_tertinggi'), // or avg() if you prefer
+                    'penonton_tertinggi' => $group->max('penonton_tertinggi'),
                     'komentar' => $group->sum('komentar'),
                     'pesanan' => $group->sum('pesanan'),
                     'penjualan' => $group->sum('penjualan')
@@ -202,18 +228,17 @@ class LiveDataController extends Controller
             ->sortBy('start_hour')
             ->values()
             ->map(function ($item) {
-                // Remove start_hour from final output
                 unset($item['start_hour']);
                 return $item;
             });
         
         $lineChartData = $rawData;
         
-        // Data for funnel chart
+        // Data for funnel chart with filter
         $funnelData = [
-            ['stage' => 'Dilihat', 'value' => LiveData::sum('dilihat')],
-            ['stage' => 'Komentar', 'value' => LiveData::sum('komentar')],
-            ['stage' => 'Pesanan', 'value' => LiveData::sum('pesanan')],
+            ['stage' => 'Dilihat', 'value' => $query->sum('dilihat')],
+            ['stage' => 'Komentar', 'value' => $query->sum('komentar')],
+            ['stage' => 'Pesanan', 'value' => $query->sum('pesanan')],
         ];
         
         return response()->json([
@@ -224,16 +249,12 @@ class LiveDataController extends Controller
 
     /**
      * Extract start hour from shift string
-     * Examples: "06:00 - 08:00" -> 6, "21:00 - 01:00" -> 21
      */
     private function extractStartHour($shift)
     {
-        // Match the first time in the shift string
         if (preg_match('/(\d{1,2}):(\d{2})/', $shift, $matches)) {
             return (int) $matches[1];
         }
-        
-        // Fallback: return 0 if no match found
         return 0;
     }
 }
