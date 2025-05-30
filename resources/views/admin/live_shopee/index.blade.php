@@ -651,33 +651,19 @@ $(document).ready(function() {
             url.searchParams.append('user_id', userValue);
         }
         
-        console.log('Fetching viewers data from:', url.toString()); // Debug log
-        
         fetch(url)
             .then(response => response.json())
             .then(result => {
-                console.log('Viewers API Response:', result); // Debug log
                 if (result.status === 'success') {
                     const viewersData = result.viewers;
-                    console.log('Viewers Data:', viewersData); // Debug log
+                    const viewersDates = viewersData.map(data => data.date);
+                    const viewers = viewersData.map(data => data.viewers);
                     
-                    if (!result.has_data || viewersData.length === 0) {
-                        // Show empty state for line chart
-                        showEmptyLineChart('viewersChart', 'Total Viewers');
-                    } else {
-                        const viewersDates = viewersData.map(data => data.date);
-                        const viewers = viewersData.map(data => data.viewers);
-                        console.log('Chart Data - Dates:', viewersDates, 'Viewers:', viewers); // Debug log
-                        createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
-                    }
-                } else {
-                    console.error('API returned error status:', result);
-                    showEmptyLineChart('viewersChart', 'Total Viewers');
+                    createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
                 }
             })
             .catch(error => {
                 console.error('Error fetching viewers data:', error);
-                showEmptyLineChart('viewersChart', 'Total Viewers');
             });
     }
 
@@ -722,23 +708,9 @@ $(document).ready(function() {
         isInitialized = true;
         console.log('Initializing Live Shopee page...');
         
-        // Initialize without default filters to see all data
         liveShopeeTable.draw();
-        
-        // Set fixed canvas size before any chart operations
-        const canvas = document.getElementById('viewersChart');
-        if (canvas) {
-            canvas.style.width = '100%';
-            canvas.style.height = '300px';
-            canvas.width = 400;
-            canvas.height = 300;
-        }
-        
-        // Fetch data without date restrictions initially
-        setTimeout(function() {
-            fetchViewersDataWithoutFilters();
-            initFunnelChartWithoutFilters();
-        }, 500); // Small delay to ensure DOM is ready
+        fetchViewersData();
+        initFunnelChart();
         
         $('[data-toggle="tooltip"]').tooltip();
     });
@@ -862,194 +834,65 @@ function handleFileInputChange(inputId) {
 }
 
 function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 1)') {
-    const canvas = document.getElementById(ctxId);
-    if (!canvas) {
-        console.error('Canvas element not found:', ctxId);
-        return;
+    const ctx = document.getElementById(ctxId).getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (window[ctxId + 'Chart'] && typeof window[ctxId + 'Chart'].destroy === 'function') {
+        window[ctxId + 'Chart'].destroy();
     }
     
-    // Force fixed canvas dimensions
-    canvas.style.width = '100%';
-    canvas.style.height = '300px';
-    canvas.width = 400;
-    canvas.height = 300;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        console.error('Unable to get 2D context for canvas:', ctxId);
-        return;
-    }
-    
-    // Destroy existing chart completely
-    if (window[ctxId + 'Chart']) {
-        try {
-            window[ctxId + 'Chart'].destroy();
-        } catch (e) {
-            console.warn('Error destroying chart:', e);
-        }
-        window[ctxId + 'Chart'] = null;
-    }
-    
-    // Handle empty data
-    if (!data || data.length === 0) {
-        showEmptyLineChart(ctxId, label);
-        return;
-    }
-    
-    // Debug log the data being passed to the chart
-    console.log('Creating chart with:', {
-        canvas: canvas,
-        dates: dates,
-        data: data,
-        label: label
-    });
-    
-    // Check if Chart.js is loaded
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded!');
-        showEmptyLineChart(ctxId, label);
-        return;
-    }
-    
-    // Calculate proper Y-axis range for fixed height display
-    const maxValue = Math.max(...data);
-    const minValue = Math.min(...data);
-    const isSinglePoint = data.length === 1;
-    
-    let yAxisMin, yAxisMax;
-    
-    if (isSinglePoint) {
-        // For single point, create a nice range around the value
-        const value = data[0];
-        const padding = Math.max(value * 0.2, 1000); // 20% padding or minimum 1000
-        yAxisMin = Math.max(0, value - padding);
-        yAxisMax = value + padding;
-    } else {
-        // For multiple points, use natural range with padding
-        const range = maxValue - minValue;
-        const padding = Math.max(range * 0.1, 100);
-        yAxisMin = Math.max(0, minValue - padding);
-        yAxisMax = maxValue + padding;
-    }
-    
-    try {
-        window[ctxId + 'Chart'] = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    backgroundColor: color.replace('1)', '0.1)'),
-                    borderColor: color,
-                    borderWidth: 3,
-                    tension: 0.1,
-                    fill: false,
-                    pointBackgroundColor: color,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 3,
-                    pointRadius: isSinglePoint ? 8 : 5,
-                    pointHoverRadius: isSinglePoint ? 12 : 8,
-                    pointHoverBackgroundColor: color,
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 3
-                }]
-            },
-            options: {
-                responsive: false, // Disable responsive to prevent resizing
-                maintainAspectRatio: false,
-                animation: false, // Disable animations to prevent multiple redraws
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20
+    // Create new chart
+    window[ctxId + 'Chart'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: label,
+                data: data,
+                backgroundColor: color.replace('1)', '0.5)'),
+                borderColor: color,
+                borderWidth: 2,
+                tension: 0.1,
+                fill: false,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            tooltips: {
+                enabled: true,
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
+                        if (label) {
+                            label += ': ';
                         }
-                    },
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: color,
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += Number(context.parsed.y).toLocaleString();
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        min: yAxisMin,
-                        max: yAxisMax,
-                        ticks: {
-                            stepSize: Math.max(Math.round((yAxisMax - yAxisMin) / 5), 100),
-                            callback: function(value, index, values) {
-                                return Number(value).toLocaleString();
-                            },
-                            color: '#6c757d',
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)',
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            color: '#6c757d',
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.1)',
-                            drawBorder: false
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                },
-                elements: {
-                    point: {
-                        hoverBorderWidth: 3
-                    }
-                },
-                layout: {
-                    padding: {
-                        top: 10,
-                        bottom: 10,
-                        left: 10,
-                        right: 10
+                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                        return label;
                     }
                 }
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value, index, values) {
+                            if (parseInt(value) >= 1000) {
+                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            } else {
+                                return value;
+                            }
+                        }
+                    }
+                }]
             }
-        });
-        
-        console.log('Chart created successfully:', window[ctxId + 'Chart']);
-        
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        showEmptyLineChart(ctxId, label);
-    }
+        }
+    });
     
     return window[ctxId + 'Chart'];
 }
