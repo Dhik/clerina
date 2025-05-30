@@ -503,6 +503,37 @@ class LiveShopeeController extends Controller
                             $penjualanSiapDikirim = (float)preg_replace('/[^\d]/', '', $row[16]);
                         }
                         
+                        // Helper function to convert European number format to integer
+                        function convertToInteger($value) {
+                            if (empty($value)) return 0;
+                            
+                            // Handle European format where periods are thousands separators
+                            // e.g., "1.101" = 1101, "6.052" = 6052
+                            $cleanValue = str_replace('.', '', $value); // Remove thousands separators
+                            return (int)$cleanValue;
+                        }
+                        
+                        // Helper function to convert European decimal format
+                        function convertToDecimal($value) {
+                            if (empty($value)) return 0;
+                            
+                            // For actual decimals, we need to be more careful
+                            // If it's a small number like "1.312", it might be 1312 (thousands format)
+                            // If it's like "1.52", it's probably a decimal
+                            $parts = explode('.', $value);
+                            if (count($parts) == 2) {
+                                $decimal = $parts[1];
+                                // If decimal part has 3 digits, it's likely thousands format
+                                if (strlen($decimal) >= 3) {
+                                    return (int)str_replace('.', '', $value);
+                                } else {
+                                    // It's a real decimal
+                                    return (float)$value;
+                                }
+                            }
+                            return (float)$value;
+                        }
+                        
                         LiveShopee::updateOrCreate(
                             [
                                 'date' => $date,
@@ -514,17 +545,17 @@ class LiveShopeeController extends Controller
                             [
                                 'start_time' => $startTime,
                                 'durasi' => $durasi,
-                                'penonton_aktif' => (int)($row[6] ?? 0), // Penonton Aktif
-                                'komentar' => (int)($row[7] ?? 0), // Komentar
-                                'tambah_ke_keranjang' => (int)($row[8] ?? 0), // Tambah ke Keranjang
-                                'rata_rata_durasi_ditonton' => $avgDuration, // Rata-rata durasi ditonton
-                                'penonton' => (int)($row[10] ?? 0), // Penonton
-                                'pesanan_dibuat' => (int)($row[11] ?? 0), // Pesanan(Pesanan Dibuat)
-                                'pesanan_siap_dikirim' => (int)($row[12] ?? 0), // Pesanan(Pesanan Siap Dikirim)
-                                'produk_terjual_dibuat' => (int)($row[13] ?? 0), // Produk Terjual(Pesanan Dibuat)
-                                'produk_terjual_siap_dikirim' => (int)($row[14] ?? 0), // Produk Terjual(Pesanan Siap Dikirim)
-                                'penjualan_dibuat' => $penjualanDibuat, // Penjualan(Pesanan Dibuat)
-                                'penjualan_siap_dikirim' => $penjualanSiapDikirim // Penjualan(Pesanan Siap Dikirim)
+                                'penonton_aktif' => convertToInteger($row[6]), // 1.101 -> 1101
+                                'komentar' => convertToInteger($row[7]), // 650 -> 650
+                                'tambah_ke_keranjang' => convertToInteger($row[8]), // 1.312 -> 1312
+                                'rata_rata_durasi_ditonton' => $avgDuration, // Keep as calculated decimal
+                                'penonton' => convertToInteger($row[10]), // 6.052 -> 6052
+                                'pesanan_dibuat' => (int)($row[11] ?? 0), // These are already integers
+                                'pesanan_siap_dikirim' => (int)($row[12] ?? 0),
+                                'produk_terjual_dibuat' => (int)($row[13] ?? 0),
+                                'produk_terjual_siap_dikirim' => (int)($row[14] ?? 0),
+                                'penjualan_dibuat' => $penjualanDibuat,
+                                'penjualan_siap_dikirim' => $penjualanSiapDikirim
                             ]
                         );
                         
