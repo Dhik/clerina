@@ -922,8 +922,10 @@
                     if (i === 0) {
                         retentionCell.classList.add('month-0');
                     } else {
-                        // Color based on retention rate
+                        // Color based on retention rate with BLACK text
                         retentionCell.style.backgroundColor = `rgba(0, 123, 255, ${retentionRate / 100})`;
+                        retentionCell.style.color = 'black'; // Changed to black
+                        retentionCell.style.textShadow = 'none'; // Remove text shadow for better readability
                     }
                 } else {
                     retentionCell.textContent = '-';
@@ -944,14 +946,12 @@
                     if (i === 0) {
                         revenueCell.classList.add('month-0');
                     } else {
-                        // Color based on AOV (assuming max AOV around 200,000)
+                        // Color based on AOV (assuming max AOV around 200,000) with BLACK text
                         const maxAOV = 200000;
                         const intensity = Math.min(1, monthData.average_order_value / maxAOV);
                         revenueCell.style.backgroundColor = `rgba(40, 167, 69, ${intensity})`;
-                        if (intensity > 0.5) {
-                            revenueCell.style.color = 'white';
-                            revenueCell.style.textShadow = '0 0 2px rgba(0, 0, 0, 0.7)';
-                        }
+                        revenueCell.style.color = 'black'; // Changed to black
+                        revenueCell.style.textShadow = 'none'; // Remove text shadow for better readability
                     }
                 } else {
                     revenueCell.textContent = '-';
