@@ -530,12 +530,12 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'can' => [PermissionEnum::ChangeOwnPassword],
                 ],
-                // [
-                //     'text' => 'Live Shopee',
-                //     'url' => 'admin/live_shopee',
-                //     'can' => [PermissionEnum::ViewOffer],
-                //     'icon' => 'nav-icon far fa-circle',
-                // ],
+                [
+                    'text' => 'Live Shopee',
+                    'url' => 'admin/live_shopee',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
             ]
         ],
         [

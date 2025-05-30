@@ -84,6 +84,12 @@ Route::prefix('admin')
 
         Route::prefix('live_shopee')->group(function () {
             Route::get('/', [LiveShopeeController::class, 'index'])->name('live_shopee.index');
+            Route::get('/get-data', [LiveShopeeController::class, 'get_live_shopee'])->name('live_shopee.get_data');
+            Route::get('/get-details-by-date', [LiveShopeeController::class, 'get_live_shopee_details_by_date'])->name('live_shopee.get_details_by_date');
+            Route::get('/line-data', [LiveShopeeController::class, 'get_line_data'])->name('live_shopee.line_data');
+            Route::get('/funnel-data', [LiveShopeeController::class, 'get_funnel_data'])->name('live_shopee.funnel_data');
+            Route::post('/import', [LiveShopeeController::class, 'import_live_shopee'])->name('live_shopee.import');
+            Route::delete('/delete', [LiveShopeeController::class, 'delete_live_shopee'])->name('live_shopee.delete');
         });
         
         Route::prefix('products')
