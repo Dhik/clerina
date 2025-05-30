@@ -124,7 +124,9 @@
                             <label class="custom-file-label" for="liveShopeeCSVFile">Choose file</label>
                         </div>
                         <small class="form-text text-muted">Please upload a CSV file with Live Shopee data</small>
-                        <small class="form-text text-muted">Expected columns: A=Date, B=User ID, C=No, D=Nama Livestream, E=Start Time, F=Durasi, G=Penonton Aktif, H=Komentar, I=Tambah ke Keranjang, J=Rata-rata Durasi Ditonton, K=Penonton, L=Pesanan Dibuat, M=Pesanan Siap Dikirim, N=Produk Terjual Dibuat, O=Produk Terjual Siap Dikirim, P=Penjualan Dibuat, Q=Penjualan Siap Dikirim</small>
+                        <small class="form-text text-muted">Expected columns in this order:</small>
+                        <small class="form-text text-muted"><strong>Periode Data, User Id, No., Nama Livestream, Start Time, Durasi, Penonton Aktif, Komentar, Tambah ke Keranjang, Rata-rata durasi ditonton, Penonton, Pesanan(Pesanan Dibuat), Pesanan(Pesanan Siap Dikirim), Produk Terjual(Pesanan Dibuat), Produk Terjual(Pesanan Siap Dikirim), Penjualan(Pesanan Dibuat), Penjualan(Pesanan Siap Dikirim)</strong></small>
+                        <small class="form-text text-muted">Date format: DD-MM-YYYY, Sales format: Rp1.234.567</small>
                     </div>
                     <div class="form-group d-none" id="errorImportLiveShopee"></div>
                     <button type="submit" class="btn btn-primary">

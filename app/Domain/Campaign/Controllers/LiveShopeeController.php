@@ -55,7 +55,7 @@ class LiveShopeeController extends Controller
             ])
             ->groupBy('date');
 
-        // Apply tenant filter - re-enabled
+        // Apply tenant filter
         if (auth()->user() && auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
@@ -184,7 +184,7 @@ class LiveShopeeController extends Controller
             }
         }
 
-        if (auth()->user()->tenant_id) {
+        if (auth()->user() && auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
 
@@ -275,6 +275,8 @@ class LiveShopeeController extends Controller
             if (auth()->user() && auth()->user()->tenant_id) {
                 $query->where('tenant_id', auth()->user()->tenant_id);
             }
+            
+            // Apply date filter
             if ($request->has('filterDates')) {
                 $dates = explode(' - ', $request->filterDates);
                 $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
@@ -291,21 +293,6 @@ class LiveShopeeController extends Controller
             if ($request->has('user_id') && $request->user_id) {
                 $query->where('user_id', $request->user_id);
             }
-            
-            // Group by date and get sum of viewers
-            $viewersData = $query->select(
-                'date',
-                DB::raw('SUM(penonton) as total_viewers')
-            )
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'date' => Carbon::parse($item->date)->format('d M Y'),
-                    'viewers' => (int)$item->total_viewers
-                ];
-            });
             
             // Group by date and get sum of viewers
             $viewersData = $query->select(
@@ -348,6 +335,11 @@ class LiveShopeeController extends Controller
     {
         try {
             $query = LiveShopee::query();
+            
+            // Apply tenant filter
+            if (auth()->user() && auth()->user()->tenant_id) {
+                $query->where('tenant_id', auth()->user()->tenant_id);
+            }
             
             // Apply date filter
             if ($request->has('filterDates')) {
@@ -426,60 +418,122 @@ class LiveShopeeController extends Controller
             DB::beginTransaction();
             try {
                 $csvData = array_map('str_getcsv', file($file->getPathname()));
-                $headers = array_shift($csvData);
+                $headers = array_shift($csvData); // Remove header row
                 
-                foreach ($csvData as $row) {
-                    if (empty($row[0])) {
+                // Log headers for debugging
+                \Log::info('CSV Headers:', $headers);
+                
+                foreach ($csvData as $rowIndex => $row) {
+                    if (empty($row) || count($row) < 17) {
+                        \Log::warning("Skipping row {$rowIndex}: insufficient data", $row);
                         continue;
                     }
                     
                     try {
-                        $date = Carbon::parse($row[0])->format('Y-m-d');
+                        // Parse the date from "Periode Data" column (index 0)
+                        $periodeData = trim($row[0]); // e.g., "01-05-2025"
+                        $date = Carbon::createFromFormat('d-m-Y', $periodeData)->format('Y-m-d');
                         
-                        // CSV Column mapping:
-                        // A=date, B=user_id, C=no, D=nama_livestream, E=start_time, F=durasi
-                        // G=penonton_aktif, H=komentar, I=tambah_ke_keranjang, J=rata_rata_durasi_ditonton
-                        // K=penonton, L=pesanan_dibuat, M=pesanan_siap_dikirim, N=produk_terjual_dibuat
-                        // O=produk_terjual_siap_dikirim, P=penjualan_dibuat, Q=penjualan_siap_dikirim
+                        // Get user_id from column index 1
+                        $userId = trim($row[1]); // e.g., 215123036
                         
-                        $date = Carbon::parse($row[0])->format('Y-m-d'); // Column A
-                        $csvUserId = $row[1] ?? null; // Column B
+                        // Parse start time - extract just the time part
+                        $startTimeRaw = trim($row[4]); // e.g., "01-05-2025 06:00"
+                        $startTime = null;
+                        if (strpos($startTimeRaw, ' ') !== false) {
+                            $timeParts = explode(' ', $startTimeRaw);
+                            $startTime = count($timeParts) > 1 ? $timeParts[1] . ':00' : null;
+                        }
                         
-                        // Use CSV user_id if available, otherwise use the selected one
-                        $finalUserId = !empty($csvUserId) ? $csvUserId : $userId;
+                        // Parse duration from HH:MM:SS to minutes
+                        $durasiRaw = trim($row[5]); // e.g., "19:00:04"
+                        $durasi = 0;
+                        if (preg_match('/(\d+):(\d+):(\d+)/', $durasiRaw, $matches)) {
+                            $hours = (int)$matches[1];
+                            $minutes = (int)$matches[2];
+                            $seconds = (int)$matches[3];
+                            $durasi = ($hours * 60) + $minutes + ($seconds > 30 ? 1 : 0); // Round seconds
+                        }
+                        
+                        // Parse average watch duration from MM:SS to decimal minutes
+                        $avgDurationRaw = trim($row[9]); // e.g., "00:01:31"
+                        $avgDuration = 0;
+                        if (preg_match('/(\d+):(\d+)/', $avgDurationRaw, $matches)) {
+                            $minutes = (int)$matches[1];
+                            $seconds = (int)$matches[2];
+                            $avgDuration = $minutes + ($seconds / 60);
+                        }
+                        
+                        // Parse sales amounts - remove "Rp" and convert to numeric
+                        $penjualanDibuat = 0;
+                        $penjualanSiapDikirim = 0;
+                        
+                        if (!empty(trim($row[15]))) {
+                            $penjualanDibuat = (float)preg_replace('/[^\d]/', '', $row[15]);
+                        }
+                        
+                        if (!empty(trim($row[16]))) {
+                            $penjualanSiapDikirim = (float)preg_replace('/[^\d]/', '', $row[16]);
+                        }
+                        
+                        // Determine tenant_id
+                        $tenantId = null;
+                        if (Auth::user()) {
+                            $tenantId = Auth::user()->current_tenant_id ?? Auth::user()->tenant_id ?? 1;
+                        }
                         
                         LiveShopee::updateOrCreate(
                             [
                                 'date' => $date,
-                                'user_id' => $finalUserId,
-                                'no' => $row[2] ?? null, // Column C
-                                'nama_livestream' => $row[3] ?? null, // Column D
-                                'tenant_id' => Auth::user()->current_tenant_id
+                                'user_id' => $userId,
+                                'no' => trim($row[2]) ?: null, // No.
+                                'nama_livestream' => trim($row[3]) ?: null, // Nama Livestream
+                                'tenant_id' => $tenantId
                             ],
                             [
-                                'start_time' => $row[4] ?? null, // Column E
-                                'durasi' => (int)($row[5] ?? 0), // Column F
-                                'penonton_aktif' => (int)($row[6] ?? 0), // Column G
-                                'komentar' => (int)($row[7] ?? 0), // Column H
-                                'tambah_ke_keranjang' => (int)($row[8] ?? 0), // Column I
-                                'rata_rata_durasi_ditonton' => (float)($row[9] ?? 0), // Column J
-                                'penonton' => (int)($row[10] ?? 0), // Column K
-                                'pesanan_dibuat' => (int)($row[11] ?? 0), // Column L
-                                'pesanan_siap_dikirim' => (int)($row[12] ?? 0), // Column M
-                                'produk_terjual_dibuat' => (int)($row[13] ?? 0), // Column N
-                                'produk_terjual_siap_dikirim' => (int)($row[14] ?? 0), // Column O
-                                'penjualan_dibuat' => (float)($row[15] ?? 0), // Column P
-                                'penjualan_siap_dikirim' => (float)($row[16] ?? 0) // Column Q
+                                'start_time' => $startTime,
+                                'durasi' => $durasi,
+                                'penonton_aktif' => (int)($row[6] ?? 0), // Penonton Aktif
+                                'komentar' => (int)($row[7] ?? 0), // Komentar
+                                'tambah_ke_keranjang' => (int)($row[8] ?? 0), // Tambah ke Keranjang
+                                'rata_rata_durasi_ditonton' => $avgDuration, // Rata-rata durasi ditonton
+                                'penonton' => (int)($row[10] ?? 0), // Penonton
+                                'pesanan_dibuat' => (int)($row[11] ?? 0), // Pesanan(Pesanan Dibuat)
+                                'pesanan_siap_dikirim' => (int)($row[12] ?? 0), // Pesanan(Pesanan Siap Dikirim)
+                                'produk_terjual_dibuat' => (int)($row[13] ?? 0), // Produk Terjual(Pesanan Dibuat)
+                                'produk_terjual_siap_dikirim' => (int)($row[14] ?? 0), // Produk Terjual(Pesanan Siap Dikirim)
+                                'penjualan_dibuat' => $penjualanDibuat, // Penjualan(Pesanan Dibuat)
+                                'penjualan_siap_dikirim' => $penjualanSiapDikirim // Penjualan(Pesanan Siap Dikirim)
                             ]
                         );
                         
                         $importCount++;
+                        
+                        \Log::info("Successfully imported row {$rowIndex}", [
+                            'date' => $date,
+                            'user_id' => $userId,
+                            'livestream' => $row[3],
+                            'viewers' => $row[10],
+                            'orders' => $row[11],
+                            'sales' => $penjualanDibuat
+                        ]);
+                        
                     } catch (\Exception $e) {
-                        \Log::warning("Error processing row in CSV: " . json_encode($row) . " - " . $e->getMessage());
+                        \Log::error("Error processing row {$rowIndex}: " . $e->getMessage(), [
+                            'row_data' => $row,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        continue; // Skip this row and continue with the next
                     }
                 }
                 
                 DB::commit();
+                
+                \Log::info("Import completed", [
+                    'total_imported' => $importCount,
+                    'file_name' => $file->getClientOriginalName()
+                ]);
                 
                 return response()->json([
                     'status' => 'success',
@@ -488,10 +542,12 @@ class LiveShopeeController extends Controller
                 
             } catch (\Exception $e) {
                 DB::rollBack();
+                \Log::error("Import transaction failed: " . $e->getMessage());
                 throw $e;
             }
             
         } catch (\Exception $e) {
+            \Log::error("Import failed: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error importing data: ' . $e->getMessage()
