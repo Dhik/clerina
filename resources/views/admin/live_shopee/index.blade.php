@@ -653,10 +653,17 @@ $(document).ready(function() {
             .then(result => {
                 if (result.status === 'success') {
                     const viewersData = result.viewers;
-                    const viewersDates = viewersData.map(data => data.date);
-                    const viewers = viewersData.map(data => data.viewers);
                     
-                    createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
+                    if (!result.has_data || viewersData.length === 0) {
+                        // Show empty state for line chart
+                        showEmptyLineChart('viewersChart', 'Total Viewers');
+                    } else {
+                        const viewersDates = viewersData.map(data => data.date);
+                        const viewers = viewersData.map(data => data.viewers);
+                        createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
+                    }
+                } else {
+                    showEmptyLineChart('viewersChart', 'Total Viewers');
                 }
             })
             .catch(error => {
@@ -680,7 +687,14 @@ $(document).ready(function() {
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success') {
-                    createFunnelChart('funnelChart', result.data, 'funnelMetrics', result);
+                    if (!result.has_data) {
+                        // Show empty state for funnel chart
+                        showEmptyFunnelChart('funnelChart', 'funnelMetrics');
+                    } else {
+                        createFunnelChart('funnelChart', result.data, 'funnelMetrics', result);
+                    }
+                } else {
+                    showEmptyFunnelChart('funnelChart', 'funnelMetrics');
                 }
             })
             .catch(error => {
@@ -765,6 +779,12 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         window[ctxId + 'Chart'].destroy();
     }
     
+    // Handle empty data
+    if (!data || data.length === 0) {
+        showEmptyLineChart(ctxId, label);
+        return;
+    }
+    
     window[ctxId + 'Chart'] = new Chart(ctx, {
         type: 'line',
         data: {
@@ -828,9 +848,33 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
     return window[ctxId + 'Chart'];
 }
 
+function showEmptyLineChart(ctxId, label) {
+    const ctx = document.getElementById(ctxId).getContext('2d');
+    
+    if (window[ctxId + 'Chart'] && typeof window[ctxId + 'Chart'].destroy === 'function') {
+        window[ctxId + 'Chart'].destroy();
+    }
+    
+    // Clear the canvas and show empty message
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = '#6c757d';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2 - 10);
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#adb5bd';
+    ctx.fillText('Import some CSV data to see the chart', ctx.canvas.width / 2, ctx.canvas.height / 2 + 15);
+}
+
 function createFunnelChart(elementId, data, metricsElementId, result) {
     if (window[elementId + 'Chart']) {
         window[elementId + 'Chart'].destroy();
+    }
+    
+    // Handle empty data
+    if (!data || data.length === 0 || data.every(item => item.value === 0)) {
+        showEmptyFunnelChart(elementId, metricsElementId);
+        return;
     }
     
     const options = {
@@ -951,6 +995,30 @@ function createFunnelChart(elementId, data, metricsElementId, result) {
     }
     
     return window[elementId + 'Chart'];
+}
+
+function showEmptyFunnelChart(elementId, metricsElementId) {
+    if (window[elementId + 'Chart']) {
+        window[elementId + 'Chart'].destroy();
+    }
+    
+    // Show empty state for funnel chart
+    document.querySelector('#' + elementId).innerHTML = `
+        <div class="d-flex flex-column align-items-center justify-content-center" style="height: 350px;">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No data available</h5>
+            <p class="text-muted">Import some CSV data to see the funnel analysis</p>
+        </div>
+    `;
+    
+    if (metricsElementId) {
+        document.querySelector('#' + metricsElementId).innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-info-circle mb-2"></i>
+                <p class="mb-0">Metrics will appear here once you have data</p>
+            </div>
+        `;
+    }
 }
 </script>
 @stop

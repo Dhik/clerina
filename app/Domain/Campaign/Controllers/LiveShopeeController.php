@@ -55,8 +55,8 @@ class LiveShopeeController extends Controller
             ])
             ->groupBy('date');
 
-        // Apply filters
-        if (auth()->user()->tenant_id) {
+        // Apply tenant filter - re-enabled
+        if (auth()->user() && auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
         
@@ -271,7 +271,10 @@ class LiveShopeeController extends Controller
         try {
             $query = LiveShopee::query();
             
-            // Apply date filter
+            // Apply tenant filter
+            if (auth()->user() && auth()->user()->tenant_id) {
+                $query->where('tenant_id', auth()->user()->tenant_id);
+            }
             if ($request->has('filterDates')) {
                 $dates = explode(' - ', $request->filterDates);
                 $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->format('Y-m-d');
@@ -304,9 +307,30 @@ class LiveShopeeController extends Controller
                 ];
             });
             
+            // Group by date and get sum of viewers
+            $viewersData = $query->select(
+                'date',
+                DB::raw('SUM(penonton) as total_viewers')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => Carbon::parse($item->date)->format('d M Y'),
+                    'viewers' => (int)$item->total_viewers
+                ];
+            });
+            
+            // If no data, return empty array
+            if ($viewersData->isEmpty()) {
+                $viewersData = collect([]);
+            }
+            
             return response()->json([
                 'status' => 'success',
-                'viewers' => $viewersData
+                'viewers' => $viewersData,
+                'has_data' => $viewersData->isNotEmpty()
             ]);
             
         } catch (\Exception $e) {
@@ -352,33 +376,30 @@ class LiveShopeeController extends Controller
                 DB::raw('SUM(pesanan_dibuat) as total_orders')
             )->first();
             
-            // Prepare data for funnel chart
-            $funnelData = [
-                [
-                    'name' => 'Total Viewers',
-                    'value' => (int)$aggregates->total_viewers
-                ],
-                [
-                    'name' => 'Active Viewers',
-                    'value' => (int)$aggregates->total_active_viewers
-                ],
-                [
-                    'name' => 'Comments',
-                    'value' => (int)$aggregates->total_comments
-                ],
-                [
-                    'name' => 'Add to Cart',
-                    'value' => (int)$aggregates->total_add_to_cart
-                ],
-                [
-                    'name' => 'Orders',
-                    'value' => (int)$aggregates->total_orders
-                ]
-            ];
+            // Handle empty data case
+            if (!$aggregates || $aggregates->total_viewers == 0) {
+                $funnelData = [
+                    ['name' => 'Total Viewers', 'value' => 0],
+                    ['name' => 'Active Viewers', 'value' => 0],
+                    ['name' => 'Comments', 'value' => 0],
+                    ['name' => 'Add to Cart', 'value' => 0],
+                    ['name' => 'Orders', 'value' => 0]
+                ];
+            } else {
+                // Prepare data for funnel chart
+                $funnelData = [
+                    ['name' => 'Total Viewers', 'value' => (int)$aggregates->total_viewers],
+                    ['name' => 'Active Viewers', 'value' => (int)$aggregates->total_active_viewers],
+                    ['name' => 'Comments', 'value' => (int)$aggregates->total_comments],
+                    ['name' => 'Add to Cart', 'value' => (int)$aggregates->total_add_to_cart],
+                    ['name' => 'Orders', 'value' => (int)$aggregates->total_orders]
+                ];
+            }
             
             return response()->json([
                 'status' => 'success',
-                'data' => $funnelData
+                'data' => $funnelData,
+                'has_data' => $aggregates && $aggregates->total_viewers > 0
             ]);
             
         } catch (\Exception $e) {
