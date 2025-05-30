@@ -862,23 +862,47 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         label: label
     });
     
+    // Calculate proper Y-axis range for fixed height display
+    const maxValue = Math.max(...data);
+    const minValue = Math.min(...data);
+    const isSinglePoint = data.length === 1;
+    
+    let yAxisMin, yAxisMax;
+    
+    if (isSinglePoint) {
+        // For single point, create a nice range around the value
+        const value = data[0];
+        const padding = Math.max(value * 0.2, 1000); // 20% padding or minimum 1000
+        yAxisMin = Math.max(0, value - padding);
+        yAxisMax = value + padding;
+    } else {
+        // For multiple points, use natural range with padding
+        const range = maxValue - minValue;
+        const padding = Math.max(range * 0.1, 100);
+        yAxisMin = Math.max(0, minValue - padding);
+        yAxisMax = maxValue + padding;
+    }
+    
     window[ctxId + 'Chart'] = new Chart(ctx, {
-        type: 'line',
+        type: 'line', // Always use line chart
         data: {
             labels: dates,
             datasets: [{
                 label: label,
                 data: data,
-                backgroundColor: color.replace('1)', '0.2)'),
+                backgroundColor: color.replace('1)', '0.1)'),
                 borderColor: color,
                 borderWidth: 3,
                 tension: 0.1,
                 fill: false,
                 pointBackgroundColor: color,
                 pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7
+                pointBorderWidth: 3,
+                pointRadius: isSinglePoint ? 8 : 5,
+                pointHoverRadius: isSinglePoint ? 12 : 8,
+                pointHoverBackgroundColor: color,
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 3
             }]
         },
         options: {
@@ -887,12 +911,21 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
                 },
                 tooltip: {
                     enabled: true,
                     mode: 'index',
                     intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: color,
+                    borderWidth: 1,
                     callbacks: {
                         label: function(context) {
                             let label = context.dataset.label || '';
@@ -907,16 +940,35 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
             },
             scales: {
                 y: {
-                    beginAtZero: true,
+                    beginAtZero: false,
+                    min: yAxisMin,
+                    max: yAxisMax,
                     ticks: {
+                        stepSize: Math.max(Math.round((yAxisMax - yAxisMin) / 5), 100),
                         callback: function(value, index, values) {
                             return Number(value).toLocaleString();
+                        },
+                        color: '#6c757d',
+                        font: {
+                            size: 12
                         }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        drawBorder: false
                     }
                 },
                 x: {
                     ticks: {
-                        maxRotation: 45
+                        maxRotation: 45,
+                        color: '#6c757d',
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        drawBorder: false
                     }
                 }
             },
@@ -924,6 +976,19 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                 mode: 'nearest',
                 axis: 'x',
                 intersect: false
+            },
+            elements: {
+                point: {
+                    hoverBorderWidth: 3
+                }
+            },
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
+                }
             }
         }
     });
