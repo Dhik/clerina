@@ -450,6 +450,16 @@ class LiveShopeeController extends Controller
                 // Log headers for debugging
                 \Log::info('CSV Headers:', $headers);
                 
+                // Helper function to convert European number format to integer
+                $convertToInteger = function($value) {
+                    if (empty($value)) return 0;
+                    
+                    // Handle European format where periods are thousands separators
+                    // e.g., "1.101" = 1101, "6.052" = 6052
+                    $cleanValue = str_replace('.', '', $value); // Remove thousands separators
+                    return (int)$cleanValue;
+                };
+                
                 foreach ($csvData as $rowIndex => $row) {
                     if (empty($row) || count($row) < 17) {
                         \Log::warning("Skipping row {$rowIndex}: insufficient data", $row);
@@ -491,6 +501,13 @@ class LiveShopeeController extends Controller
                             $avgDuration = ($minutes * 60) + $seconds; // Convert to total seconds
                         }
                         
+                        \Log::info("Average duration calculation", [
+                            'raw_value' => $avgDurationRaw,
+                            'parsed_minutes' => $matches[1] ?? 'no match',
+                            'parsed_seconds' => $matches[2] ?? 'no match', 
+                            'calculated_total_seconds' => $avgDuration
+                        ]);
+                        
                         // Parse sales amounts - remove "Rp" and convert to numeric
                         $penjualanDibuat = 0;
                         $penjualanSiapDikirim = 0;
@@ -501,37 +518,6 @@ class LiveShopeeController extends Controller
                         
                         if (!empty(trim($row[16]))) {
                             $penjualanSiapDikirim = (float)preg_replace('/[^\d]/', '', $row[16]);
-                        }
-                        
-                        // Helper function to convert European number format to integer
-                        function convertToInteger($value) {
-                            if (empty($value)) return 0;
-                            
-                            // Handle European format where periods are thousands separators
-                            // e.g., "1.101" = 1101, "6.052" = 6052
-                            $cleanValue = str_replace('.', '', $value); // Remove thousands separators
-                            return (int)$cleanValue;
-                        }
-                        
-                        // Helper function to convert European decimal format
-                        function convertToDecimal($value) {
-                            if (empty($value)) return 0;
-                            
-                            // For actual decimals, we need to be more careful
-                            // If it's a small number like "1.312", it might be 1312 (thousands format)
-                            // If it's like "1.52", it's probably a decimal
-                            $parts = explode('.', $value);
-                            if (count($parts) == 2) {
-                                $decimal = $parts[1];
-                                // If decimal part has 3 digits, it's likely thousands format
-                                if (strlen($decimal) >= 3) {
-                                    return (int)str_replace('.', '', $value);
-                                } else {
-                                    // It's a real decimal
-                                    return (float)$value;
-                                }
-                            }
-                            return (float)$value;
                         }
                         
                         LiveShopee::updateOrCreate(
@@ -545,11 +531,11 @@ class LiveShopeeController extends Controller
                             [
                                 'start_time' => $startTime,
                                 'durasi' => $durasi,
-                                'penonton_aktif' => convertToInteger($row[6]), // 1.101 -> 1101
-                                'komentar' => convertToInteger($row[7]), // 650 -> 650
-                                'tambah_ke_keranjang' => convertToInteger($row[8]), // 1.312 -> 1312
-                                'rata_rata_durasi_ditonton' => $avgDuration, // Keep as calculated decimal
-                                'penonton' => convertToInteger($row[10]), // 6.052 -> 6052
+                                'penonton_aktif' => $convertToInteger($row[6]), // 1.101 -> 1101
+                                'komentar' => $convertToInteger($row[7]), // 650 -> 650
+                                'tambah_ke_keranjang' => $convertToInteger($row[8]), // 1.312 -> 1312
+                                'rata_rata_durasi_ditonton' => $avgDuration, // Store as seconds: 91
+                                'penonton' => $convertToInteger($row[10]), // 6.052 -> 6052
                                 'pesanan_dibuat' => (int)($row[11] ?? 0), // These are already integers
                                 'pesanan_siap_dikirim' => (int)($row[12] ?? 0),
                                 'produk_terjual_dibuat' => (int)($row[13] ?? 0),
@@ -565,7 +551,8 @@ class LiveShopeeController extends Controller
                             'date' => $date,
                             'user_id' => $userId,
                             'livestream' => $row[3],
-                            'viewers' => $row[10],
+                            'viewers' => $convertToInteger($row[10]),
+                            'avg_duration_seconds' => $avgDuration,
                             'orders' => $row[11],
                             'sales' => $penjualanDibuat
                         ]);
