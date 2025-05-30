@@ -55,7 +55,7 @@
                                         <h5 class="card-title mb-0">Viewers Over Time</h5>
                                     </div>
                                     <div class="card-body">
-                                        <canvas id="viewersChart" width="400" height="300"></canvas>
+                                        <!-- <canvas id="viewersChart" width="400" height="300"></canvas> -->
                                     </div>
                                 </div>
                             </div>
