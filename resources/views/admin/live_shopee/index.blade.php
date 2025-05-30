@@ -55,7 +55,7 @@
                                         <h5 class="card-title mb-0">Viewers Over Time</h5>
                                     </div>
                                     <div class="card-body">
-                                        <!-- <canvas id="viewersChart" width="400" height="300"></canvas> -->
+                                        <canvas id="viewersChart" width="400" height="300"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -650,11 +650,15 @@ $(document).ready(function() {
             url.searchParams.append('user_id', userValue);
         }
         
+        console.log('Fetching viewers data from:', url.toString()); // Debug log
+        
         fetch(url)
             .then(response => response.json())
             .then(result => {
+                console.log('Viewers API Response:', result); // Debug log
                 if (result.status === 'success') {
                     const viewersData = result.viewers;
+                    console.log('Viewers Data:', viewersData); // Debug log
                     
                     if (!result.has_data || viewersData.length === 0) {
                         // Show empty state for line chart
@@ -662,14 +666,17 @@ $(document).ready(function() {
                     } else {
                         const viewersDates = viewersData.map(data => data.date);
                         const viewers = viewersData.map(data => data.viewers);
+                        console.log('Chart Data - Dates:', viewersDates, 'Viewers:', viewers); // Debug log
                         createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
                     }
                 } else {
+                    console.error('API returned error status:', result);
                     showEmptyLineChart('viewersChart', 'Total Viewers');
                 }
             })
             .catch(error => {
                 console.error('Error fetching viewers data:', error);
+                showEmptyLineChart('viewersChart', 'Total Viewers');
             });
     }
 
@@ -706,11 +713,72 @@ $(document).ready(function() {
 
     // Initialize on page load
     $(function () {
+        // Initialize without default filters to see all data
+        console.log('Initializing Live Shopee page...');
         liveShopeeTable.draw();
-        fetchViewersData();
-        initFunnelChart();
+        
+        // Fetch data without date restrictions initially
+        fetchViewersDataWithoutFilters();
+        initFunnelChartWithoutFilters();
+        
         $('[data-toggle="tooltip"]').tooltip();
     });
+    
+    // Function to fetch viewers data without date restrictions
+    function fetchViewersDataWithoutFilters() {
+        const url = new URL("{{ route('live_shopee.line_data') }}", window.location.origin);
+        
+        console.log('Fetching all viewers data from:', url.toString());
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                console.log('Initial viewers API Response:', result);
+                if (result.status === 'success') {
+                    const viewersData = result.viewers;
+                    console.log('Initial viewers Data:', viewersData);
+                    
+                    if (!result.has_data || viewersData.length === 0) {
+                        showEmptyLineChart('viewersChart', 'Total Viewers');
+                    } else {
+                        const viewersDates = viewersData.map(data => data.date);
+                        const viewers = viewersData.map(data => data.viewers);
+                        console.log('Initial chart Data - Dates:', viewersDates, 'Viewers:', viewers);
+                        createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
+                    }
+                } else {
+                    console.error('Initial API returned error status:', result);
+                    showEmptyLineChart('viewersChart', 'Total Viewers');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching initial viewers data:', error);
+                showEmptyLineChart('viewersChart', 'Total Viewers');
+            });
+    }
+    
+    // Function to fetch funnel data without date restrictions
+    function initFunnelChartWithoutFilters() {
+        const url = new URL("{{ route('live_shopee.funnel_data') }}", window.location.origin);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                console.log('Initial funnel API Response:', result);
+                if (result.status === 'success') {
+                    if (!result.has_data) {
+                        showEmptyFunnelChart('funnelChart', 'funnelMetrics');
+                    } else {
+                        createFunnelChart('funnelChart', result.data, 'funnelMetrics', result);
+                    }
+                } else {
+                    showEmptyFunnelChart('funnelChart', 'funnelMetrics');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching initial funnel data:', error);
+            });
+    }
 });
 
 // Utility Functions
@@ -787,6 +855,13 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         return;
     }
     
+    // Debug log the data being passed to the chart
+    console.log('Creating chart with:', {
+        dates: dates,
+        data: data,
+        label: label
+    });
+    
     window[ctxId + 'Chart'] = new Chart(ctx, {
         type: 'line',
         data: {
@@ -794,11 +869,16 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
             datasets: [{
                 label: label,
                 data: data,
-                backgroundColor: color.replace('1)', '0.5)'),
+                backgroundColor: color.replace('1)', '0.2)'),
                 borderColor: color,
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true
+                borderWidth: 3,
+                tension: 0.1,
+                fill: false,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
             }]
         },
         options: {
@@ -808,41 +888,42 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                 legend: {
                     display: true,
                     position: 'top'
-                }
-            },
-            tooltips: {
-                enabled: true,
-                mode: 'index',
-                intersect: false,
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
-                        if (label) {
-                            label += ': ';
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += Number(context.parsed.y).toLocaleString();
+                            return label;
                         }
-                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                        return label;
                     }
                 }
             },
             scales: {
-                yAxes: [{
+                y: {
+                    beginAtZero: true,
                     ticks: {
-                        beginAtZero: true,
                         callback: function(value, index, values) {
-                            if (parseInt(value) >= 1000) {
-                                return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                            } else {
-                                return value;
-                            }
+                            return Number(value).toLocaleString();
                         }
                     }
-                }],
-                xAxes: [{
+                },
+                x: {
                     ticks: {
                         maxRotation: 45
                     }
-                }]
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             }
         }
     });

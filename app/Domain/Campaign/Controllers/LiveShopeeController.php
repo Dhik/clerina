@@ -276,16 +276,39 @@ class LiveShopeeController extends Controller
                 $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->format('Y-m-d');
                 
                 $query->whereBetween('date', [$startDate, $endDate]);
+                
+                \Log::info('Line chart date filter applied', [
+                    'filter_dates' => $request->filterDates,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]);
             } else {
-                // Default to current month if no date filter
-                $query->whereMonth('date', now()->month)
-                      ->whereYear('date', now()->year);
+                // If no date filter, show data from the last 30 days OR all data if less than 30 days
+                $query->where('date', '>=', Carbon::now()->subDays(30)->format('Y-m-d'));
+                      
+                \Log::info('Line chart default date filter applied', [
+                    'showing_last_30_days_from' => Carbon::now()->subDays(30)->format('Y-m-d')
+                ]);
             }
             
             // Apply user filter
             if ($request->has('user_id') && $request->user_id) {
                 $query->where('user_id', $request->user_id);
+                \Log::info('Line chart user filter applied', ['user_id' => $request->user_id]);
             }
+            
+            // Debug: Get total count before grouping
+            $totalRecords = LiveShopee::count();
+            $filteredCount = (clone $query)->count();
+            
+            \Log::info('Line chart query debug', [
+                'total_records_in_table' => $totalRecords,
+                'filtered_records_count' => $filteredCount,
+                'has_filter_dates' => $request->has('filterDates'),
+                'filter_dates_value' => $request->filterDates,
+                'has_user_filter' => $request->has('user_id'),
+                'user_filter_value' => $request->user_id
+            ]);
             
             // Group by date and get sum of viewers
             $viewersData = $query->select(
@@ -302,6 +325,11 @@ class LiveShopeeController extends Controller
                 ];
             });
             
+            \Log::info('Line chart data result', [
+                'data_count' => $viewersData->count(),
+                'data' => $viewersData->toArray()
+            ]);
+            
             // If no data, return empty array
             if ($viewersData->isEmpty()) {
                 $viewersData = collect([]);
@@ -310,10 +338,20 @@ class LiveShopeeController extends Controller
             return response()->json([
                 'status' => 'success',
                 'viewers' => $viewersData,
-                'has_data' => $viewersData->isNotEmpty()
+                'has_data' => $viewersData->isNotEmpty(),
+                'debug' => [
+                    'total_records' => $totalRecords,
+                    'filtered_count' => $filteredCount,
+                    'result_count' => $viewersData->count()
+                ]
             ]);
             
         } catch (\Exception $e) {
+            \Log::error('Line chart data error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
@@ -339,9 +377,8 @@ class LiveShopeeController extends Controller
                 
                 $query->whereBetween('date', [$startDate, $endDate]);
             } else {
-                // Default to current month if no date filter
-                $query->whereMonth('date', now()->month)
-                      ->whereYear('date', now()->year);
+                // If no date filter, show data from the last 30 days OR all data if less than 30 days
+                $query->where('date', '>=', Carbon::now()->subDays(30)->format('Y-m-d'));
             }
             
             // Apply user filter
