@@ -249,7 +249,7 @@
 }
 
 #funnelMetrics {
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
 }
 
