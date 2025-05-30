@@ -65,7 +65,7 @@
                                         <h5 class="card-title mb-0">Conversion Funnel</h5>
                                     </div>
                                     <div class="card-body">
-                                        <div id="funnelChart"></div>
+                                        <!-- <div id="funnelChart"></div> -->
                                         <div id="funnelMetrics" class="mt-4"></div>
                                     </div>
                                 </div>
@@ -249,7 +249,7 @@
 }
 
 #funnelMetrics {
-    max-height: 300px;
+    max-height: 500px;
     overflow-y: auto;
 }
 
