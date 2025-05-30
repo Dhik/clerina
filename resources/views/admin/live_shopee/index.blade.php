@@ -889,11 +889,9 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         return;
     }
     
-    // Set proper sizing to fit within card
-    canvas.style.height = '250px';
-    canvas.style.maxHeight = '250px';
-    canvas.style.width = '100%';
-    canvas.style.maxWidth = '100%';
+    // Set fixed height via CSS to prevent growth
+    canvas.style.height = '400px';
+    canvas.style.maxHeight = '400px';
     
     const ctx = canvas.getContext('2d');
     
@@ -930,25 +928,10 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                 intersect: false,
                 mode: 'index'
             },
-            layout: {
-                padding: {
-                    top: 10,
-                    right: 15,
-                    bottom: 10,
-                    left: 10
-                }
-            },
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top',
-                    labels: {
-                        padding: 15,
-                        usePointStyle: true,
-                        font: {
-                            size: 12
-                        }
-                    }
+                    position: 'top'
                 },
                 tooltip: {
                     enabled: true,
@@ -968,9 +951,6 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        font: {
-                            size: 11
-                        },
                         callback: function(value, index, values) {
                             if (parseInt(value) >= 1000) {
                                 return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -978,21 +958,6 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                                 return value;
                             }
                         }
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: {
-                            size: 10
-                        },
-                        maxRotation: 45,
-                        minRotation: 0
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
                     }
                 }
             }
