@@ -55,7 +55,7 @@
                                         <h5 class="card-title mb-0">Viewers Over Time</h5>
                                     </div>
                                     <div class="card-body">
-                                        <canvas id="viewersChart" width="400" height="300"></canvas>
+                                        <!-- <canvas id="viewersChart" width="400" height="300"></canvas> -->
                                     </div>
                                 </div>
                             </div>
@@ -337,56 +337,56 @@ $(document).ready(function() {
                 data: 'total_streams',
                 name: 'total_streams',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_duration',
                 name: 'total_duration',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'avg_active_viewers',
                 name: 'avg_active_viewers',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_viewers',
                 name: 'total_viewers',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_comments',
                 name: 'total_comments',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_add_to_cart',
                 name: 'total_add_to_cart',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_orders_created',
                 name: 'total_orders_created',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_orders_ready',
                 name: 'total_orders_ready',
                 render: function(data) {
-                    return Number(data || 0).toLocaleString('id-ID');
+                    return Number(data).toLocaleString('id-ID');
                 }
             },
             {data: 'total_sales_created', name: 'total_sales_created'},
