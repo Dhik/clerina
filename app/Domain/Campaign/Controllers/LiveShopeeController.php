@@ -492,10 +492,17 @@ class LiveShopeeController extends Controller
                             $durasi = ($hours * 60) + $minutes + ($seconds > 30 ? 1 : 0); // Round seconds
                         }
                         
-                        // Parse average watch duration from MM:SS to total seconds
+                        // Parse average watch duration from HH:MM:SS to total seconds
                         $avgDurationRaw = trim($row[9]); // e.g., "00:01:31"
                         $avgDuration = 0;
-                        if (preg_match('/(\d+):(\d+)/', $avgDurationRaw, $matches)) {
+                        if (preg_match('/(\d+):(\d+):(\d+)/', $avgDurationRaw, $matches)) {
+                            // For HH:MM:SS format
+                            $hours = (int)$matches[1];
+                            $minutes = (int)$matches[2];
+                            $seconds = (int)$matches[3];
+                            $avgDuration = ($hours * 3600) + ($minutes * 60) + $seconds; // Convert to total seconds
+                        } elseif (preg_match('/(\d+):(\d+)/', $avgDurationRaw, $matches)) {
+                            // For MM:SS format (fallback)
                             $minutes = (int)$matches[1];
                             $seconds = (int)$matches[2];
                             $avgDuration = ($minutes * 60) + $seconds; // Convert to total seconds
@@ -503,8 +510,7 @@ class LiveShopeeController extends Controller
                         
                         \Log::info("Average duration calculation", [
                             'raw_value' => $avgDurationRaw,
-                            'parsed_minutes' => $matches[1] ?? 'no match',
-                            'parsed_seconds' => $matches[2] ?? 'no match', 
+                            'regex_matches' => $matches ?? 'no match',
                             'calculated_total_seconds' => $avgDuration
                         ]);
                         
