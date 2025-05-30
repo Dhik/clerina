@@ -257,6 +257,7 @@
     max-width: 1200px;
 }
 
+/* Custom scrollbar for tables */
 .dataTables_scrollBody::-webkit-scrollbar {
     height: 8px;
 }
@@ -310,6 +311,7 @@ $(document).ready(function() {
     let modalFilterDate = initDateRangePicker('modalFilterDates');
     let funnelChart = null;
     let viewersChart = null;
+    let isInitialized = false; // Prevent multiple initializations
 
     // Initialize Live Shopee DataTable
     let liveShopeeTable = $('#liveShopeeTable').DataTable({
@@ -336,56 +338,56 @@ $(document).ready(function() {
                 data: 'total_streams',
                 name: 'total_streams',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_duration',
                 name: 'total_duration',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'avg_active_viewers',
                 name: 'avg_active_viewers',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_viewers',
                 name: 'total_viewers',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_comments',
                 name: 'total_comments',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_add_to_cart',
                 name: 'total_add_to_cart',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_orders_created',
                 name: 'total_orders_created',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {
                 data: 'total_orders_ready',
                 name: 'total_orders_ready',
                 render: function(data) {
-                    return Number(data).toLocaleString('id-ID');
+                    return Number(data || 0).toLocaleString('id-ID');
                 }
             },
             {data: 'total_sales_created', name: 'total_sales_created'},
@@ -712,13 +714,31 @@ $(document).ready(function() {
 
     // Initialize on page load
     $(function () {
-        // Initialize without default filters to see all data
+        if (isInitialized) {
+            console.log('Already initialized, skipping...');
+            return;
+        }
+        
+        isInitialized = true;
         console.log('Initializing Live Shopee page...');
+        
+        // Initialize without default filters to see all data
         liveShopeeTable.draw();
         
+        // Set fixed canvas size before any chart operations
+        const canvas = document.getElementById('viewersChart');
+        if (canvas) {
+            canvas.style.width = '100%';
+            canvas.style.height = '300px';
+            canvas.width = 400;
+            canvas.height = 300;
+        }
+        
         // Fetch data without date restrictions initially
-        fetchViewersDataWithoutFilters();
-        initFunnelChartWithoutFilters();
+        setTimeout(function() {
+            fetchViewersDataWithoutFilters();
+            initFunnelChartWithoutFilters();
+        }, 500); // Small delay to ensure DOM is ready
         
         $('[data-toggle="tooltip"]').tooltip();
     });
@@ -842,10 +862,32 @@ function handleFileInputChange(inputId) {
 }
 
 function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 1)') {
-    const ctx = document.getElementById(ctxId).getContext('2d');
+    const canvas = document.getElementById(ctxId);
+    if (!canvas) {
+        console.error('Canvas element not found:', ctxId);
+        return;
+    }
     
-    if (window[ctxId + 'Chart'] && typeof window[ctxId + 'Chart'].destroy === 'function') {
-        window[ctxId + 'Chart'].destroy();
+    // Force fixed canvas dimensions
+    canvas.style.width = '100%';
+    canvas.style.height = '300px';
+    canvas.width = 400;
+    canvas.height = 300;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.error('Unable to get 2D context for canvas:', ctxId);
+        return;
+    }
+    
+    // Destroy existing chart completely
+    if (window[ctxId + 'Chart']) {
+        try {
+            window[ctxId + 'Chart'].destroy();
+        } catch (e) {
+            console.warn('Error destroying chart:', e);
+        }
+        window[ctxId + 'Chart'] = null;
     }
     
     // Handle empty data
@@ -856,10 +898,18 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
     
     // Debug log the data being passed to the chart
     console.log('Creating chart with:', {
+        canvas: canvas,
         dates: dates,
         data: data,
         label: label
     });
+    
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded!');
+        showEmptyLineChart(ctxId, label);
+        return;
+    }
     
     // Calculate proper Y-axis range for fixed height display
     const maxValue = Math.max(...data);
@@ -882,135 +932,161 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         yAxisMax = maxValue + padding;
     }
     
-    window[ctxId + 'Chart'] = new Chart(ctx, {
-        type: 'line', // Always use line chart
-        data: {
-            labels: dates,
-            datasets: [{
-                label: label,
-                data: data,
-                backgroundColor: color.replace('1)', '0.1)'),
-                borderColor: color,
-                borderWidth: 3,
-                tension: 0.1,
-                fill: false,
-                pointBackgroundColor: color,
-                pointBorderColor: '#fff',
-                pointBorderWidth: 3,
-                pointRadius: isSinglePoint ? 8 : 5,
-                pointHoverRadius: isSinglePoint ? 12 : 8,
-                pointHoverBackgroundColor: color,
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 20
-                    }
-                },
-                tooltip: {
-                    enabled: true,
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
+    try {
+        window[ctxId + 'Chart'] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: color.replace('1)', '0.1)'),
                     borderColor: color,
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            label += Number(context.parsed.y).toLocaleString();
-                            return label;
-                        }
-                    }
-                }
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: false,
+                    pointBackgroundColor: color,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 3,
+                    pointRadius: isSinglePoint ? 8 : 5,
+                    pointHoverRadius: isSinglePoint ? 12 : 8,
+                    pointHoverBackgroundColor: color,
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 3
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: yAxisMin,
-                    max: yAxisMax,
-                    ticks: {
-                        stepSize: Math.max(Math.round((yAxisMax - yAxisMin) / 5), 100),
-                        callback: function(value, index, values) {
-                            return Number(value).toLocaleString();
-                        },
-                        color: '#6c757d',
-                        font: {
-                            size: 12
+            options: {
+                responsive: false, // Disable responsive to prevent resizing
+                maintainAspectRatio: false,
+                animation: false, // Disable animations to prevent multiple redraws
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
                         }
                     },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)',
-                        drawBorder: false
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: color,
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += Number(context.parsed.y).toLocaleString();
+                                return label;
+                            }
+                        }
                     }
                 },
-                x: {
-                    ticks: {
-                        maxRotation: 45,
-                        color: '#6c757d',
-                        font: {
-                            size: 12
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: yAxisMin,
+                        max: yAxisMax,
+                        ticks: {
+                            stepSize: Math.max(Math.round((yAxisMax - yAxisMin) / 5), 100),
+                            callback: function(value, index, values) {
+                                return Number(value).toLocaleString();
+                            },
+                            color: '#6c757d',
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
                         }
                     },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)',
-                        drawBorder: false
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            color: '#6c757d',
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        }
                     }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            },
-            elements: {
-                point: {
-                    hoverBorderWidth: 3
-                }
-            },
-            layout: {
-                padding: {
-                    top: 10,
-                    bottom: 10,
-                    left: 10,
-                    right: 10
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                elements: {
+                    point: {
+                        hoverBorderWidth: 3
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 10,
+                        left: 10,
+                        right: 10
+                    }
                 }
             }
-        }
-    });
+        });
+        
+        console.log('Chart created successfully:', window[ctxId + 'Chart']);
+        
+    } catch (error) {
+        console.error('Error creating chart:', error);
+        showEmptyLineChart(ctxId, label);
+    }
     
     return window[ctxId + 'Chart'];
 }
 
 function showEmptyLineChart(ctxId, label) {
-    const ctx = document.getElementById(ctxId).getContext('2d');
+    const canvas = document.getElementById(ctxId);
+    if (!canvas) {
+        console.error('Canvas element not found:', ctxId);
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.error('Unable to get 2D context for canvas:', ctxId);
+        return;
+    }
     
     if (window[ctxId + 'Chart'] && typeof window[ctxId + 'Chart'].destroy === 'function') {
         window[ctxId + 'Chart'].destroy();
     }
     
     // Clear the canvas and show empty message
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Set canvas size properly
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
     ctx.fillStyle = '#6c757d';
     ctx.font = '16px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2 - 10);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('No data available', canvas.width / 2, canvas.height / 2 - 10);
     ctx.font = '12px Arial';
     ctx.fillStyle = '#adb5bd';
-    ctx.fillText('Import some CSV data to see the chart', ctx.canvas.width / 2, ctx.canvas.height / 2 + 15);
+    ctx.fillText('Import some CSV data to see the chart', canvas.width / 2, canvas.height / 2 + 15);
 }
 
 function createFunnelChart(elementId, data, metricsElementId, result) {
