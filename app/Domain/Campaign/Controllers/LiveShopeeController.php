@@ -55,11 +55,7 @@ class LiveShopeeController extends Controller
             ])
             ->groupBy('date');
 
-        // Apply tenant filter
-        if (auth()->user() && auth()->user()->tenant_id) {
-            $query->where('tenant_id', auth()->user()->tenant_id);
-        }
-        
+        // Apply filters - removed tenant_id filter since column doesn't exist
         if ($request->has('date_start') && $request->has('date_end')) {
             $query->whereBetween('date', [$request->date_start, $request->date_end]);
         } else {
@@ -184,8 +180,8 @@ class LiveShopeeController extends Controller
             }
         }
 
-        if (auth()->user() && auth()->user()->tenant_id) {
-            $query->where('tenant_id', auth()->user()->tenant_id);
+        if (auth()->user()) {
+            // Removed tenant_id filter since column doesn't exist in live_shopee table
         }
 
         if ($request->has('user_id') && $request->user_id !== '') {
@@ -271,10 +267,7 @@ class LiveShopeeController extends Controller
         try {
             $query = LiveShopee::query();
             
-            // Apply tenant filter
-            if (auth()->user() && auth()->user()->tenant_id) {
-                $query->where('tenant_id', auth()->user()->tenant_id);
-            }
+            // Removed tenant filter since live_shopee table doesn't have tenant_id column
             
             // Apply date filter
             if ($request->has('filterDates')) {
@@ -336,10 +329,7 @@ class LiveShopeeController extends Controller
         try {
             $query = LiveShopee::query();
             
-            // Apply tenant filter
-            if (auth()->user() && auth()->user()->tenant_id) {
-                $query->where('tenant_id', auth()->user()->tenant_id);
-            }
+            // Removed tenant filter since live_shopee table doesn't have tenant_id column
             
             // Apply date filter
             if ($request->has('filterDates')) {
@@ -476,19 +466,13 @@ class LiveShopeeController extends Controller
                             $penjualanSiapDikirim = (float)preg_replace('/[^\d]/', '', $row[16]);
                         }
                         
-                        // Determine tenant_id
-                        $tenantId = null;
-                        if (Auth::user()) {
-                            $tenantId = Auth::user()->current_tenant_id ?? Auth::user()->tenant_id ?? 1;
-                        }
-                        
                         LiveShopee::updateOrCreate(
                             [
                                 'date' => $date,
                                 'user_id' => $userId,
                                 'no' => trim($row[2]) ?: null, // No.
-                                'nama_livestream' => trim($row[3]) ?: null, // Nama Livestream
-                                'tenant_id' => $tenantId
+                                'nama_livestream' => trim($row[3]) ?: null // Nama Livestream
+                                // Removed tenant_id since column doesn't exist in live_shopee table
                             ],
                             [
                                 'start_time' => $startTime,
