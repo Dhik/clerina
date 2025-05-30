@@ -206,7 +206,7 @@ class LiveShopeeController extends Controller
                 return $row->tambah_ke_keranjang ? number_format($row->tambah_ke_keranjang, 0, ',', '.') : '-';
             })
             ->editColumn('rata_rata_durasi_ditonton', function ($row) {
-                return $row->rata_rata_durasi_ditonton ? number_format($row->rata_rata_durasi_ditonton, 2, ',', '.') . ' min' : '-';
+                return $row->rata_rata_durasi_ditonton ? number_format($row->rata_rata_durasi_ditonton, 2, ',', '.') . ' sec' : '-';
             })
             ->editColumn('penonton', function ($row) {
                 return $row->penonton ? number_format($row->penonton, 0, ',', '.') : '-';
