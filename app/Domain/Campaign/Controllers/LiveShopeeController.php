@@ -80,7 +80,7 @@ class LiveShopeeController extends Controller
                 return $row->total_duration ?? 0;
             })
             ->editColumn('avg_active_viewers', function ($row) {
-                return number_format($row->avg_active_viewers ?? 0, 0);
+                return round($row->avg_active_viewers ?? 0, 0); // Return raw number, not formatted
             })
             ->editColumn('total_viewers', function ($row) {
                 return $row->total_viewers ?? 0;

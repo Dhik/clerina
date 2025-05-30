@@ -257,7 +257,6 @@
     max-width: 1200px;
 }
 
-/* Custom scrollbar for tables */
 .dataTables_scrollBody::-webkit-scrollbar {
     height: 8px;
 }
