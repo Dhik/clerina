@@ -1016,7 +1016,7 @@ function createFunnelChart(elementId, data, metricsElementId, result) {
     const options = {
         chart: {
             type: 'bar',
-            height: 350,
+            height: 250,
             toolbar: {
                 show: false
             }
