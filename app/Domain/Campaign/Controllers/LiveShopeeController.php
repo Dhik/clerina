@@ -482,13 +482,13 @@ class LiveShopeeController extends Controller
                             $durasi = ($hours * 60) + $minutes + ($seconds > 30 ? 1 : 0); // Round seconds
                         }
                         
-                        // Parse average watch duration from MM:SS to decimal minutes
+                        // Parse average watch duration from MM:SS to total seconds
                         $avgDurationRaw = trim($row[9]); // e.g., "00:01:31"
                         $avgDuration = 0;
                         if (preg_match('/(\d+):(\d+)/', $avgDurationRaw, $matches)) {
                             $minutes = (int)$matches[1];
                             $seconds = (int)$matches[2];
-                            $avgDuration = $minutes + ($seconds / 60);
+                            $avgDuration = ($minutes * 60) + $seconds; // Convert to total seconds
                         }
                         
                         // Parse sales amounts - remove "Rp" and convert to numeric
