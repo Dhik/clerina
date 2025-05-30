@@ -890,8 +890,8 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
     }
     
     // Set fixed height via CSS to prevent growth
-    canvas.style.height = '500px';
-    canvas.style.maxHeight = '500px';
+    canvas.style.height = '570px';
+    canvas.style.maxHeight = '570px';
     
     const ctx = canvas.getContext('2d');
     
