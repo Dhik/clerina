@@ -311,7 +311,7 @@ $(document).ready(function() {
     let modalFilterDate = initDateRangePicker('modalFilterDates');
     let funnelChart = null;
     let viewersChart = null;
-    let isInitialized = false; // Prevent multiple initializations
+    let chartsInitialized = false; // Track chart initialization
 
     // Initialize Live Shopee DataTable
     let liveShopeeTable = $('#liveShopeeTable').DataTable({
@@ -542,15 +542,56 @@ $(document).ready(function() {
         if ($('#dailyDetailsModal').is(':visible')) {
             streamDetailsTable.draw();
         }
-        fetchViewersData();
+        // Only update data, don't recreate chart
+        updateChartData();
         initFunnelChart();
     });
 
     filterDate.change(function() {
         liveShopeeTable.draw();
-        fetchViewersData();
+        // Only update data, don't recreate chart
+        updateChartData();
         initFunnelChart();
     });
+    
+    // Function to update chart data without recreating
+    function updateChartData() {
+        if (!window.viewersChartChart) {
+            fetchViewersData();
+            return;
+        }
+        
+        const filterValue = filterDate.val();
+        const userValue = filterUser.val();
+        
+        const url = new URL("{{ route('live_shopee.line_data') }}", window.location.origin);
+        
+        if (filterValue) {
+            url.searchParams.append('filterDates', filterValue);
+        }
+        
+        if (userValue) {
+            url.searchParams.append('user_id', userValue);
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    const viewersData = result.viewers;
+                    const viewersDates = viewersData.map(data => data.date);
+                    const viewers = viewersData.map(data => data.viewers);
+                    
+                    // Update existing chart data
+                    window.viewersChartChart.data.labels = viewersDates;
+                    window.viewersChartChart.data.datasets[0].data = viewers;
+                    window.viewersChartChart.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error updating chart data:', error);
+            });
+    }
 
     modalFilterDate.change(function() {
         streamDetailsTable.draw();
@@ -638,6 +679,12 @@ $(document).ready(function() {
     });
 
     function fetchViewersData() {
+        // Prevent multiple chart creations
+        if (chartsInitialized && window.viewersChartChart) {
+            console.log('Chart already exists, updating data instead...');
+            return;
+        }
+        
         const filterValue = filterDate.val();
         const userValue = filterUser.val();
         
@@ -660,6 +707,7 @@ $(document).ready(function() {
                     const viewers = viewersData.map(data => data.viewers);
                     
                     createLineChart('viewersChart', 'Total Viewers', viewersDates, viewers);
+                    chartsInitialized = true;
                 }
             })
             .catch(error => {
@@ -700,17 +748,17 @@ $(document).ready(function() {
 
     // Initialize on page load
     $(function () {
-        if (isInitialized) {
-            console.log('Already initialized, skipping...');
-            return;
-        }
-        
-        isInitialized = true;
         console.log('Initializing Live Shopee page...');
         
         liveShopeeTable.draw();
-        fetchViewersData();
-        initFunnelChart();
+        
+        // Initialize charts only once
+        setTimeout(function() {
+            if (!chartsInitialized) {
+                fetchViewersData();
+                initFunnelChart();
+            }
+        }, 100);
         
         $('[data-toggle="tooltip"]').tooltip();
     });
@@ -834,14 +882,26 @@ function handleFileInputChange(inputId) {
 }
 
 function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 1)') {
-    const ctx = document.getElementById(ctxId).getContext('2d');
+    // Get canvas and set fixed height in CSS
+    const canvas = document.getElementById(ctxId);
+    if (!canvas) {
+        console.error('Canvas not found:', ctxId);
+        return;
+    }
+    
+    // Set fixed height via CSS to prevent growth
+    canvas.style.height = '300px';
+    canvas.style.maxHeight = '300px';
+    
+    const ctx = canvas.getContext('2d');
     
     // Destroy existing chart if it exists
     if (window[ctxId + 'Chart'] && typeof window[ctxId + 'Chart'].destroy === 'function') {
         window[ctxId + 'Chart'].destroy();
+        window[ctxId + 'Chart'] = null;
     }
     
-    // Create new chart
+    // Create new chart with size restrictions
     window[ctxId + 'Chart'] = new Chart(ctx, {
         type: 'line',
         data: {
@@ -864,23 +924,33 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label: function(tooltipItem, data) {
-                        let label = data.datasets[tooltipItem.datasetIndex].label || '';
-                        if (label) {
-                            label += ': ';
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += context.parsed.y.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                            return label;
                         }
-                        label += tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                        return label;
                     }
                 }
             },
             scales: {
-                yAxes: [{
+                y: {
+                    beginAtZero: true,
                     ticks: {
-                        beginAtZero: true,
                         callback: function(value, index, values) {
                             if (parseInt(value) >= 1000) {
                                 return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -889,7 +959,7 @@ function createLineChart(ctxId, label, dates, data, color = 'rgba(54, 162, 235, 
                             }
                         }
                     }
-                }]
+                }
             }
         }
     });
