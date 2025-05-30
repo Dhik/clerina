@@ -525,7 +525,7 @@ return [
             'icon'    => 'fas fa-fw fa-map',
             'submenu' => [
                 [
-                    'text' => 'Live Tiktok',
+                    'text' => 'Live Data',
                     'url' => 'admin/live_data',
                     'icon' => 'nav-icon far fa-circle',
                     'can' => [PermissionEnum::ChangeOwnPassword],
