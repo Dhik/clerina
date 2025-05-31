@@ -84,7 +84,8 @@ class NetProfitController extends Controller
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 1;
-            $currentMonth = Carbon::now()->format('Y-m');
+            $startDate = Carbon::now()->subDays(40)->startOfDay();
+            $endDate = Carbon::now()->endOfDay();
             
             // Create an array to store date => KOL spent mapping
             $kolSpentData = [];
@@ -96,14 +97,17 @@ class NetProfitController extends Controller
                 
                 // Parse the date
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                $parsedDate = Carbon::parse($date);
                 
-                // Skip if not in current month
-                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                // Skip if not within the past 40 days
+                if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                     continue;
                 }
+                
                 $kolSpent = $this->parseCurrencyToInt($row[17]);
                 $kolSpentData[$date] = $kolSpent;
             }
+            
             // Counter for tracking updates
             $updatedCount = 0;
             
@@ -125,7 +129,7 @@ class NetProfitController extends Controller
             
             return response()->json([
                 'success' => true, 
-                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+                'message' => "KOL spent data updated successfully for the past 40 days. Updated {$updatedCount} records."
             ]);
         } catch(\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -142,26 +146,30 @@ class NetProfitController extends Controller
             $sheetData = $this->googleSheetService->getSheetData($range);
             
             $tenant_id = 2;
-            $currentMonth = Carbon::now()->format('Y-m');
+            $startDate = Carbon::now()->subDays(40)->startOfDay();
+            $endDate = Carbon::now()->endOfDay();
             
             // Create an array to store date => KOL spent mapping
             $kolSpentData = [];
             
             foreach ($sheetData as $row) {
-                if (empty($row) || empty($row[0]) || !isset($row[17])) { // 17 is index for column R
+                if (empty($row) || empty($row[0]) || !isset($row[12])) { // 12 is index for column M
                     continue;
                 }
                 
                 // Parse the date
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                $parsedDate = Carbon::parse($date);
                 
-                // Skip if not in current month
-                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                // Skip if not within the past 40 days
+                if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                     continue;
                 }
-                $kolSpent = $this->parseCurrencyToInt($row[17]);
+                
+                $kolSpent = $this->parseCurrencyToInt($row[12]);
                 $kolSpentData[$date] = $kolSpent;
             }
+            
             // Counter for tracking updates
             $updatedCount = 0;
             
@@ -183,7 +191,7 @@ class NetProfitController extends Controller
             
             return response()->json([
                 'success' => true, 
-                'message' => "KOL spent data updated successfully. Updated {$updatedCount} records."
+                'message' => "KOL spent data updated successfully for the past 40 days. Updated {$updatedCount} records."
             ]);
         } catch(\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -557,18 +565,25 @@ class NetProfitController extends Controller
     public function updateMarketing()
     {
         try {
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            
             DB::statement("
                 UPDATE net_profits
                 INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
                 SET net_profits.marketing = sales.ad_spent_total, 
                     net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
+                WHERE net_profits.date BETWEEN ? AND ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 1]);
+            ", [now(), $startDate, $endDate, 1]);
 
             return response()->json([
                 'success' => true,
+                'message' => "Marketing data updated successfully for the past 40 days.",
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -581,18 +596,25 @@ class NetProfitController extends Controller
     public function updateVisit()
     {
         try {
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            
             DB::statement("
                 UPDATE net_profits
                 INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
                 SET net_profits.visit = sales.visit, 
                     net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
+                WHERE net_profits.date BETWEEN ? AND ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 1]);
+            ", [now(), $startDate, $endDate, 1]);
 
             return response()->json([
                 'success' => true,
+                'message' => "Visit data updated successfully for the past 40 days.",
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -605,18 +627,25 @@ class NetProfitController extends Controller
     public function updateVisitAzrina()
     {
         try {
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            
             DB::statement("
                 UPDATE net_profits
                 INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
                 SET net_profits.visit = sales.visit, 
                     net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
+                WHERE net_profits.date BETWEEN ? AND ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 2]);
+            ", [now(), $startDate, $endDate, 2]);
 
             return response()->json([
                 'success' => true,
+                'message' => "Visit data updated successfully for Azrina tenant for the past 40 days.",
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -629,18 +658,25 @@ class NetProfitController extends Controller
     public function updateMarketingAzrina()
     {
         try {
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+            
             DB::statement("
                 UPDATE net_profits
                 INNER JOIN sales ON net_profits.date = sales.date AND net_profits.tenant_id = sales.tenant_id
                 SET net_profits.marketing = sales.ad_spent_total, 
                     net_profits.updated_at = ?
-                WHERE MONTH(net_profits.date) = ?
-                AND YEAR(net_profits.date) = ?
+                WHERE net_profits.date BETWEEN ? AND ?
                 AND sales.tenant_id = ?
-            ", [now(), now()->month, now()->year, 2]);
+            ", [now(), $startDate, $endDate, 2]);
 
             return response()->json([
                 'success' => true,
+                'message' => "Marketing data updated successfully for Azrina tenant for the past 40 days.",
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -939,21 +975,21 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
-            // Update ROAS for records with non-zero marketing spend
+            // Update ROAS for records with non-zero marketing spend for the past 40 days
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->where('marketing', '!=', 0)
                 ->update([
                     'roas' => DB::raw('sales / marketing')
                 ]);
 
-            // Set ROAS to null for records with zero marketing spend
+            // Set ROAS to null for records with zero marketing spend for the past 40 days
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->where('marketing', 0)
                 ->update([
@@ -962,7 +998,11 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'ROAS updated successfully.'
+                'message' => 'ROAS updated successfully for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
         } catch (\Exception $e) {
             \Log::error('Update ROAS Error: ' . $e->getMessage());
@@ -977,21 +1017,21 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 2;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
-            // Update ROAS for records with non-zero marketing spend
+            // Update ROAS for records with non-zero marketing spend for the past 40 days
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->where('marketing', '!=', 0)
                 ->update([
                     'roas' => DB::raw('sales / marketing')
                 ]);
 
-            // Set ROAS to null for records with zero marketing spend
+            // Set ROAS to null for records with zero marketing spend for the past 40 days
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->where('marketing', 0)
                 ->update([
@@ -1000,13 +1040,17 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'ROAS updated successfully.'
+                'message' => 'ROAS updated successfully for Azrina tenant for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
         } catch (\Exception $e) {
-            \Log::error('Update ROAS Error: ' . $e->getMessage());
+            \Log::error('Update ROAS Azrina Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update ROAS.',
+                'message' => 'Failed to update ROAS for Azrina tenant.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1015,7 +1059,7 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
-            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
             $endDate = Carbon::now()->format('Y-m-d');
 
             // $startDate = Carbon::create(2025, 3, 1)->format('Y-m-d'); // March 1, 2025
@@ -1061,7 +1105,7 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Successfully updated $updatedCount net profit records with sales data",
+                'message' => "Successfully updated $updatedCount net profit records with sales data for the past 40 days",
                 'date_range' => "$startDate to $endDate"
             ]);
 
@@ -1077,7 +1121,7 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 2;
-            $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
             $endDate = Carbon::now()->format('Y-m-d');
 
             $netProfitDates = NetProfit::whereBetween('date', [$startDate, $endDate])
@@ -1120,14 +1164,14 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Successfully updated $updatedCount net profit records with sales data",
+                'message' => "Successfully updated $updatedCount net profit records with sales data for Azrina tenant for the past 40 days",
                 'date_range' => "$startDate to $endDate"
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating net profit sales data',
+                'message' => 'Error updating net profit sales data for Azrina tenant',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1136,10 +1180,11 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
             $dailyQty = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
+                ->whereBetween('orders.date', [$startDate, $endDate])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -1157,18 +1202,16 @@ class NetProfitController extends Controller
                 ->selectRaw('SUM(qty) as total_qty')
                 ->groupBy('date');
 
-            // Reset the quantity only for the current tenant
+            // Reset the quantity for the past 40 days for the current tenant
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->update(['qty' => 0]);
 
-            // Update quantities only for the current tenant
+            // Update quantities for the past 40 days for the current tenant
             NetProfit::query()
                 ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
+                ->whereBetween('net_profits.date', [$startDate, $endDate])
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
@@ -1178,7 +1221,11 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Quantity updated successfully.'
+                'message' => 'Quantity updated successfully for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -1194,10 +1241,11 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 2;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
             $dailyQty = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
+                ->whereBetween('orders.date', [$startDate, $endDate])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -1215,18 +1263,16 @@ class NetProfitController extends Controller
                 ->selectRaw('SUM(qty) as total_qty')
                 ->groupBy('date');
 
-            // Reset the quantity only for the current tenant
+            // Reset the quantity for the past 40 days for Azrina tenant
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->update(['qty' => 0]);
 
-            // Update quantities only for the current tenant
+            // Update quantities for the past 40 days for Azrina tenant
             NetProfit::query()
                 ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
+                ->whereBetween('net_profits.date', [$startDate, $endDate])
                 ->joinSub($dailyQty, 'dq', function($join) {
                     $join->on('net_profits.date', '=', 'dq.date');
                 })
@@ -1236,14 +1282,18 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Quantity updated successfully.'
+                'message' => 'Quantity updated successfully for Azrina tenant for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Update Qty Error: ' . $e->getMessage());
+            \Log::error('Update Qty Azrina Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update quantity.',
+                'message' => 'Failed to update quantity for Azrina tenant.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1252,10 +1302,11 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 1;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
             $dailyOrders = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
+                ->whereBetween('orders.date', [$startDate, $endDate])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -1273,18 +1324,16 @@ class NetProfitController extends Controller
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');
 
-            // Reset order count and packing fee only for the current tenant
+            // Reset order count and packing fee for the past 40 days for the current tenant
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->update(['order' => 0, 'fee_packing' => 0]);
                 
-            // Update order count and packing fee only for the current tenant
+            // Update order count and packing fee for the past 40 days for the current tenant
             NetProfit::query()
                 ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
+                ->whereBetween('net_profits.date', [$startDate, $endDate])
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })
@@ -1295,7 +1344,11 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order count and packing fee updated successfully.'
+                'message' => 'Order count and packing fee updated successfully for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -1311,10 +1364,11 @@ class NetProfitController extends Controller
     {
         try {
             $tenant_id = 2;
+            $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
 
             $dailyOrders = Order::query()
-                ->whereMonth('orders.date', now()->month)
-                ->whereYear('orders.date', now()->year)
+                ->whereBetween('orders.date', [$startDate, $endDate])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -1332,18 +1386,16 @@ class NetProfitController extends Controller
                 ->selectRaw('COUNT(DISTINCT id_order) as total_orders')
                 ->groupBy('date');
 
-            // Reset order count and packing fee only for the current tenant
+            // Reset order count and packing fee for the past 40 days for Azrina tenant
             NetProfit::query()
-                ->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->where('tenant_id', $tenant_id)
                 ->update(['order' => 0, 'fee_packing' => 0]);
                 
-            // Update order count and packing fee only for the current tenant
+            // Update order count and packing fee for the past 40 days for Azrina tenant
             NetProfit::query()
                 ->where('net_profits.tenant_id', $tenant_id)
-                ->whereMonth('net_profits.date', now()->month)
-                ->whereYear('net_profits.date', now()->year)
+                ->whereBetween('net_profits.date', [$startDate, $endDate])
                 ->joinSub($dailyOrders, 'do', function($join) {
                     $join->on('net_profits.date', '=', 'do.date');
                 })
@@ -1354,14 +1406,18 @@ class NetProfitController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order count and packing fee updated successfully.'
+                'message' => 'Order count and packing fee updated successfully for Azrina tenant for the past 40 days.',
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Update Order Count Error: ' . $e->getMessage());
+            \Log::error('Update Order Count Azrina Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update order count and packing fee.',
+                'message' => 'Failed to update order count and packing fee for Azrina tenant.',
                 'error' => $e->getMessage()
             ], 500);
         }
