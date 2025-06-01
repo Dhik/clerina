@@ -1337,7 +1337,6 @@ class SalesController extends Controller
         return response()->json($response);
     }
 
-
     public function importFromGoogleSheet()
     {
         $this->googleSheetService->setSpreadsheetId('1LGAez9IydEKgLZwRnFX7_20T_hjgZ6tz3t-YXo4QBUw');
@@ -1345,16 +1344,24 @@ class SalesController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
+        $startDate = Carbon::now()->subDays(40)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+        
+        $importedCount = 0;
 
         foreach ($sheetData as $row) {
             if (empty($row) || empty($row[0])) {
                 continue;
             }
+            
             $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+            $parsedDate = Carbon::parse($date);
+            
+            // Skip if not within the past 40 days
+            if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                 continue;
             }
+            
             $salesChannelData = [
                 4 => $row[8] ?? null, // Tiktok Shop (sales_channel_id == 4)
                 1 => $row[10] ?? null, // Shopee (sales_channel_id == 1)
@@ -1408,9 +1415,18 @@ class SalesController extends Controller
                     ]
                 );
             }
+            
+            $importedCount++;
         }
 
-        return response()->json(['message' => 'Data imported successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => "Data imported successfully for the past 40 days. Processed {$importedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ]
+        ]);
     }
 
     public function importAdsAzrina()
@@ -1420,7 +1436,10 @@ class SalesController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
-        $currentMonth = Carbon::now()->format('Y-m');
+        $startDate = Carbon::now()->subDays(40)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+        
+        $importedCount = 0;
 
         foreach ($sheetData as $row) {
             if (empty($row) || empty($row[0])) {
@@ -1429,7 +1448,10 @@ class SalesController extends Controller
             
             try {
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                $parsedDate = Carbon::parse($date);
+                
+                // Skip if not within the past 40 days
+                if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                     continue;
                 }
                 
@@ -1484,6 +1506,8 @@ class SalesController extends Controller
                         ]
                     );
                 }
+                
+                $importedCount++;
             } catch (\Exception $e) {
                 // Log any date parsing errors or other exceptions
                 \Log::error('Error importing ads data: ' . $e->getMessage());
@@ -1491,7 +1515,14 @@ class SalesController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Azrina ads data imported successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => "Azrina ads data imported successfully for the past 40 days. Processed {$importedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ]
+        ]);
     }
 
     public function importVisitCleora()
@@ -1501,16 +1532,24 @@ class SalesController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1;
-        $currentMonth = Carbon::now()->format('Y-m');
+        $startDate = Carbon::now()->subDays(40)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+        
+        $importedCount = 0;
 
         foreach ($sheetData as $row) {
             if (empty($row) || empty($row[0])) {
                 continue;
             }
+            
             $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
-            if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+            $parsedDate = Carbon::parse($date);
+            
+            // Skip if not within the past 40 days
+            if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                 continue;
             }
+            
             $salesChannelData = [
                 1 => $row[4] ?? null,
                 4 => $row[5] ?? null,
@@ -1535,9 +1574,20 @@ class SalesController extends Controller
                     ]
                 );
             }
+            
+            $importedCount++;
         }
-        return response()->json(['message' => 'Data imported successfully']);
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Visit data imported successfully for Cleora for the past 40 days. Processed {$importedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ]
+        ]);
     }
+
     public function importVisitAzrina()
     {
         // Set the spreadsheet ID to the new one
@@ -1548,7 +1598,10 @@ class SalesController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 2;
-        $currentMonth = Carbon::now()->format('Y-m');
+        $startDate = Carbon::now()->subDays(40)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+        
+        $importedCount = 0;
 
         foreach ($sheetData as $row) {
             // Skip rows without date in column A
@@ -1558,9 +1611,10 @@ class SalesController extends Controller
             
             try {
                 $date = Carbon::createFromFormat('d/m/Y', $row[0])->format('Y-m-d');
+                $parsedDate = Carbon::parse($date);
                 
-                // Skip rows not from current month
-                if (Carbon::parse($date)->format('Y-m') !== $currentMonth) {
+                // Skip if not within the past 40 days
+                if ($parsedDate->lt($startDate) || $parsedDate->gt($endDate)) {
                     continue;
                 }
                 
@@ -1591,6 +1645,8 @@ class SalesController extends Controller
                         ]
                     );
                 }
+                
+                $importedCount++;
             } catch (\Exception $e) {
                 // Log any date parsing errors or other exceptions
                 \Log::error('Error importing visit data: ' . $e->getMessage());
@@ -1598,7 +1654,14 @@ class SalesController extends Controller
             }
         }
         
-        return response()->json(['message' => 'Data imported successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => "Visit data imported successfully for Azrina for the past 40 days. Processed {$importedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ]
+        ]);
     }
 
 
@@ -1613,10 +1676,12 @@ class SalesController extends Controller
     public function updateMonthlyAdSpentData()
     {
         try {
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
+            $startDate = Carbon::now()->subDays(40);
+            $endDate = Carbon::now();
+            
+            $updatedCount = 0;
 
-            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
                 $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 1)
@@ -1642,12 +1707,23 @@ class SalesController extends Controller
                     'roas' => $roas,
                 ];
                 
-                Sales::where('tenant_id', 1)
+                $updated = Sales::where('tenant_id', 1)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
+                    
+                if ($updated) {
+                    $updatedCount++;
+                }
             }
 
-            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+            return response()->json([
+                'status' => 'success', 
+                'message' => "Ad spent data updated successfully for the past 40 days. Updated {$updatedCount} records.",
+                'date_range' => [
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d')
+                ]
+            ]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
@@ -1656,10 +1732,12 @@ class SalesController extends Controller
     public function updateMonthlyAdSpentDataAzrina()
     {
         try {
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
+            $startDate = Carbon::now()->subDays(40);
+            $endDate = Carbon::now();
+            
+            $updatedCount = 0;
 
-            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
                 $sumSpentSocialMedia = AdSpentSocialMedia::where('tenant_id', 2)
@@ -1687,12 +1765,23 @@ class SalesController extends Controller
                     'roas' => $roas,
                 ];
                 
-                Sales::where('tenant_id', 2)
+                $updated = Sales::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
+                    
+                if ($updated) {
+                    $updatedCount++;
+                }
             }
 
-            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+            return response()->json([
+                'status' => 'success', 
+                'message' => "Ad spent data updated successfully for Azrina tenant for the past 40 days. Updated {$updatedCount} records.",
+                'date_range' => [
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d')
+                ]
+            ]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
@@ -1701,10 +1790,13 @@ class SalesController extends Controller
     public function updateMonthlyVisitData()
     {
         try {
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
+            $startDate = Carbon::now()->subDays(40);
+            $endDate = Carbon::now();
+            
+            $updatedCleoraCount = 0;
+            $updatedAzrinaCount = 0;
 
-            for ($date = $startOfMonth; $date <= $endOfMonth; $date->addDay()) {
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
                 $formattedDate = $date->format('Y-m-d');
 
                 $sumVisitCleora = Visit::where('tenant_id', 1)
@@ -1718,19 +1810,38 @@ class SalesController extends Controller
                 $dataToUpdate = [
                     'visit' => $sumVisitCleora,
                 ];
-                Sales::where('tenant_id', 1)
+                $updatedCleora = Sales::where('tenant_id', 1)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
+                    
+                if ($updatedCleora) {
+                    $updatedCleoraCount++;
+                }
 
                 $dataToUpdate = [
                     'visit' => $sumVisitAzrina,
                 ];
-                Sales::where('tenant_id', 2)
+                $updatedAzrina = Sales::where('tenant_id', 2)
                     ->where('date', $formattedDate)
                     ->update($dataToUpdate);
+                    
+                if ($updatedAzrina) {
+                    $updatedAzrinaCount++;
+                }
             }
 
-            return response()->json(['status' => 'success', 'message' => 'Ad spent data updated for the current month.']);
+            return response()->json([
+                'status' => 'success', 
+                'message' => "Visit data updated successfully for the past 40 days. Updated {$updatedCleoraCount} Cleora records and {$updatedAzrinaCount} Azrina records.",
+                'date_range' => [
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d')
+                ],
+                'updated_counts' => [
+                    'cleora' => $updatedCleoraCount,
+                    'azrina' => $updatedAzrinaCount
+                ]
+            ]);
         } catch (Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }

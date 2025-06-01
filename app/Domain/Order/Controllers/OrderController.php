@@ -292,7 +292,7 @@ class OrderController extends Controller
 
     public function updateSalesTurnover()
     {
-        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
         
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
@@ -307,6 +307,8 @@ class OrderController extends Controller
                         ])
                         ->groupBy('date')
                         ->get();
+        
+        $updatedCount = 0;
         
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
@@ -348,13 +350,22 @@ class OrderController extends Controller
                 ->where('date', $formattedDate)
                 ->where('tenant_id', 1)
                 ->update(['sales' => $total->total_amount]);
+                
+            $updatedCount++;
         }
         
-        return response()->json(['message' => 'Net profits sales updated successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => "Net profits sales updated successfully for the past 40 days. Updated {$updatedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ]
+        ]);
     }
     public function updateSalesTurnover2()
     {
-        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $startDate = Carbon::now()->subDays(40)->format('Y-m-d');
         $endDate = Carbon::now()->format('Y-m-d');
         
         $totals = Order::select(DB::raw('date, SUM(amount) AS total_amount'))
@@ -369,6 +380,8 @@ class OrderController extends Controller
                         ])
                         ->groupBy('date')
                         ->get();
+        
+        $updatedCount = 0;
         
         foreach ($totals as $total) {
             $formattedDate = Carbon::parse($total->date)->format('Y-m-d');
@@ -410,9 +423,18 @@ class OrderController extends Controller
                 ->where('date', $formattedDate)
                 ->where('tenant_id', 2)
                 ->update(['sales' => $total->total_amount]);
+                
+            $updatedCount++;
         }
         
-        return response()->json(['message' => 'Net profits sales updated successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => "Net profits sales updated successfully for Azrina tenant for the past 40 days. Updated {$updatedCount} records.",
+            'date_range' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ]
+        ]);
     }
     public function updateSalesTurnoverAzrina()
     {
