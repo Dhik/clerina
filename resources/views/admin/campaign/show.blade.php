@@ -146,58 +146,6 @@
             });
         });
 
-        $('#confirmRefreshAll').click(function() {
-            const contents = $('#refreshAllContentList tr');
-            const totalContents = contents.length;
-            let completedContents = 0;
-            let currentIndex = 0;
-
-            // Function to process one content at a time
-            function processNextContent() {
-                if (currentIndex >= totalContents) {
-                    return; // All done
-                }
-
-                const contentRow = contents.eq(currentIndex);
-                const contentId = contentRow.attr('id').split('-')[1];
-                
-                // Show loading spinner
-                $(`#content-${contentId} td:last-child`).html('<i class="fas fa-spinner fa-spin text-primary"></i>');
-
-                $.ajax({
-                    url: "{{ route('statistic.refresh', ['campaignContent' => ':campaignContentId']) }}".replace(':campaignContentId', contentId),
-                    method: 'GET',
-                    timeout: 30000, // 30 second timeout
-                    success: function(data) {
-                        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-check text-success"></i>');
-                        completedContents++;
-                        updateProgressBar(completedContents, totalContents);
-                        
-                        // Move to next content after 1 second delay
-                        setTimeout(function() {
-                            currentIndex++;
-                            processNextContent();
-                        }, 1000);
-                    },
-                    error: function(xhr, status, error) {
-                        console.log(`Error refreshing content ${contentId}:`, error);
-                        $(`#content-${contentId} td:last-child`).html('<i class="fas fa-times text-danger"></i>');
-                        completedContents++;
-                        updateProgressBar(completedContents, totalContents);
-                        
-                        // Move to next content after 1 second delay even on error
-                        setTimeout(function() {
-                            currentIndex++;
-                            processNextContent();
-                        }, 1000);
-                    }
-                });
-            }
-
-            // Start processing the first content
-            processNextContent();
-        });
-
         function updateProgressBar(completed, total) {
             const progressPercentage = Math.round((completed / total) * 100);
             $('#refreshProgressBar').css('width', progressPercentage + '%')
