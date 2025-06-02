@@ -272,13 +272,13 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
         // Check if this KOL meets the qualification criteria
         $meetsQualification = $kol->views_last_9_post == 1 && 
                             $kol->activity_posting == 1 && 
-                            $kol->followers > 1000;
+                            $kol->followers > 500;
         
         if ($meetsQualification) {
             // Count current qualified KOLs
             $qualifiedCount = KeyOpinionLeader::where('status_affiliate', 'Qualified')->count();
             
-            if ($qualifiedCount < 1000) {
+            if ($qualifiedCount < 500) {
                 // Still room for more qualified KOLs
                 $kol->update(['status_affiliate' => 'Qualified']);
             } else {
@@ -306,7 +306,7 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
                     $nextBestWaitingKol = KeyOpinionLeader::where('status_affiliate', 'Waiting List')
                         ->where('views_last_9_post', 1)
                         ->where('activity_posting', 1)
-                        ->where('followers', '>', 1000)
+                        ->where('followers', '>', 500)
                         ->orderBy('followers', 'desc')
                         ->first();
                         
