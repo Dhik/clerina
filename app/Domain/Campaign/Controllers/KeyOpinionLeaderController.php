@@ -711,8 +711,9 @@ class KeyOpinionLeaderController extends Controller
         $usernames = $query->whereIn('channel', ['tiktok_video'])
                         ->where('type', 'affiliate')
                         ->where('followers', 0)
-                        ->where('following', 0)
-                        ->whereDate('created_at', '2025-06-02')
+                        // ->where('following', 0)
+                        ->where('total_likes', '>', 0)
+                        // ->whereDate('created_at', '2025-06-02')
                         ->pluck('username')
                         ->toArray();
 
