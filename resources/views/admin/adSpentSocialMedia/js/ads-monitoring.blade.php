@@ -35,24 +35,20 @@ $(document).ready(function() {
             {data: 'channel', name: 'channel'},
             {data: 'gmv_target', name: 'gmv_target'},
             {data: 'gmv_actual', name: 'gmv_actual'},
-            // {data: 'gmv_variance', name: 'gmv_variance', orderable: false},
             {data: 'spent_target', name: 'spent_target'},
             {data: 'spent_actual', name: 'spent_actual'},
-            // {data: 'spent_variance', name: 'spent_variance', orderable: false},
             {data: 'roas_target', name: 'roas_target'},
             {data: 'roas_actual', name: 'roas_actual'},
-            // {data: 'roas_variance', name: 'roas_variance', orderable: false},
             {data: 'cpa_target', name: 'cpa_target'},
             {data: 'cpa_actual', name: 'cpa_actual'},
-            // {data: 'cpa_variance', name: 'cpa_variance', orderable: false},
             {data: 'aov_to_cpa_target', name: 'aov_to_cpa_target'},
             {data: 'aov_to_cpa_actual', name: 'aov_to_cpa_actual'},
             {data: 'daily_score', name: 'daily_score', orderable: false, searchable: false},
             {data: 'performance_status', name: 'performance_status', orderable: false}
         ],
         columnDefs: [
-            { "targets": [2, 3, 5, 6, 8, 9, 11, 12, 14, 15], "className": "text-right" },
-            { "targets": [1, 4, 7, 10, 13, 16, 17], "className": "text-center" }
+            { "targets": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "className": "text-right" },
+            { "targets": [1, 12, 13], "className": "text-center" }
         ],
         order: [[0, 'desc'], [1, 'asc']],
         fixedHeader: true,
