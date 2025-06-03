@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Domain\Sales\Controllers;
 
 use App\Domain\Sales\Models\OperationalSpent;
@@ -24,7 +23,15 @@ class OperationalSpentController extends Controller
 
         return DataTables::of($query)
             ->addColumn('actions', function ($row) {
-                return '<button onclick="editData('.$row->id.')" class="btn btn-sm btn-primary">Edit</button>';
+                // UPDATED ACTIONS COLUMN WITH DELETE BUTTON
+                return '
+                    <button onclick="editData('.$row->id.')" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="deleteData('.$row->id.')" class="btn btn-sm btn-danger ml-1">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                ';
             })
             ->editColumn('spent', function ($row) {
                 return number_format($row->spent, 0, ',', '.');
@@ -66,5 +73,38 @@ class OperationalSpentController extends Controller
         ->update(['operasional' => $dailyOperational]);
 
         return response()->json(['success' => true]);
+    }
+
+    // NEW DELETE METHOD
+    public function destroy(Request $request)
+    {
+        try {
+            $operationalSpent = OperationalSpent::where('id', $request->id)
+                ->where('tenant_id', Auth::user()->current_tenant_id)
+                ->first();
+
+            if (!$operationalSpent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Operational spent not found'
+                ], 404);
+            }
+
+            // Reset the operational value in NetProfit to 0 when deleting
+            NetProfit::query()
+                ->whereYear('date', $operationalSpent->year)
+                ->whereMonth('date', $operationalSpent->month)
+                ->where('tenant_id', Auth::user()->current_tenant_id)
+                ->update(['operasional' => 0]);
+
+            $operationalSpent->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete operational spent'
+            ], 500);
+        }
     }
 }

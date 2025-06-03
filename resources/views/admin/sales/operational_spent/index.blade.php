@@ -198,5 +198,46 @@ function saveData(e) {
 function editData(id) {
     showModal(id);
 }
+
+// NEW DELETE FUNCTION
+function deleteData(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('operational-spent.destroy') }}",
+                type: 'DELETE',
+                data: {
+                    id: id,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire(
+                            'Deleted!',
+                            'Operational spent has been deleted.',
+                            'success'
+                        );
+                        table.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire(
+                        'Error!',
+                        'Failed to delete operational spent.',
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+}
 </script>
 @stop
