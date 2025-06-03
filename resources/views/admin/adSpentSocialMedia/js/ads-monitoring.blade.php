@@ -112,6 +112,113 @@ $(document).ready(function() {
         }, 2000);
     });
 
+    // Refresh Data button handler
+    $('#btnRefreshAdsMonitoringData').click(function() {
+        Swal.fire({
+            title: 'Refresh Ads Monitoring Data',
+            text: 'This will update actual performance data from TikTok, Shopee, and Meta ads for the current month. Continue?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, refresh data',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                refreshAdsMonitoringData();
+            }
+        });
+    });
+
+    // Function to refresh ads monitoring data
+    function refreshAdsMonitoringData() {
+        // Show loading with progress
+        Swal.fire({
+            title: 'Refreshing Data...',
+            html: 'Updating actual performance data from all ad platforms...',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Call refresh all endpoint
+        fetch("{{ route('adSpentSocialMedia.refresh_all_ads_monitoring') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                Swal.fire({
+                    title: 'Success!',
+                    html: `
+                        <div class="text-left">
+                            <p><strong>All ads monitoring data refreshed successfully!</strong></p>
+                            <ul>
+                                <li>TikTok: ${result.results.tiktok.message}</li>
+                                <li>Shopee: ${result.results.shopee.message}</li>
+                                <li>Meta: ${result.results.meta.message}</li>
+                            </ul>
+                            <p><small>Period: ${result.period}</small></p>
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Refresh the table and charts
+                    adsMonitoringTable.draw();
+                    initAdsMonitoringCharts();
+                });
+            } else if (result.status === 'partial_success') {
+                let errorMessages = [];
+                Object.keys(result.results).forEach(platform => {
+                    if (result.results[platform].status === 'error') {
+                        errorMessages.push(`${platform.charAt(0).toUpperCase() + platform.slice(1)}: ${result.results[platform].message}`);
+                    }
+                });
+                
+                Swal.fire({
+                    title: 'Partial Success',
+                    html: `
+                        <div class="text-left">
+                            <p>Some platforms were updated successfully, but there were errors:</p>
+                            <ul>
+                                ${errorMessages.map(msg => `<li class="text-danger">${msg}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    adsMonitoringTable.draw();
+                    initAdsMonitoringCharts();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: result.message || 'Failed to refresh ads monitoring data',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing ads monitoring data:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Network error occurred while refreshing data',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        });
+    }
+
     // Filter change handlers
     adsMonitoringChannelFilter.change(function() {
         adsMonitoringTable.draw();

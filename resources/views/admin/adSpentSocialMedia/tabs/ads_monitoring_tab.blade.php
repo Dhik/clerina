@@ -24,6 +24,9 @@
                                 </div>
                                 <div class="col-auto">
                                     <div class="btn-group">
+                                        <button type="button" class="btn btn-info" id="btnRefreshAdsMonitoringData">
+                                            <i class="fas fa-sync-alt"></i> Refresh Data
+                                        </button>
                                         <button type="button" class="btn btn-success" id="btnExportAdsMonitoringReport">
                                             <i class="fas fa-file-export"></i> Export Report
                                         </button>

@@ -111,6 +111,11 @@ Route::prefix('admin')
                 Route::get('/ads-monitoring/get', [AdSpentSocialMediaController::class, 'get_ads_monitoring'])->name('adSpentSocialMedia.get_ads_monitoring');
                 Route::get('/ads-monitoring/chart-data', [AdSpentSocialMediaController::class, 'get_ads_monitoring_chart_data'])->name('adSpentSocialMedia.ads_monitoring_chart_data');
                 Route::post('/ads-monitoring/export', [AdSpentSocialMediaController::class, 'export_ads_monitoring'])->name('adSpentSocialMedia.export_ads_monitoring');
+                Route::post('/ads-monitoring/refresh/tiktok', [AdSpentSocialMediaController::class, 'refresh_tiktok_ads_monitoring'])->name('adSpentSocialMedia.refresh_tiktok_ads_monitoring');
+                Route::post('/ads-monitoring/refresh/shopee', [AdSpentSocialMediaController::class, 'refresh_shopee_ads_monitoring'])->name('adSpentSocialMedia.refresh_shopee_ads_monitoring');
+                Route::post('/ads-monitoring/refresh/meta', [AdSpentSocialMediaController::class, 'refresh_meta_ads_monitoring'])->name('adSpentSocialMedia.refresh_meta_ads_monitoring');
+                Route::post('/ads-monitoring/refresh/all', [AdSpentSocialMediaController::class, 'refresh_all_ads_monitoring'])->name('adSpentSocialMedia.refresh_all_ads_monitoring');
+                Route::get('/ads-monitoring/refresh/status', [AdSpentSocialMediaController::class, 'get_ads_monitoring_refresh_status'])->name('adSpentSocialMedia.get_ads_monitoring_refresh_status');
                 
                 // Existing chart data routes
                 // Route::get('/line-data', [AdSpentSocialMediaController::class, 'get_line_data'])->name('adSpentSocialMedia.line-data');

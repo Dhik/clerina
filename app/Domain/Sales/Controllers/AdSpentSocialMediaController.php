@@ -5355,4 +5355,244 @@ class AdSpentSocialMediaController extends Controller
             ], 500);
         }
     }
+    public function refresh_tiktok_ads_monitoring(Request $request)
+    {
+        try {
+            $currentMonth = Carbon::now()->format('Y-m');
+            $startDate = $currentMonth . '-01';
+            $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+            $affectedRows = DB::statement("
+                UPDATE ads_monitoring am
+                JOIN ads_tiktok at ON am.date = at.date
+                SET 
+                    am.spent_actual = at.amount_spent,
+                    am.gmv_actual = at.purchases_conversion_value_shared_items,
+                    am.cpa_actual = at.cost_per_purchase,
+                    am.roas_actual = CASE 
+                        WHEN at.amount_spent > 0 THEN 
+                            ROUND(at.purchases_conversion_value_shared_items / at.amount_spent, 4)
+                        ELSE NULL 
+                    END,
+                    am.updated_at = NOW()
+                WHERE am.channel = 'tiktok_ads'
+                AND am.date >= ?
+                AND am.date <= ?
+            ", [$startDate, $endDate]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'TikTok ads data refreshed successfully',
+                'period' => $currentMonth,
+                'affected_rows' => $affectedRows
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to refresh TikTok ads data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh Shopee ads actual data
+     */
+    public function refresh_shopee_ads_monitoring(Request $request)
+    {
+        try {
+            $currentMonth = Carbon::now()->format('Y-m');
+            $startDate = $currentMonth . '-01';
+            $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+            $affectedRows = DB::statement("
+                UPDATE ads_monitoring am
+                JOIN (
+                    SELECT 
+                        date,
+                        SUM(biaya) as total_spent,
+                        SUM(omzet_penjualan) as total_gmv,
+                        AVG(CASE WHEN produk_terjual > 0 THEN biaya / produk_terjual ELSE NULL END) as avg_cpa
+                    FROM ads_shopee 
+                    WHERE date >= ? 
+                    AND date <= ?
+                    GROUP BY date
+                ) as_grouped ON am.date = as_grouped.date
+                SET 
+                    am.spent_actual = as_grouped.total_spent,
+                    am.gmv_actual = as_grouped.total_gmv,
+                    am.cpa_actual = as_grouped.avg_cpa,
+                    am.roas_actual = CASE 
+                        WHEN as_grouped.total_spent > 0 THEN 
+                            ROUND(as_grouped.total_gmv / as_grouped.total_spent, 4)
+                        ELSE NULL 
+                    END,
+                    am.updated_at = NOW()
+                WHERE am.channel = 'shopee_ads'
+                AND am.date >= ?
+                AND am.date <= ?
+            ", [$startDate, $endDate, $startDate, $endDate]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Shopee ads data refreshed successfully',
+                'period' => $currentMonth,
+                'affected_rows' => $affectedRows
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to refresh Shopee ads data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh Meta ads actual data
+     */
+    public function refresh_meta_ads_monitoring(Request $request)
+    {
+        try {
+            $currentMonth = Carbon::now()->format('Y-m');
+            $startDate = $currentMonth . '-01';
+            $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+            $affectedRows = DB::statement("
+                UPDATE ads_monitoring am
+                JOIN (
+                    SELECT 
+                        date,
+                        SUM(amount_spent) as total_spent,
+                        SUM(purchases_conversion_value_shared_items) as total_gmv,
+                        SUM(purchases_shared_items) as total_purchases,
+                        AVG(CASE 
+                            WHEN purchases_shared_items > 0 THEN amount_spent / purchases_shared_items 
+                            ELSE NULL 
+                        END) as avg_cpa
+                    FROM ads_meta 
+                    WHERE date >= ? 
+                    AND date <= ?
+                    GROUP BY date
+                ) am_grouped ON am.date = am_grouped.date
+                SET 
+                    am.spent_actual = am_grouped.total_spent,
+                    am.gmv_actual = am_grouped.total_gmv,
+                    am.cpa_actual = am_grouped.avg_cpa,
+                    am.roas_actual = CASE 
+                        WHEN am_grouped.total_spent > 0 THEN 
+                            ROUND(am_grouped.total_gmv / am_grouped.total_spent, 4)
+                        ELSE NULL 
+                    END,
+                    am.updated_at = NOW()
+                WHERE am.channel = 'meta_ads'
+                AND am.date >= ?
+                AND am.date <= ?
+            ", [$startDate, $endDate, $startDate, $endDate]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Meta ads data refreshed successfully',
+                'period' => $currentMonth,
+                'affected_rows' => $affectedRows
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to refresh Meta ads data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh all ads monitoring data (TikTok, Shopee, Meta)
+     */
+    public function refresh_all_ads_monitoring(Request $request)
+    {
+        try {
+            $results = [];
+            $currentMonth = Carbon::now()->format('Y-m');
+
+            // Refresh TikTok
+            $tiktokResponse = $this->refresh_tiktok_ads_monitoring($request);
+            $tiktokData = json_decode($tiktokResponse->getContent(), true);
+            $results['tiktok'] = $tiktokData;
+
+            // Refresh Shopee
+            $shopeeResponse = $this->refresh_shopee_ads_monitoring($request);
+            $shopeeData = json_decode($shopeeResponse->getContent(), true);
+            $results['shopee'] = $shopeeData;
+
+            // Refresh Meta
+            $metaResponse = $this->refresh_meta_ads_monitoring($request);
+            $metaData = json_decode($metaResponse->getContent(), true);
+            $results['meta'] = $metaData;
+
+            // Check if any failed
+            $hasErrors = collect($results)->contains(function($result) {
+                return $result['status'] === 'error';
+            });
+
+            if ($hasErrors) {
+                return response()->json([
+                    'status' => 'partial_success',
+                    'message' => 'Some ads data refresh operations had errors',
+                    'results' => $results,
+                    'period' => $currentMonth
+                ], 207); // Multi-Status
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'All ads monitoring data refreshed successfully',
+                'results' => $results,
+                'period' => $currentMonth,
+                'total_affected_rows' => array_sum(array_column($results, 'affected_rows'))
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to refresh all ads monitoring data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get refresh status and last update info
+     */
+    public function get_ads_monitoring_refresh_status(Request $request)
+    {
+        try {
+            $currentMonth = Carbon::now()->format('Y-m');
+            
+            $status = DB::select("
+                SELECT 
+                    channel,
+                    COUNT(*) as total_records,
+                    COUNT(CASE WHEN spent_actual IS NOT NULL THEN 1 END) as records_with_actual,
+                    MAX(updated_at) as last_updated,
+                    MIN(date) as period_start,
+                    MAX(date) as period_end
+                FROM ads_monitoring 
+                WHERE DATE_FORMAT(date, '%Y-%m') = ?
+                GROUP BY channel
+                ORDER BY channel
+            ", [$currentMonth]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $status,
+                'period' => $currentMonth,
+                'last_check' => Carbon::now()->format('Y-m-d H:i:s')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to get refresh status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
