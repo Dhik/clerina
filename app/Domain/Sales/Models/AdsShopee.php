@@ -42,6 +42,7 @@ class AdsShopee extends Model
         'total_penjualan_pesanan_dibuat_idr',
         'penjualan_pesanan_siap_dikirim_idr',
         'tenant_id',
+        'jenis_ads',
     ];
 
     protected $casts = [
