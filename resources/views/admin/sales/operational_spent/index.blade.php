@@ -100,6 +100,7 @@
 </style>
 @stop
 
+
 @section('js')
 <script>
 $.ajaxSetup({
@@ -131,18 +132,29 @@ let table = $('#operationalSpentTable').DataTable({
     ]
 });
 
+// FIXED: Updated showModal function to handle both add and edit cases properly
 function showModal(id = null) {
     if (id) {
-        $.get("{{ route('operational-spent.getByDate') }}", { id: id }, function(data) {
+        // Edit mode - fetch data by ID
+        $.get("{{ route('operational-spent.getById') }}", { id: id }, function(data) {
             $('#id').val(data.id);
             $('#month').val(data.month);
             $('#year').val(data.year);
             $('#spent').val(data.spent);
+            $('#formModalLabel').text('Edit Operational Spent');
             $('#formModal').modal('show');
+        }).fail(function() {
+            Swal.fire(
+                'Error!',
+                'Failed to load operational spent data.',
+                'error'
+            );
         });
     } else {
+        // Add mode - reset form
         $('#operationalSpentForm')[0].reset();
         $('#id').val('');
+        $('#formModalLabel').text('Add Operational Spent');
         $('#formModal').modal('show');
     }
 }
@@ -199,7 +211,6 @@ function editData(id) {
     showModal(id);
 }
 
-// NEW DELETE FUNCTION
 function deleteData(id) {
     Swal.fire({
         title: 'Are you sure?',

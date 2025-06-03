@@ -126,8 +126,9 @@ Route::prefix('admin')
             Route::get('/', [OperationalSpentController::class, 'index'])->name('operational-spent.index');
             Route::get('/get', [OperationalSpentController::class, 'get'])->name('operational-spent.get');
             Route::get('/getByDate', [OperationalSpentController::class, 'getByDate'])->name('operational-spent.getByDate');
+            Route::get('/getById', [OperationalSpentController::class, 'getById'])->name('operational-spent.getById'); // NEW ROUTE
             Route::post('/', [OperationalSpentController::class, 'store'])->name('operational-spent.store');
-            Route::delete('/destroy', [OperationalSpentController::class, 'destroy'])->name('operational-spent.destroy'); // NEW ROUTE
+            Route::delete('/destroy', [OperationalSpentController::class, 'destroy'])->name('operational-spent.destroy');
         });
 
         Route::prefix('net-profit')->group(function () {
