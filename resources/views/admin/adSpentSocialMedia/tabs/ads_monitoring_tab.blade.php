@@ -100,16 +100,12 @@
                                     <th>Channel</th>
                                     <th>GMV Target</th>
                                     <th>GMV Actual</th>
-                                    <th>GMV Variance</th>
                                     <th>Spent Target</th>
                                     <th>Spent Actual</th>
-                                    <th>Spent Variance</th>
                                     <th>ROAS Target</th>
                                     <th>ROAS Actual</th>
-                                    <th>ROAS Variance</th>
                                     <th>CPA Target</th>
                                     <th>CPA Actual</th>
-                                    <th>CPA Variance</th>
                                     <th>AOV/CPA Target</th>
                                     <th>AOV/CPA Actual</th>
                                     <th>Daily Score</th>
