@@ -47,11 +47,12 @@ $(document).ready(function() {
             {data: 'cpa_variance', name: 'cpa_variance', orderable: false},
             {data: 'aov_to_cpa_target', name: 'aov_to_cpa_target'},
             {data: 'aov_to_cpa_actual', name: 'aov_to_cpa_actual'},
+            {data: 'daily_score', name: 'daily_score', orderable: false, searchable: false},
             {data: 'performance_status', name: 'performance_status', orderable: false}
         ],
         columnDefs: [
             { "targets": [2, 3, 5, 6, 8, 9, 11, 12, 14, 15], "className": "text-right" },
-            { "targets": [1, 4, 7, 10, 13, 16], "className": "text-center" }
+            { "targets": [1, 4, 7, 10, 13, 16, 17], "className": "text-center" }
         ],
         order: [[0, 'desc'], [1, 'asc']],
         fixedHeader: true,

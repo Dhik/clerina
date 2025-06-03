@@ -5102,41 +5102,25 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            ->addColumn('daily_score', function ($row) {
+                return $this->calculateDailyScore($row);
+            })
             ->addColumn('performance_status', function ($row) {
-                $scores = [];
+                $totalScore = $this->calculateTotalScore($row);
+                $maxScore = 102; // 20 + 25 + 25 + 15 + 15 + 2 (bonus points)
                 
-                // GMV Performance
-                if ($row->gmv_target && $row->gmv_actual) {
-                    $gmvScore = ($row->gmv_actual >= $row->gmv_target) ? 1 : 0;
-                    $scores[] = $gmvScore;
-                }
+                $percentage = ($totalScore / $maxScore) * 100;
                 
-                // ROAS Performance
-                if ($row->roas_target && $row->roas_actual) {
-                    $roasScore = ($row->roas_actual >= $row->roas_target) ? 1 : 0;
-                    $scores[] = $roasScore;
-                }
-                
-                // CPA Performance (lower is better)
-                if ($row->cpa_target && $row->cpa_actual) {
-                    $cpaScore = ($row->cpa_actual <= $row->cpa_target) ? 1 : 0;
-                    $scores[] = $cpaScore;
-                }
-                
-                if (empty($scores)) {
-                    return '<span class="badge badge-secondary">No Data</span>';
-                }
-                
-                $avgScore = array_sum($scores) / count($scores);
-                
-                if ($avgScore >= 0.8) {
-                    return '<span class="badge badge-success">Excellent</span>';
-                } elseif ($avgScore >= 0.6) {
-                    return '<span class="badge badge-warning">Good</span>';
-                } elseif ($avgScore >= 0.4) {
-                    return '<span class="badge badge-info">Average</span>';
+                if ($percentage >= 90) {
+                    return '<span class="badge badge-success">Excellent (' . $totalScore . '/' . $maxScore . ')</span>';
+                } elseif ($percentage >= 80) {
+                    return '<span class="badge badge-primary">Very Good (' . $totalScore . '/' . $maxScore . ')</span>';
+                } elseif ($percentage >= 70) {
+                    return '<span class="badge badge-info">Good (' . $totalScore . '/' . $maxScore . ')</span>';
+                } elseif ($percentage >= 60) {
+                    return '<span class="badge badge-warning">Average (' . $totalScore . '/' . $maxScore . ')</span>';
                 } else {
-                    return '<span class="badge badge-danger">Poor</span>';
+                    return '<span class="badge badge-danger">Poor (' . $totalScore . '/' . $maxScore . ')</span>';
                 }
             })
             ->editColumn('date', function ($row) {
@@ -5172,8 +5156,170 @@ class AdSpentSocialMediaController extends Controller
             ->editColumn('aov_to_cpa_actual', function ($row) {
                 return $row->aov_to_cpa_actual ? number_format($row->aov_to_cpa_actual, 2) : '-';
             })
-            ->rawColumns(['gmv_variance', 'spent_variance', 'roas_variance', 'cpa_variance', 'performance_status'])
+            ->rawColumns(['gmv_variance', 'spent_variance', 'roas_variance', 'cpa_variance', 'performance_status', 'daily_score'])
             ->make(true);
+    }
+
+    /**
+     * Calculate daily score breakdown for each KPI
+     */
+    private function calculateDailyScore($row)
+    {
+        $scores = [];
+        $details = [];
+        
+        // GMV Score (Bobot: 20, Max: 22)
+        if ($row->gmv_target && $row->gmv_actual) {
+            $achievement = ($row->gmv_actual / $row->gmv_target) * 100;
+            if ($achievement >= 100) {
+                $gmvScore = min(22, 20 + 2); // Base score + bonus
+                $details[] = '<span class="text-success">GMV: 22/22 (' . number_format($achievement, 1) . '%)</span>';
+            } else {
+                $gmvScore = max(0, round(($achievement / 100) * 20));
+                $details[] = '<span class="text-warning">GMV: ' . $gmvScore . '/22 (' . number_format($achievement, 1) . '%)</span>';
+            }
+            $scores[] = $gmvScore;
+        } else {
+            $details[] = '<span class="text-muted">GMV: N/A</span>';
+        }
+        
+        // Spent Score (Bobot: 25, Max: 27) - Lower is better
+        if ($row->spent_target && $row->spent_actual) {
+            $spentRatio = ($row->spent_actual / $row->spent_target) * 100;
+            if ($spentRatio <= 100) {
+                $spentScore = min(27, 25 + 2); // Bonus for staying under budget
+                $details[] = '<span class="text-success">Spent: 27/27 (' . number_format($spentRatio, 1) . '%)</span>';
+            } else {
+                // Penalty for overspending
+                $penalty = ($spentRatio - 100) / 100;
+                $spentScore = max(0, round(25 - ($penalty * 25)));
+                $details[] = '<span class="text-danger">Spent: ' . $spentScore . '/27 (' . number_format($spentRatio, 1) . '%)</span>';
+            }
+            $scores[] = $spentScore;
+        } else {
+            $details[] = '<span class="text-muted">Spent: N/A</span>';
+        }
+        
+        // ROAS Score (Bobot: 25, Max: 27)
+        if ($row->roas_target && $row->roas_actual) {
+            $roasAchievement = ($row->roas_actual / $row->roas_target) * 100;
+            if ($roasAchievement >= 100) {
+                $roasScore = min(27, 25 + 2); // Base score + bonus
+                $details[] = '<span class="text-success">ROAS: 27/27 (' . number_format($roasAchievement, 1) . '%)</span>';
+            } else {
+                $roasScore = max(0, round(($roasAchievement / 100) * 25));
+                $details[] = '<span class="text-warning">ROAS: ' . $roasScore . '/27 (' . number_format($roasAchievement, 1) . '%)</span>';
+            }
+            $scores[] = $roasScore;
+        } else {
+            $details[] = '<span class="text-muted">ROAS: N/A</span>';
+        }
+        
+        // CPA Score (Bobot: 15, Max: 17) - Lower is better
+        if ($row->cpa_target && $row->cpa_actual) {
+            $cpaRatio = ($row->cpa_actual / $row->cpa_target) * 100;
+            if ($cpaRatio <= 100) {
+                $cpaScore = min(17, 15 + 2); // Bonus for lower CPA
+                $details[] = '<span class="text-success">CPA: 17/17 (' . number_format($cpaRatio, 1) . '%)</span>';
+            } else {
+                // Penalty for higher CPA
+                $penalty = ($cpaRatio - 100) / 100;
+                $cpaScore = max(0, round(15 - ($penalty * 15)));
+                $details[] = '<span class="text-danger">CPA: ' . $cpaScore . '/17 (' . number_format($cpaRatio, 1) . '%)</span>';
+            }
+            $scores[] = $cpaScore;
+        } else {
+            $details[] = '<span class="text-muted">CPA: N/A</span>';
+        }
+        
+        // AOV to CPA Score (Bobot: 15, Max: 17)
+        if ($row->aov_to_cpa_target && $row->aov_to_cpa_actual) {
+            $aovCpaAchievement = ($row->aov_to_cpa_actual / $row->aov_to_cpa_target) * 100;
+            if ($aovCpaAchievement >= 100) {
+                $aovCpaScore = min(17, 15 + 2); // Base score + bonus
+                $details[] = '<span class="text-success">AOV/CPA: 17/17 (' . number_format($aovCpaAchievement, 1) . '%)</span>';
+            } else {
+                $aovCpaScore = max(0, round(($aovCpaAchievement / 100) * 15));
+                $details[] = '<span class="text-warning">AOV/CPA: ' . $aovCpaScore . '/17 (' . number_format($aovCpaAchievement, 1) . '%)</span>';
+            }
+            $scores[] = $aovCpaScore;
+        } else {
+            $details[] = '<span class="text-muted">AOV/CPA: N/A</span>';
+        }
+        
+        $totalScore = array_sum($scores);
+        $maxPossible = 110; // 22 + 27 + 27 + 17 + 17
+        
+        $html = '<div class="score-breakdown">';
+        $html .= '<div class="total-score mb-2"><strong>Total Score: ' . $totalScore . '/' . $maxPossible . '</strong></div>';
+        $html .= '<div class="score-details" style="font-size: 11px;">';
+        $html .= implode('<br>', $details);
+        $html .= '</div>';
+        $html .= '</div>';
+        
+        return $html;
+    }
+
+    /**
+     * Calculate total score for performance status
+     */
+    private function calculateTotalScore($row)
+    {
+        $totalScore = 0;
+        
+        // GMV Score (Max: 22)
+        if ($row->gmv_target && $row->gmv_actual) {
+            $achievement = ($row->gmv_actual / $row->gmv_target) * 100;
+            if ($achievement >= 100) {
+                $totalScore += min(22, 20 + 2);
+            } else {
+                $totalScore += max(0, round(($achievement / 100) * 20));
+            }
+        }
+        
+        // Spent Score (Max: 27)
+        if ($row->spent_target && $row->spent_actual) {
+            $spentRatio = ($row->spent_actual / $row->spent_target) * 100;
+            if ($spentRatio <= 100) {
+                $totalScore += min(27, 25 + 2);
+            } else {
+                $penalty = ($spentRatio - 100) / 100;
+                $totalScore += max(0, round(25 - ($penalty * 25)));
+            }
+        }
+        
+        // ROAS Score (Max: 27)
+        if ($row->roas_target && $row->roas_actual) {
+            $roasAchievement = ($row->roas_actual / $row->roas_target) * 100;
+            if ($roasAchievement >= 100) {
+                $totalScore += min(27, 25 + 2);
+            } else {
+                $totalScore += max(0, round(($roasAchievement / 100) * 25));
+            }
+        }
+        
+        // CPA Score (Max: 17)
+        if ($row->cpa_target && $row->cpa_actual) {
+            $cpaRatio = ($row->cpa_actual / $row->cpa_target) * 100;
+            if ($cpaRatio <= 100) {
+                $totalScore += min(17, 15 + 2);
+            } else {
+                $penalty = ($cpaRatio - 100) / 100;
+                $totalScore += max(0, round(15 - ($penalty * 15)));
+            }
+        }
+        
+        // AOV to CPA Score (Max: 17)
+        if ($row->aov_to_cpa_target && $row->aov_to_cpa_actual) {
+            $aovCpaAchievement = ($row->aov_to_cpa_actual / $row->aov_to_cpa_target) * 100;
+            if ($aovCpaAchievement >= 100) {
+                $totalScore += min(17, 15 + 2);
+            } else {
+                $totalScore += max(0, round(($aovCpaAchievement / 100) * 15));
+            }
+        }
+        
+        return $totalScore;
     }
 
     /**

@@ -48,4 +48,55 @@
 .mb-2 {
     margin-bottom: 0.5rem;
 }
+/* Add this to your CSS file or in a <style> section */
+
+.score-breakdown {
+    min-width: 200px;
+    max-width: 250px;
+}
+
+.score-breakdown .total-score {
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+}
+
+.score-breakdown .score-details {
+    line-height: 1.3;
+}
+
+.score-breakdown .score-details br {
+    margin-bottom: 2px;
+}
+
+/* DataTable responsive adjustments for score column */
+@media (max-width: 768px) {
+    .score-breakdown {
+        min-width: 150px;
+        max-width: 180px;
+    }
+    
+    .score-breakdown .score-details {
+        font-size: 10px;
+    }
+}
+
+/* Tooltip for better score viewing on mobile */
+.score-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.score-tooltip:hover .score-details {
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    white-space: nowrap;
+}
 </style>

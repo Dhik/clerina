@@ -112,6 +112,7 @@
                                     <th>CPA Variance</th>
                                     <th>AOV/CPA Target</th>
                                     <th>AOV/CPA Actual</th>
+                                    <th>Daily Score</th>
                                     <th>Performance</th>
                                 </tr>
                             </thead>
