@@ -5510,21 +5510,33 @@ class AdSpentSocialMediaController extends Controller
 
             $affectedRows = DB::statement("
                 UPDATE ads_monitoring am
-                JOIN ads_tiktok at ON am.date = at.date
+                JOIN (
+                    SELECT 
+                        date,
+                        CAST(COALESCE(SUM(amount_spent), 0) AS DECIMAL(10,2)) as total_spent,
+                        CAST(COALESCE(SUM(purchases_conversion_value_shared_items), 0) AS DECIMAL(15,2)) as total_gmv,
+                        CAST(AVG(CASE WHEN cost_per_purchase IS NOT NULL THEN cost_per_purchase END) AS DECIMAL(10,2)) as avg_cpa
+                    FROM ads_tiktok 
+                    WHERE date >= ? 
+                    AND date <= ?
+                    AND amount_spent IS NOT NULL
+                    AND purchases_conversion_value_shared_items IS NOT NULL
+                    GROUP BY date
+                ) at_grouped ON am.date = at_grouped.date
                 SET 
-                    am.spent_actual = at.amount_spent,
-                    am.gmv_actual = at.purchases_conversion_value_shared_items,
-                    am.cpa_actual = at.cost_per_purchase,
+                    am.spent_actual = at_grouped.total_spent,
+                    am.gmv_actual = at_grouped.total_gmv,
+                    am.cpa_actual = at_grouped.avg_cpa,
                     am.roas_actual = CASE 
-                        WHEN at.amount_spent > 0 THEN 
-                            ROUND(at.purchases_conversion_value_shared_items / at.amount_spent, 4)
+                        WHEN at_grouped.total_spent > 0 THEN 
+                            ROUND(at_grouped.total_gmv / at_grouped.total_spent, 4)
                         ELSE NULL 
                     END,
                     am.updated_at = NOW()
                 WHERE am.channel = 'tiktok_ads'
                 AND am.date >= ?
                 AND am.date <= ?
-            ", [$startDate, $endDate]);
+            ", [$startDate, $endDate, $startDate, $endDate]);
 
             return response()->json([
                 'status' => 'success',
