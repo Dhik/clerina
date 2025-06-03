@@ -107,6 +107,10 @@ Route::prefix('admin')
                 Route::get('/platform-comparison', [AdSpentSocialMediaController::class, 'get_platform_comparison_data'])->name('adSpentSocialMedia.platform-comparison-data');
                 Route::get('/overall-metrics', [AdSpentSocialMediaController::class, 'get_overall_metrics_data'])->name('adSpentSocialMedia.overall-metrics-data');
                 Route::post('/export-report', [AdSpentSocialMediaController::class, 'export_overall_report'])->name('adSpentSocialMedia.export_overall_report');
+
+                Route::get('/ads-monitoring/get', [AdSpentSocialMediaController::class, 'get_ads_monitoring'])->name('adSpentSocialMedia.get_ads_monitoring');
+                Route::get('/ads-monitoring/chart-data', [AdSpentSocialMediaController::class, 'get_ads_monitoring_chart_data'])->name('adSpentSocialMedia.ads_monitoring_chart_data');
+                Route::post('/ads-monitoring/export', [AdSpentSocialMediaController::class, 'export_ads_monitoring'])->name('adSpentSocialMedia.export_ads_monitoring');
                 
                 // Existing chart data routes
                 // Route::get('/line-data', [AdSpentSocialMediaController::class, 'get_line_data'])->name('adSpentSocialMedia.line-data');

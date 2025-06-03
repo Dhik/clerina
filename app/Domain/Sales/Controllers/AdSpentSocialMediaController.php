@@ -7,6 +7,7 @@ use App\Domain\Sales\BLL\AdSpentSocialMedia\AdSpentSocialMediaBLLInterface;
 use App\Domain\Sales\Models\AdSpentSocialMedia;
 use App\Domain\Sales\Models\Sales;
 use App\Domain\Sales\Models\AdsMeta;
+use App\Domain\Sales\Models\AdsMonitoring;
 use App\Domain\Sales\Models\AdsShopee;
 use App\Domain\Sales\Models\AdsMeta2;
 use App\Domain\Sales\Models\AdsMeta3;
@@ -4095,216 +4096,110 @@ class AdSpentSocialMediaController extends Controller
         }
     }
     /**
- * Get Shopee Ads data for DataTables
- */
-public function get_ads_shopee(Request $request)
-{
-    $query = AdsShopee::query()
-        ->select([
-            'date',
-            DB::raw('SUM(dilihat) as total_dilihat'),
-            DB::raw('SUM(jumlah_klik) as total_jumlah_klik'),
-            DB::raw('SUM(konversi) as total_konversi'),
-            DB::raw('SUM(produk_terjual) as total_produk_terjual'),
-            DB::raw('SUM(omzet_penjualan) as total_omzet_penjualan'),
-            DB::raw('SUM(biaya) as total_biaya'),
-            DB::raw('AVG(efektivitas_iklan) as avg_efektivitas_iklan'),
-        ])
-        ->groupBy('date'); // Only group by date, removing kode_produk
-    
-    // Apply filters
-    if (auth()->user()->tenant_id) {
-        $query->where('tenant_id', auth()->user()->tenant_id);
-    }
-    if ($request->has('mode_bidding') && $request->mode_bidding) {
-        $query->where('mode_bidding', $request->mode_bidding);
-    }
-    
-    if ($request->has('date_start') && $request->has('date_end')) {
-        $query->whereBetween('date', [$request->date_start, $request->date_end]);
-    } else {
-        $query->whereMonth('date', now()->month)
-            ->whereYear('date', now()->year);
-    }
-    
-    if ($request->has('kode_produk') && $request->kode_produk) {
-        $query->where('kode_produk', $request->kode_produk);
-    }
-    
-    return DataTables::of($query)
-        ->addIndexColumn()
-        ->editColumn('date', function ($row) {
-            return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">' . 
-                    Carbon::parse($row->date)->format('d M Y') . '</a>';
-        })
-        ->addColumn('ctr', function ($row) {
-            if ($row->total_dilihat > 0 && $row->total_jumlah_klik > 0) {
-                return ($row->total_jumlah_klik / $row->total_dilihat) * 100;
-            }
-            return 0;
-        })
-        ->addColumn('conversion_rate', function ($row) {
-            if ($row->total_jumlah_klik > 0 && $row->total_konversi > 0) {
-                return ($row->total_konversi / $row->total_jumlah_klik) * 100;
-            }
-            return 0;
-        })
-        ->addColumn('cost_per_click', function ($row) {
-            if ($row->total_jumlah_klik > 0 && $row->total_biaya > 0) {
-                return $row->total_biaya / $row->total_jumlah_klik;
-            }
-            return 0;
-        })
-        ->addColumn('roas', function ($row) {
-            if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
-                return $row->total_omzet_penjualan / $row->total_biaya;
-            }
-            return 0;
-        })
-        ->addColumn('performance', function ($row) {
-            if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
-                $roas = $row->total_omzet_penjualan / $row->total_biaya;
-                
-                if ($roas >= 2.5) {
-                    return '<span class="badge badge-success">Winning</span>';
-                } elseif ($roas >= 2.01) {
-                    return '<span class="badge badge-primary">Bagus</span>';
-                } elseif ($roas >= 1.75) {
-                    return '<span class="badge badge-info">Potensi</span>';
-                } else {
-                    return '<span class="badge badge-danger">Buruk</span>';
+     * Get Shopee Ads data for DataTables
+     */
+    public function get_ads_shopee(Request $request)
+    {
+        $query = AdsShopee::query()
+            ->select([
+                'date',
+                DB::raw('SUM(dilihat) as total_dilihat'),
+                DB::raw('SUM(jumlah_klik) as total_jumlah_klik'),
+                DB::raw('SUM(konversi) as total_konversi'),
+                DB::raw('SUM(produk_terjual) as total_produk_terjual'),
+                DB::raw('SUM(omzet_penjualan) as total_omzet_penjualan'),
+                DB::raw('SUM(biaya) as total_biaya'),
+                DB::raw('AVG(efektivitas_iklan) as avg_efektivitas_iklan'),
+            ])
+            ->groupBy('date'); // Only group by date, removing kode_produk
+        
+        // Apply filters
+        if (auth()->user()->tenant_id) {
+            $query->where('tenant_id', auth()->user()->tenant_id);
+        }
+        if ($request->has('mode_bidding') && $request->mode_bidding) {
+            $query->where('mode_bidding', $request->mode_bidding);
+        }
+        
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        } else {
+            $query->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year);
+        }
+        
+        if ($request->has('kode_produk') && $request->kode_produk) {
+            $query->where('kode_produk', $request->kode_produk);
+        }
+        
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">' . 
+                        Carbon::parse($row->date)->format('d M Y') . '</a>';
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->total_dilihat > 0 && $row->total_jumlah_klik > 0) {
+                    return ($row->total_jumlah_klik / $row->total_dilihat) * 100;
                 }
-            }
-            return '<span class="badge badge-secondary">N/A</span>';
-        })
-        ->rawColumns(['date', 'performance'])
-        ->make(true);
-}
-
-public function get_shopee_details_by_date(Request $request)
-{
-    $query = AdsShopee::query()
-        ->select([
-            'id',
-            'date',
-            'sku_induk',
-            'dilihat',
-            'suka',
-            'jumlah_klik',
-            'dimasukan_ke_keranjang_produk',
-            'produk_pesanan_dibuat',
-            'produk_pesanan_siap_dikirim',
-            'produk_terjual',
-            'omzet_penjualan',
-            'biaya',
-            'efektivitas_iklan'
-        ]);
-    
-    if ($request->has('date_start') && $request->has('date_end')) {
-        $query->whereBetween('date', [$request->date_start, $request->date_end]);
-    } elseif ($request->has('date')) {
-        $query->where('date', $request->date);
-    }
-    
-    if ($request->has('kode_produk') && $request->kode_produk) {
-        $query->where('kode_produk', $request->kode_produk);
-    }
-    if ($request->has('mode_bidding') && $request->mode_bidding) {
-        $query->where('mode_bidding', $request->mode_bidding);
-    }
-    
-    if (auth()->user()->tenant_id) {
-        $query->where('tenant_id', auth()->user()->tenant_id);
-    }
-    
-    return DataTables::of($query)
-        ->addIndexColumn()
-        ->editColumn('date', function ($row) {
-            return Carbon::parse($row->date)->format('d M Y');
-        })
-        ->editColumn('dilihat', function ($row) {
-            return number_format($row->dilihat, 0, ',', '.');
-        })
-        ->editColumn('suka', function ($row) {
-            return number_format($row->suka, 0, ',', '.');
-        })
-        ->editColumn('jumlah_klik', function ($row) {
-            return number_format($row->jumlah_klik, 0, ',', '.');
-        })
-        ->editColumn('dimasukan_ke_keranjang_produk', function ($row) {
-            return number_format($row->dimasukan_ke_keranjang_produk, 0, ',', '.');
-        })
-        ->editColumn('produk_pesanan_dibuat', function ($row) {
-            return number_format($row->produk_pesanan_dibuat, 0, ',', '.');
-        })
-        ->editColumn('produk_pesanan_siap_dikirim', function ($row) {
-            return number_format($row->produk_pesanan_siap_dikirim, 0, ',', '.');
-        })
-        ->editColumn('produk_terjual', function ($row) {
-            return number_format($row->produk_terjual, 0, ',', '.');
-        })
-        ->editColumn('omzet_penjualan', function ($row) {
-            return 'Rp ' . number_format($row->omzet_penjualan, 0, ',', '.');
-        })
-        ->editColumn('biaya', function ($row) {
-            return 'Rp ' . number_format($row->biaya, 0, ',', '.');
-        })
-        ->editColumn('efektivitas_iklan', function ($row) {
-            return number_format($row->efektivitas_iklan, 2, ',', '.');
-        })
-        ->addColumn('ctr', function ($row) {
-            if ($row->dilihat > 0 && $row->jumlah_klik > 0) {
-                $ctr = ($row->jumlah_klik / $row->dilihat) * 100;
-                return number_format($ctr, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('cr', function ($row) {
-            if ($row->jumlah_klik > 0 && $row->produk_terjual > 0) {
-                $cr = ($row->produk_terjual / $row->jumlah_klik) * 100;
-                return number_format($cr, 2, ',', '.') . '%';
-            }
-            return '-';
-        })
-        ->addColumn('roas', function ($row) {
-            if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
-                $roas = $row->omzet_penjualan / $row->biaya;
-                return number_format($roas, 2, ',', '.');
-            }
-            return '-';
-        })
-        ->addColumn('performance', function ($row) {
-            if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
-                $roas = $row->omzet_penjualan / $row->biaya;
-                
-                if ($roas >= 2.5) {
-                    return '<span class="badge badge-success">Winning</span>';
-                } elseif ($roas >= 2.01) {
-                    return '<span class="badge badge-primary">Bagus</span>';
-                } elseif ($roas >= 1.75) {
-                    return '<span class="badge badge-info">Potensi</span>';
-                } else {
-                    return '<span class="badge badge-danger">Buruk</span>';
+                return 0;
+            })
+            ->addColumn('conversion_rate', function ($row) {
+                if ($row->total_jumlah_klik > 0 && $row->total_konversi > 0) {
+                    return ($row->total_konversi / $row->total_jumlah_klik) * 100;
                 }
-            }
-            return '<span class="badge badge-secondary">N/A</span>';
-        })
-        ->addColumn('action', function ($row) {
-            return '<button type="button" class="btn btn-danger btn-sm delete-record" data-id="'.$row->id.'">
-                <i class="fas fa-trash"></i> Delete
-            </button>';
-        })
-        ->rawColumns(['performance', 'action'])
-        ->make(true);
-}
+                return 0;
+            })
+            ->addColumn('cost_per_click', function ($row) {
+                if ($row->total_jumlah_klik > 0 && $row->total_biaya > 0) {
+                    return $row->total_biaya / $row->total_jumlah_klik;
+                }
+                return 0;
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
+                    return $row->total_omzet_penjualan / $row->total_biaya;
+                }
+                return 0;
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->total_biaya > 0 && $row->total_omzet_penjualan > 0) {
+                    $roas = $row->total_omzet_penjualan / $row->total_biaya;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
+                    }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->rawColumns(['date', 'performance'])
+            ->make(true);
+    }
 
-/**
- * Get Shopee summary
- */
-public function get_shopee_summary(Request $request)
-{
-    try {
-        $query = AdsShopee::query();
+    public function get_shopee_details_by_date(Request $request)
+    {
+        $query = AdsShopee::query()
+            ->select([
+                'id',
+                'date',
+                'sku_induk',
+                'dilihat',
+                'suka',
+                'jumlah_klik',
+                'dimasukan_ke_keranjang_produk',
+                'produk_pesanan_dibuat',
+                'produk_pesanan_siap_dikirim',
+                'produk_terjual',
+                'omzet_penjualan',
+                'biaya',
+                'efektivitas_iklan'
+            ]);
         
         if ($request->has('date_start') && $request->has('date_end')) {
             $query->whereBetween('date', [$request->date_start, $request->date_end]);
@@ -4323,726 +4218,1136 @@ public function get_shopee_summary(Request $request)
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
         
-        $summary = [
-            'total_ads' => $query->count(),
-            'total_impressions' => $query->sum('dilihat'),
-            'total_clicks' => $query->sum('jumlah_klik'),
-            'total_conversions' => $query->sum('konversi'),
-            'total_cost' => $query->sum('biaya'),
-            'total_revenue' => $query->sum('omzet_penjualan'),
-            'avg_ctr' => 0,
-            'avg_conversion_rate' => 0,
-            'avg_roas' => 0
-        ];
-        
-        if ($summary['total_impressions'] > 0 && $summary['total_clicks'] > 0) {
-            $summary['avg_ctr'] = ($summary['total_clicks'] / $summary['total_impressions']) * 100;
-        }
-        
-        if ($summary['total_clicks'] > 0 && $summary['total_conversions'] > 0) {
-            $summary['avg_conversion_rate'] = ($summary['total_conversions'] / $summary['total_clicks']) * 100;
-        }
-        
-        if ($summary['total_cost'] > 0 && $summary['total_revenue'] > 0) {
-            $summary['avg_roas'] = $summary['total_revenue'] / $summary['total_cost'];
-        }
-        
-        return response()->json([
-            'status' => 'success',
-            'summary' => $summary
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to get summary: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Import Shopee Ads from CSV
- */
-public function importShopeeAds(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'csv_file' => 'required|file|mimes:csv,txt|max:10240',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $validator->errors()->first(),
-        ], 422);
-    }
-
-    try {
-        // Get the original filename
-        $file = $request->file('csv_file');
-        $originalFilename = $file->getClientOriginalName();
-        
-        // Extract date from filename (as a fallback)
-        $date = $this->extractDateFromFilename($originalFilename);
-        Log::info("Extracted date from filename: {$date}");
-        
-        // Store the file temporarily
-        $path = $file->storeAs('temp', 'shopee_ads_import.csv');
-        $filePath = Storage::path($path);
-        
-        // Process the CSV data, passing the extracted date
-        $processedData = $this->processShopeeCSV($filePath, $date);
-        $totalRows = count($processedData);
-        Log::info("Processed {$totalRows} rows from CSV");
-        
-        // Save processed data to database
-        $inserted = $this->saveShopeeToDatabase($processedData);
-        Log::info("Inserted {$inserted} records into database");
-        
-        // Delete the temporary file
-        Storage::delete($path);
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => "Successfully imported {$inserted} records from the CSV file for date {$date}.",
-            'debug_info' => [
-                'total_rows_processed' => $totalRows,
-                'records_inserted' => $inserted,
-                'extracted_date' => $date,
-                'filename' => $originalFilename
-            ]
-        ]);
-        
-    } catch (\Exception $e) {
-        Log::error('Error importing Shopee Ads CSV: ' . $e->getMessage());
-        Log::error($e->getTraceAsString());
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error importing CSV: ' . $e->getMessage(),
-        ], 500);
-    }
-}
-private function extractDateFromFilename($filename)
-{
-    // Default to today if no date found
-    $defaultDate = Carbon::now()->format('Y-m-d');
-    
-    // Try to match standard date patterns in the filename
-    if (preg_match('/(\d{2}[_\/]\d{2}[_\/]\d{4})/', $filename, $matches)) {
-        $dateString = $matches[1]; // This could be DD_MM_YYYY or DD/MM/YYYY
-        
-        // Check which format we have
-        if (strpos($dateString, '_') !== false) {
-            try {
-                return Carbon::createFromFormat('d_m_Y', $dateString)->format('Y-m-d');
-            } catch (\Exception $e) {
-                Log::warning("Failed to parse underscore date from filename: {$filename}. Using default date instead.");
-            }
-        } else if (strpos($dateString, '/') !== false) {
-            try {
-                return Carbon::createFromFormat('d/m/Y', $dateString)->format('Y-m-d');
-            } catch (\Exception $e) {
-                Log::warning("Failed to parse slash date from filename: {$filename}. Using default date instead.");
-            }
-        }
-    }
-    
-    Log::warning("No date pattern found in filename: {$filename}. Using default date instead.");
-    return $defaultDate;
-}
-/**
- * Process Shopee CSV data with enhanced debugging
- */
-private function processShopeeCSV($filePath, $fileDate = null)
-{
-    $data = [];
-    $headers = [];
-    $row = 0;
-    $processedRows = 0;
-    $skippedRows = 0;
-    $validRows = 0;
-    $skipRows = 9; // Skip the first 9 rows of metadata
-    
-    if (($handle = fopen($filePath, "r")) !== false) {
-        // First, let's log all the metadata rows for reference
-        $metadataLines = [];
-        $lineCount = 0;
-        rewind($handle);
-        while (($lineData = fgetcsv($handle, 1000, ",")) !== false && $lineCount < $skipRows + 1) {
-            $metadataLines[] = $lineData;
-            $lineCount++;
-        }
-        Log::info("CSV Metadata (first {$skipRows} rows plus header):", $metadataLines);
-        
-        // Try to extract date from the "Periode" metadata if possible
-        foreach ($metadataLines as $line) {
-            if (isset($line[0]) && strpos($line[0], 'Periode') !== false && isset($line[1])) {
-                // Format expected: "Periode,29/04/2025 - 29/04/2025"
-                if (preg_match('/(\d{2}\/\d{2}\/\d{4})/', $line[1], $matches)) {
-                    try {
-                        $fileDate = Carbon::createFromFormat('d/m/Y', $matches[0])->format('Y-m-d');
-                        Log::info("Extracted date from Periode metadata: {$fileDate}");
-                    } catch (\Exception $e) {
-                        Log::warning("Failed to parse date from Periode metadata: {$line[1]}");
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->editColumn('date', function ($row) {
+                return Carbon::parse($row->date)->format('d M Y');
+            })
+            ->editColumn('dilihat', function ($row) {
+                return number_format($row->dilihat, 0, ',', '.');
+            })
+            ->editColumn('suka', function ($row) {
+                return number_format($row->suka, 0, ',', '.');
+            })
+            ->editColumn('jumlah_klik', function ($row) {
+                return number_format($row->jumlah_klik, 0, ',', '.');
+            })
+            ->editColumn('dimasukan_ke_keranjang_produk', function ($row) {
+                return number_format($row->dimasukan_ke_keranjang_produk, 0, ',', '.');
+            })
+            ->editColumn('produk_pesanan_dibuat', function ($row) {
+                return number_format($row->produk_pesanan_dibuat, 0, ',', '.');
+            })
+            ->editColumn('produk_pesanan_siap_dikirim', function ($row) {
+                return number_format($row->produk_pesanan_siap_dikirim, 0, ',', '.');
+            })
+            ->editColumn('produk_terjual', function ($row) {
+                return number_format($row->produk_terjual, 0, ',', '.');
+            })
+            ->editColumn('omzet_penjualan', function ($row) {
+                return 'Rp ' . number_format($row->omzet_penjualan, 0, ',', '.');
+            })
+            ->editColumn('biaya', function ($row) {
+                return 'Rp ' . number_format($row->biaya, 0, ',', '.');
+            })
+            ->editColumn('efektivitas_iklan', function ($row) {
+                return number_format($row->efektivitas_iklan, 2, ',', '.');
+            })
+            ->addColumn('ctr', function ($row) {
+                if ($row->dilihat > 0 && $row->jumlah_klik > 0) {
+                    $ctr = ($row->jumlah_klik / $row->dilihat) * 100;
+                    return number_format($ctr, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('cr', function ($row) {
+                if ($row->jumlah_klik > 0 && $row->produk_terjual > 0) {
+                    $cr = ($row->produk_terjual / $row->jumlah_klik) * 100;
+                    return number_format($cr, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            ->addColumn('roas', function ($row) {
+                if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
+                    $roas = $row->omzet_penjualan / $row->biaya;
+                    return number_format($roas, 2, ',', '.');
+                }
+                return '-';
+            })
+            ->addColumn('performance', function ($row) {
+                if ($row->biaya > 0 && $row->omzet_penjualan > 0) {
+                    $roas = $row->omzet_penjualan / $row->biaya;
+                    
+                    if ($roas >= 2.5) {
+                        return '<span class="badge badge-success">Winning</span>';
+                    } elseif ($roas >= 2.01) {
+                        return '<span class="badge badge-primary">Bagus</span>';
+                    } elseif ($roas >= 1.75) {
+                        return '<span class="badge badge-info">Potensi</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Buruk</span>';
                     }
+                }
+                return '<span class="badge badge-secondary">N/A</span>';
+            })
+            ->addColumn('action', function ($row) {
+                return '<button type="button" class="btn btn-danger btn-sm delete-record" data-id="'.$row->id.'">
+                    <i class="fas fa-trash"></i> Delete
+                </button>';
+            })
+            ->rawColumns(['performance', 'action'])
+            ->make(true);
+    }
+
+    /**
+     * Get Shopee summary
+     */
+    public function get_shopee_summary(Request $request)
+    {
+        try {
+            $query = AdsShopee::query();
+            
+            if ($request->has('date_start') && $request->has('date_end')) {
+                $query->whereBetween('date', [$request->date_start, $request->date_end]);
+            } elseif ($request->has('date')) {
+                $query->where('date', $request->date);
+            }
+            
+            if ($request->has('kode_produk') && $request->kode_produk) {
+                $query->where('kode_produk', $request->kode_produk);
+            }
+            if ($request->has('mode_bidding') && $request->mode_bidding) {
+                $query->where('mode_bidding', $request->mode_bidding);
+            }
+            
+            if (auth()->user()->tenant_id) {
+                $query->where('tenant_id', auth()->user()->tenant_id);
+            }
+            
+            $summary = [
+                'total_ads' => $query->count(),
+                'total_impressions' => $query->sum('dilihat'),
+                'total_clicks' => $query->sum('jumlah_klik'),
+                'total_conversions' => $query->sum('konversi'),
+                'total_cost' => $query->sum('biaya'),
+                'total_revenue' => $query->sum('omzet_penjualan'),
+                'avg_ctr' => 0,
+                'avg_conversion_rate' => 0,
+                'avg_roas' => 0
+            ];
+            
+            if ($summary['total_impressions'] > 0 && $summary['total_clicks'] > 0) {
+                $summary['avg_ctr'] = ($summary['total_clicks'] / $summary['total_impressions']) * 100;
+            }
+            
+            if ($summary['total_clicks'] > 0 && $summary['total_conversions'] > 0) {
+                $summary['avg_conversion_rate'] = ($summary['total_conversions'] / $summary['total_clicks']) * 100;
+            }
+            
+            if ($summary['total_cost'] > 0 && $summary['total_revenue'] > 0) {
+                $summary['avg_roas'] = $summary['total_revenue'] / $summary['total_cost'];
+            }
+            
+            return response()->json([
+                'status' => 'success',
+                'summary' => $summary
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to get summary: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Import Shopee Ads from CSV
+     */
+    public function importShopeeAds(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            // Get the original filename
+            $file = $request->file('csv_file');
+            $originalFilename = $file->getClientOriginalName();
+            
+            // Extract date from filename (as a fallback)
+            $date = $this->extractDateFromFilename($originalFilename);
+            Log::info("Extracted date from filename: {$date}");
+            
+            // Store the file temporarily
+            $path = $file->storeAs('temp', 'shopee_ads_import.csv');
+            $filePath = Storage::path($path);
+            
+            // Process the CSV data, passing the extracted date
+            $processedData = $this->processShopeeCSV($filePath, $date);
+            $totalRows = count($processedData);
+            Log::info("Processed {$totalRows} rows from CSV");
+            
+            // Save processed data to database
+            $inserted = $this->saveShopeeToDatabase($processedData);
+            Log::info("Inserted {$inserted} records into database");
+            
+            // Delete the temporary file
+            Storage::delete($path);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully imported {$inserted} records from the CSV file for date {$date}.",
+                'debug_info' => [
+                    'total_rows_processed' => $totalRows,
+                    'records_inserted' => $inserted,
+                    'extracted_date' => $date,
+                    'filename' => $originalFilename
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error importing Shopee Ads CSV: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing CSV: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    private function extractDateFromFilename($filename)
+    {
+        // Default to today if no date found
+        $defaultDate = Carbon::now()->format('Y-m-d');
+        
+        // Try to match standard date patterns in the filename
+        if (preg_match('/(\d{2}[_\/]\d{2}[_\/]\d{4})/', $filename, $matches)) {
+            $dateString = $matches[1]; // This could be DD_MM_YYYY or DD/MM/YYYY
+            
+            // Check which format we have
+            if (strpos($dateString, '_') !== false) {
+                try {
+                    return Carbon::createFromFormat('d_m_Y', $dateString)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    Log::warning("Failed to parse underscore date from filename: {$filename}. Using default date instead.");
+                }
+            } else if (strpos($dateString, '/') !== false) {
+                try {
+                    return Carbon::createFromFormat('d/m/Y', $dateString)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    Log::warning("Failed to parse slash date from filename: {$filename}. Using default date instead.");
                 }
             }
         }
         
-        // Reset file pointer and process the file
-        rewind($handle);
+        Log::warning("No date pattern found in filename: {$filename}. Using default date instead.");
+        return $defaultDate;
+    }
+    /**
+     * Process Shopee CSV data with enhanced debugging
+     */
+    private function processShopeeCSV($filePath, $fileDate = null)
+    {
+        $data = [];
+        $headers = [];
+        $row = 0;
+        $processedRows = 0;
+        $skippedRows = 0;
+        $validRows = 0;
+        $skipRows = 9; // Skip the first 9 rows of metadata
         
-        // Skip the metadata rows
-        for ($i = 0; $i < $skipRows; $i++) {
-            fgetcsv($handle, 1000, ",");
-            $row++;
-        }
-        
-        // The next row should be the header
-        $headers = fgetcsv($handle, 1000, ",");
-        $row++;
-        
-        // Now process the actual data rows
-        while (($rowData = fgetcsv($handle, 1000, ",")) !== false) {
-            $processedRows++;
+        if (($handle = fopen($filePath, "r")) !== false) {
+            // First, let's log all the metadata rows for reference
+            $metadataLines = [];
+            $lineCount = 0;
+            rewind($handle);
+            while (($lineData = fgetcsv($handle, 1000, ",")) !== false && $lineCount < $skipRows + 1) {
+                $metadataLines[] = $lineData;
+                $lineCount++;
+            }
+            Log::info("CSV Metadata (first {$skipRows} rows plus header):", $metadataLines);
             
-            // Check if row has enough data
-            if (count($rowData) < 5) {
-                Log::warning("Row {$row} doesn't have enough columns. Skipping.", ['data' => $rowData]);
-                $skippedRows++;
-                $row++;
-                continue;
+            // Try to extract date from the "Periode" metadata if possible
+            foreach ($metadataLines as $line) {
+                if (isset($line[0]) && strpos($line[0], 'Periode') !== false && isset($line[1])) {
+                    // Format expected: "Periode,29/04/2025 - 29/04/2025"
+                    if (preg_match('/(\d{2}\/\d{2}\/\d{4})/', $line[1], $matches)) {
+                        try {
+                            $fileDate = Carbon::createFromFormat('d/m/Y', $matches[0])->format('Y-m-d');
+                            Log::info("Extracted date from Periode metadata: {$fileDate}");
+                        } catch (\Exception $e) {
+                            Log::warning("Failed to parse date from Periode metadata: {$line[1]}");
+                        }
+                    }
+                }
             }
             
-            try {
-                // Based on the header row structure:
-                // Urutan,Nama Iklan,Status,Kode Produk,Tampilan Iklan,Mode Bidding,Penempatan Iklan,Tanggal Mulai,Tanggal Selesai,Dilihat,Jumlah Klik,...
+            // Reset file pointer and process the file
+            rewind($handle);
+            
+            // Skip the metadata rows
+            for ($i = 0; $i < $skipRows; $i++) {
+                fgetcsv($handle, 1000, ",");
+                $row++;
+            }
+            
+            // The next row should be the header
+            $headers = fgetcsv($handle, 1000, ",");
+            $row++;
+            
+            // Now process the actual data rows
+            while (($rowData = fgetcsv($handle, 1000, ",")) !== false) {
+                $processedRows++;
                 
-                // Get kode_produk from the CSV (column 3 in the data)
-                $kodeProduct = !empty($rowData[3]) ? $rowData[3] : 'Unknown';
-                
-                // Use the date from the metadata/filename if provided
-                $date = $fileDate;
-                if (empty($date)) {
-                    Log::warning("No date found for row {$row}. Skipping.", ['data' => $rowData]);
+                // Check if row has enough data
+                if (count($rowData) < 5) {
+                    Log::warning("Row {$row} doesn't have enough columns. Skipping.", ['data' => $rowData]);
                     $skippedRows++;
                     $row++;
                     continue;
                 }
                 
-                // Creating a unique key for each ad
-                $adName = isset($rowData[1]) ? $rowData[1] : 'Unnamed';
-                $key = $date . '_' . $kodeProduct . '_' . md5($adName);
+                try {
+                    // Based on the header row structure:
+                    // Urutan,Nama Iklan,Status,Kode Produk,Tampilan Iklan,Mode Bidding,Penempatan Iklan,Tanggal Mulai,Tanggal Selesai,Dilihat,Jumlah Klik,...
+                    
+                    // Get kode_produk from the CSV (column 3 in the data)
+                    $kodeProduct = !empty($rowData[3]) ? $rowData[3] : 'Unknown';
+                    
+                    // Use the date from the metadata/filename if provided
+                    $date = $fileDate;
+                    if (empty($date)) {
+                        Log::warning("No date found for row {$row}. Skipping.", ['data' => $rowData]);
+                        $skippedRows++;
+                        $row++;
+                        continue;
+                    }
+                    
+                    // Creating a unique key for each ad
+                    $adName = isset($rowData[1]) ? $rowData[1] : 'Unnamed';
+                    $key = $date . '_' . $kodeProduct . '_' . md5($adName);
+                    
+                    $validRows++;
+                    
+                    if (!isset($data[$key])) {
+                        // Initialize with first row data
+                        $data[$key] = [
+                            'date' => $date,
+                            'kode_produk' => $kodeProduct,
+                            'urutan' => $this->parseNumeric(isset($rowData[0]) ? $rowData[0] : 0),
+                            'nama_iklan' => $adName,
+                            'status' => isset($rowData[2]) ? $rowData[2] : '',
+                            'tampilan_iklan' => isset($rowData[4]) ? $rowData[4] : '',
+                            'mode_bidding' => isset($rowData[5]) ? $rowData[5] : '',
+                            'penempatan_iklan' => isset($rowData[6]) ? $rowData[6] : '',
+                            'tanggal_mulai' => isset($rowData[7]) ? $this->parseDate($rowData[7]) : null,
+                            'tanggal_selesai' => isset($rowData[8]) ? $rowData[8] : '',
+                            'dilihat' => $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0),
+                            'jumlah_klik' => $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0),
+                            'konversi' => $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0),
+                            'produk_terjual' => $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0),
+                            'omzet_penjualan' => $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0),
+                            'biaya' => $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0),
+                            'efektivitas_iklan' => (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0),
+                            'count' => 1,
+                        ];
+                    } else {
+                        // For existing groups, update numeric values for sum
+                        $data[$key]['dilihat'] += $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0);
+                        $data[$key]['jumlah_klik'] += $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0);
+                        $data[$key]['konversi'] += $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0);
+                        $data[$key]['produk_terjual'] += $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0);
+                        $data[$key]['omzet_penjualan'] += $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0);
+                        $data[$key]['biaya'] += $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0);
+                        $data[$key]['efektivitas_iklan'] += (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0);
+                        $data[$key]['count']++;
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error processing row {$row}: " . $e->getMessage(), ['data' => $rowData]);
+                    $skippedRows++;
+                }
                 
-                $validRows++;
+                $row++;
+            }
+            fclose($handle);
+        } else {
+            Log::error("Failed to open CSV file: {$filePath}");
+            throw new \Exception("Failed to open CSV file");
+        }
+        
+        // Calculate average for efektivitas_iklan
+        foreach ($data as $key => $value) {
+            if ($value['count'] > 0) {
+                $data[$key]['efektivitas_iklan'] = $value['efektivitas_iklan'] / $value['count'];
+            }
+            // Remove count field as it's not in the database
+            unset($data[$key]['count']);
+        }
+        
+        Log::info("CSV Processing Summary: Processed {$processedRows} rows, Valid {$validRows}, Skipped {$skippedRows}, Unique Records " . count($data));
+        
+        // Debug: log a sample of processed data if available
+        if (count($data) > 0) {
+            $sampleRecord = reset($data);
+            Log::info("Sample processed record:", $sampleRecord);
+        }
+        
+        return array_values($data);
+    }
+
+    /**
+     * Save processed Shopee data to database
+     */
+    private function saveShopeeToDatabase($data)
+    {
+        $count = 0;
+        $updated = 0;
+        $failed = 0;
+        
+        foreach ($data as $row) {
+            try {
+                // Check if a record already exists
+                $existingRecord = AdsShopee::where('date', $row['date'])
+                    ->where('kode_produk', $row['kode_produk'])
+                    ->where('nama_iklan', $row['nama_iklan'])
+                    ->first();
                 
-                if (!isset($data[$key])) {
-                    // Initialize with first row data
-                    $data[$key] = [
-                        'date' => $date,
-                        'kode_produk' => $kodeProduct,
-                        'urutan' => $this->parseNumeric(isset($rowData[0]) ? $rowData[0] : 0),
-                        'nama_iklan' => $adName,
-                        'status' => isset($rowData[2]) ? $rowData[2] : '',
-                        'tampilan_iklan' => isset($rowData[4]) ? $rowData[4] : '',
-                        'mode_bidding' => isset($rowData[5]) ? $rowData[5] : '',
-                        'penempatan_iklan' => isset($rowData[6]) ? $rowData[6] : '',
-                        'tanggal_mulai' => isset($rowData[7]) ? $this->parseDate($rowData[7]) : null,
-                        'tanggal_selesai' => isset($rowData[8]) ? $rowData[8] : '',
-                        'dilihat' => $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0),
-                        'jumlah_klik' => $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0),
-                        'konversi' => $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0),
-                        'produk_terjual' => $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0),
-                        'omzet_penjualan' => $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0),
-                        'biaya' => $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0),
-                        'efektivitas_iklan' => (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0),
-                        'count' => 1,
-                    ];
+                if ($existingRecord) {
+                    // Update existing record
+                    $existingRecord->update($row);
+                    $updated++;
                 } else {
-                    // For existing groups, update numeric values for sum
-                    $data[$key]['dilihat'] += $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0);
-                    $data[$key]['jumlah_klik'] += $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0);
-                    $data[$key]['konversi'] += $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0);
-                    $data[$key]['produk_terjual'] += $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0);
-                    $data[$key]['omzet_penjualan'] += $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0);
-                    $data[$key]['biaya'] += $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0);
-                    $data[$key]['efektivitas_iklan'] += (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0);
-                    $data[$key]['count']++;
+                    // Create new record
+                    AdsShopee::create($row);
+                    $count++;
                 }
             } catch (\Exception $e) {
-                Log::error("Error processing row {$row}: " . $e->getMessage(), ['data' => $rowData]);
-                $skippedRows++;
+                Log::error("Failed to save record: " . $e->getMessage(), ['data' => $row]);
+                $failed++;
             }
-            
-            $row++;
         }
-        fclose($handle);
-    } else {
-        Log::error("Failed to open CSV file: {$filePath}");
-        throw new \Exception("Failed to open CSV file");
+        
+        Log::info("Database insertion summary: Inserted {$count}, Updated {$updated}, Failed {$failed}");
+        
+        return $count;
     }
-    
-    // Calculate average for efektivitas_iklan
-    foreach ($data as $key => $value) {
-        if ($value['count'] > 0) {
-            $data[$key]['efektivitas_iklan'] = $value['efektivitas_iklan'] / $value['count'];
-        }
-        // Remove count field as it's not in the database
-        unset($data[$key]['count']);
-    }
-    
-    Log::info("CSV Processing Summary: Processed {$processedRows} rows, Valid {$validRows}, Skipped {$skippedRows}, Unique Records " . count($data));
-    
-    // Debug: log a sample of processed data if available
-    if (count($data) > 0) {
-        $sampleRecord = reset($data);
-        Log::info("Sample processed record:", $sampleRecord);
-    }
-    
-    return array_values($data);
-}
 
-/**
- * Save processed Shopee data to database
- */
-private function saveShopeeToDatabase($data)
-{
-    $count = 0;
-    $updated = 0;
-    $failed = 0;
-    
-    foreach ($data as $row) {
+    /**
+     * Delete Shopee Ads record
+     */
+    public function deleteShopeeRecord(Request $request)
+    {
         try {
-            // Check if a record already exists
-            $existingRecord = AdsShopee::where('date', $row['date'])
-                ->where('kode_produk', $row['kode_produk'])
-                ->where('nama_iklan', $row['nama_iklan'])
-                ->first();
+            $record = AdsShopee::findOrFail($request->id);
+            $record->delete();
             
-            if ($existingRecord) {
-                // Update existing record
-                $existingRecord->update($row);
-                $updated++;
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Record deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to delete record: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Shopee Ads line chart data
+     */
+    public function getShopeeLineData(Request $request)
+    {
+        try {
+            $query = AdsShopee::query()
+                ->select([
+                    'date',
+                    DB::raw('SUM(dilihat) as impressions'),
+                    DB::raw('SUM(jumlah_klik) as clicks'),
+                    DB::raw('SUM(biaya) as spent'),
+                    DB::raw('SUM(omzet_penjualan) as revenue')
+                ])
+                ->groupBy('date')
+                ->orderBy('date');
+            
+            if ($request->has('date_start') && $request->has('date_end')) {
+                $query->whereBetween('date', [$request->date_start, $request->date_end]);
             } else {
-                // Create new record
-                AdsShopee::create($row);
-                $count++;
+                $query->whereMonth('date', now()->month)
+                    ->whereYear('date', now()->year);
             }
+            
+            if ($request->has('kode_produk') && $request->kode_produk) {
+                $query->where('kode_produk', $request->kode_produk);
+            }
+            if ($request->has('mode_bidding') && $request->mode_bidding) {
+                $query->where('mode_bidding', $request->mode_bidding);
+            }
+            
+            if (auth()->user()->tenant_id) {
+                $query->where('tenant_id', auth()->user()->tenant_id);
+            }
+            
+            $data = $query->get();
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $data
+            ]);
         } catch (\Exception $e) {
-            Log::error("Failed to save record: " . $e->getMessage(), ['data' => $row]);
-            $failed++;
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to get chart data: ' . $e->getMessage()
+            ], 500);
         }
     }
-    
-    Log::info("Database insertion summary: Inserted {$count}, Updated {$updated}, Failed {$failed}");
-    
-    return $count;
-}
 
-/**
- * Delete Shopee Ads record
- */
-public function deleteShopeeRecord(Request $request)
-{
-    try {
-        $record = AdsShopee::findOrFail($request->id);
-        $record->delete();
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Record deleted successfully'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to delete record: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Get Shopee Ads line chart data
- */
-public function getShopeeLineData(Request $request)
-{
-    try {
-        $query = AdsShopee::query()
-            ->select([
-                'date',
-                DB::raw('SUM(dilihat) as impressions'),
-                DB::raw('SUM(jumlah_klik) as clicks'),
-                DB::raw('SUM(biaya) as spent'),
-                DB::raw('SUM(omzet_penjualan) as revenue')
-            ])
-            ->groupBy('date')
-            ->orderBy('date');
-        
-        if ($request->has('date_start') && $request->has('date_end')) {
-            $query->whereBetween('date', [$request->date_start, $request->date_end]);
-        } else {
-            $query->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year);
-        }
-        
-        if ($request->has('kode_produk') && $request->kode_produk) {
-            $query->where('kode_produk', $request->kode_produk);
-        }
-        if ($request->has('mode_bidding') && $request->mode_bidding) {
-            $query->where('mode_bidding', $request->mode_bidding);
-        }
-        
-        if (auth()->user()->tenant_id) {
-            $query->where('tenant_id', auth()->user()->tenant_id);
-        }
-        
-        $data = $query->get();
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $data
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to get chart data: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Get Shopee Ads funnel data
- */
-public function getShopeeFunnelData(Request $request)
-{
-    try {
-        $query = AdsShopee::query();
-        
-        if ($request->has('date_start') && $request->has('date_end')) {
-            $query->whereBetween('date', [$request->date_start, $request->date_end]);
-        } else {
-            $query->whereMonth('date', now()->month)
-                ->whereYear('date', now()->year);
-        }
-        
-        if ($request->has('kode_produk') && $request->kode_produk) {
-            $query->where('kode_produk', $request->kode_produk);
-        }
-        if ($request->has('mode_bidding') && $request->mode_bidding) {
-            $query->where('mode_bidding', $request->mode_bidding);
-        }
-        
-        if (auth()->user()->tenant_id) {
-            $query->where('tenant_id', auth()->user()->tenant_id);
-        }
-        
-        $totals = $query->selectRaw('
-            SUM(dilihat) as impressions,
-            SUM(jumlah_klik) as clicks,
-            SUM(konversi) as conversions,
-            SUM(produk_terjual) as purchases,
-            SUM(biaya) as cost,
-            SUM(omzet_penjualan) as revenue
-        ')->first();
-        
-        // Calculate funnel metrics
-        $ctr = $totals->impressions > 0 ? ($totals->clicks / $totals->impressions) * 100 : 0;
-        $conversionRate = $totals->clicks > 0 ? ($totals->conversions / $totals->clicks) * 100 : 0;
-        $purchaseRate = $totals->conversions > 0 ? ($totals->purchases / $totals->conversions) * 100 : 0;
-        $roas = $totals->cost > 0 ? $totals->revenue / $totals->cost : 0;
-        
-        $funnelData = [
-            ['name' => 'Impressions', 'value' => $totals->impressions],
-            ['name' => 'Clicks', 'value' => $totals->clicks],
-            ['name' => 'Conversions', 'value' => $totals->conversions],
-            ['name' => 'Purchases', 'value' => $totals->purchases]
-        ];
-        
-        $metrics = [
-            'ctr' => $ctr,
-            'conversion_rate' => $conversionRate,
-            'purchase_rate' => $purchaseRate,
-            'cost' => $totals->cost,
-            'revenue' => $totals->revenue,
-            'roas' => $roas
-        ];
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $funnelData,
-            'metrics' => $metrics
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to get funnel data: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Parse numeric value from string
- */
-private function parseNumeric($value)
-{
-    // Remove any non-numeric characters except decimal point
-    $value = preg_replace('/[^0-9.]/', '', $value);
-    return $value === '' ? 0 : (int) $value;
-}
-
-/**
- * Parse date from string
- */
-private function parseDate($date)
-{
-    if (empty($date)) {
-        return null;
-    }
-    
-    try {
-        return Carbon::parse($date)->format('Y-m-d');
-    } catch (\Exception $e) {
-        return null;
-    }
-}
-
-public function importShopeeSkuDetails(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'excel_file' => 'required|file|mimes:xlsx,xls|max:10240',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $validator->errors()->first(),
-        ], 422);
-    }
-
-    try {
-        // Get the original filename
-        $file = $request->file('excel_file');
-        $originalFilename = $file->getClientOriginalName();
-        
-        // Extract date from filename (format: export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx)
-        $date = $this->extractDateFromSkuFilename($originalFilename);
-        Log::info("Extracted date from SKU Excel filename: {$date}");
-        
-        // Store the file temporarily
-        $path = $file->storeAs('temp', 'shopee_sku_import.xlsx');
-        $filePath = Storage::path($path);
-        
-        // Process the Excel file
-        $processedData = $this->processShopeeSkuExcel($filePath, $date);
-        $totalRows = count($processedData);
-        Log::info("Processed {$totalRows} rows from Excel");
-        
-        // Save processed data to database
-        $result = $this->saveShopeeSkuToDatabase($processedData);
-        Log::info("SKU Details import summary: Inserted {$result['inserted']}, Updated {$result['updated']}");
-        
-        // Delete the temporary file
-        Storage::delete($path);
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => "Successfully imported SKU details: {$result['inserted']} new records, {$result['updated']} updated records for date {$date}.",
-            'debug_info' => [
-                'total_rows_processed' => $totalRows,
-                'records_inserted' => $result['inserted'],
-                'records_updated' => $result['updated'],
-                'extracted_date' => $date,
-                'filename' => $originalFilename
-            ]
-        ]);
-        
-    } catch (\Exception $e) {
-        Log::error('Error importing Shopee SKU Excel: ' . $e->getMessage());
-        Log::error($e->getTraceAsString());
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error importing Excel: ' . $e->getMessage(),
-        ], 500);
-    }
-}
-
-/**
- * Extract date from SKU Excel filename
- * Format: export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx
- */
-private function extractDateFromSkuFilename($filename)
-{
-    // Default to today if no date found
-    $defaultDate = Carbon::now()->format('Y-m-d');
-    
-    // Try to match the pattern in format export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx
-    if (preg_match('/parentskudetail\.(\d{8})_/', $filename, $matches)) {
-        $dateString = $matches[1]; // This will be YYYYMMDD
+    /**
+     * Get Shopee Ads funnel data
+     */
+    public function getShopeeFunnelData(Request $request)
+    {
         try {
-            return Carbon::createFromFormat('Ymd', $dateString)->format('Y-m-d');
+            $query = AdsShopee::query();
+            
+            if ($request->has('date_start') && $request->has('date_end')) {
+                $query->whereBetween('date', [$request->date_start, $request->date_end]);
+            } else {
+                $query->whereMonth('date', now()->month)
+                    ->whereYear('date', now()->year);
+            }
+            
+            if ($request->has('kode_produk') && $request->kode_produk) {
+                $query->where('kode_produk', $request->kode_produk);
+            }
+            if ($request->has('mode_bidding') && $request->mode_bidding) {
+                $query->where('mode_bidding', $request->mode_bidding);
+            }
+            
+            if (auth()->user()->tenant_id) {
+                $query->where('tenant_id', auth()->user()->tenant_id);
+            }
+            
+            $totals = $query->selectRaw('
+                SUM(dilihat) as impressions,
+                SUM(jumlah_klik) as clicks,
+                SUM(konversi) as conversions,
+                SUM(produk_terjual) as purchases,
+                SUM(biaya) as cost,
+                SUM(omzet_penjualan) as revenue
+            ')->first();
+            
+            // Calculate funnel metrics
+            $ctr = $totals->impressions > 0 ? ($totals->clicks / $totals->impressions) * 100 : 0;
+            $conversionRate = $totals->clicks > 0 ? ($totals->conversions / $totals->clicks) * 100 : 0;
+            $purchaseRate = $totals->conversions > 0 ? ($totals->purchases / $totals->conversions) * 100 : 0;
+            $roas = $totals->cost > 0 ? $totals->revenue / $totals->cost : 0;
+            
+            $funnelData = [
+                ['name' => 'Impressions', 'value' => $totals->impressions],
+                ['name' => 'Clicks', 'value' => $totals->clicks],
+                ['name' => 'Conversions', 'value' => $totals->conversions],
+                ['name' => 'Purchases', 'value' => $totals->purchases]
+            ];
+            
+            $metrics = [
+                'ctr' => $ctr,
+                'conversion_rate' => $conversionRate,
+                'purchase_rate' => $purchaseRate,
+                'cost' => $totals->cost,
+                'revenue' => $totals->revenue,
+                'roas' => $roas
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $funnelData,
+                'metrics' => $metrics
+            ]);
         } catch (\Exception $e) {
-            Log::warning("Failed to parse date from SKU filename: {$filename}. Using default date instead.");
-            return $defaultDate;
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to get funnel data: ' . $e->getMessage()
+            ], 500);
         }
     }
-    
-    Log::warning("No date pattern found in SKU filename: {$filename}. Using default date instead.");
-    return $defaultDate;
-}
 
-/**
- * Process Shopee SKU Excel data
- */
-private function processShopeeSkuExcel($filePath, $fileDate)
-{
-    $data = [];
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
-    $worksheet = $spreadsheet->getActiveSheet();
-    
-    // Get the highest row
-    $highestRow = $worksheet->getHighestRow();
-    
-    // Log the first few rows for debugging
-    $headerRow = $worksheet->rangeToArray('A1:' . $worksheet->getHighestColumn() . '1', null, true, false)[0];
-    Log::info("Excel Headers:", $headerRow);
-    
-    // Process each row
-    for ($row = 2; $row <= $highestRow; $row++) {
-        // Get the row data
-        $rowData = $worksheet->rangeToArray('A' . $row . ':' . $worksheet->getHighestColumn() . $row, null, true, false)[0];
-        
-        // Skip rows where column 11 is "-"
-        if (isset($rowData[11]) && $rowData[11] === '-') {
-            continue;
-        }
-        
-        // Extract required fields
-        $kodeProduct = isset($rowData[0]) ? $rowData[0] : '';
-        
-        if (empty($kodeProduct)) {
-            continue;
-        }
-        
-        $skuInduk = isset($rowData[7]) ? $rowData[7] : '';
-        
-        $data[] = [
-            'date' => $fileDate,
-            'kode_produk' => $kodeProduct,
-            'sku_induk' => $skuInduk,
-            'pengunjung_produk_kunjungan' => $this->parseExcelNumeric($rowData[8] ?? 0),
-            'halaman_produk_dilihat' => $this->parseExcelNumeric($rowData[9] ?? 0),
-            'pengunjung_melihat_tanpa_membeli' => $this->parseExcelNumeric($rowData[10] ?? 0),
-            'klik_pencarian' => $this->parseExcelNumeric($rowData[12] ?? 0),
-            'suka' => $this->parseExcelNumeric($rowData[13] ?? 0),
-            'pengunjung_produk_menambahkan_produk_ke_keranjang' => $this->parseExcelNumeric($rowData[14] ?? 0),
-            'dimasukan_ke_keranjang_produk' => $this->parseExcelNumeric($rowData[15] ?? 0),
-            'total_pembeli_pesanan_dibuat' => $this->parseExcelNumeric($rowData[17] ?? 0),
-            'produk_pesanan_dibuat' => $this->parseExcelNumeric($rowData[18] ?? 0),
-            'produk_pesanan_siap_dikirim' => $this->parseExcelNumeric($rowData[22] ?? 0),
-            'total_pembeli_pesanan_siap_dikirim' => $this->parseExcelNumeric($rowData[21] ?? 0),
-            'total_penjualan_pesanan_dibuat_idr' => $this->parseExcelNumeric($rowData[19] ?? 0),
-            'penjualan_pesanan_siap_dikirim_idr' => $this->parseExcelNumeric($rowData[23] ?? 0),
-        ];
-    }
-    
-    return $data;
-}
-
-/**
- * Parse numeric value from Excel
- */
-private function parseExcelNumeric($value)
-{
-    if (is_numeric($value)) {
-        return (int) $value;
-    }
-    
-    // Handle formatted numbers (e.g., "1,234")
-    if (is_string($value)) {
+    /**
+     * Parse numeric value from string
+     */
+    private function parseNumeric($value)
+    {
         // Remove any non-numeric characters except decimal point
         $value = preg_replace('/[^0-9.]/', '', $value);
         return $value === '' ? 0 : (int) $value;
     }
-    
-    return 0;
-}
 
-/**
- * Save Shopee SKU data to database
- */
-private function saveShopeeSkuToDatabase($data)
-{
-    $inserted = 0;
-    $updated = 0;
-    
-    foreach ($data as $row) {
+    /**
+     * Parse date from string
+     */
+    private function parseDate($date)
+    {
+        if (empty($date)) {
+            return null;
+        }
+        
         try {
-            // Check if a record already exists with the same date and kode_produk
-            $existingRecord = AdsShopee::where('date', $row['date'])
-                ->where('kode_produk', $row['kode_produk'])
-                ->first();
-            
-            if ($existingRecord) {
-                // Update existing record with the SKU details
-                $existingRecord->update([
-                    'sku_induk' => $row['sku_induk'],
-                    'pengunjung_produk_kunjungan' => $row['pengunjung_produk_kunjungan'],
-                    'halaman_produk_dilihat' => $row['halaman_produk_dilihat'],
-                    'pengunjung_melihat_tanpa_membeli' => $row['pengunjung_melihat_tanpa_membeli'],
-                    'klik_pencarian' => $row['klik_pencarian'],
-                    'suka' => $row['suka'],
-                    'pengunjung_produk_menambahkan_produk_ke_keranjang' => $row['pengunjung_produk_menambahkan_produk_ke_keranjang'],
-                    'dimasukan_ke_keranjang_produk' => $row['dimasukan_ke_keranjang_produk'],
-                    'total_pembeli_pesanan_dibuat' => $row['total_pembeli_pesanan_dibuat'],
-                    'produk_pesanan_dibuat' => $row['produk_pesanan_dibuat'],
-                    'produk_pesanan_siap_dikirim' => $row['produk_pesanan_siap_dikirim'],
-                    'total_pembeli_pesanan_siap_dikirim' => $row['total_pembeli_pesanan_siap_dikirim'],
-                    'total_penjualan_pesanan_dibuat_idr' => $row['total_penjualan_pesanan_dibuat_idr'],
-                    'penjualan_pesanan_siap_dikirim_idr' => $row['penjualan_pesanan_siap_dikirim_idr'],
-                ]);
-                $updated++;
-            } else {
-                // Create a new record with defaults for ad-specific fields
-                AdsShopee::create([
-                    'date' => $row['date'],
-                    'kode_produk' => $row['kode_produk'],
-                    'sku_induk' => $row['sku_induk'],
-                    'urutan' => 0,
-                    'nama_iklan' => 'SKU Detail Import',
-                    'status' => 'Imported',
-                    'tampilan_iklan' => '',
-                    'mode_bidding' => '',
-                    'penempatan_iklan' => '',
-                    'tanggal_mulai' => null,
-                    'tanggal_selesai' => '',
-                    'dilihat' => 0,
-                    'jumlah_klik' => 0,
-                    'konversi' => 0,
-                    'produk_terjual' => 0,
-                    'omzet_penjualan' => 0,
-                    'biaya' => 0,
-                    'efektivitas_iklan' => 0,
-                    'pengunjung_produk_kunjungan' => $row['pengunjung_produk_kunjungan'],
-                    'halaman_produk_dilihat' => $row['halaman_produk_dilihat'],
-                    'pengunjung_melihat_tanpa_membeli' => $row['pengunjung_melihat_tanpa_membeli'],
-                    'klik_pencarian' => $row['klik_pencarian'],
-                    'suka' => $row['suka'],
-                    'pengunjung_produk_menambahkan_produk_ke_keranjang' => $row['pengunjung_produk_menambahkan_produk_ke_keranjang'],
-                    'dimasukan_ke_keranjang_produk' => $row['dimasukan_ke_keranjang_produk'],
-                    'total_pembeli_pesanan_dibuat' => $row['total_pembeli_pesanan_dibuat'],
-                    'produk_pesanan_dibuat' => $row['produk_pesanan_dibuat'],
-                    'produk_pesanan_siap_dikirim' => $row['produk_pesanan_siap_dikirim'],
-                    'total_pembeli_pesanan_siap_dikirim' => $row['total_pembeli_pesanan_siap_dikirim'],
-                    'total_penjualan_pesanan_dibuat_idr' => $row['total_penjualan_pesanan_dibuat_idr'],
-                    'penjualan_pesanan_siap_dikirim_idr' => $row['penjualan_pesanan_siap_dikirim_idr'],
-                ]);
-                $inserted++;
-            }
+            return Carbon::parse($date)->format('Y-m-d');
         } catch (\Exception $e) {
-            Log::error("Failed to save SKU record: " . $e->getMessage(), ['data' => $row]);
+            return null;
         }
     }
-    
-    return [
-        'inserted' => $inserted,
-        'updated' => $updated
-    ];
-}
+
+    public function importShopeeSkuDetails(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'excel_file' => 'required|file|mimes:xlsx,xls|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            // Get the original filename
+            $file = $request->file('excel_file');
+            $originalFilename = $file->getClientOriginalName();
+            
+            // Extract date from filename (format: export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx)
+            $date = $this->extractDateFromSkuFilename($originalFilename);
+            Log::info("Extracted date from SKU Excel filename: {$date}");
+            
+            // Store the file temporarily
+            $path = $file->storeAs('temp', 'shopee_sku_import.xlsx');
+            $filePath = Storage::path($path);
+            
+            // Process the Excel file
+            $processedData = $this->processShopeeSkuExcel($filePath, $date);
+            $totalRows = count($processedData);
+            Log::info("Processed {$totalRows} rows from Excel");
+            
+            // Save processed data to database
+            $result = $this->saveShopeeSkuToDatabase($processedData);
+            Log::info("SKU Details import summary: Inserted {$result['inserted']}, Updated {$result['updated']}");
+            
+            // Delete the temporary file
+            Storage::delete($path);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => "Successfully imported SKU details: {$result['inserted']} new records, {$result['updated']} updated records for date {$date}.",
+                'debug_info' => [
+                    'total_rows_processed' => $totalRows,
+                    'records_inserted' => $result['inserted'],
+                    'records_updated' => $result['updated'],
+                    'extracted_date' => $date,
+                    'filename' => $originalFilename
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error importing Shopee SKU Excel: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error importing Excel: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Extract date from SKU Excel filename
+     * Format: export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx
+     */
+    private function extractDateFromSkuFilename($filename)
+    {
+        // Default to today if no date found
+        $defaultDate = Carbon::now()->format('Y-m-d');
+        
+        // Try to match the pattern in format export_report.parentskudetail.YYYYMMDD_YYYYMMDD.xlsx
+        if (preg_match('/parentskudetail\.(\d{8})_/', $filename, $matches)) {
+            $dateString = $matches[1]; // This will be YYYYMMDD
+            try {
+                return Carbon::createFromFormat('Ymd', $dateString)->format('Y-m-d');
+            } catch (\Exception $e) {
+                Log::warning("Failed to parse date from SKU filename: {$filename}. Using default date instead.");
+                return $defaultDate;
+            }
+        }
+        
+        Log::warning("No date pattern found in SKU filename: {$filename}. Using default date instead.");
+        return $defaultDate;
+    }
+
+    /**
+     * Process Shopee SKU Excel data
+     */
+    private function processShopeeSkuExcel($filePath, $fileDate)
+    {
+        $data = [];
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $worksheet = $spreadsheet->getActiveSheet();
+        
+        // Get the highest row
+        $highestRow = $worksheet->getHighestRow();
+        
+        // Log the first few rows for debugging
+        $headerRow = $worksheet->rangeToArray('A1:' . $worksheet->getHighestColumn() . '1', null, true, false)[0];
+        Log::info("Excel Headers:", $headerRow);
+        
+        // Process each row
+        for ($row = 2; $row <= $highestRow; $row++) {
+            // Get the row data
+            $rowData = $worksheet->rangeToArray('A' . $row . ':' . $worksheet->getHighestColumn() . $row, null, true, false)[0];
+            
+            // Skip rows where column 11 is "-"
+            if (isset($rowData[11]) && $rowData[11] === '-') {
+                continue;
+            }
+            
+            // Extract required fields
+            $kodeProduct = isset($rowData[0]) ? $rowData[0] : '';
+            
+            if (empty($kodeProduct)) {
+                continue;
+            }
+            
+            $skuInduk = isset($rowData[7]) ? $rowData[7] : '';
+            
+            $data[] = [
+                'date' => $fileDate,
+                'kode_produk' => $kodeProduct,
+                'sku_induk' => $skuInduk,
+                'pengunjung_produk_kunjungan' => $this->parseExcelNumeric($rowData[8] ?? 0),
+                'halaman_produk_dilihat' => $this->parseExcelNumeric($rowData[9] ?? 0),
+                'pengunjung_melihat_tanpa_membeli' => $this->parseExcelNumeric($rowData[10] ?? 0),
+                'klik_pencarian' => $this->parseExcelNumeric($rowData[12] ?? 0),
+                'suka' => $this->parseExcelNumeric($rowData[13] ?? 0),
+                'pengunjung_produk_menambahkan_produk_ke_keranjang' => $this->parseExcelNumeric($rowData[14] ?? 0),
+                'dimasukan_ke_keranjang_produk' => $this->parseExcelNumeric($rowData[15] ?? 0),
+                'total_pembeli_pesanan_dibuat' => $this->parseExcelNumeric($rowData[17] ?? 0),
+                'produk_pesanan_dibuat' => $this->parseExcelNumeric($rowData[18] ?? 0),
+                'produk_pesanan_siap_dikirim' => $this->parseExcelNumeric($rowData[22] ?? 0),
+                'total_pembeli_pesanan_siap_dikirim' => $this->parseExcelNumeric($rowData[21] ?? 0),
+                'total_penjualan_pesanan_dibuat_idr' => $this->parseExcelNumeric($rowData[19] ?? 0),
+                'penjualan_pesanan_siap_dikirim_idr' => $this->parseExcelNumeric($rowData[23] ?? 0),
+            ];
+        }
+        
+        return $data;
+    }
+
+    /**
+     * Parse numeric value from Excel
+     */
+    private function parseExcelNumeric($value)
+    {
+        if (is_numeric($value)) {
+            return (int) $value;
+        }
+        
+        // Handle formatted numbers (e.g., "1,234")
+        if (is_string($value)) {
+            // Remove any non-numeric characters except decimal point
+            $value = preg_replace('/[^0-9.]/', '', $value);
+            return $value === '' ? 0 : (int) $value;
+        }
+        
+        return 0;
+    }
+
+    /**
+     * Save Shopee SKU data to database
+     */
+    private function saveShopeeSkuToDatabase($data)
+    {
+        $inserted = 0;
+        $updated = 0;
+        
+        foreach ($data as $row) {
+            try {
+                // Check if a record already exists with the same date and kode_produk
+                $existingRecord = AdsShopee::where('date', $row['date'])
+                    ->where('kode_produk', $row['kode_produk'])
+                    ->first();
+                
+                if ($existingRecord) {
+                    // Update existing record with the SKU details
+                    $existingRecord->update([
+                        'sku_induk' => $row['sku_induk'],
+                        'pengunjung_produk_kunjungan' => $row['pengunjung_produk_kunjungan'],
+                        'halaman_produk_dilihat' => $row['halaman_produk_dilihat'],
+                        'pengunjung_melihat_tanpa_membeli' => $row['pengunjung_melihat_tanpa_membeli'],
+                        'klik_pencarian' => $row['klik_pencarian'],
+                        'suka' => $row['suka'],
+                        'pengunjung_produk_menambahkan_produk_ke_keranjang' => $row['pengunjung_produk_menambahkan_produk_ke_keranjang'],
+                        'dimasukan_ke_keranjang_produk' => $row['dimasukan_ke_keranjang_produk'],
+                        'total_pembeli_pesanan_dibuat' => $row['total_pembeli_pesanan_dibuat'],
+                        'produk_pesanan_dibuat' => $row['produk_pesanan_dibuat'],
+                        'produk_pesanan_siap_dikirim' => $row['produk_pesanan_siap_dikirim'],
+                        'total_pembeli_pesanan_siap_dikirim' => $row['total_pembeli_pesanan_siap_dikirim'],
+                        'total_penjualan_pesanan_dibuat_idr' => $row['total_penjualan_pesanan_dibuat_idr'],
+                        'penjualan_pesanan_siap_dikirim_idr' => $row['penjualan_pesanan_siap_dikirim_idr'],
+                    ]);
+                    $updated++;
+                } else {
+                    // Create a new record with defaults for ad-specific fields
+                    AdsShopee::create([
+                        'date' => $row['date'],
+                        'kode_produk' => $row['kode_produk'],
+                        'sku_induk' => $row['sku_induk'],
+                        'urutan' => 0,
+                        'nama_iklan' => 'SKU Detail Import',
+                        'status' => 'Imported',
+                        'tampilan_iklan' => '',
+                        'mode_bidding' => '',
+                        'penempatan_iklan' => '',
+                        'tanggal_mulai' => null,
+                        'tanggal_selesai' => '',
+                        'dilihat' => 0,
+                        'jumlah_klik' => 0,
+                        'konversi' => 0,
+                        'produk_terjual' => 0,
+                        'omzet_penjualan' => 0,
+                        'biaya' => 0,
+                        'efektivitas_iklan' => 0,
+                        'pengunjung_produk_kunjungan' => $row['pengunjung_produk_kunjungan'],
+                        'halaman_produk_dilihat' => $row['halaman_produk_dilihat'],
+                        'pengunjung_melihat_tanpa_membeli' => $row['pengunjung_melihat_tanpa_membeli'],
+                        'klik_pencarian' => $row['klik_pencarian'],
+                        'suka' => $row['suka'],
+                        'pengunjung_produk_menambahkan_produk_ke_keranjang' => $row['pengunjung_produk_menambahkan_produk_ke_keranjang'],
+                        'dimasukan_ke_keranjang_produk' => $row['dimasukan_ke_keranjang_produk'],
+                        'total_pembeli_pesanan_dibuat' => $row['total_pembeli_pesanan_dibuat'],
+                        'produk_pesanan_dibuat' => $row['produk_pesanan_dibuat'],
+                        'produk_pesanan_siap_dikirim' => $row['produk_pesanan_siap_dikirim'],
+                        'total_pembeli_pesanan_siap_dikirim' => $row['total_pembeli_pesanan_siap_dikirim'],
+                        'total_penjualan_pesanan_dibuat_idr' => $row['total_penjualan_pesanan_dibuat_idr'],
+                        'penjualan_pesanan_siap_dikirim_idr' => $row['penjualan_pesanan_siap_dikirim_idr'],
+                    ]);
+                    $inserted++;
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to save SKU record: " . $e->getMessage(), ['data' => $row]);
+            }
+        }
+        
+        return [
+            'inserted' => $inserted,
+            'updated' => $updated
+        ];
+    }
+    public function get_ads_monitoring(Request $request)
+    {
+        $query = AdsMonitoring::query();
+
+        // Apply date filters
+        if ($request->has('date_start') && $request->has('date_end')) {
+            $query->whereBetween('date', [$request->date_start, $request->date_end]);
+        }
+
+        // Apply channel filter
+        if ($request->has('channel') && $request->channel != '') {
+            $query->where('channel', $request->channel);
+        }
+
+        return DataTables::of($query)
+            ->addColumn('gmv_variance', function ($row) {
+                if ($row->gmv_target && $row->gmv_actual) {
+                    $variance = (($row->gmv_actual - $row->gmv_target) / $row->gmv_target) * 100;
+                    $class = $variance >= 0 ? 'text-success' : 'text-danger';
+                    $icon = $variance >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    return '<span class="' . $class . '"><i class="fas ' . $icon . '"></i> ' . number_format($variance, 2) . '%</span>';
+                }
+                return '-';
+            })
+            ->addColumn('spent_variance', function ($row) {
+                if ($row->spent_target && $row->spent_actual) {
+                    $variance = (($row->spent_actual - $row->spent_target) / $row->spent_target) * 100;
+                    $class = $variance >= 0 ? 'text-danger' : 'text-success';
+                    $icon = $variance >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    return '<span class="' . $class . '"><i class="fas ' . $icon . '"></i> ' . number_format($variance, 2) . '%</span>';
+                }
+                return '-';
+            })
+            ->addColumn('roas_variance', function ($row) {
+                if ($row->roas_target && $row->roas_actual) {
+                    $variance = (($row->roas_actual - $row->roas_target) / $row->roas_target) * 100;
+                    $class = $variance >= 0 ? 'text-success' : 'text-danger';
+                    $icon = $variance >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    return '<span class="' . $class . '"><i class="fas ' . $icon . '"></i> ' . number_format($variance, 2) . '%</span>';
+                }
+                return '-';
+            })
+            ->addColumn('cpa_variance', function ($row) {
+                if ($row->cpa_target && $row->cpa_actual) {
+                    $variance = (($row->cpa_actual - $row->cpa_target) / $row->cpa_target) * 100;
+                    $class = $variance >= 0 ? 'text-danger' : 'text-success';
+                    $icon = $variance >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    return '<span class="' . $class . '"><i class="fas ' . $icon . '"></i> ' . number_format($variance, 2) . '%</span>';
+                }
+                return '-';
+            })
+            ->addColumn('performance_status', function ($row) {
+                $scores = [];
+                
+                // GMV Performance
+                if ($row->gmv_target && $row->gmv_actual) {
+                    $gmvScore = ($row->gmv_actual >= $row->gmv_target) ? 1 : 0;
+                    $scores[] = $gmvScore;
+                }
+                
+                // ROAS Performance
+                if ($row->roas_target && $row->roas_actual) {
+                    $roasScore = ($row->roas_actual >= $row->roas_target) ? 1 : 0;
+                    $scores[] = $roasScore;
+                }
+                
+                // CPA Performance (lower is better)
+                if ($row->cpa_target && $row->cpa_actual) {
+                    $cpaScore = ($row->cpa_actual <= $row->cpa_target) ? 1 : 0;
+                    $scores[] = $cpaScore;
+                }
+                
+                if (empty($scores)) {
+                    return '<span class="badge badge-secondary">No Data</span>';
+                }
+                
+                $avgScore = array_sum($scores) / count($scores);
+                
+                if ($avgScore >= 0.8) {
+                    return '<span class="badge badge-success">Excellent</span>';
+                } elseif ($avgScore >= 0.6) {
+                    return '<span class="badge badge-warning">Good</span>';
+                } elseif ($avgScore >= 0.4) {
+                    return '<span class="badge badge-info">Average</span>';
+                } else {
+                    return '<span class="badge badge-danger">Poor</span>';
+                }
+            })
+            ->editColumn('date', function ($row) {
+                return Carbon::parse($row->date)->format('d/m/Y');
+            })
+            ->editColumn('gmv_target', function ($row) {
+                return $row->gmv_target ? 'Rp ' . number_format($row->gmv_target, 0, ',', '.') : '-';
+            })
+            ->editColumn('gmv_actual', function ($row) {
+                return $row->gmv_actual ? 'Rp ' . number_format($row->gmv_actual, 0, ',', '.') : '-';
+            })
+            ->editColumn('spent_target', function ($row) {
+                return $row->spent_target ? 'Rp ' . number_format($row->spent_target, 0, ',', '.') : '-';
+            })
+            ->editColumn('spent_actual', function ($row) {
+                return $row->spent_actual ? 'Rp ' . number_format($row->spent_actual, 0, ',', '.') : '-';
+            })
+            ->editColumn('roas_target', function ($row) {
+                return $row->roas_target ? number_format($row->roas_target, 2) : '-';
+            })
+            ->editColumn('roas_actual', function ($row) {
+                return $row->roas_actual ? number_format($row->roas_actual, 2) : '-';
+            })
+            ->editColumn('cpa_target', function ($row) {
+                return $row->cpa_target ? 'Rp ' . number_format($row->cpa_target, 0, ',', '.') : '-';
+            })
+            ->editColumn('cpa_actual', function ($row) {
+                return $row->cpa_actual ? 'Rp ' . number_format($row->cpa_actual, 0, ',', '.') : '-';
+            })
+            ->editColumn('aov_to_cpa_target', function ($row) {
+                return $row->aov_to_cpa_target ? number_format($row->aov_to_cpa_target, 2) : '-';
+            })
+            ->editColumn('aov_to_cpa_actual', function ($row) {
+                return $row->aov_to_cpa_actual ? number_format($row->aov_to_cpa_actual, 2) : '-';
+            })
+            ->rawColumns(['gmv_variance', 'spent_variance', 'roas_variance', 'cpa_variance', 'performance_status'])
+            ->make(true);
+    }
+
+    /**
+     * Get chart data for ads monitoring
+     */
+    public function get_ads_monitoring_chart_data(Request $request)
+    {
+        try {
+            $query = AdsMonitoring::query();
+
+            // Apply date filters
+            if ($request->has('date_start') && $request->has('date_end')) {
+                $query->whereBetween('date', [$request->date_start, $request->date_end]);
+            } else {
+                // Default to last 30 days
+                $query->where('date', '>=', Carbon::now()->subDays(30));
+            }
+
+            // Apply channel filter
+            if ($request->has('channel') && $request->channel != '') {
+                $query->where('channel', $request->channel);
+            }
+
+            $data = $query->orderBy('date')->get();
+
+            // Group by date and channel for chart
+            $chartData = [
+                'dates' => [],
+                'channels' => [],
+                'datasets' => [
+                    'gmv_target' => [],
+                    'gmv_actual' => [],
+                    'spent_target' => [],
+                    'spent_actual' => [],
+                    'roas_target' => [],
+                    'roas_actual' => [],
+                    'cpa_target' => [],
+                    'cpa_actual' => []
+                ]
+            ];
+
+            // Get unique dates and channels
+            $dates = $data->pluck('date')->unique()->sort()->values();
+            $channels = $data->pluck('channel')->unique()->values();
+
+            $chartData['dates'] = $dates->map(function($date) {
+                return Carbon::parse($date)->format('Y-m-d');
+            })->toArray();
+
+            $chartData['channels'] = $channels->toArray();
+
+            // Process data for each channel
+            foreach ($channels as $channel) {
+                $channelData = $data->where('channel', $channel);
+                
+                foreach ($dates as $date) {
+                    $dayData = $channelData->where('date', $date)->first();
+                    
+                    $chartData['datasets']['gmv_target'][$channel][] = $dayData ? (float)$dayData->gmv_target : null;
+                    $chartData['datasets']['gmv_actual'][$channel][] = $dayData ? (float)$dayData->gmv_actual : null;
+                    $chartData['datasets']['spent_target'][$channel][] = $dayData ? (float)$dayData->spent_target : null;
+                    $chartData['datasets']['spent_actual'][$channel][] = $dayData ? (float)$dayData->spent_actual : null;
+                    $chartData['datasets']['roas_target'][$channel][] = $dayData ? (float)$dayData->roas_target : null;
+                    $chartData['datasets']['roas_actual'][$channel][] = $dayData ? (float)$dayData->roas_actual : null;
+                    $chartData['datasets']['cpa_target'][$channel][] = $dayData ? (float)$dayData->cpa_target : null;
+                    $chartData['datasets']['cpa_actual'][$channel][] = $dayData ? (float)$dayData->cpa_actual : null;
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $chartData
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export ads monitoring report
+     */
+    public function export_ads_monitoring(Request $request)
+    {
+        try {
+            $query = AdsMonitoring::query();
+
+            // Apply filters
+            if ($request->has('date_start') && $request->has('date_end')) {
+                $query->whereBetween('date', [$request->date_start, $request->date_end]);
+            }
+
+            if ($request->has('channel') && $request->channel != '') {
+                $query->where('channel', $request->channel);
+            }
+
+            $data = $query->orderBy('date', 'desc')->orderBy('channel')->get();
+
+            $filename = 'ads_monitoring_report_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($data) {
+                $file = fopen('php://output', 'w');
+                
+                // CSV Headers
+                fputcsv($file, [
+                    'Date',
+                    'Channel',
+                    'GMV Target',
+                    'GMV Actual',
+                    'GMV Variance (%)',
+                    'Spent Target',
+                    'Spent Actual',
+                    'Spent Variance (%)',
+                    'ROAS Target',
+                    'ROAS Actual',
+                    'ROAS Variance (%)',
+                    'CPA Target',
+                    'CPA Actual',
+                    'CPA Variance (%)',
+                    'AOV/CPA Target',
+                    'AOV/CPA Actual'
+                ]);
+
+                foreach ($data as $row) {
+                    // Calculate variances
+                    $gmvVariance = ($row->gmv_target && $row->gmv_actual) 
+                        ? (($row->gmv_actual - $row->gmv_target) / $row->gmv_target) * 100 
+                        : null;
+                        
+                    $spentVariance = ($row->spent_target && $row->spent_actual) 
+                        ? (($row->spent_actual - $row->spent_target) / $row->spent_target) * 100 
+                        : null;
+                        
+                    $roasVariance = ($row->roas_target && $row->roas_actual) 
+                        ? (($row->roas_actual - $row->roas_target) / $row->roas_target) * 100 
+                        : null;
+                        
+                    $cpaVariance = ($row->cpa_target && $row->cpa_actual) 
+                        ? (($row->cpa_actual - $row->cpa_target) / $row->cpa_target) * 100 
+                        : null;
+
+                    fputcsv($file, [
+                        Carbon::parse($row->date)->format('d/m/Y'),
+                        $row->channel,
+                        $row->gmv_target,
+                        $row->gmv_actual,
+                        $gmvVariance ? number_format($gmvVariance, 2) : '',
+                        $row->spent_target,
+                        $row->spent_actual,
+                        $spentVariance ? number_format($spentVariance, 2) : '',
+                        $row->roas_target,
+                        $row->roas_actual,
+                        $roasVariance ? number_format($roasVariance, 2) : '',
+                        $row->cpa_target,
+                        $row->cpa_actual,
+                        $cpaVariance ? number_format($cpaVariance, 2) : '',
+                        $row->aov_to_cpa_target,
+                        $row->aov_to_cpa_actual
+                    ]);
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to export report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

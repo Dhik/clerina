@@ -31,9 +31,14 @@
                         <i class="fab fa-tiktok"></i> TikTok Ads
                     </a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" id="overall-tab" data-toggle="tab" href="#overall-content" role="tab" aria-controls="overall-content" aria-selected="false">
                         <i class="fas fa-chart-line"></i> Overall Performance
+                    </a>
+                </li> -->
+                <li class="nav-item">
+                    <a class="nav-link" id="ads-monitoring-tab" data-toggle="tab" href="#ads-monitoring-content" role="tab" aria-controls="ads-monitoring-content" aria-selected="false">
+                        <i class="fas fa-bullseye"></i> Ads Monitoring
                     </a>
                 </li>
             </ul>
@@ -45,6 +50,7 @@
                 @include('admin.adSpentSocialMedia.tabs.shopee_tab')
                 @include('admin.adSpentSocialMedia.tabs.tiktok_tab')
                 @include('admin.adSpentSocialMedia.tabs.overall_tab')
+                @include('admin.adSpentSocialMedia.tabs.ads_monitoring_tab')
             </div>
         </div>
     </div>
@@ -76,6 +82,7 @@
     @include('admin.adSpentSocialMedia.js.shopee-ads')
     @include('admin.adSpentSocialMedia.js.tiktok-ads')
     @include('admin.adSpentSocialMedia.js.overall-performance')
+    @include('admin.adSpentSocialMedia.js.ads-monitoring')
     
     @include('admin.adSpentMarketPlace.script-line-chart')
 @stop
