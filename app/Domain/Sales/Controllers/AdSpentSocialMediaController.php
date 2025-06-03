@@ -4421,6 +4421,7 @@ class AdSpentSocialMediaController extends Controller
             ], 500);
         }
     }
+
     private function extractDateFromFilename($filename)
     {
         // Default to today if no date found
@@ -4449,6 +4450,7 @@ class AdSpentSocialMediaController extends Controller
         Log::warning("No date pattern found in filename: {$filename}. Using default date instead.");
         return $defaultDate;
     }
+
     /**
      * Process Shopee CSV data with enhanced debugging
      */
@@ -4460,7 +4462,7 @@ class AdSpentSocialMediaController extends Controller
         $processedRows = 0;
         $skippedRows = 0;
         $validRows = 0;
-        $skipRows = 9; // Skip the first 9 rows of metadata
+        $skipRows = 7; // Updated to skip 7 rows for the new format
         
         if (($handle = fopen($filePath, "r")) !== false) {
             // First, let's log all the metadata rows for reference
@@ -4514,11 +4516,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 
                 try {
-                    // Based on the header row structure:
-                    // Urutan,Nama Iklan,Status,Kode Produk,Tampilan Iklan,Mode Bidding,Penempatan Iklan,Tanggal Mulai,Tanggal Selesai,Dilihat,Jumlah Klik,...
+                    // Updated column mapping for new CSV structure:
+                    // A=urutan, B=nama_iklan, C=status, D=jenis_ads, E=kode_produk, F=tampilan_iklan, G=mode_bidding, H=penempatan_iklan, I=tanggal_mulai, J=tanggal_selesai, K=dilihat, L=jumlah_klik, N=konversi, T=produk_terjual, V=omzet_penjualan, X=biaya, Z=efektivitas_iklan
                     
-                    // Get kode_produk from the CSV (column 3 in the data)
-                    $kodeProduct = !empty($rowData[3]) ? $rowData[3] : 'Unknown';
+                    // Get kode_produk from the CSV (column E - index 4)
+                    $kodeProduct = !empty($rowData[4]) ? $rowData[4] : 'Unknown';
                     
                     // Use the date from the metadata/filename if provided
                     $date = $fileDate;
@@ -4531,7 +4533,8 @@ class AdSpentSocialMediaController extends Controller
                     
                     // Creating a unique key for each ad
                     $adName = isset($rowData[1]) ? $rowData[1] : 'Unnamed';
-                    $key = $date . '_' . $kodeProduct . '_' . md5($adName);
+                    $jenisAds = isset($rowData[3]) ? $rowData[3] : '';
+                    $key = $date . '_' . $kodeProduct . '_' . md5($adName . $jenisAds);
                     
                     $validRows++;
                     
@@ -4543,29 +4546,30 @@ class AdSpentSocialMediaController extends Controller
                             'urutan' => $this->parseNumeric(isset($rowData[0]) ? $rowData[0] : 0),
                             'nama_iklan' => $adName,
                             'status' => isset($rowData[2]) ? $rowData[2] : '',
-                            'tampilan_iklan' => isset($rowData[4]) ? $rowData[4] : '',
-                            'mode_bidding' => isset($rowData[5]) ? $rowData[5] : '',
-                            'penempatan_iklan' => isset($rowData[6]) ? $rowData[6] : '',
-                            'tanggal_mulai' => isset($rowData[7]) ? $this->parseDate($rowData[7]) : null,
-                            'tanggal_selesai' => isset($rowData[8]) ? $rowData[8] : '',
-                            'dilihat' => $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0),
-                            'jumlah_klik' => $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0),
-                            'konversi' => $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0),
-                            'produk_terjual' => $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0),
-                            'omzet_penjualan' => $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0),
-                            'biaya' => $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0),
-                            'efektivitas_iklan' => (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0),
+                            'jenis_ads' => $jenisAds, // New field from column D
+                            'tampilan_iklan' => isset($rowData[5]) ? $rowData[5] : '', // Column F
+                            'mode_bidding' => isset($rowData[6]) ? $rowData[6] : '', // Column G
+                            'penempatan_iklan' => isset($rowData[7]) ? $rowData[7] : '', // Column H
+                            'tanggal_mulai' => isset($rowData[8]) ? $this->parseDate($rowData[8]) : null, // Column I
+                            'tanggal_selesai' => isset($rowData[9]) ? $rowData[9] : '', // Column J
+                            'dilihat' => $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0), // Column K
+                            'jumlah_klik' => $this->parseNumeric(isset($rowData[11]) ? $rowData[11] : 0), // Column L
+                            'konversi' => $this->parseNumeric(isset($rowData[13]) ? $rowData[13] : 0), // Column N
+                            'produk_terjual' => $this->parseNumeric(isset($rowData[19]) ? $rowData[19] : 0), // Column T
+                            'omzet_penjualan' => $this->parseNumeric(isset($rowData[21]) ? $rowData[21] : 0), // Column V
+                            'biaya' => $this->parseNumeric(isset($rowData[23]) ? $rowData[23] : 0), // Column X
+                            'efektivitas_iklan' => (float) str_replace(',', '.', isset($rowData[25]) ? $rowData[25] : 0), // Column Z
                             'count' => 1,
                         ];
                     } else {
                         // For existing groups, update numeric values for sum
-                        $data[$key]['dilihat'] += $this->parseNumeric(isset($rowData[9]) ? $rowData[9] : 0);
-                        $data[$key]['jumlah_klik'] += $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0);
-                        $data[$key]['konversi'] += $this->parseNumeric(isset($rowData[12]) ? $rowData[12] : 0);
-                        $data[$key]['produk_terjual'] += $this->parseNumeric(isset($rowData[18]) ? $rowData[18] : 0);
-                        $data[$key]['omzet_penjualan'] += $this->parseNumeric(isset($rowData[20]) ? $rowData[20] : 0);
-                        $data[$key]['biaya'] += $this->parseNumeric(isset($rowData[22]) ? $rowData[22] : 0);
-                        $data[$key]['efektivitas_iklan'] += (float) str_replace(',', '.', isset($rowData[23]) ? $rowData[23] : 0);
+                        $data[$key]['dilihat'] += $this->parseNumeric(isset($rowData[10]) ? $rowData[10] : 0);
+                        $data[$key]['jumlah_klik'] += $this->parseNumeric(isset($rowData[11]) ? $rowData[11] : 0);
+                        $data[$key]['konversi'] += $this->parseNumeric(isset($rowData[13]) ? $rowData[13] : 0);
+                        $data[$key]['produk_terjual'] += $this->parseNumeric(isset($rowData[19]) ? $rowData[19] : 0);
+                        $data[$key]['omzet_penjualan'] += $this->parseNumeric(isset($rowData[21]) ? $rowData[21] : 0);
+                        $data[$key]['biaya'] += $this->parseNumeric(isset($rowData[23]) ? $rowData[23] : 0);
+                        $data[$key]['efektivitas_iklan'] += (float) str_replace(',', '.', isset($rowData[25]) ? $rowData[25] : 0);
                         $data[$key]['count']++;
                     }
                 } catch (\Exception $e) {
@@ -4612,10 +4616,11 @@ class AdSpentSocialMediaController extends Controller
         
         foreach ($data as $row) {
             try {
-                // Check if a record already exists
+                // Check if a record already exists (updated to include jenis_ads in uniqueness check)
                 $existingRecord = AdsShopee::where('date', $row['date'])
                     ->where('kode_produk', $row['kode_produk'])
                     ->where('nama_iklan', $row['nama_iklan'])
+                    ->where('jenis_ads', $row['jenis_ads'])
                     ->first();
                 
                 if ($existingRecord) {
