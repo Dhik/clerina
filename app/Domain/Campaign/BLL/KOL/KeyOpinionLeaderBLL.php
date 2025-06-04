@@ -278,7 +278,7 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
             // Count current qualified KOLs
             $qualifiedCount = KeyOpinionLeader::where('status_affiliate', 'Qualified')->count();
             
-            if ($qualifiedCount < 500) {
+            if ($qualifiedCount < 1000) {
                 // Still room for more qualified KOLs
                 $kol->update(['status_affiliate' => 'Qualified']);
             } else {
