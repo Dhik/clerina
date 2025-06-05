@@ -5762,17 +5762,9 @@ private function calculateTotalScore($row)
 public function get_spent_vs_gmv(Request $request)
 {
     try {
-        // Use hardcoded tenant_id = 1 and current month as default
         $tenantId = 1;
         $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
         $dateEnd = $request->date_end ?: now()->format('Y-m-d');
-        
-        \Log::info('Spent vs GMV Debug', [
-            'tenant_id' => $tenantId,
-            'date_start' => $dateStart,
-            'date_end' => $dateEnd,
-            'channel' => $request->channel
-        ]);
         
         $sql = "
             SELECT 
@@ -5844,16 +5836,7 @@ public function get_spent_vs_gmv(Request $request)
             $tenantId, $dateStart, $dateEnd   // marketplace spend
         ];
 
-        \Log::info('SQL Query with bindings', [
-            'bindings' => $bindings
-        ]);
-
         $data = DB::select($sql, $bindings);
-
-        \Log::info('Raw query result', [
-            'count' => count($data),
-            'sample_data' => array_slice($data, 0, 3) // Show first 3 records
-        ]);
 
         // Filter by channel if specified
         if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
@@ -5866,18 +5849,24 @@ public function get_spent_vs_gmv(Request $request)
             ->editColumn('date', function($row) {
                 return $row->date;
             })
+            ->editColumn('channel_name', function($row) {
+                return $row->channel_name;
+            })
             ->editColumn('sales_amount', function($row) {
-                return number_format($row->sales_amount, 0);
+                // Return raw number for JavaScript to handle formatting
+                return (float) $row->sales_amount;
             })
             ->editColumn('spend_amount', function($row) {
-                return number_format($row->spend_amount, 0);
+                // Return raw number for JavaScript to handle formatting
+                return (float) $row->spend_amount;
             })
             ->editColumn('roas', function($row) {
-                return number_format($row->roas, 2);
+                return (float) $row->roas;
             })
             ->editColumn('spent_percentage', function($row) {
-                return number_format($row->spent_percentage, 2);
+                return (float) $row->spent_percentage;
             })
+            ->rawColumns(['date', 'channel_name'])
             ->make(true);
 
     } catch (\Exception $e) {
