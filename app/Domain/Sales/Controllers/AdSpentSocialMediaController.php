@@ -5757,30 +5757,21 @@ private function calculateTotalScore($row)
     }
 
     /**
- * Debug version of get_spent_vs_gmv with detailed logging
+ * Get Spent vs GMV data for DataTable - FIXED with tenant_id = 1
  */
 public function get_spent_vs_gmv(Request $request)
 {
     try {
-        $tenantId = auth()->user()->tenant_id;
+        // Use hardcoded tenant_id = 1 and current month as default
+        $tenantId = 1;
+        $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
+        $dateEnd = $request->date_end ?: now()->format('Y-m-d');
         
-        // Debug: Log the inputs
         \Log::info('Spent vs GMV Debug', [
             'tenant_id' => $tenantId,
-            'date_start' => $request->date_start,
-            'date_end' => $request->date_end,
-            'channel' => $request->channel,
-            'all_request_data' => $request->all()
-        ]);
-        
-        // Set default date range if not provided
-        $dateStart = $request->date_start ?: '2025-06-01';
-        $dateEnd = $request->date_end ?: '2025-06-30';
-        
-        // Debug: Log the dates being used
-        \Log::info('Date range being used', [
-            'dateStart' => $dateStart,
-            'dateEnd' => $dateEnd
+            'date_start' => $dateStart,
+            'date_end' => $dateEnd,
+            'channel' => $request->channel
         ]);
         
         $sql = "
@@ -5810,14 +5801,8 @@ public function get_spent_vs_gmv(Request $request)
                     AND o.date <= ?
                     AND o.sales_channel_id = 1
                     AND o.status NOT IN (
-                        'pending', 
-                        'cancelled', 
-                        'request_cancel', 
-                        'request_return',
-                        'Batal', 
-                        'Canceled', 
-                        'Pembatalan diajukan', 
-                        'Dibatalkan Sistem'
+                        'pending', 'cancelled', 'request_cancel', 'request_return',
+                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
                     )
                 GROUP BY o.date
             ) sales_data
@@ -5859,93 +5844,20 @@ public function get_spent_vs_gmv(Request $request)
             $tenantId, $dateStart, $dateEnd   // marketplace spend
         ];
 
-        // Debug: Log the SQL and bindings
-        \Log::info('SQL Query', [
-            'sql' => $sql,
+        \Log::info('SQL Query with bindings', [
             'bindings' => $bindings
         ]);
 
         $data = DB::select($sql, $bindings);
 
-        // Debug: Log the raw data
         \Log::info('Raw query result', [
             'count' => count($data),
-            'data' => $data
+            'sample_data' => array_slice($data, 0, 3) // Show first 3 records
         ]);
 
         // Filter by channel if specified
         if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
             $data = collect($data)->where('channel_name', $request->channel)->values()->all();
-            \Log::info('After channel filter', [
-                'channel' => $request->channel,
-                'count' => count($data)
-            ]);
-        }
-
-        // If still no data, let's test individual queries
-        if (empty($data)) {
-            // Test sales data only
-            $salesSql = "
-                SELECT 
-                    o.date,
-                    SUM(o.amount) as sales_amount
-                FROM orders o
-                JOIN sales_channels sc ON o.sales_channel_id = sc.id
-                WHERE o.tenant_id = ?
-                    AND o.date >= ? 
-                    AND o.date <= ?
-                    AND o.sales_channel_id = 1
-                    AND o.status NOT IN (
-                        'pending', 'cancelled', 'request_cancel', 'request_return',
-                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
-                    )
-                GROUP BY o.date
-                ORDER BY o.date DESC
-            ";
-            
-            $salesData = DB::select($salesSql, [$tenantId, $dateStart, $dateEnd]);
-            \Log::info('Sales data only', [
-                'count' => count($salesData),
-                'data' => $salesData
-            ]);
-
-            // Test spend data only
-            $spendSql = "
-                SELECT 
-                    date,
-                    SUM(amount) as spend_amount
-                FROM (
-                    SELECT 
-                        asmp.date,
-                        asmp.amount
-                    FROM ad_spent_social_media asmp
-                    JOIN social_media sm ON asmp.social_media_id = sm.id
-                    WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= ? 
-                        AND asmp.date <= ?
-                        AND asmp.social_media_id = 1
-                    
-                    UNION ALL
-                    
-                    SELECT 
-                        asmp.date,
-                        asmp.amount
-                    FROM ad_spent_market_places asmp
-                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
-                    WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= ? 
-                        AND asmp.date <= ?
-                        AND asmp.sales_channel_id = 1
-                ) combined_spend
-                GROUP BY date
-                ORDER BY date DESC
-            ";
-            
-            $spendData = DB::select($spendSql, [$tenantId, $dateStart, $dateEnd, $tenantId, $dateStart, $dateEnd]);
-            \Log::info('Spend data only', [
-                'count' => count($spendData),
-                'data' => $spendData
-            ]);
         }
 
         $collection = collect($data);
@@ -5979,20 +5891,38 @@ public function get_spent_vs_gmv(Request $request)
 }
 
 /**
- * Alternative method - Test with your exact working query
+ * Get chart data for Spent vs GMV - MISSING METHOD ADDED
  */
-public function test_spent_vs_gmv(Request $request)
+public function get_spent_vs_gmv_chart_data(Request $request)
 {
     try {
-        $tenantId = auth()->user()->tenant_id;
+        $tenantId = 1;
+        $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
+        $dateEnd = $request->date_end ?: now()->format('Y-m-d');
         
-        // Use your exact working query structure
+        \Log::info('Chart data request', [
+            'tenant_id' => $tenantId,
+            'date_start' => $dateStart,
+            'date_end' => $dateEnd,
+            'channel' => $request->channel
+        ]);
+        
         $sql = "
             SELECT 
                 'Shopee and Meta' as channel_name,
                 COALESCE(sales_data.date, spend_data.date) as date,
                 COALESCE(sales_data.sales_amount, 0) as sales_amount,
-                COALESCE(spend_data.spend_amount, 0) as spend_amount
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
             FROM (
                 SELECT 
                     o.date,
@@ -6000,18 +5930,12 @@ public function test_spent_vs_gmv(Request $request)
                 FROM orders o
                 JOIN sales_channels sc ON o.sales_channel_id = sc.id
                 WHERE o.tenant_id = ?
-                    AND o.date >= '2025-06-01' 
-                    AND o.date < '2025-07-01'
+                    AND o.date >= ? 
+                    AND o.date <= ?
                     AND o.sales_channel_id = 1
                     AND o.status NOT IN (
-                        'pending', 
-                        'cancelled', 
-                        'request_cancel', 
-                        'request_return',
-                        'Batal', 
-                        'Canceled', 
-                        'Pembatalan diajukan', 
-                        'Dibatalkan Sistem'
+                        'pending', 'cancelled', 'request_cancel', 'request_return',
+                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
                     )
                 GROUP BY o.date
             ) sales_data
@@ -6026,8 +5950,8 @@ public function test_spent_vs_gmv(Request $request)
                     FROM ad_spent_social_media asmp
                     JOIN social_media sm ON asmp.social_media_id = sm.id
                     WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= '2025-06-01' 
-                        AND asmp.date < '2025-07-01'
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
                         AND asmp.social_media_id = 1
                     
                     UNION ALL
@@ -6038,83 +5962,238 @@ public function test_spent_vs_gmv(Request $request)
                     FROM ad_spent_market_places asmp
                     JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
                     WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= '2025-06-01' 
-                        AND asmp.date < '2025-07-01'
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
                         AND asmp.sales_channel_id = 1
                 ) combined_spend
                 GROUP BY date
             ) spend_data ON sales_data.date = spend_data.date
-            ORDER BY date
+            ORDER BY COALESCE(sales_data.date, spend_data.date) ASC
         ";
 
-        $data = DB::select($sql, [$tenantId, $tenantId, $tenantId]);
-        
-        // Calculate ROAS and percentage in PHP
-        $processedData = collect($data)->map(function($row) {
-            $roas = $row->spend_amount > 0 ? $row->sales_amount / $row->spend_amount : 0;
-            $spentPercentage = $row->sales_amount > 0 ? ($row->spend_amount / $row->sales_amount) * 100 : 0;
-            
-            return [
-                'channel_name' => $row->channel_name,
-                'date' => $row->date,
-                'sales_amount' => $row->sales_amount,
-                'spend_amount' => $row->spend_amount,
-                'roas' => $roas,
-                'spent_percentage' => $spentPercentage
-            ];
-        });
+        $data = DB::select($sql, [
+            $tenantId, $dateStart, $dateEnd,  // sales data
+            $tenantId, $dateStart, $dateEnd,  // social media spend
+            $tenantId, $dateStart, $dateEnd   // marketplace spend
+        ]);
 
-        return DataTables::of($processedData)
-            ->editColumn('sales_amount', function($row) {
-                return number_format($row['sales_amount'], 0);
-            })
-            ->editColumn('spend_amount', function($row) {
-                return number_format($row['spend_amount'], 0);
-            })
-            ->editColumn('roas', function($row) {
-                return number_format($row['roas'], 2);
-            })
-            ->editColumn('spent_percentage', function($row) {
-                return number_format($row['spent_percentage'], 2);
-            })
-            ->make(true);
+        // Apply channel filter if specified
+        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
+            $data = collect($data)->where('channel_name', $request->channel)->values()->all();
+        }
+
+        // Convert to collection for easier manipulation
+        $dataCollection = collect($data);
+
+        // Calculate summary statistics
+        $totalGmv = $dataCollection->sum('sales_amount');
+        $totalSpent = $dataCollection->sum('spend_amount');
+        $avgRoas = $totalSpent > 0 ? $totalGmv / $totalSpent : 0;
+        $spentPercentage = $totalGmv > 0 ? ($totalSpent / $totalGmv) * 100 : 0;
+
+        // Prepare chart data
+        $chartData = $dataCollection->map(function($item) {
+            return [
+                'date' => $item->date,
+                'channel_name' => $item->channel_name,
+                'sales_amount' => (float) $item->sales_amount,
+                'spend_amount' => (float) $item->spend_amount,
+                'roas' => (float) $item->roas,
+                'spent_percentage' => (float) $item->spent_percentage
+            ];
+        })->values()->all();
+
+        \Log::info('Chart data prepared', [
+            'data_count' => count($chartData),
+            'total_gmv' => $totalGmv,
+            'total_spent' => $totalSpent
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'chart_data' => $chartData,
+                'summary_stats' => [
+                    'total_gmv' => (float) $totalGmv,
+                    'total_spent' => (float) $totalSpent,
+                    'avg_roas' => (float) $avgRoas,
+                    'spent_percentage' => (float) $spentPercentage
+                ],
+                'period' => [
+                    'start_date' => $dateStart,
+                    'end_date' => $dateEnd
+                ]
+            ]
+        ]);
 
     } catch (\Exception $e) {
-        \Log::error('Test Spent vs GMV Error: ' . $e->getMessage());
+        \Log::error('Chart data error: ' . $e->getMessage());
         return response()->json([
-            'error' => 'Failed to fetch test data: ' . $e->getMessage()
+            'status' => 'error',
+            'message' => 'Failed to fetch chart data: ' . $e->getMessage()
         ], 500);
     }
 }
 
 /**
- * Simple test to check basic data
+ * Export Spent vs GMV data to Excel - FIXED
  */
-public function simple_test(Request $request)
+public function export_spent_vs_gmv(Request $request)
 {
     try {
-        $tenantId = auth()->user()->tenant_id;
+        $tenantId = 1;
+        $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
+        $dateEnd = $request->date_end ?: now()->format('Y-m-d');
         
-        // Just get some basic order data
-        $orders = DB::table('orders')
-            ->where('tenant_id', $tenantId)
-            ->where('date', '>=', '2025-06-01')
-            ->where('date', '<', '2025-07-01')
-            ->where('sales_channel_id', 1)
-            ->select('date', 'amount', 'status')
-            ->limit(10)
-            ->get();
+        $sql = "
+            SELECT 
+                'Shopee and Meta' as channel_name,
+                COALESCE(sales_data.date, spend_data.date) as date,
+                COALESCE(sales_data.sales_amount, 0) as sales_amount,
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
+            FROM (
+                SELECT 
+                    o.date,
+                    SUM(o.amount) as sales_amount
+                FROM orders o
+                JOIN sales_channels sc ON o.sales_channel_id = sc.id
+                WHERE o.tenant_id = ?
+                    AND o.date >= ? 
+                    AND o.date <= ?
+                    AND o.sales_channel_id = 1
+                    AND o.status NOT IN (
+                        'pending', 'cancelled', 'request_cancel', 'request_return',
+                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
+                    )
+                GROUP BY o.date
+            ) sales_data
+            LEFT JOIN (
+                SELECT 
+                    date,
+                    SUM(amount) as spend_amount
+                FROM (
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND asmp.social_media_id = 1
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_market_places asmp
+                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND asmp.sales_channel_id = 1
+                ) combined_spend
+                GROUP BY date
+            ) spend_data ON sales_data.date = spend_data.date
+            ORDER BY COALESCE(sales_data.date, spend_data.date) ASC
+        ";
+
+        $data = DB::select($sql, [
+            $tenantId, $dateStart, $dateEnd,  // sales data
+            $tenantId, $dateStart, $dateEnd,  // social media spend
+            $tenantId, $dateStart, $dateEnd   // marketplace spend
+        ]);
+
+        // Apply channel filter if specified
+        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
+            $data = collect($data)->where('channel_name', $request->channel)->values()->all();
+        }
+
+        // Create Excel export class
+        $export = new class($data, $dateStart, $dateEnd) implements FromCollection, WithHeadings, WithMapping, WithStyles {
+            private $data;
+            private $dateStart;
+            private $dateEnd;
             
-        return response()->json([
-            'tenant_id' => $tenantId,
-            'orders_count' => $orders->count(),
-            'orders_sample' => $orders
-        ]);
+            public function __construct($data, $dateStart, $dateEnd) {
+                $this->data = collect($data);
+                $this->dateStart = $dateStart;
+                $this->dateEnd = $dateEnd;
+            }
+            
+            public function collection() {
+                return $this->data;
+            }
+            
+            public function headings(): array {
+                return [
+                    'Date',
+                    'Channel',
+                    'GMV (Rp)',
+                    'Ad Spent (Rp)',
+                    'ROAS',
+                    'Spent/GMV %'
+                ];
+            }
+            
+            public function map($row): array {
+                return [
+                    $row->date,
+                    $row->channel_name,
+                    number_format($row->sales_amount, 0, ',', '.'),
+                    number_format($row->spend_amount, 0, ',', '.'),
+                    number_format($row->roas, 2, ',', '.'),
+                    number_format($row->spent_percentage, 2, ',', '.') . '%'
+                ];
+            }
+            
+            public function styles(Worksheet $sheet) {
+                return [
+                    // Style the first row as header
+                    1 => [
+                        'font' => ['bold' => true],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'FFE2E3E5']
+                        ]
+                    ],
+                    // Right align numeric columns
+                    'C:F' => [
+                        'alignment' => [
+                            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT
+                        ]
+                    ],
+                    // Center align channel column
+                    'B:B' => [
+                        'alignment' => [
+                            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+                        ]
+                    ]
+                ];
+            }
+        };
+
+        $filename = 'spent_vs_gmv_report_' . $dateStart . '_to_' . $dateEnd . '.xlsx';
         
+        return Excel::download($export, $filename);
+
     } catch (\Exception $e) {
+        \Log::error('Export error: ' . $e->getMessage());
         return response()->json([
-            'error' => $e->getMessage()
-        ]);
+            'status' => 'error',
+            'message' => 'Failed to export data: ' . $e->getMessage()
+        ], 500);
     }
 }
 }
