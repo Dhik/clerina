@@ -5756,492 +5756,335 @@ private function calculateTotalScore($row)
         }
     }
 
-    public function get_spent_vs_gmv(Request $request)
-    {
-        try {
-            $tenantId = auth()->user()->tenant_id;
-            
-            // Base query for Shopee and Meta combined
-            $baseQuery = "
-                SELECT 
-                    'Shopee and Meta' as channel_name,
-                    COALESCE(sales_data.date, spend_data.date) as date,
-                    COALESCE(sales_data.sales_amount, 0) as sales_amount,
-                    COALESCE(spend_data.spend_amount, 0) as spend_amount,
-                    CASE 
-                        WHEN COALESCE(spend_data.spend_amount, 0) > 0 
-                        THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
-                        ELSE 0 
-                    END as roas,
-                    CASE 
-                        WHEN COALESCE(sales_data.sales_amount, 0) > 0 
-                        THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
-                        ELSE 0 
-                    END as spent_percentage
-                FROM (
-                    SELECT 
-                        o.date,
-                        SUM(o.amount) as sales_amount
-                    FROM orders o
-                    JOIN sales_channels sc ON o.sales_channel_id = sc.id
-                    WHERE o.tenant_id = {$tenantId}
-                        AND o.sales_channel_id = 1
-                        AND o.status NOT IN (
-                            'pending', 'cancelled', 'request_cancel', 'request_return',
-                            'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
-                        )
-                    GROUP BY o.date
-                ) sales_data
-                LEFT JOIN (
-                    SELECT 
-                        date,
-                        SUM(amount) as spend_amount
-                    FROM (
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_social_media asmp
-                        JOIN social_media sm ON asmp.social_media_id = sm.id
-                        WHERE asmp.tenant_id = {$tenantId}
-                            AND asmp.social_media_id = 1
-                        
-                        UNION ALL
-                        
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_market_places asmp
-                        JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
-                        WHERE asmp.tenant_id = {$tenantId}
-                            AND asmp.sales_channel_id = 1
-                    ) combined_spend
-                    GROUP BY date
-                ) spend_data ON sales_data.date = spend_data.date
-                WHERE 1=1
-            ";
-
-            // Add date filters
-            if ($request->filled('date_start') && $request->filled('date_end')) {
-                $baseQuery .= " AND COALESCE(sales_data.date, spend_data.date) BETWEEN '{$request->date_start}' AND '{$request->date_end}'";
-            }
-
-            // Add channel filter (for future extension)
-            if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
-                // For now, we only support Shopee and Meta combined
-                // Return empty result if other channel is selected
-                $baseQuery .= " AND 1=0";
-            }
-
-            $baseQuery .= " ORDER BY COALESCE(sales_data.date, spend_data.date) DESC";
-
-            $query = DB::table(DB::raw("({$baseQuery}) as spent_vs_gmv_data"));
-
-            return DataTables::of($query)
-                ->editColumn('date', function($row) {
-                    return date('Y-m-d', strtotime($row->date));
-                })
-                ->editColumn('sales_amount', function($row) {
-                    return number_format($row->sales_amount, 0);
-                })
-                ->editColumn('spend_amount', function($row) {
-                    return number_format($row->spend_amount, 0);
-                })
-                ->editColumn('roas', function($row) {
-                    return number_format($row->roas, 2);
-                })
-                ->editColumn('spent_percentage', function($row) {
-                    return number_format($row->spent_percentage, 2);
-                })
-                ->rawColumns(['date', 'channel_name', 'sales_amount', 'spend_amount', 'roas', 'spent_percentage'])
-                ->make(true);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
     /**
-     * Get chart data for Spent vs GMV
-     */
-    public function get_spent_vs_gmv_chart_data(Request $request)
-    {
-        try {
-            $tenantId = auth()->user()->tenant_id;
-            $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
-            $dateEnd = $request->date_end ?: now()->format('Y-m-d');
-            
-            $baseQuery = "
+ * Get Spent vs GMV data for DataTable - FIXED VERSION
+ */
+public function get_spent_vs_gmv(Request $request)
+{
+    try {
+        $tenantId = auth()->user()->tenant_id;
+        
+        // Build the base query with proper parameter binding
+        $baseQuery = "
+            SELECT 
+                'Shopee and Meta' as channel_name,
+                COALESCE(sales_data.date, spend_data.date) as date,
+                COALESCE(sales_data.sales_amount, 0) as sales_amount,
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
+            FROM (
                 SELECT 
-                    'Shopee and Meta' as channel_name,
-                    COALESCE(sales_data.date, spend_data.date) as date,
-                    COALESCE(sales_data.sales_amount, 0) as sales_amount,
-                    COALESCE(spend_data.spend_amount, 0) as spend_amount,
-                    CASE 
-                        WHEN COALESCE(spend_data.spend_amount, 0) > 0 
-                        THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
-                        ELSE 0 
-                    END as roas,
-                    CASE 
-                        WHEN COALESCE(sales_data.sales_amount, 0) > 0 
-                        THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
-                        ELSE 0 
-                    END as spent_percentage
-                FROM (
-                    SELECT 
-                        o.date,
-                        SUM(o.amount) as sales_amount
-                    FROM orders o
-                    JOIN sales_channels sc ON o.sales_channel_id = sc.id
-                    WHERE o.tenant_id = ?
-                        AND o.date >= ? 
-                        AND o.date <= ?
-                        AND o.sales_channel_id = 1
-                        AND o.status NOT IN (
-                            'pending', 'cancelled', 'request_cancel', 'request_return',
-                            'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
-                        )
-                    GROUP BY o.date
-                ) sales_data
-                LEFT JOIN (
-                    SELECT 
-                        date,
-                        SUM(amount) as spend_amount
-                    FROM (
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_social_media asmp
-                        JOIN social_media sm ON asmp.social_media_id = sm.id
-                        WHERE asmp.tenant_id = ?
-                            AND asmp.date >= ? 
-                            AND asmp.date <= ?
-                            AND asmp.social_media_id = 1
-                        
-                        UNION ALL
-                        
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_market_places asmp
-                        JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
-                        WHERE asmp.tenant_id = ?
-                            AND asmp.date >= ? 
-                            AND asmp.date <= ?
-                            AND asmp.sales_channel_id = 1
-                    ) combined_spend
-                    GROUP BY date
-                ) spend_data ON sales_data.date = spend_data.date
-                ORDER BY COALESCE(sales_data.date, spend_data.date)
-            ";
-
-            $data = DB::select($baseQuery, [
-                $tenantId, $dateStart, $dateEnd,  // sales data
-                $tenantId, $dateStart, $dateEnd,  // social media spend
-                $tenantId, $dateStart, $dateEnd   // marketplace spend
-            ]);
-
-            // Apply channel filter if specified
-            if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
-                // For future extension to other channels
-                $data = collect($data)->where('channel_name', $request->channel)->values()->all();
-            }
-
-            // Convert to collection for easier manipulation
-            $dataCollection = collect($data);
-
-            // Calculate summary statistics
-            $totalGmv = $dataCollection->sum('sales_amount');
-            $totalSpent = $dataCollection->sum('spend_amount');
-            $avgRoas = $totalSpent > 0 ? $totalGmv / $totalSpent : 0;
-            $spentPercentage = $totalGmv > 0 ? ($totalSpent / $totalGmv) * 100 : 0;
-
-            // Prepare chart data
-            $chartData = $dataCollection->map(function($item) {
-                return [
-                    'date' => $item->date,
-                    'channel_name' => $item->channel_name,
-                    'sales_amount' => (float) $item->sales_amount,
-                    'spend_amount' => (float) $item->spend_amount,
-                    'roas' => (float) $item->roas,
-                    'spent_percentage' => (float) $item->spent_percentage
-                ];
-            })->values()->all();
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'chart_data' => $chartData,
-                    'summary_stats' => [
-                        'total_gmv' => (float) $totalGmv,
-                        'total_spent' => (float) $totalSpent,
-                        'avg_roas' => (float) $avgRoas,
-                        'spent_percentage' => (float) $spentPercentage
-                    ],
-                    'period' => [
-                        'start_date' => $dateStart,
-                        'end_date' => $dateEnd
-                    ]
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to fetch chart data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Export Spent vs GMV data to Excel
-     */
-    public function export_spent_vs_gmv(Request $request)
-    {
-        try {
-            $tenantId = auth()->user()->tenant_id;
-            $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
-            $dateEnd = $request->date_end ?: now()->format('Y-m-d');
-            
-            $baseQuery = "
+                    o.date,
+                    SUM(o.amount) as sales_amount
+                FROM orders o
+                JOIN sales_channels sc ON o.sales_channel_id = sc.id
+                WHERE o.tenant_id = ?
+                    AND o.sales_channel_id = 1
+                    AND o.status NOT IN (
+                        'pending', 'cancelled', 'request_cancel', 'request_return',
+                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
+                    )
+                GROUP BY o.date
+            ) sales_data
+            LEFT JOIN (
                 SELECT 
-                    'Shopee and Meta' as channel_name,
-                    COALESCE(sales_data.date, spend_data.date) as date,
-                    COALESCE(sales_data.sales_amount, 0) as sales_amount,
-                    COALESCE(spend_data.spend_amount, 0) as spend_amount,
-                    CASE 
-                        WHEN COALESCE(spend_data.spend_amount, 0) > 0 
-                        THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
-                        ELSE 0 
-                    END as roas,
-                    CASE 
-                        WHEN COALESCE(sales_data.sales_amount, 0) > 0 
-                        THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
-                        ELSE 0 
-                    END as spent_percentage
-                FROM (
-                    SELECT 
-                        o.date,
-                        SUM(o.amount) as sales_amount
-                    FROM orders o
-                    JOIN sales_channels sc ON o.sales_channel_id = sc.id
-                    WHERE o.tenant_id = ?
-                        AND o.date >= ? 
-                        AND o.date <= ?
-                        AND o.sales_channel_id = 1
-                        AND o.status NOT IN (
-                            'pending', 'cancelled', 'request_cancel', 'request_return',
-                            'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
-                        )
-                    GROUP BY o.date
-                ) sales_data
-                LEFT JOIN (
-                    SELECT 
-                        date,
-                        SUM(amount) as spend_amount
-                    FROM (
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_social_media asmp
-                        JOIN social_media sm ON asmp.social_media_id = sm.id
-                        WHERE asmp.tenant_id = ?
-                            AND asmp.date >= ? 
-                            AND asmp.date <= ?
-                            AND asmp.social_media_id = 1
-                        
-                        UNION ALL
-                        
-                        SELECT 
-                            asmp.date,
-                            asmp.amount
-                        FROM ad_spent_market_places asmp
-                        JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
-                        WHERE asmp.tenant_id = ?
-                            AND asmp.date >= ? 
-                            AND asmp.date <= ?
-                            AND asmp.sales_channel_id = 1
-                    ) combined_spend
-                    GROUP BY date
-                ) spend_data ON sales_data.date = spend_data.date
-                ORDER BY COALESCE(sales_data.date, spend_data.date)
-            ";
-
-            $data = DB::select($baseQuery, [
-                $tenantId, $dateStart, $dateEnd,  // sales data
-                $tenantId, $dateStart, $dateEnd,  // social media spend
-                $tenantId, $dateStart, $dateEnd   // marketplace spend
-            ]);
-
-            // Apply channel filter if specified
-            if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
-                $data = collect($data)->where('channel_name', $request->channel)->values()->all();
-            }
-
-            // Create Excel export class
-            $export = new class($data, $dateStart, $dateEnd) implements FromCollection, WithHeadings, WithMapping, WithStyles {
-                private $data;
-                private $dateStart;
-                private $dateEnd;
-                
-                public function __construct($data, $dateStart, $dateEnd) {
-                    $this->data = collect($data);
-                    $this->dateStart = $dateStart;
-                    $this->dateEnd = $dateEnd;
-                }
-                
-                public function collection() {
-                    return $this->data;
-                }
-                
-                public function headings(): array {
-                    return [
-                        'Date',
-                        'Channel',
-                        'GMV (Rp)',
-                        'Ad Spent (Rp)',
-                        'ROAS',
-                        'Spent/GMV %'
-                    ];
-                }
-                
-                public function map($row): array {
-                    return [
-                        date('Y-m-d', strtotime($row->date)),
-                        $row->channel_name,
-                        number_format($row->sales_amount, 0, ',', '.'),
-                        number_format($row->spend_amount, 0, ',', '.'),
-                        number_format($row->roas, 2, ',', '.'),
-                        number_format($row->spent_percentage, 2, ',', '.') . '%'
-                    ];
-                }
-                
-                public function styles(Worksheet $sheet) {
-                    return [
-                        // Style the first row as header
-                        1 => [
-                            'font' => ['bold' => true],
-                            'fill' => [
-                                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                'startColor' => ['argb' => 'FFE2E3E5']
-                            ]
-                        ],
-                        // Right align numeric columns
-                        'C:F' => [
-                            'alignment' => [
-                                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT
-                            ]
-                        ],
-                        // Center align channel column
-                        'B:B' => [
-                            'alignment' => [
-                                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
-                            ]
-                        ]
-                    ];
-                }
-            };
-
-            $filename = 'spent_vs_gmv_report_' . $dateStart . '_to_' . $dateEnd . '.xlsx';
-            
-            return Excel::download($export, $filename);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to export data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Alternative method with extended channel support for future use
-     */
-    public function get_spent_vs_gmv_extended(Request $request)
-    {
-        try {
-            $tenantId = auth()->user()->tenant_id;
-            $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
-            $dateEnd = $request->date_end ?: now()->format('Y-m-d');
-
-            // Query for Shopee and Meta combined
-            $shopeeMetaQuery = "
-                SELECT 
-                    'Shopee and Meta' as channel_name,
-                    COALESCE(sales_data.date, spend_data.date) as date,
-                    COALESCE(sales_data.sales_amount, 0) as sales_amount,
-                    COALESCE(spend_data.spend_amount, 0) as spend_amount
-                FROM (
-                    SELECT o.date, SUM(o.amount) as sales_amount
-                    FROM orders o
-                    WHERE o.tenant_id = {$tenantId} 
-                        AND o.date BETWEEN '{$dateStart}' AND '{$dateEnd}'
-                        AND o.sales_channel_id = 1
-                        AND o.status NOT IN ('pending', 'cancelled', 'request_cancel', 'request_return')
-                    GROUP BY o.date
-                ) sales_data
-                LEFT JOIN (
-                    SELECT date, SUM(amount) as spend_amount
-                    FROM (
-                        SELECT asmp.date, asmp.amount
-                        FROM ad_spent_social_media asmp
-                        WHERE asmp.tenant_id = {$tenantId} 
-                            AND asmp.date BETWEEN '{$dateStart}' AND '{$dateEnd}'
-                            AND asmp.social_media_id = 1
-                        UNION ALL
-                        SELECT asmp.date, asmp.amount
-                        FROM ad_spent_market_places asmp
-                        WHERE asmp.tenant_id = {$tenantId} 
-                            AND asmp.date BETWEEN '{$dateStart}' AND '{$dateEnd}'
-                            AND asmp.sales_channel_id = 1
-                    ) combined_spend
-                    GROUP BY date
-                ) spend_data ON sales_data.date = spend_data.date
-            ";
-
-            // Add more channel queries here for TikTok, Meta only, Shopee only, etc.
-            // For now, we'll use the basic query
-
-            $finalQuery = "
-                SELECT 
-                    channel_name,
                     date,
-                    sales_amount,
-                    spend_amount,
-                    CASE 
-                        WHEN spend_amount > 0 
-                        THEN sales_amount / spend_amount 
-                        ELSE 0 
-                    END as roas,
-                    CASE 
-                        WHEN sales_amount > 0 
-                        THEN (spend_amount / sales_amount) * 100 
-                        ELSE 0 
-                    END as spent_percentage
-                FROM ({$shopeeMetaQuery}) combined_data
-                WHERE 1=1
-            ";
+                    SUM(amount) as spend_amount
+                FROM (
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ?
+                        AND asmp.social_media_id = 1
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_market_places asmp
+                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
+                    WHERE asmp.tenant_id = ?
+                        AND asmp.sales_channel_id = 1
+                ) combined_spend
+                GROUP BY date
+            ) spend_data ON sales_data.date = spend_data.date
+            WHERE 1=1
+        ";
+        
+        $bindings = [$tenantId, $tenantId, $tenantId];
 
-            // Apply channel filter
-            if ($request->filled('channel')) {
-                $finalQuery .= " AND channel_name = '{$request->channel}'";
-            }
-
-            $finalQuery .= " ORDER BY date, channel_name";
-
-            $data = DB::select($finalQuery);
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $data
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to fetch extended data: ' . $e->getMessage()
-            ], 500);
+        // Add date filters
+        if ($request->filled('date_start') && $request->filled('date_end')) {
+            $baseQuery .= " AND COALESCE(sales_data.date, spend_data.date) BETWEEN ? AND ?";
+            $bindings[] = $request->date_start;
+            $bindings[] = $request->date_end;
         }
+
+        // Add channel filter (for future extension)
+        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
+            // For now, we only support Shopee and Meta combined
+            // Return empty result if other channel is selected
+            $baseQuery .= " AND 1=0";
+        }
+
+        $baseQuery .= " ORDER BY COALESCE(sales_data.date, spend_data.date) DESC";
+
+        // Execute the query with bindings
+        $data = DB::select($baseQuery, $bindings);
+        
+        // Convert to collection for DataTables
+        $collection = collect($data);
+
+        return DataTables::of($collection)
+            ->editColumn('date', function($row) {
+                return date('Y-m-d', strtotime($row->date));
+            })
+            ->editColumn('sales_amount', function($row) {
+                return number_format($row->sales_amount, 0);
+            })
+            ->editColumn('spend_amount', function($row) {
+                return number_format($row->spend_amount, 0);
+            })
+            ->editColumn('roas', function($row) {
+                return number_format($row->roas, 2);
+            })
+            ->editColumn('spent_percentage', function($row) {
+                return number_format($row->spent_percentage, 2);
+            })
+            ->make(true);
+
+    } catch (\Exception $e) {
+        \Log::error('Spent vs GMV Error: ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to fetch data: ' . $e->getMessage()
+        ], 500);
     }
+}
+
+/**
+ * Alternative simpler approach using DB facade directly
+ */
+public function get_spent_vs_gmv_alternative(Request $request)
+{
+    try {
+        $tenantId = auth()->user()->tenant_id;
+        
+        // Start with a base query builder
+        $query = DB::table('orders as o')
+            ->select([
+                DB::raw("'Shopee and Meta' as channel_name"),
+                'o.date',
+                DB::raw('COALESCE(SUM(o.amount), 0) as sales_amount'),
+                DB::raw('COALESCE(spend_data.spend_amount, 0) as spend_amount'),
+                DB::raw('CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(SUM(o.amount), 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas'),
+                DB::raw('CASE 
+                    WHEN COALESCE(SUM(o.amount), 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / SUM(o.amount)) * 100 
+                    ELSE 0 
+                END as spent_percentage')
+            ])
+            ->join('sales_channels as sc', 'o.sales_channel_id', '=', 'sc.id')
+            ->leftJoin(DB::raw('(
+                SELECT 
+                    date,
+                    SUM(amount) as spend_amount
+                FROM (
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ' . $tenantId . '
+                        AND asmp.social_media_id = 1
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_market_places asmp
+                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
+                    WHERE asmp.tenant_id = ' . $tenantId . '
+                        AND asmp.sales_channel_id = 1
+                ) combined_spend
+                GROUP BY date
+            ) as spend_data'), 'o.date', '=', 'spend_data.date')
+            ->where('o.tenant_id', $tenantId)
+            ->where('o.sales_channel_id', 1)
+            ->whereNotIn('o.status', [
+                'pending', 'cancelled', 'request_cancel', 'request_return',
+                'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
+            ])
+            ->groupBy('o.date', 'spend_data.spend_amount')
+            ->orderBy('o.date', 'desc');
+
+        // Add date filters
+        if ($request->filled('date_start') && $request->filled('date_end')) {
+            $query->whereBetween('o.date', [$request->date_start, $request->date_end]);
+        }
+
+        // Add channel filter
+        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
+            // Return empty result for unsupported channels
+            $query->whereRaw('1=0');
+        }
+
+        return DataTables::of($query)
+            ->editColumn('date', function($row) {
+                return $row->date;
+            })
+            ->editColumn('sales_amount', function($row) {
+                return number_format($row->sales_amount, 0);
+            })
+            ->editColumn('spend_amount', function($row) {
+                return number_format($row->spend_amount, 0);
+            })
+            ->editColumn('roas', function($row) {
+                return number_format($row->roas, 2);
+            })
+            ->editColumn('spent_percentage', function($row) {
+                return number_format($row->spent_percentage, 2);
+            })
+            ->make(true);
+
+    } catch (\Exception $e) {
+        \Log::error('Spent vs GMV Alternative Error: ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to fetch data: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Simplified version using your exact SQL structure
+ */
+public function get_spent_vs_gmv_simple(Request $request)
+{
+    try {
+        $tenantId = auth()->user()->tenant_id;
+        $dateStart = $request->date_start ?: '2025-06-01';
+        $dateEnd = $request->date_end ?: now()->format('Y-m-d');
+        
+        $sql = "
+            SELECT 
+                'Shopee and Meta' as channel_name,
+                COALESCE(sales_data.date, spend_data.date) as date,
+                COALESCE(sales_data.sales_amount, 0) as sales_amount,
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
+            FROM (
+                SELECT 
+                    o.date,
+                    SUM(o.amount) as sales_amount
+                FROM orders o
+                JOIN sales_channels sc ON o.sales_channel_id = sc.id
+                WHERE o.tenant_id = ?
+                    AND o.date >= ? 
+                    AND o.date <= ?
+                    AND o.sales_channel_id = 1
+                    AND o.status NOT IN (
+                        'pending', 
+                        'cancelled', 
+                        'request_cancel', 
+                        'request_return',
+                        'Batal', 
+                        'Canceled', 
+                        'Pembatalan diajukan', 
+                        'Dibatalkan Sistem'
+                    )
+                GROUP BY o.date
+            ) sales_data
+            LEFT JOIN (
+                SELECT 
+                    date,
+                    SUM(amount) as spend_amount
+                FROM (
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND asmp.social_media_id = 1
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_market_places asmp
+                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND asmp.sales_channel_id = 1
+                ) combined_spend
+                GROUP BY date
+            ) spend_data ON sales_data.date = spend_data.date
+            ORDER BY COALESCE(sales_data.date, spend_data.date) DESC
+        ";
+
+        $data = DB::select($sql, [
+            $tenantId, $dateStart, $dateEnd,  // sales query
+            $tenantId, $dateStart, $dateEnd,  // social media spend
+            $tenantId, $dateStart, $dateEnd   // marketplace spend
+        ]);
+
+        // Filter by channel if specified
+        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
+            $data = collect($data)->where('channel_name', $request->channel)->values()->all();
+        }
+
+        return DataTables::of(collect($data))
+            ->editColumn('date', function($row) {
+                return $row->date;
+            })
+            ->editColumn('sales_amount', function($row) {
+                return number_format($row->sales_amount, 0);
+            })
+            ->editColumn('spend_amount', function($row) {
+                return number_format($row->spend_amount, 0);
+            })
+            ->editColumn('roas', function($row) {
+                return number_format($row->roas, 2);
+            })
+            ->editColumn('spent_percentage', function($row) {
+                return number_format($row->spent_percentage, 2);
+            })
+            ->make(true);
+
+    } catch (\Exception $e) {
+        \Log::error('Spent vs GMV Simple Error: ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Failed to fetch data: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }
