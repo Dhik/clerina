@@ -5481,6 +5481,13 @@ class OrderController extends Controller
         $startDate = Carbon::now()->subMonths(12);
         $currentTenantId = Auth::user()->current_tenant_id;
         
+        // Debug: Log what we're getting
+        \Log::info('Cohort Analysis Debug', [
+            'user_id' => Auth::id(),
+            'current_tenant_id' => $currentTenantId,
+            'user_object' => Auth::user()->toArray()
+        ]);
+        
         // Direct SQL query using the customers table - with AOV
         $cohortData = DB::select('
             SELECT
@@ -5622,6 +5629,12 @@ class OrderController extends Controller
             ],
             'filters' => [
                 'tenant_id' => $currentTenantId
+            ],
+            // Debug info - remove this in production
+            'debug_info' => [
+                'authenticated_user_id' => Auth::id(),
+                'current_tenant_id_from_auth' => $currentTenantId,
+                'total_cohorts_found' => count($formattedCohortData)
             ]
         ];
         

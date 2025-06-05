@@ -22,7 +22,6 @@
                     <div class="d-flex justify-content-between mb-4">
                         <div>
                             <h5>Analysis Period: <span id="analysis-period">...</span></h5>
-                            <p class="text-muted">Filters: Tenant ID: 1, Sales Channel ID: 1</p>
                         </div>
                         <div class="btn-group">
                             <button type="button" id="retention-tab-btn" class="btn btn-primary active">Retention Rate</button>
