@@ -5482,7 +5482,7 @@ class OrderController extends Controller
     $currentTenantId = Auth::user()->current_tenant_id;
     
     // Allow customization of how many months to show
-    $maxMonthsToShow = $request->input('max_months', 12); // Default to 12 months (0-11)
+    $maxMonthsToShow = $request->input('max_months', 6); // Default to 6 months (0-5)
     
     // Debug: Log what we're getting
     \Log::info('Cohort Analysis Debug', [
