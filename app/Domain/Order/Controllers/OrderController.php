@@ -5489,46 +5489,29 @@ class OrderController extends Controller
             'end_date' => $endDate->format('Y-m-d')
         ]);
         
-        // Step 1: Get deduplicated cohorts on-the-fly
-        // Group by phone_number to handle duplicates in the query
+        // Step 1: Get deduplicated cohorts - first create a subquery to deduplicate customers
         $cohorts = DB::select('
             SELECT
-                DATE_FORMAT(MIN(first_order_date), "%Y-%m") AS cohort_month,
-                COUNT(DISTINCT phone_number) AS total_customers,
+                cohort_month,
+                COUNT(*) AS total_customers,
                 ROUND(AVG(aov), 2) AS cohort_aov
-            FROM customers
-            WHERE first_order_date BETWEEN ? AND ?
-                AND tenant_id = ?
-                AND phone_number IS NOT NULL
-            GROUP BY phone_number, DATE_FORMAT(MIN(first_order_date), "%Y-%m")
+            FROM (
+                SELECT 
+                    phone_number,
+                    DATE_FORMAT(MIN(first_order_date), "%Y-%m") AS cohort_month,
+                    MAX(aov) as aov
+                FROM customers
+                WHERE first_order_date BETWEEN ? AND ?
+                    AND tenant_id = ?
+                    AND phone_number IS NOT NULL
+                GROUP BY phone_number
+            ) AS deduplicated_customers
+            GROUP BY cohort_month
             ORDER BY cohort_month
         ', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $currentTenantId]);
         
-        // Step 1.5: Re-aggregate the cohorts properly
-        $cohortGroups = [];
-        foreach ($cohorts as $row) {
-            $month = $row->cohort_month;
-            if (!isset($cohortGroups[$month])) {
-                $cohortGroups[$month] = [
-                    'total_customers' => 0,
-                    'aov_sum' => 0,
-                    'aov_count' => 0
-                ];
-            }
-            $cohortGroups[$month]['total_customers'] += $row->total_customers;
-            $cohortGroups[$month]['aov_sum'] += $row->cohort_aov * $row->total_customers;
-            $cohortGroups[$month]['aov_count'] += $row->total_customers;
-        }
-        
-        // Convert back to the expected format
-        $finalCohorts = [];
-        foreach ($cohortGroups as $month => $data) {
-            $finalCohorts[] = (object)[
-                'cohort_month' => $month,
-                'total_customers' => $data['total_customers'],
-                'cohort_aov' => $data['aov_count'] > 0 ? round($data['aov_sum'] / $data['aov_count'], 2) : 0
-            ];
-        }
+        // Now we have clean cohort data, no need for re-aggregation
+        $finalCohorts = $cohorts;
         
         // Step 2: Generate month list for analysis
         $monthsList = [];
@@ -5574,11 +5557,11 @@ class OrderController extends Controller
                             COALESCE(ROUND(AVG(o.amount), 2), ?) as avg_order_value,
                             COUNT(DISTINCT o.id_order) as total_orders
                         FROM (
-                            SELECT DISTINCT phone_number, MIN(first_order_date) as true_first_date
+                            SELECT phone_number
                             FROM customers 
                             WHERE tenant_id = ? 
                             GROUP BY phone_number
-                            HAVING DATE_FORMAT(true_first_date, "%Y-%m") = ?
+                            HAVING DATE_FORMAT(MIN(first_order_date), "%Y-%m") = ?
                         ) c
                         JOIN orders o ON c.phone_number = o.customer_phone_number
                         WHERE o.date BETWEEN ? AND ?
@@ -5600,18 +5583,17 @@ class OrderController extends Controller
                             COALESCE(ROUND(AVG(o.amount), 2), 0) as avg_order_value,
                             COUNT(DISTINCT o.id_order) as total_orders
                         FROM (
-                            SELECT DISTINCT phone_number, MIN(first_order_date) as true_first_date
+                            SELECT phone_number
                             FROM customers 
                             WHERE tenant_id = ? 
                             GROUP BY phone_number
-                            HAVING DATE_FORMAT(true_first_date, "%Y-%m") = ?
+                            HAVING DATE_FORMAT(MIN(first_order_date), "%Y-%m") = ?
                         ) c
                         JOIN orders o ON c.phone_number = o.customer_phone_number
                             AND o.date BETWEEN ? AND ?
                             AND o.tenant_id = ?
                             AND o.status != "Batal"
                             AND o.sales_channel_id = 1
-                        WHERE 1=1
                     ', [
                         $currentTenantId, 
                         $cohortMonth,
