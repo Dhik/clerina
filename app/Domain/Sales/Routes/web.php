@@ -116,7 +116,11 @@ Route::prefix('admin')
                 Route::post('/ads-monitoring/refresh/meta', [AdSpentSocialMediaController::class, 'refresh_meta_ads_monitoring'])->name('adSpentSocialMedia.refresh_meta_ads_monitoring');
                 Route::post('/ads-monitoring/refresh/all', [AdSpentSocialMediaController::class, 'refresh_all_ads_monitoring'])->name('adSpentSocialMedia.refresh_all_ads_monitoring');
                 Route::get('/ads-monitoring/refresh/status', [AdSpentSocialMediaController::class, 'get_ads_monitoring_refresh_status'])->name('adSpentSocialMedia.get_ads_monitoring_refresh_status');
-                
+
+                Route::get('/spent-vs-gmv/get', [AdSpentSocialMediaController::class, 'get_spent_vs_gmv'])->name('adSpentSocialMedia.get_spent_vs_gmv');
+                Route::get('/spent-vs-gmv/chart-data', [AdSpentSocialMediaController::class, 'get_spent_vs_gmv_chart_data'])->name('adSpentSocialMedia.spent_vs_gmv_chart_data');
+                Route::post('/spent-vs-gmv/export', [AdSpentSocialMediaController::class, 'export_spent_vs_gmv'])->name('adSpentSocialMedia.export_spent_vs_gmv');
+                                
                 // Existing chart data routes
                 // Route::get('/line-data', [AdSpentSocialMediaController::class, 'get_line_data'])->name('adSpentSocialMedia.line-data');
                 // Route::get('/funnel-data', [AdSpentSocialMediaController::class, 'get_funnel_data'])->name('adSpentSocialMedia.funnel-data');

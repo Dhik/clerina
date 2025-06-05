@@ -41,6 +41,11 @@
                         <i class="fas fa-bullseye"></i> Ads Monitoring
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="spent-vs-gmv-tab" data-toggle="tab" href="#spent-vs-gmv-content" role="tab" aria-controls="spent-vs-gmv-content" aria-selected="false">
+                        <i class="fas fa-chart-area"></i> Spent vs GMV
+                    </a>
+                </li>
             </ul>
         </div>
         <div class="card-body">
@@ -51,6 +56,7 @@
                 @include('admin.adSpentSocialMedia.tabs.tiktok_tab')
                 @include('admin.adSpentSocialMedia.tabs.overall_tab')
                 @include('admin.adSpentSocialMedia.tabs.ads_monitoring_tab')
+                @include('admin.adSpentSocialMedia.tabs.spent_vs_gmv_tab')
             </div>
         </div>
     </div>
@@ -83,6 +89,6 @@
     @include('admin.adSpentSocialMedia.js.tiktok-ads')
     @include('admin.adSpentSocialMedia.js.overall-performance')
     @include('admin.adSpentSocialMedia.js.ads-monitoring')
-    
+    @include('admin.adSpentSocialMedia.js.spent-vs-gmv')
     @include('admin.adSpentMarketPlace.script-line-chart')
 @stop
