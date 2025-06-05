@@ -5757,7 +5757,7 @@ private function calculateTotalScore($row)
     }
 
     /**
- * Get Spent vs GMV data for DataTable - FIXED with tenant_id = 1
+ * Get Spent vs GMV data for DataTable - Multi-channel support
  */
 public function get_spent_vs_gmv(Request $request)
 {
@@ -5766,7 +5766,8 @@ public function get_spent_vs_gmv(Request $request)
         $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
         $dateEnd = $request->date_end ?: now()->format('Y-m-d');
         
-        $sql = "
+        // Build base queries for both channels
+        $shopeeMetaSql = "
             SELECT 
                 'Shopee and Meta' as channel_name,
                 COALESCE(sales_data.date, spend_data.date) as date,
@@ -5827,21 +5828,101 @@ public function get_spent_vs_gmv(Request $request)
                 ) combined_spend
                 GROUP BY date
             ) spend_data ON sales_data.date = spend_data.date
-            ORDER BY COALESCE(sales_data.date, spend_data.date) DESC
+        ";
+
+        $tiktokShopSql = "
+            SELECT 
+                'TikTok Shop' as channel_name,
+                COALESCE(sales_data.date, spend_data.date) as date,
+                COALESCE(sales_data.sales_amount, 0) as sales_amount,
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
+            FROM (
+                SELECT 
+                    o.date,
+                    SUM(o.amount) as sales_amount
+                FROM orders o
+                JOIN sales_channels sc ON o.sales_channel_id = sc.id
+                WHERE o.tenant_id = ?
+                    AND o.date >= ? 
+                    AND o.date <= ?
+                    AND o.sales_channel_id = 2  -- TikTok Shop channel ID
+                    AND o.status NOT IN (
+                        'pending', 'cancelled', 'request_cancel', 'request_return',
+                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
+                    )
+                GROUP BY o.date
+            ) sales_data
+            LEFT JOIN (
+                SELECT 
+                    date,
+                    SUM(amount) as spend_amount
+                FROM (
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND sm.name = 'TikTok'  -- TikTok ads
+                    
+                    UNION ALL
+                    
+                    SELECT 
+                        asmp.date,
+                        asmp.amount
+                    FROM ad_spent_market_places asmp
+                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
+                    WHERE asmp.tenant_id = ? 
+                        AND asmp.date >= ? 
+                        AND asmp.date <= ?
+                        AND asmp.sales_channel_id = 2  -- TikTok Shop marketplace ads
+                ) combined_spend
+                GROUP BY date
+            ) spend_data ON sales_data.date = spend_data.date
+        ";
+
+        // Combine both queries
+        $combinedSql = "
+            SELECT * FROM (
+                ({$shopeeMetaSql})
+                UNION ALL
+                ({$tiktokShopSql})
+            ) as all_channels
+            WHERE 1=1
         ";
 
         $bindings = [
+            // Shopee and Meta bindings
+            $tenantId, $dateStart, $dateEnd,  // sales query
+            $tenantId, $dateStart, $dateEnd,  // social media spend
+            $tenantId, $dateStart, $dateEnd,  // marketplace spend
+            // TikTok Shop bindings
             $tenantId, $dateStart, $dateEnd,  // sales query
             $tenantId, $dateStart, $dateEnd,  // social media spend
             $tenantId, $dateStart, $dateEnd   // marketplace spend
         ];
 
-        $data = DB::select($sql, $bindings);
-
-        // Filter by channel if specified
-        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
-            $data = collect($data)->where('channel_name', $request->channel)->values()->all();
+        // Apply channel filter
+        if ($request->filled('channel')) {
+            $combinedSql .= " AND channel_name = ?";
+            $bindings[] = $request->channel;
         }
+
+        $combinedSql .= " ORDER BY date DESC, channel_name ASC";
+
+        $data = DB::select($combinedSql, $bindings);
 
         $collection = collect($data);
 
@@ -5853,11 +5934,9 @@ public function get_spent_vs_gmv(Request $request)
                 return $row->channel_name;
             })
             ->editColumn('sales_amount', function($row) {
-                // Return raw number for JavaScript to handle formatting
                 return (float) $row->sales_amount;
             })
             ->editColumn('spend_amount', function($row) {
-                // Return raw number for JavaScript to handle formatting
                 return (float) $row->spend_amount;
             })
             ->editColumn('roas', function($row) {
@@ -5880,7 +5959,7 @@ public function get_spent_vs_gmv(Request $request)
 }
 
 /**
- * Get chart data for Spent vs GMV - MISSING METHOD ADDED
+ * Get chart data for Spent vs GMV - Multi-channel support
  */
 public function get_spent_vs_gmv_chart_data(Request $request)
 {
@@ -5889,14 +5968,8 @@ public function get_spent_vs_gmv_chart_data(Request $request)
         $dateStart = $request->date_start ?: now()->startOfMonth()->format('Y-m-d');
         $dateEnd = $request->date_end ?: now()->format('Y-m-d');
         
-        \Log::info('Chart data request', [
-            'tenant_id' => $tenantId,
-            'date_start' => $dateStart,
-            'date_end' => $dateEnd,
-            'channel' => $request->channel
-        ]);
-        
-        $sql = "
+        // Same combined query as above but for chart data
+        $shopeeMetaSql = "
             SELECT 
                 'Shopee and Meta' as channel_name,
                 COALESCE(sales_data.date, spend_data.date) as date,
@@ -5913,63 +5986,95 @@ public function get_spent_vs_gmv_chart_data(Request $request)
                     ELSE 0 
                 END as spent_percentage
             FROM (
-                SELECT 
-                    o.date,
-                    SUM(o.amount) as sales_amount
+                SELECT o.date, SUM(o.amount) as sales_amount
                 FROM orders o
-                JOIN sales_channels sc ON o.sales_channel_id = sc.id
-                WHERE o.tenant_id = ?
-                    AND o.date >= ? 
-                    AND o.date <= ?
-                    AND o.sales_channel_id = 1
-                    AND o.status NOT IN (
-                        'pending', 'cancelled', 'request_cancel', 'request_return',
-                        'Batal', 'Canceled', 'Pembatalan diajukan', 'Dibatalkan Sistem'
-                    )
+                WHERE o.tenant_id = ? AND o.date >= ? AND o.date <= ? AND o.sales_channel_id = 1
+                    AND o.status NOT IN ('pending', 'cancelled', 'request_cancel', 'request_return')
                 GROUP BY o.date
             ) sales_data
             LEFT JOIN (
-                SELECT 
-                    date,
-                    SUM(amount) as spend_amount
+                SELECT date, SUM(amount) as spend_amount
                 FROM (
-                    SELECT 
-                        asmp.date,
-                        asmp.amount
+                    SELECT asmp.date, asmp.amount
                     FROM ad_spent_social_media asmp
-                    JOIN social_media sm ON asmp.social_media_id = sm.id
-                    WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= ? 
-                        AND asmp.date <= ?
-                        AND asmp.social_media_id = 1
-                    
+                    WHERE asmp.tenant_id = ? AND asmp.date >= ? AND asmp.date <= ? AND asmp.social_media_id = 1
                     UNION ALL
-                    
-                    SELECT 
-                        asmp.date,
-                        asmp.amount
+                    SELECT asmp.date, asmp.amount
                     FROM ad_spent_market_places asmp
-                    JOIN sales_channels sc ON asmp.sales_channel_id = sc.id
-                    WHERE asmp.tenant_id = ? 
-                        AND asmp.date >= ? 
-                        AND asmp.date <= ?
-                        AND asmp.sales_channel_id = 1
+                    WHERE asmp.tenant_id = ? AND asmp.date >= ? AND asmp.date <= ? AND asmp.sales_channel_id = 1
                 ) combined_spend
                 GROUP BY date
             ) spend_data ON sales_data.date = spend_data.date
-            ORDER BY COALESCE(sales_data.date, spend_data.date) ASC
         ";
 
-        $data = DB::select($sql, [
-            $tenantId, $dateStart, $dateEnd,  // sales data
+        $tiktokShopSql = "
+            SELECT 
+                'TikTok Shop' as channel_name,
+                COALESCE(sales_data.date, spend_data.date) as date,
+                COALESCE(sales_data.sales_amount, 0) as sales_amount,
+                COALESCE(spend_data.spend_amount, 0) as spend_amount,
+                CASE 
+                    WHEN COALESCE(spend_data.spend_amount, 0) > 0 
+                    THEN COALESCE(sales_data.sales_amount, 0) / spend_data.spend_amount 
+                    ELSE 0 
+                END as roas,
+                CASE 
+                    WHEN COALESCE(sales_data.sales_amount, 0) > 0 
+                    THEN (COALESCE(spend_data.spend_amount, 0) / sales_data.sales_amount) * 100 
+                    ELSE 0 
+                END as spent_percentage
+            FROM (
+                SELECT o.date, SUM(o.amount) as sales_amount
+                FROM orders o
+                WHERE o.tenant_id = ? AND o.date >= ? AND o.date <= ? AND o.sales_channel_id = 2
+                    AND o.status NOT IN ('pending', 'cancelled', 'request_cancel', 'request_return')
+                GROUP BY o.date
+            ) sales_data
+            LEFT JOIN (
+                SELECT date, SUM(amount) as spend_amount
+                FROM (
+                    SELECT asmp.date, asmp.amount
+                    FROM ad_spent_social_media asmp
+                    JOIN social_media sm ON asmp.social_media_id = sm.id
+                    WHERE asmp.tenant_id = ? AND asmp.date >= ? AND asmp.date <= ? AND sm.name = 'TikTok'
+                    UNION ALL
+                    SELECT asmp.date, asmp.amount
+                    FROM ad_spent_market_places asmp
+                    WHERE asmp.tenant_id = ? AND asmp.date >= ? AND asmp.date <= ? AND asmp.sales_channel_id = 2
+                ) combined_spend
+                GROUP BY date
+            ) spend_data ON sales_data.date = spend_data.date
+        ";
+
+        $combinedSql = "
+            SELECT * FROM (
+                ({$shopeeMetaSql})
+                UNION ALL
+                ({$tiktokShopSql})
+            ) as all_channels
+            WHERE 1=1
+        ";
+
+        $bindings = [
+            // Shopee and Meta bindings
+            $tenantId, $dateStart, $dateEnd,  // sales
+            $tenantId, $dateStart, $dateEnd,  // social media spend
+            $tenantId, $dateStart, $dateEnd,  // marketplace spend
+            // TikTok Shop bindings
+            $tenantId, $dateStart, $dateEnd,  // sales
             $tenantId, $dateStart, $dateEnd,  // social media spend
             $tenantId, $dateStart, $dateEnd   // marketplace spend
-        ]);
+        ];
 
-        // Apply channel filter if specified
-        if ($request->filled('channel') && $request->channel !== 'shopee_and_meta') {
-            $data = collect($data)->where('channel_name', $request->channel)->values()->all();
+        // Apply channel filter
+        if ($request->filled('channel')) {
+            $combinedSql .= " AND channel_name = ?";
+            $bindings[] = $request->channel;
         }
+
+        $combinedSql .= " ORDER BY date ASC, channel_name ASC";
+
+        $data = DB::select($combinedSql, $bindings);
 
         // Convert to collection for easier manipulation
         $dataCollection = collect($data);
@@ -5992,16 +6097,14 @@ public function get_spent_vs_gmv_chart_data(Request $request)
             ];
         })->values()->all();
 
-        \Log::info('Chart data prepared', [
-            'data_count' => count($chartData),
-            'total_gmv' => $totalGmv,
-            'total_spent' => $totalSpent
-        ]);
+        // Get unique channels for chart legends
+        $channels = $dataCollection->pluck('channel_name')->unique()->values()->all();
 
         return response()->json([
             'status' => 'success',
             'data' => [
                 'chart_data' => $chartData,
+                'channels' => $channels,
                 'summary_stats' => [
                     'total_gmv' => (float) $totalGmv,
                     'total_spent' => (float) $totalSpent,

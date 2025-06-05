@@ -13,11 +13,8 @@
                                 <div class="col-auto">
                                     <select class="form-control" id="spentVsGmvChannelFilter">
                                         <option value="">All Channels</option>
-                                        <option value="shopee_and_meta">Shopee and Meta</option>
-                                        <option value="meta_ads">Meta Ads</option>
-                                        <option value="shopee_ads">Shopee Ads</option>
-                                        <option value="tiktok_ads">TikTok Ads</option>
-                                        <option value="google_ads">Google Ads</option>
+                                        <option value="Shopee and Meta">Shopee and Meta</option>
+                                        <option value="TikTok Shop">TikTok Shop</option>
                                     </select>
                                 </div>
                                 <div class="col-auto">

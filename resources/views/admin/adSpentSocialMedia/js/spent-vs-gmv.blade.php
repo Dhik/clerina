@@ -350,37 +350,80 @@ $(document).ready(function() {
             return;
         }
 
-        // Prepare data for dual-axis chart
-        const labels = data.chart_data.map(item => item.date);
-        const gmvData = data.chart_data.map(item => item.sales_amount);
-        const spentData = data.chart_data.map(item => item.spend_amount);
+        // Group data by channel and date
+        const channelData = {};
+        data.chart_data.forEach(item => {
+            if (!channelData[item.channel_name]) {
+                channelData[item.channel_name] = {
+                    dates: [],
+                    gmv: [],
+                    spent: []
+                };
+            }
+            channelData[item.channel_name].dates.push(item.date);
+            channelData[item.channel_name].gmv.push(item.sales_amount);
+            channelData[item.channel_name].spent.push(item.spend_amount);
+        });
 
-        const datasets = [
-            {
-                label: 'GMV',
+        // Get all unique dates for labels
+        const allDates = [...new Set(data.chart_data.map(item => item.date))].sort();
+        
+        // Create datasets for each channel
+        const datasets = [];
+        const colors = {
+            'Shopee and Meta': { gmv: '#007bff', spent: '#0056b3' },
+            'TikTok Shop': { gmv: '#28a745', spent: '#1e7e34' }
+        };
+
+        Object.keys(channelData).forEach((channel, index) => {
+            const channelColor = colors[channel] || { 
+                gmv: `hsl(${index * 60}, 70%, 50%)`, 
+                spent: `hsl(${index * 60}, 70%, 35%)` 
+            };
+
+            // Create data arrays aligned with all dates
+            const gmvData = allDates.map(date => {
+                const dataPoint = data.chart_data.find(item => 
+                    item.channel_name === channel && item.date === date
+                );
+                return dataPoint ? dataPoint.sales_amount : 0;
+            });
+
+            const spentData = allDates.map(date => {
+                const dataPoint = data.chart_data.find(item => 
+                    item.channel_name === channel && item.date === date
+                );
+                return dataPoint ? dataPoint.spend_amount : 0;
+            });
+
+            // GMV dataset
+            datasets.push({
+                label: `${channel} - GMV`,
                 data: gmvData,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderColor: channelColor.gmv,
+                backgroundColor: channelColor.gmv + '20',
                 fill: false,
                 tension: 0.1,
                 yAxisID: 'y'
-            },
-            {
-                label: 'Ad Spent',
+            });
+
+            // Spent dataset
+            datasets.push({
+                label: `${channel} - Ad Spent`,
                 data: spentData,
-                borderColor: '#dc3545',
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                borderColor: channelColor.spent,
+                backgroundColor: channelColor.spent + '20',
                 borderDash: [5, 5],
                 fill: false,
                 tension: 0.1,
                 yAxisID: 'y1'
-            }
-        ];
+            });
+        });
 
         spentVsGmvChart = new Chart(context, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: allDates,
                 datasets: datasets
             },
             options: {
@@ -460,23 +503,45 @@ $(document).ready(function() {
             return;
         }
 
-        const labels = data.chart_data.map(item => item.date);
-        const roasData = data.chart_data.map(item => item.roas);
-
-        const dataset = {
-            label: 'ROAS',
-            data: roasData,
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-            fill: true,
-            tension: 0.1
+        // Get all unique dates for labels
+        const allDates = [...new Set(data.chart_data.map(item => item.date))].sort();
+        
+        // Create datasets for each channel
+        const datasets = [];
+        const colors = {
+            'Shopee and Meta': '#007bff',
+            'TikTok Shop': '#28a745'
         };
+
+        // Group by channel
+        const channels = [...new Set(data.chart_data.map(item => item.channel_name))];
+        
+        channels.forEach((channel, index) => {
+            const channelColor = colors[channel] || `hsl(${index * 60}, 70%, 50%)`;
+            
+            // Create data array aligned with all dates
+            const roasData = allDates.map(date => {
+                const dataPoint = data.chart_data.find(item => 
+                    item.channel_name === channel && item.date === date
+                );
+                return dataPoint ? dataPoint.roas : 0;
+            });
+
+            datasets.push({
+                label: `${channel} - ROAS`,
+                data: roasData,
+                borderColor: channelColor,
+                backgroundColor: channelColor + '20',
+                fill: false,
+                tension: 0.1
+            });
+        });
 
         roasTrendChart = new Chart(context, {
             type: 'line',
             data: {
-                labels: labels,
-                datasets: [dataset]
+                labels: allDates,
+                datasets: datasets
             },
             options: {
                 responsive: true,
