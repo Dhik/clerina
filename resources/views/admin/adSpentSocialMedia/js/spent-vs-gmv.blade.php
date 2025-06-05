@@ -1,6 +1,6 @@
 <script>
 /**
- * Spent vs GMV tab functionality - FIXED DataTable initialization
+ * Spent vs GMV tab functionality - FIXED with proper headers
  */
 $(document).ready(function() {
     // Initialize variables
@@ -8,15 +8,17 @@ $(document).ready(function() {
     let spentVsGmvChannelFilter = $('#spentVsGmvChannelFilter');
     let spentVsGmvChart = null;
     let roasTrendChart = null;
-    let spentVsGmvTable = null; // Initialize as null
+    let spentVsGmvTable = null;
 
     // Function to initialize DataTable
     function initSpentVsGmvTable() {
         // Check if DataTable already exists and destroy it
         if ($.fn.DataTable.isDataTable('#spentVsGmvTable')) {
             $('#spentVsGmvTable').DataTable().destroy();
-            $('#spentVsGmvTable').empty();
         }
+
+        // Clear the table but keep the header structure
+        $('#spentVsGmvTable tbody').empty();
 
         // Initialize Spent vs GMV DataTable
         spentVsGmvTable = $('#spentVsGmvTable').DataTable({
@@ -24,34 +26,51 @@ $(document).ready(function() {
             processing: true,
             serverSide: true,
             pageLength: 25,
-            destroy: true, // Allow reinitialization
+            destroy: true,
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_spent_vs_gmv') }}",
                 data: function (d) {
-                    if (spentVsGmvFilterDate.val()) {
+                    if (spentVsGmvFilterDate && spentVsGmvFilterDate.val()) {
                         let dates = spentVsGmvFilterDate.val().split(' - ');
                         d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                         d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     }
-                    if (spentVsGmvChannelFilter.val()) {
+                    if (spentVsGmvChannelFilter && spentVsGmvChannelFilter.val()) {
                         d.channel = spentVsGmvChannelFilter.val();
                     }
+                },
+                error: function(xhr, error, thrown) {
+                    console.error('DataTable AJAX error:', error, thrown);
                 }
             },
             columns: [
-                {data: 'date', name: 'date'},
-                {data: 'channel_name', name: 'channel_name'},
+                {
+                    data: 'date', 
+                    name: 'date',
+                    title: 'Date'
+                },
+                {
+                    data: 'channel_name', 
+                    name: 'channel_name',
+                    title: 'Channel'
+                },
                 {
                     data: 'sales_amount', 
                     name: 'sales_amount',
+                    title: 'GMV',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            // Data is already formatted from server, just add "Rp " prefix if not present
+                        if (type === 'display' || type === 'type') {
+                            if (data === null || data === undefined) return 'Rp 0';
+                            
+                            // If it's already a formatted string with commas, just add Rp prefix
                             if (typeof data === 'string' && data.includes(',')) {
-                                return 'Rp ' + data;
+                                return data.startsWith('Rp') ? data : 'Rp ' + data;
                             }
+                            
                             // If it's a number, format it
-                            return 'Rp ' + Number(data).toLocaleString('id-ID');
+                            const numValue = parseFloat(data);
+                            if (isNaN(numValue)) return 'Rp 0';
+                            return 'Rp ' + numValue.toLocaleString('id-ID');
                         }
                         return data;
                     }
@@ -59,14 +78,20 @@ $(document).ready(function() {
                 {
                     data: 'spend_amount', 
                     name: 'spend_amount',
+                    title: 'Ad Spent',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            // Data is already formatted from server, just add "Rp " prefix if not present
+                        if (type === 'display' || type === 'type') {
+                            if (data === null || data === undefined) return 'Rp 0';
+                            
+                            // If it's already a formatted string with commas, just add Rp prefix
                             if (typeof data === 'string' && data.includes(',')) {
-                                return 'Rp ' + data;
+                                return data.startsWith('Rp') ? data : 'Rp ' + data;
                             }
+                            
                             // If it's a number, format it
-                            return 'Rp ' + Number(data).toLocaleString('id-ID');
+                            const numValue = parseFloat(data);
+                            if (isNaN(numValue)) return 'Rp 0';
+                            return 'Rp ' + numValue.toLocaleString('id-ID');
                         }
                         return data;
                     }
@@ -74,9 +99,12 @@ $(document).ready(function() {
                 {
                     data: 'roas', 
                     name: 'roas',
+                    title: 'ROAS',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            return parseFloat(data).toFixed(2);
+                        if (type === 'display' || type === 'type') {
+                            const numValue = parseFloat(data);
+                            if (isNaN(numValue)) return '0.00';
+                            return numValue.toFixed(2);
                         }
                         return data;
                     }
@@ -84,33 +112,79 @@ $(document).ready(function() {
                 {
                     data: 'spent_percentage', 
                     name: 'spent_percentage',
+                    title: 'Spent/GMV %',
                     render: function(data, type, row) {
-                        if (type === 'display') {
-                            return parseFloat(data).toFixed(2) + '%';
+                        if (type === 'display' || type === 'type') {
+                            const numValue = parseFloat(data);
+                            if (isNaN(numValue)) return '0.00%';
+                            return numValue.toFixed(2) + '%';
                         }
                         return data;
                     }
                 }
             ],
             columnDefs: [
-                { "targets": [2, 3, 4, 5], "className": "text-right" },
-                { "targets": [1], "className": "text-center" }
+                { 
+                    "targets": [2, 3, 4, 5], 
+                    "className": "text-right" 
+                },
+                { 
+                    "targets": [1], 
+                    "className": "text-center" 
+                }
             ],
             order: [[0, 'desc']],
-            fixedHeader: true,
+            language: {
+                processing: "Loading data...",
+                emptyTable: "No data available",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                lengthMenu: "Show _MENU_ entries",
+                loadingRecords: "Loading...",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                },
+                search: "Search:",
+                zeroRecords: "No matching records found"
+            },
+            dom: 'Bfrtip',
+            buttons: [],
+            fixedHeader: false, // Disable fixed header temporarily
             scrollCollapse: true,
-            deferRender: true,
-            scroller: true
+            deferRender: true
+        });
+
+        // Handle DataTable events
+        spentVsGmvTable.on('xhr', function() {
+            console.log('DataTable data loaded successfully');
+        });
+
+        spentVsGmvTable.on('error.dt', function(e, settings, techNote, message) {
+            console.error('DataTable error:', message);
         });
     }
 
-    // Initialize DataTable on page load
-    initSpentVsGmvTable();
+    // Initialize DataTable when document is ready
+    // Use a small delay to ensure all elements are properly loaded
+    setTimeout(function() {
+        if (typeof initDateRangePicker === 'function') {
+            spentVsGmvFilterDate = initDateRangePicker('spentVsGmvFilterDates');
+        }
+        initSpentVsGmvTable();
+    }, 100);
 
     // Button click handlers
-    $('#spentVsGmvResetFilterBtn').click(function() {
-        spentVsGmvFilterDate.val('');
-        spentVsGmvChannelFilter.val('');
+    $(document).on('click', '#spentVsGmvResetFilterBtn', function() {
+        if (spentVsGmvFilterDate && typeof spentVsGmvFilterDate.val === 'function') {
+            spentVsGmvFilterDate.val('');
+        }
+        if (spentVsGmvChannelFilter) {
+            spentVsGmvChannelFilter.val('');
+        }
         if (spentVsGmvTable) {
             spentVsGmvTable.draw();
         }
@@ -118,16 +192,16 @@ $(document).ready(function() {
     });
 
     // Export button handler
-    $('#btnExportSpentVsGmvReport').click(function() {
+    $(document).on('click', '#btnExportSpentVsGmvReport', function() {
         let params = {};
         
-        if (spentVsGmvFilterDate.val()) {
+        if (spentVsGmvFilterDate && spentVsGmvFilterDate.val()) {
             let dates = spentVsGmvFilterDate.val().split(' - ');
             params.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
             params.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
         }
         
-        if (spentVsGmvChannelFilter.val()) {
+        if (spentVsGmvChannelFilter && spentVsGmvChannelFilter.val()) {
             params.channel = spentVsGmvChannelFilter.val();
         }
         
@@ -154,6 +228,7 @@ $(document).ready(function() {
         // Add to document, submit, and remove
         document.body.appendChild(form);
         form.submit();
+        document.body.removeChild(form);
         
         // Close loading after a short delay
         setTimeout(function() {
@@ -164,7 +239,7 @@ $(document).ready(function() {
     });
 
     // Refresh Data button handler
-    $('#btnRefreshSpentVsGmvData').click(function() {
+    $(document).on('click', '#btnRefreshSpentVsGmvData', function() {
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 title: 'Refresh Spent vs GMV Data',
@@ -185,7 +260,6 @@ $(document).ready(function() {
                 }
             });
         } else {
-            // Fallback if SweetAlert is not available
             if (confirm('Refresh Spent vs GMV Data. Continue?')) {
                 if (spentVsGmvTable) {
                     spentVsGmvTable.draw();
@@ -196,14 +270,14 @@ $(document).ready(function() {
     });
 
     // Filter change handlers
-    spentVsGmvChannelFilter.change(function() {
+    $(document).on('change', '#spentVsGmvChannelFilter', function() {
         if (spentVsGmvTable) {
             spentVsGmvTable.draw();
         }
         initSpentVsGmvCharts();
     });
 
-    spentVsGmvFilterDate.change(function() {
+    $(document).on('change', '#spentVsGmvFilterDates', function() {
         if (spentVsGmvTable) {
             spentVsGmvTable.draw();
         }
@@ -212,15 +286,17 @@ $(document).ready(function() {
 
     // Chart initialization function
     function initSpentVsGmvCharts() {
-        const filterValue = spentVsGmvFilterDate.val();
-        const channelValue = spentVsGmvChannelFilter.val();
+        const filterValue = spentVsGmvFilterDate ? spentVsGmvFilterDate.val() : '';
+        const channelValue = spentVsGmvChannelFilter ? spentVsGmvChannelFilter.val() : '';
         
         const url = new URL("{{ route('adSpentSocialMedia.spent_vs_gmv_chart_data') }}", window.location.origin);
         
         if (filterValue) {
             let dates = filterValue.split(' - ');
-            url.searchParams.append('date_start', moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD'));
-            url.searchParams.append('date_end', moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD'));
+            if (dates.length === 2) {
+                url.searchParams.append('date_start', moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD'));
+                url.searchParams.append('date_end', moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD'));
+            }
         }
         
         if (channelValue) {
@@ -239,7 +315,7 @@ $(document).ready(function() {
                     createRoasTrendChart(result.data);
                     updateSummaryStats(result.data);
                 } else {
-                    console.error('Chart data error:', result.message);
+                    console.error('Chart data error:', result.message || 'Unknown error');
                 }
             })
             .catch(error => {
@@ -442,6 +518,8 @@ $(document).ready(function() {
 
     // Update summary statistics
     function updateSummaryStats(data) {
+        if (!data.summary_stats) return;
+        
         const stats = data.summary_stats;
         
         const totalGmvElement = document.getElementById('totalGmvStat');
@@ -489,8 +567,7 @@ $(document).ready(function() {
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         if (e.target.id === 'spent-vs-gmv-tab') {
             setTimeout(function() {
-                // Reinitialize DataTable when tab is shown
-                initSpentVsGmvTable();
+                // Only adjust columns if table exists
                 if (spentVsGmvTable) {
                     spentVsGmvTable.columns.adjust();
                 }
@@ -499,14 +576,7 @@ $(document).ready(function() {
         }
     });
 
-    // Initialize if Spent vs GMV tab is active on page load
-    if ($('#spent-vs-gmv-tab').hasClass('active')) {
-        setTimeout(function() {
-            initSpentVsGmvCharts();
-        }, 500);
-    }
-
-    // Initialize charts when page loads
+    // Initialize charts when the tab becomes visible
     setTimeout(function() {
         initSpentVsGmvCharts();
     }, 1000);

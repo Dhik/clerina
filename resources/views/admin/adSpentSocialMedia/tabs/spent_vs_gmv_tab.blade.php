@@ -1,3 +1,4 @@
+<!-- Tab: Spent vs GMV Content -->
 <div class="tab-pane fade" id="spent-vs-gmv-content" role="tabpanel" aria-labelledby="spent-vs-gmv-tab">
     <div class="row">
         <div class="col-12">
@@ -20,7 +21,7 @@
                                     </select>
                                 </div>
                                 <div class="col-auto">
-                                    <button class="btn btn-default" id="spentVsGmvResetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
+                                    <button class="btn btn-default" id="spentVsGmvResetFilterBtn">Reset Filter</button>
                                 </div>
                                 <div class="col-auto">
                                     <div class="btn-group">
@@ -120,6 +121,9 @@
                                     <th>Spent/GMV %</th>
                                 </tr>
                             </thead>
+                            <tbody>
+                                <!-- Data will be populated by DataTables -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
