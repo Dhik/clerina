@@ -33,10 +33,10 @@ class ContentPlan extends Model
         'posting_date',
     ];
 
-    protected $dates = [
-        'created_date',
-        'target_posting_date',
-        'posting_date',
+    protected $casts = [
+        'created_date' => 'date',
+        'target_posting_date' => 'date',
+        'posting_date' => 'datetime',
     ];
 
     // Status constants for workflow

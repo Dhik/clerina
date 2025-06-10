@@ -74,9 +74,23 @@
                                 @forelse($contentPlans as $plan)
                                     <tr>
                                         <td>{{ $plan->id }}</td>
-                                        <td>{{ $plan->target_posting_date ? $plan->target_posting_date->format('Y-m-d') : '-' }}</td>
+                                        <td>{{ $plan->target_posting_date ? (is_string($plan->target_posting_date) ? $plan->target_posting_date : $plan->target_posting_date->format('Y-m-d')) : '-' }}</td>
                                         <td>
-                                            <span class="badge badge-{{ $this->getStatusBadgeColor($plan->status) }}">
+                                            @php
+                                                function getStatusBadgeColor($status) {
+                                                    switch($status) {
+                                                        case 'draft': return 'secondary';
+                                                        case 'content_writing': return 'info';
+                                                        case 'creative_review': return 'warning';
+                                                        case 'admin_support': return 'primary';
+                                                        case 'content_editing': return 'dark';
+                                                        case 'ready_to_post': return 'success';
+                                                        case 'posted': return 'success';
+                                                        default: return 'light';
+                                                    }
+                                                }
+                                            @endphp
+                                            <span class="badge badge-{{ getStatusBadgeColor($plan->status) }}">
                                                 {{ $plan->status_label }}
                                             </span>
                                         </td>
@@ -84,7 +98,7 @@
                                         <td>{{ $plan->jenis_konten ?? '-' }}</td>
                                         <td>{{ $plan->pillar ?? '-' }}</td>
                                         <td>{{ $plan->platform ?? '-' }}</td>
-                                        <td>{{ $plan->created_at->format('Y-m-d') }}</td>
+                                        <td>{{ $plan->created_at ? (is_string($plan->created_at) ? $plan->created_at : $plan->created_at->format('Y-m-d')) : '-' }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{{ route('contentPlan.show', $plan) }}" class="btn btn-info btn-sm" title="View">
@@ -161,18 +175,3 @@
     @endif
 </script>
 @stop
-
-@php
-function getStatusBadgeColor($status) {
-    switch($status) {
-        case 'draft': return 'secondary';
-        case 'content_writing': return 'info';
-        case 'creative_review': return 'warning';
-        case 'admin_support': return 'primary';
-        case 'content_editing': return 'dark';
-        case 'ready_to_post': return 'success';
-        case 'posted': return 'success';
-        default: return 'light';
-    }
-}
-@endphp
