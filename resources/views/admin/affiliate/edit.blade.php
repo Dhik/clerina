@@ -21,9 +21,6 @@
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
-
-                        <!-- Repeat the same pattern for other fields as in create.blade.php, 
-                             but use $affiliate->field_name for the value -->
                     </div>
                 </div>
 
