@@ -7,6 +7,8 @@ use App\Domain\ContentPlan\BLL\ContentPlan\ContentPlanBLLInterface;
 use App\Domain\ContentPlan\Models\ContentPlan;
 use App\Domain\ContentPlan\Requests\ContentPlanRequest;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use DataTables;
 
 /**
  * @property ContentPlanBLLInterface contentPlanBLL
@@ -23,28 +25,42 @@ class ContentPlanController extends Controller
      */
     public function index(Request $request)
     {
+        $statusOptions = ContentPlan::getStatusOptions();
+        return view('admin.content_plan.index', compact('statusOptions'));
+    }
+
+    /**
+     * Get data for DataTables
+     */
+    public function data(Request $request): JsonResponse
+    {
         $query = ContentPlan::query();
         
         // Filter by status if provided
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         }
-        
-        // Search functionality
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('objektif', 'like', "%{$search}%")
-                  ->orWhere('jenis_konten', 'like', "%{$search}%")
-                  ->orWhere('pillar', 'like', "%{$search}%")
-                  ->orWhere('platform', 'like', "%{$search}%");
-            });
-        }
-        
-        $contentPlans = $query->orderBy('created_at', 'desc')->paginate(15);
-        $statusOptions = ContentPlan::getStatusOptions();
-        
-        return view('admin.content_plan.index', compact('contentPlans', 'statusOptions'));
+
+        return DataTables::of($query)
+            ->addColumn('target_date', function ($plan) {
+                return $plan->target_posting_date ? 
+                    (is_string($plan->target_posting_date) ? $plan->target_posting_date : $plan->target_posting_date->format('Y-m-d')) : 
+                    '-';
+            })
+            ->addColumn('status_badge', function ($plan) {
+                $badgeColor = $this->getStatusBadgeColor($plan->status);
+                return '<span class="badge badge-' . $badgeColor . '">' . $plan->status_label . '</span>';
+            })
+            ->addColumn('created_date', function ($plan) {
+                return $plan->created_at ? 
+                    (is_string($plan->created_at) ? $plan->created_at : $plan->created_at->format('Y-m-d')) : 
+                    '-';
+            })
+            ->addColumn('action', function ($plan) {
+                return $this->generateActionButtons($plan);
+            })
+            ->rawColumns(['status_badge', 'action'])
+            ->make(true);
     }
 
     /**
@@ -59,16 +75,26 @@ class ContentPlanController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(ContentPlanRequest $request)
+    public function store(ContentPlanRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['status'] = ContentPlan::STATUS_DRAFT;
-        $data['created_date'] = now();
-        
-        ContentPlan::create($data);
-        
-        return redirect()->route('contentPlan.index')
-            ->with('success', 'Content plan created successfully!');
+        try {
+            $data = $request->validated();
+            $data['status'] = ContentPlan::STATUS_DRAFT;
+            $data['created_date'] = now();
+            
+            $contentPlan = ContentPlan::create($data);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Content plan created successfully!',
+                'data' => $contentPlan
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating content plan: ' . $e->getMessage()
+            ], 422);
+        }
     }
 
     /**
@@ -77,6 +103,17 @@ class ContentPlanController extends Controller
     public function show(ContentPlan $contentPlan)
     {
         return view('admin.content_plan.show', compact('contentPlan'));
+    }
+
+    /**
+     * Get details for a specific content plan
+     */
+    public function getDetails(ContentPlan $contentPlan): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $contentPlan
+        ]);
     }
 
     /**
@@ -91,49 +128,43 @@ class ContentPlanController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(ContentPlanRequest $request, ContentPlan $contentPlan)
+    public function update(ContentPlanRequest $request, ContentPlan $contentPlan): JsonResponse
     {
-        $step = $request->get('step', 1);
-        $data = $request->validated();
-        
-        // Update status based on step completion
-        switch($step) {
-            case 1: // Social Media Strategist
-                $data['status'] = ContentPlan::STATUS_CONTENT_WRITING;
-                break;
-            case 2: // Content Writer
-                $data['status'] = ContentPlan::STATUS_CREATIVE_REVIEW;
-                break;
-            case 3: // Creative Leader
-                $data['status'] = ContentPlan::STATUS_ADMIN_SUPPORT;
-                break;
-            case 4: // Admin Support
-                $data['status'] = ContentPlan::STATUS_CONTENT_EDITING;
-                break;
-            case 5: // Content Editor
-                $data['status'] = ContentPlan::STATUS_READY_TO_POST;
-                break;
-            case 6: // Admin Social Media
-                $data['status'] = ContentPlan::STATUS_POSTED;
-                $data['posting_date'] = now();
-                break;
+        try {
+            $data = $request->validated();
+            $contentPlan->update($data);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Content plan updated successfully!',
+                'data' => $contentPlan->fresh()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating content plan: ' . $e->getMessage()
+            ], 422);
         }
-        
-        $contentPlan->update($data);
-        
-        return redirect()->route('contentPlan.index')
-            ->with('success', 'Content plan updated successfully!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ContentPlan $contentPlan)
+    public function destroy(ContentPlan $contentPlan): JsonResponse
     {
-        $contentPlan->delete();
-        
-        return redirect()->route('contentPlan.index')
-            ->with('success', 'Content plan deleted successfully!');
+        try {
+            $contentPlan->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Content plan deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting content plan: ' . $e->getMessage()
+            ], 422);
+        }
     }
 
     /**
@@ -158,48 +189,89 @@ class ContentPlanController extends Controller
     /**
      * Update specific step
      */
-    public function updateStep(Request $request, ContentPlan $contentPlan, $step)
+    public function updateStep(Request $request, ContentPlan $contentPlan, $step): JsonResponse
     {
-        // Validate step number
-        if (!in_array($step, [1, 2, 3, 4, 5, 6])) {
-            abort(404);
+        try {
+            // Validate step number
+            if (!in_array($step, [1, 2, 3, 4, 5, 6])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid step number'
+                ], 422);
+            }
+            
+            // Check if user can edit this step
+            if (!$contentPlan->canEditByStep($step)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This content plan is not ready for this step.'
+                ], 422);
+            }
+            
+            $data = $this->getStepValidationRules($request, $step);
+            
+            // Update status based on step completion
+            switch($step) {
+                case 1: // Social Media Strategist
+                    $data['status'] = ContentPlan::STATUS_CONTENT_WRITING;
+                    break;
+                case 2: // Content Writer
+                    $data['status'] = ContentPlan::STATUS_CREATIVE_REVIEW;
+                    break;
+                case 3: // Creative Leader
+                    $data['status'] = ContentPlan::STATUS_ADMIN_SUPPORT;
+                    break;
+                case 4: // Admin Support
+                    $data['status'] = ContentPlan::STATUS_CONTENT_EDITING;
+                    break;
+                case 5: // Content Editor
+                    $data['status'] = ContentPlan::STATUS_READY_TO_POST;
+                    break;
+                case 6: // Admin Social Media
+                    $data['status'] = ContentPlan::STATUS_POSTED;
+                    $data['posting_date'] = now();
+                    break;
+            }
+            
+            $contentPlan->update($data);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Step {$step} completed successfully!",
+                'data' => $contentPlan->fresh()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating step: ' . $e->getMessage()
+            ], 422);
         }
-        
-        // Check if user can edit this step
-        if (!$contentPlan->canEditByStep($step)) {
-            return redirect()->route('contentPlan.index')
-                ->with('error', 'This content plan is not ready for this step.');
+    }
+
+    /**
+     * Get status counts for dashboard
+     */
+    public function getStatusCounts(): JsonResponse
+    {
+        $counts = ContentPlan::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $statusOptions = ContentPlan::getStatusOptions();
+        $result = [];
+
+        foreach ($statusOptions as $status => $label) {
+            $result[$status] = [
+                'label' => $label,
+                'count' => $counts->get($status)->count ?? 0
+            ];
         }
-        
-        $data = $this->getStepValidationRules($request, $step);
-        
-        // Update status based on step completion
-        switch($step) {
-            case 1: // Social Media Strategist
-                $data['status'] = ContentPlan::STATUS_CONTENT_WRITING;
-                break;
-            case 2: // Content Writer
-                $data['status'] = ContentPlan::STATUS_CREATIVE_REVIEW;
-                break;
-            case 3: // Creative Leader
-                $data['status'] = ContentPlan::STATUS_ADMIN_SUPPORT;
-                break;
-            case 4: // Admin Support
-                $data['status'] = ContentPlan::STATUS_CONTENT_EDITING;
-                break;
-            case 5: // Content Editor
-                $data['status'] = ContentPlan::STATUS_READY_TO_POST;
-                break;
-            case 6: // Admin Social Media
-                $data['status'] = ContentPlan::STATUS_POSTED;
-                $data['posting_date'] = now();
-                break;
-        }
-        
-        $contentPlan->update($data);
-        
-        return redirect()->route('contentPlan.index')
-            ->with('success', "Step {$step} completed successfully!");
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
     }
 
     private function getStepValidationRules($request, $step)
@@ -251,5 +323,70 @@ class ContentPlanController extends Controller
             default:
                 return [];
         }
+    }
+
+    private function getStatusBadgeColor($status)
+    {
+        switch($status) {
+            case 'draft': return 'secondary';
+            case 'content_writing': return 'info';
+            case 'creative_review': return 'warning';
+            case 'admin_support': return 'primary';
+            case 'content_editing': return 'dark';
+            case 'ready_to_post': return 'success';
+            case 'posted': return 'success';
+            default: return 'light';
+        }
+    }
+
+    private function generateActionButtons($plan)
+    {
+        $buttons = '<div class="btn-group" role="group">';
+        
+        // View button
+        $buttons .= '<button type="button" class="btn btn-info btn-sm viewButton" data-id="' . $plan->id . '" title="View">
+                        <i class="fas fa-eye"></i>
+                     </button>';
+        
+        // Edit button
+        $buttons .= '<button type="button" class="btn btn-warning btn-sm editButton" data-id="' . $plan->id . '" title="Edit">
+                        <i class="fas fa-edit"></i>
+                     </button>';
+        
+        // Step-specific edit buttons
+        if ($plan->status == 'draft') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="1" title="Step 1: Strategy">
+                            <i class="fas fa-clipboard-list"></i> 1
+                         </button>';
+        } elseif ($plan->status == 'content_writing') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="2" title="Step 2: Content Writing">
+                            <i class="fas fa-pen"></i> 2
+                         </button>';
+        } elseif ($plan->status == 'creative_review') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="3" title="Step 3: Creative Review">
+                            <i class="fas fa-check-double"></i> 3
+                         </button>';
+        } elseif ($plan->status == 'admin_support') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="4" title="Step 4: Admin Support">
+                            <i class="fas fa-users-cog"></i> 4
+                         </button>';
+        } elseif ($plan->status == 'content_editing') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="5" title="Step 5: Content Editing">
+                            <i class="fas fa-edit"></i> 5
+                         </button>';
+        } elseif ($plan->status == 'ready_to_post') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="6" title="Step 6: Final Posting">
+                            <i class="fas fa-share"></i> 6
+                         </button>';
+        }
+        
+        // Delete button
+        $buttons .= '<button type="button" class="btn btn-danger btn-sm deleteButton" data-id="' . $plan->id . '" title="Delete">
+                        <i class="fas fa-trash"></i>
+                     </button>';
+        
+        $buttons .= '</div>';
+        
+        return $buttons;
     }
 }
