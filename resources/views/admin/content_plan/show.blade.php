@@ -25,7 +25,21 @@
                 <div class="card-header">
                     <h3 class="card-title">Content Plan Status</h3>
                     <div class="card-tools">
-                        <span class="badge badge-{{ $this->getStatusBadgeColor($contentPlan->status) }} badge-lg">
+                        @php
+                            function getStatusBadgeColor($status) {
+                                switch($status) {
+                                    case 'draft': return 'secondary';
+                                    case 'content_writing': return 'info';
+                                    case 'creative_review': return 'warning';
+                                    case 'admin_support': return 'primary';
+                                    case 'content_editing': return 'dark';
+                                    case 'ready_to_post': return 'success';
+                                    case 'posted': return 'success';
+                                    default: return 'light';
+                                }
+                            }
+                        @endphp
+                        <span class="badge badge-{{ getStatusBadgeColor($contentPlan->status) }} badge-lg">
                             {{ $contentPlan->status_label }}
                         </span>
                     </div>
@@ -138,11 +152,11 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td width="40%"><strong>Created Date:</strong></td>
-                                    <td>{{ $contentPlan->created_date ? $contentPlan->created_date->format('Y-m-d') : '-' }}</td>
+                                    <td>{{ $contentPlan->created_date ? (is_string($contentPlan->created_date) ? $contentPlan->created_date : $contentPlan->created_date->format('Y-m-d')) : '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Target Posting Date:</strong></td>
-                                    <td>{{ $contentPlan->target_posting_date ? $contentPlan->target_posting_date->format('Y-m-d') : '-' }}</td>
+                                    <td>{{ $contentPlan->target_posting_date ? (is_string($contentPlan->target_posting_date) ? $contentPlan->target_posting_date : $contentPlan->target_posting_date->format('Y-m-d')) : '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Objektif:</strong></td>
@@ -207,7 +221,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Posting Date:</strong></td>
-                                    <td>{{ $contentPlan->posting_date ? $contentPlan->posting_date->format('Y-m-d H:i') : '-' }}</td>
+                                    <td>{{ $contentPlan->posting_date ? (is_string($contentPlan->posting_date) ? $contentPlan->posting_date : $contentPlan->posting_date->format('Y-m-d H:i')) : '-' }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -353,18 +367,3 @@
 }
 </style>
 @stop
-
-@php
-function getStatusBadgeColor($status) {
-    switch($status) {
-        case 'draft': return 'secondary';
-        case 'content_writing': return 'info';
-        case 'creative_review': return 'warning';
-        case 'admin_support': return 'primary';
-        case 'content_editing': return 'dark';
-        case 'ready_to_post': return 'success';
-        case 'posted': return 'success';
-        default: return 'light';
-    }
-}
-@endphp
