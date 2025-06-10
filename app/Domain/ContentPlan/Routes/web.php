@@ -21,11 +21,6 @@ Route::prefix('admin')
                 Route::get('/{contentPlan}', [ContentPlanController::class, 'show'])->name('contentPlan.show');
                 Route::get('/{contentPlan}/edit', [ContentPlanController::class, 'edit'])->name('contentPlan.edit');
 
-                // Step-specific routes for workflow
-                Route::get('/{contentPlan}/step/{step}', [ContentPlanController::class, 'editStep'])
-                    ->name('contentPlan.editStep')
-                    ->where('step', '[1-6]');
-                
                 // API Routes for data processing
                 Route::get('/data', [ContentPlanController::class, 'data'])->name('contentPlan.data');
                 Route::post('/store', [ContentPlanController::class, 'store'])->name('contentPlan.store');
@@ -39,5 +34,10 @@ Route::prefix('admin')
                 // Additional API endpoints
                 Route::get('/{contentPlan}/details', [ContentPlanController::class, 'getDetails'])->name('contentPlan.details');
                 Route::get('/status-counts', [ContentPlanController::class, 'getStatusCounts'])->name('contentPlan.statusCounts');
+                
+                // Step-specific routes for workflow
+                Route::get('/{contentPlan}/step/{step}', [ContentPlanController::class, 'editStep'])
+                    ->name('contentPlan.editStep')
+                    ->where('step', '[1-6]');
             });
     });
