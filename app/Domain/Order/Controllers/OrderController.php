@@ -5484,7 +5484,7 @@ class OrderController extends Controller
     
     // EMERGENCY FIX: Drastically reduce scope
     $endDate = Carbon::now()->endOfMonth();
-    $startDate = Carbon::now()->subMonths(3)->startOfMonth(); // Only 3 months!
+    $startDate = Carbon::now()->subMonths(6)->startOfMonth(); // Only 3 months!
     $maxMonthsToShow = 3; // Only 3 months analysis
     
     try {
