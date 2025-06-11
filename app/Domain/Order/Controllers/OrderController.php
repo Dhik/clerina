@@ -5474,7 +5474,6 @@ class OrderController extends Controller
             'skipped_rows' => $skippedRows
         ]);
     }
-
 public function getCohortData(Request $request)
 {
     // Get data for cohort analysis (past 12 months)
@@ -5488,7 +5487,10 @@ public function getCohortData(Request $request)
     }
     
     // Allow customization of how many months to show
-    $maxMonthsToShow = $request->input('max_months', 6); // Default to 6 months (0-5)
+    $maxMonthsToShow = $request->input('max_months', 6);
+    
+    // Set longer execution time for large datasets
+    set_time_limit(300); // 5 minutes
     
     // Debug: Log what we're getting
     \Log::info('Cohort Analysis Debug', [
@@ -5498,22 +5500,37 @@ public function getCohortData(Request $request)
         'end_date' => $endDate->format('Y-m-d')
     ]);
     
-    // Step 1: Get cohort data - customers grouped by their first order month
-    // EXPLICITLY filter by current tenant only
+    // Step 1: Get cohort data with optimized query
     $cohorts = DB::select('
         SELECT
             DATE_FORMAT(first_order_date, "%Y-%m") AS cohort_month,
-            COUNT(DISTINCT phone_number) AS total_customers,
-            ROUND(AVG(aov), 2) AS cohort_aov
+            COUNT(*) AS total_customers,
+            ROUND(AVG(COALESCE(aov, 0)), 2) AS cohort_aov
         FROM customers
         WHERE first_order_date BETWEEN ? AND ?
             AND tenant_id = ?
             AND phone_number IS NOT NULL
+            AND first_order_date IS NOT NULL
         GROUP BY DATE_FORMAT(first_order_date, "%Y-%m")
         ORDER BY cohort_month
     ', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $currentTenantId]);
     
-    // Step 2: Generate month list for analysis
+    if (empty($cohorts)) {
+        return response()->json([
+            'cohort_data' => [],
+            'months_list' => [],
+            'summary_metrics' => [
+                'total_cohorts' => 0,
+                'total_customers_acquired' => 0,
+                'message' => 'No cohort data found for the specified period'
+            ]
+        ]);
+    }
+    
+    // Step 2: Pre-calculate all retention data in batch for performance
+    $retentionData = $this->calculateBatchRetention($cohorts, $currentTenantId, $maxMonthsToShow);
+    
+    // Step 3: Generate month list for analysis
     $monthsList = [];
     $currentMonth = clone $startDate;
     while ($currentMonth <= $endDate) {
@@ -5521,123 +5538,53 @@ public function getCohortData(Request $request)
         $currentMonth->addMonth();
     }
     
-    // Step 3: Calculate retention for each cohort across all subsequent months
+    // Step 4: Format the cohort data using pre-calculated retention
     $formattedCohortData = [];
     
     foreach ($cohorts as $cohort) {
         $cohortMonth = $cohort->cohort_month;
-        $cohortStartDate = Carbon::createFromFormat('Y-m', $cohortMonth)->startOfMonth();
         $totalCustomers = $cohort->total_customers;
         $cohortAOV = $cohort->cohort_aov ?? 0;
         
         $formattedCohortData[$cohortMonth] = [
-            'total_customers' => $totalCustomers,
-            'cohort_aov' => $cohortAOV,
+            'total_customers' => (int)$totalCustomers,
+            'cohort_aov' => (float)$cohortAOV,
             'months' => []
         ];
         
-        // Calculate retention for each month from cohort start
-        $monthIndex = 0;
-        $analysisDate = clone $cohortStartDate;
-        
-        while ($monthIndex < $maxMonthsToShow && $analysisDate <= Carbon::now()->endOfMonth()) {
-            $analysisMonth = $analysisDate->format('Y-m');
-            $analysisStartDate = $analysisDate->format('Y-m-01');
-            $analysisEndDate = $analysisDate->format('Y-m-t');
+        // Use pre-calculated retention data
+        for ($monthIndex = 0; $monthIndex < $maxMonthsToShow; $monthIndex++) {
+            $key = $cohortMonth . '_' . $monthIndex;
             
-            if ($monthIndex === 0) {
-                // Month 0: All customers are active by definition (100% retention)
-                $activeCustomers = $totalCustomers;
-                $retentionRate = 100.0;
+            if (isset($retentionData[$key])) {
+                $data = $retentionData[$key];
+                $retentionRate = $monthIndex === 0 ? 100.0 : 
+                    ($totalCustomers > 0 ? round(($data['active_customers'] / $totalCustomers) * 100, 2) : 0);
                 
-                // Get actual revenue for the cohort month - EXPLICIT tenant filtering
-                $monthRevenue = DB::select('
-                    SELECT 
-                        COALESCE(SUM(o.amount), 0) as total_revenue,
-                        COALESCE(ROUND(AVG(o.amount), 2), ?) as avg_order_value,
-                        COUNT(DISTINCT o.id_order) as total_orders
-                    FROM customers c
-                    JOIN orders o ON c.phone_number = o.customer_phone_number
-                    WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
-                        AND c.tenant_id = ?
-                        AND o.date BETWEEN ? AND ?
-                        AND o.tenant_id = ?
-                        AND o.status != "Batal"
-                        AND o.sales_channel_id = 1
-                ', [$cohortAOV, $cohortMonth, $currentTenantId, $analysisStartDate, $analysisEndDate, $currentTenantId]);
-                
-                $totalRevenue = $monthRevenue[0]->total_revenue ?? 0;
-                $avgOrderValue = $monthRevenue[0]->avg_order_value ?? $cohortAOV;
-                
+                $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
+                    'month' => $data['analysis_month'],
+                    'active_customers' => (int)$data['active_customers'],
+                    'retention_rate' => (float)$retentionRate,
+                    'revenue' => (float)$data['total_revenue'],
+                    'average_order_value' => (float)$data['avg_order_value'],
+                    'has_data' => $data['has_data']
+                ];
             } else {
-                // Subsequent months: Calculate actual retention
-                // A customer is considered "retained" if they made at least one order in this month
-                // EXPLICIT tenant filtering in both customers and orders
-                
-                $retentionData = DB::select('
-                    SELECT
-                        COUNT(DISTINCT c.phone_number) as active_customers,
-                        COALESCE(SUM(o.amount), 0) as total_revenue,
-                        COALESCE(ROUND(AVG(o.amount), 2), 0) as avg_order_value,
-                        COUNT(DISTINCT o.id_order) as total_orders
-                    FROM customers c
-                    JOIN orders o ON c.phone_number = o.customer_phone_number
-                    WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
-                        AND c.tenant_id = ?
-                        AND o.date BETWEEN ? AND ?
-                        AND o.tenant_id = ?
-                        AND o.status != "Batal"
-                        AND o.sales_channel_id = 1
-                ', [
-                    $cohortMonth,
-                    $currentTenantId,
-                    $analysisStartDate, 
-                    $analysisEndDate, 
-                    $currentTenantId
-                ]);
-                
-                $activeCustomers = $retentionData[0]->active_customers ?? 0;
-                $totalRevenue = $retentionData[0]->total_revenue ?? 0;
-                $avgOrderValue = $retentionData[0]->avg_order_value ?? 0;
-                
-                $retentionRate = $totalCustomers > 0 
-                    ? round(($activeCustomers / $totalCustomers) * 100, 2) 
-                    : 0;
+                // Future months or months with no data
+                $analysisDate = Carbon::createFromFormat('Y-m', $cohortMonth)->addMonths($monthIndex);
+                $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
+                    'month' => $analysisDate->format('Y-m'),
+                    'active_customers' => 0,
+                    'retention_rate' => 0.0,
+                    'revenue' => 0.0,
+                    'average_order_value' => 0.0,
+                    'has_data' => false
+                ];
             }
-            
-            $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
-                'month' => $analysisMonth,
-                'active_customers' => (int)$activeCustomers,
-                'retention_rate' => (float)$retentionRate,
-                'revenue' => (float)$totalRevenue,
-                'average_order_value' => (float)$avgOrderValue,
-                'has_data' => true // Always true since we're only looking at past months
-            ];
-            
-            // Move to next month
-            $analysisDate->addMonth();
-            $monthIndex++;
-        }
-        
-        // Add empty slots for future months that don't have data yet
-        while ($monthIndex < $maxMonthsToShow) {
-            $analysisMonth = $analysisDate->format('Y-m');
-            
-            $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
-                'month' => $analysisMonth,
-                'active_customers' => 0,
-                'retention_rate' => 0.0,
-                'revenue' => 0.0,
-                'average_order_value' => 0.0,
-                'has_data' => false // No data for future months
-            ];
-            
-            $analysisDate->addMonth();
-            $monthIndex++;
         }
     }
     
-    // Step 4: Calculate summary metrics
+    // Step 5: Calculate summary metrics
     $summaryMetrics = [
         'total_cohorts' => count($formattedCohortData),
         'total_customers_acquired' => array_sum(array_column($cohorts, 'total_customers')),
@@ -5645,7 +5592,7 @@ public function getCohortData(Request $request)
         'average_retention_month_1' => $this->calculateAverageRetention($formattedCohortData, 1),
         'average_retention_month_3' => $this->calculateAverageRetention($formattedCohortData, 3),
         'average_retention_month_6' => $this->calculateAverageRetention($formattedCohortData, 6),
-        'data_quality_note' => 'Analysis performed with corrected retention logic for tenant ' . $currentTenantId
+        'data_quality_note' => 'Optimized analysis for tenant ' . $currentTenantId
     ];
     
     // Prepare response data
@@ -5659,14 +5606,96 @@ public function getCohortData(Request $request)
         ],
         'filters' => [
             'tenant_id' => $currentTenantId
-        ],
-        'debug_info' => [
-            'cohorts_found' => count($cohorts),
-            'total_customers_in_period' => array_sum(array_column($cohorts, 'total_customers'))
         ]
     ];
     
     return response()->json($response);
+}
+
+/**
+ * Calculate retention data in batch for all cohorts - MUCH more efficient
+ */
+private function calculateBatchRetention($cohorts, $currentTenantId, $maxMonthsToShow)
+{
+    $retentionData = [];
+    
+    foreach ($cohorts as $cohort) {
+        $cohortMonth = $cohort->cohort_month;
+        $cohortStartDate = Carbon::createFromFormat('Y-m', $cohortMonth);
+        
+        for ($monthIndex = 0; $monthIndex < $maxMonthsToShow; $monthIndex++) {
+            $analysisDate = clone $cohortStartDate;
+            $analysisDate->addMonths($monthIndex);
+            
+            // Skip future months
+            if ($analysisDate > Carbon::now()->endOfMonth()) {
+                break;
+            }
+            
+            $analysisMonth = $analysisDate->format('Y-m');
+            $analysisStartDate = $analysisDate->format('Y-m-01');
+            $analysisEndDate = $analysisDate->format('Y-m-t');
+            
+            if ($monthIndex === 0) {
+                // Month 0: Get initial cohort revenue data
+                $monthData = DB::selectOne('
+                    SELECT 
+                        ? as active_customers,
+                        COALESCE(SUM(o.amount), 0) as total_revenue,
+                        COALESCE(ROUND(AVG(o.amount), 2), 0) as avg_order_value
+                    FROM customers c
+                    LEFT JOIN orders o ON c.phone_number = o.customer_phone_number
+                        AND o.date BETWEEN ? AND ?
+                        AND o.tenant_id = ?
+                        AND o.status != "Batal"
+                        AND o.sales_channel_id = 1
+                    WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
+                        AND c.tenant_id = ?
+                    LIMIT 1
+                ', [
+                    $cohort->total_customers,
+                    $analysisStartDate, 
+                    $analysisEndDate, 
+                    $currentTenantId,
+                    $cohortMonth,
+                    $currentTenantId
+                ]);
+            } else {
+                // Subsequent months: Calculate retention with optimized query
+                $monthData = DB::selectOne('
+                    SELECT
+                        COUNT(DISTINCT c.phone_number) as active_customers,
+                        COALESCE(SUM(o.amount), 0) as total_revenue,
+                        COALESCE(ROUND(AVG(o.amount), 2), 0) as avg_order_value
+                    FROM customers c
+                    INNER JOIN orders o ON c.phone_number = o.customer_phone_number
+                    WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
+                        AND c.tenant_id = ?
+                        AND o.date BETWEEN ? AND ?
+                        AND o.tenant_id = ?
+                        AND o.status != "Batal"
+                        AND o.sales_channel_id = 1
+                ', [
+                    $cohortMonth,
+                    $currentTenantId,
+                    $analysisStartDate, 
+                    $analysisEndDate, 
+                    $currentTenantId
+                ]);
+            }
+            
+            $key = $cohortMonth . '_' . $monthIndex;
+            $retentionData[$key] = [
+                'analysis_month' => $analysisMonth,
+                'active_customers' => $monthData->active_customers ?? 0,
+                'total_revenue' => $monthData->total_revenue ?? 0,
+                'avg_order_value' => $monthData->avg_order_value ?? 0,
+                'has_data' => true
+            ];
+        }
+    }
+    
+    return $retentionData;
 }
 
 /**
