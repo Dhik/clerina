@@ -176,6 +176,7 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
     {
         // Only include fields that are actually provided in the request
         $data = [];
+        $manualStatusUpdate = false; // Track if status_affiliate was manually set
         
         // Always update these fields if provided
         if ($request->has('username')) {
@@ -189,6 +190,12 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
         }
         if ($request->has('activity_posting')) {
             $data['activity_posting'] = $request->input('activity_posting');
+        }
+        
+        // Check if status_affiliate was manually set in the form
+        if ($request->has('status_affiliate')) {
+            $data['status_affiliate'] = $request->input('status_affiliate');
+            $manualStatusUpdate = true;
         }
         
         // Only update other fields if they're provided (for full updates)
@@ -261,14 +268,19 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
         // Update the KOL first
         $updatedKol = $this->kolDAL->updateKOL($keyOpinionLeader, $data);
         
-        // Check if we need to update status_affiliate based on the new criteria
-        $this->updateAffiliateStatus($updatedKol);
+        // Only apply automatic status update if status wasn't manually set
+        if (!$manualStatusUpdate) {
+            $this->updateAffiliateStatus($updatedKol);
+        }
         
         return $updatedKol;
     }
 
     private function updateAffiliateStatus(KeyOpinionLeader $kol): void
     {
+        // Store the original status to check if it was Qualified
+        $originalStatus = $kol->getOriginal('status_affiliate');
+        
         // Check if this KOL meets the qualification criteria
         $meetsQualification = $kol->views_last_9_post == 1 && 
                             $kol->activity_posting == 1 && 
@@ -302,7 +314,7 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
                 $kol->update(['status_affiliate' => 'Not Qualified']);
                 
                 // If this was a qualified KOL, promote the next best from waiting list
-                if ($kol->status_affiliate === 'Qualified') {
+                if ($originalStatus === 'Qualified') {
                     $nextBestWaitingKol = KeyOpinionLeader::where('status_affiliate', 'Waiting List')
                         ->where('views_last_9_post', 1)
                         ->where('activity_posting', 1)
