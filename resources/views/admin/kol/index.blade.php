@@ -262,6 +262,20 @@
                                 </div>
                             </div>
 
+                            <!-- Status Affiliate - NEW FIELD -->
+                            <div class="form-group row">
+                                <label for="edit_status_affiliate" class="col-md-4 col-form-label text-md-right">Affiliate Status</label>
+                                <div class="col-md-8">
+                                    <select class="form-control" name="status_affiliate" id="edit_status_affiliate">
+                                        <option value="">Not Set</option>
+                                        <option value="Qualified">Qualified</option>
+                                        <option value="Waiting List">Waiting List</option>
+                                        <option value="Not Qualified">Not Qualified</option>
+                                    </select>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+
                             <!-- Views Last 9 Posts -->
                             <div class="form-group row">
                                 <label class="col-md-4 col-form-label text-md-right">Recent Views</label>
@@ -1118,6 +1132,9 @@
             $('#edit_content_type').val(data.content_type || '');
             $('#edit_rate').val(data.rate || '');
             $('#edit_pic_contact').val(data.pic_contact || '');
+            
+            // Set status_affiliate dropdown
+            $('#edit_status_affiliate').val(data.status_affiliate || '');
             
             // Set radio buttons for views_last_9_post
             if (data.views_last_9_post === 1 || data.views_last_9_post === '1' || data.views_last_9_post === true) {

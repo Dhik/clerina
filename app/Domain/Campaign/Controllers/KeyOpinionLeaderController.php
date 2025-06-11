@@ -267,6 +267,7 @@ class KeyOpinionLeaderController extends Controller
             'phone_number' => $keyOpinionLeader->phone_number,
             'views_last_9_post' => $keyOpinionLeader->views_last_9_post,
             'activity_posting' => $keyOpinionLeader->activity_posting,
+            'status_affiliate' => $keyOpinionLeader->status_affiliate, // Add this line
             // Add all required fields to preserve existing data
             'channel' => $keyOpinionLeader->channel,
             'niche' => $keyOpinionLeader->niche,

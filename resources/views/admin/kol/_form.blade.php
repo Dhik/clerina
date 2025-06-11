@@ -130,6 +130,37 @@
 </div>
 
 
+<!-- Add this section to _form.blade.php after the Phone Number field -->
+
+<!-- Status Affiliate -->
+<div class="form-group row">
+    <label for="status_affiliate" class="col-md-4 col-form-label text-md-right">Affiliate Status</label>
+    <div class="col-md-6">
+        <select class="form-control @error('status_affiliate') is-invalid @enderror" 
+                name="status_affiliate" 
+                id="status_affiliate">
+            <option value="" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') === '' ? 'selected' : '' }}>
+                Not Set
+            </option>
+            <option value="Qualified" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') === 'Qualified' ? 'selected' : '' }}>
+                Qualified
+            </option>
+            <option value="Waiting List" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') === 'Waiting List' ? 'selected' : '' }}>
+                Waiting List
+            </option>
+            <option value="Not Qualified" {{ old('status_affiliate', $keyOpinionLeader->status_affiliate ?? '') === 'Not Qualified' ? 'selected' : '' }}>
+                Not Qualified
+            </option>
+        </select>
+        @error('status_affiliate')
+        <span class="invalid-feedback" role="alert">
+            <strong>{{ $message }}</strong>
+        </span>
+        @enderror
+    </div>
+</div>
+
+
 
 <!-- Submit Button -->
 <div class="form-group row mb-0">
