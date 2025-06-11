@@ -5475,135 +5475,114 @@ class OrderController extends Controller
         ]);
     }
     public function getCohortData(Request $request)
-{
-    // Get data for cohort analysis (past 12 months)
-    $endDate = Carbon::now()->endOfMonth();
-    $startDate = Carbon::now()->subMonths(12)->startOfMonth();
-    $currentTenantId = Auth::user()->current_tenant_id;
-    
-    // Allow customization of how many months to show
-    $maxMonthsToShow = $request->input('max_months', 6); // Default to 6 months (0-5)
-    
-    // Debug: Log what we're getting
-    \Log::info('Cohort Analysis Debug', [
-        'user_id' => Auth::id(),
-        'current_tenant_id' => $currentTenantId,
-        'start_date' => $startDate->format('Y-m-d'),
-        'end_date' => $endDate->format('Y-m-d')
-    ]);
-    
-    // Step 1: Get deduplicated cohorts - first create a subquery to deduplicate customers
-    $cohorts = DB::select('
-        SELECT
-            cohort_month,
-            COUNT(*) AS total_customers,
-            ROUND(AVG(aov), 2) AS cohort_aov
-        FROM (
-            SELECT 
-                phone_number,
-                DATE_FORMAT(MIN(first_order_date), "%Y-%m") AS cohort_month,
-                MAX(aov) as aov
+    {
+        // Get data for cohort analysis (past 12 months)
+        $endDate = Carbon::now()->endOfMonth();
+        $startDate = Carbon::now()->subMonths(12)->startOfMonth();
+        $currentTenantId = Auth::user()->current_tenant_id;
+        
+        // Allow customization of how many months to show
+        $maxMonthsToShow = $request->input('max_months', 6); // Default to 6 months (0-5)
+        
+        // Debug: Log what we're getting
+        \Log::info('Cohort Analysis Debug', [
+            'user_id' => Auth::id(),
+            'current_tenant_id' => $currentTenantId,
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d')
+        ]);
+        
+        // Step 1: Get cohort data - customers grouped by their first order month
+        $cohorts = DB::select('
+            SELECT
+                DATE_FORMAT(first_order_date, "%Y-%m") AS cohort_month,
+                COUNT(DISTINCT phone_number) AS total_customers,
+                ROUND(AVG(aov), 2) AS cohort_aov
             FROM customers
             WHERE first_order_date BETWEEN ? AND ?
                 AND tenant_id = ?
                 AND phone_number IS NOT NULL
-            GROUP BY phone_number
-        ) AS deduplicated_customers
-        GROUP BY cohort_month
-        ORDER BY cohort_month
-    ', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $currentTenantId]);
-    
-    // Now we have clean cohort data, no need for re-aggregation
-    $finalCohorts = $cohorts;
-    
-    // Step 2: Generate month list for analysis
-    $monthsList = [];
-    $currentMonth = clone $startDate;
-    while ($currentMonth <= $endDate) {
-        $monthsList[] = $currentMonth->format('Y-m');
-        $currentMonth->addMonth();
-    }
-    
-    // Step 3: Calculate retention for each cohort across all subsequent months
-    $formattedCohortData = [];
-    
-    foreach ($finalCohorts as $cohort) {
-        $cohortMonth = $cohort->cohort_month;
-        $cohortStartDate = Carbon::createFromFormat('Y-m', $cohortMonth)->startOfMonth();
-        $totalCustomers = $cohort->total_customers;
-        $cohortAOV = $cohort->cohort_aov ?? 0;
+            GROUP BY DATE_FORMAT(first_order_date, "%Y-%m")
+            ORDER BY cohort_month
+        ', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d'), $currentTenantId]);
         
-        $formattedCohortData[$cohortMonth] = [
-            'total_customers' => $totalCustomers,
-            'cohort_aov' => $cohortAOV,
-            'months' => []
-        ];
+        // Step 2: Generate month list for analysis
+        $monthsList = [];
+        $currentMonth = clone $startDate;
+        while ($currentMonth <= $endDate) {
+            $monthsList[] = $currentMonth->format('Y-m');
+            $currentMonth->addMonth();
+        }
         
-        // Calculate retention for each month from cohort start to present
-        // Show the requested number of months for each cohort
-        $monthIndex = 0;
-        $analysisDate = clone $cohortStartDate;
+        // Step 3: Calculate retention for each cohort across all subsequent months
+        $formattedCohortData = [];
         
-        while ($monthIndex < $maxMonthsToShow && $analysisDate <= Carbon::now()->addMonths(1)) {
-            $analysisMonth = $analysisDate->format('Y-m');
-            $analysisStartDate = $analysisDate->startOfMonth()->format('Y-m-d');
-            $analysisEndDate = $analysisDate->endOfMonth()->format('Y-m-d');
+        foreach ($cohorts as $cohort) {
+            $cohortMonth = $cohort->cohort_month;
+            $cohortStartDate = Carbon::createFromFormat('Y-m', $cohortMonth)->startOfMonth();
+            $totalCustomers = $cohort->total_customers;
+            $cohortAOV = $cohort->cohort_aov ?? 0;
             
-            if ($monthIndex === 0) {
-                // Month 0: All customers are active by definition (100% retention)
-                $activeCustomers = $totalCustomers;
-                $retentionRate = 100.0;
+            $formattedCohortData[$cohortMonth] = [
+                'total_customers' => $totalCustomers,
+                'cohort_aov' => $cohortAOV,
+                'months' => []
+            ];
+            
+            // Calculate retention for each month from cohort start
+            $monthIndex = 0;
+            $analysisDate = clone $cohortStartDate;
+            
+            while ($monthIndex < $maxMonthsToShow && $analysisDate <= Carbon::now()->endOfMonth()) {
+                $analysisMonth = $analysisDate->format('Y-m');
+                $analysisStartDate = $analysisDate->format('Y-m-01');
+                $analysisEndDate = $analysisDate->format('Y-m-t');
                 
-                // Get actual revenue for the cohort month using deduplicated customers
-                $monthRevenue = DB::select('
-                    SELECT 
-                        COALESCE(SUM(o.amount), 0) as total_revenue,
-                        COALESCE(ROUND(AVG(o.amount), 2), ?) as avg_order_value,
-                        COUNT(DISTINCT o.id_order) as total_orders
-                    FROM (
-                        SELECT phone_number
-                        FROM customers 
-                        WHERE tenant_id = ? 
-                        GROUP BY phone_number
-                        HAVING DATE_FORMAT(MIN(first_order_date), "%Y-%m") = ?
-                    ) c
-                    JOIN orders o ON c.phone_number = o.customer_phone_number
-                    WHERE o.date BETWEEN ? AND ?
-                        AND o.tenant_id = ?
-                        AND o.status != "Batal"
-                        AND o.sales_channel_id = 1
-                ', [$cohortAOV, $currentTenantId, $cohortMonth, $analysisStartDate, $analysisEndDate, $currentTenantId]);
-                
-                $totalRevenue = $monthRevenue[0]->total_revenue ?? 0;
-                $avgOrderValue = $monthRevenue[0]->avg_order_value ?? $cohortAOV;
-                
-            } else {
-                // Subsequent months: Calculate actual retention
-                // A customer is considered "retained" if they made at least one order in this month
-                
-                // Only query if this analysis month is in the past or current month
-                if ($analysisDate <= Carbon::now()->endOfMonth()) {
+                if ($monthIndex === 0) {
+                    // Month 0: All customers are active by definition (100% retention)
+                    $activeCustomers = $totalCustomers;
+                    $retentionRate = 100.0;
+                    
+                    // Get actual revenue for the cohort month
+                    $monthRevenue = DB::select('
+                        SELECT 
+                            COALESCE(SUM(o.amount), 0) as total_revenue,
+                            COALESCE(ROUND(AVG(o.amount), 2), ?) as avg_order_value,
+                            COUNT(DISTINCT o.id_order) as total_orders
+                        FROM customers c
+                        JOIN orders o ON c.phone_number = o.customer_phone_number
+                        WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
+                            AND c.tenant_id = ?
+                            AND o.date BETWEEN ? AND ?
+                            AND o.tenant_id = ?
+                            AND o.status != "Batal"
+                            AND o.sales_channel_id = 1
+                    ', [$cohortAOV, $cohortMonth, $currentTenantId, $analysisStartDate, $analysisEndDate, $currentTenantId]);
+                    
+                    $totalRevenue = $monthRevenue[0]->total_revenue ?? 0;
+                    $avgOrderValue = $monthRevenue[0]->avg_order_value ?? $cohortAOV;
+                    
+                } else {
+                    // Subsequent months: Calculate actual retention
+                    // A customer is considered "retained" if they made at least one order in this month
+                    
                     $retentionData = DB::select('
                         SELECT
                             COUNT(DISTINCT c.phone_number) as active_customers,
                             COALESCE(SUM(o.amount), 0) as total_revenue,
                             COALESCE(ROUND(AVG(o.amount), 2), 0) as avg_order_value,
                             COUNT(DISTINCT o.id_order) as total_orders
-                        FROM (
-                            SELECT phone_number
-                            FROM customers 
-                            WHERE tenant_id = ? 
-                            GROUP BY phone_number
-                            HAVING DATE_FORMAT(MIN(first_order_date), "%Y-%m") = ?
-                        ) c
+                        FROM customers c
                         JOIN orders o ON c.phone_number = o.customer_phone_number
+                        WHERE DATE_FORMAT(c.first_order_date, "%Y-%m") = ?
+                            AND c.tenant_id = ?
                             AND o.date BETWEEN ? AND ?
                             AND o.tenant_id = ?
                             AND o.status != "Batal"
                             AND o.sales_channel_id = 1
                     ', [
-                        $currentTenantId, 
                         $cohortMonth,
+                        $currentTenantId,
                         $analysisStartDate, 
                         $analysisEndDate, 
                         $currentTenantId
@@ -5612,228 +5591,239 @@ class OrderController extends Controller
                     $activeCustomers = $retentionData[0]->active_customers ?? 0;
                     $totalRevenue = $retentionData[0]->total_revenue ?? 0;
                     $avgOrderValue = $retentionData[0]->avg_order_value ?? 0;
-                } else {
-                    // Future months - no data available yet
-                    $activeCustomers = 0;
-                    $totalRevenue = 0;
-                    $avgOrderValue = 0;
+                    
+                    $retentionRate = $totalCustomers > 0 
+                        ? round(($activeCustomers / $totalCustomers) * 100, 2) 
+                        : 0;
                 }
                 
-                $retentionRate = $totalCustomers > 0 
-                    ? round(($activeCustomers / $totalCustomers) * 100, 2) 
-                    : 0;
+                $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
+                    'month' => $analysisMonth,
+                    'active_customers' => (int)$activeCustomers,
+                    'retention_rate' => (float)$retentionRate,
+                    'revenue' => (float)$totalRevenue,
+                    'average_order_value' => (float)$avgOrderValue,
+                    'has_data' => true // Always true since we're only looking at past months
+                ];
+                
+                // Move to next month
+                $analysisDate->addMonth();
+                $monthIndex++;
             }
             
-            $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
-                'month' => $analysisMonth,
-                'active_customers' => (int)$activeCustomers,
-                'retention_rate' => (float)$retentionRate,
-                'revenue' => (float)$totalRevenue,
-                'average_order_value' => (float)$avgOrderValue,
-                'has_data' => $analysisDate <= Carbon::now()->endOfMonth()
-            ];
-            
-            // Move to next month
-            $analysisDate->addMonth();
-            $monthIndex++;
-        }
-    }
-    
-    // Step 4: Calculate summary metrics
-    $summaryMetrics = [
-        'total_cohorts' => count($formattedCohortData),
-        'total_customers_acquired' => array_sum(array_column($finalCohorts, 'total_customers')),
-        'average_cohort_size' => count($finalCohorts) > 0 ? round(array_sum(array_column($finalCohorts, 'total_customers')) / count($finalCohorts), 2) : 0,
-        'average_retention_month_1' => $this->calculateAverageRetention($formattedCohortData, 1),
-        'average_retention_month_3' => $this->calculateAverageRetention($formattedCohortData, 3),
-        'average_retention_month_6' => $this->calculateAverageRetention($formattedCohortData, 6),
-        'data_quality_note' => 'Analysis performed with duplicate-safe queries'
-    ];
-    
-    // Prepare response data
-    $response = [
-        'cohort_data' => $formattedCohortData,
-        'months_list' => $monthsList,
-        'summary_metrics' => $summaryMetrics,
-        'analysis_period' => [
-            'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => $endDate->format('Y-m-d')
-        ],
-        'filters' => [
-            'tenant_id' => $currentTenantId
-        ]
-    ];
-    
-    return response()->json($response);
-}
-
-/**
- * Calculate average retention rate for a specific month index across all cohorts
- */
-private function calculateAverageRetention($cohortData, $monthIndex)
-{
-    $validRetentionRates = [];
-    
-    foreach ($cohortData as $cohort) {
-        if (isset($cohort['months'][$monthIndex])) {
-            $validRetentionRates[] = $cohort['months'][$monthIndex]['retention_rate'];
-        }
-    }
-    
-    return count($validRetentionRates) > 0 
-        ? round(array_sum($validRetentionRates) / count($validRetentionRates), 2) 
-        : 0;
-}
-    public function generateAnalysis(Request $request)
-{
-    try {
-        // Get cohort data and parameters from request
-        $cohortData = $request->input('cohort_data');
-        $analysisPeriod = $request->input('analysis_period');
-        $format = $request->input('format', 'detailed'); // Get format with default 'detailed'
-        
-        // Validate input data
-        if (empty($cohortData)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No cohort data provided'
-            ], 400);
+            // Add empty slots for future months that don't have data yet
+            while ($monthIndex < $maxMonthsToShow) {
+                $analysisMonth = $analysisDate->format('Y-m');
+                
+                $formattedCohortData[$cohortMonth]['months'][$monthIndex] = [
+                    'month' => $analysisMonth,
+                    'active_customers' => 0,
+                    'retention_rate' => 0.0,
+                    'revenue' => 0.0,
+                    'average_order_value' => 0.0,
+                    'has_data' => false // No data for future months
+                ];
+                
+                $analysisDate->addMonth();
+                $monthIndex++;
+            }
         }
         
-        // Log request parameters for debugging
-        Log::info('Generating AI analysis', [
-            'format' => $format,
-            'period' => $analysisPeriod,
-            'cohort_count' => count($cohortData)
-        ]);
+        // Step 4: Calculate summary metrics
+        $summaryMetrics = [
+            'total_cohorts' => count($formattedCohortData),
+            'total_customers_acquired' => array_sum(array_column($cohorts, 'total_customers')),
+            'average_cohort_size' => count($cohorts) > 0 ? round(array_sum(array_column($cohorts, 'total_customers')) / count($cohorts), 2) : 0,
+            'average_retention_month_1' => $this->calculateAverageRetention($formattedCohortData, 1),
+            'average_retention_month_3' => $this->calculateAverageRetention($formattedCohortData, 3),
+            'average_retention_month_6' => $this->calculateAverageRetention($formattedCohortData, 6),
+            'data_quality_note' => 'Analysis performed with corrected retention logic'
+        ];
         
-        // Prepare the prompt with the specified format
-        $prompt = $this->preparePrompt($cohortData, $analysisPeriod, $format);
-        
-        // Call the OpenAI API
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('services.openai.api_key'),
-            'Content-Type' => 'application/json',
-        ])->post('https://api.openai.com/v1/chat/completions', [
-            'model' => 'gpt-4o', // Using the latest model
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a helpful business analyst who specializes in cohort analysis. Provide valuable insights and actionable recommendations based on cohort data. Your response should be in Bahasa Indonesia with proper formatting. IMPORTANT: Always include clear section headers for "# Kesimpulan Umum", "# Implikasi Bisnis", and "# Rekomendasi" in your response.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $prompt
-                ]
+        // Prepare response data
+        $response = [
+            'cohort_data' => $formattedCohortData,
+            'months_list' => $monthsList,
+            'summary_metrics' => $summaryMetrics,
+            'analysis_period' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
             ],
-            'temperature' => 0.7,
-            'max_tokens' => 1000,
-        ]);
+            'filters' => [
+                'tenant_id' => $currentTenantId
+            ]
+        ];
         
-        // Check if the response is successful
-        if ($response->successful()) {
-            $result = $response->json();
-            $analysis = $result['choices'][0]['message']['content'] ?? 'Tidak dapat menghasilkan analisis.';
-            
-            // Verify that the analysis contains the required sections
-            $requiredSections = [
-                'Kesimpulan Umum',
-                'Implikasi Bisnis',
-                'Rekomendasi'
-            ];
-            
-            $missingSection = false;
-            foreach ($requiredSections as $section) {
-                if (strpos($analysis, $section) === false && strpos($analysis, strtolower($section)) === false) {
-                    $missingSection = true;
-                    break;
-                }
-            }
-            
-            // If any section is missing, fix the response structure
-            if ($missingSection) {
-                $analysis = $this->restructureResponse($analysis);
-            }
-            
-            // Log successful completion
-            Log::info('AI analysis generated successfully', [
-                'length' => strlen($analysis),
-                'format' => $format
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'analysis' => $analysis,
-                'format' => $format // Include format in response for client reference
-            ]);
-        } else {
-            // Log API error details
-            Log::error('OpenAI API Error', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'headers' => $response->headers()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate analysis: ' . ($response->json()['error']['message'] ?? 'Unknown API error')
-            ], 500);
-        }
-    } catch (\Exception $e) {
-        Log::error('AI Analysis Error', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Error generating analysis: ' . $e->getMessage()
-        ], 500);
+        return response()->json($response);
     }
-}
 
-/**
- * Restructure the AI response to ensure it has all the required sections
- * 
- * @param string $analysis
- * @return string
- */
-private function restructureResponse($analysis)
-{
-    // Split the response into paragraphs
-    $paragraphs = preg_split('/\n\s*\n|\r\n\s*\r\n/', $analysis);
-    
-    // Default structure
-    $structuredResponse = "# Kesimpulan Umum\n";
-    
-    // Determine if there are enough paragraphs to distribute
-    if (count($paragraphs) >= 3) {
-        // Distribute paragraphs to appropriate sections
-        $structuredResponse .= implode("\n\n", array_slice($paragraphs, 0, ceil(count($paragraphs) / 3)));
-        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
-        $structuredResponse .= implode("\n\n", array_slice($paragraphs, ceil(count($paragraphs) / 3), ceil(count($paragraphs) / 3)));
-        $structuredResponse .= "\n\n# Rekomendasi\n";
-        $structuredResponse .= implode("\n\n", array_slice($paragraphs, 2 * ceil(count($paragraphs) / 3)));
-    } else if (count($paragraphs) == 2) {
-        // Just two paragraphs, use first for conclusion, second for recommendations
-        $structuredResponse .= $paragraphs[0];
-        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
-        $structuredResponse .= "Berdasarkan kesimpulan di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
-        $structuredResponse .= "\n\n# Rekomendasi\n";
-        $structuredResponse .= $paragraphs[1];
-    } else {
-        // Just one paragraph, use it as conclusion and add generic sections
-        $structuredResponse .= $paragraphs[0];
-        $structuredResponse .= "\n\n# Implikasi Bisnis\n";
-        $structuredResponse .= "Berdasarkan analisis di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
-        $structuredResponse .= "\n\n# Rekomendasi\n";
-        $structuredResponse .= "1. Lakukan program retensi khusus untuk pelanggan pada bulan kedua dan ketiga.\n";
-        $structuredResponse .= "2. Tingkatkan pengalaman pelanggan pada transaksi pertama untuk mendorong pembelian berulang.\n";
-        $structuredResponse .= "3. Implementasikan program loyalitas untuk meningkatkan retensi jangka panjang.";
+    /**
+     * Calculate average retention rate for a specific month index across all cohorts
+     */
+    private function calculateAverageRetention($cohortData, $monthIndex)
+    {
+        $validRetentionRates = [];
+        
+        foreach ($cohortData as $cohort) {
+            if (isset($cohort['months'][$monthIndex]) && $cohort['months'][$monthIndex]['has_data']) {
+                $validRetentionRates[] = $cohort['months'][$monthIndex]['retention_rate'];
+            }
+        }
+        
+        return count($validRetentionRates) > 0 
+            ? round(array_sum($validRetentionRates) / count($validRetentionRates), 2) 
+            : 0;
     }
-    
-    return $structuredResponse;
-}
+        public function generateAnalysis(Request $request)
+        {
+            try {
+                // Get cohort data and parameters from request
+                $cohortData = $request->input('cohort_data');
+                $analysisPeriod = $request->input('analysis_period');
+                $format = $request->input('format', 'detailed'); // Get format with default 'detailed'
+                
+                // Validate input data
+                if (empty($cohortData)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No cohort data provided'
+                    ], 400);
+                }
+                
+                // Log request parameters for debugging
+                Log::info('Generating AI analysis', [
+                    'format' => $format,
+                    'period' => $analysisPeriod,
+                    'cohort_count' => count($cohortData)
+                ]);
+                
+                // Prepare the prompt with the specified format
+                $prompt = $this->preparePrompt($cohortData, $analysisPeriod, $format);
+                
+                // Call the OpenAI API
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . config('services.openai.api_key'),
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o', // Using the latest model
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => 'You are a helpful business analyst who specializes in cohort analysis. Provide valuable insights and actionable recommendations based on cohort data. Your response should be in Bahasa Indonesia with proper formatting. IMPORTANT: Always include clear section headers for "# Kesimpulan Umum", "# Implikasi Bisnis", and "# Rekomendasi" in your response.'
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => $prompt
+                        ]
+                    ],
+                    'temperature' => 0.7,
+                    'max_tokens' => 1000,
+                ]);
+                
+                // Check if the response is successful
+                if ($response->successful()) {
+                    $result = $response->json();
+                    $analysis = $result['choices'][0]['message']['content'] ?? 'Tidak dapat menghasilkan analisis.';
+                    
+                    // Verify that the analysis contains the required sections
+                    $requiredSections = [
+                        'Kesimpulan Umum',
+                        'Implikasi Bisnis',
+                        'Rekomendasi'
+                    ];
+                    
+                    $missingSection = false;
+                    foreach ($requiredSections as $section) {
+                        if (strpos($analysis, $section) === false && strpos($analysis, strtolower($section)) === false) {
+                            $missingSection = true;
+                            break;
+                        }
+                    }
+                    
+                    // If any section is missing, fix the response structure
+                    if ($missingSection) {
+                        $analysis = $this->restructureResponse($analysis);
+                    }
+                    
+                    // Log successful completion
+                    Log::info('AI analysis generated successfully', [
+                        'length' => strlen($analysis),
+                        'format' => $format
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'analysis' => $analysis,
+                        'format' => $format // Include format in response for client reference
+                    ]);
+                } else {
+                    // Log API error details
+                    Log::error('OpenAI API Error', [
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                        'headers' => $response->headers()
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to generate analysis: ' . ($response->json()['error']['message'] ?? 'Unknown API error')
+                    ], 500);
+                }
+            } catch (\Exception $e) {
+                Log::error('AI Analysis Error', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error generating analysis: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+    /**
+     * Restructure the AI response to ensure it has all the required sections
+     * 
+     * @param string $analysis
+     * @return string
+     */
+    private function restructureResponse($analysis)
+    {
+        // Split the response into paragraphs
+        $paragraphs = preg_split('/\n\s*\n|\r\n\s*\r\n/', $analysis);
+        
+        // Default structure
+        $structuredResponse = "# Kesimpulan Umum\n";
+        
+        // Determine if there are enough paragraphs to distribute
+        if (count($paragraphs) >= 3) {
+            // Distribute paragraphs to appropriate sections
+            $structuredResponse .= implode("\n\n", array_slice($paragraphs, 0, ceil(count($paragraphs) / 3)));
+            $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+            $structuredResponse .= implode("\n\n", array_slice($paragraphs, ceil(count($paragraphs) / 3), ceil(count($paragraphs) / 3)));
+            $structuredResponse .= "\n\n# Rekomendasi\n";
+            $structuredResponse .= implode("\n\n", array_slice($paragraphs, 2 * ceil(count($paragraphs) / 3)));
+        } else if (count($paragraphs) == 2) {
+            // Just two paragraphs, use first for conclusion, second for recommendations
+            $structuredResponse .= $paragraphs[0];
+            $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+            $structuredResponse .= "Berdasarkan kesimpulan di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
+            $structuredResponse .= "\n\n# Rekomendasi\n";
+            $structuredResponse .= $paragraphs[1];
+        } else {
+            // Just one paragraph, use it as conclusion and add generic sections
+            $structuredResponse .= $paragraphs[0];
+            $structuredResponse .= "\n\n# Implikasi Bisnis\n";
+            $structuredResponse .= "Berdasarkan analisis di atas, implikasi bisnis yang perlu diperhatikan adalah terkait retensi pelanggan dan nilai transaksi rata-rata.";
+            $structuredResponse .= "\n\n# Rekomendasi\n";
+            $structuredResponse .= "1. Lakukan program retensi khusus untuk pelanggan pada bulan kedua dan ketiga.\n";
+            $structuredResponse .= "2. Tingkatkan pengalaman pelanggan pada transaksi pertama untuk mendorong pembelian berulang.\n";
+            $structuredResponse .= "3. Implementasikan program loyalitas untuk meningkatkan retensi jangka panjang.";
+        }
+        
+        return $structuredResponse;
+    }
 private function preparePrompt($cohortData, $analysisPeriod, $format = 'detailed')
 {
     // Extract key metrics for the prompt
