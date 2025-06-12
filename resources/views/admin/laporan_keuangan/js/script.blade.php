@@ -481,14 +481,14 @@
                         
                         if (type === 'fee_admin') {
                             row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
-                            row += '<td class="text-center"><span class="badge badge-info">' + formatNumber(item.count_orders) + '</span></td>';
+                            row += '<td class="text-center">' + formatNumber(item.count_orders) + '</td>';
                         } else if (type === 'net_profit') {
                             row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.net_profit) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.hpp) + '</td>';
                             row += '<td class="text-right">' + item.hpp_percentage.toFixed(2) + '%</td>';
-                            row += '<td class="text-center"><span class="badge badge-info">' + formatNumber(item.count_orders) + '</span></td>';
+                            row += '<td class="text-center">' + formatNumber(item.count_orders) + '</td>';
                         }
                         
                         row += '</tr>';
@@ -501,14 +501,14 @@
                     
                     if (type === 'fee_admin') {
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
-                        footerRow += '<td class="text-center"><span class="badge badge-primary">' + formatNumber(response.summary.total_count_orders) + '</span></td>';
+                        footerRow += '<td class="text-center">' + formatNumber(response.summary.total_count_orders) + '</td>';
                     } else if (type === 'net_profit') {
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_net_profit) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_hpp) + '</td>';
                         footerRow += '<td class="text-right">' + response.summary.total_hpp_percentage.toFixed(2) + '%</td>';
-                        footerRow += '<td class="text-center"><span class="badge badge-primary">' + formatNumber(response.summary.total_count_orders) + '</span></td>';
+                        footerRow += '<td class="text-center">' + formatNumber(response.summary.total_count_orders) + '</td>';
                     }
                     
                     footerRow += '</tr>';
@@ -737,9 +737,7 @@
                     <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
                     ${channel.channel_name}
                 </td>
-                <td class="text-center">
-                    <span class="badge badge-primary">${formatNumber(channel.total_orders)} orders</span>
-                </td>
+                <td class="text-center">${formatNumber(channel.total_orders)}</td>
                 <td class="text-right">${percentage.toFixed(1)}%</td>
             `;
             

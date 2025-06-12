@@ -66,12 +66,11 @@
                 </div>
             </div>
 
-            <!-- Monthly Order Count by Channel -->
             <div class="row mb-4">
-                <div class="col-12">
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Monthly Order Count by Channel</h3>
+                            <h3 class="card-title">Order Count by Channel</h3>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -79,8 +78,8 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Channel</th>
-                                            <th class="text-center">Total Orders</th>
-                                            <th class="text-right">Percentage</th>
+                                            <th class="text-center">Orders</th>
+                                            <th class="text-right">%</th>
                                         </tr>
                                     </thead>
                                     <tbody id="monthlyOrderCountCards">
@@ -91,10 +90,33 @@
                         </div>
                     </div>
                 </div>
-            </div>
             
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Order Count by Channel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th class="text-center">Orders</th>
+                                            <th class="text-right">%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyOrderCountCards">
+                                        <!-- Table rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Revenue by Channel</h3>
@@ -117,7 +139,7 @@
                     </div>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">HPP by Channel</h3>
@@ -141,7 +163,7 @@
                     </div>
                 </div>
                 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Fee Admin by Channel</h3>
