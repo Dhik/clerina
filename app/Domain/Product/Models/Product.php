@@ -19,6 +19,10 @@ class Product extends Model
         'harga_batas_bawah',
         'tenant_id',
         'harga_satuan',
+        'combination_sku_1',
+        'combination_sku_2',
+        'combination_sku_3',
+        'combination_sku_4'
     ];
     public function orders() 
     {
