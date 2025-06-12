@@ -130,10 +130,10 @@ class LaporanKeuanganController extends Controller
                     return '<a href="#" class="text-primary show-details" data-type="net_profit" data-date="' . $row['date'] . '">Rp ' . number_format($row['net_profit'], 0, ',', '.') . '</a>';
                 })
                 ->editColumn('total_count_orders', function ($row) {
-                    return '<span class="badge badge-info">' . number_format($row['total_count_orders'], 0, ',', '.') . ' orders</span>';
+                    return number_format($row['total_count_orders'], 0, ',', '.');
                 });
             
-            return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit', 'total_count_orders'])->make(true);
+            return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit'])->make(true);
         } else {
             // For pivot tables (gross_revenue, hpp, fee_admin)
             // Get all dates in the selected range
