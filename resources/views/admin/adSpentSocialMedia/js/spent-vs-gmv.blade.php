@@ -25,7 +25,7 @@ $(document).ready(function() {
             responsive: true,
             processing: true,
             serverSide: true,
-            pageLength: 25,
+            pageLength: 10,
             destroy: true,
             ajax: {
                 url: "{{ route('adSpentSocialMedia.get_spent_vs_gmv') }}",

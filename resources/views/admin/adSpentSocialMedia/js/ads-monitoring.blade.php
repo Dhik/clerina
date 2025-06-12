@@ -16,7 +16,7 @@ $(document).ready(function() {
         responsive: true,
         processing: true,
         serverSide: true,
-        pageLength: 25,
+        pageLength: 10,
         ajax: {
             url: "{{ route('adSpentSocialMedia.get_ads_monitoring') }}",
             data: function (d) {

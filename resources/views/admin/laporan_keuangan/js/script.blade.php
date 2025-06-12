@@ -47,7 +47,7 @@
         dataTables.summary = $('#summaryTable').DataTable({
             processing: true,
             serverSide: true,
-            pageLength: 25,
+            pageLength: 10,
             dom: 'Bfrtip',
             buttons: [
                 {
@@ -132,7 +132,7 @@
         dataTables.grossRevenue = $('#grossRevenueTable').DataTable({
             processing: true,
             serverSide: true,
-            pageLength: 25,
+            pageLength: 10,
             dom: 'Bfrtip',
             scrollX: true,
             buttons: [
@@ -188,7 +188,7 @@
         dataTables.hpp = $('#hppTable').DataTable({
             processing: true,
             serverSide: true,
-            pageLength: 25,
+            pageLength: 10,
             dom: 'Bfrtip',
             scrollX: true,
             buttons: [
@@ -244,7 +244,7 @@
         dataTables.feeAdmin = $('#feeAdminTable').DataTable({
             processing: true,
             serverSide: true,
-            pageLength: 25,
+            pageLength: 10,
             dom: 'Bfrtip',
             scrollX: true,
             buttons: [
