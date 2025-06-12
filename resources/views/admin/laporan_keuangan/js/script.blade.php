@@ -733,10 +733,7 @@
             // Create table row
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="${indicatorClass}">
-                    <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
-                    ${channel.channel_name}
-                </td>
+                <td>${channel.channel_name}</td>
                 <td class="text-center">${formatNumber(channel.total_orders)}</td>
                 <td class="text-right">${percentage.toFixed(1)}%</td>
             `;
