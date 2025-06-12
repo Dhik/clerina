@@ -43,7 +43,7 @@
 
     // Initialize DataTables for all tabs
     function initializeTables() {
-        // Summary table (keep as is)
+        // Summary table (updated with order count column)
         dataTables.summary = $('#summaryTable').DataTable({
             processing: true,
             serverSide: true,
@@ -69,12 +69,17 @@
                 { data: 'total_gross_revenue', name: 'total_gross_revenue' },
                 { data: 'total_hpp', name: 'total_hpp' },
                 { data: 'total_fee_admin', name: 'total_fee_admin' },
-                { data: 'net_profit', name: 'net_profit' }
+                { data: 'net_profit', name: 'net_profit' },
+                { data: 'total_count_orders', name: 'total_count_orders' }
             ],
             columnDefs: [
                 { 
                     "targets": [1, 2, 3, 4], 
                     "className": "text-right" 
+                },
+                { 
+                    "targets": [5], 
+                    "className": "text-center" 
                 }
             ],
             order: [[0, 'desc']],
@@ -456,12 +461,14 @@
                     
                     if (type === 'fee_admin') {
                         headerRow += '<th class="text-right">Fee Admin</th>';
+                        headerRow += '<th class="text-right">Orders Count</th>';
                     } else if (type === 'net_profit') {
                         headerRow += '<th class="text-right">Gross Revenue</th>';
                         headerRow += '<th class="text-right">Fee Admin</th>';
                         headerRow += '<th class="text-right">Net Profit</th>';
                         headerRow += '<th class="text-right">HPP</th>';
                         headerRow += '<th class="text-right">HPP %</th>';
+                        headerRow += '<th class="text-right">Orders Count</th>';
                     }
                     
                     headerRow += '</tr>';
@@ -474,12 +481,14 @@
                         
                         if (type === 'fee_admin') {
                             row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
+                            row += '<td class="text-center"><span class="badge badge-info">' + formatNumber(item.count_orders) + '</span></td>';
                         } else if (type === 'net_profit') {
                             row += '<td class="text-right">Rp ' + formatNumber(item.gross_revenue) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.fee_admin) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.net_profit) + '</td>';
                             row += '<td class="text-right">Rp ' + formatNumber(item.hpp) + '</td>';
                             row += '<td class="text-right">' + item.hpp_percentage.toFixed(2) + '%</td>';
+                            row += '<td class="text-center"><span class="badge badge-info">' + formatNumber(item.count_orders) + '</span></td>';
                         }
                         
                         row += '</tr>';
@@ -492,12 +501,14 @@
                     
                     if (type === 'fee_admin') {
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
+                        footerRow += '<td class="text-center"><span class="badge badge-primary">' + formatNumber(response.summary.total_count_orders) + '</span></td>';
                     } else if (type === 'net_profit') {
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_gross_revenue) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_fee_admin) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_net_profit) + '</td>';
                         footerRow += '<td class="text-right">Rp ' + formatNumber(response.summary.total_hpp) + '</td>';
                         footerRow += '<td class="text-right">' + response.summary.total_hpp_percentage.toFixed(2) + '%</td>';
+                        footerRow += '<td class="text-center"><span class="badge badge-primary">' + formatNumber(response.summary.total_count_orders) + '</span></td>';
                     }
                     
                     footerRow += '</tr>';
@@ -670,9 +681,70 @@
                 // Update channel summary tables
                 updateChannelRevenueCards(data.channel_summary);
                 updateChannelHppCards(data.channel_summary);
-                updateChannelFeeAdminCards(data.channel_summary); // Add this line
+                updateChannelFeeAdminCards(data.channel_summary);
+                updateMonthlyOrderCountCards(data.monthly_order_count);
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    function updateMonthlyOrderCountCards(monthlyOrderCount) {
+        const container = document.getElementById('monthlyOrderCountCards');
+        container.innerHTML = ''; // Clear previous content
+        
+        // Calculate total orders for percentage calculation
+        const totalOrders = monthlyOrderCount.reduce((sum, channel) => sum + parseInt(channel.total_orders), 0);
+        
+        // Create a table row for each channel
+        monthlyOrderCount.forEach(channel => {
+            const channelName = channel.channel_name.toLowerCase();
+            let indicatorClass = 'other-indicator';
+            let logoClass = 'fa-shopping-bag';
+            
+            // Determine the indicator class and logo based on channel name
+            if (channelName.includes('shopee') && !channelName.includes('2') && !channelName.includes('3')) {
+                indicatorClass = 'shopee-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 2') || channelName.includes('shopee2')) {
+                indicatorClass = 'shopee-2-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('shopee 3') || channelName.includes('shopee3')) {
+                indicatorClass = 'shopee-3-indicator';
+                logoClass = 'fa-shopping-bag';
+            } else if (channelName.includes('lazada')) {
+                indicatorClass = 'lazada-indicator';
+                logoClass = 'fa-box';
+            } else if (channelName.includes('tokopedia')) {
+                indicatorClass = 'tokopedia-indicator';
+                logoClass = 'fa-store';
+            } else if (channelName.includes('tiktok')) {
+                indicatorClass = 'tiktok-indicator';
+                logoClass = 'fa-music';
+            } else if (channelName === 'b2b') {
+                indicatorClass = 'b2b-indicator';
+                logoClass = 'fa-handshake';
+            } else if (channelName === 'crm') {
+                indicatorClass = 'crm-indicator';
+                logoClass = 'fa-users';
+            }
+            
+            // Calculate percentage
+            const percentage = totalOrders > 0 ? ((channel.total_orders / totalOrders) * 100) : 0;
+            
+            // Create table row
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="${indicatorClass}">
+                    <span class="channel-icon"><i class="fas ${logoClass}"></i></span>
+                    ${channel.channel_name}
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-primary">${formatNumber(channel.total_orders)} orders</span>
+                </td>
+                <td class="text-right">${percentage.toFixed(1)}%</td>
+            `;
+            
+            container.appendChild(row);
+        });
     }
 
     function updateChannelRevenueCards(channelSummary) {

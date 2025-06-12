@@ -93,7 +93,8 @@ class LaporanKeuanganController extends Controller
                     ->selectRaw('
                         SUM(gross_revenue) as total_gross_revenue,
                         SUM(hpp) as total_hpp,
-                        SUM(fee_admin) as total_fee_admin
+                        SUM(fee_admin) as total_fee_admin,
+                        SUM(count_id_order) as total_count_orders
                     ')
                     ->first();
                 
@@ -106,6 +107,7 @@ class LaporanKeuanganController extends Controller
                     'total_hpp' => $summaryData->total_hpp ?: 0,
                     'total_fee_admin' => $summaryData->total_fee_admin ?: 0,
                     'net_profit' => $netProfit ?: 0,
+                    'total_count_orders' => $summaryData->total_count_orders ?: 0,
                 ];
                 
                 $result[] = $row;
@@ -126,9 +128,12 @@ class LaporanKeuanganController extends Controller
                 })
                 ->editColumn('net_profit', function ($row) {
                     return '<a href="#" class="text-primary show-details" data-type="net_profit" data-date="' . $row['date'] . '">Rp ' . number_format($row['net_profit'], 0, ',', '.') . '</a>';
+                })
+                ->editColumn('total_count_orders', function ($row) {
+                    return '<span class="badge badge-info">' . number_format($row['total_count_orders'], 0, ',', '.') . ' orders</span>';
                 });
             
-            return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit'])->make(true);
+            return $dataTable->rawColumns(['total_gross_revenue', 'total_hpp', 'total_fee_admin', 'net_profit', 'total_count_orders'])->make(true);
         } else {
             // For pivot tables (gross_revenue, hpp, fee_admin)
             // Get all dates in the selected range
@@ -332,11 +337,13 @@ class LaporanKeuanganController extends Controller
             $totalHpp = 0;
             $totalFeeAdmin = 0;
             $totalNetProfit = 0;
+            $totalCountOrders = 0;
             
             foreach ($data as $row) {
                 $grossRevenue = $row->gross_revenue ?: 0;
                 $hpp = $row->hpp ?: 0;
                 $feeAdmin = $row->fee_admin ?: 0;
+                $countOrders = $row->count_id_order ?: 0;
                 $netProfit = $grossRevenue - $feeAdmin;
                 $hppPercentage = $grossRevenue > 0 ? ($hpp / $grossRevenue) * 100 : 0;
                 
@@ -344,6 +351,7 @@ class LaporanKeuanganController extends Controller
                 $totalHpp += $hpp;
                 $totalFeeAdmin += $feeAdmin;
                 $totalNetProfit += $netProfit;
+                $totalCountOrders += $countOrders;
                 
                 $details[] = [
                     'channel_name' => $row->channel_name,
@@ -351,7 +359,8 @@ class LaporanKeuanganController extends Controller
                     'hpp' => $hpp,
                     'fee_admin' => $feeAdmin,
                     'net_profit' => $netProfit,
-                    'hpp_percentage' => $hppPercentage
+                    'hpp_percentage' => $hppPercentage,
+                    'count_orders' => $countOrders
                 ];
             }
             
@@ -364,7 +373,8 @@ class LaporanKeuanganController extends Controller
                 'total_hpp' => $totalHpp,
                 'total_fee_admin' => $totalFeeAdmin,
                 'total_net_profit' => $totalNetProfit,
-                'total_hpp_percentage' => $totalHppPercentage
+                'total_hpp_percentage' => $totalHppPercentage,
+                'total_count_orders' => $totalCountOrders
             ];
             
             return response()->json([
@@ -548,7 +558,8 @@ class LaporanKeuanganController extends Controller
         $summary = $query->selectRaw('
             SUM(gross_revenue) as total_gross_revenue,
             SUM(hpp) as total_hpp,
-            SUM(fee_admin) as total_fee_admin
+            SUM(fee_admin) as total_fee_admin,
+            SUM(count_id_order) as total_count_orders
         ')->first();
         
         // Calculate net profit
@@ -578,7 +589,8 @@ class LaporanKeuanganController extends Controller
                 sc.name as channel_name,
                 SUM(lk.gross_revenue) as channel_gross_revenue,
                 SUM(lk.hpp) as channel_hpp,
-                SUM(lk.fee_admin) as channel_fee_admin
+                SUM(lk.fee_admin) as channel_fee_admin,
+                SUM(lk.count_id_order) as channel_count_orders
             ')
             ->groupBy('sc.id', 'sc.name')
             ->orderBy('channel_gross_revenue', 'desc')
@@ -591,6 +603,9 @@ class LaporanKeuanganController extends Controller
                 ? (($channel->channel_hpp / $channel->channel_gross_revenue) * 100) 
                 : 0;
         }
+
+        // Get monthly order count by channel
+        $monthlyOrderCount = $this->getMonthlyOrderCount($request);
         
         return response()->json([
             'total_gross_revenue' => $summary->total_gross_revenue ?? 0,
@@ -598,7 +613,45 @@ class LaporanKeuanganController extends Controller
             'total_fee_admin' => $summary->total_fee_admin ?? 0,
             'net_profit' => $netProfit,
             'hpp_percentage' => $hppPercentage,
-            'channel_summary' => $channelSummary
+            'total_count_orders' => $summary->total_count_orders ?? 0,
+            'channel_summary' => $channelSummary,
+            'monthly_order_count' => $monthlyOrderCount
         ]);
+    }
+
+    private function getMonthlyOrderCount(Request $request)
+    {
+        $currentTenantId = Auth::user()->current_tenant_id;
+        
+        $startDate = null;
+        $endDate = null;
+        
+        if (!is_null($request->input('filterDates'))) {
+            [$startDateString, $endDateString] = explode(' - ', $request->input('filterDates'));
+            $startDate = Carbon::createFromFormat('d/m/Y', $startDateString)->format('Y-m-d');
+            $endDate = Carbon::createFromFormat('d/m/Y', $endDateString)->format('Y-m-d');
+        }
+        
+        $query = DB::table('laporan_keuangan as lk')
+            ->join('sales_channels as sc', 'lk.sales_channel_id', '=', 'sc.id')
+            ->where('lk.tenant_id', '=', $currentTenantId);
+        
+        // Apply date filtering
+        if (!is_null($request->input('filterDates'))) {
+            $query->where('lk.date', '>=', $startDate)
+                ->where('lk.date', '<=', $endDate);
+        } else {
+            $query->whereMonth('lk.date', Carbon::now()->month)
+                ->whereYear('lk.date', Carbon::now()->year);
+        }
+        
+        return $query->selectRaw('
+                sc.id as channel_id,
+                sc.name as channel_name,
+                SUM(lk.count_id_order) as total_orders
+            ')
+            ->groupBy('sc.id', 'sc.name')
+            ->orderBy('total_orders', 'desc')
+            ->get();
     }
 }

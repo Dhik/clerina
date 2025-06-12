@@ -65,6 +65,33 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Monthly Order Count by Channel -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Monthly Order Count by Channel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Channel</th>
+                                            <th class="text-center">Total Orders</th>
+                                            <th class="text-right">Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthlyOrderCountCards">
+                                        <!-- Table rows will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="row mb-4">
                 <div class="col-md-4">
@@ -78,7 +105,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Channel</th>
-                                            <th>Gross Revenue</th>
+                                            <th class="text-right">Gross Revenue</th>
                                         </tr>
                                     </thead>
                                     <tbody id="channelRevenueCards">
@@ -101,8 +128,8 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Channel</th>
-                                            <th>HPP</th>
-                                            <th>Percentage</th>
+                                            <th class="text-right">HPP</th>
+                                            <th class="text-right">Percentage</th>
                                         </tr>
                                     </thead>
                                     <tbody id="channelHppCards">
@@ -125,8 +152,8 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>Channel</th>
-                                            <th>Fee Admin</th>
-                                            <th>Percentage</th>
+                                            <th class="text-right">Fee Admin</th>
+                                            <th class="text-right">Percentage</th>
                                         </tr>
                                     </thead>
                                     <tbody id="channelFeeAdminCards">
@@ -172,6 +199,7 @@
                                             <th>Total HPP</th>
                                             <th>Total Fee Admin</th>
                                             <th>Net Profit</th>
+                                            <th>Total Orders</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -236,7 +264,7 @@
     
     <!-- Standard Detail Modal -->
     <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detailModalLabel">Details</h5>
