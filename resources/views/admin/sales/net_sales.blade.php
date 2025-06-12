@@ -345,33 +345,26 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css">
 <style>
     #salesPieChart {
         height: 400px !important;
         width: 100% !important;
     }
     
-    /* Sticky Header Styles */
+    /* Sticky Header Styles - Header stays at top of viewport when scrolling */
     #netProfitsTable thead th {
         position: sticky;
-        top: 0;
+        top: 57px; /* Adjust this to match your AdminLTE navbar height */
         background-color: #f8f9fa !important;
-        z-index: 100;
+        z-index: 1020; /* Higher than most elements but lower than navbar */
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         border-bottom: 2px solid #dee2e6 !important;
         font-weight: 600;
     }
     
-    /* Adjust for AdminLTE navbar - change this value based on your navbar height */
-    .main-header {
-        position: fixed;
-        z-index: 1030;
-    }
-    
-    /* For pages with AdminLTE navbar, adjust the sticky position */
-    body.layout-navbar-fixed #netProfitsTable thead th {
-        top: 57px; /* Adjust this value to match your navbar height */
+    /* If no navbar or different layout, use this */
+    body:not(.layout-navbar-fixed) #netProfitsTable thead th {
+        top: 0;
     }
     
     /* Additional styling for better appearance */
@@ -379,11 +372,15 @@
         background-color: #e9ecef !important;
     }
     
-    /* Ensure table container allows for sticky positioning */
+    /* Remove height restriction from table container to allow full scrolling */
     .table-responsive {
         position: relative;
-        max-height: 70vh; /* Limit table height for better UX */
-        overflow: auto;
+        overflow: visible; /* Allow header to stick outside container */
+    }
+    
+    /* Ensure the table wrapper doesn't interfere with sticky positioning */
+    .card-body {
+        overflow: visible;
     }
     
     /* Custom scrollbar for better appearance */
@@ -479,7 +476,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
-    <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
     <script>
         filterDate = $('#filterDates');
         filterChannel = $('#filterChannel');
@@ -766,10 +762,7 @@
             processing: true,
             serverSide: true,
             pageLength: 25,
-            fixedHeader: {
-                header: true,
-                headerOffset: $('body').hasClass('layout-navbar-fixed') ? 57 : 0
-            },
+            // Remove fixedHeader option to use pure CSS sticky
             dom: 'Bfrtip',
             buttons: [
                 {
@@ -1004,27 +997,8 @@
             columnDefs: [
                 { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], "className": "text-right" }
             ],
-            order: [[0, 'asc']],
-            initComplete: function() {
-                // Ensure fixed header is properly initialized
-                this.api().fixedHeader.adjust();
-            }
-        });
-
-        // Adjust fixed header on window resize and tab changes
-        $(window).on('resize', function() {
-            if (netProfitsTable && netProfitsTable.fixedHeader) {
-                netProfitsTable.fixedHeader.adjust();
-            }
-        });
-
-        // Adjust fixed header when switching tabs or making changes
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
-            setTimeout(function() {
-                if (netProfitsTable && netProfitsTable.fixedHeader) {
-                    netProfitsTable.fixedHeader.adjust();
-                }
-            }, 100);
+            order: [[0, 'asc']]
+            // Removed fixedHeader related code since we're using pure CSS
         });
 
         function fetchSummary() {
