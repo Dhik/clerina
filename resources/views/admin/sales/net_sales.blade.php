@@ -354,17 +354,45 @@
     /* Sticky Header Styles - Header stays at top of viewport when scrolling */
     #netProfitsTable thead th {
         position: sticky;
-        top: 57px; /* Adjust this to match your AdminLTE navbar height */
+        top: 0 !important; /* Start with 0, then adjust based on layout */
         background-color: #f8f9fa !important;
-        z-index: 1020; /* Higher than most elements but lower than navbar */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1050 !important; /* Very high z-index to stay above everything */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
         border-bottom: 2px solid #dee2e6 !important;
-        font-weight: 600;
+        font-weight: 600 !important;
+        border-top: none !important;
     }
     
-    /* If no navbar or different layout, use this */
-    body:not(.layout-navbar-fixed) #netProfitsTable thead th {
-        top: 0;
+    /* Detect AdminLTE layout and adjust accordingly */
+    .main-header.navbar-light + .content-wrapper #netProfitsTable thead th,
+    .main-header + .content-wrapper #netProfitsTable thead th,
+    body.layout-navbar-fixed #netProfitsTable thead th {
+        top: 57px !important; /* Adjust for fixed navbar */
+    }
+    
+    /* Ensure table and containers don't interfere with sticky positioning */
+    .table-responsive {
+        position: relative;
+        overflow-x: auto;
+        overflow-y: visible; /* Allow vertical overflow for sticky header */
+    }
+    
+    .card-body {
+        overflow: visible;
+        position: relative;
+    }
+    
+    .card {
+        overflow: visible;
+    }
+    
+    /* Force the sticky behavior */
+    #netProfitsTable {
+        position: relative;
+    }
+    
+    #netProfitsTable thead {
+        position: relative;
     }
     
     /* Additional styling for better appearance */
@@ -372,15 +400,12 @@
         background-color: #e9ecef !important;
     }
     
-    /* Remove height restriction from table container to allow full scrolling */
-    .table-responsive {
-        position: relative;
-        overflow: visible; /* Allow header to stick outside container */
-    }
-    
-    /* Ensure the table wrapper doesn't interfere with sticky positioning */
-    .card-body {
-        overflow: visible;
+    /* Ensure the sticky header appears above DataTables controls */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        z-index: 1;
     }
     
     /* Custom scrollbar for better appearance */
@@ -755,6 +780,36 @@
         }
 
         $('#refreshDataBtn').click(refreshData);
+
+        // Function to set proper sticky header position
+        function setStickyHeaderPosition() {
+            const navbar = document.querySelector('.main-header, .navbar-fixed-top, nav.navbar');
+            const tableHeaders = document.querySelectorAll('#netProfitsTable thead th');
+            
+            let topOffset = 0;
+            if (navbar) {
+                topOffset = navbar.offsetHeight;
+            }
+            
+            tableHeaders.forEach(function(th) {
+                th.style.top = topOffset + 'px';
+            });
+        }
+        
+        // Set sticky header position after page load
+        $(document).ready(function() {
+            setTimeout(setStickyHeaderPosition, 100);
+        });
+        
+        // Reset position after DataTable draw
+        $('#netProfitsTable').on('draw.dt', function() {
+            setTimeout(setStickyHeaderPosition, 50);
+        });
+        
+        // Handle window resize
+        $(window).on('resize', function() {
+            setStickyHeaderPosition();
+        });
 
         let netProfitsTable = $('#netProfitsTable').DataTable({
             scrollX: true,
