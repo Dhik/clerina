@@ -65,31 +65,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Order Count by Channel</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th>Channel</th>
-                                            <th class="text-center">Orders</th>
-                                            <th class="text-right">%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="monthlyOrderCountCards">
-                                        <!-- Table rows will be dynamically added here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             
             <div class="row mb-4">
                 <div class="col-md-3">
