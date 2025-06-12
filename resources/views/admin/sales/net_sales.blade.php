@@ -350,92 +350,6 @@
         height: 400px !important;
         width: 100% !important;
     }
-    
-    /* Sticky Header Styles - Header stays at top of viewport when scrolling */
-    #netProfitsTable thead th {
-        position: sticky;
-        top: 0 !important; /* Start with 0, then adjust based on layout */
-        background-color: #f8f9fa !important;
-        z-index: 1050 !important; /* Very high z-index to stay above everything */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
-        border-bottom: 2px solid #dee2e6 !important;
-        font-weight: 600 !important;
-        border-top: none !important;
-    }
-    
-    /* Detect AdminLTE layout and adjust accordingly */
-    .main-header.navbar-light + .content-wrapper #netProfitsTable thead th,
-    .main-header + .content-wrapper #netProfitsTable thead th,
-    body.layout-navbar-fixed #netProfitsTable thead th {
-        top: 57px !important; /* Adjust for fixed navbar */
-    }
-    
-    /* Ensure table and containers don't interfere with sticky positioning */
-    .table-responsive {
-        position: relative;
-        overflow-x: auto;
-        overflow-y: visible; /* Allow vertical overflow for sticky header */
-    }
-    
-    .card-body {
-        overflow: visible;
-        position: relative;
-    }
-    
-    .card {
-        overflow: visible;
-    }
-    
-    /* Force the sticky behavior */
-    #netProfitsTable {
-        position: relative;
-    }
-    
-    #netProfitsTable thead {
-        position: relative;
-    }
-    
-    /* Additional styling for better appearance */
-    #netProfitsTable thead th:hover {
-        background-color: #e9ecef !important;
-    }
-    
-    /* Ensure the sticky header appears above DataTables controls */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter,
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-        z-index: 1;
-    }
-    
-    /* Custom scrollbar for better appearance */
-    .table-responsive::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-    }
-    
-    .table-responsive::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-    
-    /* Ensure DataTable controls don't overlap with sticky header */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter,
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-        margin-top: 10px;
-    }
-    
     .modal-content {
         border-radius: 8px;
     }
@@ -474,6 +388,10 @@
         white-space: nowrap;
     }
 
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
     .dt-button-collection {
         padding: 8px !important;
     }
@@ -595,7 +513,82 @@
             });
         }
 
-        // Load sales channels filter
+        // $('#importDataBtn').on('click', function() {
+        //     Swal.fire({
+        //         title: 'Importing Data',
+        //         html: 'Starting import process...',
+        //         allowOutsideClick: false,
+        //         didOpen: () => {
+        //             Swal.showLoading();
+        //         }
+        //     });
+
+        //     const endpoints = [
+        //         { 
+        //             name: 'Cleora Import Data', 
+        //             url: "{{ route('net-profit.import-data') }}"
+        //         },
+        //         { 
+        //             name: 'Azrina Import Data', 
+        //             url: "{{ route('net-profit.import-data-azrina') }}"
+        //         }
+        //     ];
+
+        //     let completedEndpoints = 0;
+        //     let failedEndpoints = [];
+        //     let currentIndex = 0;
+
+        //     function processNextEndpoint() {
+        //         if (currentIndex >= endpoints.length) {
+        //             // All endpoints processed
+        //             if (failedEndpoints.length > 0) {
+        //                 Swal.fire({
+        //                     icon: 'warning',
+        //                     title: 'Import Completed with Warnings',
+        //                     html: `Completed: ${completedEndpoints}/${endpoints.length}<br>Failed: ${failedEndpoints.join(', ')}`,
+        //                     confirmButtonText: 'OK'
+        //                 });
+        //             } else {
+        //                 Swal.fire({
+        //                     icon: 'success',
+        //                     title: 'Data Imported Successfully!',
+        //                     text: 'All data has been imported and updated.',
+        //                     timer: 2000,
+        //                     showConfirmButton: false
+        //                 });
+        //             }
+                    
+        //             // Reload the table to show updated data
+        //             netProfitsTable.draw();
+                    
+        //             return;
+        //         }
+
+        //         const endpoint = endpoints[currentIndex];
+        //         Swal.update({
+        //             html: `${endpoint.name}... (${currentIndex + 1}/${endpoints.length})`
+        //         });
+
+        //         $.ajax({
+        //             url: endpoint.url,
+        //             method: 'GET',
+        //             success: function(response) {
+        //                 completedEndpoints++;
+        //                 currentIndex++;
+        //                 processNextEndpoint();
+        //             },
+        //             error: function(xhr, status, error) {
+        //                 failedEndpoints.push(endpoint.name);
+        //                 currentIndex++;
+        //                 console.error(`Failed at ${endpoint.name}:`, error);
+        //                 processNextEndpoint();
+        //             }
+        //         });
+        //     }
+            
+        //     processNextEndpoint();
+        // });
+
         $('#netProfitsTable').closest('.card').before(`
             <div class="card mb-3">
                 <div class="card-header">
@@ -749,7 +742,7 @@
                     }
                     
                     // Reload the table to show updated data
-                    netProfitsTable.ajax.reload();
+                    table.ajax.reload();
                     
                     return;
                 }
@@ -781,342 +774,311 @@
 
         $('#refreshDataBtn').click(refreshData);
 
-        // Function to set proper sticky header position
-        function setStickyHeaderPosition() {
-            const navbar = document.querySelector('.main-header, .navbar-fixed-top, nav.navbar');
-            const tableHeaders = document.querySelectorAll('#netProfitsTable thead th');
-            
-            let topOffset = 0;
-            if (navbar) {
-                topOffset = navbar.offsetHeight;
-            }
-            
-            tableHeaders.forEach(function(th) {
-                th.style.top = topOffset + 'px';
-            });
-        }
-        
-        // Set sticky header position after page load
-        $(document).ready(function() {
-            setTimeout(setStickyHeaderPosition, 100);
-        });
-        
-        // Reset position after DataTable draw
-        $('#netProfitsTable').on('draw.dt', function() {
-            setTimeout(setStickyHeaderPosition, 50);
-        });
-        
-        // Handle window resize
-        $(window).on('resize', function() {
-            setStickyHeaderPosition();
-        });
 
-        let netProfitsTable = $('#netProfitsTable').DataTable({
-            scrollX: true,
-            responsive: false,
-            processing: true,
-            serverSide: true,
-            pageLength: 25,
-            // Remove fixedHeader option to use pure CSS sticky
-            dom: 'Bfrtip',
-            buttons: [
-                {
-                    extend: 'colvis',
-                    text: 'Show/Hide Columns',
-                    className: 'btn btn-secondary'
-                }
-            ],
-            ajax: {
-                url: "{{ route('sales.get_net_sales') }}",
-                data: function (d) {
-                    d.filterDates = filterDate.val();
-                    d.sales_channel_id = $('#salesChannelFilter').val(); // Add sales channel filter
-                }
-            },
-            columns: [
-                {
-                    data: 'date', 
-                    name: 'date',
-                    visible: true
-                },
-                {
-                    data: 'visit',
-                    render: function(data) {
-                        return Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false 
-                },
-                {
-                    data: 'qty',
-                    render: function(data) {
-                        return Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'order',
-                    render: function(data) {
-                        return Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'closing_rate',
-                    render: function(data) {
-                        const value = parseFloat(data) || 0;
-                        return value.toFixed(2) + '%';
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'roas',
-                    render: function(data) {
-                        const value = parseFloat(data) || 0;
-                        return value.toFixed(2);
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'total_sales',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    },
-                    visible: true
-                },
-                {
-                    data: 'balance_amount',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'gross_revenue',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'fee_admin',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'estimasi_cancel',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'estimasi_retur',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'mp_sales',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'b2b_sales',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'crm_sales',
-                    render: function(data) {
-                        return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false
-                },
-                {
-                    data: 'penjualan_bersih',
-                    render: function(data) {
-                        return '<span class="text-info">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
-                    },
-                    visible: false // Set to true to show by default
-                },
-                {
-                    data: 'marketing',
-                    name: 'marketing',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showAdSpentDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    },
-                    visible: true
-                },
-                {
-                    data: 'spent_kol',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    },
-                    visible: true  // Visible by default
-                },
-                {
-                    data: 'romi',
-                    render: function(data) {
-                        const value = parseFloat(data) || 0;
-                        return value.toFixed(2);
-                    },
-                    visible: false  // Hidden by default, or set to true if you want it visible
-                },
-                {
-                    data: 'affiliate',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: true  // Visible by default
-                },
-                {
-                    data: 'ad_spent_social_media',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'ad_spent_market_place',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'operasional',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data).toLocaleString('id-ID');
-                    },
-                    visible: true  // Visible by default
-                },
-                {
-                    data: 'hpp',
-                    render: function(data, type, row) {
-                        return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
-                            'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
-                    },
-                    visible: true  // Visible by default
-                },
-                {
-                    data: 'fee_packing',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'estimasi_fee_admin',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'ppn',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: false  // Hidden by default
-                },
-                {
-                    data: 'total_marketing_spend',
-                    render: function(data) {
-                        return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
-                    },
-                    visible: true  // Hidden by default
-                },
-                {
-                    data: 'net_profit',
-                    render: function(data) {
-                        const isPositive = data >= 0;
-                        const arrowIcon = isPositive ? '↑' : '↓';
-                        const colorClass = isPositive ? 'text-success' : 'text-danger';
-                        return `<div class="${colorClass}">
-                            ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
-                        </div>`;
-                    },
-                    visible: true  // Visible by default
-                }
-            ],
-            columnDefs: [
-                { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], "className": "text-right" }
-            ],
-            order: [[0, 'asc']]
-            // Removed fixedHeader related code since we're using pure CSS
-        });
-
-        function fetchSummary() {
-            const filterDates = document.getElementById('filterDates').value;
-            const salesChannelId = document.getElementById('salesChannelFilter').value;
-            const url = new URL("{{ route('sales.get_net_sales_summary') }}");
-            if (filterDates) {
-                url.searchParams.append('filterDates', filterDates);
-            }
-            if (salesChannelId) {
-                url.searchParams.append('sales_channel_id', salesChannelId);
-            }
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    // Store total sales value for percentage calculations
-                    const totalSalesValue = parseFloat(data.total_sales) || 0;
-                    
-                    // Format and display the main values
-                    document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
-                    document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
-                    document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
-                    document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
-                    document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
-                    
-                    // Format and display the ROMI values
-                    document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                    
-                    // New fields from the updated HTML
-                    document.getElementById('totalNetSales2').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
-                    document.getElementById('avgNetROMI').textContent = Number(data.avg_net_romi).toLocaleString('id-ID', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                    
-                    // Calculate and display percentages relative to total sales
-                    if (totalSalesValue > 0) {
-                        const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
-                        const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
-                        const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
-                        const netSalesPercentage = (parseFloat(data.total_net_sales) / totalSalesValue * 100);
-                        const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
-                        
-                        document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
-                        document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
-                        document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
-                        document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
-                        document.getElementById('totalNetSalesPercentage').textContent = netSalesPercentage.toFixed(2) + '%';
-                    } else {
-                        // Handle case when total sales is zero
-                        document.getElementById('totalHppPercentage').textContent = '0%';
-                        document.getElementById('totalSpentPercentage').textContent = '0%';
-                        document.getElementById('totalNetProfitPercentage').textContent = '0%';
-                        document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
+            let netProfitsTable = $('#netProfitsTable').DataTable({
+                scrollX: true,
+                responsive: false,
+                processing: true,
+                serverSide: true,
+                pageLength: 25,
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'Show/Hide Columns',
+                        className: 'btn btn-secondary'
                     }
-                })
-                .catch(error => console.error('Error:', error));
-        }
-        fetchSummary();
+                ],
+                ajax: {
+                    url: "{{ route('sales.get_net_sales') }}",
+                    data: function (d) {
+                        d.filterDates = filterDate.val();
+                        d.sales_channel_id = $('#salesChannelFilter').val(); // Add sales channel filter
+                    }
+                },
+                columns: [
+                    {
+                        data: 'date', 
+                        name: 'date',
+                        visible: true
+                    },
+                    {
+                        data: 'visit',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false 
+                    },
+                    {
+                        data: 'qty',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'order',
+                        render: function(data) {
+                            return Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'closing_rate',
+                        render: function(data) {
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2) + '%';
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'roas',
+                        render: function(data) {
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2);
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'total_sales',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showSalesDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        },
+                        visible: true
+                    },
+                    {
+                        data: 'balance_amount',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'gross_revenue',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'fee_admin',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'estimasi_cancel',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_retur',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'mp_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'b2b_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'crm_sales',
+                        render: function(data) {
+                            return '<span class="text-success">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false
+                    },
+                    {
+                        data: 'penjualan_bersih',
+                        render: function(data) {
+                            return '<span class="text-info">Rp ' + Math.round(data).toLocaleString('id-ID') + '</span>';
+                        },
+                        visible: false // Set to true to show by default
+                    },
+                    {
+                        data: 'marketing',
+                        name: 'marketing',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showAdSpentDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        },
+                        visible: true
+                    },
+                    {
+                        data: 'spent_kol',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showKolDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        },
+                        visible: true  // Visible by default
+                    },
+                    {
+                        data: 'romi',
+                        render: function(data) {
+                            const value = parseFloat(data) || 0;
+                            return value.toFixed(2);
+                        },
+                        visible: false  // Hidden by default, or set to true if you want it visible
+                    },
+                    {
+                        data: 'affiliate',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: true  // Visible by default
+                    },
+                    {
+                        data: 'ad_spent_social_media',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'ad_spent_market_place',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'operasional',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data).toLocaleString('id-ID');
+                        },
+                        visible: true  // Visible by default
+                    },
+                    {
+                        data: 'hpp',
+                        render: function(data, type, row) {
+                            return '<a href="#" onclick="showHppDetail(\'' + row.date + '\')" class="text-primary">' + 
+                                'Rp ' + Math.round(data).toLocaleString('id-ID') + '</a>';
+                        },
+                        visible: true  // Visible by default
+                    },
+                    {
+                        data: 'fee_packing',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'estimasi_fee_admin',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'ppn',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: false  // Hidden by default
+                    },
+                    {
+                        data: 'total_marketing_spend',
+                        render: function(data) {
+                            return 'Rp ' + Math.round(data || 0).toLocaleString('id-ID');
+                        },
+                        visible: true  // Hidden by default
+                    },
+                    {
+                        data: 'net_profit',
+                        render: function(data) {
+                            const isPositive = data >= 0;
+                            const arrowIcon = isPositive ? '↑' : '↓';
+                            const colorClass = isPositive ? 'text-success' : 'text-danger';
+                            return `<div class="${colorClass}">
+                                ${arrowIcon} Rp ${Math.round(data).toLocaleString('id-ID')}
+                            </div>`;
+                        },
+                        visible: true  // Visible by default
+                    }
+                ],
+                columnDefs: [
+                    { "targets": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], "className": "text-right" }
+                ],
+                order: [[0, 'asc']]
+            });
+
+            function fetchSummary() {
+    const filterDates = document.getElementById('filterDates').value;
+    const salesChannelId = document.getElementById('salesChannelFilter').value;
+    const url = new URL("{{ route('sales.get_net_sales_summary') }}");
+    if (filterDates) {
+        url.searchParams.append('filterDates', filterDates);
+    }
+    if (salesChannelId) {
+        url.searchParams.append('sales_channel_id', salesChannelId);
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Store total sales value for percentage calculations
+            const totalSalesValue = parseFloat(data.total_sales) || 0;
+            
+            // Format and display the main values
+            document.getElementById('totalSales').textContent = 'Rp ' + Math.round(data.total_sales).toLocaleString('id-ID');
+            document.getElementById('totalHpp').textContent = 'Rp ' + Math.round(data.total_hpp).toLocaleString('id-ID');
+            document.getElementById('totalSpent').textContent = 'Rp ' + Math.round(data.total_spent).toLocaleString('id-ID');
+            document.getElementById('totalNetProfit').textContent = 'Rp ' + Math.round(data.total_net_profit).toLocaleString('id-ID');
+            document.getElementById('totalMarketingSpent').textContent = 'Rp ' + Math.round(data.total_marketing_spent).toLocaleString('id-ID');
+            
+            // Format and display the ROMI values
+            document.getElementById('avgROMI').textContent = Number(data.avg_romi).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // New fields from the updated HTML
+            document.getElementById('totalNetSales2').textContent = 'Rp ' + Math.round(data.total_net_sales).toLocaleString('id-ID');
+            document.getElementById('avgNetROMI').textContent = Number(data.avg_net_romi).toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // Calculate and display percentages relative to total sales
+            if (totalSalesValue > 0) {
+                const hppPercentage = (parseFloat(data.total_hpp) / totalSalesValue * 100);
+                const spentPercentage = (parseFloat(data.total_spent) / totalSalesValue * 100);
+                const netProfitPercentage = (parseFloat(data.total_net_profit) / totalSalesValue * 100);
+                const netSalesPercentage = (parseFloat(data.total_net_sales) / totalSalesValue * 100);
+                const marketingSpentPercentage = (parseFloat(data.total_marketing_spent) / totalSalesValue * 100);
+                
+                document.getElementById('totalHppPercentage').textContent = hppPercentage.toFixed(2) + '%';
+                document.getElementById('totalSpentPercentage').textContent = spentPercentage.toFixed(2) + '%';
+                document.getElementById('totalNetProfitPercentage').textContent = netProfitPercentage.toFixed(2) + '%';
+                document.getElementById('totalMarketingSpentPercentage').textContent = marketingSpentPercentage.toFixed(2) + '%';
+                document.getElementById('totalNetSalesPercentage').textContent = netSalesPercentage.toFixed(2) + '%';
+            } else {
+                // Handle case when total sales is zero
+                document.getElementById('totalHppPercentage').textContent = '0%';
+                document.getElementById('totalSpentPercentage').textContent = '0%';
+                document.getElementById('totalNetProfitPercentage').textContent = '0%';
+                document.getElementById('totalMarketingSpentPercentage').textContent = '0%';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+fetchSummary();
 
         $('#totalSpentCard').click(function() {
             const campaignExpense = $('#newCampaignExpense').text().trim();
