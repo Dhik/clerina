@@ -32,6 +32,7 @@ class LaporanKeuangan extends Model
         'balance_amount',
         'gross_revenue', 
         'fee_admin',
+        'count_id_order'
     ];
     protected $casts = [
         'date' => 'date'
