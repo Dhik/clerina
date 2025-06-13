@@ -780,7 +780,7 @@
                 responsive: false,
                 processing: true,
                 serverSide: true,
-                pageLength: 10,
+                pageLength: 50,
                 dom: 'Bfrtip',
                 buttons: [
                     {
