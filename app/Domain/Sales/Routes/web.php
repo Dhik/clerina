@@ -71,6 +71,8 @@ Route::prefix('admin')
                 Route::get('/campaign-summary', [AdSpentSocialMediaController::class, 'get_campaign_summary'])->name('adSpentSocialMedia.get_campaign_summary');
                 Route::delete('/delete-by-account', [AdSpentSocialMediaController::class, 'deleteByAccountAndDate'])->name('adSpentSocialMedia.delete_by_account');
                 Route::get('/export-data', [AdSpentSocialMediaController::class, 'exportAdsMetaStats'])->name('adSpentSocialMedia.export-data');
+                Route::get('/export-tiktok-data', [AdSpentSocialMediaController::class, 'exportAdsTiktokStats'])->name('adSpentSocialMedia.export-tiktok-data');
+                Route::get('/export-shopee-data', [AdSpentSocialMediaController::class, 'exportAdsShopeeStats'])->name('adSpentSocialMedia.export-shopee-data');
 
                 Route::get('/get-shopee', [AdSpentSocialMediaController::class, 'get_ads_shopee'])->name('adSpentSocialMedia.get_ads_shopee');
                 Route::post('/import-shopee-sku', [AdSpentSocialMediaController::class, 'importShopeeSkuDetails'])->name('adSpentSocialMedia.import_shopee_sku');

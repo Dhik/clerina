@@ -2616,6 +2616,154 @@ class AdSpentSocialMediaController extends Controller
         ]);
     }
 
+    public function exportAdsTiktokStats()
+    {
+        $newSpreadsheetId = '17Sls8V-UH5gWobRCqxdeI8IySx7a7Nf7HGs3cDUI2F8';
+
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
+        
+        $startDate = '2025-03-01';
+        $endDate = '2025-06-15';
+        
+        $records = AdsTiktok::selectRaw(
+            'kategori_produk, 
+            date,
+            SUM(amount_spent) AS total_amount_spent,
+            SUM(impressions) AS total_impressions,
+            SUM(link_clicks) AS total_link_clicks,
+            SUM(content_views_shared_items) AS total_content_views,
+            SUM(adds_to_cart_shared_items) AS total_adds_to_cart,
+            SUM(purchases_shared_items) AS total_purchases,
+            SUM(purchases_conversion_value_shared_items) AS total_conversion_value'
+        )
+        ->whereBetween('date', [$startDate, $endDate])
+        ->groupBy('kategori_produk', 'date')
+        ->orderBy('kategori_produk')
+        ->orderBy('date')
+        ->get();
+        
+        $data = [];
+        $data[] = [
+            'Kategori Produk',
+            'Date', 
+            'Total Amount Spent',
+            'Total Impressions', 
+            'Total Link Clicks',
+            'Total Content Views',
+            'Total Adds to Cart',
+            'Total Purchases',
+            'Total Conversion Value'
+        ];
+        
+        foreach ($records as $row) {
+            $data[] = [
+                $row->kategori_produk,
+                Carbon::parse($row->date)->format('Y-m-d'),
+                (float)$row->total_amount_spent,
+                (int)$row->total_impressions,
+                (float)$row->total_link_clicks,
+                (float)$row->total_content_views,
+                (float)$row->total_adds_to_cart,
+                (float)$row->total_purchases,
+                (float)$row->total_conversion_value
+            ];
+        }
+        
+        // Update sheet name
+        $sheetName = 'Ads Tiktok Stats';
+        
+        $this->googleSheetService->clearRange("$sheetName!A1:I1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+        // Calculate total conversion value across all records
+        $totalConversionValueSum = $records->sum('total_conversion_value');
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Ads TikTok Stats exported successfully to Google Sheets',
+            'date_range' => "$startDate to $endDate",
+            'count' => count($data) - 1,
+            'total_conversion_value_sum' => $totalConversionValueSum
+        ]);
+    }
+
+    public function exportAdsShopeeStats()
+    {
+        $newSpreadsheetId = '17Sls8V-UH5gWobRCqxdeI8IySx7a7Nf7HGs3cDUI2F8';
+
+        if ($newSpreadsheetId) {
+            $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
+        }
+        
+        $startDate = '2025-03-01';
+        $endDate = '2025-06-15';
+        
+        // Note: Shopee table uses different column names, mapping them to match the output format
+        $records = AdsShopee::selectRaw(
+            'sku_induk as kategori_produk, 
+            date,
+            SUM(biaya) AS total_amount_spent,
+            SUM(dilihat) AS total_impressions,
+            SUM(jumlah_klik) AS total_link_clicks,
+            SUM(halaman_produk_dilihat) AS total_content_views,
+            SUM(dimasukan_ke_keranjang_produk) AS total_adds_to_cart,
+            SUM(produk_terjual) AS total_purchases,
+            SUM(omzet_penjualan) AS total_conversion_value'
+        )
+        ->whereBetween('date', [$startDate, $endDate])
+        ->whereNotNull('sku_induk')
+        ->groupBy('sku_induk', 'date')
+        ->orderBy('sku_induk')
+        ->orderBy('date')
+        ->get();
+        
+        $data = [];
+        $data[] = [
+            'Kategori Produk',
+            'Date', 
+            'Total Amount Spent',
+            'Total Impressions', 
+            'Total Link Clicks',
+            'Total Content Views',
+            'Total Adds to Cart',
+            'Total Purchases',
+            'Total Conversion Value'
+        ];
+        
+        foreach ($records as $row) {
+            $data[] = [
+                $row->kategori_produk,
+                Carbon::parse($row->date)->format('Y-m-d'),
+                (float)$row->total_amount_spent,
+                (int)$row->total_impressions,
+                (float)$row->total_link_clicks,
+                (float)$row->total_content_views,
+                (float)$row->total_adds_to_cart,
+                (float)$row->total_purchases,
+                (float)$row->total_conversion_value
+            ];
+        }
+        
+        // Update sheet name
+        $sheetName = 'Ads Shopee Stats';
+        
+        $this->googleSheetService->clearRange("$sheetName!A1:I1000");
+        $this->googleSheetService->exportData("$sheetName!A1", $data, 'USER_ENTERED');
+        
+        // Calculate total conversion value across all records
+        $totalConversionValueSum = $records->sum('total_conversion_value');
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Ads Shopee Stats exported successfully to Google Sheets',
+            'date_range' => "$startDate to $endDate",
+            'count' => count($data) - 1,
+            'total_conversion_value_sum' => $totalConversionValueSum
+        ]);
+    }
+
     public function import_shopee2_ads(Request $request)
     {
         try {
