@@ -4169,9 +4169,9 @@ class OrderController extends Controller
         $duplicateRows = 0;
         $orderCountMap = [];
         
-        // Get current month and year for filtering
-        $currentMonth = Carbon::now()->format('m');
-        $currentYear = Carbon::now()->format('Y');
+        // Set specific month and year for filtering (January 2025)
+        $targetMonth = '01';
+        $targetYear = '2025';
         
         // Initialize variables to track the last valid values for columns A-D
         $lastOrderDate = null;
@@ -4189,7 +4189,7 @@ class OrderController extends Controller
                 
                 // Process date (Column A)
                 $orderDate = null;
-                $isCurrentMonth = false;
+                $isTargetMonth = false;
                 
                 if (!empty($row[0])) {
                     try {
@@ -4200,16 +4200,16 @@ class OrderController extends Controller
                             $year = $matches[3];
                             $orderDate = Carbon::createFromDate($year, $month, $day)->format('Y-m-d');
                             
-                            // Check if date is from current month
-                            $isCurrentMonth = ($month == $currentMonth && $year == $currentYear);
+                            // Check if date is from January 2025
+                            $isTargetMonth = (str_pad($month, 2, '0', STR_PAD_LEFT) == $targetMonth && $year == $targetYear);
                             
                             $lastOrderDate = $orderDate; // Update the last valid date
                         } else {
                             $orderDate = Carbon::parse($dateStr)->format('Y-m-d');
                             $parsedDate = Carbon::parse($dateStr);
                             
-                            // Check if date is from current month
-                            $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                            // Check if date is from January 2025
+                            $isTargetMonth = ($parsedDate->format('m') == $targetMonth && $parsedDate->format('Y') == $targetYear);
                             
                             $lastOrderDate = $orderDate; // Update the last valid date
                         }
@@ -4221,9 +4221,9 @@ class OrderController extends Controller
                             continue; // Skip if no valid date can be determined
                         }
                         
-                        // Check if the last valid date is from current month
+                        // Check if the last valid date is from January 2025
                         $parsedDate = Carbon::parse($orderDate);
-                        $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                        $isTargetMonth = ($parsedDate->format('m') == $targetMonth && $parsedDate->format('Y') == $targetYear);
                     }
                 } else {
                     // If no date provided, use the last valid date if available
@@ -4233,13 +4233,13 @@ class OrderController extends Controller
                         continue; // Skip if no valid date can be determined
                     }
                     
-                    // Check if the last valid date is from current month
+                    // Check if the last valid date is from January 2025
                     $parsedDate = Carbon::parse($orderDate);
-                    $isCurrentMonth = ($parsedDate->format('m') == $currentMonth && $parsedDate->format('Y') == $currentYear);
+                    $isTargetMonth = ($parsedDate->format('m') == $targetMonth && $parsedDate->format('Y') == $targetYear);
                 }
                 
-                // Skip if not from current month
-                if (!$isCurrentMonth) {
+                // Skip if not from January 2025
+                if (!$isTargetMonth) {
                     $skippedRows++;
                     continue;
                 }
@@ -4377,7 +4377,7 @@ class OrderController extends Controller
         }
 
         return response()->json([
-            'message' => 'Closing Zalsa orders imported successfully (current month only)', 
+            'message' => 'Closing Zalsa orders imported successfully (January 2025 only)', 
             'total_rows' => $totalRows,
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
