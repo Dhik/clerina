@@ -2551,8 +2551,8 @@ class AdSpentSocialMediaController extends Controller
             $this->googleSheetService->setSpreadsheetId($newSpreadsheetId);
         }
         
-        $startDate = '2025-05-01';
-        $endDate = '2025-05-18';
+        $startDate = '2025-03-01';
+        $endDate = '2025-06-15';
         
         $records = AdsMeta::selectRaw(
             'kategori_produk, 
