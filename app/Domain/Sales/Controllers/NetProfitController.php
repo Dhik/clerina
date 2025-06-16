@@ -408,11 +408,12 @@ class NetProfitController extends Controller
     public function updateHpp()
     {
         try {
-            $yesterday = now()->subDay()->startOfDay();
+            $twoDaysAgo = now()->subDays(2)->startOfDay();
+            $yesterday = now()->subDay()->endOfDay();
             $tenant_id = Auth::user()->current_tenant_id; // Using authenticated user's tenant ID
             
             $hppPerDate = Order::query()
-                ->whereDate('orders.date', $yesterday)
+                ->whereBetween('orders.date', [$twoDaysAgo, $yesterday])
                 ->where('orders.tenant_id', $tenant_id)
                 ->whereNotIn('orders.status', 
                 [
@@ -440,9 +441,9 @@ class NetProfitController extends Controller
             
             $hppResults = $hppPerDate->get();
             
-            // Reset only yesterday's HPP
+            // Reset HPP for the last 2 days
             $resetCount = NetProfit::query()
-                ->whereDate('date', $yesterday)
+                ->whereBetween('date', [$twoDaysAgo->format('Y-m-d'), $yesterday->format('Y-m-d')])
                 ->where('tenant_id', $tenant_id)
                 ->update(['hpp' => 0]);
                 
@@ -460,6 +461,7 @@ class NetProfitController extends Controller
             
             return response()->json([
                 'success' => true,
+                'date_range' => $twoDaysAgo->format('Y-m-d') . ' to ' . $yesterday->format('Y-m-d'),
                 'reset_count' => $resetCount,
                 'updated_count' => $updatedCount
             ]);
