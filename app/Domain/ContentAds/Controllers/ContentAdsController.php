@@ -9,9 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use DataTables;
 use Carbon\Carbon;
+use App\Domain\Sales\Services\GoogleSheetService;
 
 class ContentAdsController extends Controller
 {
+    protected $googleSheetService;
+
+    public function __construct(
+        GoogleSheetService $googleSheetService
+    ) { 
+        $this->googleSheetService = $googleSheetService;
+    }
     /**
      * Display a listing of the resource.
      */
