@@ -190,6 +190,7 @@ return [
         App\Domain\Report\Providers\ReportProvider::class,
         App\Domain\AffiliateTalent\Providers\AffiliateTalentProvider::class,
         App\Domain\ContentPlan\Providers\ContentPlanProvider::class,
+        App\Domain\ContentAds\Providers\ContentAdsProvider::class,
     ])->toArray(),
 
     /*

@@ -571,6 +571,54 @@ return [
                 ],
             ]
         ],
+        [
+            'text' => 'Content Ads',
+            'can' => [
+                PermissionEnum::ViewMarketing, // You can adjust permissions as needed
+                PermissionEnum::ViewCampaign,
+                PermissionEnum::ViewKOL
+            ],
+            'icon'    => 'fas fa-fw fa-ad',
+            'submenu' => [
+                [
+                    'text' => 'Content Ads',
+                    'url' => 'admin/contentAds',
+                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'can' => [PermissionEnum::ViewMarketing],
+                    'active' => ['admin/contentAds*']
+                ],
+                [
+                    'text' => 'Step 1 - Initial Request',
+                    'url' => 'admin/contentAds?status=step1',
+                    'icon' => 'nav-icon far fa-circle text-secondary',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Step 2 - Link Drive & Task',
+                    'url' => 'admin/contentAds?status=step2',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Step 3 - File Naming',
+                    'url' => 'admin/contentAds?status=step3',
+                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Completed',
+                    'url' => 'admin/contentAds?status=completed',
+                    'icon' => 'nav-icon fas fa-check-circle text-success',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'KPI Report',
+                    'url' => 'admin/contentAds/kpi-report',
+                    'icon' => 'nav-icon fas fa-chart-bar text-info',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+            ]
+        ],
         // [
         //     'text' => 'Live Data',
         //     'url' => 'admin/live_data',
