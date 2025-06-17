@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use DataTables;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use App\Domain\Sales\Services\GoogleSheetService;
 
 class ContentAdsController extends Controller
