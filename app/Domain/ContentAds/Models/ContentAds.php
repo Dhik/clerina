@@ -113,12 +113,6 @@ class ContentAds extends Model
         return in_array($this->status, $allowedStatuses[$step] ?? []);
     }
 
-    // Relationships
-    public function assignee()
-    {
-        return $this->belongsTo(\App\Models\User::class, 'assignee_id');
-    }
-
     // Scopes for reporting
     public function scopeByProduct($query, $product)
     {
@@ -128,11 +122,6 @@ class ContentAds extends Model
     public function scopeByFunneling($query, $funneling)
     {
         return $query->where('funneling', $funneling);
-    }
-
-    public function scopeByAssignee($query, $assigneeId)
-    {
-        return $query->where('assignee_id', $assigneeId);
     }
 
     public function scopeToday($query)
