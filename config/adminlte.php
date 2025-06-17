@@ -611,12 +611,12 @@ return [
                     'icon' => 'nav-icon fas fa-check-circle text-success',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
-                [
-                    'text' => 'KPI Report',
-                    'url' => 'admin/contentAds/kpi-report',
-                    'icon' => 'nav-icon fas fa-chart-bar text-info',
-                    'can' => [PermissionEnum::ViewMarketing],
-                ],
+                // [
+                //     'text' => 'KPI Report',
+                //     'url' => 'admin/contentAds/kpi-report',
+                //     'icon' => 'nav-icon fas fa-chart-bar text-info',
+                //     'can' => [PermissionEnum::ViewMarketing],
+                // ],
             ]
         ],
         // [
