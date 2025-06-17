@@ -74,6 +74,9 @@
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addContentAdsModal">
                             <i class="fas fa-plus"></i> Add New Content Ads
                         </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="importFromGoogleSheets()">
+                            <i class="fas fa-file-import"></i> Import from Google Sheets
+                        </button>
                         <button type="button" class="btn btn-info btn-sm" onclick="loadKpiData()">
                             <i class="fas fa-chart-bar"></i> Refresh KPI
                         </button>
@@ -125,8 +128,6 @@
                                 <th>Platform</th>
                                 <th>Funneling</th>
                                 <th>Editor</th>
-                                <th>Assignee</th>
-                                <th>Task Status</th>
                                 <th>Created</th>
                                 <th>Actions</th>
                             </tr>
@@ -203,8 +204,6 @@
                 { data: 'platform', name: 'platform' },
                 { data: 'funneling', name: 'funneling' },
                 { data: 'editor', name: 'editor' },
-                { data: 'assignee_name', name: 'assignee.name' },
-                { data: 'tugas_status', name: 'tugas_selesai' },
                 { data: 'created_date', name: 'created_at' },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
@@ -429,11 +428,6 @@
         $('#view_funneling').text(data.funneling || '-');
         $('#view_editor').text(data.editor || '-');
         $('#view_status').text(data.status_label || '-');
-        $('#view_assignee').text(data.assignee ? data.assignee.name : '-');
-        $('#view_tugas_selesai').html(data.tugas_selesai ? 
-            '<span class="badge badge-success">Completed</span>' : 
-            '<span class="badge badge-warning">Pending</span>'
-        );
         $('#view_filename').text(data.filename || '-');
         $('#view_link_drive').text(data.link_drive || '-');
     }
@@ -449,7 +443,6 @@
         $('#edit_link_drive').val(data.link_drive);
         $('#edit_editor').val(data.editor);
         $('#edit_filename').val(data.filename);
-        $('#edit_tugas_selesai').prop('checked', data.tugas_selesai);
     }
 
     // Function to populate step modal
@@ -536,12 +529,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" name="tugas_selesai" id="step_tugas_selesai" value="1" ${data.tugas_selesai ? 'checked' : ''}>
-                            <label class="custom-control-label" for="step_tugas_selesai">Tugas Selesai</label>
-                        </div>
-                    </div>
                 `;
             case 3:
                 return `
@@ -605,6 +592,57 @@
                     error: function(xhr) {
                         Swal.fire('Error!', 'An error occurred while deleting.', 'error');
                     }
+                });
+            }
+        });
+    }
+
+    // Import from Google Sheets function
+    function importFromGoogleSheets() {
+        Swal.fire({
+            title: 'Import from Google Sheets?',
+            text: 'This will import data from the specified Google Sheet. Continue?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, import now!',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '{{ route('contentAds.import_gsheet') }}',
+                    method: 'GET',
+                    timeout: 60000, // 60 seconds timeout
+                    success: function(response) {
+                        return response;
+                    },
+                    error: function(xhr) {
+                        Swal.showValidationMessage(
+                            `Import failed: ${xhr.responseJSON?.message || 'Unknown error'}`
+                        );
+                    }
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const data = result.value;
+                Swal.fire({
+                    title: 'Import Completed!',
+                    html: `
+                        <div class="text-left">
+                            <p><strong>Total Rows:</strong> ${data.total_rows}</p>
+                            <p><strong>Processed:</strong> ${data.processed_rows}</p>
+                            <p><strong>New Created:</strong> ${data.new_content_ads_created}</p>
+                            <p><strong>Updated:</strong> ${data.content_ads_updated}</p>
+                            <p><strong>Skipped:</strong> ${data.skipped_rows}</p>
+                        </div>
+                    `,
+                    icon: 'success'
+                }).then(() => {
+                    // Refresh the table and KPI data
+                    table.draw();
+                    loadKpiData();
                 });
             }
         });

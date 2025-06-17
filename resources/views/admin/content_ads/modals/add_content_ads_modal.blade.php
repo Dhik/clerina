@@ -49,13 +49,6 @@
                                 <label for="add_request_date">Request Date</label>
                                 <input type="date" class="form-control" name="request_date" id="add_request_date">
                             </div>
-                            <div class="form-group">
-                                <label for="add_assignee_id">Assignee</label>
-                                <select class="form-control" name="assignee_id" id="add_assignee_id">
-                                    <option value="">Select Assignee</option>
-                                    {{-- This would be populated with users --}}
-                                </select>
-                            </div>
                         </div>
                     </div>
                     <div class="form-group">

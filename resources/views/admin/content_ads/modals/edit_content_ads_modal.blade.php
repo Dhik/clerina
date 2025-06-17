@@ -69,12 +69,6 @@
                                 <label for="edit_filename">File Name</label>
                                 <input type="text" class="form-control" name="filename" id="edit_filename">
                             </div>
-                            <div class="form-group">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" name="tugas_selesai" id="edit_tugas_selesai" value="1">
-                                    <label class="custom-control-label" for="edit_tugas_selesai">Tugas Selesai</label>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     <div class="form-group">

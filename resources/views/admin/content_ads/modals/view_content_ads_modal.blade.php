@@ -36,10 +36,6 @@
                                 <td><strong>Status:</strong></td>
                                 <td id="view_status">-</td>
                             </tr>
-                            <tr>
-                                <td><strong>Assignee:</strong></td>
-                                <td id="view_assignee">-</td>
-                            </tr>
                         </table>
                     </div>
                     <div class="col-md-6">
@@ -52,10 +48,6 @@
                             <tr>
                                 <td><strong>File Name:</strong></td>
                                 <td id="view_filename">-</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Task Status:</strong></td>
-                                <td id="view_tugas_selesai">-</td>
                             </tr>
                         </table>
                     </div>

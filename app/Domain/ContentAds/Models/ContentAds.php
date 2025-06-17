@@ -113,6 +113,9 @@ class ContentAds extends Model
         return in_array($this->status, $allowedStatuses[$step] ?? []);
     }
 
+    // Relationships
+    // No relationships needed for simplified version
+
     // Scopes for reporting
     public function scopeByProduct($query, $product)
     {

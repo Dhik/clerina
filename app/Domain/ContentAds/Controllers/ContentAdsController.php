@@ -46,7 +46,7 @@ class ContentAdsController extends Controller
      */
     public function data(Request $request): JsonResponse
     {
-        $query = ContentAds::with('assignee');
+        $query = ContentAds::query();
         
         // Apply filters
         if ($request->has('status') && $request->status != '') {
@@ -76,18 +76,10 @@ class ContentAdsController extends Controller
                     (is_string($ads->created_at) ? $ads->created_at : $ads->created_at->format('Y-m-d')) : 
                     '-';
             })
-            ->addColumn('assignee_name', function ($ads) {
-                return $ads->assignee ? $ads->assignee->name : '-';
-            })
-            ->addColumn('tugas_status', function ($ads) {
-                return $ads->tugas_selesai ? 
-                    '<span class="badge badge-success">Completed</span>' : 
-                    '<span class="badge badge-warning">Pending</span>';
-            })
             ->addColumn('action', function ($ads) {
                 return $this->generateActionButtons($ads);
             })
-            ->rawColumns(['status_badge', 'tugas_status', 'action'])
+            ->rawColumns(['status_badge', 'action'])
             ->make(true);
     }
 
@@ -128,7 +120,6 @@ class ContentAdsController extends Controller
      */
     public function getDetails(ContentAds $contentAds): JsonResponse
     {
-        $contentAds->load('assignee');
         return response()->json([
             'success' => true,
             'data' => $contentAds
@@ -249,12 +240,11 @@ class ContentAdsController extends Controller
         $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
 
         // Daily content created per person
-        $dailyPerPerson = ContentAds::with('assignee')
+        $dailyPerPerson = ContentAds::selectRaw('editor, DATE(created_at) as date, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('assignee_id, DATE(created_at) as date, COUNT(*) as count')
-            ->groupBy('assignee_id', 'date')
+            ->groupBy('editor', 'date')
             ->get()
-            ->groupBy('assignee.name');
+            ->groupBy('editor');
 
         // Per product statistics
         $perProduct = ContentAds::completed()
@@ -311,14 +301,12 @@ class ContentAdsController extends Controller
                     'platform' => 'nullable|string|max:255',
                     'funneling' => 'nullable|string|max:255',
                     'request_date' => 'nullable|date',
-                    'assignee_id' => 'nullable|exists:users,id',
                 ]);
                 
             case 2: // Link Drive & Task
                 return $request->validate([
                     'link_drive' => 'nullable|string|max:255',
                     'editor' => 'nullable|string|in:RAFI,HENDRA',
-                    'tugas_selesai' => 'nullable|boolean',
                 ]);
                 
             case 3: // File Naming
