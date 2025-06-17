@@ -74,9 +74,9 @@
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addContentAdsModal">
                             <i class="fas fa-plus"></i> Add New Content Ads
                         </button>
-                        <!-- <button type="button" class="btn btn-success btn-sm" onclick="importFromGoogleSheets()">
+                        <button type="button" class="btn btn-success btn-sm" onclick="importFromGoogleSheets()">
                             <i class="fas fa-file-import"></i> Import from Google Sheets
-                        </button> -->
+                        </button>
                         <button type="button" class="btn btn-info btn-sm" onclick="loadKpiData()">
                             <i class="fas fa-chart-bar"></i> Refresh KPI
                         </button>
@@ -349,17 +349,7 @@
     function updateKpiCards(data) {
         $('#totalCompleted').text(data.total_completed || 0);
         $('#totalPending').text(data.total_pending || 0);
-        
-        // Calculate today's count
-        var todayCount = 0;
-        if (data.daily_per_person) {
-            Object.values(data.daily_per_person).forEach(function(person) {
-                if (person && person[0]) {
-                    todayCount += person[0].count || 0;
-                }
-            });
-        }
-        $('#totalToday').text(todayCount);
+        $('#totalToday').text(data.total_created_today || 0);
         
         // Count active products
         var activeProducts = data.per_product ? Object.keys(data.per_product).length : 0;

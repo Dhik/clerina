@@ -239,15 +239,15 @@ class ContentAdsController extends Controller
         $startDate = $request->get('start_date', Carbon::today()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
 
-        // Daily content created per person
-        $dailyPerPerson = ContentAds::selectRaw('editor, DATE(created_at) as date, COUNT(*) as count')
+        // Daily content created per editor
+        $dailyPerEditor = ContentAds::selectRaw('editor, DATE(created_at) as date, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->groupBy('editor', 'date')
             ->get()
             ->groupBy('editor');
 
         // Per product statistics
-        $perProduct = ContentAds::completed()
+        $perProduct = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('product, COUNT(*) as count')
             ->groupBy('product')
@@ -255,7 +255,7 @@ class ContentAdsController extends Controller
             ->keyBy('product');
 
         // Per funnel statistics
-        $perFunnel = ContentAds::completed()
+        $perFunnel = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('funneling, COUNT(*) as count')
             ->groupBy('funneling')
@@ -263,7 +263,7 @@ class ContentAdsController extends Controller
             ->keyBy('funneling');
 
         // Combined product and funnel
-        $productFunnel = ContentAds::completed()
+        $productFunnel = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('product, funneling, COUNT(*) as count')
             ->groupBy('product', 'funneling')
@@ -273,19 +273,36 @@ class ContentAdsController extends Controller
                 return $items->keyBy('funneling');
             });
 
+        // Per editor statistics
+        $perEditor = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('editor, COUNT(*) as count')
+            ->groupBy('editor')
+            ->get()
+            ->keyBy('editor');
+
         return response()->json([
             'success' => true,
             'data' => [
-                'daily_per_person' => $dailyPerPerson,
+                'daily_per_editor' => $dailyPerEditor,
                 'per_product' => $perProduct,
                 'per_funnel' => $perFunnel,
+                'per_editor' => $perEditor,
                 'product_funnel' => $productFunnel,
-                'total_completed' => ContentAds::completed()
+                'total_completed' => ContentAds::where('status', ContentAds::STATUS_COMPLETED)
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->count(),
                 'total_pending' => ContentAds::where('status', '!=', ContentAds::STATUS_COMPLETED)
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->count(),
+                'total_created_today' => ContentAds::whereDate('created_at', Carbon::today())
+                    ->count(),
+                'total_by_platform' => ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->selectRaw('platform, COUNT(*) as count')
+                    ->groupBy('platform')
+                    ->get()
+                    ->keyBy('platform'),
             ]
         ]);
     }

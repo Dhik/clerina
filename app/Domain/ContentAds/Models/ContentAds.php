@@ -136,4 +136,9 @@ class ContentAds extends Model
     {
         return $query->where('status', self::STATUS_COMPLETED);
     }
+
+    public function scopeByEditor($query, $editor)
+    {
+        return $query->where('editor', $editor);
+    }
 }
