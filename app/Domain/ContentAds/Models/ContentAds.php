@@ -19,13 +19,10 @@ class ContentAds extends Model
         'editor',
         'status',
         'filename',
-        'tugas_selesai',
-        'assignee_id',
     ];
 
     protected $casts = [
         'request_date' => 'date',
-        'tugas_selesai' => 'boolean',
     ];
 
     // Status constants for workflow

@@ -380,7 +380,7 @@ class ContentAdsController extends Controller
         
         return $buttons;
     }
-    public function importContentAdsFromGSheet()
+public function importContentAdsFromGSheet()
 {
     $this->googleSheetService->setSpreadsheetId('1VWc_2OoW2W_l-o-itXw9ZfXS0xl1QF__58Q8Tnt3M8Y');
     $range = 'Sheet1!A2:L'; // From A2 to cover all columns up to L
@@ -397,23 +397,23 @@ class ContentAdsController extends Controller
     try {
         foreach ($sheetData as $rowIndex => $row) {
             // Skip if essential fields are empty
-            if (empty($row[1]) || empty($row[2]) || empty($row[4])) { // Video Editor, Platform, Product
+            if (empty($row[1]) || empty($row[2]) || empty($row[4])) { // editor, platform, product
                 \Log::info("Skipping row " . ($rowIndex + 2) . ": Missing essential data - Editor: " . ($row[1] ?? 'empty') . ", Platform: " . ($row[2] ?? 'empty') . ", Product: " . ($row[4] ?? 'empty'));
                 $skippedRows++;
                 continue;
             }
             
             try {
-                // Map columns according to your actual data structure
-                $editor = isset($row[1]) ? trim($row[1]) : null; // Column B = Video Editor
-                $platform = isset($row[2]) ? trim($row[2]) : null; // Column C = Untuk Platform
-                $funneling = isset($row[3]) ? trim($row[3]) : null; // Column D = Funneling
-                $product = isset($row[4]) ? trim($row[4]) : null; // Column E = Produk
-                $filename = isset($row[5]) ? trim($row[5]) : null; // Column F = File Naming
-                $linkDrive = isset($row[6]) ? trim($row[6]) : null; // Column G = Link Source Video
-                // Column H = Evidence (skip for now)
+                // Map only the required columns
+                $editor = isset($row[1]) ? trim($row[1]) : null; // Column B = editor
+                $platform = isset($row[2]) ? trim($row[2]) : null; // Column C = platform
+                $funneling = isset($row[3]) ? trim($row[3]) : null; // Column D = funneling
+                $product = isset($row[4]) ? trim($row[4]) : null; // Column E = product
+                $filename = isset($row[5]) ? trim($row[5]) : null; // Column F = filename
+                $linkDrive = isset($row[6]) ? trim($row[6]) : null; // Column G = link_drive
+                // Column H = Evidence (skip)
                 $requestDate = null;
-                if (isset($row[8]) && !empty($row[8])) { // Column I = Request Date
+                if (isset($row[8]) && !empty($row[8])) { // Column I = request_date
                     try {
                         // Handle DD/MM/YYYY format
                         if (strpos($row[8], '/') !== false) {
@@ -425,9 +425,8 @@ class ContentAdsController extends Controller
                         \Log::warning("Invalid date format in row " . ($rowIndex + 2) . ": " . $row[8]);
                     }
                 }
-                // Column J = Tugas Selesai (we'll derive this from status)
-                // Column K = Tanggal UP ADS (skip for now)
-                $status = isset($row[11]) ? trim($row[11]) : 'step1'; // Column L = Status
+                // Columns J, K are skipped
+                $status = isset($row[11]) ? trim($row[11]) : 'step1'; // Column L = status
 
                 // Validate and normalize editor values
                 $validEditors = ['RAFI', 'HENDRA'];
@@ -494,7 +493,6 @@ class ContentAdsController extends Controller
                 }
 
                 // Try to find existing content ads with similar data
-                // Use a more specific identifier to avoid false duplicates
                 $existingContentAds = ContentAds::where('editor', $editor)
                     ->where('platform', $platform)
                     ->where('product', $product)
@@ -507,19 +505,15 @@ class ContentAdsController extends Controller
                     $existingContentAds->request_date = $requestDate;
                     $existingContentAds->status = $status;
                     $existingContentAds->link_drive = $linkDrive;
-                    
-                    // Set tugas_selesai based on status
-                    $existingContentAds->tugas_selesai = in_array($status, ['step3', 'completed']);
-                    
                     $existingContentAds->updated_at = now();
                     $existingContentAds->save();
                     
                     $contentAdsUpdated++;
                 } else {
-                    // Create new content ads
+                    // Create new content ads - only with the required fields
                     $contentAdsData = [
-                        'link_ref'              => null, // Not in sheet data
-                        'desc_request'          => null, // Not in sheet data
+                        'link_ref'              => null,
+                        'desc_request'          => null,
                         'product'               => $product,
                         'platform'              => $platform,
                         'funneling'             => $funneling,
@@ -528,8 +522,6 @@ class ContentAdsController extends Controller
                         'editor'                => $editor,
                         'status'                => $status,
                         'filename'              => $filename,
-                        'tugas_selesai'         => in_array($status, ['step3', 'completed']),
-                        'assignee_id'           => null, // Not in sheet data
                         'created_at'            => now(),
                         'updated_at'            => now(),
                     ];
