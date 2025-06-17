@@ -18,6 +18,7 @@ Route::prefix('admin')
                 // API Routes for data processing (PUT THESE FIRST)
                 Route::get('/data', [ContentAdsController::class, 'data'])->name('contentAds.data');
                 Route::get('/kpi-data', [ContentAdsController::class, 'getKpiData'])->name('contentAds.kpiData');
+                Route::get('/import_content_ads', [ContentAdsController::class, 'importContentAdsFromGSheet'])->name('contentAds.import_gsheet');
                 Route::post('/store', [ContentAdsController::class, 'store'])->name('contentAds.store');
 
                 // Standard CRUD routes (THESE COME AFTER)

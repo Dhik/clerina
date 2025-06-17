@@ -371,4 +371,164 @@ class ContentAdsController extends Controller
         
         return $buttons;
     }
+    public function importContentAdsFromGSheet()
+{
+    $this->googleSheetService->setSpreadsheetId('1VWc_2OoW2W_l-o-itXw9ZfXS0xl1QF__58Q8Tnt3M8Y');
+    $range = 'Sheet1!A2:L'; // From A2 to cover all columns up to L
+    $sheetData = $this->googleSheetService->getSheetData($range);
+
+    $totalRows = count($sheetData);
+    $processedRows = 0;
+    $skippedRows = 0;
+    $newContentAdsCreated = 0;
+    $contentAdsUpdated = 0;
+
+    DB::beginTransaction();
+    
+    try {
+        foreach ($sheetData as $row) {
+            // Skip if essential fields are empty (we'll check editor, platform, product as minimum required)
+            if (empty($row[1]) && empty($row[2]) && empty($row[4])) { // editor, platform, product
+                $skippedRows++;
+                continue;
+            }
+            
+            try {
+                // Map columns according to your specification
+                $editor = isset($row[1]) ? trim($row[1]) : null; // Column B = editor
+                $platform = isset($row[2]) ? trim($row[2]) : null; // Column C = platform
+                $funneling = isset($row[3]) ? trim($row[3]) : null; // Column D = funneling
+                $product = isset($row[4]) ? trim($row[4]) : null; // Column E = product
+                $filename = isset($row[5]) ? trim($row[5]) : null; // Column F = filename
+                $linkDrive = isset($row[6]) ? trim($row[6]) : null; // Column G = link_drive
+                // Column H is skipped
+                $requestDate = null;
+                if (isset($row[8]) && !empty($row[8])) { // Column I = request_date
+                    try {
+                        $requestDate = Carbon::parse($row[8])->format('Y-m-d');
+                    } catch (\Exception $e) {
+                        \Log::warning("Invalid date format in row: " . $row[8]);
+                    }
+                }
+                // Columns J, K are skipped
+                $status = isset($row[11]) ? trim($row[11]) : 'step1'; // Column L = status
+
+                // Validate editor values
+                $validEditors = ['RAFI', 'HENDRA'];
+                if ($editor && !in_array(strtoupper($editor), $validEditors)) {
+                    \Log::warning("Invalid editor value: " . $editor . " in row, skipping.");
+                    $skippedRows++;
+                    continue;
+                }
+
+                // Validate platform values
+                $validPlatforms = ['META', 'TIKTOK'];
+                if ($platform && !in_array(strtoupper($platform), $validPlatforms)) {
+                    \Log::warning("Invalid platform value: " . $platform . " in row, skipping.");
+                    $skippedRows++;
+                    continue;
+                }
+
+                // Validate funneling values
+                $validFunnelings = ['TOFU', 'MOFU', 'BOFU', 'None'];
+                if ($funneling && !in_array($funneling, $validFunnelings)) {
+                    \Log::warning("Invalid funneling value: " . $funneling . " in row, skipping.");
+                    $skippedRows++;
+                    continue;
+                }
+
+                // Validate product values
+                $validProducts = ['3MIN', 'JB', 'CAL', 'RS', 'GS', 'PG', '30SEC', 'AcneS', 'RSXJB', '3MINXJB', 'None'];
+                if ($product && !in_array($product, $validProducts)) {
+                    \Log::warning("Invalid product value: " . $product . " in row, skipping.");
+                    $skippedRows++;
+                    continue;
+                }
+
+                // Validate status values
+                $validStatuses = ['step1', 'step2', 'step3', 'completed'];
+                if ($status && !in_array($status, $validStatuses)) {
+                    $status = 'step1'; // Default to step1 if invalid
+                }
+
+                // Create a unique identifier to check for existing records
+                // Using combination of editor, platform, product, and filename (if available)
+                $identifier = md5($editor . $platform . $product . $filename . $linkDrive);
+                
+                // Try to find existing content ads with similar data
+                $existingContentAds = ContentAds::where('editor', $editor)
+                    ->where('platform', $platform)
+                    ->where('product', $product)
+                    ->where('filename', $filename)
+                    ->where('link_drive', $linkDrive)
+                    ->first();
+                
+                if ($existingContentAds) {
+                    // Update existing content ads
+                    $existingContentAds->funneling = $funneling;
+                    $existingContentAds->request_date = $requestDate;
+                    $existingContentAds->status = $status;
+                    
+                    // Set tugas_selesai based on status
+                    if (in_array($status, ['step3', 'completed'])) {
+                        $existingContentAds->tugas_selesai = true;
+                    }
+                    
+                    $existingContentAds->updated_at = now();
+                    $existingContentAds->save();
+                    
+                    $contentAdsUpdated++;
+                } else {
+                    // Create new content ads
+                    $contentAdsData = [
+                        'link_ref'              => null, // Not in sheet data
+                        'desc_request'          => null, // Not in sheet data
+                        'product'               => $product,
+                        'platform'              => $platform,
+                        'funneling'             => $funneling,
+                        'request_date'          => $requestDate,
+                        'link_drive'            => $linkDrive,
+                        'editor'                => $editor,
+                        'status'                => $status,
+                        'filename'              => $filename,
+                        'tugas_selesai'         => in_array($status, ['step3', 'completed']),
+                        'assignee_id'           => null, // Not in sheet data
+                        'created_at'            => now(),
+                        'updated_at'            => now(),
+                    ];
+                    
+                    ContentAds::create($contentAdsData);
+                    $newContentAdsCreated++;
+                }
+                
+                $processedRows++;
+                
+            } catch (\Exception $e) {
+                \Log::warning("Error processing content ads row: " . json_encode($row) . " - " . $e->getMessage());
+                $skippedRows++;
+            }
+        }
+        
+        // Commit all changes
+        DB::commit();
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error("Error processing Content Ads data: " . $e->getMessage());
+        
+        return response()->json([
+            'message' => 'Error processing Content Ads data', 
+            'error' => $e->getMessage()
+        ], 500);
+    }
+
+    return response()->json([
+        'message' => 'Content Ads data imported successfully', 
+        'total_rows' => $totalRows,
+        'processed_rows' => $processedRows,
+        'new_content_ads_created' => $newContentAdsCreated,
+        'content_ads_updated' => $contentAdsUpdated,
+        'skipped_rows' => $skippedRows
+    ]);
+}
 }
