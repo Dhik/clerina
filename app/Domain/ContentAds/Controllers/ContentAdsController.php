@@ -395,45 +395,54 @@ class ContentAdsController extends Controller
     DB::beginTransaction();
     
     try {
-        foreach ($sheetData as $row) {
-            // Skip if essential fields are empty (we'll check editor, platform, product as minimum required)
-            if (empty($row[1]) && empty($row[2]) && empty($row[4])) { // editor, platform, product
+        foreach ($sheetData as $rowIndex => $row) {
+            // Skip if essential fields are empty
+            if (empty($row[1]) || empty($row[2]) || empty($row[4])) { // Video Editor, Platform, Product
+                \Log::info("Skipping row " . ($rowIndex + 2) . ": Missing essential data - Editor: " . ($row[1] ?? 'empty') . ", Platform: " . ($row[2] ?? 'empty') . ", Product: " . ($row[4] ?? 'empty'));
                 $skippedRows++;
                 continue;
             }
             
             try {
-                // Map columns according to your specification
-                $editor = isset($row[1]) ? trim($row[1]) : null; // Column B = editor
-                $platform = isset($row[2]) ? trim($row[2]) : null; // Column C = platform
-                $funneling = isset($row[3]) ? trim($row[3]) : null; // Column D = funneling
-                $product = isset($row[4]) ? trim($row[4]) : null; // Column E = product
-                $filename = isset($row[5]) ? trim($row[5]) : null; // Column F = filename
-                $linkDrive = isset($row[6]) ? trim($row[6]) : null; // Column G = link_drive
-                // Column H is skipped
+                // Map columns according to your actual data structure
+                $editor = isset($row[1]) ? trim($row[1]) : null; // Column B = Video Editor
+                $platform = isset($row[2]) ? trim($row[2]) : null; // Column C = Untuk Platform
+                $funneling = isset($row[3]) ? trim($row[3]) : null; // Column D = Funneling
+                $product = isset($row[4]) ? trim($row[4]) : null; // Column E = Produk
+                $filename = isset($row[5]) ? trim($row[5]) : null; // Column F = File Naming
+                $linkDrive = isset($row[6]) ? trim($row[6]) : null; // Column G = Link Source Video
+                // Column H = Evidence (skip for now)
                 $requestDate = null;
-                if (isset($row[8]) && !empty($row[8])) { // Column I = request_date
+                if (isset($row[8]) && !empty($row[8])) { // Column I = Request Date
                     try {
-                        $requestDate = Carbon::parse($row[8])->format('Y-m-d');
+                        // Handle DD/MM/YYYY format
+                        if (strpos($row[8], '/') !== false) {
+                            $requestDate = Carbon::createFromFormat('d/m/Y', $row[8])->format('Y-m-d');
+                        } else {
+                            $requestDate = Carbon::parse($row[8])->format('Y-m-d');
+                        }
                     } catch (\Exception $e) {
-                        \Log::warning("Invalid date format in row: " . $row[8]);
+                        \Log::warning("Invalid date format in row " . ($rowIndex + 2) . ": " . $row[8]);
                     }
                 }
-                // Columns J, K are skipped
-                $status = isset($row[11]) ? trim($row[11]) : 'step1'; // Column L = status
+                // Column J = Tugas Selesai (we'll derive this from status)
+                // Column K = Tanggal UP ADS (skip for now)
+                $status = isset($row[11]) ? trim($row[11]) : 'step1'; // Column L = Status
 
-                // Validate editor values
+                // Validate and normalize editor values
                 $validEditors = ['RAFI', 'HENDRA'];
-                if ($editor && !in_array(strtoupper($editor), $validEditors)) {
-                    \Log::warning("Invalid editor value: " . $editor . " in row, skipping.");
+                $editor = strtoupper($editor);
+                if (!in_array($editor, $validEditors)) {
+                    \Log::warning("Invalid editor value: " . $editor . " in row " . ($rowIndex + 2) . ", skipping.");
                     $skippedRows++;
                     continue;
                 }
 
-                // Validate platform values
+                // Validate and normalize platform values
                 $validPlatforms = ['META', 'TIKTOK'];
-                if ($platform && !in_array(strtoupper($platform), $validPlatforms)) {
-                    \Log::warning("Invalid platform value: " . $platform . " in row, skipping.");
+                $platform = strtoupper($platform);
+                if (!in_array($platform, $validPlatforms)) {
+                    \Log::warning("Invalid platform value: " . $platform . " in row " . ($rowIndex + 2) . ", skipping.");
                     $skippedRows++;
                     continue;
                 }
@@ -441,35 +450,55 @@ class ContentAdsController extends Controller
                 // Validate funneling values
                 $validFunnelings = ['TOFU', 'MOFU', 'BOFU', 'None'];
                 if ($funneling && !in_array($funneling, $validFunnelings)) {
-                    \Log::warning("Invalid funneling value: " . $funneling . " in row, skipping.");
+                    \Log::warning("Invalid funneling value: " . $funneling . " in row " . ($rowIndex + 2) . ", skipping.");
                     $skippedRows++;
                     continue;
                 }
 
-                // Validate product values
+                // Validate product values - be more flexible with product matching
                 $validProducts = ['3MIN', 'JB', 'CAL', 'RS', 'GS', 'PG', '30SEC', 'AcneS', 'RSXJB', '3MINXJB', 'None'];
-                if ($product && !in_array($product, $validProducts)) {
-                    \Log::warning("Invalid product value: " . $product . " in row, skipping.");
+                
+                // Map common variations
+                $productMappings = [
+                    '3 MIN' => '3MIN',
+                    '30 SEC' => '30SEC',
+                    'Acne S' => 'AcneS',
+                ];
+                
+                if (isset($productMappings[$product])) {
+                    $product = $productMappings[$product];
+                }
+                
+                if (!in_array($product, $validProducts)) {
+                    \Log::warning("Invalid product value: " . $product . " in row " . ($rowIndex + 2) . ", skipping.");
                     $skippedRows++;
                     continue;
                 }
 
-                // Validate status values
+                // Normalize status values
+                $statusMappings = [
+                    'Done' => 'completed',
+                    'done' => 'completed',
+                    'DONE' => 'completed',
+                    'Completed' => 'completed',
+                    'COMPLETED' => 'completed',
+                ];
+                
+                if (isset($statusMappings[$status])) {
+                    $status = $statusMappings[$status];
+                }
+                
                 $validStatuses = ['step1', 'step2', 'step3', 'completed'];
-                if ($status && !in_array($status, $validStatuses)) {
-                    $status = 'step1'; // Default to step1 if invalid
+                if (!in_array($status, $validStatuses)) {
+                    $status = 'completed'; // Default to completed since most seem to be "Done"
                 }
 
-                // Create a unique identifier to check for existing records
-                // Using combination of editor, platform, product, and filename (if available)
-                $identifier = md5($editor . $platform . $product . $filename . $linkDrive);
-                
                 // Try to find existing content ads with similar data
+                // Use a more specific identifier to avoid false duplicates
                 $existingContentAds = ContentAds::where('editor', $editor)
                     ->where('platform', $platform)
                     ->where('product', $product)
                     ->where('filename', $filename)
-                    ->where('link_drive', $linkDrive)
                     ->first();
                 
                 if ($existingContentAds) {
@@ -477,11 +506,10 @@ class ContentAdsController extends Controller
                     $existingContentAds->funneling = $funneling;
                     $existingContentAds->request_date = $requestDate;
                     $existingContentAds->status = $status;
+                    $existingContentAds->link_drive = $linkDrive;
                     
                     // Set tugas_selesai based on status
-                    if (in_array($status, ['step3', 'completed'])) {
-                        $existingContentAds->tugas_selesai = true;
-                    }
+                    $existingContentAds->tugas_selesai = in_array($status, ['step3', 'completed']);
                     
                     $existingContentAds->updated_at = now();
                     $existingContentAds->save();
@@ -513,7 +541,7 @@ class ContentAdsController extends Controller
                 $processedRows++;
                 
             } catch (\Exception $e) {
-                \Log::warning("Error processing content ads row: " . json_encode($row) . " - " . $e->getMessage());
+                \Log::warning("Error processing content ads row " . ($rowIndex + 2) . ": " . json_encode($row) . " - " . $e->getMessage());
                 $skippedRows++;
             }
         }
