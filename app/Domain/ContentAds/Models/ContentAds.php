@@ -16,6 +16,7 @@ class ContentAds extends Model
         'funneling',
         'request_date',
         'link_drive',
+        'editor',
         'status',
         'filename',
         'tugas_selesai',
@@ -62,6 +63,12 @@ class ContentAds extends Model
         'None' => 'None',
     ];
 
+    // Editor options
+    const EDITORS = [
+        'RAFI' => 'RAFI',
+        'HENDRA' => 'HENDRA',
+    ];
+
     public static function getStatusOptions()
     {
         return [
@@ -85,6 +92,11 @@ class ContentAds extends Model
     public static function getFunnelingOptions()
     {
         return self::FUNNELINGS;
+    }
+
+    public static function getEditorOptions()
+    {
+        return self::EDITORS;
     }
 
     public function getStatusLabelAttribute()

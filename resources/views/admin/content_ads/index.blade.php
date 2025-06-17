@@ -124,6 +124,7 @@
                                 <th>Product</th>
                                 <th>Platform</th>
                                 <th>Funneling</th>
+                                <th>Editor</th>
                                 <th>Assignee</th>
                                 <th>Task Status</th>
                                 <th>Created</th>
@@ -201,6 +202,7 @@
                 { data: 'product', name: 'product' },
                 { data: 'platform', name: 'platform' },
                 { data: 'funneling', name: 'funneling' },
+                { data: 'editor', name: 'editor' },
                 { data: 'assignee_name', name: 'assignee.name' },
                 { data: 'tugas_status', name: 'tugas_selesai' },
                 { data: 'created_date', name: 'created_at' },
@@ -425,6 +427,7 @@
         $('#view_product').text(data.product || '-');
         $('#view_platform').text(data.platform || '-');
         $('#view_funneling').text(data.funneling || '-');
+        $('#view_editor').text(data.editor || '-');
         $('#view_status').text(data.status_label || '-');
         $('#view_assignee').text(data.assignee ? data.assignee.name : '-');
         $('#view_tugas_selesai').html(data.tugas_selesai ? 
@@ -444,6 +447,7 @@
         $('#edit_funneling').val(data.funneling);
         $('#edit_request_date').val(data.request_date);
         $('#edit_link_drive').val(data.link_drive);
+        $('#edit_editor').val(data.editor);
         $('#edit_filename').val(data.filename);
         $('#edit_tugas_selesai').prop('checked', data.tugas_selesai);
     }
@@ -522,6 +526,15 @@
                     <div class="form-group">
                         <label for="step_link_drive">Link Drive</label>
                         <input type="text" class="form-control" name="link_drive" id="step_link_drive" value="${data.link_drive || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="step_editor">Editor</label>
+                        <select class="form-control" name="editor" id="step_editor">
+                            <option value="">Select Editor</option>
+                            @foreach($editorOptions as $key => $label)
+                                <option value="{{ $key }}" ${data.editor === '{{ $key }}' ? 'selected' : ''}>{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">

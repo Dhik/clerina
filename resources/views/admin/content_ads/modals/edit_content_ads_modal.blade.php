@@ -57,6 +57,15 @@
                                 <input type="text" class="form-control" name="link_drive" id="edit_link_drive">
                             </div>
                             <div class="form-group">
+                                <label for="edit_editor">Editor</label>
+                                <select class="form-control" name="editor" id="edit_editor">
+                                    <option value="">Select Editor</option>
+                                    @foreach($editorOptions as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label for="edit_filename">File Name</label>
                                 <input type="text" class="form-control" name="filename" id="edit_filename">
                             </div>

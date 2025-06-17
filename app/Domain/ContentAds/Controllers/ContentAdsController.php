@@ -21,12 +21,14 @@ class ContentAdsController extends Controller
         $productOptions = ContentAds::getProductOptions();
         $platformOptions = ContentAds::getPlatformOptions();
         $funnelingOptions = ContentAds::getFunnelingOptions();
+        $editorOptions = ContentAds::getEditorOptions();
         
         return view('admin.content_ads.index', compact(
             'statusOptions', 
             'productOptions', 
             'platformOptions', 
-            'funnelingOptions'
+            'funnelingOptions',
+            'editorOptions'
         ));
     }
 
@@ -306,6 +308,7 @@ class ContentAdsController extends Controller
             case 2: // Link Drive & Task
                 return $request->validate([
                     'link_drive' => 'nullable|string|max:255',
+                    'editor' => 'nullable|string|in:RAFI,HENDRA',
                     'tugas_selesai' => 'nullable|boolean',
                 ]);
                 

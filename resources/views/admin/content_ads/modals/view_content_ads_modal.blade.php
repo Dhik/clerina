@@ -29,6 +29,10 @@
                                 <td id="view_funneling">-</td>
                             </tr>
                             <tr>
+                                <td><strong>Editor:</strong></td>
+                                <td id="view_editor">-</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Status:</strong></td>
                                 <td id="view_status">-</td>
                             </tr>
