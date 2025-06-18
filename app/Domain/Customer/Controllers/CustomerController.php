@@ -268,4 +268,87 @@ class CustomerController extends Controller
             'repeat_purchase_rate' => $repeatPurchaseRate
         ]);
     }
+    public function getTableauData()
+    {
+        try {
+            $customers = DB::table('customers')
+                ->select([
+                    'id',
+                    'name',
+                    'type',
+                    'phone_number',
+                    'first_order_date',
+                    'username',
+                    'shipping_address',
+                    'city',
+                    'province',
+                    'count_orders',
+                    'aov',
+                    'last_order_date',
+                    'created_at',
+                    'updated_at'
+                ])
+                ->limit(10)
+                ->get();
+
+            // Transform the data for better Tableau compatibility
+            $transformedData = $customers->map(function ($customer) {
+                return [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'type' => $customer->type,
+                    'phone_number' => $customer->phone_number,
+                    'first_order_date' => $customer->first_order_date,
+                    'username' => $customer->username,
+                    'shipping_address' => $customer->shipping_address,
+                    'city' => $customer->city,
+                    'province' => $customer->province,
+                    'count_orders' => (int) $customer->count_orders,
+                    'aov' => (int) $customer->aov,
+                    'last_order_date' => $customer->last_order_date,
+                    'created_at' => $customer->created_at,
+                    'updated_at' => $customer->updated_at,
+                    // Add calculated fields that might be useful for mapping
+                    'customer_value' => $customer->aov * $customer->count_orders,
+                    'days_since_first_order' => $customer->first_order_date ? 
+                        now()->diffInDays($customer->first_order_date) : null,
+                    'days_since_last_order' => $customer->last_order_date ? 
+                        now()->diffInDays($customer->last_order_date) : null,
+                    'customer_status' => $this->getCustomerStatus($customer->last_order_date)
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformedData,
+                'count' => $transformedData->count(),
+                'message' => 'Customer data retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving customer data: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    }
+
+    // 3. Add this helper method to your CustomerController class
+    private function getCustomerStatus($lastOrderDate)
+    {
+        if (!$lastOrderDate) {
+            return 'No Orders';
+        }
+        
+        $daysSinceLastOrder = now()->diffInDays($lastOrderDate);
+        
+        if ($daysSinceLastOrder <= 30) {
+            return 'Active';
+        } elseif ($daysSinceLastOrder <= 90) {
+            return 'At Risk';
+        } else {
+            return 'Churned';
+        }
+    }
 }
