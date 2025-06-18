@@ -18,7 +18,7 @@
 
 @section('content')
     <!-- KPI Cards -->
-    <!-- <div class="row mb-4">
+    <div class="row mb-4">
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
@@ -63,7 +63,45 @@
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Product Composition</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-responsive">
+                        <canvas id="productDonutChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Funneling Composition</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-responsive">
+                        <canvas id="funnelingDonutChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
         <div class="col-12">
@@ -182,6 +220,10 @@
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Global chart variables
+    let productDonutChart = null;
+    let funnelingDonutChart = null;
+
     $(document).ready(function() {
         // Initialize DataTables
         var table = $('#contentAdsTable').DataTable({
@@ -336,6 +378,7 @@
             success: function(response) {
                 if (response.success) {
                     updateKpiCards(response.data);
+                    updateDonutCharts(response.data);
                 }
             },
             error: function(xhr) {
@@ -353,6 +396,146 @@
         // Count active products
         var activeProducts = data.per_product ? Object.keys(data.per_product).length : 0;
         $('#totalProductTypes').text(activeProducts);
+    }
+
+    // Update Donut Charts
+    function updateDonutCharts(data) {
+        // Update Product Donut Chart
+        updateProductDonutChart(data.per_product || {});
+        
+        // Update Funneling Donut Chart
+        updateFunnelingDonutChart(data.per_funnel || {});
+    }
+
+    // Product Donut Chart
+    function updateProductDonutChart(productData) {
+        const ctx = document.getElementById('productDonutChart').getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (productDonutChart) {
+            productDonutChart.destroy();
+        }
+
+        // Prepare data
+        const labels = Object.keys(productData);
+        const values = Object.values(productData).map(item => item.count || 0);
+        
+        // Product color mapping based on your existing button colors
+        const productColors = {
+            'CLE-XFO-008': '#87CEEB',
+            'CLE-JB30-001': '#F4D03F',
+            'CLE-CLNDLA-025': '#F8A488',
+            'CLE-RS-047': '#DC143C',
+            'CL-GS': '#4682B4',
+            'CL-TNR': '#B0C4DE',
+            'CLE-NEG-071': '#90EE90',
+            'CLE-ASG-059': '#228B22',
+            'CL-JBRS': '#FFB6C1',
+            'CLE-BD-XFOJB30-017': '#ADD8E6'
+        };
+
+        const backgroundColors = labels.map(label => productColors[label] || '#6c757d');
+
+        productDonutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.formattedValue + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // Funneling Donut Chart
+    function updateFunnelingDonutChart(funnelingData) {
+        const ctx = document.getElementById('funnelingDonutChart').getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (funnelingDonutChart) {
+            funnelingDonutChart.destroy();
+        }
+
+        // Prepare data
+        const labels = Object.keys(funnelingData);
+        const values = Object.values(funnelingData).map(item => item.count || 0);
+        
+        // Funneling color mapping based on your existing button colors
+        const funnelingColors = {
+            'TOFU': '#28a745',  // Green
+            'MOFU': '#17a2b8',  // Info blue
+            'BOFU': '#007bff'   // Primary blue
+        };
+
+        const backgroundColors = labels.map(label => funnelingColors[label] || '#6c757d');
+
+        funnelingDonutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.formattedValue + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
     }
 
     // Function to load content ads details
