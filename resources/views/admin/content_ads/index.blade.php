@@ -18,7 +18,7 @@
 
 @section('content')
     <!-- KPI Cards -->
-    <div class="row mb-4">
+    <!-- <div class="row mb-4">
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="row">
         <div class="col-12">
