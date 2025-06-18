@@ -12,6 +12,7 @@ use App\Domain\Customer\Requests\CustomerRequest;
 use App\Domain\User\Enums\PermissionEnum;
 use App\Domain\User\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Contracts\Foundation\Application as ApplicationAlias;
 use Illuminate\Contracts\View\Factory;
