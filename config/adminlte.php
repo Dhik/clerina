@@ -640,7 +640,7 @@ return [
                 ],
                 [
                     'text' => 'Live Shopee',
-                    'url' => 'admin/live_shopee',
+                    'url' => 'admin/live_shopee_product',
                     'can' => [PermissionEnum::ChangeOwnPassword],
                     'icon' => 'nav-icon far fa-circle',
                 ],

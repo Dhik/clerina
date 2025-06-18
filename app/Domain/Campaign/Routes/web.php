@@ -10,6 +10,7 @@ use App\Domain\Campaign\Controllers\BriefController;
 use App\Domain\Campaign\Controllers\BriefContentController;
 use App\Domain\Campaign\Controllers\LiveDataController;
 use App\Domain\Campaign\Controllers\LiveShopeeController;
+use App\Domain\Campaign\Controllers\LiveShopeeProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,6 +91,16 @@ Route::prefix('admin')
             Route::get('/funnel-data', [LiveShopeeController::class, 'get_funnel_data'])->name('live_shopee.funnel_data');
             Route::post('/import', [LiveShopeeController::class, 'import_live_shopee'])->name('live_shopee.import');
             Route::delete('/delete', [LiveShopeeController::class, 'delete_live_shopee'])->name('live_shopee.delete');
+        });
+
+        Route::prefix('live_shopee_product')->group(function () {
+            Route::get('/', [LiveShopeeProductController::class, 'index'])->name('live_shopee_product.index');
+            Route::get('/get-data', [LiveShopeeProductController::class, 'get_live_shopee_product'])->name('live_shopee_product.get_data');
+            Route::get('/get-details-by-date', [LiveShopeeProductController::class, 'get_live_shopee_product_details_by_date'])->name('live_shopee_product.get_details_by_date');
+            Route::get('/line-data', [LiveShopeeProductController::class, 'get_line_data'])->name('live_shopee_product.line_data');
+            Route::get('/funnel-data', [LiveShopeeProductController::class, 'get_funnel_data'])->name('live_shopee_product.funnel_data');
+            Route::post('/import', [LiveShopeeProductController::class, 'import_live_shopee_product'])->name('live_shopee_product.import');
+            Route::delete('/delete', [LiveShopeeProductController::class, 'delete_live_shopee_product'])->name('live_shopee_product.delete');
         });
         
         Route::prefix('products')
