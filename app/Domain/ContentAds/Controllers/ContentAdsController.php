@@ -348,36 +348,43 @@ class ContentAdsController extends Controller
      */
     public function getKpiData(Request $request): JsonResponse
     {
-        $startDate = $request->get('start_date', Carbon::today()->format('Y-m-d'));
-        $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
+        // Default to last 30 days if no dates provided, or use provided dates
+        $startDate = $request->get('start_date', Carbon::now()->subDays(30)->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Ensure we have proper date formatting
+        $startDate = Carbon::parse($startDate)->startOfDay();
+        $endDate = Carbon::parse($endDate)->endOfDay();
 
         // Daily content created per editor
         $dailyPerEditor = ContentAds::selectRaw('editor, DATE(created_at) as date, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('editor')
             ->groupBy('editor', 'date')
             ->get()
             ->groupBy('editor');
 
-        // Per product statistics
-        $perProduct = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+        // Per product statistics - include all statuses, not just completed
+        $perProduct = ContentAds::selectRaw('product, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('product, COUNT(*) as count')
+            ->whereNotNull('product')
             ->groupBy('product')
             ->get()
             ->keyBy('product');
 
-        // Per funnel statistics
-        $perFunnel = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+        // Per funnel statistics - include all statuses, not just completed
+        $perFunnel = ContentAds::selectRaw('funneling, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('funneling, COUNT(*) as count')
+            ->whereNotNull('funneling')
             ->groupBy('funneling')
             ->get()
             ->keyBy('funneling');
 
-        // Combined product and funnel
-        $productFunnel = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+        // Combined product and funnel - include all statuses
+        $productFunnel = ContentAds::selectRaw('product, funneling, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('product, funneling, COUNT(*) as count')
+            ->whereNotNull('product')
+            ->whereNotNull('funneling')
             ->groupBy('product', 'funneling')
             ->get()
             ->groupBy('product')
@@ -385,13 +392,36 @@ class ContentAdsController extends Controller
                 return $items->keyBy('funneling');
             });
 
-        // Per editor statistics
-        $perEditor = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+        // Per editor statistics - include all statuses
+        $perEditor = ContentAds::selectRaw('editor, COUNT(*) as count')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('editor, COUNT(*) as count')
+            ->whereNotNull('editor')
             ->groupBy('editor')
             ->get()
             ->keyBy('editor');
+
+        // Per platform statistics - include all statuses
+        $perPlatform = ContentAds::selectRaw('platform, COUNT(*) as count')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotNull('platform')
+            ->groupBy('platform')
+            ->get()
+            ->keyBy('platform');
+
+        // Totals
+        $totalCompleted = ContentAds::where('status', ContentAds::STATUS_COMPLETED)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $totalPending = ContentAds::where('status', '!=', ContentAds::STATUS_COMPLETED)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+
+        $totalCreatedToday = ContentAds::whereDate('created_at', Carbon::today())
+            ->count();
+
+        $totalInDateRange = ContentAds::whereBetween('created_at', [$startDate, $endDate])
+            ->count();
 
         return response()->json([
             'success' => true,
@@ -401,20 +431,15 @@ class ContentAdsController extends Controller
                 'per_funnel' => $perFunnel,
                 'per_editor' => $perEditor,
                 'product_funnel' => $productFunnel,
-                'total_completed' => ContentAds::where('status', ContentAds::STATUS_COMPLETED)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'total_pending' => ContentAds::where('status', '!=', ContentAds::STATUS_COMPLETED)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'total_created_today' => ContentAds::whereDate('created_at', Carbon::today())
-                    ->count(),
-                'total_by_platform' => ContentAds::where('status', ContentAds::STATUS_COMPLETED)
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->selectRaw('platform, COUNT(*) as count')
-                    ->groupBy('platform')
-                    ->get()
-                    ->keyBy('platform'),
+                'total_completed' => $totalCompleted,
+                'total_pending' => $totalPending,
+                'total_created_today' => $totalCreatedToday,
+                'total_in_date_range' => $totalInDateRange,
+                'total_by_platform' => $perPlatform,
+                'date_range' => [
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d')
+                ]
             ]
         ]);
     }
