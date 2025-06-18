@@ -33,16 +33,16 @@ class ContentAds extends Model
 
     // Product options
     const PRODUCTS = [
-        '3MIN' => '3 MIN',
-        'JB' => 'JB',
-        'CAL' => 'CAL',
-        'RS' => 'RS',
-        'GS' => 'GS',
-        'PG' => 'PG',
-        '30SEC' => '30 SEC',
-        'AcneS' => 'Acne S',
-        'RSXJB' => 'RSXJB',
-        '3MINXJB' => '3MINXJB',
+        'CLE-XFO-008' => 'CLE-XFO-008',
+        'CLE-JB30-001' => 'CLE-JB30-001',
+        'CLE-CLNDLA-025' => 'CLE-CLNDLA-025',
+        'CLE-RS-047' => 'CLE-RS-047',
+        'CL-GS' => 'CL-GS',
+        'CL-TNR' => 'CL-TNR',
+        'CLE-NEG-071' => 'CLE-NEG-071',
+        'CLE-ASG-059' => 'CLE-ASG-059',
+        'CL-JBRS' => 'CL-JBRS',
+        'CLE-BD-XFOJB30-017' => 'CLE-BD-XFOJB30-017',
         'None' => 'None',
     ];
 

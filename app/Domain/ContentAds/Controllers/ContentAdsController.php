@@ -150,45 +150,45 @@ class ContentAdsController extends Controller
         }
 
         switch (strtoupper($product)) {
-            case '3MIN':
+            case 'CLE-XFO-008':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #87CEEB; color: #333; border-color: #87CEEB; border-radius: 15px;">
-                            3MIN
+                            CLE-XFO-008
                         </span>';
-            case 'JB':
+            case 'CLE-JB30-001':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #F4D03F; color: #333; border-color: #F4D03F; border-radius: 15px;">
-                            JB
+                            CLE-JB30-001
                         </span>';
-            case 'CAL':
+            case 'CLE-CLNDLA-025':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #F8A488; color: #333; border-color: #F8A488; border-radius: 15px;">
-                            CAL
+                            CLE-CLNDLA-025
                         </span>';
-            case 'RS':
+            case 'CLE-RS-047':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #DC143C; color: white; border-color: #DC143C; border-radius: 15px;">
-                            RS
+                            CLE-RS-047
                         </span>';
-            case 'GS':
+            case 'CL-GS':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #4682B4; color: white; border-color: #4682B4; border-radius: 15px;">
-                            GS
+                            CL-GS
                         </span>';
-            case 'PG':
+            case 'CL-TNR':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #B0C4DE; color: #333; border-color: #B0C4DE; border-radius: 15px;">
-                            PG
+                            CL-TNR
                         </span>';
-            case '30SEC':
+            case 'CLE-NEG-071':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #90EE90; color: #333; border-color: #90EE90; border-radius: 15px;">
-                            30SEC
+                            CLE-NEG-071
                         </span>';
-            case 'ACNE S':
+            case 'CLE-ASG-059':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #228B22; color: white; border-color: #228B22; border-radius: 15px;">
-                            Acne S
+                            CLE-ASG-059
                         </span>';
-            case 'RSXJB':
+            case 'CL-JBRS':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #FFB6C1; color: #333; border-color: #FFB6C1; border-radius: 15px;">
-                            RSXJB
+                            CL-JBRS
                         </span>';
-            case '3MINXJB':
+            case 'CLE-BD-XFOJB30-017':
                 return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #ADD8E6; color: #333; border-color: #ADD8E6; border-radius: 15px;">
-                            3MINXJB
+                            CLE-BD-XFOJB30-017
                         </span>';
             default:
                 return '<span class="badge badge-secondary" style="border-radius: 15px;">' . htmlspecialchars($product) . '</span>';
