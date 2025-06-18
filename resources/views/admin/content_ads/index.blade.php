@@ -17,54 +17,6 @@
 @stop
 
 @section('content')
-    <!-- KPI Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h3 id="totalToday">0</h3>
-                    <p>Created Today</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-plus"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3 id="totalCompleted">0</h3>
-                    <p>Completed</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-check"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3 id="totalPending">0</h3>
-                    <p>Pending</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3 id="totalProductTypes">0</h3>
-                    <p>Active Products</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-box"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Charts Row -->
     <div class="row mb-4">
         <div class="col-md-6">
