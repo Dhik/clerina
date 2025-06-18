@@ -17,15 +17,98 @@
 @stop
 
 @section('content')
+    <!-- Calendar and Notifications Row -->
+    <div class="row mb-4">
+        <!-- Calendar Section (col-10) -->
+        <div class="col-lg-10 col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-alt"></i> Content Calendar
+                    </h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" id="toggleCalendar" title="Toggle Calendar">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0" id="calendarBody">
+                    <!-- Calendar Header -->
+                    <div class="calendar-header">
+                        <div class="month-navigation">
+                            <button class="btn btn-outline-primary btn-sm" onclick="changeMonth(-1)">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <h4 class="current-month mb-0" id="currentMonth"></h4>
+                            <button class="btn btn-outline-primary btn-sm" onclick="changeMonth(1)">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div class="calendar-container">
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar will be generated here -->
+                        </div>
+                    </div>
+
+                    <!-- Status Legend -->
+                    <div class="status-legend">
+                        <div class="legend-item">
+                            <div class="legend-color badge-secondary"></div>
+                            <span class="legend-text">Draft</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color badge-info"></div>
+                            <span class="legend-text">Content Writing</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color badge-warning"></div>
+                            <span class="legend-text">Creative Review</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color badge-primary"></div>
+                            <span class="legend-text">Admin Support</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color badge-dark"></div>
+                            <span class="legend-text">Content Editing</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color badge-success"></div>
+                            <span class="legend-text">Ready/Posted</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Section (col-2) -->
+        <div class="col-lg-2 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-bell"></i> Today's Tasks
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div id="todayNotifications">
+                        <!-- Today's notifications will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table Row -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Content Plan Management</h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-info btn-sm" onclick="switchToCalendarView()">
-                            <i class="fas fa-calendar"></i> Calendar View
-                        </button>
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addContentPlanModal">
                             <i class="fas fa-plus"></i> Add New Content Plan
                         </button>
@@ -72,17 +155,325 @@
         </div>
     </div>
 
+    {{-- Content Plan Detail Modal --}}
+    <div class="modal fade" id="contentPlanDetailModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Content Plan Details</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" id="editPlanBtn">Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @include('admin.content_plan.modals.add_content_plan_modal')
     @include('admin.content_plan.modals.edit_content_plan_modal')
     @include('admin.content_plan.modals.view_content_plan_modal')
     @include('admin.content_plan.modals.step_modal')
 @stop
 
+@section('css')
+<style>
+    /* Calendar Styles */
+    .calendar-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .month-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .current-month {
+        color: #495057;
+        font-weight: 600;
+        text-align: center;
+        flex: 1;
+    }
+
+    .calendar-container {
+        padding: 0;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #dee2e6;
+    }
+
+    .day-header {
+        background: #6c757d;
+        color: white;
+        padding: 10px 5px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .calendar-day {
+        background: white;
+        min-height: 80px;
+        padding: 5px;
+        position: relative;
+        border: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .calendar-day:hover {
+        background: #f8f9fa;
+    }
+
+    .calendar-day.other-month {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+
+    .calendar-day.other-month .day-number {
+        color: #adb5bd;
+    }
+
+    .calendar-day.today {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+    }
+
+    .day-number {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #495057;
+    }
+
+    .content-item {
+        background: white;
+        border-radius: 3px;
+        padding: 2px 4px;
+        margin-bottom: 2px;
+        font-size: 0.65rem;
+        border-left: 3px solid;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .content-item:hover {
+        transform: translateX(1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    /* Status colors matching AdminLTE badges */
+    .content-item.draft { 
+        border-left-color: #6c757d; 
+        background: #f8f9fa; 
+    }
+    .content-item.content_writing { 
+        border-left-color: #17a2b8; 
+        background: #d1ecf1; 
+    }
+    .content-item.creative_review { 
+        border-left-color: #ffc107; 
+        background: #fff3cd; 
+    }
+    .content-item.admin_support { 
+        border-left-color: #007bff; 
+        background: #d1ecf1; 
+    }
+    .content-item.content_editing { 
+        border-left-color: #343a40; 
+        background: #f8f9fa; 
+    }
+    .content-item.ready_to_post { 
+        border-left-color: #28a745; 
+        background: #d4edda; 
+    }
+    .content-item.posted { 
+        border-left-color: #20c997; 
+        background: #d1ecf1; 
+    }
+
+    .item-title {
+        font-weight: 600;
+        margin-bottom: 1px;
+        color: #495057;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+    }
+
+    .item-talent {
+        color: #6c757d;
+        font-size: 0.6rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .status-legend {
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+
+    .legend-color.badge-secondary { background-color: #6c757d; }
+    .legend-color.badge-info { background-color: #17a2b8; }
+    .legend-color.badge-warning { background-color: #ffc107; }
+    .legend-color.badge-primary { background-color: #007bff; }
+    .legend-color.badge-dark { background-color: #343a40; }
+    .legend-color.badge-success { background-color: #28a745; }
+
+    .legend-text {
+        font-size: 0.75rem;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    /* Notification Styles */
+    .notification-item {
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .notification-item:hover {
+        background: #f8f9fa;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+
+    .notification-talent {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 3px;
+    }
+
+    .notification-status {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        color: white;
+        display: inline-block;
+    }
+
+    .notification-status.draft { background-color: #6c757d; }
+    .notification-status.content_writing { background-color: #17a2b8; }
+    .notification-status.creative_review { background-color: #ffc107; color: #212529; }
+    .notification-status.admin_support { background-color: #007bff; }
+    .notification-status.content_editing { background-color: #343a40; }
+    .notification-status.ready_to_post { background-color: #28a745; }
+    .notification-status.posted { background-color: #20c997; }
+
+    .no-notifications {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.8rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .calendar-day {
+            min-height: 60px;
+            padding: 3px;
+        }
+        
+        .content-item {
+            font-size: 0.6rem;
+            padding: 1px 3px;
+        }
+        
+        .month-navigation {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .legend-item {
+            padding: 2px 6px;
+        }
+        
+        .legend-text {
+            font-size: 0.7rem;
+        }
+
+        .notification-title {
+            font-size: 0.75rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .calendar-day {
+            min-height: 50px;
+            padding: 2px;
+        }
+        
+        .day-number {
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+        
+        .content-item {
+            font-size: 0.55rem;
+            padding: 1px 2px;
+            margin-bottom: 1px;
+        }
+    }
+</style>
+@stop
+
 @section('js')
 <script>
+    let currentDate = new Date();
+    let contentPlans = [];
+    let table;
+
     $(document).ready(function() {
         // Initialize DataTables
-        var table = $('#contentPlanTable').DataTable({
+        table = $('#contentPlanTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -105,6 +496,11 @@
             order: [[0, 'desc']]
         });
 
+        // Load calendar and notifications
+        loadContentPlans();
+        generateCalendar();
+        loadTodayNotifications();
+
         // Filter functionality
         $('#filterBtn').on('click', function() {
             table.draw();
@@ -112,6 +508,12 @@
 
         $('#statusFilter').on('change', function() {
             table.draw();
+        });
+
+        // Toggle calendar visibility
+        $('#toggleCalendar').on('click', function() {
+            $('#calendarBody').slideToggle();
+            $(this).find('i').toggleClass('fa-minus fa-plus');
         });
 
         // Handle Add Content Plan Form Submit
@@ -126,6 +528,8 @@
                     if (response.success) {
                         $('#addContentPlanModal').modal('hide');
                         table.draw();
+                        loadContentPlans(); // Reload calendar
+                        loadTodayNotifications(); // Reload notifications
                         toastr.success(response.message);
                         $('#addContentPlanForm')[0].reset();
                     }
@@ -167,6 +571,8 @@
                     if (response.success) {
                         $('#editContentPlanModal').modal('hide');
                         table.draw();
+                        loadContentPlans(); // Reload calendar
+                        loadTodayNotifications(); // Reload notifications
                         toastr.success(response.message);
                     }
                 },
@@ -207,6 +613,8 @@
                     if (response.success) {
                         $('#stepModal').modal('hide');
                         table.draw();
+                        loadContentPlans(); // Reload calendar
+                        loadTodayNotifications(); // Reload notifications
                         toastr.success(response.message);
                     }
                 },
@@ -472,9 +880,259 @@
         });
     });
 
-    // Function to switch to calendar view
-    function switchToCalendarView() {
-        window.location.href = '{{ route('contentPlan.calendar') }}';
+    // Calendar Functions
+    function loadContentPlans() {
+        $.ajax({
+            url: '{{ route('contentPlan.data') }}',
+            method: 'GET',
+            data: {
+                start: 0,
+                length: -1 // Get all records
+            },
+            success: function(response) {
+                contentPlans = response.data || [];
+                generateCalendar();
+                loadTodayNotifications();
+            },
+            error: function(xhr) {
+                console.error('Error loading content plans:', xhr);
+                toastr.error('Error loading content plans');
+            }
+        });
+    }
+
+    function generateCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Update month display
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        $('#currentMonth').text(`${monthNames[month]} ${year}`);
+        
+        // Clear calendar
+        $('#calendarGrid').empty();
+        
+        // Add day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+            $('#calendarGrid').append(`<div class="day-header">${day}</div>`);
+        });
+        
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+        
+        // Generate calendar days
+        const today = new Date();
+        for (let i = 0; i < 42; i++) { // 6 weeks
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            
+            const dayElement = createDayElement(date, month, today);
+            $('#calendarGrid').append(dayElement);
+        }
+    }
+
+    function createDayElement(date, currentMonth, today) {
+        const isCurrentMonth = date.getMonth() === currentMonth;
+        const isToday = date.toDateString() === today.toDateString();
+        const dateString = date.toISOString().split('T')[0];
+        
+        let classes = 'calendar-day';
+        if (!isCurrentMonth) classes += ' other-month';
+        if (isToday) classes += ' today';
+        
+        // Find content plans for this date
+        const dayPlans = contentPlans.filter(plan => {
+            if (!plan.target_posting_date) return false;
+            const planDate = plan.target_posting_date.split(' ')[0]; // Handle both date and datetime formats
+            return planDate === dateString;
+        });
+        
+        let dayHtml = `
+            <div class="${classes}" data-date="${dateString}">
+                <div class="day-number">${date.getDate()}</div>
+        `;
+        
+        // Add content plans for this day
+        if (dayPlans.length > 0) {
+            dayPlans.forEach(plan => {
+                const statusClass = getStatusClass(plan.status);
+                dayHtml += `
+                    <div class="content-item ${statusClass}" onclick="showContentPlanDetail(${plan.id})" title="Click to view details">
+                        <div class="item-title">${plan.objektif || 'No Title'}</div>
+                        <div class="item-talent">${plan.talent || 'No Talent'}</div>
+                    </div>
+                `;
+            });
+        }
+        
+        dayHtml += '</div>';
+        return dayHtml;
+    }
+
+    function getStatusClass(status) {
+        const statusMap = {
+            'draft': 'draft',
+            'content_writing': 'content_writing',
+            'creative_review': 'creative_review',
+            'admin_support': 'admin_support',
+            'content_editing': 'content_editing',
+            'ready_to_post': 'ready_to_post',
+            'posted': 'posted'
+        };
+        return statusMap[status] || 'draft';
+    }
+
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
+        generateCalendar();
+    }
+
+    function showContentPlanDetail(id) {
+        $.ajax({
+            url: '{{ route('contentPlan.details', ':id') }}'.replace(':id', id),
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    displayContentPlanModal(response.data);
+                }
+            },
+            error: function(xhr) {
+                toastr.error('Error loading content plan details');
+            }
+        });
+    }
+
+    function displayContentPlanModal(data) {
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-info"><i class="fas fa-bullseye"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Objektif</span>
+                            <span class="info-box-number">${data.objektif || '-'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-success"><i class="fas fa-calendar"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Target Date</span>
+                            <span class="info-box-number">${data.target_posting_date || '-'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-warning"><i class="fas fa-user"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Talent</span>
+                            <span class="info-box-number">${data.talent || '-'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-box">
+                        <span class="info-box-icon bg-primary"><i class="fas fa-tags"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Status</span>
+                            <span class="info-box-number">${getStatusLabel(data.status)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Content Details</h3>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Jenis Konten</dt>
+                                <dd class="col-sm-9">${data.jenis_konten || '-'}</dd>
+                                
+                                <dt class="col-sm-3">Pillar</dt>
+                                <dd class="col-sm-9">${data.pillar || '-'}</dd>
+                                
+                                <dt class="col-sm-3">Platform</dt>
+                                <dd class="col-sm-9">${data.platform || '-'}</dd>
+                                
+                                <dt class="col-sm-3">Venue</dt>
+                                <dd class="col-sm-9">${data.venue || '-'}</dd>
+                                
+                                <dt class="col-sm-3">Caption</dt>
+                                <dd class="col-sm-9">${data.caption ? data.caption.substring(0, 200) + (data.caption.length > 200 ? '...' : '') : '-'}</dd>
+                                
+                                <dt class="col-sm-3">Hook</dt>
+                                <dd class="col-sm-9">${data.hook ? data.hook.substring(0, 150) + (data.hook.length > 150 ? '...' : '') : '-'}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#modalContent').html(modalContent);
+        $('#editPlanBtn').attr('onclick', `editContentPlan(${data.id})`);
+        $('#contentPlanDetailModal').modal('show');
+    }
+
+    function getStatusLabel(status) {
+        const statusLabels = {
+            'draft': 'Draft',
+            'content_writing': 'Content Writing',
+            'creative_review': 'Creative Review',
+            'admin_support': 'Admin Support',
+            'content_editing': 'Content Editing',
+            'ready_to_post': 'Ready to Post',
+            'posted': 'Posted'
+        };
+        return statusLabels[status] || status;
+    }
+
+    function editContentPlan(id) {
+        window.location.href = '{{ route('contentPlan.edit', ':id') }}'.replace(':id', id);
+    }
+
+    // Notification Functions
+    function loadTodayNotifications() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Filter content plans for today
+        const todayPlans = contentPlans.filter(plan => {
+            if (!plan.target_posting_date) return false;
+            const planDate = plan.target_posting_date.split(' ')[0];
+            return planDate === today;
+        });
+
+        let notificationHtml = '';
+        
+        if (todayPlans.length === 0) {
+            notificationHtml = '<div class="no-notifications">No content plans scheduled for today</div>';
+        } else {
+            todayPlans.forEach(plan => {
+                const statusClass = getStatusClass(plan.status);
+                notificationHtml += `
+                    <div class="notification-item" onclick="showContentPlanDetail(${plan.id})">
+                        <div class="notification-title">${plan.objektif || 'No Title'}</div>
+                        <div class="notification-talent">👤 ${plan.talent || 'No Talent'}</div>
+                        <span class="notification-status ${statusClass}">${getStatusLabel(plan.status)}</span>
+                    </div>
+                `;
+            });
+        }
+        
+        $('#todayNotifications').html(notificationHtml);
     }
 
     // Global delete function (similar to your budget example)
@@ -498,6 +1156,8 @@
                     success: function(response) {
                         if (response.success) {
                             table.draw();
+                            loadContentPlans(); // Reload calendar
+                            loadTodayNotifications(); // Reload notifications
                             Swal.fire(
                                 'Deleted!',
                                 response.message,
