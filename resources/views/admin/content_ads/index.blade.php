@@ -127,7 +127,6 @@
                                 <th>Product</th>
                                 <th>Platform</th>
                                 <th>Funneling</th>
-                                <th>Editor</th>
                                 <th>Created</th>
                                 <th>Actions</th>
                             </tr>
