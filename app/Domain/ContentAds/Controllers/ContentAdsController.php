@@ -76,11 +76,14 @@ class ContentAdsController extends Controller
                 $badgeColor = $this->getStatusBadgeColor($ads->status);
                 return '<span class="badge badge-' . $badgeColor . '">' . $ads->status_label . '</span>';
             })
-            ->addColumn('funneling_button', function ($ads) {
-                return $this->getFunnelingButton($ads->funneling);
+            ->addColumn('product_button', function ($ads) {
+                return $this->getProductButton($ads->product);
             })
             ->addColumn('platform_button', function ($ads) {
                 return $this->getPlatformButton($ads->platform);
+            })
+            ->addColumn('funneling_button', function ($ads) {
+                return $this->getFunnelingButton($ads->funneling);
             })
             ->addColumn('created_date', function ($ads) {
                 return $ads->created_at ? 
@@ -90,7 +93,7 @@ class ContentAdsController extends Controller
             ->addColumn('action', function ($ads) {
                 return $this->generateActionButtons($ads);
             })
-            ->rawColumns(['status_badge', 'funneling_button', 'platform_button', 'action'])
+            ->rawColumns(['status_badge', 'product_button', 'platform_button', 'funneling_button', 'action'])
             ->make(true);
     }
     /**
@@ -137,6 +140,58 @@ class ContentAdsController extends Controller
                         </span>';
             default:
                 return '<span class="badge badge-secondary">' . htmlspecialchars($platform) . '</span>';
+        }
+    }
+
+    private function getProductButton($product)
+    {
+        if (!$product) {
+            return '<span class="badge badge-light">None</span>';
+        }
+
+        switch (strtoupper($product)) {
+            case '3MIN':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #87CEEB; color: #333; border-color: #87CEEB; border-radius: 15px;">
+                            3MIN
+                        </span>';
+            case 'JB':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #F4D03F; color: #333; border-color: #F4D03F; border-radius: 15px;">
+                            JB
+                        </span>';
+            case 'CAL':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #F8A488; color: #333; border-color: #F8A488; border-radius: 15px;">
+                            CAL
+                        </span>';
+            case 'RS':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #DC143C; color: white; border-color: #DC143C; border-radius: 15px;">
+                            RS
+                        </span>';
+            case 'GS':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #4682B4; color: white; border-color: #4682B4; border-radius: 15px;">
+                            GS
+                        </span>';
+            case 'PG':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #B0C4DE; color: #333; border-color: #B0C4DE; border-radius: 15px;">
+                            PG
+                        </span>';
+            case '30SEC':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #90EE90; color: #333; border-color: #90EE90; border-radius: 15px;">
+                            30SEC
+                        </span>';
+            case 'ACNE S':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #228B22; color: white; border-color: #228B22; border-radius: 15px;">
+                            Acne S
+                        </span>';
+            case 'RSXJB':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #FFB6C1; color: #333; border-color: #FFB6C1; border-radius: 15px;">
+                            RSXJB
+                        </span>';
+            case '3MINXJB':
+                return '<span class="btn btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px; background-color: #ADD8E6; color: #333; border-color: #ADD8E6; border-radius: 15px;">
+                            3MINXJB
+                        </span>';
+            default:
+                return '<span class="badge badge-secondary" style="border-radius: 15px;">' . htmlspecialchars($product) . '</span>';
         }
     }
 

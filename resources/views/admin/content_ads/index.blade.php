@@ -200,8 +200,8 @@
                 { data: 'id', name: 'id' },
                 { data: 'request_date_formatted', name: 'request_date' },
                 { data: 'status_badge', name: 'status' },
-                { data: 'product', name: 'product' },
-                { data: 'platform_button', name: 'platform', orderable: true, searchable: true }, // Updated platform column
+                { data: 'product_button', name: 'product', orderable: true, searchable: true }, // Product column
+                { data: 'platform_button', name: 'platform', orderable: true, searchable: true },
                 { data: 'funneling_button', name: 'funneling', orderable: true, searchable: true },
                 { data: 'created_date', name: 'created_at' },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
