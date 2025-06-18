@@ -189,11 +189,12 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route('contentAds.data') }}',
+                url: '{{ route('contentAds.data') }}', // Adjust route name as needed
                 data: function(d) {
                     d.status = $('#statusFilter').val();
                     d.product = $('#productFilter').val();
                     d.platform = $('#platformFilter').val();
+                    d.funneling = $('#funnelingFilter').val(); // Add funneling filter
                 }
             },
             columns: [
@@ -202,8 +203,7 @@
                 { data: 'status_badge', name: 'status' },
                 { data: 'product', name: 'product' },
                 { data: 'platform', name: 'platform' },
-                { data: 'funneling', name: 'funneling' },
-                { data: 'editor', name: 'editor' },
+                { data: 'funneling_button', name: 'funneling', orderable: true, searchable: true }, // Add funneling column
                 { data: 'created_date', name: 'created_at' },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
