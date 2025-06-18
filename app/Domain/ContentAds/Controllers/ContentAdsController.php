@@ -106,11 +106,11 @@ class ContentAdsController extends Controller
                             <i class="fas fa-funnel-dollar"></i> TOFU
                         </span>';
             case 'MOFU':
-                return '<span class="btn btn-warning btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                return '<span class="btn btn-info btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
                             <i class="fas fa-filter"></i> MOFU
                         </span>';
             case 'BOFU':
-                return '<span class="btn btn-danger btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                return '<span class="btn btn-primary btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
                             <i class="fas fa-bullseye"></i> BOFU
                         </span>';
             default:
