@@ -19,6 +19,9 @@ Route::prefix('admin')
                 Route::get('/data', [ContentPlanController::class, 'data'])->name('contentPlan.data');
                 Route::get('/status-counts', [ContentPlanController::class, 'getStatusCounts'])->name('contentPlan.statusCounts');
                 Route::post('/store', [ContentPlanController::class, 'store'])->name('contentPlan.store');
+                
+                // Add this new calendar route
+                Route::get('/calendar', [ContentPlanController::class, 'calendar'])->name('contentPlan.calendar');
 
                 // Standard CRUD routes (THESE COME AFTER)
                 Route::get('/', [ContentPlanController::class, 'index'])->name('contentPlan.index');

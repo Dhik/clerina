@@ -20,6 +20,12 @@ class ContentPlanController extends Controller
         $this->contentPlanBLL = $contentPlanBLL;
     }
 
+    public function calendar(Request $request)
+    {
+        $statusOptions = ContentPlan::getStatusOptions();
+        return view('admin.content_plan.calendar', compact('statusOptions'));
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -29,8 +35,10 @@ class ContentPlanController extends Controller
         return view('admin.content_plan.index', compact('statusOptions'));
     }
 
+    // And add this to your existing data method to handle calendar requests:
+
     /**
-     * Get data for DataTables
+     * Get data for DataTables or Calendar
      */
     public function data(Request $request): JsonResponse
     {
@@ -40,7 +48,48 @@ class ContentPlanController extends Controller
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         }
+        
+        // If this is a calendar request (length = -1), return all data without pagination
+        if ($request->get('length') == -1) {
+            $contentPlans = $query->get();
+            
+            $data = $contentPlans->map(function ($plan) {
+                return [
+                    'id' => $plan->id,
+                    'target_posting_date' => $plan->target_posting_date ? 
+                        (is_string($plan->target_posting_date) ? $plan->target_posting_date : $plan->target_posting_date->format('Y-m-d')) : 
+                        null,
+                    'status' => $plan->status,
+                    'status_label' => $plan->status_label,
+                    'objektif' => $plan->objektif,
+                    'jenis_konten' => $plan->jenis_konten,
+                    'pillar' => $plan->pillar,
+                    'platform' => $plan->platform,
+                    'talent' => $plan->talent,
+                    'caption' => $plan->caption,
+                    'venue' => $plan->venue,
+                    'hook' => $plan->hook,
+                    'produk' => $plan->produk,
+                    'referensi' => $plan->referensi,
+                    'akun' => $plan->akun,
+                    'kerkun' => $plan->kerkun,
+                    'brief_konten' => $plan->brief_konten,
+                    'link_raw_content' => $plan->link_raw_content,
+                    'assignee_content_editor' => $plan->assignee_content_editor,
+                    'link_hasil_edit' => $plan->link_hasil_edit,
+                    'input_link_posting' => $plan->input_link_posting,
+                    'posting_date' => $plan->posting_date,
+                    'created_at' => $plan->created_at,
+                    'updated_at' => $plan->updated_at,
+                ];
+            });
+            
+            return response()->json([
+                'data' => $data
+            ]);
+        }
 
+        // Original DataTables response
         return DataTables::of($query)
             ->addColumn('target_date', function ($plan) {
                 return $plan->target_posting_date ? 

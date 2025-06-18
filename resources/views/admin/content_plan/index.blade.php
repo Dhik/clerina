@@ -23,6 +23,9 @@
                 <div class="card-header">
                     <h3 class="card-title">Content Plan Management</h3>
                     <div class="card-tools">
+                        <button type="button" class="btn btn-info btn-sm" onclick="switchToCalendarView()">
+                            <i class="fas fa-calendar"></i> Calendar View
+                        </button>
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addContentPlanModal">
                             <i class="fas fa-plus"></i> Add New Content Plan
                         </button>
@@ -376,8 +379,20 @@
                             <input type="text" class="form-control" name="pillar" id="step_pillar" value="${data.pillar || ''}">
                         </div>
                         <div class="form-group">
+                            <label for="step_talent">Talent</label>
+                            <input type="text" class="form-control" name="talent" id="step_talent" value="${data.talent || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="step_venue">Venue</label>
+                            <input type="text" class="form-control" name="venue" id="step_venue" value="${data.venue || ''}">
+                        </div>
+                        <div class="form-group">
                             <label for="step_hook">Hook</label>
                             <textarea class="form-control" name="hook" id="step_hook" rows="4">${data.hook || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="step_target_posting_date">Target Posting Date</label>
+                            <input type="date" class="form-control" name="target_posting_date" id="step_target_posting_date" value="${data.target_posting_date || ''}">
                         </div>
                     `;
                 case 2:
@@ -456,6 +471,11 @@
             $(this).find('.invalid-feedback').remove();
         });
     });
+
+    // Function to switch to calendar view
+    function switchToCalendarView() {
+        window.location.href = '{{ route('contentPlan.calendar') }}';
+    }
 
     // Global delete function (similar to your budget example)
     function deleteAjax(route, id, table) {
