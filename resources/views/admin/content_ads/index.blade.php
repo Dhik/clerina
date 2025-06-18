@@ -193,7 +193,7 @@
                     d.status = $('#statusFilter').val();
                     d.product = $('#productFilter').val();
                     d.platform = $('#platformFilter').val();
-                    d.funneling = $('#funnelingFilter').val(); // Add funneling filter
+                    d.funneling = $('#funnelingFilter').val();
                 }
             },
             columns: [
@@ -201,8 +201,8 @@
                 { data: 'request_date_formatted', name: 'request_date' },
                 { data: 'status_badge', name: 'status' },
                 { data: 'product', name: 'product' },
-                { data: 'platform', name: 'platform' },
-                { data: 'funneling_button', name: 'funneling', orderable: true, searchable: true }, // Add funneling column
+                { data: 'platform_button', name: 'platform', orderable: true, searchable: true }, // Updated platform column
+                { data: 'funneling_button', name: 'funneling', orderable: true, searchable: true },
                 { data: 'created_date', name: 'created_at' },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],

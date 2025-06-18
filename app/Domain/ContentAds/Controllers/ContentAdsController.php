@@ -79,6 +79,9 @@ class ContentAdsController extends Controller
             ->addColumn('funneling_button', function ($ads) {
                 return $this->getFunnelingButton($ads->funneling);
             })
+            ->addColumn('platform_button', function ($ads) {
+                return $this->getPlatformButton($ads->platform);
+            })
             ->addColumn('created_date', function ($ads) {
                 return $ads->created_at ? 
                     (is_string($ads->created_at) ? $ads->created_at : $ads->created_at->format('Y-m-d')) : 
@@ -87,10 +90,9 @@ class ContentAdsController extends Controller
             ->addColumn('action', function ($ads) {
                 return $this->generateActionButtons($ads);
             })
-            ->rawColumns(['status_badge', 'funneling_button', 'action'])
+            ->rawColumns(['status_badge', 'funneling_button', 'platform_button', 'action'])
             ->make(true);
     }
-
     /**
      * Get funneling button with appropriate color
      */
@@ -115,6 +117,26 @@ class ContentAdsController extends Controller
                         </span>';
             default:
                 return '<span class="badge badge-secondary">' . htmlspecialchars($funneling) . '</span>';
+        }
+    }
+
+    private function getPlatformButton($platform)
+    {
+        if (!$platform) {
+            return '<span class="badge badge-light">-</span>';
+        }
+
+        switch (strtoupper($platform)) {
+            case 'META':
+                return '<span class="btn btn-primary btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fab fa-meta"></i> META
+                        </span>';
+            case 'TIKTOK':
+                return '<span class="btn btn-dark btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fab fa-tiktok"></i> TIKTOK
+                        </span>';
+            default:
+                return '<span class="badge badge-secondary">' . htmlspecialchars($platform) . '</span>';
         }
     }
 
