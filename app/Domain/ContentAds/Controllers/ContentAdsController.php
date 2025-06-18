@@ -61,6 +61,11 @@ class ContentAdsController extends Controller
             $query->where('platform', $request->platform);
         }
 
+        // Add funneling filter
+        if ($request->has('funneling') && $request->funneling != '') {
+            $query->where('funneling', $request->funneling);
+        }
+        
         return DataTables::of($query)
             ->addColumn('request_date_formatted', function ($ads) {
                 return $ads->request_date ? 
@@ -71,6 +76,9 @@ class ContentAdsController extends Controller
                 $badgeColor = $this->getStatusBadgeColor($ads->status);
                 return '<span class="badge badge-' . $badgeColor . '">' . $ads->status_label . '</span>';
             })
+            ->addColumn('funneling_button', function ($ads) {
+                return $this->getFunnelingButton($ads->funneling);
+            })
             ->addColumn('created_date', function ($ads) {
                 return $ads->created_at ? 
                     (is_string($ads->created_at) ? $ads->created_at : $ads->created_at->format('Y-m-d')) : 
@@ -79,8 +87,35 @@ class ContentAdsController extends Controller
             ->addColumn('action', function ($ads) {
                 return $this->generateActionButtons($ads);
             })
-            ->rawColumns(['status_badge', 'action'])
+            ->rawColumns(['status_badge', 'funneling_button', 'action'])
             ->make(true);
+    }
+
+    /**
+     * Get funneling button with appropriate color
+     */
+    private function getFunnelingButton($funneling)
+    {
+        if (!$funneling) {
+            return '<span class="badge badge-light">-</span>';
+        }
+
+        switch (strtoupper($funneling)) {
+            case 'TOFU':
+                return '<span class="btn btn-success btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fas fa-funnel-dollar"></i> TOFU
+                        </span>';
+            case 'MOFU':
+                return '<span class="btn btn-warning btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fas fa-filter"></i> MOFU
+                        </span>';
+            case 'BOFU':
+                return '<span class="btn btn-danger btn-xs" style="pointer-events: none; font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fas fa-bullseye"></i> BOFU
+                        </span>';
+            default:
+                return '<span class="badge badge-secondary">' . htmlspecialchars($funneling) . '</span>';
+        }
     }
 
     /**
