@@ -73,5 +73,3 @@ Route::prefix('admin')
                 Route::post('/{id}/unjoin', [CustomerAnalysisController::class, 'unjoin'])->name('customer_analysis.unjoin');
             });
     });
-
-Route::get('/tableau/customers', [CustomerController::class, 'getTableauData']);
