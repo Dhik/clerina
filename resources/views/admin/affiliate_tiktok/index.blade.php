@@ -1,10 +1,10 @@
 @extends('adminlte::page')
 
-@section('title', 'Affiliate TikTok')
+@section('title', 'Affiliate Shopee')
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
-        <h1>Affiliate TikTok</h1>
+        <h1>Affiliate Shopee</h1>
     </div>
 @stop
 
@@ -21,10 +21,10 @@
                                 <input type="text" id="filterDates" class="form-control rangeDate" placeholder="DD/MM/YYYY - DD/MM/YYYY">
                             </div>
                             <div class="col-auto">
-                                <select class="form-control" id="creatorFilter">
-                                    <option value="">All Creators</option>
-                                    @foreach($creatorList as $creator)
-                                        <option value="{{ $creator }}">{{ $creator }}</option>
+                                <select class="form-control" id="affiliateFilter">
+                                    <option value="">All Affiliates</option>
+                                    @foreach($affiliateList as $affiliate)
+                                        <option value="{{ $affiliate }}">{{ $affiliate }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -33,8 +33,8 @@
                             </div>
                             <div class="col-auto">
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importAffiliateTiktokModal" id="btnImportAffiliateTiktok">
-                                        <i class="fas fa-file-upload"></i> Import Affiliate TikTok (Excel)
+                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importAffiliateShopeeModal" id="btnImportAffiliateShopee">
+                                        <i class="fas fa-file-upload"></i> Import Affiliate Shopee (CSV)
                                     </button>
                                 </div>
                             </div>
@@ -53,17 +53,17 @@
                             <div class="col-md-6">
                                 <div class="card h-100">
                                     <div class="card-header">
-                                        <h5 class="card-title mb-0">GMV Over Time</h5>
+                                        <h5 class="card-title mb-0">Commission Over Time</h5>
                                     </div>
                                     <div class="card-body">
-                                        <canvas id="gmvChart" width="400" height="300"></canvas>
+                                        <canvas id="commissionChart" width="400" height="300"></canvas>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="card h-100">
                                     <div class="card-header">
-                                        <h5 class="card-title mb-0">TikTok Performance Funnel</h5>
+                                        <h5 class="card-title mb-0">Affiliate Performance Funnel</h5>
                                     </div>
                                     <div class="card-body">
                                         <div id="funnelChart"></div>
@@ -80,22 +80,21 @@
         <!-- DataTable -->
         <div class="card">
             <div class="card-body">
-                <table id="affiliateTiktokTable" class="table table-bordered table-striped dataTable responsive" width="100%">
+                <table id="affiliateShopeeTable" class="table table-bordered table-striped dataTable responsive" width="100%">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Total Creators</th>
-                            <th>Total GMV</th>
-                            <th>Live GMV</th>
+                            <th>Total Affiliates</th>
+                            <th>Total Omzet</th>
                             <th>Products Sold</th>
-                            <th>Items Sold</th>
-                            <th>Est. Commission</th>
-                            <th>Avg Order Value</th>
                             <th>Total Orders</th>
-                            <th>Total Impressions</th>
-                            <th>Live Streams</th>
-                            <th>Conversion Rate</th>
-                            <th>Avg Commission/Creator</th>
+                            <th>Total Clicks</th>
+                            <th>Est. Commission</th>
+                            <th>Avg ROI</th>
+                            <th>Total Buyers</th>
+                            <th>New Buyers</th>
+                            <th>CTR</th>
+                            <th>Avg Commission/Affiliate</th>
                             <th>Performance</th>
                         </tr>
                     </thead>
@@ -106,35 +105,35 @@
 </div>
 
 <!-- Import Modal -->
-<div class="modal fade" id="importAffiliateTiktokModal" tabindex="-1" role="dialog" aria-labelledby="importAffiliateTiktokModalLabel" aria-hidden="true">
+<div class="modal fade" id="importAffiliateShopeeModal" tabindex="-1" role="dialog" aria-labelledby="importAffiliateShopeeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="importAffiliateTiktokModalLabel">Import Affiliate TikTok Data</h5>
+                <h5 class="modal-title" id="importAffiliateShopeeModalLabel">Import Affiliate Shopee Data</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <form id="importAffiliateTiktokForm" enctype="multipart/form-data">
+                <form id="importAffiliateShopeeForm" enctype="multipart/form-data">
                     @csrf
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Date Extraction:</strong> The import date will be automatically extracted from the filename.
-                        <br>Example: <code>Creator_List_20250601-20250601_20250619014737_Shop_Tokopedia (1).xlsx</code> → Date: <strong>2025-06-01</strong>
+                    <div class="form-group">
+                        <label for="importDate">Import Date</label>
+                        <input type="date" class="form-control" id="importDate" name="import_date" required>
+                        <small class="form-text text-muted">Select the date for this affiliate data import</small>
                     </div>
                     <div class="form-group">
-                        <label for="affiliateTiktokExcelFile">Import Excel File</label>
+                        <label for="affiliateShopeeCSVFile">Import CSV File</label>
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="affiliateTiktokExcelFile" name="affiliate_tiktok_excel_file" accept=".xlsx,.xls" required>
-                            <label class="custom-file-label" for="affiliateTiktokExcelFile">Choose file</label>
+                            <input type="file" class="custom-file-input" id="affiliateShopeeCSVFile" name="affiliate_shopee_csv_file" accept=".csv" required>
+                            <label class="custom-file-label" for="affiliateShopeeCSVFile">Choose file</label>
                         </div>
-                        <small class="form-text text-muted">Please upload an Excel file (.xlsx or .xls) with TikTok Affiliate data</small>
+                        <small class="form-text text-muted">Please upload a CSV file with Affiliate Shopee data</small>
                         <small class="form-text text-muted">Expected columns in this order:</small>
-                        <small class="form-text text-muted"><strong>A: Creator Username, B: Affiliate GMV, C: Affiliate Live GMV, D: Affiliate Shoppable Video, E: Affiliate Product Card GMV, F: Affiliate Products Sold, G: Items Sold, H: Est Commission, I: Avg Order Value, J: Affiliate Orders, K: CTR, L: Product Impressions, M: Avg Affiliate Customers, N: Affiliate Live Streams, O: Open Collaboration GMV, P: Open Collaboration Est, Q: Affiliate Refunded GMV, R: Affiliate Items Refunded, S: Affiliate Followers</strong></small>
-                        <small class="form-text text-muted"><strong>Filename Format:</strong> Creator_List_YYYYMMDD-YYYYMMDD_timestamp_description.xlsx</small>
+                        <small class="form-text text-muted"><strong>Column A: Affiliate ID, Column B: Nama Affiliate, Column C: Username Affiliate, Column D: Omzet Penjualan, Column E: Produk Terjual, Column F: Pesanan, Column G: Clicks, Column H: Estimasi Komisi, Column I: ROI, Column J: Total Pembeli, Column K: Pembeli Baru</strong></small>
+                        <small class="form-text text-muted">Numbers can contain dots as thousand separators (e.g., 1.234.567)</small>
                     </div>
-                    <div class="form-group d-none" id="errorImportAffiliateTiktok"></div>
+                    <div class="form-group d-none" id="errorImportAffiliateShopee"></div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload"></i> Import
                     </button>
@@ -149,7 +148,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="dailyDetailsModalLabel">TikTok Affiliate Details</h5>
+                <h5 class="modal-title" id="dailyDetailsModalLabel">Affiliate Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -167,28 +166,20 @@
                 <table id="affiliateDetailsTable" class="table table-bordered table-striped dataTable responsive" width="100%">
                     <thead>
                         <tr>
-                            <th>Creator</th>
-                            <th>Affiliate GMV</th>
-                            <th>Live GMV</th>
-                            <th>Shoppable Video</th>
-                            <th>Product Card GMV</th>
-                            <th>Products Sold</th>
-                            <th>Items Sold</th>
-                            <th>Est. Commission</th>
-                            <th>AOV</th>
-                            <th>Orders</th>
+                            <th>Affiliate ID</th>
+                            <th>Nama Affiliate</th>
+                            <th>Username</th>
+                            <th>Omzet Penjualan</th>
+                            <th>Produk Terjual</th>
+                            <th>Pesanan</th>
+                            <th>Clicks</th>
+                            <th>Est. Komisi</th>
+                            <th>ROI</th>
+                            <th>Total Pembeli</th>
+                            <th>Pembeli Baru</th>
                             <th>CTR</th>
-                            <th>Impressions</th>
-                            <th>Customers</th>
-                            <th>Live Streams</th>
-                            <th>Open Collab GMV</th>
-                            <th>Open Collab Est</th>
-                            <th>Refunded GMV</th>
-                            <th>Items Refunded</th>
-                            <th>Followers</th>
-                            <th>Conv. Rate</th>
-                            <th>Comm. Rate</th>
-                            <th>Refund Rate</th>
+                            <th>Commission Rate</th>
+                            <th>New Buyer Rate</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -263,13 +254,7 @@
 }
 
 .modal-xl {
-    max-width: 1400px;
-}
-
-.alert-info {
-    background-color: #d1ecf1;
-    border-color: #bee5eb;
-    color: #0c5460;
+    max-width: 1200px;
 }
 
 /* Custom scrollbar for tables */
@@ -317,6 +302,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.1/dist/sweetalert2.all.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-
-@include('admin.affiliate_tiktok.scripts')
+@include('admin.affiliate_shopee.scripts')
 @stop
