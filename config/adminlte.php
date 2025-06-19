@@ -647,6 +647,27 @@ return [
             ]
         ],
         [
+            'text' => 'Affiliate Data',
+            'can' => [
+                PermissionEnum::ChangeOwnPassword
+            ],
+            'icon'    => 'fas fa-fw fa-users',
+            'submenu' => [
+                [
+                    'text' => 'Affiliate Shopee',
+                    'url' => 'admin/affiliate_shopee',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ChangeOwnPassword],
+                ],
+                [
+                    'text' => 'Affiliate Tiktok',
+                    'url' => 'admin/affiliate_tiktok',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ChangeOwnPassword],
+                ],
+            ]
+        ],
+        [
             'text' => 'KOL',
             'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
             'icon'    => 'fas fa-fw fa-play',
