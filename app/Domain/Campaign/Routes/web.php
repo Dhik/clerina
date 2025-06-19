@@ -10,6 +10,7 @@ use App\Domain\Campaign\Controllers\BriefController;
 use App\Domain\Campaign\Controllers\BriefContentController;
 use App\Domain\Campaign\Controllers\LiveDataController;
 use App\Domain\Campaign\Controllers\LiveShopeeController;
+use App\Domain\Campaign\Controllers\LiveTiktokController;
 use App\Domain\Campaign\Controllers\LiveShopeeProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -101,6 +102,17 @@ Route::prefix('admin')
             Route::get('/funnel-data', [LiveShopeeProductController::class, 'get_funnel_data'])->name('live_shopee_product.funnel_data');
             Route::post('/import', [LiveShopeeProductController::class, 'import_live_shopee_product'])->name('live_shopee_product.import');
             Route::delete('/delete', [LiveShopeeProductController::class, 'delete_live_shopee_product'])->name('live_shopee_product.delete');
+        });
+
+        Route::prefix('live_tiktok')->group(function () {
+            Route::get('/', [LiveTiktokController::class, 'index'])->name('live_tiktok.index');
+            Route::get('/get-data', [LiveTiktokController::class, 'get_live_tiktok'])->name('live_tiktok.get_data');
+            Route::get('/line-data', [LiveTiktokController::class, 'get_line_data'])->name('live_tiktok.line_data');
+            Route::get('/funnel-data', [LiveTiktokController::class, 'get_funnel_data'])->name('live_tiktok.funnel_data');
+            Route::post('/', [LiveTiktokController::class, 'store'])->name('live_tiktok.store');
+            Route::get('/{id}/edit', [LiveTiktokController::class, 'edit'])->name('live_tiktok.edit');
+            Route::put('/{id}', [LiveTiktokController::class, 'update'])->name('live_tiktok.update');
+            Route::delete('/{id}', [LiveTiktokController::class, 'destroy'])->name('live_tiktok.destroy');
         });
         
         Route::prefix('products')

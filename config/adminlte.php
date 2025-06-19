@@ -644,12 +644,18 @@ return [
                     'can' => [PermissionEnum::ChangeOwnPassword],
                     'icon' => 'nav-icon far fa-circle',
                 ],
+                [
+                    'text' => 'Live TikTok',
+                    'url' => 'admin/live_tiktok',
+                    'can' => [PermissionEnum::ViewMarketing],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
             ]
         ],
         [
             'text' => 'Affiliate Data',
             'can' => [
-                PermissionEnum::ChangeOwnPassword
+                PermissionEnum::ViewMarketing
             ],
             'icon'    => 'fas fa-fw fa-users',
             'submenu' => [
@@ -657,13 +663,13 @@ return [
                     'text' => 'Affiliate Shopee',
                     'url' => 'admin/affiliate_shopee',
                     'icon' => 'nav-icon far fa-circle',
-                    'can' => [PermissionEnum::ChangeOwnPassword],
+                    'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Affiliate Tiktok',
                     'url' => 'admin/affiliate_tiktok',
                     'icon' => 'nav-icon far fa-circle',
-                    'can' => [PermissionEnum::ChangeOwnPassword],
+                    'can' => [PermissionEnum::ViewMarketing],
                 ],
             ]
         ],
