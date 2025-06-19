@@ -414,9 +414,6 @@ $(document).ready(function() {
         fetch(url)
             .then(response => response.json())
             .then(result => {
-        fetch(url)
-            .then(response => response.json())
-            .then(result => {
                 if (result.status === 'success') {
                     if (!result.has_data) {
                         // Show empty state for funnel chart
