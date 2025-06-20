@@ -942,7 +942,12 @@
     function createDayElement(date, currentMonth, today) {
         const isCurrentMonth = date.getMonth() === currentMonth;
         const isToday = date.toDateString() === today.toDateString();
-        const dateString = date.toISOString().split('T')[0];
+        
+        // FIXED: Use local date string to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
         
         let classes = 'calendar-day';
         if (!isCurrentMonth) classes += ' other-month';
@@ -963,7 +968,11 @@
                     ? plan.target_posting_date.split(' ')[0] 
                     : plan.target_posting_date;
             } else if (plan.target_posting_date instanceof Date) {
-                planDate = plan.target_posting_date.toISOString().split('T')[0];
+                // FIXED: Use local date methods instead of toISOString to avoid timezone shift
+                const pYear = plan.target_posting_date.getFullYear();
+                const pMonth = String(plan.target_posting_date.getMonth() + 1).padStart(2, '0');
+                const pDay = String(plan.target_posting_date.getDate()).padStart(2, '0');
+                planDate = `${pYear}-${pMonth}-${pDay}`;
             } else {
                 console.log('Unknown date format:', plan.target_posting_date, typeof plan.target_posting_date);
                 return false;
@@ -1129,8 +1138,14 @@
 
     // Notification Functions
     function loadTodayNotifications() {
-        const today = new Date().toISOString().split('T')[0];
-        console.log('Loading notifications for today:', today); // Debug log
+        // FIXED: Use local date to avoid timezone issues
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayString = `${year}-${month}-${day}`;
+        
+        console.log('Loading notifications for today:', todayString); // Debug log
         
         // Filter content plans for today - FIXED: properly handling target_posting_date
         const todayPlans = contentPlans.filter(plan => {
@@ -1146,13 +1161,17 @@
                     ? plan.target_posting_date.split(' ')[0] 
                     : plan.target_posting_date;
             } else if (plan.target_posting_date instanceof Date) {
-                planDate = plan.target_posting_date.toISOString().split('T')[0];
+                // FIXED: Use local date methods instead of toISOString to avoid timezone shift
+                const pYear = plan.target_posting_date.getFullYear();
+                const pMonth = String(plan.target_posting_date.getMonth() + 1).padStart(2, '0');
+                const pDay = String(plan.target_posting_date.getDate()).padStart(2, '0');
+                planDate = `${pYear}-${pMonth}-${pDay}`;
             } else {
                 console.log('Unknown date format in notifications:', plan.target_posting_date);
                 return false;
             }
             
-            const matches = planDate === today;
+            const matches = planDate === todayString;
             if (matches) {
                 console.log(`Today's plan: ${plan.id} - ${plan.objektif}`); // Debug log
             }
