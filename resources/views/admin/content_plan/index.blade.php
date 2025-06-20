@@ -845,7 +845,9 @@
                                 <option value="">Select Content Editor</option>
                                 <option value="cleora_azmi" ${data.assignee_content_editor === 'cleora_azmi' ? 'selected' : ''}>Desain Grafis Cleora, Azmi Daffa</option>
                                 <option value="azrina_farhan" ${data.assignee_content_editor === 'azrina_farhan' ? 'selected' : ''}>Desain Grafis Azrina, Farhan Ridho</option>
-                                <option value="faddal_hendra_rafi" ${data.assignee_content_editor === 'faddal_hendra_rafi' ? 'selected' : ''}>Videographer & Editor, Faddal Hendra Rafi</option>
+                                <option value="faddal" ${data.assignee_content_editor === 'faddal' ? 'selected' : ''}>Videographer & Editor, Faddal</option>
+                                <option value="hendra" ${data.assignee_content_editor === 'hendra' ? 'selected' : ''}>Videographer & Editor, Hendra</option>
+                                <option value="rafi" ${data.assignee_content_editor === 'rafi' ? 'selected' : ''}>Videographer & Editor, Rafi</option>
                                 <option value="lukman" ${data.assignee_content_editor === 'lukman' ? 'selected' : ''}>Fotograoher & Editor, Lukman fajar</option>
                             </select>
                         </div>
