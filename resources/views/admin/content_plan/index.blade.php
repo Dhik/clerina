@@ -843,9 +843,10 @@
                             <label for="step_assignee_content_editor">Assignee Content Editor</label>
                             <select class="form-control" name="assignee_content_editor" id="step_assignee_content_editor">
                                 <option value="">Select Content Editor</option>
-                                <option value="editor1" ${data.assignee_content_editor === 'editor1' ? 'selected' : ''}>Editor 1</option>
-                                <option value="editor2" ${data.assignee_content_editor === 'editor2' ? 'selected' : ''}>Editor 2</option>
-                                <option value="editor3" ${data.assignee_content_editor === 'editor3' ? 'selected' : ''}>Editor 3</option>
+                                <option value="cleora_azmi" ${data.assignee_content_editor === 'cleora_azmi' ? 'selected' : ''}>Desain Grafis Cleora, Azmi Daffa</option>
+                                <option value="azrina_farhan" ${data.assignee_content_editor === 'azrina_farhan' ? 'selected' : ''}>Desain Grafis Azrina, Farhan Ridho</option>
+                                <option value="faddal" ${data.assignee_content_editor === 'faddal' ? 'selected' : ''}>Videographer & Editor, Faddal</option>
+                                <option value="lukman" ${data.assignee_content_editor === 'lukman' ? 'selected' : ''}>Fotograoher & Editor, Lukman fajar</option>
                             </select>
                         </div>
                         <div class="form-group">
