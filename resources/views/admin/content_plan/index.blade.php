@@ -947,10 +947,13 @@
         if (!isCurrentMonth) classes += ' other-month';
         if (isToday) classes += ' today';
         
-        // Find content plans for this date
+        // Find content plans for this date - FIXED: using target_posting_date
         const dayPlans = contentPlans.filter(plan => {
             if (!plan.target_posting_date) return false;
-            const planDate = plan.target_posting_date.split(' ')[0]; // Handle both date and datetime formats
+            // Handle both date and datetime formats
+            const planDate = plan.target_posting_date.includes(' ') 
+                ? plan.target_posting_date.split(' ')[0] 
+                : plan.target_posting_date;
             return planDate === dateString;
         });
         
@@ -1108,10 +1111,13 @@
     function loadTodayNotifications() {
         const today = new Date().toISOString().split('T')[0];
         
-        // Filter content plans for today
+        // Filter content plans for today - FIXED: using target_posting_date
         const todayPlans = contentPlans.filter(plan => {
             if (!plan.target_posting_date) return false;
-            const planDate = plan.target_posting_date.split(' ')[0];
+            // Handle both date and datetime formats
+            const planDate = plan.target_posting_date.includes(' ') 
+                ? plan.target_posting_date.split(' ')[0] 
+                : plan.target_posting_date;
             return planDate === today;
         });
 
@@ -1134,6 +1140,7 @@
         
         $('#todayNotifications').html(notificationHtml);
     }
+
 
     // Global delete function (similar to your budget example)
     function deleteAjax(route, id, table) {
