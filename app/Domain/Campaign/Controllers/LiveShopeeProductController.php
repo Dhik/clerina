@@ -30,6 +30,117 @@ class LiveShopeeProductController extends Controller
     }
 
     /**
+     * Get SKU based on product name
+     */
+    private function getSKUFromProductName($productName)
+    {
+        if (empty($productName)) {
+            return null;
+        }
+
+        $product = strtolower($productName);
+
+        // Define SKU mapping based on product patterns
+        $skuMappings = [
+            'CLE-JB30-001' => [
+                'cleora exclusive glow jelly booster vit c 30gr',
+                'moisturizer gel',
+                '!twinpack',
+                '!bundle'
+            ],
+            'CLE-XFO-008' => [
+                'marshanda choice',
+                'cleora exfoliating gel 50gr',
+                'aha bha pha'
+            ],
+            'CLE-BD-TWJB30-033' => [
+                'cleora twinpack exclusive glow jelly booster 30gr',
+                'special bundle 2pcs'
+            ],
+            'CL-JBRS' => [
+                'cleora glow skin exfoliator package',
+                'special bundle 2in1',
+                'exclusive glow jelly booster vit c + red saviour'
+            ],
+            'CL-8XHL' => [
+                'special offer',
+                'cleora 8x hyalu hydrating moisturizer gel',
+                'hyaluronic acid'
+            ],
+            'CL-GS' => [
+                'cleora glow smooth moisturizer',
+                '30g',
+                'bpom'
+            ],
+            'CLE-RS-047' => [
+                'cleora beauty red saviour exfoliating serum',
+                '!bundle',
+                '!package'
+            ],
+            'CLE-XFO100ML-065' => [
+                'cleora 3 minutes exfoliating gel 100ml'
+            ],
+            'CLE-HYBST-007' => [
+                'cleora - hydro boost cleansing gel',
+                'face wash brightening',
+                '!bundle'
+            ],
+            'CL-8XHLRS' => [
+                'cleora brightening skin exfoliator package',
+                'red saviour + 8x hyalu hydrating moisturizer'
+            ],
+            'CLE-BD-XFOJB30-017' => [
+                'cleora beauty glow maximum package',
+                'exfoliating gel + exclusive glow jelly booster vit c'
+            ],
+            'CL-GLRS' => [
+                'cleora glowing special bundling 2in1',
+                'glow smooth moisturizer + red saviour serum'
+            ],
+            'CLE-NEG-071' => [
+                'cleora beauty 30 seconds natural exfoliating gel'
+            ],
+            'CL-JBHB' => [
+                'special offer',
+                'cleora bundle 2 in1',
+                'cleora glow jelly booster vit c 30gr + cleora hydro boost cleansing gel'
+            ],
+            'CL-GLXF' => [
+                'cleora bright & smooth special bundling 2in1',
+                'glow smooth moisturizer + 3 minute exfoliating gel'
+            ]
+        ];
+
+        // Check each SKU mapping
+        foreach ($skuMappings as $sku => $patterns) {
+            $matches = true;
+            
+            foreach ($patterns as $pattern) {
+                if (strpos($pattern, '!') === 0) {
+                    // Negative pattern - should NOT contain this
+                    $negativePattern = substr($pattern, 1);
+                    if (strpos($product, $negativePattern) !== false) {
+                        $matches = false;
+                        break;
+                    }
+                } else {
+                    // Positive pattern - should contain this
+                    if (strpos($product, $pattern) === false) {
+                        $matches = false;
+                        break;
+                    }
+                }
+            }
+            
+            if ($matches) {
+                return $sku;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get Live Shopee Product data for DataTables
      */
     public function get_live_shopee_product(Request $request) 
@@ -126,6 +237,7 @@ class LiveShopeeProductController extends Controller
                 'id',
                 'periode_data',
                 'user_id',
+                'sku',
                 'ranking',
                 'produk',
                 'klik_produk',
@@ -160,6 +272,9 @@ class LiveShopeeProductController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
+            ->editColumn('sku', function ($row) {
+                return $row->sku ? '<span class="badge badge-info">' . $row->sku . '</span>' : '<span class="badge badge-secondary">No SKU</span>';
+            })
             ->editColumn('produk', function ($row) {
                 return $row->produk ? '<div style="max-width: 300px; word-wrap: break-word;">' . $row->produk . '</div>' : '-';
             })
@@ -213,7 +328,7 @@ class LiveShopeeProductController extends Controller
                     <i class="fas fa-trash"></i> Delete
                 </button>';
             })
-            ->rawColumns(['produk', 'action'])
+            ->rawColumns(['sku', 'produk', 'action'])
             ->make(true);
     }
 
@@ -395,6 +510,9 @@ class LiveShopeeProductController extends Controller
                         // Get product name from Column D (index 3)
                         $produk = trim($row[3]) ?: null;
                         
+                        // Generate SKU based on product name
+                        $sku = $this->getSKUFromProductName($produk);
+                        
                         // Parse sales amounts - remove "Rp" and convert to numeric
                         $penjualanDibuat = 0;
                         $penjualanSiapDikirim = 0;
@@ -415,6 +533,7 @@ class LiveShopeeProductController extends Controller
                                 'produk' => $produk
                             ],
                             [
+                                'sku' => $sku, // Add SKU assignment
                                 'klik_produk' => $convertToInteger($row[4]), // Column E
                                 'tambah_ke_keranjang' => $convertToInteger($row[5]), // Column F
                                 'pesanan_dibuat' => (int)($row[6] ?? 0), // Column G
@@ -430,6 +549,7 @@ class LiveShopeeProductController extends Controller
                         Log::info("Successfully imported row {$rowIndex}", [
                             'date' => $date,
                             'user_id' => $userId,
+                            'sku' => $sku,
                             'ranking' => $ranking,
                             'product' => $produk,
                             'clicks' => $convertToInteger($row[4]),
@@ -470,6 +590,37 @@ class LiveShopeeProductController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error importing data: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    /**
+     * Update SKUs for existing records
+     */
+    public function update_existing_skus()
+    {
+        try {
+            $products = LiveShopeeProduct::whereNull('sku')->orWhere('sku', '')->get();
+            $updatedCount = 0;
+            
+            foreach ($products as $product) {
+                $sku = $this->getSKUFromProductName($product->produk);
+                if ($sku) {
+                    $product->sku = $sku;
+                    $product->save();
+                    $updatedCount++;
+                }
+            }
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => "Updated {$updatedCount} products with SKUs."
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating SKUs: ' . $e->getMessage()
             ], 422);
         }
     }

@@ -22,6 +22,7 @@ class LiveShopeeProduct extends Model
         'pesanan_siap_dikirim',
         'produk_terjual_siap_dikirim',
         'penjualan_dibuat',
+        'sku',
         'penjualan_siap_dikirim',
     ];
 
