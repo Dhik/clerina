@@ -788,7 +788,13 @@
                         </div>
                         <div class="form-group">
                             <label for="step_talent">Talent</label>
-                            <input type="text" class="form-control" name="talent" id="step_talent" value="${data.talent || ''}">
+                            <select class="form-control" name="talent" id="step_talent">
+                                <option value="">Select Talent</option>
+                                <option value="syifa" ${data.talent === 'syifa' ? 'selected' : ''}>Syifa</option>
+                                <option value="zinny" ${data.talent === 'zinny' ? 'selected' : ''}>Zinny</option>
+                                <option value="putri" ${data.talent === 'putri' ? 'selected' : ''}>Putri</option>
+                                <option value="eksternal" ${data.talent === 'eksternal' ? 'selected' : ''}>Eksternal</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="step_venue">Venue</label>
