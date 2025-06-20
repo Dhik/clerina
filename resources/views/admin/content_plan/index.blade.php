@@ -891,6 +891,7 @@
             },
             success: function(response) {
                 contentPlans = response.data || [];
+                console.log('Loaded content plans:', contentPlans); // Debug log
                 generateCalendar();
                 loadTodayNotifications();
             },
@@ -947,14 +948,32 @@
         if (!isCurrentMonth) classes += ' other-month';
         if (isToday) classes += ' today';
         
-        // Find content plans for this date - FIXED: using target_posting_date
+        // Find content plans for this date - FIXED: properly handling target_posting_date
         const dayPlans = contentPlans.filter(plan => {
-            if (!plan.target_posting_date) return false;
-            // Handle both date and datetime formats
-            const planDate = plan.target_posting_date.includes(' ') 
-                ? plan.target_posting_date.split(' ')[0] 
-                : plan.target_posting_date;
-            return planDate === dateString;
+            if (!plan.target_posting_date) {
+                console.log('Plan without target_posting_date:', plan.id); // Debug log
+                return false;
+            }
+            
+            // Normalize the date - handle both date string and datetime formats
+            let planDate;
+            if (typeof plan.target_posting_date === 'string') {
+                // If it contains time (space), extract just the date part
+                planDate = plan.target_posting_date.includes(' ') 
+                    ? plan.target_posting_date.split(' ')[0] 
+                    : plan.target_posting_date;
+            } else if (plan.target_posting_date instanceof Date) {
+                planDate = plan.target_posting_date.toISOString().split('T')[0];
+            } else {
+                console.log('Unknown date format:', plan.target_posting_date, typeof plan.target_posting_date);
+                return false;
+            }
+            
+            const matches = planDate === dateString;
+            if (matches) {
+                console.log(`Plan ${plan.id} matches date ${dateString}:`, plan.objektif); // Debug log
+            }
+            return matches;
         });
         
         let dayHtml = `
@@ -964,6 +983,7 @@
         
         // Add content plans for this day
         if (dayPlans.length > 0) {
+            console.log(`Adding ${dayPlans.length} plans to date ${dateString}`); // Debug log
             dayPlans.forEach(plan => {
                 const statusClass = getStatusClass(plan.status);
                 dayHtml += `
@@ -1090,6 +1110,10 @@
         $('#contentPlanDetailModal').modal('show');
     }
 
+    function editContentPlan(id) {
+        window.location.href = '{{ route('contentPlan.edit', ':id') }}'.replace(':id', id);
+    }
+
     function getStatusLabel(status) {
         const statusLabels = {
             'draft': 'Draft',
@@ -1103,23 +1127,39 @@
         return statusLabels[status] || status;
     }
 
-    function editContentPlan(id) {
-        window.location.href = '{{ route('contentPlan.edit', ':id') }}'.replace(':id', id);
-    }
-
     // Notification Functions
     function loadTodayNotifications() {
         const today = new Date().toISOString().split('T')[0];
+        console.log('Loading notifications for today:', today); // Debug log
         
-        // Filter content plans for today - FIXED: using target_posting_date
+        // Filter content plans for today - FIXED: properly handling target_posting_date
         const todayPlans = contentPlans.filter(plan => {
-            if (!plan.target_posting_date) return false;
-            // Handle both date and datetime formats
-            const planDate = plan.target_posting_date.includes(' ') 
-                ? plan.target_posting_date.split(' ')[0] 
-                : plan.target_posting_date;
-            return planDate === today;
+            if (!plan.target_posting_date) {
+                return false;
+            }
+            
+            // Normalize the date - handle both date string and datetime formats
+            let planDate;
+            if (typeof plan.target_posting_date === 'string') {
+                // If it contains time (space), extract just the date part
+                planDate = plan.target_posting_date.includes(' ') 
+                    ? plan.target_posting_date.split(' ')[0] 
+                    : plan.target_posting_date;
+            } else if (plan.target_posting_date instanceof Date) {
+                planDate = plan.target_posting_date.toISOString().split('T')[0];
+            } else {
+                console.log('Unknown date format in notifications:', plan.target_posting_date);
+                return false;
+            }
+            
+            const matches = planDate === today;
+            if (matches) {
+                console.log(`Today's plan: ${plan.id} - ${plan.objektif}`); // Debug log
+            }
+            return matches;
         });
+
+        console.log(`Found ${todayPlans.length} plans for today`); // Debug log
 
         let notificationHtml = '';
         

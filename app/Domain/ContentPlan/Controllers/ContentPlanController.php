@@ -56,8 +56,9 @@ class ContentPlanController extends Controller
             $data = $contentPlans->map(function ($plan) {
                 return [
                     'id' => $plan->id,
+                    // FIXED: Ensure consistent date format for target_posting_date
                     'target_posting_date' => $plan->target_posting_date ? 
-                        (is_string($plan->target_posting_date) ? $plan->target_posting_date : $plan->target_posting_date->format('Y-m-d')) : 
+                        $plan->target_posting_date->format('Y-m-d') : 
                         null,
                     'status' => $plan->status,
                     'status_label' => $plan->status_label,
@@ -78,9 +79,15 @@ class ContentPlanController extends Controller
                     'assignee_content_editor' => $plan->assignee_content_editor,
                     'link_hasil_edit' => $plan->link_hasil_edit,
                     'input_link_posting' => $plan->input_link_posting,
-                    'posting_date' => $plan->posting_date,
-                    'created_at' => $plan->created_at,
-                    'updated_at' => $plan->updated_at,
+                    'posting_date' => $plan->posting_date ? 
+                        $plan->posting_date->format('Y-m-d H:i:s') : 
+                        null,
+                    'created_at' => $plan->created_at ? 
+                        $plan->created_at->format('Y-m-d H:i:s') : 
+                        null,
+                    'updated_at' => $plan->updated_at ? 
+                        $plan->updated_at->format('Y-m-d H:i:s') : 
+                        null,
                 ];
             });
             
@@ -92,8 +99,9 @@ class ContentPlanController extends Controller
         // Original DataTables response
         return DataTables::of($query)
             ->addColumn('target_date', function ($plan) {
+                // FIXED: Ensure consistent date format for DataTables
                 return $plan->target_posting_date ? 
-                    (is_string($plan->target_posting_date) ? $plan->target_posting_date : $plan->target_posting_date->format('Y-m-d')) : 
+                    $plan->target_posting_date->format('Y-m-d') : 
                     '-';
             })
             ->addColumn('status_badge', function ($plan) {
@@ -101,8 +109,9 @@ class ContentPlanController extends Controller
                 return '<span class="badge badge-' . $badgeColor . '">' . $plan->status_label . '</span>';
             })
             ->addColumn('created_date', function ($plan) {
+                // This shows created_at for the table, which is different from calendar
                 return $plan->created_at ? 
-                    (is_string($plan->created_at) ? $plan->created_at : $plan->created_at->format('Y-m-d')) : 
+                    $plan->created_at->format('Y-m-d') : 
                     '-';
             })
             ->addColumn('action', function ($plan) {
