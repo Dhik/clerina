@@ -32,7 +32,7 @@
                     <div class="card-body">
                         <div class="row">
                             <!-- New Funnel Stage KPI Cards -->
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="small-box bg-gradient-warning">
                                     <div class="inner">
                                         <h4 id="summaryTofuSpent">-</h4>
@@ -43,7 +43,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="small-box bg-gradient-warning">
                                     <div class="inner">
                                         <h4 id="summaryMofuSpent">-</h4>
@@ -54,7 +54,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="small-box bg-gradient-warning">
                                     <div class="inner">
                                         <h4 id="summaryBofuSpent">-</h4>
@@ -62,6 +62,17 @@
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-funnel-dollar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="small-box bg-gradient-info">
+                                    <div class="inner">
+                                        <h4 id="summaryShopeeSpent">-</h4>
+                                        <p>SHOPEE Spent <span id="summaryShopeePercentage" class="badge badge-light">-%</span></p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fab fa-shopify"></i>
                                     </div>
                                 </div>
                             </div>

@@ -372,11 +372,13 @@ function updateCampaignSummary(params = {}, dateElementId = 'modalFilterDates', 
                 $('#summaryTofuSpent').text('Rp ' + numberFormat(data.tofu_spent));
                 $('#summaryMofuSpent').text('Rp ' + numberFormat(data.mofu_spent));
                 $('#summaryBofuSpent').text('Rp ' + numberFormat(data.bofu_spent));
-                
+                $('#summaryShopeeSpent').text('Rp ' + numberFormat(data.shopee_spent)); // Add this line
+
                 // Update percentage badges
                 $('#summaryTofuPercentage').text(numberFormat(data.tofu_percentage, 2) + '%');
                 $('#summaryMofuPercentage').text(numberFormat(data.mofu_percentage, 2) + '%');
                 $('#summaryBofuPercentage').text(numberFormat(data.bofu_percentage, 2) + '%');
+                $('#summaryShopeePercentage').text(numberFormat(data.shopee_percentage, 2) + '%'); // Add this line
                 
                 // Add color coding for ROAS based on performance thresholds
                 const roasElement = $('#summaryRoas');
