@@ -540,13 +540,13 @@ return [
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
-                    'text' => 'Creative Review (Step 3)',
+                    'text' => 'Admin Support (Step 3)',
                     'url' => 'admin/contentPlan?status=creative_review',
                     'icon' => 'nav-icon far fa-circle text-warning',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
-                    'text' => 'Admin Support (Step 4)',
+                    'text' => 'Creative Review (Step 4)',
                     'url' => 'admin/contentPlan?status=admin_support',
                     'icon' => 'nav-icon far fa-circle text-primary',
                     'can' => [PermissionEnum::ViewMarketing],
@@ -558,7 +558,7 @@ return [
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
-                    'text' => 'Ready to Post (Step 6)',
+                    'text' => 'Store to Content Bank (Step 6)',
                     'url' => 'admin/contentPlan?status=ready_to_post',
                     'icon' => 'nav-icon far fa-circle text-success',
                     'can' => [PermissionEnum::ViewMarketing],
