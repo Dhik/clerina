@@ -1393,11 +1393,6 @@ function getStepFormFields(data, step) {
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="step_review_comments">Review Comments (Optional)</label>
-                    <textarea class="form-control" name="review_comments" id="step_review_comments" rows="3" 
-                              placeholder="Add any review comments or feedback..."></textarea>
-                </div>
             `;
             
         case 5: // Content Editor (unchanged)
