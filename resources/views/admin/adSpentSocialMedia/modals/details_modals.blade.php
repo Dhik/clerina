@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                             <div class="col-3">
-                                <div class="small-box bg-gradient-info">
+                                <div class="small-box bg-gradient-warning">
                                     <div class="inner">
                                         <h4 id="summaryShopeeSpent">-</h4>
                                         <p>SHOPEE Spent <span id="summaryShopeePercentage" class="badge badge-light">-%</span></p>
