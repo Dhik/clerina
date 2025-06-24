@@ -1137,6 +1137,25 @@ function getStatusLabel(status) {
     };
     return statusLabels[status] || status;
 }
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '-';
+    
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return dateTimeString;
+    }
+}
+
+// Make formatDateTime available globally
+window.formatDateTime = formatDateTime;
 
 // Notification Functions - Updated for datetime handling
 function loadTodayNotifications() {
