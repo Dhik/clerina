@@ -1323,7 +1323,7 @@ function getStepFormFields(data, step) {
          case 3: // Admin Support (NEW: booking dates + content editor assignment)
             return `
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <h6 class="mb-3">Talent & Production Management</h6>
                         <div class="form-group">
                             <label for="step_talent_fix">Talent Fix <span class="text-danger">*</span></label>
@@ -1352,6 +1352,23 @@ function getStepFormFields(data, step) {
                                    value="${data.production_date ? data.production_date.substring(0, 16) : ''}" required>
                         </div>
                     </div>
+                </div>
+            `;
+            
+        case 4: // Creative Review (moved from step 3, now step 4)
+            return `
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-clipboard-check"></i> Creative Review</h6>
+                    <p>Review all content elements, production details, and approve for content editing phase.</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Content Strategy:</h6>
+                        <p><strong>Objektif:</strong> ${data.objektif || 'Not set'}</p>
+                        <p><strong>Platform:</strong> ${data.platform || 'Not set'} - ${data.akun || 'Not set'}</p>
+                        <p><strong>Final Talent:</strong> ${data.talent_fix || data.talent || 'Not set'}</p>
+                        <p><strong>Production Date:</strong> ${data.production_date ? formatDateTime(data.production_date) : 'Not scheduled'}</p>
+                    </div>
                     <div class="col-md-6">
                         <h6 class="mb-3">Resource Management</h6>
                         <div class="form-group">
@@ -1374,29 +1391,6 @@ function getStepFormFields(data, step) {
                             <label for="step_link_raw_content">Link Raw Content</label>
                             <textarea class="form-control" name="link_raw_content" id="step_link_raw_content" rows="4">${data.link_raw_content || ''}</textarea>
                         </div>
-                    </div>
-                </div>
-            `;
-            
-        case 4: // Creative Review (moved from step 3, now step 4)
-            return `
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-clipboard-check"></i> Creative Review</h6>
-                    <p>Review all content elements, production details, and approve for content editing phase.</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Content Strategy:</h6>
-                        <p><strong>Objektif:</strong> ${data.objektif || 'Not set'}</p>
-                        <p><strong>Platform:</strong> ${data.platform || 'Not set'} - ${data.akun || 'Not set'}</p>
-                        <p><strong>Final Talent:</strong> ${data.talent_fix || data.talent || 'Not set'}</p>
-                        <p><strong>Production Date:</strong> ${data.production_date ? formatDateTime(data.production_date) : 'Not scheduled'}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Content Details:</h6>
-                        <p><strong>Brief:</strong> ${data.brief_konten ? data.brief_konten.substring(0, 100) + '...' : 'Not written'}</p>
-                        <p><strong>Caption:</strong> ${data.caption ? data.caption.substring(0, 100) + '...' : 'Not written'}</p>
-                        <p><strong>Assigned Editor:</strong> ${data.assignee_content_editor || 'Not assigned'}</p>
                     </div>
                 </div>
                 <div class="form-group">
