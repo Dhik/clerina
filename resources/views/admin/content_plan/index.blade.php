@@ -494,9 +494,66 @@
 
 @section('js')
 <script>
-    // Complete Updated JavaScript for index.blade.php
+// Complete Updated JavaScript for index.blade.php
 // Includes all changes for new workflow and datetime handling
 
+// Helper Functions - Moved to top for global access
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '-';
+    
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return dateTimeString;
+    }
+}
+
+function getStatusClass(status) {
+    const statusMap = {
+        'draft': 'draft',
+        'content_writing': 'content_writing',
+        'admin_support': 'admin_support',          // Step 3 now
+        'creative_review': 'creative_review',       // Step 4 now
+        'content_editing': 'content_editing',
+        'ready_to_post': 'ready_to_post',
+        'posted': 'posted'
+    };
+    return statusMap[status] || 'draft';
+}
+
+function getStatusLabel(status) {
+    const statusLabels = {
+        'draft': 'Draft',
+        'content_writing': 'Content Writing',
+        'admin_support': 'Admin Support',
+        'creative_review': 'Creative Review',
+        'content_editing': 'Content Editing',
+        'ready_to_post': 'Ready to Post',
+        'posted': 'Posted'
+    };
+    return statusLabels[status] || status;
+}
+
+function getStepTitle(step) {
+    const titles = {
+        1: 'Social Media Strategist - Strategy & Platform',
+        2: 'Content Writer',
+        3: 'Admin Support - Booking & Resources',
+        4: 'Creative Review',
+        5: 'Content Editor',
+        6: 'Store to Content Bank'
+    };
+    return titles[step] || 'Unknown Step';
+}
+
+// Global Variables
 let currentDate = new Date();
 let contentPlans = [];
 let table;
@@ -970,19 +1027,6 @@ function createDayElement(date, currentMonth, today) {
     return dayHtml;
 }
 
-function getStatusClass(status) {
-    const statusMap = {
-        'draft': 'draft',
-        'content_writing': 'content_writing',
-        'admin_support': 'admin_support',          // Step 3 now
-        'creative_review': 'creative_review',       // Step 4 now
-        'content_editing': 'content_editing',
-        'ready_to_post': 'ready_to_post',
-        'posted': 'posted'
-    };
-    return statusMap[status] || 'draft';
-}
-
 function changeMonth(direction) {
     currentDate.setMonth(currentDate.getMonth() + direction);
     generateCalendar();
@@ -1125,37 +1169,7 @@ function editContentPlan(id) {
     window.location.href = '{{ route('contentPlan.edit', ':id') }}'.replace(':id', id);
 }
 
-function getStatusLabel(status) {
-    const statusLabels = {
-        'draft': 'Draft',
-        'content_writing': 'Content Writing',
-        'admin_support': 'Admin Support',
-        'creative_review': 'Creative Review',
-        'content_editing': 'Content Editing',
-        'ready_to_post': 'Ready to Post',
-        'posted': 'Posted'
-    };
-    return statusLabels[status] || status;
-}
-function formatDateTime(dateTimeString) {
-    if (!dateTimeString) return '-';
-    
-    try {
-        const date = new Date(dateTimeString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        return dateTimeString;
-    }
-}
-
-// Make formatDateTime available globally
-window.formatDateTime = formatDateTime;
+// Updated step functions for new workflow
 
 // Notification Functions - Updated for datetime handling
 function loadTodayNotifications() {
@@ -1224,19 +1238,6 @@ function loadTodayNotifications() {
     $('#todayNotifications').html(notificationHtml);
 }
 
-// Updated step functions for new workflow
-function getStepTitle(step) {
-    const titles = {
-        1: 'Social Media Strategist - Strategy & Platform',
-        2: 'Content Writer',
-        3: 'Admin Support - Booking & Resources',
-        4: 'Creative Review',
-        5: 'Content Editor',
-        6: 'Store to Content Bank'
-    };
-    return titles[step] || 'Unknown Step';
-}
-
 function getStepFormFields(data, step) {
     switch(step) {
         case 1: // Strategy & Platform (moved platform/account from step 3)
@@ -1244,6 +1245,21 @@ function getStepFormFields(data, step) {
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="mb-3">Content Strategy</h6>
+                        <div class="form-group">
+                            <label for="step_objektif">Objektif <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="objektif" id="step_objektif" value="${data.objektif || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="step_jenis_konten">Jenis Konten</label>
+                            <select class="form-control" name="jenis_konten" id="step_jenis_konten">
+                                <option value="">Select Content Type</option>
+                                <option value="image" ${data.jenis_konten === 'image' ? 'selected' : ''}>Image</option>
+                                <option value="video" ${data.jenis_konten === 'video' ? 'selected' : ''}>Video</option>
+                                <option value="carousel" ${data.jenis_konten === 'carousel' ? 'selected' : ''}>Carousel</option>
+                                <option value="reel" ${data.jenis_konten === 'reel' ? 'selected' : ''}>Reel</option>
+                                <option value="story" ${data.jenis_konten === 'story' ? 'selected' : ''}>Story</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="step_pillar">Pillar</label>
                             <input type="text" class="form-control" name="pillar" id="step_pillar" value="${data.pillar || ''}">
@@ -1297,6 +1313,7 @@ function getStepFormFields(data, step) {
                 <div class="form-group">
                     <label for="step_hook">Hook</label>
                     <textarea class="form-control" name="hook" id="step_hook" rows="4">${data.hook || ''}</textarea>
+                    <small class="form-text text-muted">Describe the main hook or attention-grabbing element for this content.</small>
                 </div>
             `;
             
@@ -1311,17 +1328,21 @@ function getStepFormFields(data, step) {
                 <div class="form-group">
                     <label for="step_brief_konten">Brief Konten <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="brief_konten" id="step_brief_konten" rows="6" required>${data.brief_konten || ''}</textarea>
-                    <small class="form-text text-muted">Provide detailed instructions for content creation.</small>
+                    <small class="form-text text-muted">Provide detailed instructions for content creation including tone, style, key messages, and any specific requirements.</small>
                 </div>
                 <div class="form-group">
                     <label for="step_caption">Caption <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="caption" id="step_caption" rows="8" required>${data.caption || ''}</textarea>
-                    <small class="form-text text-muted">Write the complete caption for the social media post.</small>
+                    <small class="form-text text-muted">Write the complete caption that will be used for the social media post. Include hashtags, mentions, and call-to-action.</small>
                 </div>
             `;
             
-         case 3: // Admin Support (NEW: booking dates + content editor assignment)
+        case 3: // Admin Support (booking dates only - NO resource management)
             return `
+                <div class="alert alert-primary">
+                    <h6><i class="fas fa-users-cog"></i> Admin Support</h6>
+                    <p>Manage talent booking, venue booking, and production scheduling.</p>
+                </div>
                 <div class="row">
                     <div class="col-md-12">
                         <h6 class="mb-3">Talent & Production Management</h6>
@@ -1355,7 +1376,7 @@ function getStepFormFields(data, step) {
                 </div>
             `;
             
-        case 4: // Creative Review (moved from step 3, now step 4)
+        case 4: // Creative Review (now includes resource management)
             return `
                 <div class="alert alert-warning">
                     <h6><i class="fas fa-clipboard-check"></i> Creative Review</h6>
@@ -1393,6 +1414,11 @@ function getStepFormFields(data, step) {
                         </div>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="step_review_comments">Review Comments (Optional)</label>
+                    <textarea class="form-control" name="review_comments" id="step_review_comments" rows="3" 
+                              placeholder="Add any review comments or feedback..."></textarea>
+                </div>
             `;
             
         case 5: // Content Editor (unchanged)
@@ -1429,6 +1455,8 @@ function getStepFormFields(data, step) {
             return '<p>Invalid step</p>';
     }
 }
+
+// Global delete function
 function deleteAjax(route, id, table) {
     Swal.fire({
         title: 'Are you sure?',
