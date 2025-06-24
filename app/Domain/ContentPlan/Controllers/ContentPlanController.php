@@ -366,21 +366,20 @@ class ContentPlanController extends Controller
                     'caption' => 'nullable|string',
                 ]);
                 
-            case 3: // Admin Support (now includes booking dates)
+            case 3: // Admin Support (now only booking dates, no resource management)
                 return $request->validate([
                     'talent_fix' => 'nullable|string|max:255',
                     'booking_talent_date' => 'nullable|date',
                     'booking_venue_date' => 'nullable|date',
                     'production_date' => 'nullable|date',
+                ]);
+                
+            case 4: // Creative Review (now includes resource management)
+                return $request->validate([
                     'kerkun' => 'nullable|string|max:255',
                     'link_raw_content' => 'nullable|string',
                     'assignee_content_editor' => 'nullable|string|max:255',
-                ]);
-                
-            case 4: // Creative Review (moved from step 3)
-                return $request->validate([
-                    // Creative review specific fields can be added here
-                    // For now, just allow updating any existing fields
+                    'review_comments' => 'nullable|string',
                 ]);
                 
             case 5: // Content Editor

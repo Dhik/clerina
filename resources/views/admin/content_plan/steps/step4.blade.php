@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="alert alert-warning">
             <h5><i class="icon fas fa-clipboard-check"></i> Creative Review</h5>
-            <p>Review all content elements, production details, and approve for content editing phase.</p>
+            <p>Review all content elements, production details, assign resources, and approve for content editing phase.</p>
         </div>
     </div>
 </div>
@@ -11,7 +11,7 @@
     <div class="col-md-6">
         <div class="card card-outline card-primary">
             <div class="card-header">
-                <h3 class="card-title">Content Strategy</h3>
+                <h3 class="card-title">Content Strategy Review</h3>
             </div>
             <div class="card-body">
                 <table class="table table-sm">
@@ -100,28 +100,60 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="card card-outline card-secondary">
+<!-- NEW: Resource Management Section (moved from Step 3) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-outline card-primary">
             <div class="card-header">
-                <h3 class="card-title">Resources</h3>
+                <h3 class="card-title">Resource Management</h3>
             </div>
             <div class="card-body">
-                <p><strong>Assigned Editor:</strong><br>
-                {{ $contentPlan->assignee_content_editor ?? 'Not assigned' }}</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="kerkun">Kerkun</label>
+                            <input type="text" class="form-control @error('kerkun') is-invalid @enderror" 
+                                   id="kerkun" name="kerkun" value="{{ old('kerkun', $contentPlan->kerkun) }}" 
+                                   placeholder="Enter kerkun details">
+                            @error('kerkun')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="assignee_content_editor">Assignee Content Editor <span class="text-danger">*</span></label>
+                            <select class="form-control @error('assignee_content_editor') is-invalid @enderror" 
+                                    id="assignee_content_editor" name="assignee_content_editor" required>
+                                <option value="">Select Content Editor</option>
+                                <option value="cleora_azmi" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'cleora_azmi' ? 'selected' : '' }}>Desain Grafis Cleora, Azmi Daffa</option>
+                                <option value="azrina_farhan" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'azrina_farhan' ? 'selected' : '' }}>Desain Grafis Azrina, Farhan Ridho</option>
+                                <option value="faddal" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'faddal' ? 'selected' : '' }}>Videographer & Editor, Faddal</option>
+                                <option value="hendra" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'hendra' ? 'selected' : '' }}>Videographer & Editor, Hendra</option>
+                                <option value="rafi" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'rafi' ? 'selected' : '' }}>Videographer & Editor, Rafi</option>
+                                <option value="lukman" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'lukman' ? 'selected' : '' }}>Photographer & Editor, Lukman Fajar</option>
+                            </select>
+                            @error('assignee_content_editor')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
                 
-                <p><strong>Raw Content Links:</strong><br>
-                @if($contentPlan->link_raw_content)
-                    <small class="text-muted">{{ Str::limit($contentPlan->link_raw_content, 100) }}</small>
-                @else
-                    <small class="text-muted">No links provided yet</small>
-                @endif
-                </p>
-
-                <p><strong>Produk:</strong><br>
-                {{ $contentPlan->produk ?? 'Not specified' }}</p>
-
-                <p><strong>Referensi:</strong><br>
-                {{ $contentPlan->referensi ?? 'Not specified' }}</p>
+                <div class="form-group">
+                    <label for="link_raw_content">Link Raw Content</label>
+                    <textarea class="form-control @error('link_raw_content') is-invalid @enderror" 
+                              id="link_raw_content" name="link_raw_content" rows="4" 
+                              placeholder="Enter raw content links (Google Drive, Dropbox, etc.)">{{ old('link_raw_content', $contentPlan->link_raw_content) }}</textarea>
+                    @error('link_raw_content')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                    <small class="form-text text-muted">Provide links to raw images, videos, or other content assets.</small>
+                </div>
             </div>
         </div>
     </div>
@@ -165,11 +197,11 @@
                         </ul>
                     </div>
                     <div class="col-md-6">
-                        <h6>Timeline Review:</h6>
+                        <h6>Resource Management:</h6>
                         <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success"></i> Production timeline realistic</li>
-                            <li><i class="fas fa-check text-success"></i> Posting date achievable</li>
-                            <li><i class="fas fa-check text-success"></i> Buffer time considered</li>
+                            <li><i class="fas fa-check text-success"></i> Content editor assigned</li>
+                            <li><i class="fas fa-check text-success"></i> Raw content links provided</li>
+                            <li><i class="fas fa-check text-success"></i> Kerkun details specified</li>
                         </ul>
                     </div>
                 </div>
@@ -177,15 +209,3 @@
         </div>
     </div>
 </div>
-
-<!-- Optional: Add review comments field if needed -->
-<!-- <div class="row">
-    <div class="col-12">
-        <div class="form-group">
-            <label for="review_comments">Review Comments (Optional)</label>
-            <textarea class="form-control" id="review_comments" name="review_comments" rows="3" 
-                      placeholder="Add any review comments or feedback..."></textarea>
-            <small class="form-text text-muted">Optional: Add any specific feedback or approval notes.</small>
-        </div>
-    </div>
-</div> -->

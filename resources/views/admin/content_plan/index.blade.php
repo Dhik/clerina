@@ -1245,21 +1245,6 @@ function getStepFormFields(data, step) {
                     <div class="col-md-6">
                         <h6 class="mb-3">Content Strategy</h6>
                         <div class="form-group">
-                            <label for="step_objektif">Objektif <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="objektif" id="step_objektif" value="${data.objektif || ''}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="step_jenis_konten">Jenis Konten</label>
-                            <select class="form-control" name="jenis_konten" id="step_jenis_konten">
-                                <option value="">Select Content Type</option>
-                                <option value="image" ${data.jenis_konten === 'image' ? 'selected' : ''}>Image</option>
-                                <option value="video" ${data.jenis_konten === 'video' ? 'selected' : ''}>Video</option>
-                                <option value="carousel" ${data.jenis_konten === 'carousel' ? 'selected' : ''}>Carousel</option>
-                                <option value="reel" ${data.jenis_konten === 'reel' ? 'selected' : ''}>Reel</option>
-                                <option value="story" ${data.jenis_konten === 'story' ? 'selected' : ''}>Story</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="step_pillar">Pillar</label>
                             <input type="text" class="form-control" name="pillar" id="step_pillar" value="${data.pillar || ''}">
                         </div>
@@ -1312,7 +1297,6 @@ function getStepFormFields(data, step) {
                 <div class="form-group">
                     <label for="step_hook">Hook</label>
                     <textarea class="form-control" name="hook" id="step_hook" rows="4">${data.hook || ''}</textarea>
-                    <small class="form-text text-muted">Describe the main hook or attention-grabbing element for this content.</small>
                 </div>
             `;
             
@@ -1327,21 +1311,17 @@ function getStepFormFields(data, step) {
                 <div class="form-group">
                     <label for="step_brief_konten">Brief Konten <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="brief_konten" id="step_brief_konten" rows="6" required>${data.brief_konten || ''}</textarea>
-                    <small class="form-text text-muted">Provide detailed instructions for content creation including tone, style, key messages, and any specific requirements.</small>
+                    <small class="form-text text-muted">Provide detailed instructions for content creation.</small>
                 </div>
                 <div class="form-group">
                     <label for="step_caption">Caption <span class="text-danger">*</span></label>
                     <textarea class="form-control" name="caption" id="step_caption" rows="8" required>${data.caption || ''}</textarea>
-                    <small class="form-text text-muted">Write the complete caption that will be used for the social media post. Include hashtags, mentions, and call-to-action.</small>
+                    <small class="form-text text-muted">Write the complete caption for the social media post.</small>
                 </div>
             `;
             
         case 3: // Admin Support (NEW: booking dates + content editor assignment)
             return `
-                <div class="alert alert-primary">
-                    <h6><i class="fas fa-users-cog"></i> Admin Support</h6>
-                    <p>Manage talent booking, venue booking, production scheduling, and content editor assignment.</p>
-                </div>
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="mb-3">Talent & Production Management</h6>
@@ -1355,25 +1335,21 @@ function getStepFormFields(data, step) {
                                 <option value="eksternal" ${data.talent_fix === 'eksternal' ? 'selected' : ''}>Eksternal</option>
                                 <option value="no_talent" ${data.talent_fix === 'no_talent' ? 'selected' : ''}>No Talent Required</option>
                             </select>
-                            <small class="form-text text-muted">Select the confirmed talent for this content.</small>
                         </div>
                         <div class="form-group">
                             <label for="step_booking_talent_date">Booking Talent Date & Time</label>
                             <input type="datetime-local" class="form-control" name="booking_talent_date" id="step_booking_talent_date" 
                                    value="${data.booking_talent_date ? data.booking_talent_date.substring(0, 16) : ''}">
-                            <small class="form-text text-muted">Schedule the talent booking appointment.</small>
                         </div>
                         <div class="form-group">
                             <label for="step_booking_venue_date">Booking Venue Date & Time</label>
                             <input type="datetime-local" class="form-control" name="booking_venue_date" id="step_booking_venue_date" 
                                    value="${data.booking_venue_date ? data.booking_venue_date.substring(0, 16) : ''}">
-                            <small class="form-text text-muted">Schedule the venue booking appointment.</small>
                         </div>
                         <div class="form-group">
                             <label for="step_production_date">Production Date & Time <span class="text-danger">*</span></label>
                             <input type="datetime-local" class="form-control" name="production_date" id="step_production_date" 
                                    value="${data.production_date ? data.production_date.substring(0, 16) : ''}" required>
-                            <small class="form-text text-muted">Set the actual content production date and time.</small>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -1397,21 +1373,6 @@ function getStepFormFields(data, step) {
                         <div class="form-group">
                             <label for="step_link_raw_content">Link Raw Content</label>
                             <textarea class="form-control" name="link_raw_content" id="step_link_raw_content" rows="4">${data.link_raw_content || ''}</textarea>
-                            <small class="form-text text-muted">Provide links to raw images, videos, or other content assets.</small>
-                        </div>
-                        
-                        <!-- Content Summary Card -->
-                        <div class="card card-outline card-info mt-3">
-                            <div class="card-header">
-                                <h3 class="card-title">Content Summary</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Platform:</strong> ${data.platform || 'Not specified'}</p>
-                                <p><strong>Account:</strong> ${data.akun || 'Not specified'}</p>
-                                <p><strong>Target Date:</strong> ${data.target_posting_date ? formatDateTime(data.target_posting_date) : 'Not set'}</p>
-                                <p><strong>Venue:</strong> ${data.venue || 'Not specified'}</p>
-                                <p><strong>Initial Talent:</strong> ${data.talent || 'Not specified'}</p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1425,148 +1386,23 @@ function getStepFormFields(data, step) {
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="card card-outline card-primary">
-                            <div class="card-header">
-                                <h3 class="card-title">Content Strategy</h3>
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <tr>
-                                        <td><strong>Objektif:</strong></td>
-                                        <td>${data.objektif || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Jenis Konten:</strong></td>
-                                        <td>${data.jenis_konten || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Pillar:</strong></td>
-                                        <td>${data.pillar || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Platform:</strong></td>
-                                        <td>${data.platform || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Account:</strong></td>
-                                        <td>${data.akun || '-'}</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <div class="card card-outline card-info">
-                            <div class="card-header">
-                                <h3 class="card-title">Production Details</h3>
-                            </div>
-                            <div class="card-body">
-                                <table class="table table-sm">
-                                    <tr>
-                                        <td><strong>Final Talent:</strong></td>
-                                        <td>${data.talent_fix || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Venue:</strong></td>
-                                        <td>${data.venue || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Production Date:</strong></td>
-                                        <td>${data.production_date ? formatDateTime(data.production_date) : '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Talent Booking:</strong></td>
-                                        <td>${data.booking_talent_date ? formatDateTime(data.booking_talent_date) : '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Venue Booking:</strong></td>
-                                        <td>${data.booking_venue_date ? formatDateTime(data.booking_venue_date) : '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Target Posting:</strong></td>
-                                        <td>${data.target_posting_date ? formatDateTime(data.target_posting_date) : '-'}</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                        <h6>Content Strategy:</h6>
+                        <p><strong>Objektif:</strong> ${data.objektif || 'Not set'}</p>
+                        <p><strong>Platform:</strong> ${data.platform || 'Not set'} - ${data.akun || 'Not set'}</p>
+                        <p><strong>Final Talent:</strong> ${data.talent_fix || data.talent || 'Not set'}</p>
+                        <p><strong>Production Date:</strong> ${data.production_date ? formatDateTime(data.production_date) : 'Not scheduled'}</p>
                     </div>
-                    
                     <div class="col-md-6">
-                        <div class="card card-outline card-success">
-                            <div class="card-header">
-                                <h3 class="card-title">Content Details</h3>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <strong>Hook:</strong>
-                                    <p class="text-muted">${data.hook || 'No hook provided'}</p>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <strong>Brief Konten:</strong>
-                                    <p class="text-muted">${data.brief_konten || 'Brief not yet written'}</p>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <strong>Caption:</strong>
-                                    <p class="text-muted">${data.caption || 'Caption not yet written'}</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card card-outline card-secondary">
-                            <div class="card-header">
-                                <h3 class="card-title">Resources</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Assigned Editor:</strong><br>
-                                ${data.assignee_content_editor || 'Not assigned'}</p>
-                                
-                                <p><strong>Raw Content Links:</strong><br>
-                                ${data.link_raw_content ? `<small class="text-muted">${data.link_raw_content.substring(0, 100)}${data.link_raw_content.length > 100 ? '...' : ''}</small>` : '<small class="text-muted">No links provided yet</small>'}</p>
-
-                                <p><strong>Produk:</strong><br>
-                                ${data.produk || 'Not specified'}</p>
-
-                                <p><strong>Referensi:</strong><br>
-                                ${data.referensi || 'Not specified'}</p>
-                            </div>
-                        </div>
+                        <h6>Content Details:</h6>
+                        <p><strong>Brief:</strong> ${data.brief_konten ? data.brief_konten.substring(0, 100) + '...' : 'Not written'}</p>
+                        <p><strong>Caption:</strong> ${data.caption ? data.caption.substring(0, 100) + '...' : 'Not written'}</p>
+                        <p><strong>Assigned Editor:</strong> ${data.assignee_content_editor || 'Not assigned'}</p>
                     </div>
                 </div>
-                
-                <div class="card card-outline card-warning mt-3">
-                    <div class="card-header">
-                        <h3 class="card-title">Creative Review Checklist</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Content Strategy Review:</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success"></i> Objektif aligned with brand goals</li>
-                                    <li><i class="fas fa-check text-success"></i> Content type suitable for platform</li>
-                                    <li><i class="fas fa-check text-success"></i> Pillar consistency maintained</li>
-                                    <li><i class="fas fa-check text-success"></i> Hook is engaging and relevant</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Production Review:</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success"></i> Talent confirmed and suitable</li>
-                                    <li><i class="fas fa-check text-success"></i> Venue booking confirmed</li>
-                                    <li><i class="fas fa-check text-success"></i> Production date scheduled</li>
-                                    <li><i class="fas fa-check text-success"></i> Content editor assigned</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group mt-3">
+                <div class="form-group">
                     <label for="step_review_comments">Review Comments (Optional)</label>
                     <textarea class="form-control" name="review_comments" id="step_review_comments" rows="3" 
-                              placeholder="Add any review comments or feedback...">${data.review_comments || ''}</textarea>
-                    <small class="form-text text-muted">Optional: Add any specific feedback or approval notes.</small>
+                              placeholder="Add any review comments or feedback..."></textarea>
                 </div>
             `;
             
@@ -1574,52 +1410,14 @@ function getStepFormFields(data, step) {
             return `
                 <div class="alert alert-dark">
                     <h6><i class="fas fa-edit"></i> Content Editing</h6>
-                    <p>Edit and finalize the content, then provide the link to edited materials.</p>
+                    <p><strong>Editor:</strong> ${data.assignee_content_editor || 'Not assigned'}</p>
+                    <p><strong>Raw Content:</strong> ${data.link_raw_content ? 'Available' : 'Not provided'}</p>
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="step_link_hasil_edit">Link Hasil Edit <span class="text-danger">*</span></label>
-                            <input type="url" class="form-control" name="link_hasil_edit" id="step_link_hasil_edit" 
-                                   value="${data.link_hasil_edit || ''}" required>
-                            <small class="form-text text-muted">Provide the link to the final edited content (images, videos, etc.).</small>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card card-outline card-info">
-                            <div class="card-header">
-                                <h3 class="card-title">Raw Content</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Assigned Editor:</strong><br>
-                                ${data.assignee_content_editor || 'Not assigned'}</p>
-                                <p><strong>Raw Content Links:</strong><br>
-                                <small class="text-muted">${data.link_raw_content || 'No links provided'}</small></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card card-outline card-secondary">
-                    <div class="card-header">
-                        <h3 class="card-title">Content Details</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Platform:</strong> ${data.platform || 'Not specified'}</p>
-                                <p><strong>Account:</strong> ${data.akun || 'Not specified'}</p>
-                                <p><strong>Content Type:</strong> ${data.jenis_konten || 'Not specified'}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Target Date:</strong> ${data.target_posting_date ? formatDateTime(data.target_posting_date) : 'Not set'}</p>
-                                <p><strong>Pillar:</strong> ${data.pillar || 'Not specified'}</p>
-                                <p><strong>Final Talent:</strong> ${data.talent_fix || data.talent || 'Not specified'}</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label for="step_link_hasil_edit">Link Hasil Edit <span class="text-danger">*</span></label>
+                    <input type="url" class="form-control" name="link_hasil_edit" id="step_link_hasil_edit" 
+                           value="${data.link_hasil_edit || ''}" required>
+                    <small class="form-text text-muted">Provide the link to the final edited content.</small>
                 </div>
             `;
             
@@ -1627,90 +1425,60 @@ function getStepFormFields(data, step) {
             return `
                 <div class="alert alert-success">
                     <h6><i class="fas fa-database"></i> Store to Content Bank</h6>
-                    <p>Final step: Store the completed content to content bank and provide posting link.</p>
+                    <p><strong>Platform:</strong> ${data.platform || 'Not set'} - ${data.akun || 'Not set'}</p>
+                    <p><strong>Edited Content:</strong> ${data.link_hasil_edit ? 'Ready' : 'Not available'}</p>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="step_input_link_posting">Content Bank / Posting Link <span class="text-danger">*</span></label>
-                            <input type="url" class="form-control" name="input_link_posting" id="step_input_link_posting" 
-                                   value="${data.input_link_posting || ''}" required>
-                            <small class="form-text text-muted">Provide the link to the published post or content bank storage location.</small>
-                        </div>
-
-                        <div class="card card-outline card-info">
-                            <div class="card-header">
-                                <h3 class="card-title">Content Bank Guidelines</h3>
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check text-success"></i> Ensure content is properly tagged and categorized</li>
-                                    <li><i class="fas fa-check text-success"></i> Include all metadata (date, platform, talent, etc.)</li>
-                                    <li><i class="fas fa-check text-success"></i> Verify file quality and format compatibility</li>
-                                    <li><i class="fas fa-check text-success"></i> Add content to searchable database</li>
-                                    <li><i class="fas fa-check text-success"></i> Create backup copies if required</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card card-outline card-success">
-                            <div class="card-header">
-                                <h3 class="card-title">Final Content Details</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Platform:</strong> ${data.platform || 'Not specified'}</p>
-                                <p><strong>Account:</strong> ${data.akun || 'Not specified'}</p>
-                                <p><strong>Content Type:</strong> ${data.jenis_konten || 'Not specified'}</p>
-                                <p><strong>Final Talent:</strong> ${data.talent_fix || data.talent || 'Not specified'}</p>
-                                <p><strong>Production Date:</strong><br>
-                                <small>${data.production_date ? formatDateTime(data.production_date) : 'Not set'}</small></p>
-                                <p><strong>Target Posting:</strong><br>
-                                <small>${data.target_posting_date ? formatDateTime(data.target_posting_date) : 'Not set'}</small></p>
-                                <p><strong>Edited Content:</strong><br>
-                                ${data.link_hasil_edit ? `<a href="${data.link_hasil_edit}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-external-link-alt"></i> View</a>` : '<small class="text-muted">No edited content</small>'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card card-outline card-primary">
-                    <div class="card-header">
-                        <h3 class="card-title">Complete Content Journey</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <h6>Strategy & Planning:</h6>
-                                <p class="text-muted"><strong>Objektif:</strong> ${data.objektif || 'No objective specified'}</p>
-                                <p class="text-muted"><strong>Hook:</strong> ${data.hook ? data.hook.substring(0, 100) + (data.hook.length > 100 ? '...' : '') : 'No hook specified'}</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h6>Content Creation:</h6>
-                                <p class="text-muted"><strong>Brief:</strong> ${data.brief_konten ? data.brief_konten.substring(0, 100) + (data.brief_konten.length > 100 ? '...' : '') : 'No brief provided'}</p>
-                                <p class="text-muted"><strong>Caption:</strong> ${data.caption ? data.caption.substring(0, 100) + (data.caption.length > 100 ? '...' : '') : 'No caption provided'}</p>
-                            </div>
-                            <div class="col-md-4">
-                                <h6>Production & Editing:</h6>
-                                <p class="text-muted"><strong>Editor:</strong> ${data.assignee_content_editor || 'Not assigned'}</p>
-                                <p class="text-muted"><strong>Production:</strong> ${data.production_date ? formatDateTime(data.production_date) : 'Not scheduled'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i> 
-                    <strong>Note:</strong> Once this step is completed, the content plan will be marked as "Posted" and archived in the system.
+                <div class="form-group">
+                    <label for="step_input_link_posting">Content Bank / Posting Link <span class="text-danger">*</span></label>
+                    <input type="url" class="form-control" name="input_link_posting" id="step_input_link_posting" 
+                           value="${data.input_link_posting || ''}" required>
+                    <small class="form-text text-muted">Provide the link to the content bank or published post.</small>
                 </div>
             `;
             
         default:
             return '<p>Invalid step</p>';
     }
+}
+function deleteAjax(route, id, table) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: route,
+                method: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        table.draw();
+                        loadContentPlans(); // Reload calendar
+                        loadTodayNotifications(); // Reload notifications
+                        Swal.fire(
+                            'Deleted!',
+                            response.message,
+                            'success'
+                        );
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire(
+                        'Error!',
+                        'An error occurred while deleting.',
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 </script>
 @stop

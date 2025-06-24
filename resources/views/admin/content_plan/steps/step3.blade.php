@@ -2,13 +2,13 @@
     <div class="col-12">
         <div class="alert alert-primary">
             <h5><i class="icon fas fa-users-cog"></i> Admin Support</h5>
-            <p>Manage talent booking, venue booking, production scheduling, and content editor assignment.</p>
+            <p>Manage talent booking, venue booking, and production scheduling.</p>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <h6 class="mb-3">Talent & Production Management</h6>
         
         <div class="form-group">
@@ -62,48 +62,7 @@
         </div>
     </div>
 
-    <div class="col-md-6">
-        <h6 class="mb-3">Resource Management</h6>
-        
-        <div class="form-group">
-            <label for="kerkun">Kerkun</label>
-            <input type="text" class="form-control @error('kerkun') is-invalid @enderror" 
-                   id="kerkun" name="kerkun" value="{{ old('kerkun', $contentPlan->kerkun) }}" 
-                   placeholder="Enter kerkun details">
-            @error('kerkun')
-                <span class="invalid-feedback">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <div class="form-group">
-            <label for="assignee_content_editor">Assignee Content Editor <span class="text-danger">*</span></label>
-            <select class="form-control @error('assignee_content_editor') is-invalid @enderror" 
-                    id="assignee_content_editor" name="assignee_content_editor" required>
-                <option value="">Select Content Editor</option>
-                <option value="cleora_azmi" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'cleora_azmi' ? 'selected' : '' }}>Desain Grafis Cleora, Azmi Daffa</option>
-                <option value="azrina_farhan" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'azrina_farhan' ? 'selected' : '' }}>Desain Grafis Azrina, Farhan Ridho</option>
-                <option value="faddal" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'faddal' ? 'selected' : '' }}>Videographer & Editor, Faddal</option>
-                <option value="hendra" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'hendra' ? 'selected' : '' }}>Videographer & Editor, Hendra</option>
-                <option value="rafi" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'rafi' ? 'selected' : '' }}>Videographer & Editor, Rafi</option>
-                <option value="lukman" {{ old('assignee_content_editor', $contentPlan->assignee_content_editor) == 'lukman' ? 'selected' : '' }}>Photographer & Editor, Lukman Fajar</option>
-            </select>
-            @error('assignee_content_editor')
-                <span class="invalid-feedback">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <div class="form-group">
-            <label for="link_raw_content">Link Raw Content</label>
-            <textarea class="form-control @error('link_raw_content') is-invalid @enderror" 
-                      id="link_raw_content" name="link_raw_content" rows="4" 
-                      placeholder="Enter raw content links (Google Drive, Dropbox, etc.)">{{ old('link_raw_content', $contentPlan->link_raw_content) }}</textarea>
-            @error('link_raw_content')
-                <span class="invalid-feedback">{{ $message }}</span>
-            @enderror
-            <small class="form-text text-muted">Provide links to raw images, videos, or other content assets.</small>
-        </div>
-
-        <!-- Content Summary Card -->
+    <div class="col-md-4">
         <div class="card card-outline card-info">
             <div class="card-header">
                 <h3 class="card-title">Content Summary</h3>
