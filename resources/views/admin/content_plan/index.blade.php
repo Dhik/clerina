@@ -1320,7 +1320,7 @@ function getStepFormFields(data, step) {
                 </div>
             `;
             
-        case 3: // Admin Support (NEW: booking dates + content editor assignment)
+         case 3: // Admin Support (NEW: booking dates + content editor assignment)
             return `
                 <div class="row">
                     <div class="col-md-6">
