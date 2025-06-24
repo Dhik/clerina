@@ -22,7 +22,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Step 1: Social Media Strategist - Initial Planning</h3>
+                    <h3 class="card-title">Step 1: Social Media Strategist - Strategy & Platform Selection</h3>
                     <div class="card-tools">
                         <a href="{{ route('contentPlan.index') }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-arrow-left"></i> Back to List
@@ -37,10 +37,10 @@
                             <!-- Left Column -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="objektif">Objektif</label>
+                                    <label for="objektif">Objektif <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('objektif') is-invalid @enderror" 
                                            id="objektif" name="objektif" value="{{ old('objektif') }}" 
-                                           placeholder="Enter content objective">
+                                           placeholder="Enter content objective" required>
                                     @error('objektif')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
@@ -91,10 +91,7 @@
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <!-- Right Column -->
-                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="venue">Venue</label>
                                     <input type="text" class="form-control @error('venue') is-invalid @enderror" 
@@ -104,7 +101,10 @@
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
+                            </div>
 
+                            <!-- Right Column -->
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="produk">Produk</label>
                                     <input type="text" class="form-control @error('produk') is-invalid @enderror" 
@@ -126,10 +126,39 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="target_posting_date">Target Posting Date</label>
-                                    <input type="date" class="form-control @error('target_posting_date') is-invalid @enderror" 
-                                           id="target_posting_date" name="target_posting_date" value="{{ old('target_posting_date') }}">
+                                    <label for="target_posting_date">Target Posting Date & Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control @error('target_posting_date') is-invalid @enderror" 
+                                           id="target_posting_date" name="target_posting_date" value="{{ old('target_posting_date') }}" required>
                                     @error('target_posting_date')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                    <small class="form-text text-muted">Set the exact date and time for content posting.</small>
+                                </div>
+
+                                <!-- NEW: Platform and Account fields -->
+                                <div class="form-group">
+                                    <label for="platform">Platform <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('platform') is-invalid @enderror" 
+                                            id="platform" name="platform" required>
+                                        <option value="">Select Platform</option>
+                                        <option value="instagram" {{ old('platform') == 'instagram' ? 'selected' : '' }}>Instagram</option>
+                                        <option value="facebook" {{ old('platform') == 'facebook' ? 'selected' : '' }}>Facebook</option>
+                                        <option value="tiktok" {{ old('platform') == 'tiktok' ? 'selected' : '' }}>TikTok</option>
+                                        <option value="twitter" {{ old('platform') == 'twitter' ? 'selected' : '' }}>Twitter</option>
+                                        <option value="linkedin" {{ old('platform') == 'linkedin' ? 'selected' : '' }}>LinkedIn</option>
+                                        <option value="youtube" {{ old('platform') == 'youtube' ? 'selected' : '' }}>YouTube</option>
+                                    </select>
+                                    @error('platform')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="akun">Akun <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('akun') is-invalid @enderror" 
+                                           id="akun" name="akun" value="{{ old('akun') }}" 
+                                           placeholder="Enter account name/handle" required>
+                                    @error('akun')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -146,6 +175,7 @@
                                     @error('hook')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
+                                    <small class="form-text text-muted">Describe the main hook or attention-grabbing element for this content.</small>
                                 </div>
                             </div>
                         </div>
@@ -167,10 +197,42 @@
 
 @section('js')
 <script>
-    // Auto-resize textarea
-    document.getElementById('hook').addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
+    $(document).ready(function() {
+        // Auto-resize textarea
+        document.getElementById('hook').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Platform selection enhancement
+        $('#platform').on('change', function() {
+            const platform = $(this).val();
+            const akunField = $('#akun');
+            
+            // Update placeholder based on platform
+            switch(platform) {
+                case 'instagram':
+                    akunField.attr('placeholder', '@username');
+                    break;
+                case 'facebook':
+                    akunField.attr('placeholder', 'Page Name');
+                    break;
+                case 'tiktok':
+                    akunField.attr('placeholder', '@username');
+                    break;
+                case 'twitter':
+                    akunField.attr('placeholder', '@username');
+                    break;
+                case 'linkedin':
+                    akunField.attr('placeholder', 'Company/Profile Name');
+                    break;
+                case 'youtube':
+                    akunField.attr('placeholder', 'Channel Name');
+                    break;
+                default:
+                    akunField.attr('placeholder', 'Enter account name/handle');
+            }
+        });
     });
 </script>
 @stop

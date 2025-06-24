@@ -44,13 +44,13 @@
                         <div class="col-2">
                             <div class="step {{ $step >= 3 ? 'active' : '' }}">
                                 <span class="badge {{ $step >= 3 ? 'badge-primary' : 'badge-secondary' }}">3</span>
-                                <br><small>Creative Review</small>
+                                <br><small>Admin Support</small>
                             </div>
                         </div>
                         <div class="col-2">
                             <div class="step {{ $step >= 4 ? 'active' : '' }}">
                                 <span class="badge {{ $step >= 4 ? 'badge-primary' : 'badge-secondary' }}">4</span>
-                                <br><small>Admin Support</small>
+                                <br><small>Creative Review</small>
                             </div>
                         </div>
                         <div class="col-2">
@@ -62,7 +62,7 @@
                         <div class="col-2">
                             <div class="step {{ $step >= 6 ? 'active' : '' }}">
                                 <span class="badge {{ $step >= 6 ? 'badge-primary' : 'badge-secondary' }}">6</span>
-                                <br><small>Final Posting</small>
+                                <br><small>Store to Content Bank</small>
                             </div>
                         </div>
                     </div>
@@ -75,22 +75,22 @@
                     <h3 class="card-title">
                         @switch($step)
                             @case(1)
-                                Step 1: Social Media Strategist - Initial Planning
+                                Step 1: Social Media Strategist - Strategy & Platform Selection
                                 @break
                             @case(2)
                                 Step 2: Content Writer - Content Creation
                                 @break
                             @case(3)
-                                Step 3: Creative Leader - Review & Platform Selection
+                                Step 3: Admin Support - Booking & Resource Management
                                 @break
                             @case(4)
-                                Step 4: Admin Support - Resource Management
+                                Step 4: Creative Leader - Review & Approval
                                 @break
                             @case(5)
                                 Step 5: Content Editor - Final Editing
                                 @break
                             @case(6)
-                                Step 6: Admin Social Media - Publishing
+                                Step 6: Admin Social Media - Store to Content Bank
                                 @break
                         @endswitch
                     </h3>
@@ -134,7 +134,7 @@
                             @if($step < 6)
                                 Complete Step {{ $step }} & Continue
                             @else
-                                Complete & Mark as Posted
+                                Complete & Store to Content Bank
                             @endif
                         </button>
                         <a href="{{ route('contentPlan.index') }}" class="btn btn-secondary">

@@ -35,8 +35,6 @@ class ContentPlanController extends Controller
         return view('admin.content_plan.index', compact('statusOptions'));
     }
 
-    // And add this to your existing data method to handle calendar requests:
-
     /**
      * Get data for DataTables or Calendar
      */
@@ -56,9 +54,9 @@ class ContentPlanController extends Controller
             $data = $contentPlans->map(function ($plan) {
                 return [
                     'id' => $plan->id,
-                    // FIXED: Ensure consistent date format for target_posting_date
+                    // Updated: target_posting_date is now datetime
                     'target_posting_date' => $plan->target_posting_date ? 
-                        $plan->target_posting_date->format('Y-m-d') : 
+                        $plan->target_posting_date->format('Y-m-d H:i:s') : 
                         null,
                     'status' => $plan->status,
                     'status_label' => $plan->status_label,
@@ -80,7 +78,18 @@ class ContentPlanController extends Controller
                     'link_hasil_edit' => $plan->link_hasil_edit,
                     'input_link_posting' => $plan->input_link_posting,
                     'posting_date' => $plan->posting_date ? 
-                        $plan->posting_date->format('Y-m-d H:i:s') : 
+                        $plan->posting_date->format('Y-m-d') : 
+                        null,
+                    // New fields
+                    'talent_fix' => $plan->talent_fix,
+                    'booking_talent_date' => $plan->booking_talent_date ? 
+                        $plan->booking_talent_date->format('Y-m-d H:i:s') : 
+                        null,
+                    'booking_venue_date' => $plan->booking_venue_date ? 
+                        $plan->booking_venue_date->format('Y-m-d H:i:s') : 
+                        null,
+                    'production_date' => $plan->production_date ? 
+                        $plan->production_date->format('Y-m-d H:i:s') : 
                         null,
                     'created_at' => $plan->created_at ? 
                         $plan->created_at->format('Y-m-d H:i:s') : 
@@ -99,9 +108,9 @@ class ContentPlanController extends Controller
         // Original DataTables response
         return DataTables::of($query)
             ->addColumn('target_date', function ($plan) {
-                // FIXED: Ensure consistent date format for DataTables
+                // Updated: show datetime format for target_posting_date
                 return $plan->target_posting_date ? 
-                    $plan->target_posting_date->format('Y-m-d') : 
+                    $plan->target_posting_date->format('Y-m-d H:i') : 
                     '-';
             })
             ->addColumn('status_badge', function ($plan) {
@@ -109,7 +118,6 @@ class ContentPlanController extends Controller
                 return '<span class="badge badge-' . $badgeColor . '">' . $plan->status_label . '</span>';
             })
             ->addColumn('created_date', function ($plan) {
-                // This shows created_at for the table, which is different from calendar
                 return $plan->created_at ? 
                     $plan->created_at->format('Y-m-d') : 
                     '-';
@@ -268,24 +276,24 @@ class ContentPlanController extends Controller
             
             $data = $this->getStepValidationRules($request, $step);
             
-            // Update status based on step completion
+            // Updated status progression based on new workflow
             switch($step) {
-                case 1: // Social Media Strategist
+                case 1: // Social Media Strategist (now includes platform/account)
                     $data['status'] = ContentPlan::STATUS_CONTENT_WRITING;
                     break;
                 case 2: // Content Writer
-                    $data['status'] = ContentPlan::STATUS_CREATIVE_REVIEW;
-                    break;
-                case 3: // Creative Leader
                     $data['status'] = ContentPlan::STATUS_ADMIN_SUPPORT;
                     break;
-                case 4: // Admin Support
+                case 3: // Admin Support (now includes booking dates)
+                    $data['status'] = ContentPlan::STATUS_CREATIVE_REVIEW;
+                    break;
+                case 4: // Creative Review (moved from step 3)
                     $data['status'] = ContentPlan::STATUS_CONTENT_EDITING;
                     break;
                 case 5: // Content Editor
                     $data['status'] = ContentPlan::STATUS_READY_TO_POST;
                     break;
-                case 6: // Admin Social Media
+                case 6: // Store to Content Bank
                     $data['status'] = ContentPlan::STATUS_POSTED;
                     $data['posting_date'] = now();
                     break;
@@ -335,7 +343,7 @@ class ContentPlanController extends Controller
     private function getStepValidationRules($request, $step)
     {
         switch($step) {
-            case 1: // Social Media Strategist
+            case 1: // Social Media Strategist (now includes platform/account)
                 return $request->validate([
                     'objektif' => 'nullable|string|max:255',
                     'jenis_konten' => 'nullable|string|max:255',
@@ -347,6 +355,9 @@ class ContentPlanController extends Controller
                     'produk' => 'nullable|string|max:255',
                     'referensi' => 'nullable|string|max:255',
                     'target_posting_date' => 'nullable|date',
+                    // Moved from step 3
+                    'platform' => 'nullable|string|max:255',
+                    'akun' => 'nullable|string|max:255',
                 ]);
                 
             case 2: // Content Writer
@@ -355,17 +366,21 @@ class ContentPlanController extends Controller
                     'caption' => 'nullable|string',
                 ]);
                 
-            case 3: // Creative Leader
+            case 3: // Admin Support (now includes booking dates)
                 return $request->validate([
-                    'platform' => 'nullable|string|max:255',
-                    'akun' => 'nullable|string|max:255',
-                ]);
-                
-            case 4: // Admin Support
-                return $request->validate([
+                    'talent_fix' => 'nullable|string|max:255',
+                    'booking_talent_date' => 'nullable|date',
+                    'booking_venue_date' => 'nullable|date',
+                    'production_date' => 'nullable|date',
                     'kerkun' => 'nullable|string|max:255',
                     'link_raw_content' => 'nullable|string',
                     'assignee_content_editor' => 'nullable|string|max:255',
+                ]);
+                
+            case 4: // Creative Review (moved from step 3)
+                return $request->validate([
+                    // Creative review specific fields can be added here
+                    // For now, just allow updating any existing fields
                 ]);
                 
             case 5: // Content Editor
@@ -373,7 +388,7 @@ class ContentPlanController extends Controller
                     'link_hasil_edit' => 'nullable|string|max:255',
                 ]);
                 
-            case 6: // Admin Social Media
+            case 6: // Store to Content Bank
                 return $request->validate([
                     'input_link_posting' => 'nullable|string|max:255',
                 ]);
@@ -388,8 +403,8 @@ class ContentPlanController extends Controller
         switch($status) {
             case 'draft': return 'secondary';
             case 'content_writing': return 'info';
-            case 'creative_review': return 'warning';
             case 'admin_support': return 'primary';
+            case 'creative_review': return 'warning';
             case 'content_editing': return 'dark';
             case 'ready_to_post': return 'success';
             case 'posted': return 'success';
@@ -411,7 +426,7 @@ class ContentPlanController extends Controller
                         <i class="fas fa-edit"></i>
                      </button>';
         
-        // Step-specific edit buttons
+        // Step-specific edit buttons (updated for new workflow)
         if ($plan->status == 'draft') {
             $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="1" title="Step 1: Strategy">
                             <i class="fas fa-clipboard-list"></i> 1
@@ -420,21 +435,21 @@ class ContentPlanController extends Controller
             $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="2" title="Step 2: Content Writing">
                             <i class="fas fa-pen"></i> 2
                          </button>';
-        } elseif ($plan->status == 'creative_review') {
-            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="3" title="Step 3: Creative Review">
-                            <i class="fas fa-check-double"></i> 3
-                         </button>';
         } elseif ($plan->status == 'admin_support') {
-            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="4" title="Step 4: Admin Support">
-                            <i class="fas fa-users-cog"></i> 4
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="3" title="Step 3: Admin Support">
+                            <i class="fas fa-users-cog"></i> 3
+                         </button>';
+        } elseif ($plan->status == 'creative_review') {
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="4" title="Step 4: Creative Review">
+                            <i class="fas fa-check-double"></i> 4
                          </button>';
         } elseif ($plan->status == 'content_editing') {
             $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="5" title="Step 5: Content Editing">
                             <i class="fas fa-edit"></i> 5
                          </button>';
         } elseif ($plan->status == 'ready_to_post') {
-            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="6" title="Step 6: Final Posting">
-                            <i class="fas fa-share"></i> 6
+            $buttons .= '<button type="button" class="btn btn-primary btn-sm stepButton" data-id="' . $plan->id . '" data-step="6" title="Step 6: Store to Content Bank">
+                            <i class="fas fa-database"></i> 6
                          </button>';
         }
         
