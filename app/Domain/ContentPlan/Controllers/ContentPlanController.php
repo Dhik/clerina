@@ -253,7 +253,7 @@ class ContentPlanController extends Controller
     }
 
     /**
-     * Update specific step
+     * Update specific step - FIXED VERSION
      */
     public function updateStep(Request $request, ContentPlan $contentPlan, $step): JsonResponse
     {
@@ -266,11 +266,16 @@ class ContentPlanController extends Controller
                 ], 422);
             }
             
+            // DEBUG: Log current status and step
+            \Log::info("Step {$step} attempted for Content Plan {$contentPlan->id}");
+            \Log::info("Current status: {$contentPlan->status}");
+            \Log::info("Can edit step: " . ($contentPlan->canEditByStep($step) ? 'YES' : 'NO'));
+            
             // Check if user can edit this step
             if (!$contentPlan->canEditByStep($step)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This content plan is not ready for this step.'
+                    'message' => "This content plan is not ready for step {$step}. Current status: {$contentPlan->status}. Expected status for step {$step}: " . $this->getExpectedStatusForStep($step)
                 ], 422);
             }
             
@@ -307,6 +312,7 @@ class ContentPlanController extends Controller
                 'data' => $contentPlan->fresh()
             ]);
         } catch (\Exception $e) {
+            \Log::error("Error in updateStep: " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating step: ' . $e->getMessage()
@@ -338,6 +344,22 @@ class ContentPlanController extends Controller
             'success' => true,
             'data' => $result
         ]);
+    }
+
+    /**
+     * Get expected status for a specific step (for debugging)
+     */
+    private function getExpectedStatusForStep($step)
+    {
+        switch($step) {
+            case 1: return ContentPlan::STATUS_DRAFT;
+            case 2: return ContentPlan::STATUS_CONTENT_WRITING;
+            case 3: return ContentPlan::STATUS_ADMIN_SUPPORT;
+            case 4: return ContentPlan::STATUS_CREATIVE_REVIEW;
+            case 5: return ContentPlan::STATUS_CONTENT_EDITING;
+            case 6: return ContentPlan::STATUS_READY_TO_POST;
+            default: return 'unknown';
+        }
     }
 
     private function getStepValidationRules($request, $step)
