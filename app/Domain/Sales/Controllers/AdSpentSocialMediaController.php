@@ -3969,218 +3969,204 @@ class AdSpentSocialMediaController extends Controller
     
     private function determinePIC($accountName)
     {
-        // Regular expressions for matching account names
-        if (preg_match('/---REZA(-|---|$|\s|&)/i', $accountName) || 
-            preg_match('/REZA---/i', $accountName) ||
-            preg_match('/---JB---REZA/i', $accountName) ||
-            preg_match('/---GS---REZA/i', $accountName)) {
-            return 'REZA';
-        }
+        // Exact matches based on your data - only these accounts get assigned PICs
+        $exactMatches = [
+            'CLEORA-30---3-MINUTES' => 'FEBRY',
+            'MKH-CLEORA-33---REZA-GS' => 'REZA',
+            'IPO2024---AI-YASYFI-YUTIMNA-HKU---3' => 'REZA',
+            'CLEORA-54---REZA-3-MINUTES' => 'REZA',
+            'MKH---CLEORA-7' => 'REZA',
+            'CLEORA-12---FEBRY-RS' => 'FEBRY',
+            'CLEORA-13---FEBRY-JB' => 'FEBRY',
+            'CLEORA-21---LABIB-JB' => 'REZA',
+            'MKH---CLEORA-5' => 'FEBRY',
+            'CLEORA-20---FEBRY-GS' => 'FEBRY',
+            'CPAS---CLEORA---ANGGA' => 'REZA',
+            'CLEORA-41---TOFU-MOFU-OFFICIAL' => 'FEBRY',
+            'CLEORA-51---PURE-GLOW---REZA' => 'REZA',
+            'CLEORA-24---REZA' => 'REZA',
+            'IPO2024---AGUS-HKU---1' => 'REZA',
+            'IPO2024---AGUS-HKU---2' => 'REZA',
+            'CLEORA-18---GLOWSMOOTH---ANGGA' => 'REZA',
+            'CLEORA-63---LABIB-3-MINUTES' => 'REZA',
+            'CLEORA-42---REZA' => 'REZA',
+            'CLEORA-16---JB---ANGGA---NEW-JAN' => 'REZA',
+            'CLEORA-80---CPAS-LAZADA---FEBRY' => 'FEBRY',
+            'CLEORA-68---GS---LABIB' => 'FEBRY',
+            'CLEORA-31---REZA---CALENDULA' => 'REZA',
+            'IPO2024---AI-YASYFI-YUTIMNA-HKU---2' => 'REZA',
+            'CLEORA-14---FEBRY-GS' => 'FEBRY',
+            'CLEORA-TOFU-1---RS---ANGGA' => 'REZA',
+            'CLEORA-23---LABIB-RS' => 'FEBRY',
+            'CLEORA-25---JB---ANGGA' => 'FEBRY',
+            'CLEORA-74---8X-HYALU--REZA' => 'REZA',
+            'CLEORA-73---ACNE-SPOT' => 'FEBRY',
+            'CLEORA-22---ANGGA---RS' => 'FEBRY',
+            'CLEORA-17---RED-SAVIOR---ANGGA' => 'FEBRY',
+            'CLEORA-64---30-SECOND---REZA' => 'REZA',
+            'CLEORA-26---RS---ANGGA---NEW-JAN' => 'FEBRY',
+            'MKH---CLEORA-4' => 'FEBRY',
+            'MKH---CPAS-SHOPEE-CLEORA-3' => 'FEBRY',
+            'CLEORA-19---GLOWSMOOTH---ANGGA' => 'FEBRY',
+            'CLEORA-27---JB-BID---ANGGA' => 'FEBRY',
+            'CLEORA-66---REZA-GS' => 'REZA',
+            'CLEORA-TOKO-2---FEBRY-GS-1' => 'FEBRY'
+        ];
         
-        if (preg_match('/---FEBRY(-|---|$|\s)/i', $accountName) || 
-            preg_match('/FEBRY---/i', $accountName) ||
-            strpos($accountName, 'IPO2024---Mohammad-Rocky-Pramana-HKU---2') !== false) {
-            return 'FEBRY';
-        }
-        
-        if (preg_match('/---LABIB(-|---|$|\s)/i', $accountName) || 
-            preg_match('/LABIB---/i', $accountName) ||
-            preg_match('/---GS---LABIB/i', $accountName) ||
-            preg_match('/GS-LABIB/i', $accountName) ||
-            preg_match('/RS-LABIB/i', $accountName) ||
-            preg_match('/CPAS-CLEORA-JAKARTA/i', $accountName) ||
-            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---3') !== false ||
-            strpos($accountName, 'MKH---CLEORA-6') !== false) {
-            return 'LABIB';
-        }
-        
-        if (preg_match('/---ANGGA(-|---|$|\s)/i', $accountName) || 
-            preg_match('/ANGGA---/i', $accountName) ||
-            strpos($accountName, 'IPO2024---AGUS-HKU---') !== false ||
-            strpos($accountName, 'CPAS---CLEORA---ANGGA') !== false ||
-            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---2') !== false) {
-            if (preg_match('/---JB-BID---ANGGA/i', $accountName) ||
-                preg_match('/---JB-ANGGA/i', $accountName) ||
-                preg_match('/---GLOWSMOOTH---ANGGA/i', $accountName) ||
-                strpos($accountName, 'MKH---CLEORA-7') !== false ||
-                strpos($accountName, 'MKH---CLEORA-5') !== false ||
-                strpos($accountName, 'MKH---CLEORA-8') !== false ||
-                preg_match('/---ANGGA---3-MINUT/i', $accountName) ||
-                preg_match('/---ANGGA---RS/i', $accountName) ||
-                preg_match('/---RS---ANGGA/i', $accountName)) {
-                return 'ANGGA,REZA';
-            }
-            return 'ANGGA';
-        }
-        
-        if (strpos($accountName, 'TOFU') !== false ||
-            strpos($accountName, 'MKH---CLEORA-4') !== false ||
-            strpos($accountName, 'IPO2024---AI-YASYFI-YUTIMNA-HKU---1') !== false ||
-            strpos($accountName, 'CLEORA-71---BOOST-OFFICIAL') !== false ||
-            strpos($accountName, 'CLEORA-72---PROSES') !== false) {
-            return 'TOFU';
-        }
-        
-        if (strpos($accountName, 'CPAS-SHOPEE-CLEORA-1') !== false ||
-            strpos($accountName, 'MKH---CPAS-SHOPEE-CLEORA-3') !== false ||
-            strpos($accountName, 'IPO2024---Mohammad-Rocky-Pramana-HKU---1') !== false) {
-            return 'ALL';
-        }
-        
-        // Default case if no pattern matches
-        return 'UNKNOWN';
+        // Return the PIC if account exists in the mapping, otherwise return null
+        return $exactMatches[$accountName] ?? null;
     }
 
         
     public function getFunnelData(Request $request)
-{
-    try {
-        // Check if filterDates is set and has the expected format
-        if (!$request->has('filterDates') || !$request->filterDates) {
-            // Use default date range (e.g., this month)
-            $startDate = Carbon::now()->startOfMonth();
-            $endDate = Carbon::now()->endOfMonth();
-        } else {
-            // Try to parse the date range
-            try {
-                $dates = explode(' - ', $request->filterDates);
+    {
+        try {
+            // Check if filterDates is set and has the expected format
+            if (!$request->has('filterDates') || !$request->filterDates) {
+                // Use default date range (e.g., this month)
+                $startDate = Carbon::now()->startOfMonth();
+                $endDate = Carbon::now()->endOfMonth();
+            } else {
+                // Try to parse the date range
+                try {
+                    $dates = explode(' - ', $request->filterDates);
+                    
+                    // Make sure we have two date parts
+                    if (count($dates) != 2) {
+                        throw new \Exception("Invalid date range format");
+                    }
+                    
+                    $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+                    $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+                } catch (\Exception $e) {
+                    // Log the actual input for debugging
+                    \Log::error("Date parse error with input: " . $request->filterDates);
+                    throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
+                }
+            }
+
+            $tenant_id = auth()->user()->current_tenant_id;
+            
+            // Define twin dates to exclude (where day and month are the same)
+            $excludeDates = [];
+            
+            // Get all dates in the range
+            $currentDate = clone $startDate;
+            while ($currentDate <= $endDate) {
+                $day = $currentDate->format('d');
+                $month = $currentDate->format('m');
                 
-                // Make sure we have two date parts
-                if (count($dates) != 2) {
-                    throw new \Exception("Invalid date range format");
+                // If day equals month, it's a twin date (e.g., 05-05, 04-04)
+                if ($day == $month) {
+                    $excludeDates[] = $currentDate->format('Y-m-d');
                 }
                 
-                $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
-                $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
-            } catch (\Exception $e) {
-                // Log the actual input for debugging
-                \Log::error("Date parse error with input: " . $request->filterDates);
-                throw new \Exception("Invalid date format. Expected format: DD/MM/YYYY - DD/MM/YYYY");
-            }
-        }
-
-        $tenant_id = auth()->user()->current_tenant_id;
-        
-        // Define twin dates to exclude (where day and month are the same)
-        $excludeDates = [];
-        
-        // Get all dates in the range
-        $currentDate = clone $startDate;
-        while ($currentDate <= $endDate) {
-            $day = $currentDate->format('d');
-            $month = $currentDate->format('m');
-            
-            // If day equals month, it's a twin date (e.g., 05-05, 04-04)
-            if ($day == $month) {
-                $excludeDates[] = $currentDate->format('Y-m-d');
+                $currentDate->addDay();
             }
             
-            $currentDate->addDay();
-        }
-        
-        // Build the base query with all common filters
-        $baseQuery = AdsMeta::where('tenant_id', $tenant_id)
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+            // Build the base query with all common filters
+            $baseQuery = AdsMeta::where('tenant_id', $tenant_id)
+                ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+                
+            // Apply common filters
+            if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+                $baseQuery->where('kategori_produk', $request->kategori_produk);
+            }
+
+            if ($request->has('pic') && $request->pic !== '') {
+                $baseQuery->where('pic', $request->pic);
+            }
+
+            // Clone the base query for metrics that exclude twin dates
+            $funnelQuery = clone $baseQuery;
             
-        // Apply common filters
-        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
-            $baseQuery->where('kategori_produk', $request->kategori_produk);
+            // Exclude twin dates if any exist in our range (only for the funnel metrics)
+            if (!empty($excludeDates)) {
+                $funnelQuery->whereNotIn('date', $excludeDates);
+            }
+            
+            // Get funnel data (excluding twin dates)
+            $data = $funnelQuery->select(
+                DB::raw('SUM(impressions) as total_impressions'),
+                DB::raw('SUM(content_views_shared_items) as total_content_views'),
+                DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
+                DB::raw('SUM(purchases_shared_items) as total_purchases')
+            )->first();
+
+            // Get link clicks data (including twin dates)
+            $linkClicksData = $baseQuery->select(
+                DB::raw('SUM(link_clicks) as total_link_clicks')
+            )->first();
+
+            // Find the date with minimum amount spent
+            $dailySpendQuery = clone $funnelQuery;
+            $dailySpends = $dailySpendQuery
+                ->select('date', DB::raw('SUM(amount_spent) as daily_spent'))
+                ->whereNotNull('amount_spent')
+                ->where('amount_spent', '>', 0)
+                ->groupBy('date')
+                ->orderBy('daily_spent', 'asc') // Sort by ascending spent to get min
+                ->limit(1)
+                ->get();
+            
+            // Find min spent day
+            $minSpent = $dailySpends->first();
+
+            // Find the date with maximum adds to cart
+            $dailyAtcQuery = clone $funnelQuery;
+            $dailyAtcs = $dailyAtcQuery
+                ->select('date', DB::raw('SUM(adds_to_cart_shared_items) as daily_atc'))
+                ->whereNotNull('adds_to_cart_shared_items')
+                ->where('adds_to_cart_shared_items', '>', 0)
+                ->groupBy('date')
+                ->orderBy('daily_atc', 'desc') // Sort by descending ATC to get max
+                ->limit(1)
+                ->get();
+            
+            // Find max ATC day
+            $maxAtc = $dailyAtcs->first();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    [
+                        'name' => 'Impressions',
+                        'value' => (int)($data->total_impressions ?? 0)
+                    ],
+                    [
+                        'name' => 'Content Views',
+                        'value' => (int)($data->total_content_views ?? 0)
+                    ],
+                    [
+                        'name' => 'Link Clicks',
+                        'value' => (float)($linkClicksData->total_link_clicks ?? 0)
+                    ],
+                    [
+                        'name' => 'Adds to Cart',
+                        'value' => (int)($data->total_adds_to_cart ?? 0)
+                    ],
+                    [
+                        'name' => 'Purchases',
+                        'value' => (int)($data->total_purchases ?? 0)
+                    ]
+                ],
+                'min_spent' => [
+                    'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
+                    'value' => $minSpent ? (int)$minSpent->daily_spent : 0
+                ],
+                'max_atc' => [
+                    'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
+                    'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
+                ],
+                'excluded_twin_dates' => $excludeDates
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching funnel data: ' . $e->getMessage()
+            ], 422);
         }
-
-        if ($request->has('pic') && $request->pic !== '') {
-            $baseQuery->where('pic', $request->pic);
-        }
-
-        // Clone the base query for metrics that exclude twin dates
-        $funnelQuery = clone $baseQuery;
-        
-        // Exclude twin dates if any exist in our range (only for the funnel metrics)
-        if (!empty($excludeDates)) {
-            $funnelQuery->whereNotIn('date', $excludeDates);
-        }
-        
-        // Get funnel data (excluding twin dates)
-        $data = $funnelQuery->select(
-            DB::raw('SUM(impressions) as total_impressions'),
-            DB::raw('SUM(content_views_shared_items) as total_content_views'),
-            DB::raw('SUM(adds_to_cart_shared_items) as total_adds_to_cart'),
-            DB::raw('SUM(purchases_shared_items) as total_purchases')
-        )->first();
-
-        // Get link clicks data (including twin dates)
-        $linkClicksData = $baseQuery->select(
-            DB::raw('SUM(link_clicks) as total_link_clicks')
-        )->first();
-
-        // Find the date with minimum amount spent
-        $dailySpendQuery = clone $funnelQuery;
-        $dailySpends = $dailySpendQuery
-            ->select('date', DB::raw('SUM(amount_spent) as daily_spent'))
-            ->whereNotNull('amount_spent')
-            ->where('amount_spent', '>', 0)
-            ->groupBy('date')
-            ->orderBy('daily_spent', 'asc') // Sort by ascending spent to get min
-            ->limit(1)
-            ->get();
-        
-        // Find min spent day
-        $minSpent = $dailySpends->first();
-
-        // Find the date with maximum adds to cart
-        $dailyAtcQuery = clone $funnelQuery;
-        $dailyAtcs = $dailyAtcQuery
-            ->select('date', DB::raw('SUM(adds_to_cart_shared_items) as daily_atc'))
-            ->whereNotNull('adds_to_cart_shared_items')
-            ->where('adds_to_cart_shared_items', '>', 0)
-            ->groupBy('date')
-            ->orderBy('daily_atc', 'desc') // Sort by descending ATC to get max
-            ->limit(1)
-            ->get();
-        
-        // Find max ATC day
-        $maxAtc = $dailyAtcs->first();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                [
-                    'name' => 'Impressions',
-                    'value' => (int)($data->total_impressions ?? 0)
-                ],
-                [
-                    'name' => 'Content Views',
-                    'value' => (int)($data->total_content_views ?? 0)
-                ],
-                [
-                    'name' => 'Link Clicks',
-                    'value' => (float)($linkClicksData->total_link_clicks ?? 0)
-                ],
-                [
-                    'name' => 'Adds to Cart',
-                    'value' => (int)($data->total_adds_to_cart ?? 0)
-                ],
-                [
-                    'name' => 'Purchases',
-                    'value' => (int)($data->total_purchases ?? 0)
-                ]
-            ],
-            'min_spent' => [
-                'date' => $minSpent ? Carbon::parse($minSpent->date)->format('d M Y') : null,
-                'value' => $minSpent ? (int)$minSpent->daily_spent : 0
-            ],
-            'max_atc' => [
-                'date' => $maxAtc ? Carbon::parse($maxAtc->date)->format('d M Y') : null,
-                'value' => $maxAtc ? (float)$maxAtc->daily_atc : 0
-            ],
-            'excluded_twin_dates' => $excludeDates
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error fetching funnel data: ' . $e->getMessage()
-        ], 422);
     }
-}
     public function getImpressionChartData(Request $request)
     {
         try {
