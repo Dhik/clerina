@@ -355,32 +355,32 @@ return [
                 [
                     'text' => 'Ads Monitor',
                     'url' => 'admin/ads_cpas',
-                    'icon' => 'nav-icon fas fa-ad text-danger',
+                    'icon' => 'nav-icon fas fa-ad text-info',
                     'can' => [PermissionEnum::ViewSales],
                 ],
                 [
                     'text' => 'Affiliate Shopee',
                     'url' => 'admin/affiliate_shopee',
-                    'icon' => 'nav-icon fas fa-handshake text-orange',
+                    'icon' => 'nav-icon fas fa-handshake text-info',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Affiliate Tiktok',
                     'url' => 'admin/affiliate_tiktok',
-                    'icon' => 'nav-icon fab fa-tiktok text-pink',
+                    'icon' => 'nav-icon fab fa-tiktok text-info',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Live Shopee',
                     'url' => 'admin/live_shopee_product',
                     'can' => [PermissionEnum::ChangeOwnPassword],
-                    'icon' => 'nav-icon fas fa-video text-orange',
+                    'icon' => 'nav-icon fas fa-video text-info',
                 ],
                 [
                     'text' => 'Live TikTok',
                     'url' => 'admin/live_tiktok',
                     'can' => [PermissionEnum::ViewMarketing],
-                    'icon' => 'nav-icon fas fa-broadcast-tower text-pink',
+                    'icon' => 'nav-icon fas fa-broadcast-tower text-info',
                 ],
             ]
         ],
@@ -394,13 +394,13 @@ return [
                 [
                     'text' => 'Daily Count',
                     'url' => 'admin/sales/net_sales',
-                    'icon' => 'nav-icon fas fa-calendar-day text-warning',
+                    'icon' => 'nav-icon fas fa-calendar-day text-info',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
                     'text' => 'Daily HPP',
                     'url' => 'admin/sales/net_per_channel',
-                    'icon' => 'nav-icon fas fa-percentage text-warning',
+                    'icon' => 'nav-icon fas fa-percentage text-info',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
@@ -528,7 +528,7 @@ return [
                 [
                     'text' => 'Campaign',
                     'url' => 'admin/campaign',
-                    'icon' => 'nav-icon fas fa-flag text-primary',
+                    'icon' => 'nav-icon fas fa-flag text-info',
                     'can' => [PermissionEnum::ViewCampaign],
                     'active' => ['admin/campaign*']
                 ],
@@ -536,14 +536,14 @@ return [
                     'text' => 'Account Affiliate',
                     'url' => 'admin/kol',
                     'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon fas fa-user-friends text-success',
+                    'icon' => 'nav-icon fas fa-user-friends text-info',
                     'active' => ['admin/kol*']
                 ],
                 [
                     'text' => 'Budget',
                     'url' => 'admin/budgets',
                     'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon fas fa-wallet text-warning',
+                    'icon' => 'nav-icon fas fa-wallet text-info',
                     'active' => ['admin/budgets*']
                 ],
                 // [
