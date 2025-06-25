@@ -109,7 +109,12 @@ class BCGMetricsController extends Controller
             ->where('date', '2025-05-01')
             ->get();
 
-        $medianTraffic = $products->median('visitor');
+        $filteredProducts = $products->filter(function ($product) {
+            $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
+            return $conversionRate <= 80;
+        });
+
+        $medianTraffic = $filteredProducts->median('visitor');
         
         $chartData = $products->map(function ($product) use ($medianTraffic) {
             $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
