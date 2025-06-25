@@ -56,17 +56,18 @@ class BCGAnalysisService
     {
         $totalRevenue = $products->sum('sales');
         $totalAdsCost = $products->sum('biaya_ads');
-        $totalStock = $products->sum('stock');
         
         return [
             'total_products' => $products->count(),
             'total_revenue' => $totalRevenue,
             'total_ads_cost' => $totalAdsCost,
             'portfolio_roas' => $totalAdsCost > 0 ? round($totalRevenue / $totalAdsCost, 2) : 0,
-            'avg_conversion_rate' => round($products->avg('conversion_rate'), 2),
+            'avg_conversion_rate' => round($products->avg(function($p) { 
+                return $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+            }), 2),
             'total_traffic' => $products->sum('visitor'),
-            'total_stock_value' => $products->sum(function($p) { return $p->stock * $p->harga; }),
-            'stock_turnover_ratio' => $totalStock > 0 ? round($products->sum('qty_sold') / $totalStock, 2) : 0
+            'total_stock_value' => $products->sum(function($p) { return ($p->stock ?? 0) * ($p->harga ?? 0); }),
+            'stock_turnover_ratio' => $products->sum('stock') > 0 ? round($products->sum('qty_sold') / $products->sum('stock'), 2) : 0
         ];
     }
 
@@ -75,7 +76,34 @@ class BCGAnalysisService
      */
     private function getQuadrantAnalysis(Collection $products): array
     {
-        $quadrants = $products->groupBy('bcg_quadrant');
+        $medianTraffic = $products->median('visitor');
+        
+        // Calculate quadrants for each product
+        $productsWithQuadrants = $products->map(function ($product) use ($medianTraffic) {
+            $conversionRate = $product->visitor > 0 ? ($product->jumlah_pembeli / $product->visitor) * 100 : 0;
+            $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
+            
+            $isHighTraffic = $product->visitor >= $medianTraffic;
+            $isHighConversion = $conversionRate >= $benchmarkConversion;
+            
+            if ($isHighTraffic && $isHighConversion) {
+                $quadrant = 'Stars';
+            } elseif ($isHighTraffic && !$isHighConversion) {
+                $quadrant = 'Question Marks';
+            } elseif (!$isHighTraffic && $isHighConversion) {
+                $quadrant = 'Cash Cows';
+            } else {
+                $quadrant = 'Dogs';
+            }
+            
+            $product->bcg_quadrant = $quadrant;
+            $product->conversion_rate = $conversionRate;
+            $product->roas = $product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0;
+            
+            return $product;
+        });
+        
+        $quadrants = $productsWithQuadrants->groupBy('bcg_quadrant');
         
         $analysis = [];
         foreach (['Stars', 'Cash Cows', 'Question Marks', 'Dogs'] as $quadrant) {
@@ -89,10 +117,12 @@ class BCGAnalysisService
                 'avg_conversion' => round($quadrantProducts->avg('conversion_rate'), 2),
                 'avg_roas' => round($quadrantProducts->avg('roas'), 2),
                 'total_stock_value' => $quadrantProducts->sum(function($p) { 
-                    return $p->stock * $p->harga; 
+                    return ($p->stock ?? 0) * ($p->harga ?? 0); 
                 }),
                 'top_products' => $quadrantProducts->sortByDesc('sales')->take(5)->values(),
-                'avg_performance_score' => round($quadrantProducts->avg('performance_score'), 1)
+                'avg_performance_score' => round($quadrantProducts->avg(function($p) use ($medianTraffic) {
+                    return $this->calculatePerformanceScore($p, $medianTraffic);
+                }), 1)
             ];
         }
         
@@ -103,99 +133,99 @@ class BCGAnalysisService
      * Generate strategic recommendations
      */
     private function getRecommendations(Collection $products): array
-{
-    $medianTraffic = $products->median('visitor');
-    
-    $productsWithQuadrants = $products->map(function ($product) use ($medianTraffic) {
-        $conversionRate = $product->visitor > 0 ? ($product->jumlah_pembeli / $product->visitor) * 100 : 0;
-        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
+    {
+        $medianTraffic = $products->median('visitor');
         
-        $isHighTraffic = $product->visitor >= $medianTraffic;
-        $isHighConversion = $conversionRate >= $benchmarkConversion;
+        $productsWithQuadrants = $products->map(function ($product) use ($medianTraffic) {
+            $conversionRate = $product->visitor > 0 ? ($product->jumlah_pembeli / $product->visitor) * 100 : 0;
+            $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
+            
+            $isHighTraffic = $product->visitor >= $medianTraffic;
+            $isHighConversion = $conversionRate >= $benchmarkConversion;
+            
+            if ($isHighTraffic && $isHighConversion) {
+                $quadrant = 'Stars';
+            } elseif ($isHighTraffic && !$isHighConversion) {
+                $quadrant = 'Question Marks';
+            } elseif (!$isHighTraffic && $isHighConversion) {
+                $quadrant = 'Cash Cows';
+            } else {
+                $quadrant = 'Dogs';
+            }
+            
+            $product->bcg_quadrant = $quadrant;
+            $product->conversion_rate = $conversionRate;
+            $product->roas = $product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0;
+            
+            return $product;
+        });
         
-        if ($isHighTraffic && $isHighConversion) {
-            $quadrant = 'Stars';
-        } elseif ($isHighTraffic && !$isHighConversion) {
-            $quadrant = 'Question Marks';
-        } elseif (!$isHighTraffic && $isHighConversion) {
-            $quadrant = 'Cash Cows';
-        } else {
-            $quadrant = 'Dogs';
+        $quadrants = $productsWithQuadrants->groupBy('bcg_quadrant');
+        
+        $recommendations = [];
+        
+        // Stars recommendations
+        $stars = $quadrants->get('Stars', collect());
+        if ($stars->count() > 0) {
+            $recommendations['Stars'] = [
+                'strategy' => 'Invest & Grow',
+                'actions' => [
+                    'Increase advertising budget for top performing Stars',
+                    'Ensure adequate stock levels to meet demand',
+                    'Monitor for market saturation signals',
+                    'Consider product variations or bundles'
+                ],
+                'priority_products' => $stars->sortByDesc('sales')->take(3)->pluck('sku')->toArray()
+            ];
         }
-        
-        $product->bcg_quadrant = $quadrant;
-        $product->conversion_rate = $conversionRate;
-        $product->roas = $product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0;
-        
-        return $product;
-    });
-    
-    $quadrants = $productsWithQuadrants->groupBy('bcg_quadrant');
-    
-    $recommendations = [];
-    
-    // Stars recommendations
-    $stars = $quadrants->get('Stars', collect());
-    if ($stars->count() > 0) {
-        $recommendations['Stars'] = [
-            'strategy' => 'Invest & Grow',
-            'actions' => [
-                'Increase advertising budget for top performing Stars',
-                'Ensure adequate stock levels to meet demand',
-                'Monitor for market saturation signals',
-                'Consider product variations or bundles'
-            ],
-            'priority_products' => $stars->sortByDesc('sales')->take(3)->pluck('sku')->toArray() // Changed to SKU
-        ];
-    }
 
-    // Cash Cows recommendations  
-    $cashCows = $quadrants->get('Cash Cows', collect());
-    if ($cashCows->count() > 0) {
-        $recommendations['Cash Cows'] = [
-            'strategy' => 'Harvest & Optimize',
-            'actions' => [
-                'Focus on profit margin optimization',
-                'Reduce advertising spend while maintaining position',
-                'Consider premium pricing strategy',
-                'Use profits to fund Stars and Question Marks'
-            ],
-            'priority_products' => $cashCows->sortByDesc('roas')->take(3)->pluck('sku')->toArray() // Changed to SKU
-        ];
-    }
+        // Cash Cows recommendations  
+        $cashCows = $quadrants->get('Cash Cows', collect());
+        if ($cashCows->count() > 0) {
+            $recommendations['Cash Cows'] = [
+                'strategy' => 'Harvest & Optimize',
+                'actions' => [
+                    'Focus on profit margin optimization',
+                    'Reduce advertising spend while maintaining position',
+                    'Consider premium pricing strategy',
+                    'Use profits to fund Stars and Question Marks'
+                ],
+                'priority_products' => $cashCows->sortByDesc('roas')->take(3)->pluck('sku')->toArray()
+            ];
+        }
 
-    // Question Marks recommendations
-    $questionMarks = $quadrants->get('Question Marks', collect());
-    if ($questionMarks->count() > 0) {
-        $recommendations['Question Marks'] = [
-            'strategy' => 'Analyze & Decide',
-            'actions' => [
-                'Conduct conversion rate optimization',
-                'Review product positioning and pricing',
-                'A/B test different marketing approaches',
-                'Consider targeting different customer segments'
-            ],
-            'priority_products' => $questionMarks->sortByDesc('visitor')->take(3)->pluck('sku')->toArray() // Changed to SKU
-        ];
-    }
+        // Question Marks recommendations
+        $questionMarks = $quadrants->get('Question Marks', collect());
+        if ($questionMarks->count() > 0) {
+            $recommendations['Question Marks'] = [
+                'strategy' => 'Analyze & Decide',
+                'actions' => [
+                    'Conduct conversion rate optimization',
+                    'Review product positioning and pricing',
+                    'A/B test different marketing approaches',
+                    'Consider targeting different customer segments'
+                ],
+                'priority_products' => $questionMarks->sortByDesc('visitor')->take(3)->pluck('sku')->toArray()
+            ];
+        }
 
-    // Dogs recommendations
-    $dogs = $quadrants->get('Dogs', collect());
-    if ($dogs->count() > 0) {
-        $recommendations['Dogs'] = [
-            'strategy' => 'Divest or Reposition',
-            'actions' => [
-                'Discontinue poor performers',
-                'Liquidate excess inventory',
-                'Stop advertising spend',
-                'Consider repositioning viable products'
-            ],
-            'priority_products' => $dogs->sortBy('sales')->take(3)->pluck('sku')->toArray() // Changed to SKU
-        ];
-    }
+        // Dogs recommendations
+        $dogs = $quadrants->get('Dogs', collect());
+        if ($dogs->count() > 0) {
+            $recommendations['Dogs'] = [
+                'strategy' => 'Divest or Reposition',
+                'actions' => [
+                    'Discontinue poor performers',
+                    'Liquidate excess inventory',
+                    'Stop advertising spend',
+                    'Consider repositioning viable products'
+                ],
+                'priority_products' => $dogs->sortBy('sales')->take(3)->pluck('sku')->toArray()
+            ];
+        }
 
-    return $recommendations;
-}
+        return $recommendations;
+    }
 
     /**
      * Identify top performing products across all quadrants
@@ -204,9 +234,17 @@ class BCGAnalysisService
     {
         return [
             'by_revenue' => $products->sortByDesc('sales')->take(10)->values(),
-            'by_conversion' => $products->sortByDesc('conversion_rate')->take(10)->values(),
-            'by_roas' => $products->where('roas', '>', 0)->sortByDesc('roas')->take(10)->values(),
-            'by_performance_score' => $products->sortByDesc('performance_score')->take(10)->values()
+            'by_conversion' => $products->sortByDesc(function($p) {
+                return $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+            })->take(10)->values(),
+            'by_roas' => $products->filter(function($p) {
+                return $p->biaya_ads > 0;
+            })->sortByDesc(function($p) {
+                return ($p->omset_penjualan ?? 0) / $p->biaya_ads;
+            })->take(10)->values(),
+            'by_performance_score' => $products->sortByDesc(function($p) {
+                return $this->calculatePerformanceScore($p, $products->median('visitor'));
+            })->take(10)->values()
         ];
     }
 
@@ -215,20 +253,39 @@ class BCGAnalysisService
      */
     private function getOpportunities(Collection $products): array
     {
+        $medianTraffic = $products->median('visitor');
+        
         return [
-            'high_traffic_low_conversion' => $products->filter(function($p) {
-                return $p->visitor > BCGProduct::getMedianTraffic() && 
-                       $p->conversion_rate < $p->benchmark_conversion;
+            'high_traffic_low_conversion' => $products->filter(function($p) use ($medianTraffic) {
+                $conversionRate = $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+                $benchmarkConversion = $this->getBenchmarkConversion($p->harga);
+                return $p->visitor > $medianTraffic && $conversionRate < $benchmarkConversion;
             })->sortByDesc('visitor')->take(10)->values(),
             
-            'underinvested_stars' => $products->filter(function($p) {
-                return $p->bcg_quadrant === 'Stars' && $p->roas > 5;
-            })->sortByDesc('roas')->take(5)->values(),
+            'underinvested_stars' => $products->filter(function($p) use ($medianTraffic) {
+                $conversionRate = $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+                $benchmarkConversion = $this->getBenchmarkConversion($p->harga);
+                $roas = $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+                
+                $isHighTraffic = $p->visitor >= $medianTraffic;
+                $isHighConversion = $conversionRate >= $benchmarkConversion;
+                
+                return $isHighTraffic && $isHighConversion && $roas > 5;
+            })->sortByDesc(function($p) {
+                return $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+            })->take(5)->values(),
             
-            'cash_cow_candidates' => $products->filter(function($p) {
-                return $p->bcg_quadrant === 'Question Marks' && 
-                       $p->conversion_rate >= $p->benchmark_conversion * 0.8;
-            })->sortByDesc('conversion_rate')->take(5)->values()
+            'cash_cow_candidates' => $products->filter(function($p) use ($medianTraffic) {
+                $conversionRate = $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+                $benchmarkConversion = $this->getBenchmarkConversion($p->harga);
+                
+                $isHighTraffic = $p->visitor >= $medianTraffic;
+                $isHighConversion = $conversionRate >= $benchmarkConversion;
+                
+                return $isHighTraffic && !$isHighConversion && $conversionRate >= $benchmarkConversion * 0.8;
+            })->sortByDesc(function($p) {
+                return $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+            })->take(5)->values()
         ];
     }
 
@@ -237,19 +294,64 @@ class BCGAnalysisService
      */
     private function getRiskProducts(Collection $products): array
     {
+        $medianTraffic = $products->median('visitor');
+        
         return [
-            'declining_stars' => $products->filter(function($p) {
-                return $p->bcg_quadrant === 'Stars' && $p->roas < 2;
-            })->sortBy('roas')->take(5)->values(),
+            'declining_stars' => $products->filter(function($p) use ($medianTraffic) {
+                $conversionRate = $p->visitor > 0 ? ($p->jumlah_pembeli / $p->visitor) * 100 : 0;
+                $benchmarkConversion = $this->getBenchmarkConversion($p->harga);
+                $roas = $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+                
+                $isHighTraffic = $p->visitor >= $medianTraffic;
+                $isHighConversion = $conversionRate >= $benchmarkConversion;
+                
+                return $isHighTraffic && $isHighConversion && $roas < 2;
+            })->sortBy(function($p) {
+                return $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+            })->take(5)->values(),
             
             'overstocked' => $products->filter(function($p) {
-                return $p->stock_turnover < 0.3 && $p->stock > 100;
+                $stockTurnover = ($p->stock ?? 0) > 0 ? ($p->qty_sold ?? 0) / $p->stock : 0;
+                return $stockTurnover < 0.3 && ($p->stock ?? 0) > 100;
             })->sortByDesc('stock')->take(10)->values(),
             
             'high_ads_low_return' => $products->filter(function($p) {
-                return $p->biaya_ads > 1000000 && $p->roas < 1;
-            })->sortBy('roas')->take(10)->values()
+                $roas = $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+                return ($p->biaya_ads ?? 0) > 1000000 && $roas < 1;
+            })->sortBy(function($p) {
+                return $p->biaya_ads > 0 ? ($p->omset_penjualan ?? 0) / $p->biaya_ads : 0;
+            })->take(10)->values()
         ];
+    }
+
+    /**
+     * Get benchmark conversion rate based on price
+     */
+    private function getBenchmarkConversion($price)
+    {
+        if ($price < 75000) return 2.0;
+        if ($price < 100000) return 1.5;
+        if ($price < 125000) return 1.0;
+        if ($price < 150000) return 0.8;
+        return 0.6;
+    }
+
+    /**
+     * Calculate performance score for a product
+     */
+    private function calculatePerformanceScore($product, $medianTraffic)
+    {
+        $conversionRate = $product->visitor > 0 ? ($product->jumlah_pembeli / $product->visitor) * 100 : 0;
+        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
+        $roas = $product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0;
+        $stockTurnover = ($product->stock ?? 0) > 0 ? ($product->qty_sold ?? 0) / $product->stock : 0;
+        
+        $conversionScore = $conversionRate >= $benchmarkConversion ? 25 : 0;
+        $roasScore = $roas >= 3 ? 25 : ($roas >= 1 ? 15 : 0);
+        $trafficScore = $product->visitor >= $medianTraffic ? 25 : 10;
+        $stockScore = $stockTurnover >= 1 ? 25 : ($stockTurnover >= 0.5 ? 15 : 0);
+        
+        return $conversionScore + $roasScore + $trafficScore + $stockScore;
     }
 
     /**
