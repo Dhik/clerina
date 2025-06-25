@@ -203,54 +203,81 @@ class BCGMetricsController extends Controller
         $skippedRows = 0;
         $notFoundRows = 0;
         
-        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
-            foreach ($chunk as $row) {
-                // Skip if kode_produk is missing (assuming it's in Column A)
-                if (empty($row[0])) {
-                    $skippedRows++;
-                    continue;
-                }
-                
-                $kode_produk = trim($row[0]); // Column A
-                
-                // Handle formatted numbers for harga (Column G) and stock (Column H)
-                $harga = null;
-                if (isset($row[6]) && !empty($row[6])) {
-                    $cleanedHarga = str_replace('.', '', trim($row[6]));
-                    $harga = is_numeric($cleanedHarga) ? (int)$cleanedHarga : null;
-                }
-                
-                $stock = null;
-                if (isset($row[7]) && !empty($row[7])) {
-                    $cleanedStock = str_replace('.', '', trim($row[7]));
-                    $stock = is_numeric($cleanedStock) ? (int)$cleanedStock : null;
-                }
-                
-                // Find existing product by kode_produk AND date
-                $existingProduct = BcgProduct::where('kode_produk', $kode_produk)
-                                            ->where('date', $date)
-                                            ->first();
-                
-                if (!$existingProduct) {
-                    $notFoundRows++;
-                    continue; // Skip if product doesn't exist for this date
-                }
-                
-                // Update the existing product with stock and harga
-                $existingProduct->update([
-                    'stock' => $stock,
-                    'harga' => $harga,
-                    'updated_at' => now(),
-                ]);
-                
-                $processedRows++;
+        // First, collect all data and group by kode_produk to calculate averages
+        $groupedData = [];
+        
+        foreach ($sheetData as $row) {
+            // Skip if kode_produk is missing
+            if (empty($row[0])) {
+                $skippedRows++;
+                continue;
             }
-            usleep(100000); // Small delay to prevent overwhelming the server
+            
+            $kode_produk = trim($row[0]); // Column A
+            
+            // Handle formatted numbers for harga (Column G) and stock (Column H)
+            $harga = null;
+            if (isset($row[6]) && !empty($row[6])) {
+                $cleanedHarga = str_replace('.', '', trim($row[6]));
+                $harga = is_numeric($cleanedHarga) ? (int)$cleanedHarga : null;
+            }
+            
+            $stock = null;
+            if (isset($row[7]) && !empty($row[7])) {
+                $cleanedStock = str_replace('.', '', trim($row[7]));
+                $stock = is_numeric($cleanedStock) ? (int)$cleanedStock : null;
+            }
+            
+            // Group data by kode_produk
+            if (!isset($groupedData[$kode_produk])) {
+                $groupedData[$kode_produk] = [
+                    'harga_values' => [],
+                    'stock_values' => []
+                ];
+            }
+            
+            // Add values to arrays (only if not null)
+            if ($harga !== null) {
+                $groupedData[$kode_produk]['harga_values'][] = $harga;
+            }
+            if ($stock !== null) {
+                $groupedData[$kode_produk]['stock_values'][] = $stock;
+            }
+        }
+        
+        // Now process the grouped data and calculate averages
+        foreach ($groupedData as $kode_produk => $data) {
+            // Calculate averages
+            $avg_harga = !empty($data['harga_values']) ? 
+                round(array_sum($data['harga_values']) / count($data['harga_values'])) : null;
+                
+            $avg_stock = !empty($data['stock_values']) ? 
+                round(array_sum($data['stock_values']) / count($data['stock_values'])) : null;
+            
+            // Find existing product by kode_produk AND date
+            $existingProduct = BcgProduct::where('kode_produk', $kode_produk)
+                                        ->where('date', $date)
+                                        ->first();
+            
+            if (!$existingProduct) {
+                $notFoundRows++;
+                continue; // Skip if product doesn't exist for this date
+            }
+            
+            // Update the existing product with averaged stock and harga
+            $existingProduct->update([
+                'stock' => $avg_stock,
+                'harga' => $avg_harga,
+                'updated_at' => now(),
+            ]);
+            
+            $processedRows++;
         }
         
         return response()->json([
-            'message' => 'BCG Stock data imported successfully',
+            'message' => 'BCG Stock data imported successfully with averages calculated',
             'total_rows' => $totalRows,
+            'unique_products' => count($groupedData),
             'processed_rows' => $processedRows,
             'skipped_rows' => $skippedRows,
             'not_found_rows' => $notFoundRows
