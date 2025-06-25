@@ -97,7 +97,7 @@ class BCGMetricsController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1; // As specified in your requirements
-        $date = '2025-05-01'; // As specified
+        $date = '2025-06-01'; // As specified
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
@@ -115,11 +115,36 @@ class BCGMetricsController extends Controller
                 // Extract data from specific columns
                 $kode_produk = $row[0] ?? null; // Column A
                 $nama_produk = $row[1] ?? null; // Column B
-                $visitor = isset($row[8]) && is_numeric($row[8]) ? (int)$row[8] : null; // Column I
-                $jumlah_atc = isset($row[14]) && is_numeric($row[14]) ? (int)$row[14] : null; // Column O
-                $jumlah_pembeli = isset($row[21]) && is_numeric($row[21]) ? (int)$row[21] : null; // Column V
-                $qty_sold = isset($row[22]) && is_numeric($row[22]) ? (int)$row[22] : null; // Column W
-                $sales = isset($row[23]) && is_numeric($row[23]) ? (int)$row[23] : null; // Column X
+                // Handle formatted numbers with dot separators
+                $visitor = null;
+                if (isset($row[8]) && !empty($row[8])) {
+                    $cleanedVisitor = str_replace('.', '', trim($row[8]));
+                    $visitor = is_numeric($cleanedVisitor) ? (int)$cleanedVisitor : null;
+                }
+                
+                $jumlah_atc = null;
+                if (isset($row[14]) && !empty($row[14])) {
+                    $cleanedAtc = str_replace('.', '', trim($row[14]));
+                    $jumlah_atc = is_numeric($cleanedAtc) ? (int)$cleanedAtc : null;
+                }
+                
+                $jumlah_pembeli = null;
+                if (isset($row[21]) && !empty($row[21])) {
+                    $cleanedPembeli = str_replace('.', '', trim($row[21]));
+                    $jumlah_pembeli = is_numeric($cleanedPembeli) ? (int)$cleanedPembeli : null;
+                }
+                
+                $qty_sold = null;
+                if (isset($row[22]) && !empty($row[22])) {
+                    $cleanedQty = str_replace('.', '', trim($row[22]));
+                    $qty_sold = is_numeric($cleanedQty) ? (int)$cleanedQty : null;
+                }
+                // Handle formatted numbers with dot separators for sales (Column X)
+                $sales = null;
+                if (isset($row[23]) && !empty($row[23])) {
+                    $cleanedSales = str_replace('.', '', trim($row[23])); // Remove dots
+                    $sales = is_numeric($cleanedSales) ? (int)$cleanedSales : null;
+                }
                 
                 // Check for duplicates based on date, tenant_id, and kode_produk
                 $existingProduct = BcgProduct::where('date', $date)
