@@ -418,12 +418,12 @@ return [
             ],
             'icon'    => 'fas fa-chart-area',
             'submenu' => [
-                [
-                    'text' => 'BCG Metrics',
-                    'url' => 'admin/bcg_metrics',
-                    'icon' => 'nav-icon fas fa-chart-pie text-info',
-                    'can' => [PermissionEnum::ViewTenant],
-                ],
+                // [
+                //     'text' => 'BCG Metrics',
+                //     'url' => 'admin/bcg_metrics',
+                //     'icon' => 'nav-icon fas fa-chart-pie text-info',
+                //     'can' => [PermissionEnum::ViewTenant],
+                // ],
                 [
                     'text' => 'Cohort Analysis',
                     'url' => 'admin/customer/cohort-index',
