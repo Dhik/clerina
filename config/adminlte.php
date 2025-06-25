@@ -311,7 +311,7 @@ return [
         [
             'text' => 'Sales',
             'url' => 'admin/sales',
-            'icon' => 'nav-icon fas fa-chart-line text-success',
+            'icon' => 'nav-icon fas fa-chart-line text-primary',
             'can' => [PermissionEnum::ViewSales],
         ],
         [
@@ -336,13 +336,13 @@ return [
         [
             'text' => 'Customer',
             'url' => 'admin/customer',
-            'icon' => 'nav-icon fas fa-users text-info',
+            'icon' => 'nav-icon fas fa-users text-primary',
             'can' => [PermissionEnum::ViewCustomer],
         ],
         [
             'text' => 'Product',
             'url' => 'admin/product',
-            'icon' => 'nav-icon fas fa-box text-warning',
+            'icon' => 'nav-icon fas fa-box text-primary',
             'can' => [PermissionEnum::ViewCustomer],
         ],
         [
