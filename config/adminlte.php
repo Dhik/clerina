@@ -416,7 +416,7 @@ return [
             'can' => [
                 PermissionEnum::ViewTenant
             ],
-            'icon'    => 'fas fa-analytics',
+            'icon'    => 'fas fa-chart-area',
             'submenu' => [
                 [
                     'text' => 'BCG Metrics',
