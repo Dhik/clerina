@@ -15,6 +15,7 @@ interface KeyOpinionLeaderBLLInterface
      * Return KOL datatable
      */
     public function getKOLDatatable(Request $request): Builder;
+    public function getKOLDatatableMonitor(Request $request): Builder;
 
     /**
      * Select kol by username

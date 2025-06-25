@@ -401,7 +401,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('kol.get') }}",
+                url: "{{ route('kol.monitor_get') }}",
                 data: function (d) {
                     d.channel = channelSelector.val();
                     d.niche = nicheSelector.val();

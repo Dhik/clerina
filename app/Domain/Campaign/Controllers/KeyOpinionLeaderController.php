@@ -145,6 +145,93 @@ class KeyOpinionLeaderController extends Controller
             ])
             ->toJson();
     }
+    public function monitor_get(Request $request): JsonResponse
+    {
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
+
+        $query = $this->kolBLL->getKOLDatatableMonitor($request);
+
+        return DataTables::of($query)
+            ->addColumn('pic_contact_name', function ($row) {
+                return $row->picContact->name ?? 'empty';
+            })
+            ->addColumn('actions', function ($row) {
+                $waButton = '';
+                if (!empty($row->phone_number)) {
+                    // Format phone number for WhatsApp (remove non-digits and ensure it starts with country code)
+                    $phoneNumber = preg_replace('/[^0-9]/', '', $row->phone_number);
+                    // If phone starts with 0, replace with 62 (Indonesia country code)
+                    if (substr($phoneNumber, 0, 1) === '0') {
+                        $phoneNumber = '62' . substr($phoneNumber, 1);
+                    }
+                    $waLink = 'https://wa.me/' . $phoneNumber;
+                    
+                    $waButton = '<a href="' . $waLink . '" class="btn btn-success btn-xs" target="_blank" title="WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a> ';
+                }
+                
+                return $waButton . 
+                    '<a href=' . route('kol.show', $row->id) . ' class="btn btn-success btn-xs" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button onclick="openEditModal(' . $row->id . ')" class="btn btn-primary btn-xs" title="Edit">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>';
+            })
+            ->addColumn('refresh_follower', function ($row) {
+                return '<button class="btn btn-info btn-xs refresh-follower" data-id="' . $row->username . '">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>';
+            })
+            ->addColumn('engagement_rate_display', function ($row) {
+                return $row->engagement_rate ? number_format($row->engagement_rate, 2) . '%' : '-';
+            })
+            ->addColumn('views_last_9_post_display', function ($row) {
+                if ($row->views_last_9_post === null) {
+                    return '<span class="badge badge-secondary">Not Set</span>';
+                }
+                return $row->views_last_9_post ? 
+                    '<span class="badge badge-success">Yes</span>' : 
+                    '<span class="badge badge-danger">No</span>';
+            })
+            ->addColumn('activity_posting_display', function ($row) {
+                if ($row->activity_posting === null) {
+                    return '<span class="badge badge-secondary">Not Set</span>';
+                }
+                return $row->activity_posting ? 
+                    '<span class="badge badge-success">Active</span>' : 
+                    '<span class="badge badge-warning">Inactive</span>';
+            })
+            ->addColumn('status_affiliate_display', function ($row) {
+                if (!$row->status_affiliate) {
+                    return '<span class="badge badge-secondary">Not Set</span>';
+                }
+                
+                $badgeClass = match($row->status_affiliate) {
+                    'Qualified' => 'badge-success',
+                    'Waiting List' => 'badge-warning', 
+                    'Not Qualified' => 'badge-danger',
+                    default => 'badge-secondary'
+                };
+                
+                return '<span class="badge ' . $badgeClass . '">' . $row->status_affiliate . '</span>';
+            })
+            ->editColumn('program', function ($row) {
+                return $row->program ?? '-';
+            })
+            ->editColumn('rate', function ($row) {
+                return number_format($row->rate, 0, ',', '.');
+            })
+            ->rawColumns([
+                'actions', 
+                'refresh_follower', 
+                'views_last_9_post_display', 
+                'activity_posting_display', 
+                'status_affiliate_display'
+            ])
+            ->toJson();
+    }
 
     public function getKpiData(Request $request): JsonResponse
     {

@@ -72,6 +72,57 @@ class KeyOpinionLeaderBLL implements KeyOpinionLeaderBLLInterface
         return $query;
     }
 
+    public function getKOLDatatableMonitor(Request $request): Builder
+    {
+        $query = $this->kolDAL->getKOLDatatable();
+        $query->where('type', 'affiliate');
+        $query->where('status_affiliate', 'Qualified');
+
+        if (!is_null($request->channel)) {
+            $query->where('channel', $request->channel);
+        }
+
+        if (!is_null($request->niche)) {
+            $query->where('niche', $request->niche);
+        }
+
+        if (!is_null($request->skinType)) {
+            $query->where('skin_type', $request->skinType);
+        }
+
+        if (!is_null($request->skinConcern)) {
+            $query->where('skin_concern', $request->skinConcern);
+        }
+
+        if (!is_null($request->contentType)) {
+            $query->where('content_type', $request->contentType);
+        }
+
+        if (!is_null($request->pic)) {
+            $query->where('pic_contact', $request->pic);
+        }
+
+        // Status affiliate filter
+        if (!is_null($request->statusAffiliate)) {
+            if ($request->statusAffiliate === 'null') {
+                $query->whereNull('status_affiliate');
+            } else {
+                $query->where('status_affiliate', $request->statusAffiliate);
+            }
+        }
+
+        // Followers range filter
+        if (!is_null($request->followersMin) && $request->followersMin !== '') {
+            $query->where('followers', '>=', (int)$request->followersMin);
+        }
+
+        if (!is_null($request->followersMax) && $request->followersMax !== '') {
+            $query->where('followers', '<=', (int)$request->followersMax);
+        }
+
+        return $query;
+    }
+
     /**
      * Select kol by username
      */
