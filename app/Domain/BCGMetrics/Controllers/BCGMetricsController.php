@@ -8,6 +8,9 @@ use App\Domain\BCGMetrics\Models\BCGMetrics;
 use App\Domain\BCGMetrics\Requests\BCGMetricsRequest;
 use App\Domain\Sales\Services\GoogleSheetService;
 use App\Domain\BCGMetrics\Models\BCGProduct;
+use App\Domain\BCGMetrics\Services\BCGAnalysisService;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Domain\BCGMetrics\Exports\BCGAnalysisExport;
 
 /**
  * @property BCGMetricsBLLInterface bCGMetricsBLL
@@ -15,11 +18,14 @@ use App\Domain\BCGMetrics\Models\BCGProduct;
 class BCGMetricsController extends Controller
 {
     protected $googleSheetService;
+    protected $bcgAnalysisService;
+
     public function __construct(
-        GoogleSheetService $googleSheetService
-        )
-    {
+        GoogleSheetService $googleSheetService,
+        BCGAnalysisService $bcgAnalysisService
+    ) {
         $this->googleSheetService = $googleSheetService;
+        $this->bcgAnalysisService = $bcgAnalysisService;
     }
 
     public function index()
@@ -211,6 +217,238 @@ class BCGMetricsController extends Controller
     public function create()
     {
         //
+    }
+
+    public function getAnalysisDashboard($date = '2025-05-01')
+    {
+        $analysis = $this->bcgAnalysisService->generateAnalysis($date);
+        
+        return view('bcg_metrics.analysis', compact('analysis', 'date'));
+    }
+
+    /**
+     * Get recommendations API endpoint
+     */
+    public function getRecommendations($date = '2025-05-01')
+    {
+        $analysis = $this->bcgAnalysisService->generateAnalysis($date);
+        
+        return response()->json([
+            'recommendations' => $analysis['recommendations'],
+            'opportunities' => $analysis['opportunities'],
+            'risks' => $analysis['risk_products']
+        ]);
+    }
+
+    /**
+     * Export analysis to Excel
+     */
+    public function exportAnalysis($format = 'excel', $date = '2025-05-01')
+    {
+        $analysis = $this->bcgAnalysisService->generateAnalysis($date);
+        
+        switch ($format) {
+            case 'excel':
+                return Excel::download(new BCGAnalysisExport($analysis), 'bcg-analysis-' . $date . '.xlsx');
+            case 'csv':
+                $csvContent = $this->bcgAnalysisService->exportAnalysis('csv', $date);
+                return response($csvContent)
+                    ->header('Content-Type', 'text/csv')
+                    ->header('Content-Disposition', 'attachment; filename="bcg-analysis-' . $date . '.csv"');
+            case 'json':
+                $jsonContent = $this->bcgAnalysisService->exportAnalysis('json', $date);
+                return response($jsonContent)
+                    ->header('Content-Type', 'application/json')
+                    ->header('Content-Disposition', 'attachment; filename="bcg-analysis-' . $date . '.json"');
+            default:
+                return response()->json(['error' => 'Unsupported format'], 400);
+        }
+    }
+
+    /**
+     * Get performance trends (if you have historical data)
+     */
+    public function getPerformanceTrends()
+    {
+        // Example for future implementation with multiple dates
+        $dates = ['2025-04-01', '2025-05-01']; // Add more dates as needed
+        $trends = [];
+        
+        foreach ($dates as $date) {
+            $analysis = $this->bcgAnalysisService->generateAnalysis($date);
+            $trends[$date] = $analysis['overview'];
+        }
+        
+        return response()->json($trends);
+    }
+
+    /**
+     * Bulk update product strategies
+     */
+    public function updateProductStrategies(Request $request)
+    {
+        $updates = $request->input('updates', []);
+        
+        foreach ($updates as $update) {
+            BCGProduct::where('kode_produk', $update['kode_produk'])
+                    ->where('date', $update['date'])
+                    ->update([
+                        'strategy_notes' => $update['strategy'] ?? null,
+                        'action_items' => json_encode($update['actions'] ?? []),
+                        'updated_at' => now()
+                    ]);
+        }
+        
+        return response()->json(['message' => 'Strategies updated successfully']);
+    }
+
+    /**
+     * Get product details with history
+     */
+    public function getProductDetails($kode_produk)
+    {
+        $product = BCGProduct::where('kode_produk', $kode_produk)
+                            ->where('date', '2025-05-01')
+                            ->first();
+        
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+        
+        $details = [
+            'basic_info' => $product,
+            'calculated_metrics' => [
+                'conversion_rate' => $product->conversion_rate,
+                'atc_rate' => $product->atc_rate,
+                'purchase_rate' => $product->purchase_rate,
+                'roas' => $product->roas,
+                'revenue_per_visitor' => $product->revenue_per_visitor,
+                'stock_turnover' => $product->stock_turnover,
+                'performance_score' => $product->performance_score
+            ],
+            'bcg_classification' => [
+                'quadrant' => $product->bcg_quadrant,
+                'benchmark_conversion' => $product->benchmark_conversion,
+                'quadrant_color' => $product->quadrant_color
+            ],
+            'recommendations' => $this->getProductRecommendations($product)
+        ];
+        
+        return response()->json($details);
+    }
+
+    /**
+     * Generate specific recommendations for a product
+     */
+    private function getProductRecommendations($product)
+    {
+        $recommendations = [];
+        
+        switch ($product->bcg_quadrant) {
+            case 'Stars':
+                $recommendations = [
+                    'primary' => 'Increase investment and scale',
+                    'actions' => [
+                        'Boost advertising budget by 20-30%',
+                        'Ensure stock availability',
+                        'Monitor competitor activities',
+                        'Consider premium positioning'
+                    ]
+                ];
+                break;
+                
+            case 'Cash Cows':
+                $recommendations = [
+                    'primary' => 'Optimize for profitability',
+                    'actions' => [
+                        'Reduce ad spend gradually',
+                        'Increase profit margins',
+                        'Maintain quality standards',
+                        'Use profits to fund other products'
+                    ]
+                ];
+                break;
+                
+            case 'Question Marks':
+                $recommendations = [
+                    'primary' => 'Improve conversion rate',
+                    'actions' => [
+                        'Optimize product pages',
+                        'Review pricing strategy',
+                        'Improve product images/descriptions',
+                        'Test different targeting'
+                    ]
+                ];
+                break;
+                
+            case 'Dogs':
+                $recommendations = [
+                    'primary' => 'Consider discontinuation',
+                    'actions' => [
+                        'Stop advertising spend',
+                        'Liquidate inventory',
+                        'Analyze failure reasons',
+                        'Consider product repositioning'
+                    ]
+                ];
+                break;
+        }
+        
+        // Add specific recommendations based on metrics
+        if ($product->roas < 1 && $product->biaya_ads > 500000) {
+            $recommendations['urgent'][] = 'URGENT: Poor ROAS with high ad spend - review immediately';
+        }
+        
+        if ($product->stock_turnover < 0.1 && $product->stock > 1000) {
+            $recommendations['urgent'][] = 'URGENT: Very slow stock movement - consider price reduction';
+        }
+        
+        return $recommendations;
+    }
+
+    /**
+     * Advanced filtering and search
+     */
+    public function advancedFilter(Request $request)
+    {
+        $query = BCGProduct::withCompleteData()->where('date', '2025-05-01');
+        
+        // Apply filters
+        if ($request->has('quadrant') && $request->quadrant !== 'all') {
+            $products = $query->get()->filter(function($product) use ($request) {
+                return $product->bcg_quadrant === $request->quadrant;
+            });
+        } else {
+            $products = $query->get();
+        }
+        
+        if ($request->has('min_revenue')) {
+            $products = $products->where('sales', '>=', $request->min_revenue);
+        }
+        
+        if ($request->has('min_conversion')) {
+            $products = $products->where('conversion_rate', '>=', $request->min_conversion);
+        }
+        
+        if ($request->has('max_roas')) {
+            $products = $products->where('roas', '<=', $request->max_roas);
+        }
+        
+        // Sort options
+        $sortBy = $request->get('sort_by', 'sales');
+        $sortDirection = $request->get('sort_direction', 'desc');
+        
+        if ($sortDirection === 'desc') {
+            $products = $products->sortByDesc($sortBy);
+        } else {
+            $products = $products->sortBy($sortBy);
+        }
+        
+        return response()->json([
+            'products' => $products->values(),
+            'total' => $products->count(),
+            'filters_applied' => $request->all()
+        ]);
     }
 
     /**
