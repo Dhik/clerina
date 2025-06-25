@@ -97,7 +97,7 @@ class BCGMetricsController extends Controller
         $sheetData = $this->googleSheetService->getSheetData($range);
 
         $tenant_id = 1; // As specified in your requirements
-        $date = '2025-06-01'; // As specified
+        $date = '2025-05-01'; // As specified
         $chunkSize = 50;
         $totalRows = count($sheetData);
         $processedRows = 0;
