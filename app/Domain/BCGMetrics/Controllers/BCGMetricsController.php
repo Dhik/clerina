@@ -34,13 +34,32 @@ class BCGMetricsController extends Controller
     $products = BCGProduct::whereNotNull('visitor')
         ->whereNotNull('jumlah_pembeli')
         ->whereNotNull('harga')
+        ->whereNotNull('sku') // Add this line to ensure SKU exists
         ->where('visitor', '>', 0)
         ->where('date', '2025-05-01')
         ->get();
 
-    $medianTraffic = $products->median('visitor');
+    // Group by SKU and aggregate data
+    $groupedProducts = $products->groupBy('sku')->map(function ($group) {
+        $first = $group->first();
+        return (object)[
+            'kode_produk' => $first->kode_produk,
+            'nama_produk' => $first->nama_produk,
+            'sku' => $first->sku,
+            'visitor' => $group->sum('visitor'),
+            'jumlah_pembeli' => $group->sum('jumlah_pembeli'),
+            'qty_sold' => $group->sum('qty_sold'),
+            'sales' => $group->sum('sales'),
+            'stock' => $group->sum('stock'),
+            'harga' => $group->avg('harga'), // Average price for SKU
+            'biaya_ads' => $group->sum('biaya_ads'),
+            'omset_penjualan' => $group->sum('omset_penjualan'),
+        ];
+    })->values();
+
+    $medianTraffic = $groupedProducts->median('visitor');
     
-    $processedProducts = $products->map(function ($product) use ($medianTraffic) {
+    $processedProducts = $groupedProducts->map(function ($product) use ($medianTraffic) {
         $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
         $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
         
@@ -67,10 +86,10 @@ class BCGMetricsController extends Controller
             'sku' => $product->sku,
             'visitor' => $product->visitor,
             'jumlah_pembeli' => $product->jumlah_pembeli,
-            'qty_sold' => $product->qty_sold ?? 0, // ADD THIS LINE
+            'qty_sold' => $product->qty_sold ?? 0,
             'conversion_rate' => round($conversionRate, 2),
             'benchmark_conversion' => $benchmarkConversion,
-            'harga' => $product->harga,
+            'harga' => round($product->harga, 0),
             'sales' => $product->sales ?? 0,
             'stock' => $product->stock ?? 0,
             'biaya_ads' => $product->biaya_ads ?? 0,
@@ -97,64 +116,82 @@ class BCGMetricsController extends Controller
     return view('admin.bcg_metrics.index', compact('processedProducts', 'quadrantSummary', 'medianTraffic'));
 }
 
+
     /**
      * Get chart data for scatter plot
      */
     public function getChartData()
-    {
-        $products = BCGProduct::whereNotNull('visitor')
-            ->whereNotNull('jumlah_pembeli')
-            ->whereNotNull('harga')
-            ->where('visitor', '>', 0)
-            ->where('date', '2025-05-01')
-            ->get();
+{
+    $products = BCGProduct::whereNotNull('visitor')
+        ->whereNotNull('jumlah_pembeli')
+        ->whereNotNull('harga')
+        ->whereNotNull('sku')
+        ->where('visitor', '>', 0)
+        ->where('date', '2025-05-01')
+        ->get();
 
-        $medianTraffic = $products->median('visitor');
+    // Group by SKU and aggregate data
+    $groupedProducts = $products->groupBy('sku')->map(function ($group) {
+        $first = $group->first();
+        return (object)[
+            'kode_produk' => $first->kode_produk,
+            'nama_produk' => $first->nama_produk,
+            'sku' => $first->sku,
+            'visitor' => $group->sum('visitor'),
+            'jumlah_pembeli' => $group->sum('jumlah_pembeli'),
+            'sales' => $group->sum('sales'),
+            'harga' => $group->avg('harga'),
+            'biaya_ads' => $group->sum('biaya_ads'),
+            'omset_penjualan' => $group->sum('omset_penjualan'),
+        ];
+    })->values();
+
+    $medianTraffic = $groupedProducts->median('visitor');
+    
+    $chartData = $groupedProducts->map(function ($product) use ($medianTraffic) {
+        $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
+        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
         
-        $chartData = $products->map(function ($product) use ($medianTraffic) {
-            $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
-            $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
-            
-            $isHighTraffic = $product->visitor >= $medianTraffic;
-            $isHighConversion = $conversionRate >= $benchmarkConversion;
-            
-            if ($isHighTraffic && $isHighConversion) {
-                $quadrant = 'Stars';
-                $color = '#28a745';
-            } elseif ($isHighTraffic && !$isHighConversion) {
-                $quadrant = 'Question Marks';
-                $color = '#17a2b8';
-            } elseif (!$isHighTraffic && $isHighConversion) {
-                $quadrant = 'Cash Cows';
-                $color = '#ffc107';
-            } else {
-                $quadrant = 'Dogs';
-                $color = '#dc3545';
-            }
+        $isHighTraffic = $product->visitor >= $medianTraffic;
+        $isHighConversion = $conversionRate >= $benchmarkConversion;
+        
+        if ($isHighTraffic && $isHighConversion) {
+            $quadrant = 'Stars';
+            $color = '#28a745';
+        } elseif ($isHighTraffic && !$isHighConversion) {
+            $quadrant = 'Question Marks';
+            $color = '#17a2b8';
+        } elseif (!$isHighTraffic && $isHighConversion) {
+            $quadrant = 'Cash Cows';
+            $color = '#ffc107';
+        } else {
+            $quadrant = 'Dogs';
+            $color = '#dc3545';
+        }
 
-            return [
-                'x' => $product->visitor,
-                'y' => round($conversionRate, 2),
-                'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50),
-                'label' => $product->sku ?: $product->kode_produk,
-                'quadrant' => $quadrant,
-                'color' => $color,
-                'revenue' => $product->sales ?? 0,
-                'benchmark' => $benchmarkConversion
-            ];
-        })->filter(function ($item) {
-            return $item['y'] <= 80; // Exclude where y > 80
-        })->values();
+        return [
+            'x' => $product->visitor,
+            'y' => round($conversionRate, 2),
+            'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50),
+            'label' => $product->sku, // Use SKU as label
+            'quadrant' => $quadrant,
+            'color' => $color,
+            'revenue' => $product->sales ?? 0,
+            'benchmark' => $benchmarkConversion
+        ];
+    })->filter(function ($item) {
+        return $item['y'] <= 80; // Exclude where y > 80
+    })->values();
 
-        return response()->json([
-            'data' => $chartData,
-            'medianTraffic' => $medianTraffic,
-            'benchmarks' => [
-                'traffic' => $medianTraffic,
-                'conversion' => 1.0
-            ]
-        ]);
-    }
+    return response()->json([
+        'data' => $chartData,
+        'medianTraffic' => $medianTraffic,
+        'benchmarks' => [
+            'traffic' => $medianTraffic,
+            'conversion' => 1.0
+        ]
+    ]);
+}
 
     /**
      * Get benchmark conversion rate based on price
@@ -301,37 +338,87 @@ class BCGMetricsController extends Controller
     /**
      * Get product details with history
      */
-    public function getProductDetails($kode_produk)
-    {
-        $product = BCGProduct::where('kode_produk', $kode_produk)
-                            ->where('date', '2025-05-01')
-                            ->first();
-        
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
-        
-        $details = [
-            'basic_info' => $product,
-            'calculated_metrics' => [
-                'conversion_rate' => $product->conversion_rate,
-                'atc_rate' => $product->atc_rate,
-                'purchase_rate' => $product->purchase_rate,
-                'roas' => $product->roas,
-                'revenue_per_visitor' => $product->revenue_per_visitor,
-                'stock_turnover' => $product->stock_turnover,
-                'performance_score' => $product->performance_score
-            ],
-            'bcg_classification' => [
-                'quadrant' => $product->bcg_quadrant,
-                'benchmark_conversion' => $product->benchmark_conversion,
-                'quadrant_color' => $product->quadrant_color
-            ],
-            'recommendations' => $this->getProductRecommendations($product)
-        ];
-        
-        return response()->json($details);
+    public function getProductDetails($sku) // Change parameter from kode_produk to sku
+{
+    $products = BCGProduct::where('sku', $sku)
+                         ->where('date', '2025-05-01')
+                         ->get();
+    
+    if ($products->isEmpty()) {
+        return response()->json(['error' => 'SKU not found'], 404);
     }
+    
+    // Aggregate data for this SKU
+    $aggregatedProduct = (object)[
+        'kode_produk' => $products->first()->kode_produk,
+        'nama_produk' => $products->first()->nama_produk,
+        'sku' => $sku,
+        'visitor' => $products->sum('visitor'),
+        'jumlah_pembeli' => $products->sum('jumlah_pembeli'),
+        'jumlah_atc' => $products->sum('jumlah_atc'),
+        'qty_sold' => $products->sum('qty_sold'),
+        'sales' => $products->sum('sales'),
+        'stock' => $products->sum('stock'),
+        'harga' => $products->avg('harga'),
+        'biaya_ads' => $products->sum('biaya_ads'),
+        'omset_penjualan' => $products->sum('omset_penjualan'),
+    ];
+    
+    $conversionRate = ($aggregatedProduct->jumlah_pembeli / $aggregatedProduct->visitor) * 100;
+    $benchmarkConversion = $this->getBenchmarkConversion($aggregatedProduct->harga);
+    
+    // Get median traffic for all SKUs
+    $allProducts = BCGProduct::whereNotNull('visitor')
+                            ->whereNotNull('sku')
+                            ->where('date', '2025-05-01')
+                            ->get()
+                            ->groupBy('sku')
+                            ->map(function($group) {
+                                return $group->sum('visitor');
+                            });
+    $medianTraffic = $allProducts->median();
+    
+    $isHighTraffic = $aggregatedProduct->visitor >= $medianTraffic;
+    $isHighConversion = $conversionRate >= $benchmarkConversion;
+    
+    if ($isHighTraffic && $isHighConversion) {
+        $quadrant = 'Stars';
+        $color = '#28a745';
+    } elseif ($isHighTraffic && !$isHighConversion) {
+        $quadrant = 'Question Marks';
+        $color = '#17a2b8';
+    } elseif (!$isHighTraffic && $isHighConversion) {
+        $quadrant = 'Cash Cows';
+        $color = '#ffc107';
+    } else {
+        $quadrant = 'Dogs';
+        $color = '#dc3545';
+    }
+    
+    $details = [
+        'basic_info' => $aggregatedProduct,
+        'calculated_metrics' => [
+            'conversion_rate' => round($conversionRate, 2),
+            'atc_rate' => $aggregatedProduct->jumlah_atc > 0 ? round(($aggregatedProduct->jumlah_atc / $aggregatedProduct->visitor) * 100, 2) : 0,
+            'purchase_rate' => $aggregatedProduct->jumlah_atc > 0 ? round(($aggregatedProduct->jumlah_pembeli / $aggregatedProduct->jumlah_atc) * 100, 2) : 0,
+            'roas' => $aggregatedProduct->biaya_ads > 0 ? round($aggregatedProduct->omset_penjualan / $aggregatedProduct->biaya_ads, 2) : 0,
+            'revenue_per_visitor' => $aggregatedProduct->visitor > 0 ? round($aggregatedProduct->sales / $aggregatedProduct->visitor, 0) : 0,
+            'stock_turnover' => $aggregatedProduct->stock > 0 ? round($aggregatedProduct->qty_sold / $aggregatedProduct->stock, 2) : 0,
+            'performance_score' => (($conversionRate >= $benchmarkConversion ? 25 : 0) + 
+                                  ($aggregatedProduct->biaya_ads > 0 && $aggregatedProduct->omset_penjualan / $aggregatedProduct->biaya_ads >= 3 ? 25 : 15) + 
+                                  ($isHighTraffic ? 25 : 10) + 
+                                  ($aggregatedProduct->stock > 0 && $aggregatedProduct->qty_sold / $aggregatedProduct->stock >= 1 ? 25 : 15))
+        ],
+        'bcg_classification' => [
+            'quadrant' => $quadrant,
+            'benchmark_conversion' => $benchmarkConversion,
+            'quadrant_color' => $color
+        ],
+        'recommendations' => $this->getProductRecommendations($quadrant, $aggregatedProduct)
+    ];
+    
+    return response()->json($details);
+}
 
     /**
      * Generate specific recommendations for a product

@@ -267,7 +267,7 @@
                             </thead>
                             <tbody>
                                 @foreach($processedProducts as $product)
-                                <tr data-quadrant="{{ $product['quadrant'] }}" class="clickable-row" data-product="{{ $product['kode_produk'] }}">
+                                <tr data-quadrant="{{ $product['quadrant'] }}" class="clickable-row" data-sku="{{ $product['sku'] }}">
                                     <td>
                                         <span class="badge" style="background-color: {{ $product['quadrant_color'] }}; color: {{ $product['quadrant'] === 'Cash Cows' ? 'black' : 'white' }};">
                                             @if($product['quadrant'] === 'Stars')⭐@elseif($product['quadrant'] === 'Cash Cows')💰@elseif($product['quadrant'] === 'Question Marks')❓@else❌@endif
@@ -468,8 +468,8 @@ $(document).ready(function() {
 
     // Row click handler
     $('#productsTable').on('click', '.clickable-row', function() {
-        const kode_produk = $(this).data('product');
-        showProductDetails(kode_produk);
+        const sku = $(this).data('sku'); // Change from product to sku
+        showProductDetails(sku);
     });
 
     // Initialize chart
@@ -636,17 +636,18 @@ fetch('{{ route("bcg_metrics.get_recommendations") }}')
         $('#recommendationsContent').html('<div class="alert alert-danger">Error loading recommendations</div>');
     });
 }
-function showProductDetails(kode_produk) {
-$('#productDetailsModal').modal('show');
-fetch(`{{ route('bcg_metrics.product_details', '') }}/${kode_produk}`)
-    .then(response => response.json())
-    .then(data => {
-        let html = generateProductDetailsHTML(data);
-        $('#productDetailsContent').html(html);
-    })
-    .catch(error => {
-        $('#productDetailsContent').html('<div class="alert alert-danger">Error loading product details</div>');
-    });
+function showProductDetails(sku) {
+    $('#productDetailsModal').modal('show');
+    
+    fetch(`{{ route('bcg_metrics.product_details', '') }}/${sku}`) // Use SKU in URL
+        .then(response => response.json())
+        .then(data => {
+            let html = generateProductDetailsHTML(data);
+            $('#productDetailsContent').html(html);
+        })
+        .catch(error => {
+            $('#productDetailsContent').html('<div class="alert alert-danger">Error loading product details</div>');
+        });
 }
 function applyAdvancedFilter() {
 const formData = new FormData(document.getElementById('advancedFilterForm'));

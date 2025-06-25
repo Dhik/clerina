@@ -3,7 +3,7 @@
 namespace App\Domain\BCGMetrics\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder; // Remove this line if it exists
+use Illuminate\Database\Eloquent\Builder; 
 
 class BCGProduct extends Model
 {

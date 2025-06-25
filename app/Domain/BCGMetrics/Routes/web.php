@@ -29,7 +29,7 @@ Route::prefix('admin')
                 Route::get('/chart-data', [BCGMetricsController::class, 'getChartData'])->name('bcg_metrics.get_chart_data');
                 Route::get('/recommendations/{date?}', [BCGMetricsController::class, 'getRecommendations'])->name('bcg_metrics.get_recommendations');
                 Route::get('/quadrant/{quadrant}', [BCGMetricsController::class, 'getQuadrantDetails'])->name('bcg_metrics.quadrant_details');
-                Route::get('/product/{kode_produk}', [BCGMetricsController::class, 'getProductDetails'])->name('bcg_metrics.product_details');
+                Route::get('/product/{sku}', [BCGMetricsController::class, 'getProductDetails'])->name('bcg_metrics.product_details');
                 
                 // Advanced filtering and search
                 Route::get('/advanced-filter', [BCGMetricsController::class, 'advancedFilter'])->name('bcg_metrics.advanced_filter');

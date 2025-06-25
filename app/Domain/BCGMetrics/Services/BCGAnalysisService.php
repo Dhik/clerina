@@ -12,15 +12,40 @@ class BCGAnalysisService
      */
     public function generateAnalysis($date = '2025-05-01'): array
     {
-        $products = BCGProduct::withCompleteData()->where('date', $date)->get();
-        
+        // Get products and group by SKU
+        $products = BCGProduct::whereNotNull('visitor')
+            ->whereNotNull('jumlah_pembeli')
+            ->whereNotNull('harga')
+            ->whereNotNull('sku')
+            ->where('visitor', '>', 0)
+            ->where('date', $date)
+            ->get();
+
+        // Group by SKU and aggregate
+        $groupedProducts = $products->groupBy('sku')->map(function ($group) {
+            $first = $group->first();
+            return (object)[
+                'kode_produk' => $first->kode_produk,
+                'nama_produk' => $first->nama_produk,
+                'sku' => $first->sku,
+                'visitor' => $group->sum('visitor'),
+                'jumlah_pembeli' => $group->sum('jumlah_pembeli'),
+                'qty_sold' => $group->sum('qty_sold'),
+                'sales' => $group->sum('sales'),
+                'stock' => $group->sum('stock'),
+                'harga' => $group->avg('harga'),
+                'biaya_ads' => $group->sum('biaya_ads'),
+                'omset_penjualan' => $group->sum('omset_penjualan'),
+            ];
+        })->values();
+
         return [
-            'overview' => $this->getOverview($products),
-            'quadrant_analysis' => $this->getQuadrantAnalysis($products),
-            'recommendations' => $this->getRecommendations($products),
-            'top_performers' => $this->getTopPerformers($products),
-            'opportunities' => $this->getOpportunities($products),
-            'risk_products' => $this->getRiskProducts($products)
+            'overview' => $this->getOverview($groupedProducts),
+            'quadrant_analysis' => $this->getQuadrantAnalysis($groupedProducts),
+            'recommendations' => $this->getRecommendations($groupedProducts),
+            'top_performers' => $this->getTopPerformers($groupedProducts),
+            'opportunities' => $this->getOpportunities($groupedProducts),
+            'risk_products' => $this->getRiskProducts($groupedProducts)
         ];
     }
 
@@ -78,73 +103,99 @@ class BCGAnalysisService
      * Generate strategic recommendations
      */
     private function getRecommendations(Collection $products): array
-    {
-        $quadrants = $products->groupBy('bcg_quadrant');
+{
+    $medianTraffic = $products->median('visitor');
+    
+    $productsWithQuadrants = $products->map(function ($product) use ($medianTraffic) {
+        $conversionRate = $product->visitor > 0 ? ($product->jumlah_pembeli / $product->visitor) * 100 : 0;
+        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
         
-        $recommendations = [];
+        $isHighTraffic = $product->visitor >= $medianTraffic;
+        $isHighConversion = $conversionRate >= $benchmarkConversion;
         
-        // Stars recommendations
-        $stars = $quadrants->get('Stars', collect());
-        if ($stars->count() > 0) {
-            $recommendations['Stars'] = [
-                'strategy' => 'Invest & Grow',
-                'actions' => [
-                    'Increase advertising budget for top performing Stars',
-                    'Ensure adequate stock levels to meet demand',
-                    'Monitor for market saturation signals',
-                    'Consider product variations or bundles'
-                ],
-                'priority_products' => $stars->sortByDesc('performance_score')->take(3)->pluck('nama_produk')->toArray()
-            ];
+        if ($isHighTraffic && $isHighConversion) {
+            $quadrant = 'Stars';
+        } elseif ($isHighTraffic && !$isHighConversion) {
+            $quadrant = 'Question Marks';
+        } elseif (!$isHighTraffic && $isHighConversion) {
+            $quadrant = 'Cash Cows';
+        } else {
+            $quadrant = 'Dogs';
         }
-
-        // Cash Cows recommendations  
-        $cashCows = $quadrants->get('Cash Cows', collect());
-        if ($cashCows->count() > 0) {
-            $recommendations['Cash Cows'] = [
-                'strategy' => 'Harvest & Optimize',
-                'actions' => [
-                    'Focus on profit margin optimization',
-                    'Reduce advertising spend while maintaining position',
-                    'Consider premium pricing strategy',
-                    'Use profits to fund Stars and Question Marks'
-                ],
-                'priority_products' => $cashCows->sortByDesc('roas')->take(3)->pluck('nama_produk')->toArray()
-            ];
-        }
-
-        // Question Marks recommendations
-        $questionMarks = $quadrants->get('Question Marks', collect());
-        if ($questionMarks->count() > 0) {
-            $recommendations['Question Marks'] = [
-                'strategy' => 'Analyze & Decide',
-                'actions' => [
-                    'Conduct conversion rate optimization',
-                    'Review product positioning and pricing',
-                    'A/B test different marketing approaches',
-                    'Consider targeting different customer segments'
-                ],
-                'priority_products' => $questionMarks->sortByDesc('visitor')->take(3)->pluck('nama_produk')->toArray()
-            ];
-        }
-
-        // Dogs recommendations
-        $dogs = $quadrants->get('Dogs', collect());
-        if ($dogs->count() > 0) {
-            $recommendations['Dogs'] = [
-                'strategy' => 'Divest or Reposition',
-                'actions' => [
-                    'Discontinue poor performers',
-                    'Liquidate excess inventory',
-                    'Stop advertising spend',
-                    'Consider repositioning viable products'
-                ],
-                'priority_products' => $dogs->sortBy('performance_score')->take(3)->pluck('nama_produk')->toArray()
-            ];
-        }
-
-        return $recommendations;
+        
+        $product->bcg_quadrant = $quadrant;
+        $product->conversion_rate = $conversionRate;
+        $product->roas = $product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0;
+        
+        return $product;
+    });
+    
+    $quadrants = $productsWithQuadrants->groupBy('bcg_quadrant');
+    
+    $recommendations = [];
+    
+    // Stars recommendations
+    $stars = $quadrants->get('Stars', collect());
+    if ($stars->count() > 0) {
+        $recommendations['Stars'] = [
+            'strategy' => 'Invest & Grow',
+            'actions' => [
+                'Increase advertising budget for top performing Stars',
+                'Ensure adequate stock levels to meet demand',
+                'Monitor for market saturation signals',
+                'Consider product variations or bundles'
+            ],
+            'priority_products' => $stars->sortByDesc('sales')->take(3)->pluck('sku')->toArray() // Changed to SKU
+        ];
     }
+
+    // Cash Cows recommendations  
+    $cashCows = $quadrants->get('Cash Cows', collect());
+    if ($cashCows->count() > 0) {
+        $recommendations['Cash Cows'] = [
+            'strategy' => 'Harvest & Optimize',
+            'actions' => [
+                'Focus on profit margin optimization',
+                'Reduce advertising spend while maintaining position',
+                'Consider premium pricing strategy',
+                'Use profits to fund Stars and Question Marks'
+            ],
+            'priority_products' => $cashCows->sortByDesc('roas')->take(3)->pluck('sku')->toArray() // Changed to SKU
+        ];
+    }
+
+    // Question Marks recommendations
+    $questionMarks = $quadrants->get('Question Marks', collect());
+    if ($questionMarks->count() > 0) {
+        $recommendations['Question Marks'] = [
+            'strategy' => 'Analyze & Decide',
+            'actions' => [
+                'Conduct conversion rate optimization',
+                'Review product positioning and pricing',
+                'A/B test different marketing approaches',
+                'Consider targeting different customer segments'
+            ],
+            'priority_products' => $questionMarks->sortByDesc('visitor')->take(3)->pluck('sku')->toArray() // Changed to SKU
+        ];
+    }
+
+    // Dogs recommendations
+    $dogs = $quadrants->get('Dogs', collect());
+    if ($dogs->count() > 0) {
+        $recommendations['Dogs'] = [
+            'strategy' => 'Divest or Reposition',
+            'actions' => [
+                'Discontinue poor performers',
+                'Liquidate excess inventory',
+                'Stop advertising spend',
+                'Consider repositioning viable products'
+            ],
+            'priority_products' => $dogs->sortBy('sales')->take(3)->pluck('sku')->toArray() // Changed to SKU
+        ];
+    }
+
+    return $recommendations;
+}
 
     /**
      * Identify top performing products across all quadrants
