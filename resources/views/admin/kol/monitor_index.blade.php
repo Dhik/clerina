@@ -7,6 +7,52 @@
 @stop
 
 @section('content')
+<div class="row mb-4">
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="starterCount">0</h3>
+                    <p>Starter Level</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="influencerCount">0</h3>
+                    <p>Influencer Level</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3 id="legendCount">0</h3>
+                    <p>Legend Level</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-crown"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3 id="bestAffiliateCount">0</h3>
+                    <p>Best Affiliate</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -232,6 +278,20 @@
             });
         });
 
+        function loadKpiDataMonitor() {
+            $.get("{{ route('kol.monitor_kpi') }}", function(data) {
+
+                // Level KPIs
+                $('#starterCount').text(data.starter_count || 0);
+                $('#influencerCount').text(data.influencer_count || 0);
+                $('#legendCount').text(data.legend_count || 0);
+                $('#bestAffiliateCount').text(data.best_affiliate_count || 0);
+            }).fail(function() {
+                console.error('Failed to load KPI data');
+                $('#starterCount, #influencerCount, #legendCount, #bestAffiliateCount').text('0');
+            });
+        }
+
         function loadKpiData() {
             $.get("{{ route('kol.kpi') }}", function(data) {
                 $('#totalKol').text(data.total_kol || 0);
@@ -451,6 +511,7 @@
             drawCallback: function() {
                 // Refresh KPI data after table draw/filter
                 loadKpiData();
+                loadKpiDataMonitor();
             }
         });
 
@@ -970,6 +1031,7 @@
                     // Refresh DataTable and KPI
                     kolTable.ajax.reload(null, false); // false = stay on current page
                     loadKpiData();
+                    loadKpiDataMonitor();
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {

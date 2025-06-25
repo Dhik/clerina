@@ -232,6 +232,45 @@ class KeyOpinionLeaderController extends Controller
             ])
             ->toJson();
     }
+    public function monitor_kpi(Request $request): JsonResponse
+    {
+        try {
+            $query = KeyOpinionLeader::query();
+            
+            // Calculate KPIs
+            $totalKol = $query->count();
+            $totalAffiliate = $query->whereNotNull('status_affiliate')->count();
+            $activeAffiliate = $query->where('status_affiliate', 'Qualified')->count();
+            $activePosting = $query->where('activity_posting', 1)->count();
+            $hasViews = $query->where('views_last_9_post', 1)->count();
+            $avgEngagement = $query->whereNotNull('engagement_rate')->avg('engagement_rate');
+            
+            // Level counts (excluding null values)
+            $starterCount = $query->where('level', 'Starter')->count();
+            $influencerCount = $query->where('level', 'Influencer')->count();
+            $legendCount = $query->where('level', 'Legend')->count();
+            $bestAffiliateCount = $query->where('level', 'Best Affiliate')->count();
+            
+            return response()->json([
+                'total_kol' => $totalKol,
+                'total_affiliate' => $totalAffiliate,
+                'active_affiliate' => $activeAffiliate,
+                'active_posting' => $activePosting,
+                'has_views' => $hasViews,
+                'avg_engagement' => $avgEngagement ? round($avgEngagement, 2) : 0,
+                'starter_count' => $starterCount,
+                'influencer_count' => $influencerCount,
+                'legend_count' => $legendCount,
+                'best_affiliate_count' => $bestAffiliateCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load KPI data',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function getKpiData(Request $request): JsonResponse
     {
