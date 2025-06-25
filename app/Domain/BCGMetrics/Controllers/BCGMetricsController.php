@@ -101,58 +101,67 @@ class BCGMetricsController extends Controller
      * Get chart data for scatter plot
      */
     public function getChartData()
-    {
-        $products = BCGProduct::whereNotNull('visitor')
-            ->whereNotNull('jumlah_pembeli')
-            ->whereNotNull('harga')
-            ->where('visitor', '>', 0)
-            ->where('date', '2025-05-01')
-            ->get();
+{
+    $products = BCGProduct::whereNotNull('visitor')
+        ->whereNotNull('jumlah_pembeli')
+        ->whereNotNull('harga')
+        ->where('visitor', '>', 0)
+        ->where('date', '2025-05-01')
+        ->get();
 
-        $medianTraffic = $products->median('visitor');
+    // Filter out outliers - exclude conversion rate > 80%
+    $filteredProducts = $products->filter(function ($product) {
+        $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
+        return $conversionRate <= 80; // EXCLUDE outliers > 80%
+    });
+
+    $medianTraffic = $filteredProducts->median('visitor');
+    
+    $chartData = $filteredProducts->map(function ($product) use ($medianTraffic) {
+        $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
+        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
         
-        $chartData = $products->map(function ($product) use ($medianTraffic) {
-            $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
-            $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
-            
-            $isHighTraffic = $product->visitor >= $medianTraffic;
-            $isHighConversion = $conversionRate >= $benchmarkConversion;
-            
-            if ($isHighTraffic && $isHighConversion) {
-                $quadrant = 'Stars';
-                $color = '#28a745';
-            } elseif ($isHighTraffic && !$isHighConversion) {
-                $quadrant = 'Question Marks';
-                $color = '#17a2b8';
-            } elseif (!$isHighTraffic && $isHighConversion) {
-                $quadrant = 'Cash Cows';
-                $color = '#ffc107';
-            } else {
-                $quadrant = 'Dogs';
-                $color = '#dc3545';
-            }
+        $isHighTraffic = $product->visitor >= $medianTraffic;
+        $isHighConversion = $conversionRate >= $benchmarkConversion;
+        
+        if ($isHighTraffic && $isHighConversion) {
+            $quadrant = 'Stars';
+            $color = '#28a745';
+        } elseif ($isHighTraffic && !$isHighConversion) {
+            $quadrant = 'Question Marks';
+            $color = '#17a2b8';
+        } elseif (!$isHighTraffic && $isHighConversion) {
+            $quadrant = 'Cash Cows';
+            $color = '#ffc107';
+        } else {
+            $quadrant = 'Dogs';
+            $color = '#dc3545';
+        }
 
-            return [
-                'x' => $product->visitor,
-                'y' => round($conversionRate, 2),
-                'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50), // Bubble size based on sales
-                'label' => $product->sku ?: $product->kode_produk,
-                'quadrant' => $quadrant,
-                'color' => $color,
-                'revenue' => $product->sales ?? 0,
-                'benchmark' => $benchmarkConversion
-            ];
-        });
+        return [
+            'x' => $product->visitor,
+            'y' => round($conversionRate, 2),
+            'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50),
+            'label' => $product->sku ?: $product->kode_produk,
+            'quadrant' => $quadrant,
+            'color' => $color,
+            'revenue' => $product->sales ?? 0,
+            'benchmark' => $benchmarkConversion
+        ];
+    });
 
-        return response()->json([
-            'data' => $chartData,
-            'medianTraffic' => $medianTraffic,
-            'benchmarks' => [
-                'traffic' => $medianTraffic,
-                'conversion' => 1.0 // Average benchmark
-            ]
-        ]);
-    }
+    return response()->json([
+        'data' => $chartData,
+        'medianTraffic' => $medianTraffic,
+        'benchmarks' => [
+            'traffic' => $medianTraffic,
+            'conversion' => 1.0
+        ],
+        'total_products' => $products->count(),
+        'filtered_products' => $filteredProducts->count(),
+        'excluded_outliers' => $products->count() - $filteredProducts->count()
+    ]);
+}
 
     /**
      * Get benchmark conversion rate based on price
