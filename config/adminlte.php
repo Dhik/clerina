@@ -311,13 +311,13 @@ return [
         [
             'text' => 'Sales',
             'url' => 'admin/sales',
-            'icon' => 'nav-icon far fa-circle text-info',
+            'icon' => 'nav-icon fas fa-chart-line text-success',
             'can' => [PermissionEnum::ViewSales],
         ],
         [
             'text' => 'Order',
             'url' => 'admin/order',
-            'icon' => 'nav-icon far fa-circle text-info',
+            'icon' => 'nav-icon fas fa-shopping-cart text-primary',
             'can' => [PermissionEnum::ViewOrder],
         ],
         
@@ -336,13 +336,13 @@ return [
         [
             'text' => 'Customer',
             'url' => 'admin/customer',
-            'icon' => 'nav-icon far fa-circle text-info',
+            'icon' => 'nav-icon fas fa-users text-info',
             'can' => [PermissionEnum::ViewCustomer],
         ],
         [
             'text' => 'Product',
             'url' => 'admin/product',
-            'icon' => 'nav-icon far fa-circle text-info',
+            'icon' => 'nav-icon fas fa-box text-warning',
             'can' => [PermissionEnum::ViewCustomer],
         ],
         [
@@ -350,37 +350,37 @@ return [
             'can' => [
                 PermissionEnum::ViewSales,
             ],
-            'icon'    => 'fas fa-fw fa-map',
+            'icon'    => 'fas fa-bullhorn',
             'submenu' => [
                 [
                     'text' => 'Ads Monitor',
                     'url' => 'admin/ads_cpas',
-                    'icon' => 'nav-icon far fa-circle text-info',
+                    'icon' => 'nav-icon fas fa-ad text-danger',
                     'can' => [PermissionEnum::ViewSales],
                 ],
                 [
                     'text' => 'Affiliate Shopee',
                     'url' => 'admin/affiliate_shopee',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-handshake text-orange',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Affiliate Tiktok',
                     'url' => 'admin/affiliate_tiktok',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fab fa-tiktok text-dark',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Live Shopee',
                     'url' => 'admin/live_shopee_product',
                     'can' => [PermissionEnum::ChangeOwnPassword],
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-video text-orange',
                 ],
                 [
                     'text' => 'Live TikTok',
                     'url' => 'admin/live_tiktok',
                     'can' => [PermissionEnum::ViewMarketing],
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-broadcast-tower text-dark',
                 ],
             ]
         ],
@@ -389,24 +389,24 @@ return [
             'can' => [
                 PermissionEnum::ViewTenant
             ],
-            'icon'    => 'fas fa-fw fa-book',
+            'icon'    => 'fas fa-chart-bar',
             'submenu' => [
                 [
                     'text' => 'Daily Count',
                     'url' => 'admin/sales/net_sales',
-                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'icon' => 'nav-icon fas fa-calendar-day text-warning',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
                     'text' => 'Daily HPP',
                     'url' => 'admin/sales/net_per_channel',
-                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'icon' => 'nav-icon fas fa-percentage text-warning',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
                     'text' => 'Financial Report',
                     'url' => 'admin/lk',
-                    'icon' => 'nav-icon far fa-circle text-success',
+                    'icon' => 'nav-icon fas fa-file-invoice-dollar text-success',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
             ]
@@ -416,18 +416,18 @@ return [
             'can' => [
                 PermissionEnum::ViewTenant
             ],
-            'icon'    => 'fas fa-fw fa-book',
+            'icon'    => 'fas fa-analytics',
             'submenu' => [
                 [
                     'text' => 'BCG Metrics',
                     'url' => 'admin/bcg_metrics',
-                    'icon' => 'nav-icon far fa-circle text-info',
+                    'icon' => 'nav-icon fas fa-chart-pie text-info',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
                     'text' => 'Cohort Analysis',
                     'url' => 'admin/customer/cohort-index',
-                    'icon' => 'nav-icon far fa-circle text-info',
+                    'icon' => 'nav-icon fas fa-layer-group text-info',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
             ]
@@ -516,7 +516,7 @@ return [
                 PermissionEnum::ViewOffer,
                 PermissionEnum::ViewKOL
             ],
-            'icon'    => 'fas fa-fw fa-map',
+            'icon'    => 'fas fa-rocket',
             'submenu' => [
                 // [
                 //     'text' => 'KOL/Influencer',
@@ -528,7 +528,7 @@ return [
                 [
                     'text' => 'Campaign',
                     'url' => 'admin/campaign',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-flag text-primary',
                     'can' => [PermissionEnum::ViewCampaign],
                     'active' => ['admin/campaign*']
                 ],
@@ -536,14 +536,14 @@ return [
                     'text' => 'Account Affiliate',
                     'url' => 'admin/kol',
                     'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-user-friends text-success',
                     'active' => ['admin/kol*']
                 ],
                 [
                     'text' => 'Budget',
                     'url' => 'admin/budgets',
                     'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-wallet text-warning',
                     'active' => ['admin/budgets*']
                 ],
                 // [
@@ -583,49 +583,49 @@ return [
                 PermissionEnum::ViewCampaign,
                 PermissionEnum::ViewKOL
             ],
-            'icon'    => 'fas fa-fw fa-edit',
+            'icon'    => 'fas fa-edit',
             'submenu' => [
                 [
                     'text' => 'Content Plan',
                     'url' => 'admin/contentPlan',
-                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'icon' => 'nav-icon fas fa-clipboard-list text-primary',
                     'can' => [PermissionEnum::ViewMarketing],
                     'active' => ['admin/contentPlan*']
                 ],
                 [
                     'text' => 'Strategy (Step 1)',
                     'url' => 'admin/contentPlan?status=draft',
-                    'icon' => 'nav-icon far fa-circle text-secondary',
+                    'icon' => 'nav-icon fas fa-chess text-secondary',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Content Writing (Step 2)',
                     'url' => 'admin/contentPlan?status=content_writing',
-                    'icon' => 'nav-icon far fa-circle text-info',
+                    'icon' => 'nav-icon fas fa-pen text-info',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Admin Support (Step 3)',
                     'url' => 'admin/contentPlan?status=admin_support',
-                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'icon' => 'nav-icon fas fa-hands-helping text-primary',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Creative Review (Step 4)',
                     'url' => 'admin/contentPlan?status=creative_review',
-                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'icon' => 'nav-icon fas fa-search text-warning',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Content Editing (Step 5)',
                     'url' => 'admin/contentPlan?status=content_editing',
-                    'icon' => 'nav-icon far fa-circle text-dark',
+                    'icon' => 'nav-icon fas fa-edit text-dark',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Store to Content Bank (Step 6)',
                     'url' => 'admin/contentPlan?status=ready_to_post',
-                    'icon' => 'nav-icon far fa-circle text-success',
+                    'icon' => 'nav-icon fas fa-archive text-success',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
@@ -643,31 +643,31 @@ return [
                 PermissionEnum::ViewCampaign,
                 PermissionEnum::ViewKOL
             ],
-            'icon'    => 'fas fa-fw fa-ad',
+            'icon'    => 'fas fa-ad',
             'submenu' => [
                 [
                     'text' => 'Content Ads',
                     'url' => 'admin/contentAds',
-                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'icon' => 'nav-icon fas fa-bullseye text-primary',
                     'can' => [PermissionEnum::ViewMarketing],
                     'active' => ['admin/contentAds*']
                 ],
                 [
                     'text' => 'Step 1 - Initial Request',
                     'url' => 'admin/contentAds?status=step1',
-                    'icon' => 'nav-icon far fa-circle text-secondary',
+                    'icon' => 'nav-icon fas fa-play text-secondary',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Step 2 - Link Drive & Task',
                     'url' => 'admin/contentAds?status=step2',
-                    'icon' => 'nav-icon far fa-circle text-info',
+                    'icon' => 'nav-icon fas fa-link text-info',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
                     'text' => 'Step 3 - File Naming',
                     'url' => 'admin/contentAds?status=step3',
-                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'icon' => 'nav-icon fas fa-file-signature text-warning',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
@@ -693,42 +693,42 @@ return [
         [
             'text' => 'Live Host Report',
             'url' => 'admin/live_data',
-            'icon' => 'nav-icon far fa-circle text-info',
+            'icon' => 'nav-icon fas fa-microphone text-danger',
             'can' => [PermissionEnum::ChangeOwnPassword],
         ],
         [
             'text' => 'KOL',
             'can' => [PermissionEnum::ViewOrder, PermissionEnum::ViewOffer],
-            'icon'    => 'fas fa-fw fa-play',
+            'icon'    => 'fas fa-star',
             'submenu' => [
                 [
                     'text' => 'Talents',
                     'url' => 'admin/talent',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-user-star text-warning',
                     'active' => ['admin/talent*']
                 ],
                 [
                     'text' => 'Content',
                     'url' => 'admin/tlnt-content',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-file-video text-primary',
                     'active' => ['admin/tlnt-content*']
                 ],
                 [
                     'text' => 'Payment',
                     'url' => 'admin/talnt-payments',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-money-bill-wave text-success',
                     'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
                 ],
                 [
                     'text' => 'Debt Report',
                     'url' => 'admin/talnt-payments/report',
                     'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-exclamation-triangle text-danger',
                 ],
                 [
                     'text' => 'Approval',
                     'url' => 'admin/approval',
-                    'icon' => 'nav-icon far fa-circle',
+                    'icon' => 'nav-icon fas fa-thumbs-up text-info',
                     'active' => ['admin/approval*']
                 ],
             ]
@@ -787,7 +787,7 @@ return [
         // ],
         [
             'text'    => 'Master Data',
-            'icon'    => 'fas fa-fw fa-database',
+            'icon'    => 'fas fa-database',
             'can' => [PermissionEnum::ViewUser,
                 PermissionEnum::ViewMarketingCategory,
                 PermissionEnum::ViewSalesChannel,
@@ -797,33 +797,33 @@ return [
                 [
                     'text' => 'Brand',
                     'url' => '/admin/tenant',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-building text-primary',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
                     'text' => 'User',
                     'url' => '/admin/users',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-users text-info',
                     'can' => [PermissionEnum::ViewUser],
                     'active' => ['admin/users*']
                 ],
                 [
                     'text' => 'Marketing Category',
                     'url' => '/admin/marketing-category',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-tags text-warning',
                     'can' => [PermissionEnum::ViewMarketingCategory],
                     'active' => ['admin/marketing-category*']
                 ],
                 [
                     'text' => 'Sales Channel',
                     'url' => '/admin/sales-channel',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-stream text-success',
                     'can' => [PermissionEnum::ViewSalesChannel],
                 ],
                 [
                     'text' => 'Social Media',
                     'url' => '/admin/social-media',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-share-alt text-primary',
                     'can' => [PermissionEnum::ViewSocialMedia],
                 ]
             ],
@@ -839,31 +839,31 @@ return [
                 [
                     'text' => 'Data',
                     'url' => 'admin/employees',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-user-tie text-primary',
                     'can' => [PermissionEnum::ViewEmployee],
                 ],
                 [
                     'text' => 'Attendances',
                     'url' => '/admin/attendance',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-calendar-check text-success',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Performances',
                     'url' => '/admin/performances',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-chart-line text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Location',
                     'url' => '/admin/location',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-map-marker-alt text-danger',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Shift',
                     'url' => '/admin/shift',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-clock text-warning',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
@@ -878,25 +878,25 @@ return [
                 [
                     'text' => 'Attendances',
                     'url' => 'admin/attendance/approval',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-user-clock text-info',
                     'can' => [PermissionEnum::ViewEmployee],
                 ],
                 [
                     'text' => 'Overtimes',
                     'url' => '/admin/overtime/approval',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-business-time text-warning',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'TimeOffs',
                     'url' => '/admin/timeOff/approval',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-calendar-times text-danger',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Change Shift',
                     'url' => '/admin/requestChangeShifts/approval',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-exchange-alt text-primary',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
@@ -909,31 +909,31 @@ return [
                 [
                     'text' => 'Recap',
                     'url' => 'admin/payroll',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-file-invoice text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Salary',
                     'url' => 'admin/payroll/import',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-dollar-sign text-success',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
         ],
         [
             'text'    => 'Account Settings',
-            'icon'    => 'fas fa-fw fa-user',
+            'icon'    => 'fas fa-user-cog',
             'can' => [PermissionEnum::ChangeOwnPassword],
             'submenu' => [
                 [
                     'text' => 'Profile',
                     'url' => 'admin/profile',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-user text-primary',
                 ],
                 [
                     'text' => 'Change Password',
                     'url' => 'admin/changeOwnPassword',
-                    'icon' => 'far fa-circle nav-icon',
+                    'icon' => 'nav-icon fas fa-key text-warning',
                 ],
             ],
         ],
