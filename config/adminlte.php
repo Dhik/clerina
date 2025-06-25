@@ -370,6 +370,18 @@ return [
                     'icon' => 'nav-icon far fa-circle',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
+                [
+                    'text' => 'Live Shopee',
+                    'url' => 'admin/live_shopee_product',
+                    'can' => [PermissionEnum::ChangeOwnPassword],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
+                [
+                    'text' => 'Live TikTok',
+                    'url' => 'admin/live_tiktok',
+                    'can' => [PermissionEnum::ViewMarketing],
+                    'icon' => 'nav-icon far fa-circle',
+                ],
             ]
         ],
         [
@@ -679,31 +691,10 @@ return [
         //     'can' => [PermissionEnum::ChangeOwnPassword],
         // ],
         [
-            'text' => 'Live Data',
-            'can' => [
-                PermissionEnum::ChangeOwnPassword
-            ],
-            'icon'    => 'fas fa-fw fa-map',
-            'submenu' => [
-                [
-                    'text' => 'Live Data',
-                    'url' => 'admin/live_data',
-                    'icon' => 'nav-icon far fa-circle',
-                    'can' => [PermissionEnum::ChangeOwnPassword],
-                ],
-                [
-                    'text' => 'Live Shopee',
-                    'url' => 'admin/live_shopee_product',
-                    'can' => [PermissionEnum::ChangeOwnPassword],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
-                [
-                    'text' => 'Live TikTok',
-                    'url' => 'admin/live_tiktok',
-                    'can' => [PermissionEnum::ViewMarketing],
-                    'icon' => 'nav-icon far fa-circle',
-                ],
-            ]
+            'text' => 'Live Host Report',
+            'url' => 'admin/live_data',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ChangeOwnPassword],
         ],
         [
             'text' => 'KOL',
