@@ -105,7 +105,7 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('COUNT(CASE WHEN new_created = date THEN account_name END) as new_created_count')
             ])
             ->groupBy('date');
-    
+
         // Apply filters
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
@@ -125,12 +125,30 @@ class AdSpentSocialMediaController extends Controller
         if ($request->has('pic') && $request->pic) {
             $query->where('pic', $request->pic);
         }
-    
+
+        // NEW: Add type filter
+        if ($request->has('type') && $request->type) {
+            switch ($request->type) {
+                case 'TOFU':
+                    $query->where('campaign_name', 'LIKE', '%TOFU%');
+                    break;
+                case 'MOFU':
+                    $query->where('campaign_name', 'LIKE', '%MOFU%');
+                    break;
+                case 'BOFU':
+                    $query->where('campaign_name', 'LIKE', '%BOFU%');
+                    break;
+                case 'SHOPEE':
+                    $query->where('campaign_name', 'LIKE', '%SHOPEE%');
+                    break;
+            }
+        }
+
         return DataTables::of($query)
             ->addIndexColumn()
             ->editColumn('date', function ($row) {
                 return '<a href="javascript:void(0)" class="date-details" data-date="'.$row->date.'">'.
-                       Carbon::parse($row->date)->format('d M Y').'</a>';
+                    Carbon::parse($row->date)->format('d M Y').'</a>';
             })
             // Return raw values instead of formatted strings
             ->editColumn('total_amount_spent', function ($row) {
@@ -2273,9 +2291,8 @@ class AdSpentSocialMediaController extends Controller
                 
                 $query->whereBetween('date', [$startDate, $endDate]);
             } else {
-                // Default to current month if no date filter
                 $query->whereMonth('date', now()->month)
-                      ->whereYear('date', now()->year);
+                    ->whereYear('date', now()->year);
             }
             
             // Apply kategori_produk filter
@@ -2286,6 +2303,24 @@ class AdSpentSocialMediaController extends Controller
             // Apply pic filter
             if ($request->has('pic') && $request->pic) {
                 $query->where('pic', $request->pic);
+            }
+
+            // NEW: Apply type filter
+            if ($request->has('type') && $request->type) {
+                switch ($request->type) {
+                    case 'TOFU':
+                        $query->where('campaign_name', 'LIKE', '%TOFU%');
+                        break;
+                    case 'MOFU':
+                        $query->where('campaign_name', 'LIKE', '%MOFU%');
+                        break;
+                    case 'BOFU':
+                        $query->where('campaign_name', 'LIKE', '%BOFU%');
+                        break;
+                    case 'SHOPEE':
+                        $query->where('campaign_name', 'LIKE', '%SHOPEE%');
+                        break;
+                }
             }
             
             // Group by date and get sum of impressions
@@ -2315,6 +2350,7 @@ class AdSpentSocialMediaController extends Controller
             ], 422);
         }
     }
+
     public function get_funnel_data(Request $request)
     {
         try {
@@ -2328,9 +2364,8 @@ class AdSpentSocialMediaController extends Controller
                 
                 $query->whereBetween('date', [$startDate, $endDate]);
             } else {
-                // Default to current month if no date filter
                 $query->whereMonth('date', now()->month)
-                      ->whereYear('date', now()->year);
+                    ->whereYear('date', now()->year);
             }
             
             // Apply kategori_produk filter
@@ -2341,6 +2376,24 @@ class AdSpentSocialMediaController extends Controller
             // Apply pic filter
             if ($request->has('pic') && $request->pic) {
                 $query->where('pic', $request->pic);
+            }
+
+            // NEW: Apply type filter
+            if ($request->has('type') && $request->type) {
+                switch ($request->type) {
+                    case 'TOFU':
+                        $query->where('campaign_name', 'LIKE', '%TOFU%');
+                        break;
+                    case 'MOFU':
+                        $query->where('campaign_name', 'LIKE', '%MOFU%');
+                        break;
+                    case 'BOFU':
+                        $query->where('campaign_name', 'LIKE', '%BOFU%');
+                        break;
+                    case 'SHOPEE':
+                        $query->where('campaign_name', 'LIKE', '%SHOPEE%');
+                        break;
+                }
             }
             
             // Get aggregate data
@@ -4116,6 +4169,24 @@ class AdSpentSocialMediaController extends Controller
                 $baseQuery->where('pic', $request->pic);
             }
 
+            // NEW: Apply type filter to base query
+            if ($request->has('type') && $request->type !== '') {
+                switch ($request->type) {
+                    case 'TOFU':
+                        $baseQuery->where('campaign_name', 'LIKE', '%TOFU%');
+                        break;
+                    case 'MOFU':
+                        $baseQuery->where('campaign_name', 'LIKE', '%MOFU%');
+                        break;
+                    case 'BOFU':
+                        $baseQuery->where('campaign_name', 'LIKE', '%BOFU%');
+                        break;
+                    case 'SHOPEE':
+                        $baseQuery->where('campaign_name', 'LIKE', '%SHOPEE%');
+                        break;
+                }
+            }
+
             // Clone the base query for metrics that exclude twin dates
             $funnelQuery = clone $baseQuery;
             
@@ -4243,8 +4314,27 @@ class AdSpentSocialMediaController extends Controller
                 $query->where('kategori_produk', $request->kategori_produk);
             }
 
+            // Apply PIC filter if provided
             if ($request->has('pic') && $request->pic !== '') {
                 $query->where('pic', $request->pic);
+            }
+
+            // NEW: Apply type filter
+            if ($request->has('type') && $request->type !== '') {
+                switch ($request->type) {
+                    case 'TOFU':
+                        $query->where('campaign_name', 'LIKE', '%TOFU%');
+                        break;
+                    case 'MOFU':
+                        $query->where('campaign_name', 'LIKE', '%MOFU%');
+                        break;
+                    case 'BOFU':
+                        $query->where('campaign_name', 'LIKE', '%BOFU%');
+                        break;
+                    case 'SHOPEE':
+                        $query->where('campaign_name', 'LIKE', '%SHOPEE%');
+                        break;
+                }
             }
             
             $data = $query->groupBy('date')

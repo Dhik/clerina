@@ -7,6 +7,7 @@ $(document).ready(function() {
     let filterDate = initDateRangePicker('filterDates');
     let filterCategory = $('#kategoriProdukFilter');
     let filterPic = $('#picFilter');
+    let filterType = $('#typeFilter');
     let modalFilterDate = initDateRangePicker('modalFilterDates');
     let funnelChart = null;
     let impressionChart = null;
@@ -30,6 +31,9 @@ $(document).ready(function() {
                 }
                 if (filterPic.val()) {
                     d.pic = filterPic.val();
+                }
+                if (filterType.val()) { // NEW: Add type filter
+                    d.type = filterType.val();
                 }
             }
         },
@@ -293,7 +297,18 @@ $(document).ready(function() {
         filterDate.val('');
         filterCategory.val('');
         filterPic.val('');
+        filterType.val('');
         adsShopeeMallTable.draw();
+        fetchImpressionData();
+        initFunnelChart();
+    });
+
+    filterType.change(function() {
+        adsShopeeMallTable.draw();
+        if ($('#dailyDetailsModal').is(':visible')) {
+            campaignDetailsTable.draw();
+            updateCampaignSummary();
+        }
         fetchImpressionData();
         initFunnelChart();
     });
@@ -501,6 +516,7 @@ $(document).ready(function() {
         const filterValue = filterDate.val();
         const kategoriProduk = filterCategory.val();
         const picValue = filterPic.val();
+        const typeValue = filterType.val(); // NEW: Get type filter value
         
         const url = new URL("{{ route('adSpentSocialMedia.line-data') }}", window.location.origin);
         
@@ -514,6 +530,10 @@ $(document).ready(function() {
 
         if (picValue) {
             url.searchParams.append('pic', picValue);
+        }
+
+        if (typeValue) { // NEW: Add type filter to URL
+            url.searchParams.append('type', typeValue);
         }
         
         fetch(url)
@@ -536,6 +556,7 @@ $(document).ready(function() {
         const filterValue = filterDate.val();
         const picValue = filterPic.val();
         const kategoriProduk = filterCategory.val();
+        const typeValue = filterType.val(); // NEW: Get type filter value
 
         const url = new URL("{{ route('adSpentSocialMedia.funnel-data') }}", window.location.origin);
         if (filterValue) {
@@ -547,6 +568,10 @@ $(document).ready(function() {
         
         if (picValue) {
             url.searchParams.append('pic', picValue);
+        }
+
+        if (typeValue) { // NEW: Add type filter to URL
+            url.searchParams.append('type', typeValue);
         }
 
         fetch(url)

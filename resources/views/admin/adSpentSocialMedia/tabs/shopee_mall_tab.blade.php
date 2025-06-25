@@ -27,6 +27,15 @@
                                     </select>
                                 </div>
                                 <div class="col-auto">
+                                    <select class="form-control" id="typeFilter">
+                                        <option value="">All Types</option>
+                                        <option value="TOFU">TOFU</option>
+                                        <option value="MOFU">MOFU</option>
+                                        <option value="BOFU">BOFU</option>
+                                        <option value="SHOPEE">SHOPEE</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
                                     <button class="btn btn-default" id="resetFilterBtn">{{ trans('buttons.reset_filter') }}</button>
                                 </div>
                                 <div class="col-auto">
