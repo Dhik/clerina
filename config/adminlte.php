@@ -346,6 +346,33 @@ return [
             'can' => [PermissionEnum::ViewCustomer],
         ],
         [
+            'text' => 'Marketing',
+            'can' => [
+                PermissionEnum::ViewSales,
+            ],
+            'icon'    => 'fas fa-fw fa-map',
+            'submenu' => [
+                [
+                    'text' => 'Ads Monitor',
+                    'url' => 'admin/ads_cpas',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewSales],
+                ],
+                [
+                    'text' => 'Affiliate Shopee',
+                    'url' => 'admin/affiliate_shopee',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Affiliate Tiktok',
+                    'url' => 'admin/affiliate_tiktok',
+                    'icon' => 'nav-icon far fa-circle',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+            ]
+        ],
+        [
             'text' => 'Business Performance',
             'can' => [
                 PermissionEnum::ViewTenant
@@ -369,21 +396,6 @@ return [
                     'url' => 'admin/lk',
                     'icon' => 'nav-icon far fa-circle text-success',
                     'can' => [PermissionEnum::ViewTenant],
-                ],
-            ]
-        ],
-        [
-            'text' => 'Marketing',
-            'can' => [
-                PermissionEnum::ViewSales,
-            ],
-            'icon'    => 'fas fa-fw fa-map',
-            'submenu' => [
-                [
-                    'text' => 'Ads Monitor',
-                    'url' => 'admin/ads_cpas',
-                    'icon' => 'nav-icon far fa-circle text-info',
-                    'can' => [PermissionEnum::ViewSales],
                 ],
             ]
         ],
@@ -690,27 +702,6 @@ return [
                     'url' => 'admin/live_tiktok',
                     'can' => [PermissionEnum::ViewMarketing],
                     'icon' => 'nav-icon far fa-circle',
-                ],
-            ]
-        ],
-        [
-            'text' => 'Affiliate Data',
-            'can' => [
-                PermissionEnum::ViewMarketing
-            ],
-            'icon'    => 'fas fa-fw fa-users',
-            'submenu' => [
-                [
-                    'text' => 'Affiliate Shopee',
-                    'url' => 'admin/affiliate_shopee',
-                    'icon' => 'nav-icon far fa-circle',
-                    'can' => [PermissionEnum::ViewMarketing],
-                ],
-                [
-                    'text' => 'Affiliate Tiktok',
-                    'url' => 'admin/affiliate_tiktok',
-                    'icon' => 'nav-icon far fa-circle',
-                    'can' => [PermissionEnum::ViewMarketing],
                 ],
             ]
         ],
