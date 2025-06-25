@@ -367,7 +367,7 @@ return [
                 [
                     'text' => 'Affiliate Tiktok',
                     'url' => 'admin/affiliate_tiktok',
-                    'icon' => 'nav-icon fab fa-tiktok text-dark',
+                    'icon' => 'nav-icon fab fa-tiktok text-pink',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
@@ -380,7 +380,7 @@ return [
                     'text' => 'Live TikTok',
                     'url' => 'admin/live_tiktok',
                     'can' => [PermissionEnum::ViewMarketing],
-                    'icon' => 'nav-icon fas fa-broadcast-tower text-dark',
+                    'icon' => 'nav-icon fas fa-broadcast-tower text-pink',
                 ],
             ]
         ],
@@ -619,7 +619,7 @@ return [
                 [
                     'text' => 'Content Editing (Step 5)',
                     'url' => 'admin/contentPlan?status=content_editing',
-                    'icon' => 'nav-icon fas fa-edit text-dark',
+                    'icon' => 'nav-icon fas fa-edit text-purple',
                     'can' => [PermissionEnum::ViewMarketing],
                 ],
                 [
