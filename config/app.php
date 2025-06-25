@@ -192,6 +192,7 @@ return [
         App\Domain\ContentPlan\Providers\ContentPlanProvider::class,
         App\Domain\ContentAds\Providers\ContentAdsProvider::class,
         App\Domain\Affiliate\Providers\AffiliateProvider::class,
+        App\Domain\BCGMetrics\Providers\BCGMetricsProvider::class,
     ])->toArray(),
 
     /*

@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Domain\BCGMetrics\Controllers\BCGMetricsController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::prefix('admin')
+    ->middleware('auth')
+    ->group(function () {
+        Route::prefix('bcg_metrics')
+            ->group(function () {
+                Route::get('/', [BCGMetricsController::class, 'index'])->name('bcg_metrics.index');
+                Route::get('/get', [BCGMetricsController::class, 'get'])->name('bcg_metrics.get');
+                Route::post('/import', [BCGMetricsController::class, 'importBcgProduct'])->name('bcg_metrics.import');
+            });
+    });
