@@ -232,6 +232,8 @@ class BCGAnalysisService
      */
     private function getTopPerformers(Collection $products): array
     {
+        $medianTraffic = $products->median('visitor'); // Calculate median traffic once
+        
         return [
             'by_revenue' => $products->sortByDesc('sales')->take(10)->values(),
             'by_conversion' => $products->sortByDesc(function($p) {
@@ -242,8 +244,8 @@ class BCGAnalysisService
             })->sortByDesc(function($p) {
                 return ($p->omset_penjualan ?? 0) / $p->biaya_ads;
             })->take(10)->values(),
-            'by_performance_score' => $products->sortByDesc(function($p) {
-                return $this->calculatePerformanceScore($p, $products->median('visitor'));
+            'by_performance_score' => $products->sortByDesc(function($p) use ($medianTraffic) { // Add use clause
+                return $this->calculatePerformanceScore($p, $medianTraffic);
             })->take(10)->values()
         ];
     }
