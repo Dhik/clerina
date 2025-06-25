@@ -41,4 +41,12 @@ class BcgProduct extends Model
         'biaya_ads' => 'integer',
         'omset_penjualan' => 'integer',
     ];
+
+    public function scopeWithCompleteData($query)
+    {
+        return $query->whereNotNull('visitor')
+                    ->whereNotNull('jumlah_pembeli') 
+                    ->whereNotNull('harga')
+                    ->where('visitor', '>', 0);
+    }
 }
