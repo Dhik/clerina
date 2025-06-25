@@ -17,9 +17,6 @@
                     <i class="fas fa-download"></i> Export
                 </button>
                 <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ route('bcg_metrics.export', ['format' => 'excel']) }}">
-                        <i class="fas fa-file-excel"></i> Excel Report
-                    </a>
                     <a class="dropdown-item" href="{{ route('bcg_metrics.export', ['format' => 'csv']) }}">
                         <i class="fas fa-file-csv"></i> CSV Data
                     </a>
@@ -367,7 +364,7 @@
                                 <span class="info-box-icon"><i class="fas fa-rocket"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Growth Opportunities</span>
-                                    @php $opportunities = $processedProducts->where('quadrant', 'Question Marks')->where('conversion_rate', '>=', function($product) { return $product['benchmark_conversion'] * 0.8; })->count(); @endphp
+                                    @php $opportunities = $processedProducts->where('quadrant', 'Question Marks')->filter(function($p) { return $p['conversion_rate'] >= $p['benchmark_conversion'] * 0.8; })->count(); @endphp
                                     <span class="info-box-number">{{ $opportunities }}</span>
                                     <span class="progress-description">Question Marks near conversion</span>
                                 </div>
@@ -385,33 +382,14 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-primary" onclick="showTopPerformers()">
-                                    <i class="fas fa-star"></i> View Top Performers
-                                </button>
-                                <button class="btn btn-warning" onclick="showRiskProducts()">
-                                    <i class="fas fa-exclamation-triangle"></i> Risk Analysis
-                                </button>
-                                <button class="btn btn-info" onclick="showGrowthOpportunities()">
-                                    <i class="fas fa-chart-line"></i> Growth Opportunities
-                                </button>
-                                <button class="btn btn-success" onclick="generateActionPlan()">
-                                    <i class="fas fa-tasks"></i> Generate Action Plan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Include all modals from the previous artifact -->
-@include('bcg_metrics.modals')
+<!-- Include Modals -->
+@include('admin.bcg_metrics.modals')
 
 @stop
 
@@ -466,7 +444,7 @@ let bcgChart;
 let isLogScale = true;
 
 $(document).ready(function() {
-    // Initialize DataTable with enhanced features
+    // Initialize DataTable
     const table = $('#productsTable').DataTable({
         responsive: true,
         pageLength: 25,
@@ -475,24 +453,6 @@ $(document).ready(function() {
             { targets: [4, 5, 8, 9, 11], className: 'text-right' },
             { targets: [6, 7, 10, 12], className: 'text-center' },
             { targets: [1], className: 'product-code-cell' }
-        ],
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: '<i class="fas fa-file-excel"></i> Excel',
-                className: 'btn btn-success btn-sm'
-            },
-            {
-                extend: 'csv',
-                text: '<i class="fas fa-file-csv"></i> CSV',
-                className: 'btn btn-info btn-sm'
-            },
-            {
-                extend: 'pdf',
-                text: '<i class="fas fa-file-pdf"></i> PDF',
-                className: 'btn btn-danger btn-sm'
-            }
         ]
     });
 
@@ -506,7 +466,7 @@ $(document).ready(function() {
         }
     });
 
-    // Row click handler for product details
+    // Row click handler
     $('#productsTable').on('click', '.clickable-row', function() {
         const kode_produk = $(this).data('product');
         showProductDetails(kode_produk);
@@ -514,9 +474,6 @@ $(document).ready(function() {
 
     // Initialize chart
     initializeChart();
-
-    // Auto-refresh data every 5 minutes (optional)
-    // setInterval(refreshChart, 300000);
 });
 
 function initializeChart() {
@@ -529,7 +486,7 @@ function initializeChart() {
                 bcgChart.destroy();
             }
             
-            // Group data by quadrant for different datasets
+            // Group data by quadrant
             const stars = data.data.filter(item => item.quadrant === 'Stars');
             const cashCows = data.data.filter(item => item.quadrant === 'Cash Cows');
             const questionMarks = data.data.filter(item => item.quadrant === 'Question Marks');
@@ -572,10 +529,6 @@ function initializeChart() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'point'
-                    },
                     scales: {
                         x: {
                             type: isLogScale ? 'logarithmic' : 'linear',
@@ -624,102 +577,132 @@ function initializeChart() {
                                 }
                             }
                         }
-                    },
-                    onHover: (event, activeElements) => {
-                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-                    },
-                    onClick: (event, activeElements) => {
-                        if (activeElements.length > 0) {
-                            const point = activeElements[0];
-                            const data = bcgChart.data.datasets[point.datasetIndex].data[point.index];
-                            // Extract product code from label or implement product ID tracking
-                            console.log('Clicked product:', data.label);
-                        }
                     }
                 }
             });
-
             // Add reference lines
             addReferenceLines(data.medianTraffic);
         })
         .catch(error => {
             console.error('Error loading chart data:', error);
-            $('#bcgChart').parent().html('<div class="alert alert-danger">Error loading chart data</div>');
         });
-}
-
-function addReferenceLines(medianTraffic) {
-    // Add reference lines using Chart.js annotation plugin (if available)
-    // For now, we'll add them programmatically
-    const chart = bcgChart;
+    }
+    function addReferenceLines(medianTraffic) {
+const chart = bcgChart;
+chart.options.plugins.afterDraw = function() {
+    const ctx = chart.ctx;
+    const xAxis = chart.scales.x;
+    const yAxis = chart.scales.y;
     
-    // This would be better implemented with the annotation plugin
-    chart.options.plugins.afterDraw = function() {
-        const ctx = chart.ctx;
-        const xAxis = chart.scales.x;
-        const yAxis = chart.scales.y;
-        
-        ctx.save();
-        
-        // Vertical line for median traffic
-        ctx.strokeStyle = 'rgba(255, 99, 132, 0.5)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        
-        const x = xAxis.getPixelForValue(medianTraffic);
-        ctx.beginPath();
-        ctx.moveTo(x, yAxis.top);
-        ctx.lineTo(x, yAxis.bottom);
-        ctx.stroke();
-        
-        // Horizontal line for benchmark conversion (1.0% average)
-        const y = yAxis.getPixelForValue(1.0);
-        ctx.beginPath();
-        ctx.moveTo(xAxis.left, y);
-        ctx.lineTo(xAxis.right, y);
-        ctx.stroke();
-        
-        // Add labels
-        ctx.fillStyle = 'rgba(255, 99, 132, 0.8)';
-        ctx.font = '12px Arial';
-        ctx.fillText('Median Traffic', x + 5, yAxis.top + 15);
-        ctx.fillText('Avg Benchmark', xAxis.left + 5, y - 5);
-        
-        ctx.restore();
-    };
+    ctx.save();
+    
+    // Vertical line for median traffic
+    ctx.strokeStyle = 'rgba(255, 99, 132, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    
+    const x = xAxis.getPixelForValue(medianTraffic);
+    ctx.beginPath();
+    ctx.moveTo(x, yAxis.top);
+    ctx.lineTo(x, yAxis.bottom);
+    ctx.stroke();
+    
+    // Horizontal line for benchmark conversion
+    const y = yAxis.getPixelForValue(1.0);
+    ctx.beginPath();
+    ctx.moveTo(xAxis.left, y);
+    ctx.lineTo(xAxis.right, y);
+    ctx.stroke();
+    
+    ctx.restore();
+};
 }
-
 function toggleChartScale() {
-    isLogScale = !isLogScale;
-    initializeChart();
+isLogScale = !isLogScale;
+initializeChart();
 }
-
 function refreshChart() {
-    initializeChart();
+initializeChart();
 }
-
-// Quick action functions
-function showTopPerformers() {
-    // Implementation for showing top performers modal
-    alert('Top Performers view - to be implemented');
+function showRecommendations() {
+$('#recommendationsModal').modal('show');
+fetch('{{ route("bcg_metrics.get_recommendations") }}')
+    .then(response => response.json())
+    .then(data => {
+        let html = generateRecommendationsHTML(data);
+        $('#recommendationsContent').html(html);
+    })
+    .catch(error => {
+        $('#recommendationsContent').html('<div class="alert alert-danger">Error loading recommendations</div>');
+    });
 }
-
-function showRiskProducts() {
-    // Implementation for showing risk products
-    alert('Risk Analysis view - to be implemented');
+function showProductDetails(kode_produk) {
+$('#productDetailsModal').modal('show');
+fetch(`{{ route('bcg_metrics.product_details', '') }}/${kode_produk}`)
+    .then(response => response.json())
+    .then(data => {
+        let html = generateProductDetailsHTML(data);
+        $('#productDetailsContent').html(html);
+    })
+    .catch(error => {
+        $('#productDetailsContent').html('<div class="alert alert-danger">Error loading product details</div>');
+    });
 }
-
-function showGrowthOpportunities() {
-    // Implementation for showing growth opportunities
-    alert('Growth Opportunities view - to be implemented');
+function applyAdvancedFilter() {
+const formData = new FormData(document.getElementById('advancedFilterForm'));
+const params = new URLSearchParams(formData);
+fetch(`{{ route('bcg_metrics.advanced_filter') }}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        updateProductTable(data.products);
+        $('#advancedFilterModal').modal('hide');
+        showFilterSummary(data);
+    })
+    .catch(error => {
+        console.error('Error applying filters:', error);
+    });
 }
+function updateProductTable(products) {
+const table = $('#productsTable').DataTable();
+table.clear();
+products.forEach(product => {
+    const rowData = [
+        `<span class="badge" style="background-color: ${getQuadrantColor(product.quadrant)};">${product.quadrant}</span>`,
+        product.kode_produk,
+        product.nama_produk,
+        product.sku || '-',
+        product.visitor.toLocaleString(),
+        product.jumlah_pembeli.toLocaleString(),
+        `<span class="badge badge-${product.conversion_rate >= getBenchmarkConversion(product.harga) ? 'success' : 'warning'}">${product.conversion_rate}%</span>`,
+        `${getBenchmarkConversion(product.harga)}%`,
+        `Rp ${product.harga.toLocaleString()}`,
+        `Rp ${product.sales.toLocaleString()}`,
+        product.roas > 0 ? `<span class="badge badge-${product.roas >= 3 ? 'success' : (product.roas >= 1 ? 'warning' : 'danger')}">${product.roas}x</span>` : 'N/A',
+        product.stock.toLocaleString()
+    ];
+    table.row.add(rowData);
+});
 
-function generateActionPlan() {
-    // Implementation for generating action plan
-    alert('Action Plan generation - to be implemented');
+table.draw();
 }
+function getQuadrantColor(quadrant) {
+const colors = {
+'Stars': '#28a745',
+'Cash Cows': '#ffc107',
+'Question Marks': '#17a2b8',
+'Dogs': '#dc3545'
+};
+return colors[quadrant] || '#6c757d';
+}
+function getBenchmarkConversion(price) {
+if (price < 75000) return 2.0;
+if (price < 100000) return 1.5;
+if (price < 125000) return 1.0;
+if (price < 150000) return 0.8;
+return 0.6;
+}
+// Additional helper functions would be included here...
 
-// Add all the modal functions from the previous recommendations artifact
 </script>
-@include('admin.bcg_metrics.modal_scripts')
+
 @stop
