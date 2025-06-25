@@ -184,21 +184,19 @@ $(document).ready(function() {
 
     // Campaign details table
     let campaignDetailsTable = $('#campaignDetailsTable').DataTable({
-        responsive: false, // Set to false for horizontal scrolling
-        scrollX: true,     // Enable horizontal scrolling
+        responsive: false,
+        scrollX: true,
         processing: true,
         serverSide: true,
         pageLength: 10,
         ajax: {
             url: "{{ route('adSpentSocialMedia.get_details_by_date') }}",
             data: function(d) {
-                // Add the date from the modal to the request
                 if (modalFilterDate.val()) {
                     let dates = modalFilterDate.val().split(' - ');
                     d.date_start = moment(dates[0], 'DD/MM/YYYY').format('YYYY-MM-DD');
                     d.date_end = moment(dates[1], 'DD/MM/YYYY').format('YYYY-MM-DD');
                 } else {
-                    // If no date range is selected, use the single date
                     d.date = $('#dailyDetailsModal').data('date');
                 }
                 if (filterPic.val()) {
@@ -212,13 +210,15 @@ $(document).ready(function() {
         columns: [
             {data: 'account_name', name: 'account_name'},
             {data: 'kategori_produk', name: 'kategori_produk'},
-            // New TOFU/MOFU/BOFU columns
+            // TOFU/MOFU/BOFU/SHOPEE columns
             {data: 'tofu_spent', name: 'tofu_spent'},
             {data: 'tofu_percentage', name: 'tofu_percentage'},
             {data: 'mofu_spent', name: 'mofu_spent'},
             {data: 'mofu_percentage', name: 'mofu_percentage'},
             {data: 'bofu_spent', name: 'bofu_spent'},
             {data: 'bofu_percentage', name: 'bofu_percentage'},
+            {data: 'shopee_spent', name: 'shopee_spent'},           // New SHOPEE spent column
+            {data: 'shopee_percentage', name: 'shopee_percentage'}, // New SHOPEE percentage column
             {data: 'last_updated_count', name: 'last_updated_count'},
             {data: 'new_created_count', name: 'new_created_count'},
             // Original columns
@@ -228,9 +228,7 @@ $(document).ready(function() {
                 data: 'link_clicks', 
                 name: 'link_clicks',
                 render: function(data) {
-                    // Handle string formatted numbers with comma as decimal separator
                     if (typeof data === 'string') {
-                        // Extract the whole number part before the comma
                         return data.split(',')[0];
                     }
                     return Math.floor(data);
@@ -240,9 +238,7 @@ $(document).ready(function() {
                 data: 'content_views_shared_items', 
                 name: 'content_views_shared_items',
                 render: function(data) {
-                    // Handle string formatted numbers with comma as decimal separator
                     if (typeof data === 'string') {
-                        // Extract the whole number part before the comma
                         return data.split(',')[0];
                     }
                     return Math.floor(data);
@@ -252,9 +248,7 @@ $(document).ready(function() {
                 data: 'adds_to_cart_shared_items', 
                 name: 'adds_to_cart_shared_items',
                 render: function(data) {
-                    // Handle string formatted numbers with comma as decimal separator
                     if (typeof data === 'string') {
-                        // Extract the whole number part before the comma
                         return data.split(',')[0];
                     }
                     return Math.floor(data);
@@ -264,9 +258,7 @@ $(document).ready(function() {
                 data: 'purchases_shared_items', 
                 name: 'purchases_shared_items',
                 render: function(data) {
-                    // Handle string formatted numbers with comma as decimal separator
                     if (typeof data === 'string') {
-                        // Extract the whole number part before the comma
                         return data.split(',')[0];
                     }
                     return Math.floor(data);
@@ -283,11 +275,11 @@ $(document).ready(function() {
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
         columnDefs: [
-            // Update the targets for right alignment to include the new columns
-            { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], "className": "text-right" },
-            // Update the targets for center alignment to include the new columns
-            { "targets": [1, 3, 5, 7, 23], "className": "text-center" },
-            { "targets": [24], "className": "text-center" }
+            // Update the targets for right alignment (added columns 8, 9)
+            { "targets": [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], "className": "text-right" },
+            // Update the targets for center alignment
+            { "targets": [1, 3, 5, 7, 25], "className": "text-center" },
+            { "targets": [26], "className": "text-center" }
         ],
         order: [[0, 'asc']],
         fixedHeader: true,

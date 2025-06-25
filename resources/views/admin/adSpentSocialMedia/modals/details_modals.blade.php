@@ -183,6 +183,8 @@
                                 <th>MOFU %</th>
                                 <th>BOFU Spent</th>
                                 <th>BOFU %</th>
+                                <th>SHOPEE Spent</th>
+                                <th>SHOPEE %</th>
                                 <th>Last Updated Count</th>
                                 <th>New Created Count</th>
                                 <th>Total Spent</th>

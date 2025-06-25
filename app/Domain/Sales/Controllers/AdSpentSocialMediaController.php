@@ -233,11 +233,14 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
+                DB::raw('SUM(CASE WHEN campaign_name LIKE "%SHOPEE%" THEN amount_spent ELSE 0 END) as shopee_spent'),
                 DB::raw('COUNT(last_updated) as last_updated_count'),
                 DB::raw('COUNT(new_created) as new_created_count'),
                 'kategori_produk',
                 'account_name'
             ]);
+
+        // Apply date filter with support for both single date and date range
         if ($request->has('date_start') && $request->has('date_end')) {
             try {
                 $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
@@ -254,16 +257,24 @@ class AdSpentSocialMediaController extends Controller
                 $query->where('date', $request->input('date'));
             }
         }
+
         $query->groupBy('account_name', 'kategori_produk');
+
+        // Apply tenant filter
         if (auth()->user()->tenant_id) {
             $query->where('tenant_id', auth()->user()->tenant_id);
         }
+
+        // Apply product category filter if provided
         if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
             $query->where('kategori_produk', $request->kategori_produk);
         }
+
+        // Apply PIC filter if provided
         if ($request->has('pic') && $request->pic !== '') {
             $query->where('pic', $request->pic);
         }
+
         return DataTables::of($query)
             ->addIndexColumn()
             ->editColumn('account_name', function ($row) {
@@ -287,11 +298,11 @@ class AdSpentSocialMediaController extends Controller
             ->editColumn('content_views_shared_items', function ($row) {
                 return $row->content_views_shared_items ? number_format($row->content_views_shared_items, 2, ',', '.') : '-';
             })
-            // Add TOFU spent column
+            // TOFU spent column
             ->addColumn('tofu_spent', function ($row) {
                 return $row->tofu_spent ? 'Rp ' . number_format($row->tofu_spent, 0, ',', '.') : '-';
             })
-            // Add TOFU percentage column
+            // TOFU percentage column
             ->addColumn('tofu_percentage', function ($row) {
                 if ($row->amount_spent > 0 && $row->tofu_spent > 0) {
                     $percentage = ($row->tofu_spent / $row->amount_spent) * 100;
@@ -299,9 +310,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // MOFU spent column
             ->addColumn('mofu_spent', function ($row) {
                 return $row->mofu_spent ? 'Rp ' . number_format($row->mofu_spent, 0, ',', '.') : '-';
             })
+            // MOFU percentage column
             ->addColumn('mofu_percentage', function ($row) {
                 if ($row->amount_spent > 0 && $row->mofu_spent > 0) {
                     $percentage = ($row->mofu_spent / $row->amount_spent) * 100;
@@ -309,9 +322,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // BOFU spent column
             ->addColumn('bofu_spent', function ($row) {
                 return $row->bofu_spent ? 'Rp ' . number_format($row->bofu_spent, 0, ',', '.') : '-';
             })
+            // BOFU percentage column
             ->addColumn('bofu_percentage', function ($row) {
                 if ($row->amount_spent > 0 && $row->bofu_spent > 0) {
                     $percentage = ($row->bofu_spent / $row->amount_spent) * 100;
@@ -319,12 +334,27 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // SHOPEE spent column
+            ->addColumn('shopee_spent', function ($row) {
+                return $row->shopee_spent ? 'Rp ' . number_format($row->shopee_spent, 0, ',', '.') : '-';
+            })
+            // SHOPEE percentage column
+            ->addColumn('shopee_percentage', function ($row) {
+                if ($row->amount_spent > 0 && $row->shopee_spent > 0) {
+                    $percentage = ($row->shopee_spent / $row->amount_spent) * 100;
+                    return number_format($percentage, 2, ',', '.') . '%';
+                }
+                return '-';
+            })
+            // Last updated count column
             ->addColumn('last_updated_count', function ($row) {
                 return $row->last_updated_count ?: '0';
             })
+            // New created count column
             ->addColumn('new_created_count', function ($row) {
                 return $row->new_created_count ?: '0';
             })
+            // Cost per view column
             ->addColumn('cost_per_view', function ($row) {
                 if ($row->content_views_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerView = $row->amount_spent / $row->content_views_shared_items;
@@ -332,9 +362,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // Adds to cart column
             ->editColumn('adds_to_cart_shared_items', function ($row) {
                 return $row->adds_to_cart_shared_items ? number_format(floor($row->adds_to_cart_shared_items), 0, ',', '.') : '-';
             })
+            // Cost per ATC column
             ->addColumn('cost_per_atc', function ($row) {
                 if ($row->adds_to_cart_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerATC = $row->amount_spent / $row->adds_to_cart_shared_items;
@@ -342,9 +374,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // Purchases column
             ->editColumn('purchases_shared_items', function ($row) {
                 return $row->purchases_shared_items ? number_format($row->purchases_shared_items, 2, ',', '.') : '-';
             })
+            // Cost per purchase column
             ->addColumn('cost_per_purchase', function ($row) {
                 if ($row->purchases_shared_items > 0 && $row->amount_spent > 0) {
                     $costPerPurchase = $row->amount_spent / $row->purchases_shared_items;
@@ -352,9 +386,11 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // Conversion value column
             ->editColumn('purchases_conversion_value_shared_items', function ($row) {
                 return $row->purchases_conversion_value_shared_items ? 'Rp ' . number_format($row->purchases_conversion_value_shared_items, 0, ',', '.') : '-';
             })
+            // ROAS column
             ->addColumn('roas', function ($row) {
                 if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
                     $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
@@ -362,6 +398,7 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // CPM column
             ->addColumn('cpm', function ($row) {
                 if ($row->impressions > 0 && $row->amount_spent > 0) {
                     $cpm = ($row->amount_spent / $row->impressions) * 1000;
@@ -369,6 +406,7 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // CTR column
             ->addColumn('ctr', function ($row) {
                 if ($row->impressions > 0 && $row->link_clicks > 0) {
                     $ctr = ($row->link_clicks / $row->impressions) * 100;
@@ -376,6 +414,7 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '-';
             })
+            // Performance column
             ->addColumn('performance', function ($row) {
                 if ($row->amount_spent > 0 && $row->purchases_conversion_value_shared_items > 0) {
                     $roas = $row->purchases_conversion_value_shared_items / $row->amount_spent;
@@ -392,6 +431,7 @@ class AdSpentSocialMediaController extends Controller
                 }
                 return '<span class="badge badge-secondary">N/A</span>';
             })
+            // Action column
             ->addColumn('action', function ($row) {
                 return '<button type="button" class="btn btn-danger btn-sm delete-account" data-account="'.$row->account_name.'" data-kategori="'.$row->kategori_produk.'">
                     <i class="fas fa-trash"></i> Delete
