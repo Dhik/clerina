@@ -2,18 +2,16 @@
 
 namespace App\Domain\BCGMetrics\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder; // Remove this line if it exists
 
-class BcgProduct extends Model
+class BCGProduct extends Model
 {
-    use HasFactory;
-
     protected $table = 'bcg_product';
-
+    
     protected $fillable = [
         'date',
-        'tenant_id',
+        'tenant_id', 
         'kode_produk',
         'nama_produk',
         'sku',
@@ -25,23 +23,23 @@ class BcgProduct extends Model
         'stock',
         'harga',
         'biaya_ads',
-        'omset_penjualan',
+        'omset_penjualan'
     ];
 
     protected $casts = [
         'date' => 'date',
-        'tenant_id' => 'integer',
         'visitor' => 'integer',
-        'jumlah_atc' => 'integer',
+        'jumlah_atc' => 'integer', 
         'jumlah_pembeli' => 'integer',
         'qty_sold' => 'integer',
         'sales' => 'integer',
         'stock' => 'integer',
         'harga' => 'integer',
         'biaya_ads' => 'integer',
-        'omset_penjualan' => 'integer',
+        'omset_penjualan' => 'integer'
     ];
 
+    // Accessors for calculated metrics
     public function getConversionRateAttribute()
     {
         return $this->visitor > 0 ? round(($this->jumlah_pembeli / $this->visitor) * 100, 2) : 0;
@@ -115,8 +113,8 @@ class BcgProduct extends Model
         return $conversionScore + $roasScore + $trafficScore + $stockScore;
     }
 
-    // Scopes
-    public function scopeWithCompleteData(Builder $query)
+    // Scopes - Remove type hints or use correct type
+    public function scopeWithCompleteData($query)
     {
         return $query->whereNotNull('visitor')
                     ->whereNotNull('jumlah_pembeli') 
@@ -124,19 +122,19 @@ class BcgProduct extends Model
                     ->where('visitor', '>', 0);
     }
 
-    public function scopeByQuadrant(Builder $query, $quadrant)
+    public function scopeByQuadrant($query, $quadrant)
     {
         return $query->withCompleteData()->get()->filter(function($product) use ($quadrant) {
             return $product->bcg_quadrant === $quadrant;
         });
     }
 
-    public function scopeByDate(Builder $query, $date)
+    public function scopeByDate($query, $date)
     {
         return $query->where('date', $date);
     }
 
-    public function scopeTopPerformers(Builder $query, $limit = 10)
+    public function scopeTopPerformers($query, $limit = 10)
     {
         return $query->withCompleteData()->get()
                     ->sortByDesc('performance_score')
@@ -146,7 +144,10 @@ class BcgProduct extends Model
     // Static methods
     public static function getMedianTraffic($date = '2025-05-01')
     {
-        return static::withCompleteData()
+        return static::whereNotNull('visitor')
+                    ->whereNotNull('jumlah_pembeli') 
+                    ->whereNotNull('harga')
+                    ->where('visitor', '>', 0)
                     ->where('date', $date)
                     ->get()
                     ->median('visitor') ?? 0;
@@ -154,7 +155,12 @@ class BcgProduct extends Model
 
     public static function getQuadrantSummary($date = '2025-05-01')
     {
-        $products = static::withCompleteData()->where('date', $date)->get();
+        $products = static::whereNotNull('visitor')
+                         ->whereNotNull('jumlah_pembeli') 
+                         ->whereNotNull('harga')
+                         ->where('visitor', '>', 0)
+                         ->where('date', $date)
+                         ->get();
         
         return $products->groupBy('bcg_quadrant')->map(function ($group, $quadrant) {
             return [
