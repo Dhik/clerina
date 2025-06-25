@@ -368,6 +368,12 @@ return [
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewSales],
         ],
+        [
+            'text' => 'BCG Metrics',
+            'url' => 'admin/bcg_metrics',
+            'icon' => 'nav-icon far fa-circle text-info',
+            'can' => [PermissionEnum::ViewTenant],
+        ],
         // [
         //     'text' => 'Ads Relation',
         //     'url' => 'admin/sales/ads_relation',
