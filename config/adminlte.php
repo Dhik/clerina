@@ -315,29 +315,12 @@ return [
             'can' => [PermissionEnum::ViewSales],
         ],
         [
-            'text' => 'Daily Count',
-            'url' => 'admin/sales/net_sales',
-            'icon' => 'nav-icon far fa-circle text-warning',
-            'can' => [PermissionEnum::ViewTenant],
-        ],
-        [
-            'text' => 'Daily HPP',
-            'url' => 'admin/sales/net_per_channel',
-            'icon' => 'nav-icon far fa-circle text-warning',
-            'can' => [PermissionEnum::ViewTenant],
-        ],
-        [
-            'text' => 'Financial Report',
-            'url' => 'admin/lk',
-            'icon' => 'nav-icon far fa-circle text-success',
-            'can' => [PermissionEnum::ViewTenant],
-        ],
-        [
             'text' => 'Order',
             'url' => 'admin/order',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewOrder],
         ],
+        
         // [
         //     'text' => 'Marketing',
         //     'url' => 'admin/marketing',
@@ -361,6 +344,33 @@ return [
             'url' => 'admin/product',
             'icon' => 'nav-icon far fa-circle text-info',
             'can' => [PermissionEnum::ViewCustomer],
+        ],
+        [
+            'text' => 'Business Performance',
+            'can' => [
+                PermissionEnum::ViewTenant
+            ],
+            'icon'    => 'fas fa-fw fa-book',
+            'submenu' => [
+                [
+                    'text' => 'Daily Count',
+                    'url' => 'admin/sales/net_sales',
+                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'can' => [PermissionEnum::ViewTenant],
+                ],
+                [
+                    'text' => 'Daily HPP',
+                    'url' => 'admin/sales/net_per_channel',
+                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'can' => [PermissionEnum::ViewTenant],
+                ],
+                [
+                    'text' => 'Financial Report',
+                    'url' => 'admin/lk',
+                    'icon' => 'nav-icon far fa-circle text-success',
+                    'can' => [PermissionEnum::ViewTenant],
+                ],
+            ]
         ],
         [
             'text' => 'Ads Monitor',
@@ -518,65 +528,65 @@ return [
             ]
         ],
         [
-        'text' => 'Content Production',
-        'can' => [
-            PermissionEnum::ViewMarketing, // You can adjust permissions as needed
-            PermissionEnum::ViewCampaign,
-            PermissionEnum::ViewKOL
+            'text' => 'Content Production',
+            'can' => [
+                PermissionEnum::ViewMarketing, // You can adjust permissions as needed
+                PermissionEnum::ViewCampaign,
+                PermissionEnum::ViewKOL
+            ],
+            'icon'    => 'fas fa-fw fa-edit',
+            'submenu' => [
+                [
+                    'text' => 'Content Plan',
+                    'url' => 'admin/contentPlan',
+                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'can' => [PermissionEnum::ViewMarketing],
+                    'active' => ['admin/contentPlan*']
+                ],
+                [
+                    'text' => 'Strategy (Step 1)',
+                    'url' => 'admin/contentPlan?status=draft',
+                    'icon' => 'nav-icon far fa-circle text-secondary',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Content Writing (Step 2)',
+                    'url' => 'admin/contentPlan?status=content_writing',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Admin Support (Step 3)',
+                    'url' => 'admin/contentPlan?status=admin_support',
+                    'icon' => 'nav-icon far fa-circle text-primary',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Creative Review (Step 4)',
+                    'url' => 'admin/contentPlan?status=creative_review',
+                    'icon' => 'nav-icon far fa-circle text-warning',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Content Editing (Step 5)',
+                    'url' => 'admin/contentPlan?status=content_editing',
+                    'icon' => 'nav-icon far fa-circle text-dark',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Store to Content Bank (Step 6)',
+                    'url' => 'admin/contentPlan?status=ready_to_post',
+                    'icon' => 'nav-icon far fa-circle text-success',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+                [
+                    'text' => 'Posted Content',
+                    'url' => 'admin/contentPlan?status=posted',
+                    'icon' => 'nav-icon fas fa-check-circle text-success',
+                    'can' => [PermissionEnum::ViewMarketing],
+                ],
+            ]
         ],
-        'icon'    => 'fas fa-fw fa-edit',
-        'submenu' => [
-            [
-                'text' => 'Content Plan',
-                'url' => 'admin/contentPlan',
-                'icon' => 'nav-icon far fa-circle text-primary',
-                'can' => [PermissionEnum::ViewMarketing],
-                'active' => ['admin/contentPlan*']
-            ],
-            [
-                'text' => 'Strategy (Step 1)',
-                'url' => 'admin/contentPlan?status=draft',
-                'icon' => 'nav-icon far fa-circle text-secondary',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Content Writing (Step 2)',
-                'url' => 'admin/contentPlan?status=content_writing',
-                'icon' => 'nav-icon far fa-circle text-info',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Admin Support (Step 3)',
-                'url' => 'admin/contentPlan?status=admin_support',
-                'icon' => 'nav-icon far fa-circle text-primary',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Creative Review (Step 4)',
-                'url' => 'admin/contentPlan?status=creative_review',
-                'icon' => 'nav-icon far fa-circle text-warning',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Content Editing (Step 5)',
-                'url' => 'admin/contentPlan?status=content_editing',
-                'icon' => 'nav-icon far fa-circle text-dark',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Store to Content Bank (Step 6)',
-                'url' => 'admin/contentPlan?status=ready_to_post',
-                'icon' => 'nav-icon far fa-circle text-success',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-            [
-                'text' => 'Posted Content',
-                'url' => 'admin/contentPlan?status=posted',
-                'icon' => 'nav-icon fas fa-check-circle text-success',
-                'can' => [PermissionEnum::ViewMarketing],
-            ],
-        ]
-    ],
         [
             'text' => 'Content Ads',
             'can' => [
