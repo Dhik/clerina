@@ -29,79 +29,73 @@ class BCGMetricsController extends Controller
     }
 
     public function index()
-    {
-        // Get products with complete data for analysis
-        $products = BCGProduct::whereNotNull('visitor')
-            ->whereNotNull('jumlah_pembeli')
-            ->whereNotNull('harga')
-            ->where('visitor', '>', 0)
-            ->where('date', '2025-05-01')
-            ->get();
+{
+    // Get products with complete data for analysis
+    $products = BCGProduct::whereNotNull('visitor')
+        ->whereNotNull('jumlah_pembeli')
+        ->whereNotNull('harga')
+        ->where('visitor', '>', 0)
+        ->where('date', '2025-05-01')
+        ->get();
 
-        // Calculate median traffic for threshold
-        $medianTraffic = $products->median('visitor');
+    $medianTraffic = $products->median('visitor');
+    
+    $processedProducts = $products->map(function ($product) use ($medianTraffic) {
+        $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
+        $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
         
-        // Process products and add calculated fields
-        $processedProducts = $products->map(function ($product) use ($medianTraffic) {
-            // Calculate conversion rate
-            $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
-            
-            // Get benchmark conversion based on price
-            $benchmarkConversion = $this->getBenchmarkConversion($product->harga);
-            
-            // Determine quadrant
-            $isHighTraffic = $product->visitor >= $medianTraffic;
-            $isHighConversion = $conversionRate >= $benchmarkConversion;
-            
-            if ($isHighTraffic && $isHighConversion) {
-                $quadrant = 'Stars';
-                $quadrantColor = '#28a745';
-            } elseif ($isHighTraffic && !$isHighConversion) {
-                $quadrant = 'Question Marks';
-                $quadrantColor = '#17a2b8';
-            } elseif (!$isHighTraffic && $isHighConversion) {
-                $quadrant = 'Cash Cows';
-                $quadrantColor = '#ffc107';
-            } else {
-                $quadrant = 'Dogs';
-                $quadrantColor = '#dc3545';
-            }
+        $isHighTraffic = $product->visitor >= $medianTraffic;
+        $isHighConversion = $conversionRate >= $benchmarkConversion;
+        
+        if ($isHighTraffic && $isHighConversion) {
+            $quadrant = 'Stars';
+            $quadrantColor = '#28a745';
+        } elseif ($isHighTraffic && !$isHighConversion) {
+            $quadrant = 'Question Marks';
+            $quadrantColor = '#17a2b8';
+        } elseif (!$isHighTraffic && $isHighConversion) {
+            $quadrant = 'Cash Cows';
+            $quadrantColor = '#ffc107';
+        } else {
+            $quadrant = 'Dogs';
+            $quadrantColor = '#dc3545';
+        }
 
-            return [
-                'kode_produk' => $product->kode_produk,
-                'nama_produk' => $product->nama_produk,
-                'sku' => $product->sku,
-                'visitor' => $product->visitor,
-                'jumlah_pembeli' => $product->jumlah_pembeli,
-                'conversion_rate' => round($conversionRate, 2),
-                'benchmark_conversion' => $benchmarkConversion,
-                'harga' => $product->harga,
-                'sales' => $product->sales ?? 0,
-                'stock' => $product->stock ?? 0,
-                'biaya_ads' => $product->biaya_ads ?? 0,
-                'omset_penjualan' => $product->omset_penjualan ?? 0,
-                'quadrant' => $quadrant,
-                'quadrant_color' => $quadrantColor,
-                'roas' => $product->biaya_ads > 0 ? round(($product->omset_penjualan ?? 0) / $product->biaya_ads, 2) : 0
-            ];
-        });
+        return [
+            'kode_produk' => $product->kode_produk,
+            'nama_produk' => $product->nama_produk,
+            'sku' => $product->sku,
+            'visitor' => $product->visitor,
+            'jumlah_pembeli' => $product->jumlah_pembeli,
+            'qty_sold' => $product->qty_sold ?? 0, // ADD THIS LINE
+            'conversion_rate' => round($conversionRate, 2),
+            'benchmark_conversion' => $benchmarkConversion,
+            'harga' => $product->harga,
+            'sales' => $product->sales ?? 0,
+            'stock' => $product->stock ?? 0,
+            'biaya_ads' => $product->biaya_ads ?? 0,
+            'omset_penjualan' => $product->omset_penjualan ?? 0,
+            'quadrant' => $quadrant,
+            'quadrant_color' => $quadrantColor,
+            'roas' => $product->biaya_ads > 0 ? round(($product->omset_penjualan ?? 0) / $product->biaya_ads, 2) : 0
+        ];
+    });
 
-        // Calculate quadrant summaries
-        $quadrantSummary = $processedProducts->groupBy('quadrant')->map(function ($group, $quadrant) {
-            return [
-                'quadrant' => $quadrant,
-                'count' => $group->count(),
-                'total_revenue' => $group->sum('sales'),
-                'total_ads_cost' => $group->sum('biaya_ads'),
-                'avg_conversion' => round($group->avg('conversion_rate'), 2),
-                'avg_traffic' => round($group->avg('visitor'), 0),
-                'total_stock' => $group->sum('stock'),
-                'avg_roas' => round($group->avg('roas'), 2)
-            ];
-        });
+    $quadrantSummary = $processedProducts->groupBy('quadrant')->map(function ($group, $quadrant) {
+        return [
+            'quadrant' => $quadrant,
+            'count' => $group->count(),
+            'total_revenue' => $group->sum('sales'),
+            'total_ads_cost' => $group->sum('biaya_ads'),
+            'avg_conversion' => round($group->avg('conversion_rate'), 2),
+            'avg_traffic' => round($group->avg('visitor'), 0),
+            'total_stock' => $group->sum('stock'),
+            'avg_roas' => round($group->avg('roas'), 2)
+        ];
+    });
 
-        return view('admin.bcg_metrics.index', compact('processedProducts', 'quadrantSummary', 'medianTraffic'));
-    }
+    return view('admin.bcg_metrics.index', compact('processedProducts', 'quadrantSummary', 'medianTraffic'));
+}
 
     /**
      * Get chart data for scatter plot
