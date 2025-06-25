@@ -95,7 +95,7 @@ class BCGMetricsController extends Controller
         $this->googleSheetService->setSpreadsheetId('1MnY6beeJjZIJ_lMWytdPb6shLlX7gkselbynkRfELbE');
         $range = 'DATA PRODUCT!A2:X'; // Assuming data starts from row 2
         $sheetData = $this->googleSheetService->getSheetData($range);
-
+        
         $tenant_id = 1; // As specified in your requirements
         $date = '2025-05-01'; // As specified
         $chunkSize = 50;
@@ -103,7 +103,7 @@ class BCGMetricsController extends Controller
         $processedRows = 0;
         $skippedRows = 0;
         $duplicateRows = 0;
-
+        
         foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
             foreach ($chunk as $row) {
                 // Skip if essential data is missing (kode_produk and nama_produk)
@@ -115,6 +115,8 @@ class BCGMetricsController extends Controller
                 // Extract data from specific columns
                 $kode_produk = $row[0] ?? null; // Column A
                 $nama_produk = $row[1] ?? null; // Column B
+                $sku = $row[7] ?? null; // Column H
+                
                 // Handle formatted numbers with dot separators
                 $visitor = null;
                 if (isset($row[8]) && !empty($row[8])) {
@@ -139,6 +141,7 @@ class BCGMetricsController extends Controller
                     $cleanedQty = str_replace('.', '', trim($row[22]));
                     $qty_sold = is_numeric($cleanedQty) ? (int)$cleanedQty : null;
                 }
+                
                 // Handle formatted numbers with dot separators for sales (Column X)
                 $sales = null;
                 if (isset($row[23]) && !empty($row[23])) {
@@ -151,7 +154,7 @@ class BCGMetricsController extends Controller
                                         ->where('tenant_id', $tenant_id)
                                         ->where('kode_produk', $kode_produk)
                                         ->first();
-
+                
                 if ($existingProduct) {
                     $duplicateRows++;
                     continue;
@@ -162,6 +165,7 @@ class BCGMetricsController extends Controller
                     'tenant_id' => $tenant_id,
                     'kode_produk' => $kode_produk,
                     'nama_produk' => $nama_produk,
+                    'sku' => $sku,
                     'visitor' => $visitor,
                     'jumlah_atc' => $jumlah_atc,
                     'jumlah_pembeli' => $jumlah_pembeli,
@@ -170,14 +174,14 @@ class BCGMetricsController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-
+                
                 // Create new BCG product record
                 BcgProduct::create($productData);
                 $processedRows++;
             }
             usleep(100000); // Small delay to prevent overwhelming the server
         }
-
+        
         return response()->json([
             'message' => 'BCG Product data imported successfully',
             'total_rows' => $totalRows,
