@@ -704,26 +704,26 @@ return [
                 [
                     'text' => 'Talents',
                     'url' => 'admin/talent',
-                    'icon' => 'nav-icon fas fa-user-star text-warning',
+                    'icon' => 'nav-icon fas fa-star text-info',
                     'active' => ['admin/talent*']
                 ],
                 [
                     'text' => 'Content',
                     'url' => 'admin/tlnt-content',
-                    'icon' => 'nav-icon fas fa-file-video text-primary',
+                    'icon' => 'nav-icon fas fa-file-video text-info',
                     'active' => ['admin/tlnt-content*']
                 ],
                 [
                     'text' => 'Payment',
                     'url' => 'admin/talnt-payments',
-                    'icon' => 'nav-icon fas fa-money-bill-wave text-success',
+                    'icon' => 'nav-icon fas fa-money-bill-wave text-info',
                     'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
                 ],
                 [
                     'text' => 'Debt Report',
                     'url' => 'admin/talnt-payments/report',
                     'can' => [PermissionEnum::ViewVisit, PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon fas fa-exclamation-triangle text-danger',
+                    'icon' => 'nav-icon fas fa-exclamation-triangle text-info',
                 ],
                 [
                     'text' => 'Approval',
@@ -797,7 +797,7 @@ return [
                 [
                     'text' => 'Brand',
                     'url' => '/admin/tenant',
-                    'icon' => 'nav-icon fas fa-building text-primary',
+                    'icon' => 'nav-icon fas fa-building text-info',
                     'can' => [PermissionEnum::ViewTenant],
                 ],
                 [
@@ -810,20 +810,20 @@ return [
                 [
                     'text' => 'Marketing Category',
                     'url' => '/admin/marketing-category',
-                    'icon' => 'nav-icon fas fa-tags text-warning',
+                    'icon' => 'nav-icon fas fa-tags text-info',
                     'can' => [PermissionEnum::ViewMarketingCategory],
                     'active' => ['admin/marketing-category*']
                 ],
                 [
                     'text' => 'Sales Channel',
                     'url' => '/admin/sales-channel',
-                    'icon' => 'nav-icon fas fa-stream text-success',
+                    'icon' => 'nav-icon fas fa-stream text-info',
                     'can' => [PermissionEnum::ViewSalesChannel],
                 ],
                 [
                     'text' => 'Social Media',
                     'url' => '/admin/social-media',
-                    'icon' => 'nav-icon fas fa-share-alt text-primary',
+                    'icon' => 'nav-icon fas fa-share-alt text-info',
                     'can' => [PermissionEnum::ViewSocialMedia],
                 ]
             ],
@@ -839,13 +839,13 @@ return [
                 [
                     'text' => 'Data',
                     'url' => 'admin/employees',
-                    'icon' => 'nav-icon fas fa-user-tie text-primary',
+                    'icon' => 'nav-icon fas fa-user-tie text-info',
                     'can' => [PermissionEnum::ViewEmployee],
                 ],
                 [
                     'text' => 'Attendances',
                     'url' => '/admin/attendance',
-                    'icon' => 'nav-icon fas fa-calendar-check text-success',
+                    'icon' => 'nav-icon fas fa-calendar-check text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
@@ -857,13 +857,13 @@ return [
                 [
                     'text' => 'Location',
                     'url' => '/admin/location',
-                    'icon' => 'nav-icon fas fa-map-marker-alt text-danger',
+                    'icon' => 'nav-icon fas fa-map-marker-alt text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Shift',
                     'url' => '/admin/shift',
-                    'icon' => 'nav-icon fas fa-clock text-warning',
+                    'icon' => 'nav-icon fas fa-clock text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
@@ -884,19 +884,19 @@ return [
                 [
                     'text' => 'Overtimes',
                     'url' => '/admin/overtime/approval',
-                    'icon' => 'nav-icon fas fa-business-time text-warning',
+                    'icon' => 'nav-icon fas fa-business-time text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'TimeOffs',
                     'url' => '/admin/timeOff/approval',
-                    'icon' => 'nav-icon fas fa-calendar-times text-danger',
+                    'icon' => 'nav-icon fas fa-calendar-times text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
                 [
                     'text' => 'Change Shift',
                     'url' => '/admin/requestChangeShifts/approval',
-                    'icon' => 'nav-icon fas fa-exchange-alt text-primary',
+                    'icon' => 'nav-icon fas fa-exchange-alt text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
@@ -915,7 +915,7 @@ return [
                 [
                     'text' => 'Salary',
                     'url' => 'admin/payroll/import',
-                    'icon' => 'nav-icon fas fa-dollar-sign text-success',
+                    'icon' => 'nav-icon fas fa-dollar-sign text-info',
                     'can' => [PermissionEnum::ViewAttendance],
                 ],
             ],
@@ -928,12 +928,12 @@ return [
                 [
                     'text' => 'Profile',
                     'url' => 'admin/profile',
-                    'icon' => 'nav-icon fas fa-user text-primary',
+                    'icon' => 'nav-icon fas fa-user text-info',
                 ],
                 [
                     'text' => 'Change Password',
                     'url' => 'admin/changeOwnPassword',
-                    'icon' => 'nav-icon fas fa-key text-warning',
+                    'icon' => 'nav-icon fas fa-key text-info',
                 ],
             ],
         ],
