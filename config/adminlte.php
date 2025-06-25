@@ -532,13 +532,13 @@ return [
                     'can' => [PermissionEnum::ViewCampaign],
                     'active' => ['admin/campaign*']
                 ],
-                [
-                    'text' => 'Account Affiliate',
-                    'url' => 'admin/kol',
-                    'can' => [PermissionEnum::ViewOffer],
-                    'icon' => 'nav-icon fas fa-user-friends text-info',
-                    'active' => ['admin/kol*']
-                ],
+                // [
+                //     'text' => 'Account Affiliate',
+                //     'url' => 'admin/kol',
+                //     'can' => [PermissionEnum::ViewOffer],
+                //     'icon' => 'nav-icon fas fa-user-friends text-info',
+                //     'active' => ['admin/kol*']
+                // ],
                 [
                     'text' => 'Budget',
                     'url' => 'admin/budgets',
@@ -574,6 +574,22 @@ return [
                 //     'icon' => 'nav-icon far fa-circle',
                 //     'active' => ['admin/offer*']
                 // ],
+            ]
+        ],
+        [
+            'text' => 'Affiliate Program',
+            'can' => [
+                PermissionEnum::ViewOffer
+            ],
+            'icon'    => 'fas fa-handshake',
+            'submenu' => [
+                [
+                    'text' => 'Affiliate Selection',
+                    'url' => 'admin/kol',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon fas fa-user-friends text-info',
+                    'active' => ['admin/kol*']
+                ],
             ]
         ],
         [
