@@ -22,5 +22,6 @@ Route::prefix('admin')
                 Route::get('/', [BCGMetricsController::class, 'index'])->name('bcg_metrics.index');
                 Route::get('/get', [BCGMetricsController::class, 'get'])->name('bcg_metrics.get');
                 Route::get('/import', [BCGMetricsController::class, 'importBcgProduct'])->name('bcg_metrics.import');
+                Route::get('/import-stock', [BCGMetricsController::class, 'importBcgStock'])->name('bcg_metrics.import_stock');
             });
     });

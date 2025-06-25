@@ -22,6 +22,8 @@ class BcgProduct extends Model
         'jumlah_pembeli',
         'qty_sold',
         'sales',
+        'stock',
+        'harga',
     ];
 
     protected $casts = [
@@ -32,5 +34,7 @@ class BcgProduct extends Model
         'jumlah_pembeli' => 'integer',
         'qty_sold' => 'integer',
         'sales' => 'integer',
+        'stock' => 'integer',
+        'harga' => 'integer',
     ];
 }

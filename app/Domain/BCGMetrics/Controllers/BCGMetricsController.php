@@ -190,4 +190,70 @@ class BCGMetricsController extends Controller
             'duplicate_rows' => $duplicateRows
         ]);
     }
+    public function importBcgStock()
+    {
+        $this->googleSheetService->setSpreadsheetId('1MnY6beeJjZIJ_lMWytdPb6shLlX7gkselbynkRfELbE');
+        $range = 'DATA STOCK!A2:H'; // Assuming data starts from row 2
+        $sheetData = $this->googleSheetService->getSheetData($range);
+        
+        $date = '2025-05-01'; // Same date as used in product import
+        $chunkSize = 50;
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $notFoundRows = 0;
+        
+        foreach (array_chunk($sheetData, $chunkSize) as $chunk) {
+            foreach ($chunk as $row) {
+                // Skip if kode_produk is missing (assuming it's in Column A)
+                if (empty($row[0])) {
+                    $skippedRows++;
+                    continue;
+                }
+                
+                $kode_produk = trim($row[0]); // Column A
+                
+                // Handle formatted numbers for harga (Column G) and stock (Column H)
+                $harga = null;
+                if (isset($row[6]) && !empty($row[6])) {
+                    $cleanedHarga = str_replace('.', '', trim($row[6]));
+                    $harga = is_numeric($cleanedHarga) ? (int)$cleanedHarga : null;
+                }
+                
+                $stock = null;
+                if (isset($row[7]) && !empty($row[7])) {
+                    $cleanedStock = str_replace('.', '', trim($row[7]));
+                    $stock = is_numeric($cleanedStock) ? (int)$cleanedStock : null;
+                }
+                
+                // Find existing product by kode_produk AND date
+                $existingProduct = BcgProduct::where('kode_produk', $kode_produk)
+                                            ->where('date', $date)
+                                            ->first();
+                
+                if (!$existingProduct) {
+                    $notFoundRows++;
+                    continue; // Skip if product doesn't exist for this date
+                }
+                
+                // Update the existing product with stock and harga
+                $existingProduct->update([
+                    'stock' => $stock,
+                    'harga' => $harga,
+                    'updated_at' => now(),
+                ]);
+                
+                $processedRows++;
+            }
+            usleep(100000); // Small delay to prevent overwhelming the server
+        }
+        
+        return response()->json([
+            'message' => 'BCG Stock data imported successfully',
+            'total_rows' => $totalRows,
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'not_found_rows' => $notFoundRows
+        ]);
+    }
 }
