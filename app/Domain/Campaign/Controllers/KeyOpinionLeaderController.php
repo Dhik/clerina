@@ -195,6 +195,11 @@ class KeyOpinionLeaderController extends Controller
         // $this->authorize('viewKOL', KeyOpinionLeader::class);
         return view('admin.kol.index', $this->getCommonData());
     }
+    public function monitor_index(): View|\Illuminate\Foundation\Application|Factory|Application
+    {
+        // $this->authorize('viewKOL', KeyOpinionLeader::class);
+        return view('admin.kol.monitor_index', $this->getCommonData());
+    }
 
     /**
      * Create a new KOL

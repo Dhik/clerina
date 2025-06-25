@@ -590,6 +590,13 @@ return [
                     'icon' => 'nav-icon fas fa-user-friends text-info',
                     'active' => ['admin/kol*']
                 ],
+                [
+                    'text' => 'Monitor Affiliate',
+                    'url' => 'admin/kol/monitor',
+                    'can' => [PermissionEnum::ViewOffer],
+                    'icon' => 'nav-icon fas fa-user-friends text-info',
+                    'active' => ['admin/kol*']
+                ],
             ]
         ],
         [
