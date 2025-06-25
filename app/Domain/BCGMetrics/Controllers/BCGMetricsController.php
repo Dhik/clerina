@@ -135,21 +135,23 @@ class BCGMetricsController extends Controller
             return [
                 'x' => $product->visitor,
                 'y' => round($conversionRate, 2),
-                'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50), // Bubble size based on sales
+                'r' => min(max(($product->sales ?? 0) / 10000000, 5), 50),
                 'label' => $product->sku ?: $product->kode_produk,
                 'quadrant' => $quadrant,
                 'color' => $color,
                 'revenue' => $product->sales ?? 0,
                 'benchmark' => $benchmarkConversion
             ];
-        });
+        })->filter(function ($item) {
+            return $item['y'] <= 80; // Exclude where y > 80
+        })->values();
 
         return response()->json([
             'data' => $chartData,
             'medianTraffic' => $medianTraffic,
             'benchmarks' => [
                 'traffic' => $medianTraffic,
-                'conversion' => 1.0 // Average benchmark
+                'conversion' => 1.0
             ]
         ]);
     }
