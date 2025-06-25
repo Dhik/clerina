@@ -720,6 +720,6 @@ function generateActionPlan() {
 }
 
 // Add all the modal functions from the previous recommendations artifact
-@include('bcg_metrics.modal_scripts')
 </script>
+@include('admin.bcg_metrics.modal_scripts')
 @stop
