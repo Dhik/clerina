@@ -723,20 +723,44 @@ class AdSpentSocialMediaController extends Controller
                 DB::raw('SUM(purchases_conversion_value_shared_items) as total_conversion_value'),
                 DB::raw('COUNT(DISTINCT account_name) as accounts_count'),
                 
-                // Existing TOFU/MOFU/BOFU metrics
+                // TOFU/MOFU/BOFU metrics
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%TOFU%" THEN amount_spent ELSE 0 END) as tofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%MOFU%" THEN amount_spent ELSE 0 END) as mofu_spent'),
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%BOFU%" THEN amount_spent ELSE 0 END) as bofu_spent'),
                 
-                // New SHOPEE metric
+                // SHOPEE metric - THIS WILL BE FILTERED BY DATE
                 DB::raw('SUM(CASE WHEN campaign_name LIKE "%SHOPEE%" THEN amount_spent ELSE 0 END) as shopee_spent')
             ]);
         
-        // ... rest of your existing filter logic ...
+        // Apply date filter - THIS AFFECTS ALL METRICS INCLUDING SHOPEE
+        if ($request->has('date_start') && $request->has('date_end')) {
+            try {
+                $dateStart = Carbon::parse($request->input('date_start'))->format('Y-m-d');
+                $dateEnd = Carbon::parse($request->input('date_end'))->format('Y-m-d');
+                $query->whereBetween('date', [$dateStart, $dateEnd]);
+            } catch (\Exception $e) {
+                Log::error('Date parsing error: ' . $e->getMessage());
+            }
+        } elseif ($request->has('date')) {
+            try {
+                $parsedDate = Carbon::parse($request->input('date'))->format('Y-m-d');
+                $query->where('date', $parsedDate);
+            } catch (\Exception $e) {
+                $query->where('date', $request->input('date'));
+            }
+        }
+        
+        // Apply other filters
+        if ($request->has('kategori_produk') && $request->kategori_produk !== '') {
+            $query->where('kategori_produk', $request->kategori_produk);
+        }
+        
+        if ($request->has('pic') && $request->pic !== '') {
+            $query->where('pic', $request->pic);
+        }
         
         $summary = $query->first();
         
-        // Calculate derived metrics
         $result = [
             'total_amount_spent' => $summary->total_amount_spent,
             'total_impressions' => $summary->total_impressions,
@@ -755,17 +779,15 @@ class AdSpentSocialMediaController extends Controller
             'ctr' => $summary->total_impressions > 0 ? ($summary->total_link_clicks / $summary->total_impressions) * 100 : 0,
             'roas' => $summary->total_amount_spent > 0 ? $summary->total_conversion_value / $summary->total_amount_spent : 0,
             
-            // Existing funnel stage metrics with percentages
+            // Funnel stage metrics with percentages (FILTERED BY DATE)
             'tofu_spent' => $summary->tofu_spent,
             'mofu_spent' => $summary->mofu_spent, 
             'bofu_spent' => $summary->bofu_spent,
+            'shopee_spent' => $summary->shopee_spent, // FILTERED BY DATE
             'tofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->tofu_spent / $summary->total_amount_spent) * 100 : 0,
             'mofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->mofu_spent / $summary->total_amount_spent) * 100 : 0,
             'bofu_percentage' => $summary->total_amount_spent > 0 ? ($summary->bofu_spent / $summary->total_amount_spent) * 100 : 0,
-            
-            // New SHOPEE metrics
-            'shopee_spent' => $summary->shopee_spent,
-            'shopee_percentage' => $summary->total_amount_spent > 0 ? ($summary->shopee_spent / $summary->total_amount_spent) * 100 : 0
+            'shopee_percentage' => $summary->total_amount_spent > 0 ? ($summary->shopee_spent / $summary->total_amount_spent) * 100 : 0 // FILTERED BY DATE
         ];
         
         return response()->json([
