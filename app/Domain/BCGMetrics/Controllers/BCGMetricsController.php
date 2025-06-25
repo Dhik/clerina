@@ -112,7 +112,7 @@ class BCGMetricsController extends Controller
     // Filter out outliers - exclude conversion rate > 80%
     $filteredProducts = $products->filter(function ($product) {
         $conversionRate = ($product->jumlah_pembeli / $product->visitor) * 100;
-        return $conversionRate <= 80; // EXCLUDE outliers > 80%
+        return $conversionRate <= 80;
     });
 
     $medianTraffic = $filteredProducts->median('visitor');
@@ -156,10 +156,7 @@ class BCGMetricsController extends Controller
         'benchmarks' => [
             'traffic' => $medianTraffic,
             'conversion' => 1.0
-        ],
-        'total_products' => $products->count(),
-        'filtered_products' => $filteredProducts->count(),
-        'excluded_outliers' => $products->count() - $filteredProducts->count()
+        ]
     ]);
 }
 
