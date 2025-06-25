@@ -163,8 +163,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/', [KeyOpinionLeaderController::class, 'index'])->name('kol.index');
                 Route::get('/monitor', [KeyOpinionLeaderController::class, 'monitor_index'])->name('kol.monitor');
-                Route::get('/get', [KeyOpinionLeaderController::class, 'get'])->name('kol.get');
                 Route::get('/monitor_get', [KeyOpinionLeaderController::class, 'monitor_get'])->name('kol.monitor_get');
+                Route::get('/get', [KeyOpinionLeaderController::class, 'get'])->name('kol.get');
                 Route::get('/chart', [KeyOpinionLeaderController::class, 'chart'])->name('kol.chart');
                 Route::get('/average-rate', [KeyOpinionLeaderController::class, 'averageRate'])->name('kol.averageRate');
                 Route::get('/select', [KeyOpinionLeaderController::class, 'select'])->name('kol.select');
