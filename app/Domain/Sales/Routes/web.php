@@ -123,9 +123,6 @@ Route::prefix('admin')
                 Route::get('/spent-vs-gmv/chart-data', [AdSpentSocialMediaController::class, 'get_spent_vs_gmv_chart_data'])->name('adSpentSocialMedia.spent_vs_gmv_chart_data');
                 Route::post('/spent-vs-gmv/export', [AdSpentSocialMediaController::class, 'export_spent_vs_gmv'])->name('adSpentSocialMedia.export_spent_vs_gmv');
                                 
-                // Existing chart data routes
-                // Route::get('/line-data', [AdSpentSocialMediaController::class, 'get_line_data'])->name('adSpentSocialMedia.line-data');
-                // Route::get('/funnel-data', [AdSpentSocialMediaController::class, 'get_funnel_data'])->name('adSpentSocialMedia.funnel-data');
             });
 
         Route::prefix('operational-spent')->group(function () {
