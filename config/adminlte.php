@@ -373,17 +373,42 @@ return [
             ]
         ],
         [
-            'text' => 'Ads Monitor',
-            'url' => 'admin/ads_cpas',
-            'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewSales],
+            'text' => 'Marketing',
+            'can' => [
+                PermissionEnum::ViewSales,
+            ],
+            'icon'    => 'fas fa-fw fa-map',
+            'submenu' => [
+                [
+                    'text' => 'Ads Monitor',
+                    'url' => 'admin/ads_cpas',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewSales],
+                ],
+            ]
         ],
         [
-            'text' => 'BCG Metrics',
-            'url' => 'admin/bcg_metrics',
-            'icon' => 'nav-icon far fa-circle text-info',
-            'can' => [PermissionEnum::ViewTenant],
+            'text' => 'Business Analysis',
+            'can' => [
+                PermissionEnum::ViewTenant
+            ],
+            'icon'    => 'fas fa-fw fa-book',
+            'submenu' => [
+                [
+                    'text' => 'BCG Metrics',
+                    'url' => 'admin/bcg_metrics',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewTenant],
+                ],
+                [
+                    'text' => 'Cohort Analysis',
+                    'url' => 'admin/customer/cohort-index',
+                    'icon' => 'nav-icon far fa-circle text-info',
+                    'can' => [PermissionEnum::ViewTenant],
+                ],
+            ]
         ],
+        
         // [
         //     'text' => 'Ads Relation',
         //     'url' => 'admin/sales/ads_relation',
