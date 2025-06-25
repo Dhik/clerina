@@ -24,6 +24,8 @@ class BcgProduct extends Model
         'sales',
         'stock',
         'harga',
+        'biaya_ads',
+        'omset_penjualan',
     ];
 
     protected $casts = [
@@ -36,5 +38,7 @@ class BcgProduct extends Model
         'sales' => 'integer',
         'stock' => 'integer',
         'harga' => 'integer',
+        'biaya_ads' => 'integer',
+        'omset_penjualan' => 'integer',
     ];
 }

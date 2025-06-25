@@ -283,4 +283,96 @@ class BCGMetricsController extends Controller
             'not_found_rows' => $notFoundRows
         ]);
     }
+    public function importBcgAds()
+    {
+        $this->googleSheetService->setSpreadsheetId('1MnY6beeJjZIJ_lMWytdPb6shLlX7gkselbynkRfELbE');
+        $range = 'IKLAN SHOPEE!A2:X'; // Assuming data starts from row 2
+        $sheetData = $this->googleSheetService->getSheetData($range);
+        
+        $date = '2025-05-01'; // Same date as used in product import
+        $totalRows = count($sheetData);
+        $processedRows = 0;
+        $skippedRows = 0;
+        $notFoundRows = 0;
+        
+        // First, collect all data and group by kode_produk to calculate sums
+        $groupedData = [];
+        
+        foreach ($sheetData as $row) {
+            // Skip if kode_produk is missing (Column E)
+            if (empty($row[4])) {
+                $skippedRows++;
+                continue;
+            }
+            
+            $kode_produk = trim($row[4]); // Column E
+            
+            // Handle formatted numbers for biaya_ads (Column X) and omset_penjualan (Column V)
+            $biaya_ads = null;
+            if (isset($row[23]) && !empty($row[23])) {
+                $cleanedBiayaAds = str_replace('.', '', trim($row[23]));
+                $biaya_ads = is_numeric($cleanedBiayaAds) ? (int)$cleanedBiayaAds : null;
+            }
+            
+            $omset_penjualan = null;
+            if (isset($row[21]) && !empty($row[21])) {
+                $cleanedOmset = str_replace('.', '', trim($row[21]));
+                $omset_penjualan = is_numeric($cleanedOmset) ? (int)$cleanedOmset : null;
+            }
+            
+            // Group data by kode_produk
+            if (!isset($groupedData[$kode_produk])) {
+                $groupedData[$kode_produk] = [
+                    'biaya_ads_values' => [],
+                    'omset_penjualan_values' => []
+                ];
+            }
+            
+            // Add values to arrays (only if not null)
+            if ($biaya_ads !== null) {
+                $groupedData[$kode_produk]['biaya_ads_values'][] = $biaya_ads;
+            }
+            if ($omset_penjualan !== null) {
+                $groupedData[$kode_produk]['omset_penjualan_values'][] = $omset_penjualan;
+            }
+        }
+        
+        // Now process the grouped data and calculate sums
+        foreach ($groupedData as $kode_produk => $data) {
+            // Calculate sums
+            $sum_biaya_ads = !empty($data['biaya_ads_values']) ? 
+                array_sum($data['biaya_ads_values']) : null;
+                
+            $sum_omset_penjualan = !empty($data['omset_penjualan_values']) ? 
+                array_sum($data['omset_penjualan_values']) : null;
+            
+            // Find existing product by kode_produk AND date
+            $existingProduct = BcgProduct::where('kode_produk', $kode_produk)
+                                        ->where('date', $date)
+                                        ->first();
+            
+            if (!$existingProduct) {
+                $notFoundRows++;
+                continue; // Skip if product doesn't exist for this date
+            }
+            
+            // Update the existing product with summed biaya_ads and omset_penjualan
+            $existingProduct->update([
+                'biaya_ads' => $sum_biaya_ads,
+                'omset_penjualan' => $sum_omset_penjualan,
+                'updated_at' => now(),
+            ]);
+            
+            $processedRows++;
+        }
+        
+        return response()->json([
+            'message' => 'BCG Ads data imported successfully with sums calculated',
+            'total_rows' => $totalRows,
+            'unique_products' => count($groupedData),
+            'processed_rows' => $processedRows,
+            'skipped_rows' => $skippedRows,
+            'not_found_rows' => $notFoundRows
+        ]);
+    }
 }
