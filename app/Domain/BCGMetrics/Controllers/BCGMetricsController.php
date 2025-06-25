@@ -338,7 +338,7 @@ class BCGMetricsController extends Controller
     /**
      * Get product details with history
      */
-    public function getProductDetails($sku) // Change parameter from kode_produk to sku
+    public function getProductDetails($sku)
 {
     $products = BCGProduct::where('sku', $sku)
                          ->where('date', '2025-05-01')
@@ -395,6 +395,9 @@ class BCGMetricsController extends Controller
         $color = '#dc3545';
     }
     
+    // Add quadrant to the aggregated product object
+    $aggregatedProduct->bcg_quadrant = $quadrant;
+    
     $details = [
         'basic_info' => $aggregatedProduct,
         'calculated_metrics' => [
@@ -414,80 +417,86 @@ class BCGMetricsController extends Controller
             'benchmark_conversion' => $benchmarkConversion,
             'quadrant_color' => $color
         ],
-        'recommendations' => $this->getProductRecommendations($quadrant, $aggregatedProduct)
+        'recommendations' => $this->getProductRecommendations($aggregatedProduct) // Pass the product object, not quadrant string
     ];
     
     return response()->json($details);
 }
 
+
     /**
      * Generate specific recommendations for a product
      */
-    private function getProductRecommendations($product)
-    {
-        $recommendations = [];
-        
-        switch ($product->bcg_quadrant) {
-            case 'Stars':
-                $recommendations = [
-                    'primary' => 'Increase investment and scale',
-                    'actions' => [
-                        'Boost advertising budget by 20-30%',
-                        'Ensure stock availability',
-                        'Monitor competitor activities',
-                        'Consider premium positioning'
-                    ]
-                ];
-                break;
-                
-            case 'Cash Cows':
-                $recommendations = [
-                    'primary' => 'Optimize for profitability',
-                    'actions' => [
-                        'Reduce ad spend gradually',
-                        'Increase profit margins',
-                        'Maintain quality standards',
-                        'Use profits to fund other products'
-                    ]
-                ];
-                break;
-                
-            case 'Question Marks':
-                $recommendations = [
-                    'primary' => 'Improve conversion rate',
-                    'actions' => [
-                        'Optimize product pages',
-                        'Review pricing strategy',
-                        'Improve product images/descriptions',
-                        'Test different targeting'
-                    ]
-                ];
-                break;
-                
-            case 'Dogs':
-                $recommendations = [
-                    'primary' => 'Consider discontinuation',
-                    'actions' => [
-                        'Stop advertising spend',
-                        'Liquidate inventory',
-                        'Analyze failure reasons',
-                        'Consider product repositioning'
-                    ]
-                ];
-                break;
-        }
-        
-        // Add specific recommendations based on metrics
-        if ($product->roas < 1 && $product->biaya_ads > 500000) {
-            $recommendations['urgent'][] = 'URGENT: Poor ROAS with high ad spend - review immediately';
-        }
-        
-        if ($product->stock_turnover < 0.1 && $product->stock > 1000) {
-            $recommendations['urgent'][] = 'URGENT: Very slow stock movement - consider price reduction';
-        }
-        
-        return $recommendations;
+    private function getProductRecommendations($product) // Only one parameter needed
+{
+    $recommendations = [];
+    
+    switch ($product->bcg_quadrant) {
+        case 'Stars':
+            $recommendations = [
+                'primary' => 'Increase investment and scale',
+                'actions' => [
+                    'Boost advertising budget by 20-30%',
+                    'Ensure stock availability',
+                    'Monitor competitor activities',
+                    'Consider premium positioning'
+                ]
+            ];
+            break;
+            
+        case 'Cash Cows':
+            $recommendations = [
+                'primary' => 'Optimize for profitability',
+                'actions' => [
+                    'Reduce ad spend gradually',
+                    'Increase profit margins',
+                    'Maintain quality standards',
+                    'Use profits to fund other products'
+                ]
+            ];
+            break;
+            
+        case 'Question Marks':
+            $recommendations = [
+                'primary' => 'Improve conversion rate',
+                'actions' => [
+                    'Optimize product pages',
+                    'Review pricing strategy',
+                    'Improve product images/descriptions',
+                    'Test different targeting'
+                ]
+            ];
+            break;
+            
+        case 'Dogs':
+            $recommendations = [
+                'primary' => 'Consider discontinuation',
+                'actions' => [
+                    'Stop advertising spend',
+                    'Liquidate inventory',
+                    'Analyze failure reasons',
+                    'Consider product repositioning'
+                ]
+            ];
+            break;
     }
+    
+    // Add urgent alerts
+    $urgent = [];
+    if (($product->biaya_ads ?? 0) > 500000 && ($product->biaya_ads > 0 ? ($product->omset_penjualan ?? 0) / $product->biaya_ads : 0) < 1) {
+        $urgent[] = 'URGENT: Poor ROAS with high ad spend - review immediately';
+    }
+    
+    if (($product->stock ?? 0) > 1000 && ($product->stock > 0 ? ($product->qty_sold ?? 0) / $product->stock : 0) < 0.1) {
+        $urgent[] = 'URGENT: Very slow stock movement - consider price reduction';
+    }
+    
+    if (!empty($urgent)) {
+        $recommendations['urgent'] = $urgent;
+    }
+    
+    return $recommendations;
+}
 
     /**
      * Advanced filtering and search
