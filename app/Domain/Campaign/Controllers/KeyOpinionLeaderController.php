@@ -453,9 +453,21 @@ class KeyOpinionLeaderController extends Controller
         ]);
         
         try {
-            // Update only the level field
+            // Define slot mapping for each level
+            $levelSlotMapping = [
+                'Starter' => 10,
+                'Influencer' => 30,
+                'Legend' => 60,
+                'Best Affiliate' => 90
+            ];
+            
+            $selectedLevel = $request->input('level');
+            $assignedSlot = $levelSlotMapping[$selectedLevel];
+            
+            // Update both level and slot fields
             $keyOpinionLeader->update([
-                'level' => $request->input('level')
+                'level' => $selectedLevel,
+                'slot' => $assignedSlot
             ]);
             
             return response()->json([
@@ -464,7 +476,8 @@ class KeyOpinionLeaderController extends Controller
                 'data' => [
                     'id' => $keyOpinionLeader->id,
                     'username' => $keyOpinionLeader->username,
-                    'level' => $keyOpinionLeader->level
+                    'level' => $keyOpinionLeader->level,
+                    'slot' => $keyOpinionLeader->slot
                 ]
             ]);
             
