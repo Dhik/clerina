@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', trans('labels.key_opinion_leader'))
+@section('title', 'Affiliate Program')
 
 @section('content_header')
     <h1>Affiliate Monitor</h1>
