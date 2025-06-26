@@ -70,7 +70,8 @@
             </div>
         </div>
     </div>
-    <!-- Add this modal to your index.blade.php -->
+
+    <!-- Edit KOL Modal -->
     <div class="modal fade" id="editKolModal" tabindex="-1" role="dialog" aria-labelledby="editKolModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -139,7 +140,7 @@
                                 </div>
                             </div>
 
-                            <!-- Status Affiliate - NEW FIELD -->
+                            <!-- Status Affiliate -->
                             <div class="form-group row">
                                 <label for="edit_status_affiliate" class="col-md-4 col-form-label text-md-right">Affiliate Status</label>
                                 <div class="col-md-8">
@@ -235,44 +236,11 @@
 @section('js')
     <script>
         const kolTableSelector = $('#kolTable');
-        const channelSelector = $('#filterChannel');
-        const nicheSelector = $('#filterNiche');
-        const skinTypeSelector = $('#filterSkinType');
-        const skinConcernSelector = $('#filterSkinConcern');
-        const contentTypeSelector = $('#filterContentType');
-        const picSelector = $('#filterPIC');
-        const btnExportKol = $('#btnExportKol');
         const statusAffiliateSelector = $('#filterStatusAffiliate');
-        const followersMinSelector = $('#filterFollowersMin');
-        const followersMaxSelector = $('#filterFollowersMax');
-        let bulkRefreshInProgress = false;
-        let bulkRefreshStopped = false;
-
-        $('#btnBulkRefresh').click(function() {
-            if (bulkRefreshInProgress) {
-                return;
-            }
-
-            // Show confirmation
-            Swal.fire({
-                title: 'Bulk Refresh Confirmation',
-                text: 'This will refresh followers/following for all KOLs. This may take several minutes. Continue?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, start refresh!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    startBulkRefresh();
-                }
-            });
-        });
+        let currentKolId = null;
 
         function loadKpiDataMonitor() {
             $.get("{{ route('kol.monitor_kpi') }}", function(data) {
-
-                // Level KPIs
                 $('#starterCount').text(data.starter_count || 0);
                 $('#influencerCount').text(data.influencer_count || 0);
                 $('#legendCount').text(data.legend_count || 0);
@@ -283,170 +251,6 @@
             });
         }
 
-        function loadKpiData() {
-            $.get("{{ route('kol.kpi') }}", function(data) {
-                $('#totalKol').text(data.total_kol || 0);
-                $('#totalAffiliate').text(data.total_affiliate || 0);
-                $('#activeAffiliate').text(data.active_affiliate || 0);
-                $('#activePosting').text(data.active_posting || 0);
-                $('#hasViews').text(data.has_views || 0);
-                
-                // Format average engagement as percentage
-                const avgEngagement = data.avg_engagement ? parseFloat(data.avg_engagement).toFixed(2) + '%' : '0%';
-                $('#avgEngagement').text(avgEngagement);
-            }).fail(function() {
-                console.error('Failed to load KPI data');
-                // Set default values on error
-                $('#totalKol, #totalAffiliate, #activeAffiliate, #activePosting, #hasViews').text('0');
-                $('#avgEngagement').text('0%');
-            });
-        }
-
-        $('#btnStopBulkRefresh').click(function() {
-            bulkRefreshStopped = true;
-            $('#btnStopBulkRefresh').hide();
-            $('#statusText').text('Stopping refresh...');
-        });
-
-        // Start bulk refresh process
-        function startBulkRefresh() {
-            bulkRefreshInProgress = true;
-            bulkRefreshStopped = false;
-            
-            // Reset modal
-            $('#bulkRefreshProgress').css('width', '0%').attr('aria-valuenow', 0).text('0%');
-            $('#bulkRefreshResults').empty();
-            $('#statusText').text('Fetching KOL usernames...');
-            $('#btnCloseBulkModal').prop('disabled', true);
-            $('#btnStopBulkRefresh').show();
-            
-            // Show modal
-            $('#bulkRefreshModal').modal('show');
-
-            // Get all usernames first
-            $.ajax({
-                url: "{{ route('kol.bulk-usernames') }}",
-                type: "GET",
-                data: {
-                    channel: channelSelector.val(),
-                    niche: nicheSelector.val(),
-                    skinType: skinTypeSelector.val(),
-                    skinConcern: skinConcernSelector.val(),
-                    contentType: contentTypeSelector.val(),
-                    pic: picSelector.val()
-                },
-                success: function(response) {
-                    if (response.usernames && response.usernames.length > 0) {
-                        processBulkRefresh(response.usernames);
-                    } else {
-                        $('#statusText').text('No KOLs found');
-                        finishBulkRefresh();
-                    }
-                },
-                error: function() {
-                    $('#statusText').text('Error fetching KOL list');
-                    finishBulkRefresh();
-                }
-            });
-        }
-
-        // Process bulk refresh
-        async function processBulkRefresh(usernames) {
-            const total = usernames.length;
-            let processed = 0;
-            let successful = 0;
-            let failed = 0;
-
-            $('#statusText').text(`Processing ${total} KOLs...`);
-
-            for (let i = 0; i < usernames.length; i++) {
-                if (bulkRefreshStopped) {
-                    $('#statusText').text('Refresh stopped by user');
-                    break;
-                }
-
-                const username = usernames[i];
-                const url = `{{ route('kol.refresh_follow', ['username' => ':username']) }}`.replace(':username', username);
-
-                // Add row to results table
-                const row = `
-                    <tr id="refresh-row-${i}">
-                        <td>${username}</td>
-                        <td><span class="badge badge-warning">Processing...</span></td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                    </tr>
-                `;
-                $('#bulkRefreshResults').append(row);
-
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-
-                    if (data.error) {
-                        // Error case
-                        $(`#refresh-row-${i}`).html(`
-                            <td>${username}</td>
-                            <td><span class="badge badge-danger">Failed</span></td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>${data.error}</td>
-                        `);
-                        failed++;
-                    } else {
-                        // Success case
-                        $(`#refresh-row-${i}`).html(`
-                            <td>${username}</td>
-                            <td><span class="badge badge-success">Success</span></td>
-                            <td>${data.followers || 0}</td>
-                            <td>${data.following || 0}</td>
-                            <td>${data.message || 'Updated successfully'}</td>
-                        `);
-                        successful++;
-                    }
-                } catch (error) {
-                    // Network or other error
-                    $(`#refresh-row-${i}`).html(`
-                        <td>${username}</td>
-                        <td><span class="badge badge-danger">Failed</span></td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>Network error</td>
-                    `);
-                    failed++;
-                }
-
-                processed++;
-                const percentage = Math.round((processed / total) * 100);
-                $('#bulkRefreshProgress').css('width', `${percentage}%`).attr('aria-valuenow', percentage).text(`${percentage}%`);
-                $('#statusText').text(`Processed: ${processed}/${total} | Success: ${successful} | Failed: ${failed}`);
-
-                // Scroll to bottom of results
-                const resultsDiv = $('#bulkRefreshResults').parent().parent();
-                resultsDiv.scrollTop(resultsDiv[0].scrollHeight);
-
-                // Add delay to prevent API rate limiting
-                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-            }
-
-            finishBulkRefresh();
-        }
-
-        // Finish bulk refresh
-        function finishBulkRefresh() {
-            bulkRefreshInProgress = false;
-            $('#btnCloseBulkModal').prop('disabled', false);
-            $('#btnStopBulkRefresh').hide();
-            
-            if (!bulkRefreshStopped) {
-                $('#statusText').text('Bulk refresh completed!');
-            }
-
-            // Reload the main table
-            kolTable.ajax.reload(null, false);
-        }
-
         let kolTable = kolTableSelector.DataTable({
             responsive: true,
             processing: true,
@@ -454,17 +258,7 @@
             ajax: {
                 url: "{{ route('kol.monitor_get') }}",
                 data: function (d) {
-                    d.channel = channelSelector.val();
-                    d.niche = nicheSelector.val();
-                    d.skinType = skinTypeSelector.val();
-                    d.skinConcern = skinConcernSelector.val();
-                    d.contentType = contentTypeSelector.val();
-                    d.pic = picSelector.val();
-                    // Add status affiliate filter
                     d.statusAffiliate = statusAffiliateSelector.val();
-                    // Add followers range filter
-                    d.followersMin = followersMinSelector.val();
-                    d.followersMax = followersMaxSelector.val();
                 }
             },
             columns: [
@@ -478,8 +272,6 @@
             ],
             order: [[0, 'desc']],
             drawCallback: function() {
-                // Refresh KPI data after table draw/filter
-                loadKpiData();
                 loadKpiDataMonitor();
             }
         });
@@ -488,403 +280,10 @@
             kolTable.draw();
         });
 
-        let followersFilterTimeout;
-        followersMinSelector.on('input', function() {
-            clearTimeout(followersFilterTimeout);
-            followersFilterTimeout = setTimeout(function() {
-                kolTable.draw();
-            }, 500); // Wait 500ms after user stops typing
-        });
-
-        followersMaxSelector.on('input', function() {
-            clearTimeout(followersFilterTimeout);
-            followersFilterTimeout = setTimeout(function() {
-                kolTable.draw();
-            }, 500); // Wait 500ms after user stops typing
-        });
-
-        // Clear filters functionality
-        $('#btnResetFilter').click(function() {
-            statusAffiliateSelector.val('');
-            followersMinSelector.val('');
-            followersMaxSelector.val('');
+        $(function () {
             kolTable.draw();
         });
 
-        // btnExportKol.click(function () {
-        //     let data = {
-        //         channel: channelSelector.val(),
-        //         niche: nicheSelector.val(),
-        //         skinType: skinTypeSelector.val(),
-        //         skinConcern: skinConcernSelector.val(),
-        //         contentType: contentTypeSelector.val(),
-        //         pic: picSelector.val()
-        //     };
-
-        //     let spinner = $('<div class="spinner-border spinner-border-sm" role="status"><span class="sr-only">Loading...</span></div>');
-        //     btnExportKol.prop('disabled', true).append(spinner);
-
-        //     let now = moment();
-        //     let formattedTime = now.format('YYYYMMDD-HHmmss');
-
-        //     $.ajax({
-        //         url: "{{ route('kol.export') }}",
-        //         type: "GET",
-        //         data: data,
-        //         xhrFields: {
-        //             responseType: 'blob'
-        //         },
-        //         success: function(response) {
-        //             let link = document.createElement('a');
-        //             link.href = window.URL.createObjectURL(response);
-        //             link.download = 'KOL-' + formattedTime + '.xlsx';
-        //             link.click();
-
-        //             btnExportKol.prop('disabled', false);
-        //             spinner.remove();
-        //         },
-        //         error: function(xhr, status, error) {
-        //             console.error(xhr, status, error);
-
-        //             btnExportKol.prop('disabled', false);
-        //             spinner.remove();
-        //         }
-        //     });
-        // });
-
-        $(function () {
-            kolTable.draw()
-        });
-
-        $('#btnExportKol').click(function() {
-            // Reset modal form
-            $('#exportStatusAffiliate').val('');
-            $('#exportFollowersMin').val('');
-            $('#exportFollowersMax').val('');
-            $('#exportCount').text('Click "Generate Export" to see the count of records');
-            
-            // Show modal
-            $('#exportModal').modal('show');
-        });
-
-        // Preview count functionality
-        $('#btnPreviewExport').click(function() {
-            const btn = $(this);
-            const originalText = btn.html();
-            
-            // Show loading state
-            btn.prop('disabled', true);
-            btn.html('<i class="fas fa-spinner fa-spin"></i> Loading...');
-            
-            // Get count with current filters
-            $.ajax({
-                url: "{{ route('kol.get') }}", // Reuse existing endpoint
-                type: "GET",
-                data: {
-                    channel: channelSelector.val(),
-                    niche: nicheSelector.val(),
-                    skinType: skinTypeSelector.val(),
-                    skinConcern: skinConcernSelector.val(),
-                    contentType: contentTypeSelector.val(),
-                    pic: picSelector.val(),
-                    statusAffiliate: $('#exportStatusAffiliate').val(),
-                    followersMin: $('#exportFollowersMin').val(),
-                    followersMax: $('#exportFollowersMax').val(),
-                    length: 1, // Just get count, not actual data
-                    draw: 1,
-                    start: 0
-                },
-                success: function(response) {
-                    const totalRecords = response.recordsFiltered || 0;
-                    $('#exportCount').html(`
-                        <i class="fas fa-chart-bar"></i> 
-                        <strong>${totalRecords.toLocaleString()}</strong> records will be exported
-                    `);
-                    
-                    if (totalRecords === 0) {
-                        $('#exportCount').append('<br><small class="text-warning">No records match the current filters.</small>');
-                        $('#btnConfirmExport').prop('disabled', true);
-                    } else {
-                        $('#btnConfirmExport').prop('disabled', false);
-                    }
-                },
-                error: function() {
-                    $('#exportCount').html('<i class="fas fa-exclamation-triangle text-danger"></i> Error getting record count');
-                    $('#btnConfirmExport').prop('disabled', false);
-                },
-                complete: function() {
-                    // Restore button state
-                    btn.prop('disabled', false);
-                    btn.html(originalText);
-                }
-            });
-        });
-
-        // Confirm export functionality
-        $('#btnConfirmExport').click(function() {
-            const btn = $(this);
-            const originalText = btn.html();
-            
-            // Show loading state
-            btn.prop('disabled', true);
-            btn.html('<i class="fas fa-spinner fa-spin"></i> Generating...');
-            
-            let data = {
-                channel: channelSelector.val(),
-                niche: nicheSelector.val(),
-                skinType: skinTypeSelector.val(),
-                skinConcern: skinConcernSelector.val(),
-                contentType: contentTypeSelector.val(),
-                pic: picSelector.val(),
-                statusAffiliate: $('#exportStatusAffiliate').val(),
-                followersMin: $('#exportFollowersMin').val(),
-                followersMax: $('#exportFollowersMax').val()
-            };
-
-            let now = moment();
-            let formattedTime = now.format('YYYYMMDD-HHmmss');
-
-            $.ajax({
-                url: "{{ route('kol.export') }}",
-                type: "GET",
-                data: data,
-                xhrFields: {
-                    responseType: 'blob'
-                },
-                success: function(response) {
-                    let link = document.createElement('a');
-                    link.href = window.URL.createObjectURL(response);
-                    link.download = 'KOL-Affiliate-Data-' + formattedTime + '.xlsx';
-                    link.click();
-
-                    // Close modal and show success message
-                    $('#exportModal').modal('hide');
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Export Complete!',
-                        text: 'Affiliate data has been exported successfully.',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error(xhr, status, error);
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Export Failed',
-                        text: 'An error occurred while exporting data. Please try again.',
-                        confirmButtonColor: '#d33'
-                    });
-                },
-                complete: function() {
-                    // Restore button state
-                    btn.prop('disabled', false);
-                    btn.html(originalText);
-                }
-            });
-        });
-
-        // Reset export modal when it's closed
-        $('#exportModal').on('hidden.bs.modal', function() {
-            $('#exportStatusAffiliate').val('');
-            $('#exportFollowersMin').val('');
-            $('#exportFollowersMax').val('');
-            $('#exportCount').text('Click "Generate Export" to see the count of records');
-            $('#btnConfirmExport').prop('disabled', false);
-        });
-
-        // Auto-update preview when filters change
-        $('#exportStatusAffiliate, #exportFollowersMin, #exportFollowersMax').on('change input', function() {
-            $('#exportCount').text('Click "Preview Count" to see updated count');
-            $('#btnConfirmExport').prop('disabled', false);
-        });
-
-        $(document).on('click', '.refresh-follower', function() {
-            const username = $(this).data('id'); // Get the username from the data-id attribute
-            const url = `{{ route('kol.refresh_follow', ['username' => ':username']) }}`.replace(':username', username);
-
-            Swal.fire({
-                title: 'Refreshing...',
-                text: 'Updating followers and following counts',
-                didOpen: () => {
-                    Swal.showLoading();
-                },
-            });
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    Swal.close();
-
-                    if (data.error) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: data.error,
-                        });
-                    } else {
-                        kolTable.ajax.reload(null, false); // Reload table to reflect updated follower data
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: data.message,
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                    }
-                })
-                .catch(error => {
-                    Swal.close();
-                    console.error('Error:', error);
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'An error occurred while refreshing data. Please try again later.',
-                    });
-                });
-        });
-
-        // Global variables to hold the Chart instances
-        let orderPieChart;
-        let rateBarChart;
-
-        // Function to fetch data and render pie chart
-        function fetchChannelData() {
-            $.ajax({
-                url: "{{ route('kol.chart') }}",
-                type: "GET",
-                success: function(response) {
-                    renderChannelPieChart(response.labels, response.values);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching channel distribution data:', error);
-                }
-            });
-        }
-
-        // Function to fetch data and render bar chart for average rate
-        function fetchAverageRateData() {
-            $.ajax({
-                url: "{{ route('kol.averageRate') }}",
-                type: "GET",
-                success: function(response) {
-                    renderChannelBarChart(response.labels, response.values);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching average rate data:', error);
-                }
-            });
-        }
-
-        // Function to map predefined colors based on label names
-        function getColorsForLabels(labels) {
-            const colors = {
-                "tiktok_video": "#000000",
-                "instagram_feed": "#8939C4",
-                "twitter_post": "#179CF4",
-                "youtube_video": "#F10000",
-                "shopee_video": "#EC4D28"
-            };
-
-            return labels.map(label => colors[label] || "#CCCCCC");
-        }
-
-        // Render the pie chart
-        function renderChannelPieChart(labels, values) {
-            const ctxPie = document.getElementById('channelPieChart').getContext('2d');
-
-            if (orderPieChart) {
-                orderPieChart.destroy();
-            }
-
-            orderPieChart = new Chart(ctxPie, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: getColorsForLabels(labels),
-                        borderColor: getColorsForLabels(labels),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Allow it to stretch to container
-                    legend: {
-                        position: 'right'
-                    },
-                    tooltips: {
-                        callbacks: {
-                            label: function(tooltipItem, data) {
-                                let dataset = data.datasets[tooltipItem.datasetIndex];
-                                let value = dataset.data[tooltipItem.index];
-                                return data.labels[tooltipItem.index] + ': ' + value + '%';
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Render the bar chart for average rate per channel
-        function renderChannelBarChart(labels, values) {
-            const ctxBar = document.getElementById('channelBarChart').getContext('2d');
-
-            if (rateBarChart) {
-                rateBarChart.destroy();
-            }
-
-            rateBarChart = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Average Rate Card',
-                        data: values,
-                        backgroundColor: getColorsForLabels(labels),
-                        borderColor: getColorsForLabels(labels),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Allow it to stretch to container
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            },
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'Average Rate (IDR)'
-                            }
-                        }],
-                        xAxes: [{
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'Channel'
-                            }
-                        }]
-                    },
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                }
-            });
-        }
-
-        // Fetch and render both charts on page load
-        $(document).ready(function () {
-            fetchChannelData();
-            fetchAverageRateData();
-        });
-
-        let currentKolId = null;
         function openEditModal(kolId) {
             currentKolId = kolId;
             
@@ -905,7 +304,7 @@
                 $('.invalid-feedback').text('');
             });
             
-            // Load KOL data using route name
+            // Load KOL data
             $.get(`{{ route('kol.edit-data', ':kolId') }}`.replace(':kolId', kolId))
                 .done(function(data) {
                     populateEditForm(data);
@@ -958,7 +357,7 @@
                 $('#edit_activity_null').prop('checked', true);
             }
             
-            // Set form action using route name
+            // Set form action
             $('#editKolForm').attr('action', `{{ route('kol.update', ':kolId') }}`.replace(':kolId', data.id));
         }
 
@@ -998,8 +397,7 @@
                     });
                     
                     // Refresh DataTable and KPI
-                    kolTable.ajax.reload(null, false); // false = stay on current page
-                    loadKpiData();
+                    kolTable.ajax.reload(null, false);
                     loadKpiDataMonitor();
                 },
                 error: function(xhr) {
@@ -1036,6 +434,5 @@
                 }
             });
         });
-
     </script>
 @stop
