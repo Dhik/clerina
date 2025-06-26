@@ -179,6 +179,21 @@ class KeyOpinionLeaderController extends Controller
                             <i class="fas fa-pencil-alt"></i>
                         </button>';
             })
+            ->addColumn('level_display', function ($kol) {
+                if (!$kol->level) {
+                    return '<span class="badge badge-secondary">Not Set</span>';
+                }
+                
+                $badgeClass = match($kol->level) {
+                    'Starter' => 'badge-success',
+                    'Influencer' => 'badge-info', 
+                    'Legend' => 'badge-warning',
+                    'Best Affiliate' => 'badge-danger',
+                    default => 'badge-secondary'
+                };
+                
+                return '<span class="badge ' . $badgeClass . '">' . $kol->level . '</span>';
+            })
             ->addColumn('refresh_follower', function ($row) {
                 return '<button class="btn btn-info btn-xs refresh-follower" data-id="' . $row->username . '">
                             <i class="fas fa-sync-alt"></i>
@@ -228,7 +243,8 @@ class KeyOpinionLeaderController extends Controller
                 'refresh_follower', 
                 'views_last_9_post_display', 
                 'activity_posting_display', 
-                'status_affiliate_display'
+                'status_affiliate_display',
+                'level_display'
             ])
             ->toJson();
     }
