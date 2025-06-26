@@ -141,7 +141,7 @@
 @stop
 
 @section('js')
-    <script>
+<script>
     const kolTableSelector = $('#kolTable');
     const statusAffiliateSelector = $('#filterStatusAffiliate');
     let currentKolId = null;
@@ -162,6 +162,7 @@
         responsive: true,
         processing: true,
         serverSide: true,
+        destroy: true,
         ajax: {
             url: "{{ route('kol.monitor_get') }}",
             data: function (d) {
@@ -169,22 +170,45 @@
             }
         },
         columns: [
-            {data: 'username', name: 'username'},
+            {
+                data: 'username', 
+                name: 'username',
+                orderable: true
+            },
             {
                 data: 'status_affiliate_display', 
                 name: 'status_affiliate', 
-                orderable: false
+                orderable: false,
+                searchable: false
             },
             {
                 data: 'level_display', 
                 name: 'level', 
-                orderable: false
+                orderable: false,
+                searchable: false
             },
-            {data: 'actions', sortable: false, orderable: false}
+            {
+                data: 'actions', 
+                name: 'actions',
+                orderable: false,
+                searchable: false
+            }
+        ],
+        columnDefs: [
+            {
+                targets: [1, 2, 3],
+                orderable: false
+            }
         ],
         order: [[0, 'desc']],
         drawCallback: function() {
             loadKpiDataMonitor();
+        },
+        initComplete: function() {
+            console.log('DataTable initialized successfully');
+        },
+        error: function(xhr, error, code) {
+            console.log('DataTable error:', error);
         }
     });
 
