@@ -459,6 +459,56 @@ class KeyOpinionLeaderController extends Controller
     }
 
     /**
+     * Get KOL data for level editing
+     */
+    public function getLevelData(KeyOpinionLeader $keyOpinionLeader): JsonResponse
+    {
+        $this->authorize('updateKOL', KeyOpinionLeader::class);
+        
+        return response()->json([
+            'id' => $keyOpinionLeader->id,
+            'username' => $keyOpinionLeader->username,
+            'level' => $keyOpinionLeader->level,
+        ]);
+    }
+
+    /**
+     * Update KOL level only
+     */
+    public function updateLevel(KeyOpinionLeader $keyOpinionLeader, Request $request): JsonResponse
+    {
+        $this->authorize('updateKOL', KeyOpinionLeader::class);
+        
+        // Validate the level field
+        $request->validate([
+            'level' => 'required|in:Starter,Influencer,Legend,Best Affiliate'
+        ]);
+        
+        try {
+            // Update only the level field
+            $keyOpinionLeader->update([
+                'level' => $request->input('level')
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'KOL level updated successfully.',
+                'data' => [
+                    'id' => $keyOpinionLeader->id,
+                    'username' => $keyOpinionLeader->username,
+                    'level' => $keyOpinionLeader->level
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update KOL level.'
+            ], 500);
+        }
+    }
+
+    /**
      * show KOL
      */
     public function show(KeyOpinionLeader $keyOpinionLeader): View|\Illuminate\Foundation\Application|Factory|Application

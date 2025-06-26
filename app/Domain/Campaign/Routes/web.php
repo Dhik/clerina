@@ -182,6 +182,8 @@ Route::prefix('admin')
                 Route::get('/showJson/{keyOpinionLeader}', [KeyOpinionLeaderController::class, 'showJson'])->name('kol.show.json');
                 Route::get('/{keyOpinionLeader}/edit', [KeyOpinionLeaderController::class, 'edit'])->name('kol.edit');
                 Route::put('/{keyOpinionLeader}/update', [KeyOpinionLeaderController::class, 'update'])->name('kol.update');
+                Route::get('/{keyOpinionLeader}/get-level-data', [KeyOpinionLeaderController::class, 'getLevelData'])->name('kol.get-level-data');
+                Route::patch('/{keyOpinionLeader}/update-level', [KeyOpinionLeaderController::class, 'updateLevel'])->name('kol.update-level');
                 Route::get('/kpi', [KeyOpinionLeaderController::class, 'getKpiData'])->name('kol.kpi');
                 Route::get('/{keyOpinionLeader}/show', [KeyOpinionLeaderController::class, 'show'])->name('kol.show');
             });
