@@ -63,6 +63,7 @@
                                 <th>{{ trans('labels.username') }}</th>
                                 <th>Affiliate Status</th>
                                 <th>Level</th>
+                                <th>Slot</th>
                                 <th>{{ trans('labels.action') }}</th>
                             </tr>
                         </thead>
@@ -212,6 +213,16 @@
                     title: 'Level',
                     orderable: false,
                     searchable: false
+                },
+                {
+                    data: 'slot', 
+                    name: 'slot', 
+                    title: 'Slot',
+                    orderable: true,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        return data ? data : '-';
+                    }
                 },
                 {
                     data: 'actions', 
