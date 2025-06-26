@@ -203,21 +203,19 @@ class KeyOpinionLeaderController extends Controller
     public function monitor_kpi(Request $request): JsonResponse
     {
         try {
-            $query = KeyOpinionLeader::query();
-            
-            // Calculate KPIs
-            $totalKol = $query->count();
-            $totalAffiliate = $query->whereNotNull('status_affiliate')->count();
-            $activeAffiliate = $query->where('status_affiliate', 'Qualified')->count();
-            $activePosting = $query->where('activity_posting', 1)->count();
-            $hasViews = $query->where('views_last_9_post', 1)->count();
-            $avgEngagement = $query->whereNotNull('engagement_rate')->avg('engagement_rate');
+            // Calculate KPIs using separate queries for each metric
+            $totalKol = KeyOpinionLeader::count();
+            $totalAffiliate = KeyOpinionLeader::whereNotNull('status_affiliate')->count();
+            $activeAffiliate = KeyOpinionLeader::where('status_affiliate', 'Qualified')->count();
+            $activePosting = KeyOpinionLeader::where('activity_posting', 1)->count();
+            $hasViews = KeyOpinionLeader::where('views_last_9_post', 1)->count();
+            $avgEngagement = KeyOpinionLeader::whereNotNull('engagement_rate')->avg('engagement_rate');
             
             // Level counts (excluding null values)
-            $starterCount = $query->where('level', 'Starter')->count();
-            $influencerCount = $query->where('level', 'Influencer')->count();
-            $legendCount = $query->where('level', 'Legend')->count();
-            $bestAffiliateCount = $query->where('level', 'Best Affiliate')->count();
+            $starterCount = KeyOpinionLeader::where('level', 'Starter')->count();
+            $influencerCount = KeyOpinionLeader::where('level', 'Influencer')->count();
+            $legendCount = KeyOpinionLeader::where('level', 'Legend')->count();
+            $bestAffiliateCount = KeyOpinionLeader::where('level', 'Best Affiliate')->count();
             
             return response()->json([
                 'total_kol' => $totalKol,
