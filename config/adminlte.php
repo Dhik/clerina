@@ -348,7 +348,7 @@ return [
         [
             'text' => 'Marketing',
             'can' => [
-                PermissionEnum::ViewSales,
+                PermissionEnum::ChangeOwnPassword,
             ],
             'icon'    => 'fas fa-bullhorn',
             'submenu' => [
