@@ -149,6 +149,14 @@
     const kolTableSelector = $('#kolTable');
     const statusAffiliateSelector = $('#filterStatusAffiliate');
     let currentKolId = null;
+    let kolTable;
+
+    // Set up CSRF token for all AJAX requests
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
 
     function loadKpiDataMonitor() {
         $.get("{{ route('kol.monitor_kpi') }}", function(data) {
@@ -231,7 +239,9 @@
     initializeDataTable();
 
     statusAffiliateSelector.change(function() {
-        kolTable.draw();
+        if (kolTable) {
+            kolTable.draw();
+        }
     });
 
     $(function () {
@@ -253,7 +263,9 @@
         // Open modal
         $('#editLevelModal').modal('show');
 
-        $('#editLevelModal').on('hidden.bs.modal', function() {
+        // Remove previous event handlers to prevent multiple bindings
+        $('#editLevelModal').off('hidden.bs.modal.editLevel');
+        $('#editLevelModal').on('hidden.bs.modal.editLevel', function() {
             currentKolId = null;
             $('#editLevelForm')[0].reset();
             $('.form-control').removeClass('is-invalid');
@@ -303,11 +315,15 @@
         $('.form-control').removeClass('is-invalid');
         $('.invalid-feedback').text('');
         
-        // Submit form
+        // Submit form using Laravel's method spoofing
         $.ajax({
             url: form.attr('action'),
             type: 'POST',
-            data: form.serialize(),
+            data: {
+                _method: 'PUT',
+                _token: $('input[name="_token"]').val(),
+                level: $('#edit_level').val()
+            },
             success: function(response) {
                 // Close modal
                 $('#editLevelModal').modal('hide');
@@ -323,13 +339,17 @@
                 });
                 
                 // Refresh DataTable and KPI
-                kolTable.ajax.reload(null, false);
+                if (kolTable) {
+                    kolTable.ajax.reload(null, false);
+                }
                 loadKpiDataMonitor();
             },
             error: function(xhr) {
+                console.log('Error response:', xhr);
+                
                 if (xhr.status === 422) {
                     // Validation errors
-                    const errors = xhr.responseJSON.errors;
+                    const errors = xhr.responseJSON?.errors || {};
                     
                     Object.keys(errors).forEach(function(field) {
                         const input = $(`[name="${field}"]`);
@@ -343,12 +363,19 @@
                         text: 'Please select a valid level.',
                         confirmButtonColor: '#ffc107'
                     });
+                } else if (xhr.status === 405) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Method Not Allowed',
+                        text: 'The request method is not supported. Please contact support.',
+                        confirmButtonColor: '#d33'
+                    });
                 } else {
                     // Other errors
                     Swal.fire({
                         icon: 'error',
                         title: 'Error!',
-                        text: 'Failed to update KOL level. Please try again.',
+                        text: xhr.responseJSON?.message || 'Failed to update KOL level. Please try again.',
                         confirmButtonColor: '#d33'
                     });
                 }
@@ -366,5 +393,9 @@
         // Since we only have level editing now, redirect to level modal
         openEditLevelModal(kolId);
     }
+
+    // Make functions globally available
+    window.openEditLevelModal = openEditLevelModal;
+    window.openEditModal = openEditModal;
 </script>
 @stop
