@@ -57,14 +57,18 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <table id="kolTable" class="table table-bordered table-striped dataTable responsive" aria-describedby="kol-info" width="100%">
+                    <table id="kolTable" class="table table-bordered table-striped" width="100%">
                         <thead>
-                        <tr>
-                            <th>{{ trans('labels.username') }}</th>
-                            <th width="8%">Affiliate Status</th>
-                            <th width="8%">{{ trans('labels.action') }}</th>
-                        </tr>
+                            <tr>
+                                <th>{{ trans('labels.username') }}</th>
+                                <th>Affiliate Status</th>
+                                <th>Level</th>
+                                <th>{{ trans('labels.action') }}</th>
+                            </tr>
                         </thead>
+                        <tbody>
+                            <!-- DataTables will populate this -->
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -158,66 +162,81 @@
         });
     }
 
-    let kolTable = kolTableSelector.DataTable({
-        responsive: true,
-        processing: true,
-        serverSide: true,
-        destroy: true,
-        ajax: {
-            url: "{{ route('kol.monitor_get') }}",
-            data: function (d) {
-                d.statusAffiliate = statusAffiliateSelector.val();
-            }
-        },
-        columns: [
-            {
-                data: 'username', 
-                name: 'username',
-                orderable: true
-            },
-            {
-                data: 'status_affiliate_display', 
-                name: 'status_affiliate', 
-                orderable: false,
-                searchable: false
-            },
-            {
-                data: 'level_display', 
-                name: 'level', 
-                orderable: false,
-                searchable: false
-            },
-            {
-                data: 'actions', 
-                name: 'actions',
-                orderable: false,
-                searchable: false
-            }
-        ],
-        columnDefs: [
-            {
-                targets: [1, 2, 3],
-                orderable: false
-            }
-        ],
-        order: [[0, 'desc']],
-        drawCallback: function() {
-            loadKpiDataMonitor();
-        },
-        initComplete: function() {
-            console.log('DataTable initialized successfully');
-        },
-        error: function(xhr, error, code) {
-            console.log('DataTable error:', error);
+    // Initialize DataTable with proper error handling
+    function initializeDataTable() {
+        // Destroy existing table if it exists
+        if ($.fn.DataTable.isDataTable('#kolTable')) {
+            $('#kolTable').DataTable().destroy();
         }
-    });
+        
+        // Clear the table
+        $('#kolTable').empty();
+        
+        kolTable = kolTableSelector.DataTable({
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            autoWidth: false,
+            ajax: {
+                url: "{{ route('kol.monitor_get') }}",
+                data: function (d) {
+                    d.statusAffiliate = statusAffiliateSelector.val();
+                },
+                error: function(xhr, error, code) {
+                    console.log('AJAX Error:', error);
+                }
+            },
+            columns: [
+                {
+                    data: 'username', 
+                    name: 'username',
+                    title: 'Username'
+                },
+                {
+                    data: 'status_affiliate_display', 
+                    name: 'status_affiliate', 
+                    title: 'Affiliate Status',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'level_display', 
+                    name: 'level', 
+                    title: 'Level',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'actions', 
+                    name: 'actions',
+                    title: 'Action',
+                    orderable: false,
+                    searchable: false
+                }
+            ],
+            order: [[0, 'desc']],
+            drawCallback: function() {
+                loadKpiDataMonitor();
+            },
+            initComplete: function() {
+                console.log('DataTable initialized successfully');
+            },
+            error: function(xhr, error, code) {
+                console.log('DataTable error:', error);
+            }
+        });
+    }
+
+    // Initialize the table
+    initializeDataTable();
 
     statusAffiliateSelector.change(function() {
         kolTable.draw();
     });
 
     $(function () {
-        kolTable.draw();
+        // Table is already initialized above
+        console.log('Document ready - DataTable should be initialized');
     });
 
     // New function for editing level only
