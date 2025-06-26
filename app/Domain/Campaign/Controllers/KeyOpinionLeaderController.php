@@ -447,13 +447,6 @@ class KeyOpinionLeaderController extends Controller
     {
         $this->authorize('updateKOL', KeyOpinionLeader::class);
         
-        // Debug logging
-        \Log::info('Update level request', [
-            'kol_id' => $keyOpinionLeader->id,
-            'request_data' => $request->all(),
-            'method' => $request->method()
-        ]);
-        
         // Validate the level field
         $request->validate([
             'level' => 'required|in:Starter,Influencer,Legend,Best Affiliate'
@@ -476,12 +469,6 @@ class KeyOpinionLeaderController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            \Log::error('Error updating KOL level', [
-                'kol_id' => $keyOpinionLeader->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update KOL level: ' . $e->getMessage()

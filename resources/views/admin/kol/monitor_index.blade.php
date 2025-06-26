@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- Edit KOL Modal -->
+    <!-- Edit Level Modal -->
     <div class="modal fade" id="editLevelModal" tabindex="-1" role="dialog" aria-labelledby="editLevelModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -89,7 +89,6 @@
                 </div>
                 <form id="editLevelForm" method="POST">
                     @csrf
-                    @method('PUT')
                     
                     <div class="modal-body">
                         <div id="editLevelLoader" class="text-center" style="display: none;">
@@ -245,11 +244,10 @@
     });
 
     $(function () {
-        // Table is already initialized above
         console.log('Document ready - DataTable should be initialized');
     });
 
-    // New function for editing level only
+    // Function for editing level only
     function openEditLevelModal(kolId) {
         currentKolId = kolId;
         
@@ -263,15 +261,6 @@
         // Open modal
         $('#editLevelModal').modal('show');
 
-        // Remove previous event handlers to prevent multiple bindings
-        $('#editLevelModal').off('hidden.bs.modal.editLevel');
-        $('#editLevelModal').on('hidden.bs.modal.editLevel', function() {
-            currentKolId = null;
-            $('#editLevelForm')[0].reset();
-            $('.form-control').removeClass('is-invalid');
-            $('.invalid-feedback').text('');
-        });
-        
         // Load KOL data
         $.get(`{{ route('kol.get-level-data', ':kolId') }}`.replace(':kolId', kolId))
             .done(function(data) {
@@ -295,7 +284,7 @@
         $('#display_current_level').text(data.level || 'Not Set');
         $('#edit_level').val(data.level || '');
         
-        // Set form action
+        // Set form action using route name
         $('#editLevelForm').attr('action', `{{ route('kol.update-level', ':kolId') }}`.replace(':kolId', data.id));
     }
 
@@ -315,16 +304,23 @@
         $('.form-control').removeClass('is-invalid');
         $('.invalid-feedback').text('');
         
-        // Submit form using Laravel's method spoofing
+        // Get form data
+        const formData = {
+            _token: $('input[name="_token"]').val(),
+            level: $('#edit_level').val()
+        };
+        
+        console.log('Submitting to:', form.attr('action'));
+        console.log('Form data:', formData);
+        
+        // Submit form
         $.ajax({
             url: form.attr('action'),
             type: 'POST',
-            data: {
-                _method: 'PUT',
-                _token: $('input[name="_token"]').val(),
-                level: $('#edit_level').val()
-            },
+            data: formData,
             success: function(response) {
+                console.log('Success response:', response);
+                
                 // Close modal
                 $('#editLevelModal').modal('hide');
                 
@@ -346,6 +342,8 @@
             },
             error: function(xhr) {
                 console.log('Error response:', xhr);
+                console.log('Status:', xhr.status);
+                console.log('Response text:', xhr.responseText);
                 
                 if (xhr.status === 422) {
                     // Validation errors
@@ -367,7 +365,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Method Not Allowed',
-                        text: 'The request method is not supported. Please contact support.',
+                        text: 'Route error. URL: ' + form.attr('action'),
                         confirmButtonColor: '#d33'
                     });
                 } else {
@@ -388,9 +386,16 @@
         });
     });
 
-    // Redirect to level edit modal for backward compatibility
+    // Modal cleanup on hide
+    $('#editLevelModal').on('hidden.bs.modal', function() {
+        currentKolId = null;
+        $('#editLevelForm')[0].reset();
+        $('.form-control').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+    });
+
+    // Backward compatibility function
     function openEditModal(kolId) {
-        // Since we only have level editing now, redirect to level modal
         openEditLevelModal(kolId);
     }
 
