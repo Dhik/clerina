@@ -44,6 +44,8 @@ class KeyOpinionLeader extends Model
         'status_affiliate',
         'total_likes',
         'video_count',
+        'level',
+        'slot',
     ];
 
     protected $casts = [
