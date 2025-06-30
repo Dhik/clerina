@@ -144,16 +144,44 @@ class KPIEmployeeController extends Controller
                 ->with('error', 'Employee record not found. Please contact administrator.');
         }
         
-        // Check if employee has any KPIs
-        $hasKpis = $currentEmployee->kpiEmployees()->count() > 0;
+        $currentEmployee->load('kpiEmployees');
         
-        if (!$hasKpis) {
-            return redirect()->route('kPIEmployee.index')
-                ->with('info', 'You do not have any KPIs assigned yet.');
+        // Calculate personal statistics
+        $kpis = $currentEmployee->kpiEmployees;
+        $totalKpis = $kpis->count();
+        $totalWeight = $kpis->sum('bobot');
+        
+        // Calculate total achievement
+        $totalAchievement = 0;
+        $achievedKpis = 0;
+        
+        foreach ($kpis as $kpi) {
+            if ($kpi->target > 0) {
+                $achievement = ($kpi->actual / $kpi->target) * 100;
+                $totalAchievement += $achievement * ($kpi->bobot / 100);
+                if ($achievement >= 100) {
+                    $achievedKpis++;
+                }
+            }
         }
         
-        // Redirect to the employee's detail page
-        return redirect()->route('kPIEmployee.show', $currentEmployee->id);
+        $avgAchievement = $totalKpis > 0 ? $totalAchievement : 0;
+        
+        // Get KPIs by perspective
+        $kpisByPerspective = $kpis->groupBy('perspective');
+        
+        // Check if employee is a leader
+        $hasLeaderKpis = $kpis->where('position', 'Leader')->count() > 0;
+        
+        $personalStats = [
+            'total_kpis' => $totalKpis,
+            'total_weight' => $totalWeight,
+            'avg_achievement' => round($avgAchievement, 2),
+            'achieved_kpis' => $achievedKpis,
+            'is_leader' => $hasLeaderKpis
+        ];
+        
+        return view('admin.kpi-employee.my-kpi', compact('currentEmployee', 'kpis', 'personalStats', 'kpisByPerspective'));
     }
 
     /**
