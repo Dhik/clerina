@@ -935,13 +935,7 @@ return [
                     'icon' => 'nav-icon fas fa-tachometer-alt text-info',
                     'can' => [PermissionEnum::ViewEmployee],
                     'active' => ['admin/kpi-employee*']
-                ],
-                [
-                    'text' => 'Add KPI',
-                    'url' => 'admin/kpi-employee/create',
-                    'icon' => 'nav-icon fas fa-plus-circle text-success',
-                    'can' => [PermissionEnum::ViewEmployee],
-                ],
+                ]
             ],
         ],
         [
