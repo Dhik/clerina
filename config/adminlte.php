@@ -925,6 +925,26 @@ return [
             ],
         ],
         [
+            'text' => 'KPI Management',
+            'icon' => 'nav-icon fas fa-chart-bar',
+            'can' => [PermissionEnum::ViewEmployee, PermissionEnum::ViewAttendance],
+            'submenu' => [
+                [
+                    'text' => 'Employee KPI',
+                    'url' => 'admin/kpi-employee',
+                    'icon' => 'nav-icon fas fa-tachometer-alt text-info',
+                    'can' => [PermissionEnum::ViewEmployee],
+                    'active' => ['admin/kpi-employee*']
+                ],
+                [
+                    'text' => 'Add KPI',
+                    'url' => 'admin/kpi-employee/create',
+                    'icon' => 'nav-icon fas fa-plus-circle text-success',
+                    'can' => [PermissionEnum::ViewEmployee],
+                ],
+            ],
+        ],
+        [
             'text' => 'Payroll',
             'icon' => 'nav-icon fas fa-credit-card',
             'can' => [PermissionEnum::ViewEmployee],
