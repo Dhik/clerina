@@ -69,7 +69,7 @@
 
         <!-- Main Content Area -->
         <div class="col-md-8">
-            @if($isLeader && $isViewingOwnProfile)
+            @if($hasLeaderKpis)
                 <!-- Leader View: Show Department Staff KPIs -->
                 <div class="card">
                     <div class="card-header">
@@ -83,7 +83,7 @@
                     <div class="card-body">
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> 
-                            As a department leader, you can view and manage KPIs for all staff in your department(s).
+                            This employee is a department leader. Showing KPIs for all staff in their department(s).
                         </div>
                         <table id="staff-kpi-table" class="table table-bordered table-striped">
                             <thead>
@@ -108,7 +108,7 @@
                 <!-- Leader's Own KPIs -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">My KPIs</h3>
+                        <h3 class="card-title">Leader's Own KPIs</h3>
                     </div>
                     <div class="card-body">
                         <table id="leader-kpi-table" class="table table-bordered table-striped">
@@ -130,31 +130,17 @@
                     </div>
                 </div>
             @else
-                <!-- Staff View: Show Only Own KPIs OR when viewing other employee's profile -->
+                <!-- Staff View: Show Only Own KPIs -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">
-                            @if($currentEmployee && $currentEmployee->id === $employee->id)
-                                My KPIs
-                            @else
-                                KPI Assignments
-                            @endif
-                        </h3>
-                        @if($currentEmployee && $currentEmployee->id === $employee->id)
-                            <div class="card-tools">
-                                <a href="{{ route('kPIEmployee.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> Add New KPI
-                                </a>
-                            </div>
-                        @endif
+                        <h3 class="card-title">KPI Assignments</h3>
+                        <div class="card-tools">
+                            <a href="{{ route('kPIEmployee.create') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Add New KPI
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
-                        @if($employee->kpiEmployees->where('position', 'Staff')->count() > 0 && $currentEmployee && $currentEmployee->id !== $employee->id)
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle"></i> 
-                                Only department leaders can input actual values for staff KPIs.
-                            </div>
-                        @endif
                         <table id="kpi-detail-table" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
