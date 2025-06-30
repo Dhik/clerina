@@ -22,7 +22,7 @@ Route::prefix('admin')
 
                 Route::get('/', [KPIEmployeeController::class, 'index'])->name('kPIEmployee.index');
                 Route::get('/data', [KPIEmployeeController::class, 'data'])->name('kPIEmployee.data');
-                Route::get('/staff-data', [KPIEmployeeController::class, 'getStaffData'])->name('kPIEmployee.staffData');
+                Route::get('/staff-kpi-data', [KPIEmployeeController::class, 'getStaffKpiData'])->name('kPIEmployee.staffKpiData');
                 Route::get('/create', [KPIEmployeeController::class, 'create'])->name('kPIEmployee.create');
                 Route::post('/', [KPIEmployeeController::class, 'store'])->name('kPIEmployee.store');
                 Route::get('/{employee}/detail', [KPIEmployeeController::class, 'show'])->name('kPIEmployee.show');

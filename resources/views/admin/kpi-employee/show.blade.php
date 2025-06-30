@@ -70,7 +70,7 @@
         <!-- Main Content Area -->
         <div class="col-md-8">
             @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
-                <!-- Leader View: Show Department Staff -->
+                <!-- Leader View: Show Department Staff KPIs -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Department Staff KPIs</h3>
@@ -85,13 +85,19 @@
                             <i class="fas fa-info-circle"></i> 
                             As a department leader, you can view and manage KPIs for all staff in your department(s).
                         </div>
-                        <table id="staff-table" class="table table-bordered table-striped">
+                        <table id="staff-kpi-table" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>Employee Information</th>
-                                    <th>KPI Count</th>
-                                    <th>Total Weight</th>
-                                    <th>Avg Achievement</th>
+                                    <th>No</th>
+                                    <th>Employee Name</th>
+                                    <th>Perspective</th>
+                                    <th>Key Performance Indicator (KPI)</th>
+                                    <th>Target</th>
+                                    <th>Method</th>
+                                    <th>Weight %</th>
+                                    <th>Data Source</th>
+                                    <th>Actual</th>
+                                    <th>Achievement %</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -108,15 +114,15 @@
                         <table id="leader-kpi-table" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>KPI</th>
-                                    <th>Department</th>
-                                    <th>Position</th>
-                                    <th>Method</th>
+                                    <th>No</th>
                                     <th>Perspective</th>
+                                    <th>KPI</th>
                                     <th>Target</th>
+                                    <th>Method</th>
+                                    <th>Weight %</th>
+                                    <th>Data Source</th>
                                     <th>Actual</th>
-                                    <th>Weight (%)</th>
-                                    <th>Achievement</th>
+                                    <th>Achievement %</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -152,15 +158,15 @@
                         <table id="kpi-detail-table" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>KPI</th>
-                                    <th>Department</th>
-                                    <th>Position</th>
-                                    <th>Method</th>
+                                    <th>No</th>
                                     <th>Perspective</th>
+                                    <th>KPI</th>
                                     <th>Target</th>
+                                    <th>Method</th>
+                                    <th>Weight %</th>
+                                    <th>Data Source</th>
                                     <th>Actual</th>
-                                    <th>Weight (%)</th>
-                                    <th>Achievement</th>
+                                    <th>Achievement %</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -184,33 +190,64 @@
     <script>
         $(document).ready(function() {
             @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
-                // Leader view: Staff table
-                $('#staff-table').DataTable({
+                // Leader view: Staff KPIs table (individual KPIs, not grouped by employee)
+                $('#staff-kpi-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('kPIEmployee.staffData') }}",
+                    ajax: "{{ route('kPIEmployee.staffKpiData') }}",
                     columns: [
                         {
-                            data: 'employee_info',
-                            name: 'full_name',
+                            data: null,
+                            name: 'row_number',
+                            orderable: false,
+                            searchable: false,
+                            render: function (data, type, row, meta) {
+                                return meta.row + meta.settings._iDisplayStart + 1;
+                            }
+                        },
+                        {
+                            data: 'employee_name',
+                            name: 'employee.full_name',
                             orderable: true,
                             searchable: true
                         },
                         {
-                            data: 'kpi_count',
-                            name: 'kpi_count',
-                            orderable: false,
-                            searchable: false
+                            data: 'perspective',
+                            name: 'perspective'
                         },
                         {
-                            data: 'total_weight',
-                            name: 'total_weight',
-                            orderable: false,
-                            searchable: false
+                            data: 'kpi',
+                            name: 'kpi'
                         },
                         {
-                            data: 'avg_achievement',
-                            name: 'avg_achievement',
+                            data: 'target',
+                            name: 'target',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
+                        {
+                            data: 'method_calculation',
+                            name: 'method_calculation'
+                        },
+                        {
+                            data: 'bobot',
+                            name: 'bobot'
+                        },
+                        {
+                            data: 'data_source',
+                            name: 'data_source'
+                        },
+                        {
+                            data: 'actual',
+                            name: 'actual',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
+                        {
+                            data: 'achievement',
+                            name: 'achievement',
                             orderable: false,
                             searchable: false
                         },
@@ -221,7 +258,7 @@
                             searchable: false
                         }
                     ],
-                    order: [[0, 'asc']],
+                    order: [[1, 'asc']],
                     pageLength: 10,
                     responsive: true
                 });
@@ -232,18 +269,38 @@
                     serverSide: true,
                     ajax: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
                     columns: [
-                        {data: 'kpi', name: 'kpi'},
-                        {data: 'department', name: 'department'},
-                        {data: 'position', name: 'position'},
-                        {data: 'method_calculation', name: 'method_calculation'},
+                        {
+                            data: null,
+                            name: 'row_number',
+                            orderable: false,
+                            searchable: false,
+                            render: function (data, type, row, meta) {
+                                return meta.row + meta.settings._iDisplayStart + 1;
+                            }
+                        },
                         {data: 'perspective', name: 'perspective'},
-                        {data: 'target', name: 'target'},
-                        {data: 'actual', name: 'actual'},
+                        {data: 'kpi', name: 'kpi'},
+                        {
+                            data: 'target', 
+                            name: 'target',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
+                        {data: 'method_calculation', name: 'method_calculation'},
                         {data: 'bobot', name: 'bobot'},
+                        {data: 'data_source', name: 'data_source'},
+                        {
+                            data: 'actual', 
+                            name: 'actual',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
                         {data: 'achievement', name: 'achievement', orderable: false, searchable: false},
                         {data: 'action', name: 'action', orderable: false, searchable: false}
                     ],
-                    order: [[0, 'asc']],
+                    order: [[2, 'asc']],
                     pageLength: 5,
                     responsive: true
                 });
@@ -254,18 +311,38 @@
                     serverSide: true,
                     ajax: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
                     columns: [
-                        {data: 'kpi', name: 'kpi'},
-                        {data: 'department', name: 'department'},
-                        {data: 'position', name: 'position'},
-                        {data: 'method_calculation', name: 'method_calculation'},
+                        {
+                            data: null,
+                            name: 'row_number',
+                            orderable: false,
+                            searchable: false,
+                            render: function (data, type, row, meta) {
+                                return meta.row + meta.settings._iDisplayStart + 1;
+                            }
+                        },
                         {data: 'perspective', name: 'perspective'},
-                        {data: 'target', name: 'target'},
-                        {data: 'actual', name: 'actual'},
+                        {data: 'kpi', name: 'kpi'},
+                        {
+                            data: 'target', 
+                            name: 'target',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
+                        {data: 'method_calculation', name: 'method_calculation'},
                         {data: 'bobot', name: 'bobot'},
+                        {data: 'data_source', name: 'data_source'},
+                        {
+                            data: 'actual', 
+                            name: 'actual',
+                            render: function(data) {
+                                return new Intl.NumberFormat('id-ID').format(data);
+                            }
+                        },
                         {data: 'achievement', name: 'achievement', orderable: false, searchable: false},
                         {data: 'action', name: 'action', orderable: false, searchable: false}
                     ],
-                    order: [[0, 'asc']],
+                    order: [[2, 'asc']],
                     pageLength: 10,
                     responsive: true
                 });
@@ -297,7 +374,7 @@
                                     'success'
                                 );
                                 @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
-                                    $('#staff-table').DataTable().ajax.reload();
+                                    $('#staff-kpi-table').DataTable().ajax.reload();
                                     $('#leader-kpi-table').DataTable().ajax.reload();
                                 @else
                                     $('#kpi-detail-table').DataTable().ajax.reload();

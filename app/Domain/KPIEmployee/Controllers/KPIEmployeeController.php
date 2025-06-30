@@ -275,6 +275,64 @@ class KPIEmployeeController extends Controller
     }
 
     /**
+     * Get staff KPI data for leader's department (individual KPIs)
+     */
+    public function getStaffKpiData()
+    {
+        // Get current user's employee data
+        $currentUser = auth()->user();
+        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        
+        if (!$currentEmployee) {
+            return response()->json(['error' => 'Employee not found'], 404);
+        }
+        
+        // Check if current employee is a leader
+        $leaderKpis = KPIEmployee::where('employee_id', $currentEmployee->employee_id)
+                               ->where('position', 'Leader')
+                               ->get();
+        
+        if ($leaderKpis->count() == 0) {
+            return response()->json(['error' => 'Not authorized'], 403);
+        }
+        
+        $leaderDepartments = $leaderKpis->pluck('department')->unique();
+        
+        // Get all staff KPIs in leader's departments
+        $staffKpis = KPIEmployee::with('employee')
+                               ->whereIn('department', $leaderDepartments)
+                               ->where('position', 'Staff')
+                               ->get();
+
+        return DataTables::of($staffKpis)
+            ->addColumn('employee_name', function ($kpi) {
+                return $kpi->employee ? $kpi->employee->full_name : 'N/A';
+            })
+            ->addColumn('achievement', function ($kpi) {
+                if ($kpi->target > 0) {
+                    if ($kpi->method_calculation === 'higher better') {
+                        $achievement = ($kpi->actual / $kpi->target) * 100;
+                    } else {
+                        $achievement = ($kpi->target / $kpi->actual) * 100;
+                    }
+                    $class = $achievement >= 100 ? 'success' : ($achievement >= 75 ? 'warning' : 'danger');
+                    return '<span class="badge badge-' . $class . '">' . number_format($achievement, 2) . '%</span>';
+                }
+                return '<span class="badge badge-secondary">0%</span>';
+            })
+            ->addColumn('action', function ($kpi) {
+                $actions = '<div class="btn-group btn-group-sm">';
+                $actions .= '<a href="' . route('kPIEmployee.edit', $kpi->id) . '" class="btn btn-warning btn-xs">Edit</a>';
+                $actions .= '<a href="' . route('kPIEmployee.inputActual', $kpi->id) . '" class="btn btn-success btn-xs">Input Actual</a>';
+                $actions .= '<button type="button" class="btn btn-danger btn-xs" onclick="deleteKpi(' . $kpi->id . ')">Delete</button>';
+                $actions .= '</div>';
+                return $actions;
+            })
+            ->rawColumns(['achievement', 'action'])
+            ->make(true);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(KPIEmployee $kPIEmployee)
