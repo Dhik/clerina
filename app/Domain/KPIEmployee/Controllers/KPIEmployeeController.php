@@ -5,7 +5,7 @@ namespace App\Domain\KPIEmployee\Controllers;
 use App\Http\Controllers\Controller;
 use App\Domain\KPIEmployee\Models\KPIEmployee;
 use App\Domain\KPIEmployee\Requests\KPIEmployeeRequest;
-use App\Models\Employee;
+use App\Domain\Employee\Models\Employee;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
