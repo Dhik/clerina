@@ -31,6 +31,7 @@ Route::prefix('admin')
                 Route::put('/{kPIEmployee}', [KPIEmployeeController::class, 'update'])->name('kPIEmployee.update');
                 Route::get('/{kPIEmployee}/input-actual', [KPIEmployeeController::class, 'inputActual'])->name('kPIEmployee.inputActual');
                 Route::put('/{kPIEmployee}/update-actual', [KPIEmployeeController::class, 'updateActual'])->name('kPIEmployee.updateActual');
+                Route::get('/my-kpi', [KPIEmployeeController::class, 'myKpi'])->name('kPIEmployee.myKpi');
                 Route::delete('/{kPIEmployee}', [KPIEmployeeController::class, 'destroy'])->name('kPIEmployee.destroy');
             });
     });

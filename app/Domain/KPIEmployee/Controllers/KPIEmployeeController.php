@@ -133,6 +133,29 @@ class KPIEmployeeController extends Controller
         ];
     }
 
+    public function myKpi()
+    {
+        // Get current user's employee data
+        $currentUser = auth()->user();
+        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        
+        if (!$currentEmployee) {
+            return redirect()->route('kPIEmployee.index')
+                ->with('error', 'Employee record not found. Please contact administrator.');
+        }
+        
+        // Check if employee has any KPIs
+        $hasKpis = $currentEmployee->kpiEmployees()->count() > 0;
+        
+        if (!$hasKpis) {
+            return redirect()->route('kPIEmployee.index')
+                ->with('info', 'You do not have any KPIs assigned yet.');
+        }
+        
+        // Redirect to the employee's detail page
+        return redirect()->route('kPIEmployee.show', $currentEmployee->id);
+    }
+
     /**
      * Get data for DataTables
      */
