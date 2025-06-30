@@ -927,20 +927,27 @@ return [
         [
             'text' => 'KPI Management',
             'icon' => 'nav-icon fas fa-chart-bar',
-            'can' => [PermissionEnum::ViewEmployee, PermissionEnum::ViewAttendance],
+            'can' => [PermissionEnum::ChangeOwnPassword, PermissionEnum::ViewAttendance],
+            'active' => ['admin/kpi-employee*'], // Main menu active for all KPI routes
             'submenu' => [
                 [
                     'text' => 'Employee KPI',
                     'url' => 'admin/kpi-employee',
                     'icon' => 'nav-icon fas fa-tachometer-alt text-info',
                     'can' => [PermissionEnum::ViewEmployee],
-                    'active' => ['admin/kpi-employee*']
+                    'active' => [
+                        'admin/kpi-employee',
+                        'admin/kpi-employee/create',
+                        'admin/kpi-employee/*/edit',
+                        'admin/kpi-employee/*/detail',
+                        'admin/kpi-employee/*/input-actual'
+                    ]
                 ],
                 [
                     'text' => 'My KPI',
                     'url' => 'admin/kpi-employee/my-kpi',
                     'icon' => 'nav-icon fas fa-user-chart text-success',
-                    'can' => [PermissionEnum::ViewEmployee],
+                    'can' => [PermissionEnum::ChangeOwnPassword],
                     'active' => ['admin/kpi-employee/my-kpi*']
                 ],
             ],
