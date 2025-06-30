@@ -135,13 +135,26 @@ class KPIEmployeeController extends Controller
 
     public function myKpi()
     {
-        // Get current user's employee data
+        // Get current user
         $currentUser = auth()->user();
-        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        
+        // Option 1: If users table has employee_id field
+        $currentEmployee = null;
+        if (isset($currentUser->employee_id)) {
+            $currentEmployee = Employee::where('employee_id', $currentUser->employee_id)->first();
+        }
+        
+        // Option 2: Fallback to email matching if employee_id not available
+        if (!$currentEmployee) {
+            $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        }
+        
+        // Option 3: If you have a different relationship, you can add it here
+        // For example, if there's a user_employee table or similar
         
         if (!$currentEmployee) {
             return redirect()->route('kPIEmployee.index')
-                ->with('error', 'Employee record not found. Please contact administrator.');
+                ->with('error', 'Employee record not found. Please contact administrator to link your account.');
         }
         
         $currentEmployee->load('kpiEmployees');
