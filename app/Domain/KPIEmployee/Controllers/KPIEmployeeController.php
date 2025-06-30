@@ -25,6 +25,115 @@ class KPIEmployeeController extends Controller
     }
 
     /**
+     * Get department statistics
+     */
+    private function getDepartmentStats()
+    {
+        $departments = ['Sales', 'Marketing (Ads)', 'Marketing (CRM)', 'Human Capital', 'KOL Admin', 'Affiliate Admin', 'Finance'];
+        $stats = [];
+        
+        foreach ($departments as $department) {
+            $kpis = KPIEmployee::where('department', $department)->get();
+            $totalEmployees = $kpis->groupBy('employee_id')->count();
+            $totalKpis = $kpis->count();
+            
+            if ($totalKpis > 0) {
+                $totalAchievement = 0;
+                foreach ($kpis as $kpi) {
+                    if ($kpi->target > 0) {
+                        $achievement = ($kpi->actual / $kpi->target) * 100;
+                        $totalAchievement += $achievement * ($kpi->bobot / 100);
+                    }
+                }
+                $avgAchievement = $totalAchievement / $totalKpis;
+            } else {
+                $avgAchievement = 0;
+            }
+            
+            if ($totalEmployees > 0) {
+                $stats[] = [
+                    'department' => $department,
+                    'employees' => $totalEmployees,
+                    'kpis' => $totalKpis,
+                    'achievement' => round($avgAchievement, 2)
+                ];
+            }
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Get position statistics
+     */
+    private function getPositionStats()
+    {
+        $positions = ['Leader', 'Staff'];
+        $stats = [];
+        
+        foreach ($positions as $position) {
+            $kpis = KPIEmployee::where('position', $position)->get();
+            $totalEmployees = $kpis->groupBy('employee_id')->count();
+            $totalKpis = $kpis->count();
+            
+            if ($totalKpis > 0) {
+                $totalAchievement = 0;
+                foreach ($kpis as $kpi) {
+                    if ($kpi->target > 0) {
+                        $achievement = ($kpi->actual / $kpi->target) * 100;
+                        $totalAchievement += $achievement * ($kpi->bobot / 100);
+                    }
+                }
+                $avgAchievement = $totalAchievement / $totalKpis;
+            } else {
+                $avgAchievement = 0;
+            }
+            
+            if ($totalEmployees > 0) {
+                $stats[] = [
+                    'position' => $position,
+                    'employees' => $totalEmployees,
+                    'kpis' => $totalKpis,
+                    'achievement' => round($avgAchievement, 2)
+                ];
+            }
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Get overall statistics
+     */
+    private function getOverallStats()
+    {
+        $totalEmployees = Employee::whereHas('kpiEmployees')->count();
+        $totalKpis = KPIEmployee::count();
+        $avgWeight = KPIEmployee::avg('bobot');
+        
+        $kpis = KPIEmployee::all();
+        $totalAchievement = 0;
+        $validKpis = 0;
+        
+        foreach ($kpis as $kpi) {
+            if ($kpi->target > 0) {
+                $achievement = ($kpi->actual / $kpi->target) * 100;
+                $totalAchievement += $achievement;
+                $validKpis++;
+            }
+        }
+        
+        $avgAchievement = $validKpis > 0 ? $totalAchievement / $validKpis : 0;
+        
+        return [
+            'employees' => $totalEmployees,
+            'kpis' => $totalKpis,
+            'avg_weight' => round($avgWeight, 2),
+            'avg_achievement' => round($avgAchievement, 2)
+        ];
+    }
+
+    /**
      * Get data for DataTables
      */
     public function data()
