@@ -16,7 +16,12 @@ class KPIEmployeeController extends Controller
      */
     public function index()
     {
-        return view('admin.kpi-employee.index');
+        // Get dashboard data for charts
+        $departmentStats = $this->getDepartmentStats();
+        $positionStats = $this->getPositionStats();
+        $overallStats = $this->getOverallStats();
+        
+        return view('admin.kpi-employee.index', compact('departmentStats', 'positionStats', 'overallStats'));
     }
 
     /**
