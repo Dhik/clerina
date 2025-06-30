@@ -16,7 +16,7 @@ class KPIEmployeeController extends Controller
      */
     public function index()
     {
-        return view('kpi-employee.index');
+        return view('admin.kpi-employee.index');
     }
 
     /**
