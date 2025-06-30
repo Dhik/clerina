@@ -941,7 +941,7 @@ return [
                     'url' => 'admin/kpi-employee/my-kpi',
                     'icon' => 'nav-icon fas fa-user-chart text-success',
                     'can' => [PermissionEnum::ViewEmployee],
-                    'active' => ['admin/my-kpi*']
+                    'active' => ['admin/kpi-employee/my-kpi*']
                 ],
             ],
         ],
