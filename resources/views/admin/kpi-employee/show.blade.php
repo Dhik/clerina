@@ -69,7 +69,7 @@
 
         <!-- Main Content Area -->
         <div class="col-md-8">
-            @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
+            @if($isLeader && $isViewingOwnProfile)
                 <!-- Leader View: Show Department Staff KPIs -->
                 <div class="card">
                     <div class="card-header">
@@ -130,17 +130,17 @@
                     </div>
                 </div>
             @else
-                <!-- Staff View: Show Only Own KPIs -->
+                <!-- Staff View: Show Only Own KPIs OR when viewing other employee's profile -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">
-                            @if($currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
+                            @if($currentEmployee && $currentEmployee->id === $employee->id)
                                 My KPIs
                             @else
                                 KPI Assignments
                             @endif
                         </h3>
-                        @if($currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
+                        @if($currentEmployee && $currentEmployee->id === $employee->id)
                             <div class="card-tools">
                                 <a href="{{ route('kPIEmployee.create') }}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-plus"></i> Add New KPI
@@ -149,7 +149,7 @@
                         @endif
                     </div>
                     <div class="card-body">
-                        @if($employee->kpiEmployees->where('position', 'Staff')->count() > 0 && $currentEmployee && $currentEmployee->employee_id !== $employee->employee_id)
+                        @if($employee->kpiEmployees->where('position', 'Staff')->count() > 0 && $currentEmployee && $currentEmployee->id !== $employee->id)
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle"></i> 
                                 Only department leaders can input actual values for staff KPIs.
@@ -189,7 +189,7 @@
     
     <script>
         $(document).ready(function() {
-            @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
+            @if($isLeader && $isViewingOwnProfile)
                 // Leader view: Staff KPIs table (individual KPIs, not grouped by employee)
                 $('#staff-kpi-table').DataTable({
                     processing: true,
@@ -373,7 +373,7 @@
                                     response.message,
                                     'success'
                                 );
-                                @if($isLeader && $currentEmployee && $currentEmployee->employee_id === $employee->employee_id)
+                                @if($isLeader && $isViewingOwnProfile)
                                     $('#staff-kpi-table').DataTable().ajax.reload();
                                     $('#leader-kpi-table').DataTable().ajax.reload();
                                 @else
