@@ -189,12 +189,32 @@
     
     <script>
         $(document).ready(function() {
+            // Debug information
+            console.log('Debug Info:');
+            console.log('isLeader: @json($isLeader ?? false)');
+            console.log('isViewingOwnProfile: @json($isViewingOwnProfile ?? false)');
+            console.log('currentEmployee:', @json($currentEmployee ?? null));
+            console.log('employee:', @json($employee ?? null));
+            
             @if($isLeader && $isViewingOwnProfile)
+                console.log('=== LEADER VIEW ACTIVATED ===');
+                console.log('Should show 2 tables: staff-kpi-table and leader-kpi-table');
+                
                 // Leader view: Staff KPIs table (individual KPIs, not grouped by employee)
                 $('#staff-kpi-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('kPIEmployee.staffKpiData') }}",
+                    ajax: {
+                        url: "{{ route('kPIEmployee.staffKpiData') }}",
+                        dataSrc: function(json) {
+                            console.log('Staff KPI Data Response:', json);
+                            return json.data;
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('Staff KPI Data Error:', error, thrown);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    },
                     columns: [
                         {
                             data: null,
@@ -260,14 +280,27 @@
                     ],
                     order: [[1, 'asc']],
                     pageLength: 10,
-                    responsive: true
+                    responsive: true,
+                    initComplete: function() {
+                        console.log('Staff KPI Table initialized successfully');
+                    }
                 });
 
                 // Leader's own KPIs
                 $('#leader-kpi-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
+                    ajax: {
+                        url: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
+                        dataSrc: function(json) {
+                            console.log('Leader KPI Data Response:', json);
+                            return json.data;
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('Leader KPI Data Error:', error, thrown);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    },
                     columns: [
                         {
                             data: null,
@@ -302,14 +335,30 @@
                     ],
                     order: [[2, 'asc']],
                     pageLength: 5,
-                    responsive: true
+                    responsive: true,
+                    initComplete: function() {
+                        console.log('Leader KPI Table initialized successfully');
+                    }
                 });
             @else
+                console.log('=== STAFF VIEW ACTIVATED ===');
+                console.log('Should show 1 table: kpi-detail-table');
+                
                 // Staff view: Own KPIs only
                 $('#kpi-detail-table').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
+                    ajax: {
+                        url: "{{ route('kPIEmployee.kpiData', $employee->id) }}",
+                        dataSrc: function(json) {
+                            console.log('Staff KPI Data Response:', json);
+                            return json.data;
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('Staff KPI Data Error:', error, thrown);
+                            console.error('Response:', xhr.responseText);
+                        }
+                    },
                     columns: [
                         {
                             data: null,
@@ -344,7 +393,10 @@
                     ],
                     order: [[2, 'asc']],
                     pageLength: 10,
-                    responsive: true
+                    responsive: true,
+                    initComplete: function() {
+                        console.log('Staff KPI Table initialized successfully');
+                    }
                 });
             @endif
         });
