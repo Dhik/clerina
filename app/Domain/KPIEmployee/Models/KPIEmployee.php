@@ -3,7 +3,7 @@
 namespace App\Domain\KPIEmployee\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Employee;
+use App\Domain\Employee\Models\Employee;
 
 class KPIEmployee extends Model
 {
