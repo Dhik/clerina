@@ -4,6 +4,7 @@ namespace App\Domain\Employee\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Domain\KPIEmployee\Models\KPIEmployee;
 
 class Employee extends Model
 {
@@ -41,5 +42,12 @@ class Employee extends Model
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id');
+    }
+    /**
+     * Get the KPI employees for this employee.
+     */
+    public function kpiEmployees()
+    {
+        return $this->hasMany(KPIEmployee::class, 'employee_id', 'employee_id');
     }
 }

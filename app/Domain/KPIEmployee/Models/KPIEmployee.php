@@ -32,11 +32,4 @@ class KPIEmployee extends Model
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
-    /**
-     * Get the KPI employees for this employee.
-     */
-    public function kpiEmployees()
-    {
-        return $this->hasMany(KPIEmployee::class, 'employee_id', 'employee_id');
-    }
 }
