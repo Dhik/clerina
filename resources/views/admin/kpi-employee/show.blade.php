@@ -191,12 +191,12 @@
         $(document).ready(function() {
             // Debug information
             console.log('Debug Info:');
-            console.log('isLeader: @json($isLeader ?? false)');
-            console.log('isViewingOwnProfile: @json($isViewingOwnProfile ?? false)');
+            console.log('hasLeaderKpis: @json($hasLeaderKpis ?? false)');
             console.log('currentEmployee:', @json($currentEmployee ?? null));
             console.log('employee:', @json($employee ?? null));
+            console.log('departmentStaff count:', @json($departmentStaff->count() ?? 0));
             
-            @if($isLeader && $isViewingOwnProfile)
+            @if($hasLeaderKpis)
                 console.log('=== LEADER VIEW ACTIVATED ===');
                 console.log('Should show 2 tables: staff-kpi-table and leader-kpi-table');
                 
@@ -206,6 +206,9 @@
                     serverSide: true,
                     ajax: {
                         url: "{{ route('kPIEmployee.staffKpiData') }}",
+                        data: {
+                            employee_id: "{{ $employee->id }}"
+                        },
                         dataSrc: function(json) {
                             console.log('Staff KPI Data Response:', json);
                             return json.data;
@@ -425,7 +428,7 @@
                                     response.message,
                                     'success'
                                 );
-                                @if($isLeader && $isViewingOwnProfile)
+                                @if($hasLeaderKpis)
                                     $('#staff-kpi-table').DataTable().ajax.reload();
                                     $('#leader-kpi-table').DataTable().ajax.reload();
                                 @else

@@ -115,34 +115,34 @@ class KPIEmployeeController extends Controller
     {
         $employee->load('kpiEmployees');
         
-        // Get current user's employee data
-        $currentUser = auth()->user();
-        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        // The currentEmployee is the employee whose detail page we're viewing
+        $currentEmployee = $employee;
         
-        // Check if current employee is a leader
-        $isLeader = false;
+        // Check if the viewed employee has any Leader KPIs
+        $hasLeaderKpis = $employee->kpiEmployees->where('position', 'Leader')->count() > 0;
         $departmentStaff = collect();
         
-        if ($currentEmployee) {
-            $leaderKpis = KPIEmployee::where('employee_id', $currentEmployee->employee_id)
-                                   ->where('position', 'Leader')
-                                   ->get();
+        // If this employee has leader KPIs, get staff data from their departments
+        if ($hasLeaderKpis) {
+            $leaderDepartments = $employee->kpiEmployees->where('position', 'Leader')->pluck('department')->unique();
             
-            if ($leaderKpis->count() > 0) {
-                $isLeader = true;
-                $leaderDepartments = $leaderKpis->pluck('department')->unique();
-                
-                // Get all staff in leader's departments
-                $departmentStaff = Employee::whereHas('kpiEmployees', function($query) use ($leaderDepartments) {
-                    $query->whereIn('department', $leaderDepartments)
-                          ->where('position', 'Staff');
-                })->with(['kpiEmployees' => function($query) use ($leaderDepartments) {
-                    $query->whereIn('department', $leaderDepartments);
-                }])->get();
-            }
+            // Get all staff KPIs in leader's departments
+            $departmentStaff = KPIEmployee::with('employee')
+                                         ->whereIn('department', $leaderDepartments)
+                                         ->where('position', 'Staff')
+                                         ->get();
         }
+
+        // Debug information - remove this after testing
+        logger()->info('KPI Debug Info', [
+            'viewed_employee_id' => $employee->id,
+            'viewed_employee_employee_id' => $employee->employee_id,
+            'hasLeaderKpis' => $hasLeaderKpis,
+            'departmentStaff_count' => $departmentStaff->count(),
+            'leaderKpis_count' => $employee->kpiEmployees->where('position', 'Leader')->count()
+        ]);
         
-        return view('admin.kpi-employee.show', compact('employee', 'isLeader', 'departmentStaff', 'currentEmployee'));
+        return view('admin.kpi-employee.show', compact('employee', 'hasLeaderKpis', 'departmentStaff', 'currentEmployee'));
     }
 
     /**
@@ -211,92 +211,30 @@ class KPIEmployeeController extends Controller
     }
 
     /**
-     * Get staff data for leader's department
-     */
-    public function getStaffData()
-    {
-        // Get current user's employee data
-        $currentUser = auth()->user();
-        $currentEmployee = Employee::where('email', $currentUser->email)->first();
-        
-        if (!$currentEmployee) {
-            return response()->json(['error' => 'Employee not found'], 404);
-        }
-        
-        // Check if current employee is a leader
-        $leaderKpis = KPIEmployee::where('employee_id', $currentEmployee->employee_id)
-                               ->where('position', 'Leader')
-                               ->get();
-        
-        if ($leaderKpis->count() == 0) {
-            return response()->json(['error' => 'Not authorized'], 403);
-        }
-        
-        $leaderDepartments = $leaderKpis->pluck('department')->unique();
-        
-        // Get all staff in leader's departments
-        $departmentStaff = Employee::whereHas('kpiEmployees', function($query) use ($leaderDepartments) {
-            $query->whereIn('department', $leaderDepartments)
-                  ->where('position', 'Staff');
-        })->with(['kpiEmployees' => function($query) use ($leaderDepartments) {
-            $query->whereIn('department', $leaderDepartments);
-        }])->get();
-
-        return DataTables::of($departmentStaff)
-            ->addColumn('employee_info', function ($employee) {
-                return '<strong>' . $employee->full_name . '</strong><br>' .
-                       '<small>ID: ' . $employee->employee_id . '</small><br>' .
-                       '<small>' . $employee->organization . ' - ' . $employee->job_position . '</small>';
-            })
-            ->addColumn('kpi_count', function ($employee) {
-                return $employee->kpiEmployees->count() . ' KPI(s)';
-            })
-            ->addColumn('total_weight', function ($employee) {
-                return $employee->kpiEmployees->sum('bobot') . '%';
-            })
-            ->addColumn('avg_achievement', function ($employee) {
-                $kpis = $employee->kpiEmployees;
-                if ($kpis->count() == 0) return '0%';
-                
-                $totalAchievement = 0;
-                foreach ($kpis as $kpi) {
-                    if ($kpi->target > 0) {
-                        $achievement = ($kpi->actual / $kpi->target) * 100;
-                        $totalAchievement += $achievement * ($kpi->bobot / 100);
-                    }
-                }
-                return number_format($totalAchievement, 2) . '%';
-            })
-            ->addColumn('action', function ($employee) {
-                return '<a href="' . route('kPIEmployee.show', $employee->id) . '" class="btn btn-sm btn-info">View Detail</a>';
-            })
-            ->rawColumns(['employee_info', 'action'])
-            ->make(true);
-    }
-
-    /**
      * Get staff KPI data for leader's department (individual KPIs)
      */
-    public function getStaffKpiData()
+    public function getStaffKpiData(Request $request)
     {
-        // Get current user's employee data
-        $currentUser = auth()->user();
-        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        $employeeId = $request->get('employee_id');
         
-        if (!$currentEmployee) {
+        if (!$employeeId) {
+            return response()->json(['error' => 'Employee ID required'], 400);
+        }
+        
+        $employee = Employee::find($employeeId);
+        if (!$employee) {
             return response()->json(['error' => 'Employee not found'], 404);
         }
         
-        // Check if current employee is a leader
-        $leaderKpis = KPIEmployee::where('employee_id', $currentEmployee->employee_id)
-                               ->where('position', 'Leader')
-                               ->get();
+        // Get the leader's departments
+        $leaderDepartments = KPIEmployee::where('employee_id', $employee->employee_id)
+                                      ->where('position', 'Leader')
+                                      ->pluck('department')
+                                      ->unique();
         
-        if ($leaderKpis->count() == 0) {
-            return response()->json(['error' => 'Not authorized'], 403);
+        if ($leaderDepartments->count() == 0) {
+            return response()->json(['error' => 'Not a leader'], 403);
         }
-        
-        $leaderDepartments = $leaderKpis->pluck('department')->unique();
         
         // Get all staff KPIs in leader's departments
         $staffKpis = KPIEmployee::with('employee')
@@ -381,6 +319,38 @@ class KPIEmployeeController extends Controller
      */
     public function inputActual(KPIEmployee $kPIEmployee)
     {
+        // Get current user's employee data
+        $currentUser = auth()->user();
+        $currentEmployee = Employee::where('email', $currentUser->email)->first();
+        
+        if (!$currentEmployee) {
+            return redirect()->route('kPIEmployee.index')
+                ->with('error', 'Employee record not found.');
+        }
+        
+        // Check if current employee is a leader and can input actual for this KPI
+        $canInputActual = false;
+        
+        if ($kPIEmployee->position === 'Staff') {
+            // Only leaders can input actual for staff
+            $leaderKpis = KPIEmployee::where('employee_id', $currentEmployee->employee_id)
+                                   ->where('position', 'Leader')
+                                   ->get();
+            
+            if ($leaderKpis->count() > 0) {
+                $leaderDepartments = $leaderKpis->pluck('department')->unique();
+                $canInputActual = $leaderDepartments->contains($kPIEmployee->department);
+            }
+        } else {
+            // Leaders can input actual for their own KPIs
+            $canInputActual = ($currentEmployee->employee_id === $kPIEmployee->employee_id);
+        }
+        
+        if (!$canInputActual) {
+            return redirect()->route('kPIEmployee.show', $kPIEmployee->employee->id)
+                ->with('error', 'You are not authorized to input actual values for this KPI.');
+        }
+        
         $kPIEmployee->load('employee');
         
         return view('admin.kpi-employee.input-actual', compact('kPIEmployee'));
