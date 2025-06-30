@@ -386,9 +386,19 @@ class KPIEmployeeController extends Controller
             ->addColumn('achievement', function ($kpi) {
                 if ($kpi->target > 0) {
                     if ($kpi->method_calculation === 'higher better') {
-                        $achievement = ($kpi->actual / $kpi->target) * 100;
+                        // For "higher better": actual/target * 100
+                        if ($kpi->target == 0) {
+                            $achievement = $kpi->actual > 0 ? 100 : 0; // or handle as needed
+                        } else {
+                            $achievement = ($kpi->actual / $kpi->target) * 100;
+                        }
                     } else {
-                        $achievement = ($kpi->target / $kpi->actual) * 100;
+                        // For "lower better": target/actual * 100  
+                        if ($kpi->actual == 0) {
+                            $achievement = $kpi->target > 0 ? 0 : 100; // or handle as needed
+                        } else {
+                            $achievement = ($kpi->target / $kpi->actual) * 100;
+                        }
                     }
                     $class = $achievement >= 100 ? 'success' : ($achievement >= 75 ? 'warning' : 'danger');
                     return '<span class="badge badge-' . $class . '">' . number_format($achievement, 2) . '%</span>';
